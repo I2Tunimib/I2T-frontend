@@ -4,9 +4,18 @@ import React from "react";
 import DateTime from "react-datetime";
 import "react-datetime/css/react-datetime.css";
 import MainButton from "../../../SharedComponents/MainButton/MainButton";
+import {getDayData} from "../../../Http/httpServices";
+import {useDispatch} from "react-redux";
+import {displayError} from "./../../../Redux/action/error";
 
 
 const GetData = () => {
+
+    const dispatch = useDispatch();
+
+    const dispatchError = (error) => {
+        dispatch(displayError(error));
+    }
 
     const [dataSource, setDataSource] = React.useState("Table Server");
     const [serverDataType, setServerDataType] = React.useState("covid");
@@ -33,6 +42,7 @@ const GetData = () => {
 
     // setting date
     function handleChangeDate(date) {
+        console.log(date);
         const dateArr = date.toString().split(' ');
         const year = dateArr[3];
         const day = dateArr[2];
@@ -40,37 +50,40 @@ const GetData = () => {
             let myMonth = "";
             switch (dateArr[1]) {
                 case "Jan":
-                    myMonth = "Gennaio"
+                    myMonth = "01"
                     break;
                 case "Feb":
-                    myMonth = "Febbraio";
+                    myMonth = "02";
                     break;
                 case "Mar":
-                    myMonth = "Marzo";
+                    myMonth = "03";
                     break;
                 case "Apr":
-                    myMonth = "Aprile";
+                    myMonth = "04";
                     break;
                 case "May":
-                    myMonth = "Maggio";
+                    myMonth = "05";
                     break;
                 case "Jun":
-                    myMonth = "Giugno";
+                    myMonth = "06";
                     break;
                 case "Jul":
-                    myMonth = "Luglio";
+                    myMonth = "07";
                     break;
                 case "Aug":
-                    myMonth = "Agosto";
+                    myMonth = "08";
                     break;
                 case "Sep":
-                    myMonth = "Settembre";
+                    myMonth = "09";
                     break;
                 case "Oct":
-                    myMonth = "Ottobre";
+                    myMonth = "10";
+                    break;
+                case "Nov":
+                    myMonth = "11";
                     break;
                 case "Dec":
-                    myMonth = "Dicembre";
+                    myMonth = "12";
                     break;
                 default:
                     console.log("Hai sbagliato mese");
@@ -97,7 +110,7 @@ const GetData = () => {
         let fileName = file.name.split(" ").join("-");
         function getFormat (fileName) {
             const nameArr = fileName.split(".");
-            const format = nameArr[nameArr.length - 1];
+            return nameArr[nameArr.length - 1];
         }
         const format = getFormat(fileName);
         reader.onload = function (event) { //on loading file.
@@ -114,10 +127,8 @@ const GetData = () => {
     function getTableServer() {
         if (serverDataType === "covid" || serverDataType === "meteo") {
             //call httpservice
-            console.log(serverDataType);
-            console.log(region);
-            console.log(date);
-            //TODO call service
+            const myData = getDayData(serverDataType, region, date, dispatchError );
+            console.log(myData);
         } else {
             //call httpservice
             console.log(savedName);
@@ -192,7 +203,7 @@ const GetData = () => {
                                                 <Form.Label>
                                                     Scegli la data:
                                                 </Form.Label>
-                                                <DateTime value={new Date()} timeFormat={false} onChange={(e) => { handleChangeDate(e._d) }} />
+                                                <DateTime timeFormat={false} onChange={(e) => { handleChangeDate(e._d) }} />
                                             </Form.Group>
                                         </Form>
                                         <MainButton label="Carica" cta={getTableServer} />

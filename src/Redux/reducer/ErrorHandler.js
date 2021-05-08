@@ -1,0 +1,11 @@
+export const ErrorHandlerReducer = (state = false, action) => {
+    const error = action.error; 
+    switch(action.type) {
+        case "ERROR":
+            return state = error;
+        case "NOERROR":
+            return state = false;
+        default:
+            return state = false;
+    }
+}
