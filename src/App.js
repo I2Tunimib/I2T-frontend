@@ -7,10 +7,10 @@ import AllEffects from "./Effects/AllEffects";
 function App() {
   return (
     <>
-    <AllEffects/>
     <BrowserRouter>
+    <AllEffects/>
       <Switch>
-        <Route path="/" component={HomePage}/>
+        <Route path="/" exact component={HomePage}/>
         <Route path="/table" component={TableView}/>
       </Switch>
     </BrowserRouter>

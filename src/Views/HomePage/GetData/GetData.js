@@ -4,9 +4,11 @@ import React from "react";
 import DateTime from "react-datetime";
 import "react-datetime/css/react-datetime.css";
 import MainButton from "../../../SharedComponents/MainButton/MainButton";
-import {getDayData} from "../../../Http/httpServices";
+import {getDayData, getSavedData, getExternalData} from "../../../Http/httpServices";
 import {useDispatch} from "react-redux";
 import {displayError} from "./../../../Redux/action/error";
+import {setLoadingState, unsetLoadingState} from "../../../Redux/action/loading";
+import {loadDataSuccess, deleteData} from "../../../Redux/action/loadDataSuccess";
 
 
 const GetData = () => {
@@ -15,6 +17,18 @@ const GetData = () => {
 
     const dispatchError = (error) => {
         dispatch(displayError(error));
+    }
+    const dispatchSetLoading = () => {
+        dispatch(setLoadingState());
+    }
+    const dispatchUnsetLoading = () => {
+        dispatch(unsetLoadingState());
+    }
+    const dispatchLoadedSuccess = (data) => {
+        dispatch(loadDataSuccess(data));
+    }
+    const dispatchDeleteData = (data) => {
+        dispatch(deleteData());
     }
 
     const [dataSource, setDataSource] = React.useState("Table Server");
@@ -38,6 +52,11 @@ const GetData = () => {
             </option>
         )
     })
+
+    // on init cancel all data
+    React.useEffect(()=>{
+        dispatchDeleteData();
+    }, [])
 
 
     // setting date
@@ -112,11 +131,11 @@ const GetData = () => {
             const nameArr = fileName.split(".");
             return nameArr[nameArr.length - 1];
         }
-        const format = getFormat(fileName);
+        const myFormat = getFormat(fileName);
         reader.onload = function (event) { //on loading file.
             const unconverteFile = event.target.result;
             console.log(unconverteFile);
-            console.log(format);
+            console.log(myFormat);
             //TODO more logic
         }
         reader.readAsText(file);
@@ -127,12 +146,10 @@ const GetData = () => {
     function getTableServer() {
         if (serverDataType === "covid" || serverDataType === "meteo") {
             //call httpservice
-            const myData = getDayData(serverDataType, region, date, dispatchError );
-            console.log(myData);
+            getDayData(serverDataType, region, date, dispatchError, dispatchSetLoading, dispatchUnsetLoading, dispatchLoadedSuccess);
         } else {
-            //call httpservice
-            console.log(savedName);
-            //TODO call service
+            // callhttpservice
+           getSavedData(savedName, dispatchError, dispatchSetLoading, dispatchUnsetLoading, dispatchLoadedSuccess);
         }
 
     }
@@ -140,9 +157,7 @@ const GetData = () => {
     //calling external server
     function getExternalService() {
         // call http service
-        console.log(externalUrl);
-        console.log(format);
-        //TODO call service
+        getExternalData(externalUrl, format, dispatchError, dispatchSetLoading, dispatchUnsetLoading, dispatchLoadedSuccess);
     }
 
 

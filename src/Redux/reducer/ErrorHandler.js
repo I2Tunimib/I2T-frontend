@@ -1,4 +1,4 @@
-export const ErrorHandlerReducer = (state = false, action) => {
+export const errorHandlerReducer = (state = false, action) => {
     const error = action.error; 
     switch(action.type) {
         case "ERROR":

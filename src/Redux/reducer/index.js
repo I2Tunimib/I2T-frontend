@@ -1,9 +1,16 @@
 import { combineReducers } from "redux";
-import {ErrorHandlerReducer} from "./ErrorHandler";
+import {errorHandlerReducer} from "./errorHandler";
+import { loadDataSuccessReducer } from "./loadDataSuccessReducer";
+import loadingReducer from "./loadingReducer";
+import nameLoadReducer from "./nameLoadReducer"
+
 
 
 const allReducers = combineReducers({
-    ErrorHandler: ErrorHandlerReducer,
+    ErrorHandler: errorHandlerReducer,
+    Loading: loadingReducer,
+    LoadedData: loadDataSuccessReducer,
+    LoadedName: nameLoadReducer,
 })
 
 export default allReducers;
