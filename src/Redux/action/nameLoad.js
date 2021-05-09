@@ -4,3 +4,9 @@ export const loadName = (name) => {
         name
     }
 }
+
+export const deleteName = () => {
+    return {
+        type: "DELETENAME",
+    }
+}

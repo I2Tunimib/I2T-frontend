@@ -7,6 +7,7 @@ import { Redirect , Route} from "react-router-dom";
 
 const LoadedDataEffect = () => {
     const LoadedData = useSelector(state => state.LoadedData);
+    const  LoadedName = useSelector(state => state.LoadedName);
     const dispatch = useDispatch();
     // const history = useHistory();
     const [dataHasBeenLoaded, setDataHasBeenLoaded] = React.useState(false);
@@ -29,7 +30,7 @@ const LoadedDataEffect = () => {
     }
 
     React.useEffect(() => {
-        if (LoadedData.length >= 1) {
+        if (LoadedData.length >= 1 && !LoadedName) {
             setDataHasBeenLoaded(true);
         } else {
             setDataHasBeenLoaded(false);
