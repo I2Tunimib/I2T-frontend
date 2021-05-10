@@ -5,7 +5,7 @@ const nameLoadReducer = (state = "", action ) => {
         case "DELETENAME":
             return state = "";
         default: 
-            return state = state;
+            return state;
     }
 }
 export default nameLoadReducer;

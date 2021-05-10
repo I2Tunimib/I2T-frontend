@@ -1,6 +1,6 @@
 import {useSelector} from "react-redux";
 import React from "react";
-import LoadingSpinner from "../SharedComponents/LoadingSpinner/LoadingSpinner";
+import LoadingSpinner from "../../SharedComponents/LoadingSpinner/LoadingSpinner";
 
 
 const LoadingEffect = () => {

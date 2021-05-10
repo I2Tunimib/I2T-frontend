@@ -1,0 +1,7 @@
+.upperBar {
+    display: flex;
+    flex-direction: row;
+}
+.upperBar > div{
+    display: inline-block;
+}

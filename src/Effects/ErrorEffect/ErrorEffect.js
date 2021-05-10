@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import React from "react";
-import ClassicModal from "./../SharedComponents/ClassicModal/ClassicModal";
-import {noError} from "./../Redux/action/error";
+import ClassicModal from "./../../SharedComponents/ClassicModal/ClassicModal";
+import {noError} from "./../../Redux/action/error";
 
 const ErrorEffect = () => {
     const dispatch = useDispatch();

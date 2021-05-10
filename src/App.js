@@ -2,7 +2,7 @@ import './App.css';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import HomePage from "./Views/HomePage/HomePage";
 import TableView from "./Views/TableView/TableView";
-import AllEffects from "./Effects/AllEffects";
+import AllEffects from "./Effects/AllEffects/AllEffects";
 
 function App() {
   return (

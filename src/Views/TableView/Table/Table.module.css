@@ -1,0 +1,38 @@
+.tableWrap{
+    overflow-x: scroll;
+}
+
+.tableWrap table{
+    border-spacing:0;
+    border-collapse: collapse;
+  }
+  
+  .tableWrap td {
+    text-align: center;
+    padding: 10px;
+    border: solid 1px #042650;
+  }
+  
+  .tableWrap th{
+    position:relative;
+    border:solid 2px #042650;
+    padding: 0 0;
+    line-height: normal;
+  }
+  
+  
+  .pagination {
+    padding-top: 1rem;
+  }
+  
+  .pagination button {
+    font-size: 20px;
+    background-color: #388a7f;
+    font-weight: bold;
+    color:#fff;
+    border-radius:2px;
+    margin-right:5px;
+    padding:0 5px;
+  }
+  
+  

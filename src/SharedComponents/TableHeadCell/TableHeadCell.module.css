@@ -1,0 +1,12 @@
+.headerCell{
+    display: flex;
+    flex-direction: column;
+}
+
+.statusCell{
+    display: flex;
+}
+
+.accessorCell{
+    
+}

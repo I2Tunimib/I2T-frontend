@@ -3,10 +3,10 @@ import style from "./MainButton.module.css";
 
 
 function MainButton(props) {
-    const {label} = props;
+    const {label, disabled} = props;
 
     return( 
-        <Button onClick={(e) => props.cta()} className={style.button}>
+        <Button onClick={(e) => props.cta()} className={style.button} disabled={disabled}>
             {label}
         </Button>
     )
