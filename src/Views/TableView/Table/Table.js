@@ -20,13 +20,13 @@ const Table = () => {
             const newCol = {
                 label: col.label,
                 name: col.name,
-                selected: col.selected,
                 options: {
                     customHeadLabelRender: (column) => {
                         return (
-                            <TableHeadCell col={column.label} selected={column.selected}/>
+                            <TableHeadCell col={column}/>
                         )
-                    }
+                    },
+                    selected: col.selected,
                 }
             };
             

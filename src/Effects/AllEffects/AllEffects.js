@@ -1,6 +1,7 @@
 import ErrorEffect from "../ErrorEffect/ErrorEffect";
 import LoadingEffect from "../LoadingEffect/LoadingEffect";
 import LoadedDataEffect from "../LoadedDataEffect/LoadedDataEffect";
+import ContextEffect from "../ContextEffect/ContextEffect";
 
 const AllEffects = () => {
     return (
@@ -8,6 +9,7 @@ const AllEffects = () => {
         <ErrorEffect/>
         <LoadingEffect/>
         <LoadedDataEffect/>
+        <ContextEffect />
         </>
     )
 }

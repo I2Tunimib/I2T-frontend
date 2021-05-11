@@ -1,0 +1,30 @@
+.contextMenu{
+    color: rgba(0, 0, 0, 0.87);
+    z-index: 1000000;
+    background-color: rgb(238, 238, 238);
+    border-radius: 0;
+    border: 1px solid rgba(83, 83, 83, 0.6);
+    
+}
+
+.contextMenu ul{
+    margin:0;
+}
+
+.contextMenu li{
+    padding: 0.1rem 0.8rem;
+    cursor: pointer;
+}
+
+.contextMenu li:hover{
+    color: white;
+    background-color: rgb(83, 83, 83);
+}
+
+.contextMenu li:first-child{
+    padding-top: 0.5rem;
+}
+
+.contextMenu li:last-child{
+    padding-bottom: 0.5rem;
+}
