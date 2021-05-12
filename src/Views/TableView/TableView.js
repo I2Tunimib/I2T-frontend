@@ -7,9 +7,6 @@ const TableView = () => {
 
     const LoadedColumns = useSelector(state => state.LoadedColumns);
     const LoadedData = useSelector(state => state.LoadedData);
-    React.useEffect(()=>{
-        console.log(LoadedColumns);
-    },[LoadedColumns])
 
     return (
         <>

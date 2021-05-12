@@ -20,7 +20,6 @@ const ContextEffect = () => {
 
                 </div>
             }
-
             {
                 OpenedContext &&
                 <ContextMenu properties={OpenedContext} />

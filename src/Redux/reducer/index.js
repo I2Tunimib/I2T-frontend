@@ -5,6 +5,7 @@ import loadingReducer from "./loadingReducer";
 import nameLoadReducer from "./nameLoadReducer"
 import loadColumnsReducer from "./loadColumnsReducer";
 import contextReducer from "./contextReducer";
+import hasExtendedReducer from "./hasExtendedReducer";
 
 
 
@@ -14,7 +15,8 @@ const allReducers = combineReducers({
     LoadedData: loadDataSuccessReducer,
     LoadedName: nameLoadReducer,
     LoadedColumns: loadColumnsReducer,
-    OpenedContext: contextReducer
+    OpenedContext: contextReducer,
+    HasExtended: hasExtendedReducer, 
 })
 
 export default allReducers;

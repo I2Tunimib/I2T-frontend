@@ -8,9 +8,11 @@ const LoadingEffect = () => {
 
     React.useEffect(()=>{
         if (loadingState) {
+            console.log(loadingState);
             window.scrollTo(0, 0);
             document.body.style.overflow = "hidden";
         } else {
+            console.log(loadingState);
             document.body.style.overflow = "scroll";
         }
     }, [loadingState])

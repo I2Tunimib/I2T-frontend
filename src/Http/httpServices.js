@@ -1,4 +1,4 @@
-import {BASE_URL, SAVE} from "./paths";
+import {BASE_URL, SAVE, SINGLE_LINE} from "./paths";
 import axios from "axios";
 import {convert} from "../LogicUtilities/formatConverter";
 
@@ -39,4 +39,15 @@ export async function getExternalData(url, format, dispatchError, setLoadingStat
         .catch((err)=> {
             unsetLoadingState(); dispatchError(err);
         })
+}
+
+export async function getLineToExtend (dataset, provincia, year, month, day ) {
+    return axios.get(`${BASE_URL}${dataset}/${SINGLE_LINE}${provincia}/${year}/${month}/${day}`);
+        /*.then((res)=> {
+            console.log(res.data);
+            return res.data;
+        })
+        .catch((err)=> {
+            dispatchError(err);
+        })*/
 }

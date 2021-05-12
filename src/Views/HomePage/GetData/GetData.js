@@ -10,6 +10,7 @@ import {displayError} from "./../../../Redux/action/error";
 import {setLoadingState, unsetLoadingState} from "../../../Redux/action/loading";
 import {loadDataSuccess, deleteData} from "../../../Redux/action/loadDataSuccess";
 import {deleteName} from "../../../Redux/action/loadName";
+import {hasNotExtended} from "../../../Redux/action/hasExtended";
 
 
 const GetData = () => {
@@ -28,12 +29,7 @@ const GetData = () => {
     const dispatchLoadedSuccess = (data) => {
         dispatch(loadDataSuccess(data));
     }
-    const dispatchDeleteData = () => {
-        dispatch(deleteData());
-    }
-    const dispatchDeleteName = () => {
-        dispatch(deleteName());
-    }
+
 
     const [dataSource, setDataSource] = React.useState("Table Server");
     const [serverDataType, setServerDataType] = React.useState("covid");
@@ -56,12 +52,6 @@ const GetData = () => {
             </option>
         )
     })
-
-    // on init cancel all data
-    React.useEffect(()=>{
-        dispatchDeleteData();
-        dispatchDeleteName();
-    }, [])
 
 
     // setting date

@@ -9,3 +9,11 @@ export const deleteData = () => {
         type:"CANCELDATA"
     }
 }
+
+export const updateLine = (index, line) => {
+    return {
+        type:"UPDATELINE",
+        index,
+        line
+    }
+}

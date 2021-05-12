@@ -1,7 +1,7 @@
 import style from "./TableHeadCell.module.css";
 import React from "react";
 import {useDispatch} from "react-redux";
-import {addContext} from "../../Redux/action/openContext";
+import {addContext, removeContext} from "../../Redux/action/openContext";
 import {selectColumn, deselectColumn, deleteColumn} from "../../Redux/action/loadColumns";
 
 const TableHeadCell = (props) => {
@@ -22,6 +22,10 @@ const TableHeadCell = (props) => {
     const dispatchDeleteCol = (colName) => {
         dispatch(deleteColumn(colName))
     }
+    const dispatchRemoveContext = () => {
+        dispatch(removeContext());
+    }
+
     const displayContextMenu = (e, col) =>{
         e.preventDefault();
         // let bounds = clickRef.current.getBoundingClientRect();
@@ -46,21 +50,22 @@ const TableHeadCell = (props) => {
                     } else {
                         dispatchSelectCol(col.name);
                     }
-                    // TODO remove also context
+                    dispatchRemoveContext();
                 } 
             }, {
                 icon :"",
                 label :"Nascondi",
                 action: ()=>{
                     console.log(col);
-                    // TODO remove also context
+                    // TODO to implement
+                    dispatchRemoveContext();
                 }
             }, {
                 icon :"",
                 label :"Elimina",
                 action: ()=>{
                     dispatchDeleteCol(col.name);
-                    // TODO remove also context
+                    dispatchRemoveContext();
                 }
             }
             ]
