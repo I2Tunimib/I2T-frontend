@@ -6,6 +6,7 @@ import nameLoadReducer from "./nameLoadReducer"
 import loadColumnsReducer from "./loadColumnsReducer";
 import contextReducer from "./contextReducer";
 import hasExtendedReducer from "./hasExtendedReducer";
+import toExtendColsReducer from "./toExtendColsReducer";
 
 
 
@@ -17,6 +18,7 @@ const allReducers = combineReducers({
     LoadedColumns: loadColumnsReducer,
     OpenedContext: contextReducer,
     HasExtended: hasExtendedReducer, 
+    ToExtendCols: toExtendColsReducer,
 })
 
 export default allReducers;

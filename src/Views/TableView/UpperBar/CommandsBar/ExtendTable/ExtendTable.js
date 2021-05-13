@@ -7,6 +7,9 @@ import { getLineToExtend } from "../../../../../Http/httpServices";
 import { updateLine } from "../../../../../Redux/action/loadDataSuccess";
 import { loadColumns } from "../../../../../Redux/action/loadColumns";
 import {hasExtended} from "../../../../../Redux/action/hasExtended";
+import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
+import DropdownModal from "../../../../../SharedComponents/DropdownModal/DropdownModal";
+import {addToExtendCols} from "../../../../../Redux/action/toExtendCols";
 
 
 const ExtendTable = () => {
@@ -35,10 +38,17 @@ const ExtendTable = () => {
         dispatch(hasExtended());
     }
 
+    const dispatchToExtendCol = (colsInfo) => {
+        dispatch(addToExtendCols(colsInfo))
+    }
+
     const dataSet = [{
         label: "Meteo.it",
         value: "meteo"
     }]
+
+    const [modalIsOpen, setModalIsOpen] = React.useState(false);
+
     const [selectedColumns, setSelectedColumns] = React.useState([]);
 
     const [selectedDataset, setSelectedDataset] = React.useState('');
@@ -109,7 +119,7 @@ const ExtendTable = () => {
             let month = splittedData[1];
             let day = splittedData[2].split('T')[0];
             //setting city
-            let provincia = LoadedData[i].denominazione_provincia;
+            let provincia = LoadedData[i].denominazione_provincia; 
             //pushing selected col props in the new line
             for (const col of selectedColumns) {
                 //coping all selected value;
@@ -121,6 +131,14 @@ const ExtendTable = () => {
                 if (await newLineData.status === 200) {
                     responseCounter ++;
                     const newLineProps = newLineData.data;
+                    // if it is empty i save it, maybe i wanto to extend later..
+                    if (Object.keys(newLineProps).length === 0) {
+                        dispatchToExtendCol({
+                            rowIndex: i,
+                            matchingValue: provincia,
+                            matchingcol: "LOCALITA"
+                        })
+                    }
                     newLine = { ...newLine, ...newLineProps };
                     dispatchUpdateLine(i, newLine);
                     if (responseCounter === LoadedData.length) {
@@ -139,19 +157,25 @@ const ExtendTable = () => {
     return (
         <>
             { selectedColumns.length >= 1 &&
-                <InputGroup className="mb-3">
-                    <DropdownButton
-                        as={InputGroup.Prepend}
-                        variant="outline-primary"
-                        title={selectedDataset.label || "Select Dataset"}
-                    >
-                        {dataSetDropdown}
-                    </DropdownButton>
-                    <InputGroup.Append>
-                        <Button onClick={(e) => { extendTable() }} variant="outline-primary">Extend</Button>
-                    </InputGroup.Append>
-                </InputGroup>
+                <MainButton label="Extendi" cta={() => setModalIsOpen(true)}/>
             }
+            {
+                modalIsOpen &&
+                <DropdownModal inputLabel="Seleziona" 
+                titleText="Estendi Tabella" 
+                text="Seleziona un dataset con cui estendere la tua tabella"
+                mainButtonLabel="Conferma"
+                mainButtonAction={() => {extendTable(); setModalIsOpen(false)}}
+                secondaryButtonLabel="Annulla"
+                secondaryButtonAction={() => setModalIsOpen(false)}
+                showState={modalIsOpen}
+                inputValues={dataSet}
+                onClose={() => setModalIsOpen(false)}
+                setInputValue={(dataSet) => setSelectedDataset(dataSet)}
+                />
+            }
+                
+
         </>
 
     )

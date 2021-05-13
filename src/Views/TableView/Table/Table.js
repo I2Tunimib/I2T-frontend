@@ -4,12 +4,24 @@ import MainButton from "../../../SharedComponents/MainButton/MainButton";
 import SecondaryButton from "../../../SharedComponents/SecondaryButton/SecondaryButton"; 
 import MUIDataTable from "mui-datatables";
 import TableHeadCell from "../../../SharedComponents/TableHeadCell/TableHeadCell";
-
+import Cell from "./InCellComponents/Cell/Cell";
 
 
 const Table = () => {
     const LoadedColumns = useSelector(state => state.LoadedColumns);
     const LoadedData = useSelector(state => state.LoadedData);
+
+    const options = {
+        onCellClick: function (colData, cellMeta) {
+            console.log(colData, cellMeta)
+        },
+        draggableColumns: {
+            enabled: true,
+        },
+        tableBodyHeight: '70vh',
+        fixedHeader: true,
+        
+    }
     
     
 
@@ -27,6 +39,9 @@ const Table = () => {
                         )
                     },
                     selected: col.selected,
+                    customBodyRenderLite: (dataIndex,rowIndex) => {
+                        return <Cell dataIndex={dataIndex} keyName={col.name}/>
+                    }
                 }
             };
             
@@ -34,6 +49,7 @@ const Table = () => {
         })}
         data={LoadedData}
         title={""}
+        options = {options}
         />
         </>
     )
