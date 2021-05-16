@@ -1,16 +1,12 @@
+import {Modal, Form } from "react-bootstrap";
 import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
-import { DropdownButton, Dropdown, Modal } from "react-bootstrap";
 import React from "react";
 
-const DropdownModal = (props) => {
-    const { inputLabel, titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, inputValues, setInputValue } = props;
-    const [show, setShow] = React.useState(true);
-    const [dropValue, setDropValue] = React.useState("");
 
-    React.useEffect(() => {
-        setInputValue(dropValue);
-    }, [dropValue])
+const RadioModal = (props) => {
+    const {inputArray, titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
+    const [show, setShow] = React.useState(true);
 
 
     React.useEffect(() => {
@@ -23,12 +19,20 @@ const DropdownModal = (props) => {
         }
     }, [show])
 
+    const radioFiels = inputArray.map((item)=>{
+        return(
+            <Form.Check 
+            type={"radio"} 
+            key={item.value} 
+            label={item.label} 
+            name={"city"}
+            value={item.value}
+            id={item.value}
+            onChange={(e) => {setInputValue(e.target.value)}}/>
 
-    const dropdownItems = inputValues.map((item) => {
-        return (
-            <Dropdown.Item key={item.value} onClick={(e) => { setDropValue(item) }}>{item.label}</Dropdown.Item>
         )
     })
+
 
 
     return (
@@ -39,16 +43,9 @@ const DropdownModal = (props) => {
                 </Modal.Header>
                 <Modal.Body>
                     {text}
-
-                    <Dropdown>
-                        <Dropdown.Toggle variant="primary" id="dropdown-basic">
-                            {dropValue.label || inputLabel}
-                        </Dropdown.Toggle>
-
-                        <Dropdown.Menu>
-                            {dropdownItems}
-                        </Dropdown.Menu>
-                    </Dropdown>
+                    <Form>
+                        {radioFiels}
+                    </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     {
@@ -67,5 +64,4 @@ const DropdownModal = (props) => {
         </>
     )
 }
-
-export default DropdownModal;
+export default RadioModal;

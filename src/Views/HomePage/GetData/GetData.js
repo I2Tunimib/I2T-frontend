@@ -56,7 +56,6 @@ const GetData = () => {
 
     // setting date
     function handleChangeDate(date) {
-        console.log(date);
         const dateArr = date.toString().split(' ');
         const year = dateArr[3];
         const day = dateArr[2];

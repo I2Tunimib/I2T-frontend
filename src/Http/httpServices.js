@@ -1,4 +1,4 @@
-import {BASE_URL, SAVE, SINGLE_LINE} from "./paths";
+import {BASE_URL, GET_OPTIONS, SAVE, SINGLE_LINE} from "./paths";
 import axios from "axios";
 import {convert} from "../LogicUtilities/formatConverter";
 
@@ -8,12 +8,17 @@ export async function  getDayData (type, region, date, dispatchError, setLoading
     setLoadingState();
     await axios.get(`${BASE_URL}${type}/${region}/${date.year}/${date.month}/${date.day}`)
         .then((res)=>{
+            unsetLoadingState();
             if(res.data.error) {
                 dispatchError(res.data.error.toString());
                 return;
             }
-            dataDispatch(res.data.data);
-            unsetLoadingState(); 
+            console.log(res.data);
+            if(res.data.data.length === 0) {
+                dispatchError("No data available");
+                return;
+            }
+            dataDispatch(res.data.data); 
             })
         .catch((err)=>{unsetLoadingState(); dispatchError(err)})
 }
@@ -50,4 +55,16 @@ export async function getLineToExtend (dataset, provincia, year, month, day ) {
         .catch((err)=> {
             dispatchError(err);
         })*/
+}
+
+export async function getOptionsToExtend (provincia, anno, mese, giorno) {
+    return axios.get(`${BASE_URL}${GET_OPTIONS}meteo/${provincia}/${anno}/${mese}/${giorno}`);
+}
+
+export async function saveTable(data, name) {
+    return axios.put(`${BASE_URL}save/${name}`, {data: data})
+}
+
+export async function saveAsTable(data, name) {
+    return axios.post(`${BASE_URL}save/${name}`, {data: data})
 }

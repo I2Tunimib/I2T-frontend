@@ -10,3 +10,10 @@ export const removeAllToExtendCols = () => {
         type: "DELETETOEXTENDCOL",
     }
 }
+
+export const popToExtendCol = (indexToPop) => {
+    return {
+        type: "POPTOEXTENDCOL",
+        indexToPop
+    }
+}

@@ -1,6 +1,7 @@
 import React from "react";
 import {useSelector, useDispatch} from "react-redux";
 import {loadColumns} from "../../Redux/action/loadColumns";
+import {hasExtended} from "../../Redux/action/hasExtended";
 
 const HasExtendedEffect = () => {
 
@@ -14,12 +15,16 @@ const HasExtendedEffect = () => {
         dispatch(loadColumns(cols));
     }
 
+    const dispatchHasExtended = () => {
+        dispatch(hasExtended());
+    }
+
     const setNewColumns = (dataSet) => {
         let colsLabel = [];
         const cols = [];
         //finding the most complete row to extract keys
         for (let i = 0; i < dataSet.length; i++) {
-            if (Object.keys(dataSet[i]).length > colsLabel) {
+            if (Object.keys(dataSet[i]).length > colsLabel.length) {
                 colsLabel = Object.keys(dataSet[i]);
             }
         }
@@ -51,8 +56,9 @@ const HasExtendedEffect = () => {
     }
 
     React.useEffect(()=>{
-        if(HasExtended){
+        if(HasExtended === "Extending..."){
             dispatchColumns(setNewColumns(LoadedData));
+            dispatchHasExtended();
         } else {
             // do something
         }

@@ -9,3 +9,9 @@ export const hasNotExtended = () => {
         type: "NOTEXTENDED",
     }
 }
+
+export const isExtending = () => {
+    return{
+        type: "EXTENDING",
+    }
+}

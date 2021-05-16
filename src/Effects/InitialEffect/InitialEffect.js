@@ -24,8 +24,13 @@ const InitialEffect = () => {
     const dispatchNoLoadingState = () => {
         dispatch(unsetLoadingState());
     }
+
+    const dispatchNoToExtendCol = ()=> {
+        dispatch(removeAllToExtendCols());
+    }
     // on init cancel all data
     React.useEffect(()=>{
+        dispatchNoToExtendCol();
         dispatchNoLoadingState();
         dispatchDeleteData();
         dispatchDeleteName();

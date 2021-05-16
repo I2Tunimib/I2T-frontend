@@ -6,10 +6,10 @@ import { setLoadingState, unsetLoadingState } from "../../../../../Redux/action/
 import { getLineToExtend } from "../../../../../Http/httpServices";
 import { updateLine } from "../../../../../Redux/action/loadDataSuccess";
 import { loadColumns } from "../../../../../Redux/action/loadColumns";
-import {hasExtended} from "../../../../../Redux/action/hasExtended";
+import {isExtending} from "../../../../../Redux/action/hasExtended";
 import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
 import DropdownModal from "../../../../../SharedComponents/DropdownModal/DropdownModal";
-import {addToExtendCols} from "../../../../../Redux/action/toExtendCols";
+import {addToExtendCols, removeAllToExtendCols} from "../../../../../Redux/action/toExtendCols";
 
 
 const ExtendTable = () => {
@@ -34,12 +34,15 @@ const ExtendTable = () => {
     }
 
 
-    const dispatchHasExtended = () => {
-        dispatch(hasExtended());
+    const dispatchIsExtending = () => {
+        dispatch(isExtending());
     }
 
     const dispatchToExtendCol = (colsInfo) => {
         dispatch(addToExtendCols(colsInfo))
+    }
+    const dispatchRemoveToExtendCols = () => {
+        dispatch(removeAllToExtendCols());
     }
 
     const dataSet = [{
@@ -107,6 +110,7 @@ const ExtendTable = () => {
 
     const extendTable = () => {
         //some comments here...
+        dispatchRemoveToExtendCols();
         dispatchLoading();
         let responseCounter = 0;
         for (let i = 0; i < LoadedData.length; i++) {
@@ -131,18 +135,30 @@ const ExtendTable = () => {
                 if (await newLineData.status === 200) {
                     responseCounter ++;
                     const newLineProps = newLineData.data;
+                    let isLineEmpty = true;
+                    for (const prop of Object.keys(newLineProps)) {
+                        if (newLineProps[prop]){
+                            isLineEmpty = false;
+                        }
+                    }
+
                     // if it is empty i save it, maybe i wanto to extend later..
-                    if (Object.keys(newLineProps).length === 0) {
+                    if (Object.keys(newLineProps).length === 0 || isLineEmpty) {
                         dispatchToExtendCol({
                             rowIndex: i,
                             matchingValue: provincia,
-                            matchingcol: "LOCALITA"
+                            matchingcol: "LOCALITA",
+                            matchingDate: {
+                                year,
+                                month, 
+                                day
+                            }
                         })
                     }
                     newLine = { ...newLine, ...newLineProps };
                     dispatchUpdateLine(i, newLine);
                     if (responseCounter === LoadedData.length) {
-                        dispatchHasExtended();
+                        dispatchIsExtending();
                         dispatchNoLoading();
                     }
                 } else {
