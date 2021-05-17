@@ -37,7 +37,8 @@ const HasExtendedEffect = () => {
                     cols.push({
                         label: previousCol.label,
                         name: previousCol.name,
-                        selected: previousCol.selected
+                        selected: previousCol.selected,
+                        new: false,
                     })
                     break;
                 }
@@ -48,6 +49,7 @@ const HasExtendedEffect = () => {
                     label: label,
                     name: label,
                     selected: false,
+                    new: true,
                 })
             }
         }

@@ -5,8 +5,24 @@
 
 .statusCell{
     display: flex;
+    justify-content: center;
+    height: 2rem;
 }
 
 .accessorCell{
-    
+    height: 2rem;
+}
+
+.selectedIcon{
+    background:url("../../Assets/Icons/selected.png");
+    background-size: contain;
+    height: 1.3rem;
+    width: 1.3rem;
+}
+
+.newIcon{
+    background: url("../../Assets/Icons/new.png");
+    background-size: contain;
+    height: 1.3rem;
+    width: 1.3rem;
 }

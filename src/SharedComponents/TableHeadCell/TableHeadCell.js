@@ -1,6 +1,6 @@
 import style from "./TableHeadCell.module.css";
 import React from "react";
-import {useDispatch} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import {addContext, removeContext} from "../../Redux/action/openContext";
 import {selectColumn, deselectColumn, deleteColumn} from "../../Redux/action/loadColumns";
 
@@ -25,6 +25,7 @@ const TableHeadCell = (props) => {
     const dispatchRemoveContext = () => {
         dispatch(removeContext());
     }
+
 
     const displayContextMenu = (e, col) =>{
         e.preventDefault();
@@ -54,14 +55,6 @@ const TableHeadCell = (props) => {
                 } 
             }, {
                 icon :"",
-                label :"Nascondi",
-                action: ()=>{
-                    console.log(col);
-                    // TODO to implement
-                    dispatchRemoveContext();
-                }
-            }, {
-                icon :"",
                 label :"Elimina",
                 action: ()=>{
                     dispatchDeleteCol(col.name);
@@ -81,10 +74,18 @@ const TableHeadCell = (props) => {
 
 
     return (
-        <div className={style.headerCell} ref={(r) => {handleRef(r)}} onContextMenu={(e)=>{displayContextMenu(e, col)}}>
+        <div className={`${style.headerCell}`} 
+        ref={(r) => {handleRef(r)}} 
+        onContextMenu={(e)=>{displayContextMenu(e, col)}}>
         <div className={style.statusCell}>
             {col.selected && 
-                <p>Selezionata</p>
+                <div className={style.selectedIcon}>
+                </div>
+            }
+            {
+                col.new && 
+                <div className={style.newIcon}>
+                </div>
             }
         </div>
         <div className={style.accessorCell}>

@@ -5,9 +5,15 @@ import {deleteName} from "../../Redux/action/loadName";
 import {hasNotExtended} from "../../Redux/action/hasExtended";
 import {removeAllToExtendCols} from "../../Redux/action/toExtendCols";
 import {unsetLoadingState} from "../../Redux/action/loading";
+import { removeEditableCell } from "../../Redux/action/editableCell";
+import {deleteAllColumns} from "../../Redux/action/loadColumns";
 
 const InitialEffect = () => {
     const dispatch = useDispatch();
+
+    const dispatchRemoveEditableCell = () => {
+        dispatch(removeEditableCell())
+    }
 
     const dispatchDeleteData = () => {
         dispatch(deleteData());
@@ -28,6 +34,10 @@ const InitialEffect = () => {
     const dispatchNoToExtendCol = ()=> {
         dispatch(removeAllToExtendCols());
     }
+
+    const dispatchDeleteAllCols = () => {
+        dispatch(deleteAllColumns());
+    }
     // on init cancel all data
     React.useEffect(()=>{
         dispatchNoToExtendCol();
@@ -35,6 +45,8 @@ const InitialEffect = () => {
         dispatchDeleteData();
         dispatchDeleteName();
         dispatchHasNotExtended();
+        dispatchRemoveEditableCell();
+        dispatchDeleteAllCols();
     }, [])
     return(
         <>

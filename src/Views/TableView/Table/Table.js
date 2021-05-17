@@ -1,7 +1,5 @@
 import style from "./Table.module.css";
 import { useSelector } from "react-redux";
-import MainButton from "../../../SharedComponents/MainButton/MainButton";
-import SecondaryButton from "../../../SharedComponents/SecondaryButton/SecondaryButton";
 import MUIDataTable from "mui-datatables";
 import TableHeadCell from "../../../SharedComponents/TableHeadCell/TableHeadCell";
 import Cell from "./InCellComponents/Cell/Cell";
@@ -11,10 +9,10 @@ import React from "react";
 const Table = () => {
     const LoadedColumns = useSelector(state => state.LoadedColumns);
     const LoadedData = useSelector(state => state.LoadedData);
-    const HasExtended = useSelector(state => state.HasExtended);
-    const ToExtendCols = useSelector(state => state.ToExtendCols);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const [pageIndex, setPageIndex] = React.useState(0);
+    const [addedCols, setAddedCols] = React.useState([]);
+
 
     const options = {
         draggableColumns: {
@@ -24,15 +22,14 @@ const Table = () => {
         fixedHeader: true,
         rowsPerPageOptions: [10, 20, 50],
         onChangeRowsPerPage: (numberOfRows) => {
-            console.log("cange");
             setRowsPerPage(numberOfRows);
         },
         onChangePage: (pageIndex) => {
-             console.log("change");
             setPageIndex(pageIndex);
         },
 
     }
+
 
 
 
@@ -46,9 +43,10 @@ const Table = () => {
                         options: {
                             customHeadLabelRender: (column) => {
                                 return (
-                                    <TableHeadCell col={column} />
+                                    <TableHeadCell col={column}/>
                                 )
                             },
+                            new: col.new,
                             selected: col.selected,
                             customBodyRenderLite: (dataIndex, rowIndex) => {
                                 return (

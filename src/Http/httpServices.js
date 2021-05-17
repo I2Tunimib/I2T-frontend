@@ -27,7 +27,7 @@ export async function getSavedData(name, dispatchError, setLoadingState, unsetLo
     setLoadingState();
     await axios.get(`${BASE_URL}${SAVE}${name}`)
         .then((res) => {
-            dataDispatch(res.data);
+            dataDispatch(res.data.data);
             unsetLoadingState();
         })
         .catch((err)=> {unsetLoadingState(); dispatchError(err)})

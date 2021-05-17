@@ -25,3 +25,9 @@ export const deleteColumn = (columnToDelete) => {
         column: columnToDelete,
     }
 }
+
+export const deleteAllColumns = () => {
+    return {
+        type: "DELETEALLCOLS"   
+    }
+}

@@ -1,6 +1,8 @@
 import React from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import ExtendFromCell from "./ExtendFromCell/ExtendFromCell";
+import {addEditableCell} from "../../../../../Redux/action/editableCell";
+import {addContext, removeContext} from "../../../../../Redux/action/openContext";
 
 const Cell = (props) => {
     const { dataIndex, keyName, rowIndex, rowsPerPage, pageIndex  } = props;
@@ -10,6 +12,18 @@ const Cell = (props) => {
     const HasExtended = useSelector(state => state.HasExtended);
 
     const [itHasToExt, setItHasToExt] = React.useState(false);
+    let clickRef = React.useRef(null);
+    const dispatch = useDispatch();
+
+    const dispatchEditableCell = (rowIndex, keyName) => {
+        dispatch(addEditableCell(rowIndex, keyName));
+    } 
+    const dispatchContext = (context) => {
+        dispatch(addContext(context));
+    }
+    const dispatchRemoveContext = () => {
+        dispatch(removeContext());
+    }
 
 
     const cellValue = LoadedData[dataIndex][keyName];
@@ -35,8 +49,33 @@ const Cell = (props) => {
         
     }, [HasExtended, pageIndex, rowsPerPage, ToExtendCols])
 
+    const handleRef = (r) => {
+        clickRef.current = r;
+    };
+
+    const displayContextMenu = (e) => {
+        console.log("ciao");
+        e.preventDefault();
+        let xPos = e.clientX // - bounds.left;
+        let yPos = e.clientY // - bounds.top;
+        const contextProps = {
+            xPos, 
+            yPos, 
+            type:"cellContext",
+            items: [{
+                icon:"",
+                label:"Modifica",
+                action: () => {
+                    dispatchEditableCell(dataIndex, keyName);
+                    dispatchRemoveContext();
+                }
+            }]
+        }
+        dispatchContext(contextProps);
+    }
+
     return (
-        <div>
+        <div onContextMenu={(e)=>{displayContextMenu(e)}} ref={(r) => {handleRef(r)}} onClick={()=>{dispatchRemoveContext()}}>
             {cellValue}
             {
                 itHasToExt && keyName==="LOCALITA" &&

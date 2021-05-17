@@ -1,4 +1,5 @@
 import MainButton from "../MainButton/MainButton";
+import style from "./DropdownModal.module.css";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import { DropdownButton, Dropdown, Modal } from "react-bootstrap";
 import React from "react";
@@ -40,7 +41,7 @@ const DropdownModal = (props) => {
                 <Modal.Body>
                     {text}
 
-                    <Dropdown>
+                    <Dropdown className={style.dropdown}>
                         <Dropdown.Toggle variant="primary" id="dropdown-basic">
                             {dropValue.label || inputLabel}
                         </Dropdown.Toggle>

@@ -11,6 +11,8 @@ import {setLoadingState, unsetLoadingState} from "../../../Redux/action/loading"
 import {loadDataSuccess, deleteData} from "../../../Redux/action/loadDataSuccess";
 import {deleteName} from "../../../Redux/action/loadName";
 import {hasNotExtended} from "../../../Redux/action/hasExtended";
+import {loadName} from "../../../Redux/action/loadName";
+import {convert} from "../../../LogicUtilities/formatConverter";
 
 
 const GetData = () => {
@@ -29,6 +31,10 @@ const GetData = () => {
     const dispatchLoadedSuccess = (data) => {
         dispatch(loadDataSuccess(data));
     }
+    const dispatchName = (name) => {
+        dispatch(loadName(name));
+    }
+
 
 
     const [dataSource, setDataSource] = React.useState("Table Server");
@@ -127,10 +133,10 @@ const GetData = () => {
         }
         const myFormat = getFormat(fileName);
         reader.onload = function (event) { //on loading file.
-            const unconverteFile = event.target.result;
-            console.log(unconverteFile);
+            const unconvertedFile = event.target.result;
+            console.log(unconvertedFile);
             console.log(myFormat);
-            //TODO more logic
+            dispatchLoadedSuccess(convert(myFormat, unconvertedFile));
         }
         reader.readAsText(file);
     }
@@ -144,6 +150,7 @@ const GetData = () => {
         } else {
             // callhttpservice
            getSavedData(savedName, dispatchError, dispatchSetLoading, dispatchUnsetLoading, dispatchLoadedSuccess);
+           dispatchName(savedName);
         }
 
     }

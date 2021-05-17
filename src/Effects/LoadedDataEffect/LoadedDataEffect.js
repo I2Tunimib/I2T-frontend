@@ -5,6 +5,7 @@ import { loadName } from "../../Redux/action/loadName";
 import { deleteData } from "../../Redux/action/loadDataSuccess";
 import { Redirect } from "react-router-dom";
 import { loadColumns } from "../../Redux/action/loadColumns";
+import {displayError} from "../../Redux/action/error";
 
 const LoadedDataEffect = () => {
     // this effect componente triggers when data has been loaded, and ask for name an load columns
@@ -27,6 +28,10 @@ const LoadedDataEffect = () => {
 
     const dispatchDeleteData = () => {
         dispatch(deleteData());
+    }
+
+    const dispatchError = (err) => {
+        dispatch(displayError(err))
     }
 
     const confirmAction = () => {
@@ -55,7 +60,11 @@ const LoadedDataEffect = () => {
         if (LoadedData.length >= 1 && !LoadedName) {
             setDataHasBeenLoaded(true);
             dispatchColumns(setColumns());
+        } else if (LoadedData.length >= 1) {
+            setIsConfirmed(true);
+            setDataHasBeenLoaded(false);
         } else {
+            displayError("Error: data are empty");
             setDataHasBeenLoaded(false);
         }
     }, [LoadedData])

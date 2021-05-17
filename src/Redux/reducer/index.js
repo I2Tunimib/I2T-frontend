@@ -7,6 +7,7 @@ import loadColumnsReducer from "./loadColumnsReducer";
 import contextReducer from "./contextReducer";
 import hasExtendedReducer from "./hasExtendedReducer";
 import toExtendColsReducer from "./toExtendColsReducer";
+import editableCellReducer from "./editableCellReducer";
 
 
 
@@ -19,6 +20,7 @@ const allReducers = combineReducers({
     OpenedContext: contextReducer,
     HasExtended: hasExtendedReducer, 
     ToExtendCols: toExtendColsReducer,
+    EditableCell: editableCellReducer,
 })
 
 export default allReducers;
