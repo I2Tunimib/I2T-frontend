@@ -11,6 +11,8 @@ const LoadedDataEffect = () => {
     // this effect componente triggers when data has been loaded, and ask for name an load columns
     const LoadedData = useSelector(state => state.LoadedData);
     const LoadedName = useSelector(state => state.LoadedName);
+    const HasExtended = useSelector(state => state.HasExtended);
+    const LoadedColumns = useSelector(state => state.LoadedColumns);
     const dispatch = useDispatch();
     // const history = useHistory();
     const [dataHasBeenLoaded, setDataHasBeenLoaded] = React.useState(false);
@@ -60,10 +62,11 @@ const LoadedDataEffect = () => {
         if (LoadedData.length >= 1 && !LoadedName) {
             setDataHasBeenLoaded(true);
             dispatchColumns(setColumns());
-        } else if (LoadedData.length >= 1) {
+        } else if (LoadedData.length >= 1 && !LoadedColumns) {
             setIsConfirmed(true);
+            dispatchColumns(setColumns());
             setDataHasBeenLoaded(false);
-        } else {
+        } else if (LoadedData === 0){
             displayError("Error: data are empty");
             setDataHasBeenLoaded(false);
         }

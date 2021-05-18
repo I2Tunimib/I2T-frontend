@@ -1,14 +1,14 @@
-import MainButton from "../../../../../../SharedComponents/MainButton/MainButton";
+import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
 import React from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {setLoadingState, unsetLoadingState} from "../../../../../../Redux/action/loading";
-import {getOptionsToExtend, getLineToExtend} from "../../../../../../Http/httpServices";
-import {displayError} from "../../../../../../Redux/action/error";
-import InputModal from "../../../../../../SharedComponents/InputModal/InputModal";
-import RadioModal from "../../../../../../SharedComponents/RadioModal/RadioModal";
+import {setLoadingState, unsetLoadingState} from "../../../../../Redux/action/loading";
+import {getOptionsToExtend, getLineToExtend} from "../../../../../Http/httpServices";
+import {displayError} from "../../../../../Redux/action/error";
+import InputModal from "../../../../../SharedComponents/InputModal/InputModal";
+import RadioModal from "../../../../../SharedComponents/RadioModal/RadioModal";
 import style from "./ExtendFromCell.module.css";
-import {updateLine} from "../../../../../../Redux/action/loadDataSuccess";
-import {popToExtendCol} from "../../../../../../Redux/action/toExtendCols";
+import {updateLine} from "../../../../../Redux/action/loadDataSuccess";
+import {popToExtendCol} from "../../../../../Redux/action/toExtendCols";
 
 const ExtendFromCell = (props) => {
 

@@ -1,8 +1,8 @@
 import style from "./TableHeadCell.module.css";
 import React from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {addContext, removeContext} from "../../Redux/action/openContext";
-import {selectColumn, deselectColumn, deleteColumn} from "../../Redux/action/loadColumns";
+import {addContext, removeContext} from "../../../../Redux/action/openContext";
+import {selectColumn, deselectColumn, deleteColumn} from "../../../../Redux/action/loadColumns";
 
 const TableHeadCell = (props) => {
    

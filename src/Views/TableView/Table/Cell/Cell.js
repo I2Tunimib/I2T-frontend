@@ -1,8 +1,8 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ExtendFromCell from "./ExtendFromCell/ExtendFromCell";
-import {addEditableCell} from "../../../../../Redux/action/editableCell";
-import {addContext, removeContext} from "../../../../../Redux/action/openContext";
+import {addEditableCell} from "../../../../Redux/action/editableCell";
+import {addContext, removeContext} from "../../../../Redux/action/openContext";
 
 const Cell = (props) => {
     const { dataIndex, keyName, rowIndex, rowsPerPage, pageIndex  } = props;

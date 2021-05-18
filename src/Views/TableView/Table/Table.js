@@ -1,8 +1,8 @@
 import style from "./Table.module.css";
 import { useSelector } from "react-redux";
 import MUIDataTable from "mui-datatables";
-import TableHeadCell from "../../../SharedComponents/TableHeadCell/TableHeadCell";
-import Cell from "./InCellComponents/Cell/Cell";
+import TableHeadCell from "./TableHeadCell/TableHeadCell";
+import Cell from "./Cell/Cell";
 import React from "react";
 
 
