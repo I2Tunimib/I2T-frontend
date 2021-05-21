@@ -134,8 +134,6 @@ const GetData = () => {
         const myFormat = getFormat(fileName);
         reader.onload = function (event) { //on loading file.
             const unconvertedFile = event.target.result;
-            console.log(unconvertedFile);
-            console.log(myFormat);
             dispatchLoadedSuccess(convert(myFormat, unconvertedFile));
         }
         reader.readAsText(file);

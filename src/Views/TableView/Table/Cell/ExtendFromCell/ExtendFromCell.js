@@ -93,8 +93,9 @@ const ExtendFromCell = (props) => {
 
     const checkCitiesAndOpenModal = (city = matchingValue) => {
         dispatchLoadingState();
-        if(true) {
+        //if(true) {
             (async () => {
+            // http call
             const response = await getOptionsToExtend(city, matchingDate.year, matchingDate.month, matchingDate.day);
             if (await response.status === 200) {
                 // do something
@@ -139,7 +140,7 @@ const ExtendFromCell = (props) => {
                 dispatchNoLoadingState();
             }
         })()
-        }
+        //}
         
     }
 

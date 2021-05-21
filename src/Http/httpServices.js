@@ -13,7 +13,6 @@ export async function  getDayData (type, region, date, dispatchError, setLoading
                 dispatchError(res.data.error.toString());
                 return;
             }
-            console.log(res.data);
             if(res.data.data.length === 0) {
                 dispatchError("No data available");
                 return;
