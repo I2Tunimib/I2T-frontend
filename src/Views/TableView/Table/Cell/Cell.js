@@ -3,8 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import {addEditableCell} from "../../../../Redux/action/editableCell";
 import {addContext, removeContext} from "../../../../Redux/action/openContext";
 import style from "./Cell.module.css";
-import {editContext, extContext} from "../../../../ContextItems/ContextItems";
+import {editContext, extContext, deleteLineContext} from "../../../../ContextItems/ContextItems";
 import {extendRow} from "../../../../Redux/action/extendRow";
+import {deleteLine} from "../../../../Redux/action/loadDataSuccess"
 
 const Cell = (props) => {
     const { dataIndex, keyName, rowsPerPage, pageIndex, lastDeletedCol  } = props;
@@ -28,9 +29,13 @@ const Cell = (props) => {
     const dispatchExtendRow = (index) => {
         dispatch(extendRow(index))
     }
+    const dispatchDeleteLine = (index) => {
+        dispatch(deleteLine(index));
+    }
     const modContext = editContext(dataIndex, keyName, dispatchEditableCell, dispatchRemoveContext)
     const extendContext = extContext(dataIndex, dispatchExtendRow, dispatchRemoveContext);
-    const [contextCellItems, setContextCellItems] = React.useState([modContext])
+    const deleteRowContext = deleteLineContext(dataIndex, dispatchDeleteLine, dispatchRemoveContext);
+    const [contextCellItems, setContextCellItems] = React.useState([modContext, deleteRowContext])
 
     // setting context at init 
     React.useEffect(()=>{
@@ -41,9 +46,9 @@ const Cell = (props) => {
 
     React.useEffect(()=>{
         if(itHasToExt){
-            setContextCellItems([modContext, extendContext])
+            setContextCellItems([modContext, deleteRowContext, extendContext])
         } else {
-            setContextCellItems([modContext]);
+            setContextCellItems([modContext, deleteRowContext]);
         }
     }, [itHasToExt])
 

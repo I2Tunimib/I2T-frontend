@@ -33,23 +33,7 @@ const Table = () => {
         onChangePage: (pageIndex) => {
             setPageIndex(pageIndex);
         },
-        onRowsDelete: (rowsDeleted, newTableData ) => {
-            // TODO probably delete this function and implement it manually
-            //console.log('ciao');
-            //  dispatchLoadData(newTableData);
-            const rowsToDelete = [];
-            for (const row of rowsDeleted.data) {
-                rowsToDelete.push(row.dataIndex);
-            }
-
-            rowsToDelete.sort((a,b) => a - b);
-
-            for (const item of rowsToDelete) {
-                dispatchDeleteLine(item);
-            }
-            setLastDeletedCol(lastDeletedCol + 1);
-        }
-
+        selectableRows: false,
     }
 
     const getMuiTheme = () => createMuiTheme({

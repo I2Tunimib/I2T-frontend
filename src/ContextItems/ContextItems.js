@@ -1,3 +1,4 @@
+import { removeContext } from "../Redux/action/openContext";
 
 export const selectContext = (col, selectCol, deselectCol, removeContext) => {
 
@@ -51,8 +52,18 @@ export const extContext = (dataIndex, extendRow, removeContext) => {
         icon: "",
         label: "Estendi riga",
         action: () => {
-            console.log('ciao da extcontext')
             extendRow(dataIndex);
+            removeContext();
+        }
+    })
+}
+
+export const deleteLineContext = (index, deleteRow, removeContext) => {
+    return ({
+        icon: "",
+        label: "Elimina riga",
+        action: () => {
+            deleteRow(index);
             removeContext();
         }
     })
