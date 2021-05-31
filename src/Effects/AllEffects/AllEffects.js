@@ -4,7 +4,7 @@ import LoadedDataEffect from "../LoadedDataEffect/LoadedDataEffect";
 import ContextEffect from "../ContextEffect/ContextEffect";
 import HasExtendedEffect  from "../HasExtendedEffect/HasExtendedEffect";
 import EditableCellEffect from "../EditableCellEffect/EditableCellEffect";
-
+import ExtendCellEffect from "../ExtendCellEffect/ExtendCellEffect";
 const AllEffects = () => {
     return (
         <>
@@ -14,6 +14,7 @@ const AllEffects = () => {
         <LoadedDataEffect/>
         <ContextEffect />
         <EditableCellEffect />
+        <ExtendCellEffect/>
         </>
     )
 }

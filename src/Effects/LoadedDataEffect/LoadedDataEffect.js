@@ -11,7 +11,6 @@ const LoadedDataEffect = () => {
     // this effect componente triggers when data has been loaded, and ask for name an load columns
     const LoadedData = useSelector(state => state.LoadedData);
     const LoadedName = useSelector(state => state.LoadedName);
-    const HasExtended = useSelector(state => state.HasExtended);
     const LoadedColumns = useSelector(state => state.LoadedColumns);
     const dispatch = useDispatch();
     // const history = useHistory();
@@ -30,10 +29,6 @@ const LoadedDataEffect = () => {
 
     const dispatchDeleteData = () => {
         dispatch(deleteData());
-    }
-
-    const dispatchError = (err) => {
-        dispatch(displayError(err))
     }
 
     const confirmAction = () => {

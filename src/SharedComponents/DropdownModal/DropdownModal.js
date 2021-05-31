@@ -1,7 +1,7 @@
 import MainButton from "../MainButton/MainButton";
 import style from "./DropdownModal.module.css";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
-import { DropdownButton, Dropdown, Modal } from "react-bootstrap";
+import {Dropdown, Modal } from "react-bootstrap";
 import React from "react";
 
 const DropdownModal = (props) => {

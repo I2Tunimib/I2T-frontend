@@ -1,6 +1,6 @@
 import produce from "immer";
 
-const toExtendColsReducer = (state =[], action) => {
+const toExtendRowsReducer = (state =[], action) => {
     switch(action.type) {
         case "SETTOEXTENDCOL":
             const nextState = produce(state, draftstate => {
@@ -12,7 +12,7 @@ const toExtendColsReducer = (state =[], action) => {
             console.log(action.indexToPop);
             for (let i = 0; i < state.length; i++) {
                 console.log(state[i].rowIndex);
-                if (state[i].rowIndex == action.indexToPop) {
+                if (state[i].rowIndex === action.indexToPop) {
                     indexToRemove = i;
                     break;
                 }
@@ -34,4 +34,4 @@ const toExtendColsReducer = (state =[], action) => {
     }
 }
 
-export default toExtendColsReducer;
+export default toExtendRowsReducer;

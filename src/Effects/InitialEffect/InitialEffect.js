@@ -3,10 +3,11 @@ import {useDispatch} from "react-redux";
 import { deleteData} from "../../Redux/action/loadDataSuccess";
 import {deleteName} from "../../Redux/action/loadName";
 import {hasNotExtended} from "../../Redux/action/hasExtended";
-import {removeAllToExtendCols} from "../../Redux/action/toExtendCols";
+import {removeAllToExtendRows} from "../../Redux/action/toExtendRows";
 import {unsetLoadingState} from "../../Redux/action/loading";
 import { removeEditableCell } from "../../Redux/action/editableCell";
 import {deleteAllColumns} from "../../Redux/action/loadColumns";
+import {extendedRow} from "../../Redux/action/extendRow";
 
 const InitialEffect = () => {
     const dispatch = useDispatch();
@@ -24,19 +25,20 @@ const InitialEffect = () => {
     const dispatchHasNotExtended = () => {
         dispatch(hasNotExtended());
     }
-    const dispatchRemoveToExtend = () => {
-        dispatch(removeAllToExtendCols())
-    }
     const dispatchNoLoadingState = () => {
         dispatch(unsetLoadingState());
     }
 
     const dispatchNoToExtendCol = ()=> {
-        dispatch(removeAllToExtendCols());
+        dispatch(removeAllToExtendRows());
     }
 
     const dispatchDeleteAllCols = () => {
         dispatch(deleteAllColumns());
+    }
+
+    const dispatchNoExtendRow = () => {
+        dispatch(extendedRow());
     }
     // on init cancel all data
     React.useEffect(()=>{
@@ -47,6 +49,7 @@ const InitialEffect = () => {
         dispatchHasNotExtended();
         dispatchRemoveEditableCell();
         dispatchDeleteAllCols();
+        dispatchNoExtendRow();
     }, [])
     return(
         <>

@@ -17,3 +17,10 @@ export const updateLine = (index, line) => {
         line
     }
 }
+
+export const deleteLine = (index) => {
+    return {
+        type: "DELETELINE",
+        index,
+    }
+}

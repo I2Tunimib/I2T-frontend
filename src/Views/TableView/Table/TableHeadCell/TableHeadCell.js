@@ -1,9 +1,9 @@
 import style from "./TableHeadCell.module.css";
 import React from "react";
-import {useDispatch, useSelector} from "react-redux";
+import {useDispatch} from "react-redux";
 import {addContext, removeContext} from "../../../../Redux/action/openContext";
 import {selectColumn, deselectColumn, deleteColumn} from "../../../../Redux/action/loadColumns";
-
+import {selectContext, deleteContext} from "../../../../ContextItems/ContextItems";
 const TableHeadCell = (props) => {
    
 
@@ -32,35 +32,13 @@ const TableHeadCell = (props) => {
         // let bounds = clickRef.current.getBoundingClientRect();
         let xPos = e.clientX // - bounds.left;
         let yPos = e.clientY // - bounds.top;
-        let selectLabel = "";
-        if(col.selected) {
-            selectLabel = "Deseleziona";
-        } else {
-            selectLabel ="Seleziona"; 
-        }
         const contextProps = {
             xPos,
             yPos,
             type: "headerContext",
-            items: [{
-                icon: "",
-                label: selectLabel,
-                action: ()=>{
-                    if (col.selected) {
-                        dispatchDeselectCol(col.name);
-                    } else {
-                        dispatchSelectCol(col.name);
-                    }
-                    dispatchRemoveContext();
-                } 
-            }, {
-                icon :"",
-                label :"Elimina",
-                action: ()=>{
-                    dispatchDeleteCol(col.name);
-                    dispatchRemoveContext();
-                }
-            }
+            items: [
+                selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext),
+                deleteContext(col, dispatchDeleteCol, dispatchRemoveContext),
             ]
         }
         dispatchContext(contextProps);

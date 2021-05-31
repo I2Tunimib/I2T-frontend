@@ -1,11 +1,11 @@
-export const addToExtendCols = (colsInfo) => {
+export const addToExtendRows = (colsInfo) => {
     return{
         type: "SETTOEXTENDCOL",
         colsInfo
     }
 }
 
-export const removeAllToExtendCols = () => {
+export const removeAllToExtendRows = () => {
     return {
         type: "DELETETOEXTENDCOL",
     }

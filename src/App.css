@@ -46,3 +46,8 @@ table {
 	border-collapse: collapse;
 	border-spacing: 0;
 }
+
+/*TABLE STYLES*/
+td.MuiTableCell-root{
+	padding:0 !important;
+}

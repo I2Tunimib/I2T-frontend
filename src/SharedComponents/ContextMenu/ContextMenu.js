@@ -4,7 +4,7 @@ import style from "./ContextMenu.module.css";
 
 const ContextMenu = (props) => {
     const { properties } = props;
-    const { xPos, yPos, type, items } = properties;
+    const { xPos, yPos, items } = properties;
 
     const dropItems = items.map((item) => {
         return (

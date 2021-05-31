@@ -1,21 +1,18 @@
-import { InputGroup, Dropdown, DropdownButton, Button } from "react-bootstrap";
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { displayError } from "../../../../../Redux/action/error";
 import { setLoadingState, unsetLoadingState } from "../../../../../Redux/action/loading";
 import { getLineToExtend } from "../../../../../Http/httpServices";
 import { updateLine } from "../../../../../Redux/action/loadDataSuccess";
-import { loadColumns } from "../../../../../Redux/action/loadColumns";
 import {isExtending} from "../../../../../Redux/action/hasExtended";
 import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
 import DropdownModal from "../../../../../SharedComponents/DropdownModal/DropdownModal";
-import {addToExtendCols, removeAllToExtendCols} from "../../../../../Redux/action/toExtendCols";
+import {addToExtendRows, removeAllToExtendRows} from "../../../../../Redux/action/toExtendRows";
 
 
 const ExtendTable = () => {
     const LoadedColumns = useSelector(state => state.LoadedColumns);
     const LoadedData = useSelector(state => state.LoadedData);
-    const Loading = useSelector(state => state.Loading)
     const dispatch = useDispatch();
 
     const dispatchError = (error) => {
@@ -38,11 +35,11 @@ const ExtendTable = () => {
         dispatch(isExtending());
     }
 
-    const dispatchToExtendCol = (colsInfo) => {
-        dispatch(addToExtendCols(colsInfo))
+    const dispatchToExtendRows = (colsInfo) => {
+        dispatch(addToExtendRows(colsInfo))
     }
-    const dispatchRemoveToExtendCols = () => {
-        dispatch(removeAllToExtendCols());
+    const dispatchRemoveToExtendRows = () => {
+        dispatch(removeAllToExtendRows());
     }
 
     const dataSet = [{
@@ -55,12 +52,6 @@ const ExtendTable = () => {
     const [selectedColumns, setSelectedColumns] = React.useState([]);
 
     const [selectedDataset, setSelectedDataset] = React.useState('');
-
-    const dataSetDropdown = dataSet.map((item) => {
-        return (
-            <Dropdown.Item key={item.value} onClick={(e) => { setSelectedDataset(item) }}>{item.label}</Dropdown.Item>
-        )
-    })
 
     React.useEffect(() => {
         const selectedColumns = [];
@@ -110,7 +101,7 @@ const ExtendTable = () => {
 
     const extendTable = () => {
         //some comments here...
-        dispatchRemoveToExtendCols();
+        dispatchRemoveToExtendRows();
         dispatchLoading();
         let responseCounter = 0;
         for (let i = 0; i < LoadedData.length; i++) {
@@ -144,7 +135,7 @@ const ExtendTable = () => {
 
                     // if it is empty i save it, maybe i wanto to extend later..
                     if (Object.keys(newLineProps).length === 0 || isLineEmpty) {
-                        dispatchToExtendCol({
+                        dispatchToExtendRows({
                             rowIndex: i,
                             matchingValue: provincia,
                             matchingcol: "LOCALITA",

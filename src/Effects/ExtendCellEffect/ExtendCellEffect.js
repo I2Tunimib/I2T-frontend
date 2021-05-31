@@ -1,21 +1,23 @@
-import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
 import React from "react";
 import {useDispatch, useSelector} from "react-redux";
-import {setLoadingState, unsetLoadingState} from "../../../../../Redux/action/loading";
-import {getOptionsToExtend, getLineToExtend} from "../../../../../Http/httpServices";
-import {displayError} from "../../../../../Redux/action/error";
-import InputModal from "../../../../../SharedComponents/InputModal/InputModal";
-import RadioModal from "../../../../../SharedComponents/RadioModal/RadioModal";
-import style from "./ExtendFromCell.module.css";
-import {updateLine} from "../../../../../Redux/action/loadDataSuccess";
-import {popToExtendCol} from "../../../../../Redux/action/toExtendCols";
+import {setLoadingState, unsetLoadingState} from "../../Redux/action/loading";
+import {getOptionsToExtend, getLineToExtend} from "../../Http/httpServices";
+import {displayError} from "../../Redux/action/error";
+import InputModal from "../../SharedComponents/InputModal/InputModal";
+import RadioModal from "../../SharedComponents/RadioModal/RadioModal";
+import {updateLine} from "../../Redux/action/loadDataSuccess";
+import {popToExtendCol} from "../../Redux/action/toExtendRows";
+import {extendedRow} from "../../Redux/action/extendRow";
 
-const ExtendFromCell = (props) => {
-
-    const { dataIndex} = props;
-
-    const ToExtendCols = useSelector(state => state.ToExtendCols);
+const ExtendCellEffect = () => {
+    const ExtendRow = useSelector(state => state.ExtendRow);
+    const ToExtendRows = useSelector(state => state.ToExtendRows);
     const LoadedData = useSelector(state => state.LoadedData)
+    const [matchingValue, setMatchingValue] = React.useState("");
+    const [matchingDate, setMatchingDate] = React.useState({})
+    const [cities, setCities] = React.useState([])
+    const [modalIsOpen, setModalIsOpen] = React.useState(false);
+    const [targetCity, setTargetCity] = React.useState("");
 
     const dispatch = useDispatch();
     
@@ -38,26 +40,25 @@ const ExtendFromCell = (props) => {
     const dispatchPopToExtendCol = (index) => {
         dispatch(popToExtendCol(index));
     }
-
-    const [matchingValue, setMatchingValue] = React.useState("");
-    const [matchingDate, setMatchingDate] = React.useState({})
-    const [cities, setCities] = React.useState([])
-    const [modalIsOpen, setModalIsOpen] = React.useState(false);
-    const [targetCity, setTargetCity] = React.useState("");
-
-    const findCityValue = () => {
-        for (const extCol of ToExtendCols) {
-            if (dataIndex === extCol.rowIndex) {
-                setMatchingValue(extCol.matchingValue);
-                setMatchingDate(extCol.matchingDate);
-                break;
-            }
-        }
+    const dispatchNoExtendRow = () => {
+        dispatch(extendedRow());
     }
 
-    React.useEffect(()=>{
-        findCityValue();
-    }, [])
+    const findCityValue = () => {
+        setMatchingValue('');
+        setMatchingDate({});
+        setCities([]);
+        setTargetCity('');
+        for (const extRow of ToExtendRows) {
+            if (ExtendRow === extRow.rowIndex) {
+                setMatchingValue(extRow.matchingValue);
+                setMatchingDate(extRow.matchingDate);
+                return;
+            }
+        }
+        dispatchNoExtendRow();
+        dispatchError('An error occurred, impossible to find matching value on this row');
+    }
 
     const fillRow = () => {
         if(cities.length >= 1) {
@@ -67,18 +68,22 @@ const ExtendFromCell = (props) => {
             console.log(newData);
             if (await newData.status !== 200) {
                 dispatchNoLoadingState();
+                dispatchNoExtendRow();
                 dispatchError(`Error:${newData.status}, ${newData.statusText}`)
             } else if (newData.data.error) {
                 dispatchNoLoadingState();
+                dispatchNoExtendRow();
                 dispatchError(`Error:${newData.data.error}`)
             } else {
                 const newLine = newData.data;
-                dispatchUpdateLine(dataIndex, {...LoadedData[dataIndex], ...newLine});
+                dispatchUpdateLine(ExtendRow, {...LoadedData[ExtendRow], ...newLine});
                 dispatchNoLoadingState();
+                dispatchNoExtendRow();
                 // removing toextendCol
-                for(const col of ToExtendCols) {
-                    if (col.rowIndex == dataIndex) {
+                for(const col of ToExtendRows) {
+                    if (col.rowIndex === ExtendRow) {
                         dispatchPopToExtendCol(col.rowIndex);
+
                     }
                 }
             }
@@ -89,7 +94,6 @@ const ExtendFromCell = (props) => {
         }
         
     }
-
 
     const checkCitiesAndOpenModal = (city = matchingValue) => {
         dispatchLoadingState();
@@ -132,20 +136,35 @@ const ExtendFromCell = (props) => {
 
                 }
 
-                
-
-
             } else {
                 dispatchError(`Error:${response.status}, ${response.statusText}`)
                 dispatchNoLoadingState();
             }
         })()
-        //}
-        
     }
 
-    return (
-        <> {
+    React.useEffect(()=>{
+        console.log('openModal');
+        if(matchingValue && matchingDate) {
+            checkCitiesAndOpenModal();
+        }
+        
+    },[matchingDate, matchingValue])
+
+    React.useEffect(()=>{
+        console.log(ExtendRow);
+        if(ExtendRow){
+            findCityValue();
+        }
+        if(ExtendRow === 0) {
+            findCityValue();
+        }
+        
+    }, [ExtendRow])
+
+    return(
+        <>
+{
             modalIsOpen && cities.length >= 1 &&
             //OPEN radio modal here
             <RadioModal 
@@ -155,9 +174,9 @@ const ExtendFromCell = (props) => {
             mainButtonLabel="Conferma"
             mainButtonAction={()=>{fillRow(); setModalIsOpen(false)}}
             secondaryButtonLabel="Annulla"
-            secondaryButtonAction={() => setModalIsOpen(false)}
+            secondaryButtonAction={() => {setModalIsOpen(false); dispatchNoExtendRow()}}
             showState={modalIsOpen}
-            onClose={() => {setModalIsOpen(false)}}
+            onClose={() => {setModalIsOpen(false); dispatchNoExtendRow();}}
             setInputValue= {
                 (value) => {setTargetCity(value)}
             }
@@ -168,22 +187,19 @@ const ExtendFromCell = (props) => {
             <InputModal 
             inputLabel="Scegli manualmente una città:"
             titleText="Estendi riga"
-            text={"Non è stato possibile trovare una località con il nome " + matchingValue }
+            text={"Non è stato possibile trovare una località con il nome " + (targetCity || matchingValue)}
             mainButtonLabel="Conferma"
             mainButtonAction={()=>{fillRow()}}
             secondaryButtonLabel="Annulla"
-            secondaryButtonAction={()=>{setModalIsOpen(false)}}
+            secondaryButtonAction={()=>{setModalIsOpen(false); dispatchNoExtendRow()}}
             showState={modalIsOpen}
-            onClose={()=>{setModalIsOpen(false)}}
+            onClose={()=>{setModalIsOpen(false); dispatchNoExtendRow();}}
             setInputValue ={(value) => {setTargetCity(value)}}
             />
 
         }
-
-            <MainButton className={style.zIndex} label="Estendi" cta={() => checkCitiesAndOpenModal()}/>
-
         </>
     )
 }
 
-export default ExtendFromCell;
+export default ExtendCellEffect;

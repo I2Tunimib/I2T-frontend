@@ -9,8 +9,6 @@ import {useDispatch} from "react-redux";
 import {displayError} from "./../../../Redux/action/error";
 import {setLoadingState, unsetLoadingState} from "../../../Redux/action/loading";
 import {loadDataSuccess, deleteData} from "../../../Redux/action/loadDataSuccess";
-import {deleteName} from "../../../Redux/action/loadName";
-import {hasNotExtended} from "../../../Redux/action/hasExtended";
 import {loadName} from "../../../Redux/action/loadName";
 import {convert} from "../../../LogicUtilities/formatConverter";
 
