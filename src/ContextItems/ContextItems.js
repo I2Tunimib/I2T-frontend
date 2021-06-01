@@ -1,8 +1,9 @@
 import { removeContext } from "../Redux/action/openContext";
-import {ReactComponent as SelectIcon} from "../Assets/icon-set/selected/select.svg";
-import {ReactComponent as DeselectIcon} from "../Assets/icon-set/selected/select-empty.svg";
-import {ReactComponent as DeleteIcon} from "../Assets/icon-set/delete/trash.svg";
+import   {ReactComponent as SelectIcon} from "../Assets/icon-set/selected/select.svg";
+import  {ReactComponent as DeselectIcon} from "../Assets/icon-set/selected/select-empty.svg";
+import  {ReactComponent as DeleteIcon} from "../Assets/icon-set/delete/trash.svg";
 import {ReactComponent as EditIcon} from "../Assets/icon-set/edit/pencil.svg";
+import {ReactComponent as ExtendIcon} from "../Assets/icon-set/extend/extend.svg";
 
 export const selectContext = (col, selectCol, deselectCol, removeContext) => {
     let selectLabel = "";
@@ -12,7 +13,7 @@ export const selectContext = (col, selectCol, deselectCol, removeContext) => {
         selectLabel = "Seleziona";
     }
     return ({
-        icon: col.selected ? DeselectIcon : SelectIcon,
+        icon: col.selected ? <DeselectIcon/> : <SelectIcon/>,
         label: selectLabel,
         action: () => {
             if (col.selected) {
@@ -29,7 +30,7 @@ export const selectContext = (col, selectCol, deselectCol, removeContext) => {
 
 export const deleteContext = (col, deleteCol, removeContext) => {
     return ({
-        icon: DeleteIcon,
+        icon: <DeleteIcon/>,
         label: "Elimina",
         action: ()=> {
             deleteCol(col.name);
@@ -41,7 +42,7 @@ export const deleteContext = (col, deleteCol, removeContext) => {
 
 export const editContext = (dataIndex, keyName, editableCell, removeContext) => {
     return ({
-        icon: EditIcon,
+        icon: <EditIcon/>,
         label: "Modifica",
         action: () => {
             editableCell(dataIndex, keyName);
@@ -52,7 +53,7 @@ export const editContext = (dataIndex, keyName, editableCell, removeContext) => 
 
 export const extContext = (dataIndex, extendRow, removeContext) => {
     return ({
-        icon: null,
+        icon: <ExtendIcon/>,
         label: "Estendi riga",
         action: () => {
             extendRow(dataIndex);
@@ -63,11 +64,12 @@ export const extContext = (dataIndex, extendRow, removeContext) => {
 
 export const deleteLineContext = (index, deleteRow, removeContext) => {
     return ({
-        icon: DeleteIcon,
+        icon: <DeleteIcon/>,
         label: "Elimina riga",
         action: () => {
-            deleteRow(index);
-            removeContext();
+            console.log(index);
+            //deleteRow(index);
+            //removeContext();
         }
     })
 }

@@ -1,5 +1,5 @@
+
 import React from "react";
-import { isCompositeComponentWithType } from "react-dom/test-utils";
 import style from "./ContextMenu.module.css";
 
 
@@ -8,12 +8,13 @@ const ContextMenu = (props) => {
     const { xPos, yPos, items } = properties;
 
     const dropItems = items.map((item) => {
+        console.log(item.icon);
         return (
             <li onClick={(e) => { item.action() }} key={item.label}>
                 {
                     item.icon &&
                     <div>
-                        <item.icon/>
+                       {item.icon}
                     </div>
                 }
 

@@ -4,6 +4,10 @@ import {useDispatch} from "react-redux";
 import {addContext, removeContext} from "../../../../Redux/action/openContext";
 import {selectColumn, deselectColumn, deleteColumn} from "../../../../Redux/action/loadColumns";
 import {selectContext, deleteContext} from "../../../../ContextItems/ContextItems";
+import {ReactComponent as SelectedIcon} from "../../../../Assets/icon-set/selected/select.svg";
+import {ReactComponent as UnselectedIcon} from "../../../../Assets/icon-set/selected/select-empty.svg";
+import {ReactComponent as NewIcon} from "../../../../Assets/icon-set/new/new.svg";
+
 const TableHeadCell = (props) => {
    
 
@@ -56,14 +60,17 @@ const TableHeadCell = (props) => {
         ref={(r) => {handleRef(r)}} 
         onContextMenu={(e)=>{displayContextMenu(e, col)}}>
         <div className={style.statusCell}>
-            {col.selected && 
-                <div className={style.selectedIcon}>
-                </div>
+            {
+                col.selected && 
+                <SelectedIcon/>
+            }
+            {
+                !col.selected &&
+                <UnselectedIcon/>
             }
             {
                 col.new && 
-                <div className={style.newIcon}>
-                </div>
+                <NewIcon/>
             }
         </div>
         <div className={style.accessorCell}>

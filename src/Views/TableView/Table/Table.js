@@ -13,6 +13,7 @@ const Table = () => {
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const [pageIndex, setPageIndex] = React.useState(0);
     const [lastDeletedCol, setLastDeletedCol] = React.useState(null);
+    const [lastSortedCol, setLastSortedCol] = React.useState(null);
 
     const dispatch = useDispatch();
 
@@ -33,7 +34,12 @@ const Table = () => {
         onChangePage: (pageIndex) => {
             setPageIndex(pageIndex);
         },
+        onColumnSortChange: (changedCol) => {
+            setLastSortedCol(changedCol);
+        },
         selectableRows: "none",
+        fixedSelectColumn: true,
+        sort: false,
     }
 
     const getMuiTheme = () => createMuiTheme({
@@ -41,7 +47,7 @@ const Table = () => {
             MUIDataTableBodyCell: {
                 root: {
                     // backgroundColor: "#FF0000",
-                    height: "2rem",
+                    height: "3rem",
                     // width: "100%",
                     margin: "0",
                     textAlign: "center",
@@ -49,10 +55,12 @@ const Table = () => {
             },
             MUIDataTableHeadCell: {
                 root: {
-                    padding: " 1rem 0",
+                    padding: " 1rem 1rem",
                     width: "100%",
                     minWidth: "7rem",
                     maxWidth: "15rem",
+                    textAlign: "center",
+                    cursor: "grab",
                 },
                 contentWrapper: {
                     padding: "0 0rem",
@@ -92,6 +100,7 @@ const Table = () => {
                                             rowsPerPage={rowsPerPage}
                                             pageIndex={pageIndex} 
                                             lastDeletedCol={lastDeletedCol}
+                                            lastSortedCol={lastSortedCol}
                                             />
                                     </>
                                 )

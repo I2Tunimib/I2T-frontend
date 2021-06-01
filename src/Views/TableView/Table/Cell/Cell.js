@@ -8,7 +8,7 @@ import {extendRow} from "../../../../Redux/action/extendRow";
 import {deleteLine} from "../../../../Redux/action/loadDataSuccess"
 
 const Cell = (props) => {
-    const { dataIndex, keyName, rowsPerPage, pageIndex, lastDeletedCol  } = props;
+    const { dataIndex, keyName, rowsPerPage, pageIndex, lastDeletedCol, lastSortedCol} = props;
     
     const LoadedData = useSelector(state => state.LoadedData);
     const ToExtendRows = useSelector(state => state.ToExtendRows);
@@ -97,5 +97,5 @@ const Cell = (props) => {
         </div>
     )
 }
-
+ 
 export default Cell;
