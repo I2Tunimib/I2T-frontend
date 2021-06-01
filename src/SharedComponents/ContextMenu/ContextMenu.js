@@ -1,4 +1,5 @@
 import React from "react";
+import { isCompositeComponentWithType } from "react-dom/test-utils";
 import style from "./ContextMenu.module.css";
 
 
@@ -9,7 +10,16 @@ const ContextMenu = (props) => {
     const dropItems = items.map((item) => {
         return (
             <li onClick={(e) => { item.action() }} key={item.label}>
-                {item.label}
+                {
+                    item.icon &&
+                    <div>
+                        <item.icon/>
+                    </div>
+                }
+
+                <p>
+                    {item.label}
+                </p>
             </li>
         )
     })
@@ -22,7 +32,7 @@ const ContextMenu = (props) => {
     return (
         <>
 
-            <div style={{ position: "absolute", top: findContextCoord()[1], left: findContextCoord()[0]}} className={style.contextMenu}>
+            <div style={{ position: "absolute", top: findContextCoord()[1], left: findContextCoord()[0] }} className={style.contextMenu}>
                 <ul>
                     {dropItems}
                 </ul>

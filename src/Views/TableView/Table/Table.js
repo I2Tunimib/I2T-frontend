@@ -33,7 +33,7 @@ const Table = () => {
         onChangePage: (pageIndex) => {
             setPageIndex(pageIndex);
         },
-        selectableRows: false,
+        selectableRows: "none",
     }
 
     const getMuiTheme = () => createMuiTheme({

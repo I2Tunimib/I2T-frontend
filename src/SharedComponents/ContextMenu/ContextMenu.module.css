@@ -1,30 +1,56 @@
-.contextMenu{
-    color: rgba(0, 0, 0, 0.87);
-    z-index: 1000000;
-    background-color: rgb(238, 238, 238);
-    border-radius: 0;
-    border: 1px solid rgba(83, 83, 83, 0.6);
-    
+.contextMenu {
+  color: rgba(0, 0, 0, 0.87);
+  z-index: 1000000;
+  background-color: rgb(238, 238, 238);
+  border-radius: 0;
+  border: 1px solid rgba(83, 83, 83, 0.6);
+  font-size: 0.8rem;
+  line-height: 1.2em;
+  width: 10em;
 }
 
-.contextMenu ul{
+.contextMenu ul {
+  margin: 0;
+}
+
+.contextMenu li {
+  padding: 0.2rem 0.8rem 0.2rem 0.3rem;
+  display: flex;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contextMenu li:hover {
+  color: white;
+  background-color: rgb(128, 128, 128);
+  fill:white;
+}
+
+.contextMenu li:first-child {
+  padding-top: 0.4rem;
+}
+
+.contextMenu li:last-child {
+  padding-bottom: 0.4rem;
+}
+
+.contextMenu li p{
+    display: inline-block;
     margin:0;
 }
 
-.contextMenu li{
-    padding: 0.1rem 0.8rem;
-    cursor: pointer;
+.contextMenu li div{
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin: 0 0.3em 0 0;
+    position: relative;
+    top: -0.1em;
 }
 
-.contextMenu li:hover{
-    color: white;
-    background-color: rgb(83, 83, 83);
-}
-
-.contextMenu li:first-child{
-    padding-top: 0.5rem;
-}
-
-.contextMenu li:last-child{
-    padding-bottom: 0.5rem;
+.contextMenu li div svg{
+    width: 1em;
+    height: 1em;
 }
