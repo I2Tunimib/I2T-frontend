@@ -29,8 +29,8 @@ const ExtendCellEffect = () => {
         dispatch(unsetLoadingState());
     }
 
-    const dispatchError = () => {
-        dispatch(displayError());
+    const dispatchError = (error) => {
+        dispatch(displayError(error));
     }
 
     const dispatchUpdateLine = (index, line) => {
@@ -103,17 +103,24 @@ const ExtendCellEffect = () => {
             const response = await getOptionsToExtend(city, matchingDate.year, matchingDate.month, matchingDate.day);
             if (await response.status === 200) {
                 // do something
+                console.log(response.data.error);
                 if (response.data.error && response.data.error !== "no cities found") {
                     // dispatchError(response.data.error)
+                    console.log(response.data.error);
                     dispatchNoLoadingState();
                     return dispatchError(response.data.error);
                 } else {
                     //OpenRadioModalHere
                     if(response.data.error === "no cities found") {
+                        console.log('1');
                         dispatchNoLoadingState();
                         setModalIsOpen(true);
                         return ;
                     } 
+                    if (response.data.error === "no matching value") {
+                        dispatchNoLoadingState();
+                        return dispatchError("Non è stato possibile trovare dati meteo entro 30km da questa località");
+                    }
                     if (!response.data.error) {
                         console.log(response.data);
                         const cityArr = [];

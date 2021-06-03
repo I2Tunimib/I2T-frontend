@@ -4,7 +4,7 @@ import {addEditableCell} from "../../../../Redux/action/editableCell";
 import {addContext, removeContext} from "../../../../Redux/action/openContext";
 import style from "./Cell.module.css";
 import {editContext, extContext, deleteLineContext} from "../../../../ContextItems/ContextItems";
-import {extendRow} from "../../../../Redux/action/extendRow";
+import {extendRow, extendedRow} from "../../../../Redux/action/extendRow";
 import {deleteLine} from "../../../../Redux/action/loadDataSuccess"
 
 const Cell = (props) => {
@@ -32,6 +32,7 @@ const Cell = (props) => {
     const dispatchDeleteLine = (index) => {
         dispatch(deleteLine(index));
     }
+
     const modContext = editContext(dataIndex, keyName, dispatchEditableCell, dispatchRemoveContext)
     const extendContext = extContext(dataIndex, dispatchExtendRow, dispatchRemoveContext);
     const deleteRowContext = deleteLineContext(dataIndex, dispatchDeleteLine, dispatchRemoveContext);

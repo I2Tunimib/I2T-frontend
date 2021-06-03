@@ -68,8 +68,8 @@ export const deleteLineContext = (index, deleteRow, removeContext) => {
         label: "Elimina riga",
         action: () => {
             console.log(index);
-            //deleteRow(index);
-            //removeContext();
+            deleteRow(index);
+            removeContext();
         }
     })
 }
