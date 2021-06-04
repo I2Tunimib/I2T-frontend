@@ -50,6 +50,7 @@ const Table = () => {
                     height: "3rem",
                     // width: "100%",
                     margin: "0",
+                    paddingTop: '1rem',
                     textAlign: "center",
                 }
             },

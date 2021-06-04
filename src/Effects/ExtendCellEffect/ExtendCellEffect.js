@@ -78,12 +78,11 @@ const ExtendCellEffect = () => {
                 const newLine = newData.data;
                 dispatchUpdateLine(ExtendRow, {...LoadedData[ExtendRow], ...newLine});
                 dispatchNoLoadingState();
-                dispatchNoExtendRow();
                 // removing toextendCol
                 for(const col of ToExtendRows) {
                     if (col.rowIndex === ExtendRow) {
                         dispatchPopToExtendCol(col.rowIndex);
-
+                        dispatchNoExtendRow();
                     }
                 }
             }
@@ -138,6 +137,7 @@ const ExtendCellEffect = () => {
                         setModalIsOpen(true);
                         return ;
                     }
+                    dispatchNoExtendRow();
                     dispatchNoLoadingState();
                     return dispatchError("An unknown error occurred, please try later");
 

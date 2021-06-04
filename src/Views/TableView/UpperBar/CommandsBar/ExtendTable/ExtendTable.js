@@ -164,7 +164,7 @@ const ExtendTable = () => {
     return (
         <>
             { selectedColumns.length >= 1 &&
-                <MainButton label="Extendi" cta={() => setModalIsOpen(true)}/>
+                <MainButton label="Estendi" cta={() => setModalIsOpen(true)}/>
             }
             {
                 modalIsOpen &&

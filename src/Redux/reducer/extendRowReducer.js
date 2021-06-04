@@ -3,6 +3,7 @@ const extendRowReducer = (state = false, action) => {
         case "EXTENDROW":
             return state = action.rowIndex;
         case "ROWHASBEENEXTENDED":
+            console.log('ciao');
             return state = false;
         default:
             return state;
