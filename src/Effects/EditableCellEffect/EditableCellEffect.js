@@ -10,7 +10,7 @@ const EditableCellEffect = () => {
     const LoadedData = useSelector(state => state.LoadedData)
 
     const [editModalIsOpen, setEditModalIsOpen] = React.useState(false);
-    const [newValue, setNewValue] = React.useState("")
+    const [newValue, setNewValue] = React.useState(null);
 
     const dispatch = useDispatch();
 
@@ -24,6 +24,7 @@ const EditableCellEffect = () => {
     React.useEffect(()=>{
         if(EditableCell) {
             setEditModalIsOpen(true);
+            setNewValue(LoadedData[EditableCell.rowIndex][EditableCell.keyName]);
         } else {
             setEditModalIsOpen(false);
         }
@@ -48,6 +49,7 @@ const EditableCellEffect = () => {
             secondaryButtonAction={()=>{dispatchRemoveEditableCell()}}
             mainButtonAction={()=>{edit()}}
             setInputValue={(value)=>{setNewValue(value)}}
+            value={newValue}
             showState={editModalIsOpen}
             onClose={()=>{dispatchRemoveEditableCell()}}
         />

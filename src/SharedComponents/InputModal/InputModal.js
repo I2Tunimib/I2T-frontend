@@ -5,7 +5,7 @@ import React from "react";
 
 
 const InputModal = (props) => {
-    const { inputLabel, titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
+    const { inputLabel, titleText, text, value, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
     const [show, setShow] = React.useState(true);
 
 
@@ -32,7 +32,7 @@ const InputModal = (props) => {
                     <Form>
                         <Form.Group>
                             <Form.Label>{inputLabel}</Form.Label>
-                            <Form.Control type="text" onChange={(e) => { setInputValue(e.target.value) }} />
+                            <Form.Control type="text" onChange={(e) => { setInputValue(e.target.value) }} value={value}/>
                         </Form.Group>
                     </Form>
                 </Modal.Body>
