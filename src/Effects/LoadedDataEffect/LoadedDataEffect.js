@@ -5,7 +5,7 @@ import { loadName } from "../../Redux/action/loadName";
 import { deleteData } from "../../Redux/action/loadDataSuccess";
 import { Redirect } from "react-router-dom";
 import { loadColumns } from "../../Redux/action/loadColumns";
-import {displayError} from "../../Redux/action/error";
+import { displayError } from "../../Redux/action/error";
 
 const LoadedDataEffect = () => {
     // this effect componente triggers when data has been loaded, and ask for name an load columns
@@ -41,15 +41,23 @@ const LoadedDataEffect = () => {
         let keys = [];
         for (let i = 0; i < LoadedData.length; i++) {
             if (Object.keys(LoadedData[i]).length > keys.length) {
-                keys  = Object.keys(LoadedData[i]).map((key)=>{
-                    return {
-                        label: key,
-                        name: key,
-                        selected: false,
-                    }
+                keys = Object.keys(LoadedData[i]).filter(key => key !== 'index').map((key) => {
+                        return {
+                            label: key,
+                            name: key,
+                            selected: false,
+                            type: 'dataCol',
+                        }
                 })
             }
         }
+        keys.unshift({
+            label: "",
+            name: 'index',
+            selected: false,
+            type: 'indexCol'
+        });
+        // add first empty7 column
         return keys;
     }
 
@@ -61,7 +69,7 @@ const LoadedDataEffect = () => {
             setIsConfirmed(true);
             dispatchColumns(setColumns());
             setDataHasBeenLoaded(false);
-        } else if (LoadedData === 0){
+        } else if (LoadedData === 0) {
             displayError("Error: data are empty");
             setDataHasBeenLoaded(false);
         }

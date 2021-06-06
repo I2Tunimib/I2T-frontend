@@ -47,7 +47,7 @@ const Table = () => {
             MUIDataTableBodyCell: {
                 root: {
                     // backgroundColor: "#FF0000",
-                    height: "3rem",
+                    height: "3.5rem",
                     // width: "100%",
                     margin: "0",
                     paddingTop: '1rem',
@@ -89,8 +89,10 @@ const Table = () => {
                                     <TableHeadCell col={column} />
                                 )
                             },
+                            type: col.type,
                             new: col.new,
                             selected: col.selected,
+                            draggable: col.type === "indexCol" ? false : true,
                             customBodyRenderLite: (dataIndex, rowIndex) => {
                                 return (
                                     <>

@@ -3,6 +3,9 @@
     flex-direction: column;
 }
 
+.indexCell{
+    width: 3rem;
+}
 .statusCell{
     display: flex;
     justify-content: center;
