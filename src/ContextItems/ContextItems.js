@@ -4,6 +4,7 @@ import  {ReactComponent as DeselectIcon} from "../Assets/icon-set/selected/selec
 import  {ReactComponent as DeleteIcon} from "../Assets/icon-set/delete/trash.svg";
 import {ReactComponent as EditIcon} from "../Assets/icon-set/edit/pencil.svg";
 import {ReactComponent as ExtendIcon} from "../Assets/icon-set/extend/extend.svg";
+import {ReactComponent as MetaIcon} from "../Assets/icon-set/metadata/tag.svg";
 
 export const selectContext = (col, selectCol, deselectCol, removeContext) => {
     let selectLabel = "";
@@ -70,6 +71,17 @@ export const deleteLineContext = (index, deleteRow, removeContext) => {
             console.log(index);
             deleteRow(index);
             removeContext();
+        }
+    })
+}
+
+export const seeMetaDataContext = (openModal, removeContext) => {
+    return ({
+        icon: <MetaIcon/>,
+        label: "Vedi metadati",
+        action: () => {
+            openModal(true);
+            removeContext()
         }
     })
 }

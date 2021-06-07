@@ -3,9 +3,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { addEditableCell } from "../../../../Redux/action/editableCell";
 import { addContext, removeContext } from "../../../../Redux/action/openContext";
 import style from "./Cell.module.css";
-import { editContext, extContext, deleteLineContext } from "../../../../ContextItems/ContextItems";
+import { editContext, extContext, deleteLineContext, seeMetaDataContext } from "../../../../ContextItems/ContextItems";
 import { extendRow, extendedRow } from "../../../../Redux/action/extendRow";
 import { deleteLine } from "../../../../Redux/action/loadDataSuccess"
+import ClassicModal from "../../../../SharedComponents/ClassicModal/ClassicModal";
 
 const Cell = (props) => {
     const { dataIndex, keyName, rowsPerPage, pageIndex, lastDeletedCol, lastSortedCol } = props;
@@ -15,6 +16,7 @@ const Cell = (props) => {
     const HasExtended = useSelector(state => state.HasExtended);
 
     const [itHasToExt, setItHasToExt] = React.useState(false);
+    const [metaModalIsOpen, setMetaModalIsOpen] = React.useState(false);
     let clickRef = React.useRef(null);
     const dispatch = useDispatch();
     const dispatchEditableCell = (rowIndex, keyName) => {
@@ -35,8 +37,10 @@ const Cell = (props) => {
 
     const modContext = editContext(dataIndex, keyName, dispatchEditableCell, dispatchRemoveContext)
     const extendContext = extContext(dataIndex, dispatchExtendRow, dispatchRemoveContext);
+    const metaDataContext = seeMetaDataContext(setMetaModalIsOpen, dispatchRemoveContext);
     const deleteRowContext = deleteLineContext(dataIndex, dispatchDeleteLine, dispatchRemoveContext);
     const [contextCellItems, setContextCellItems] = React.useState([modContext, deleteRowContext])
+   
 
     // setting context at init 
     React.useEffect(() => {
@@ -48,9 +52,9 @@ const Cell = (props) => {
     React.useEffect(() => {
         if (keyName !== 'index') {
             if (itHasToExt) {
-                setContextCellItems([modContext, extendContext])
+                setContextCellItems([modContext, extendContext, metaDataContext])
             } else {
-                setContextCellItems([modContext]);
+                setContextCellItems([modContext, metaDataContext]);
             }
         } else {
             setContextCellItems([deleteRowContext]);
@@ -98,9 +102,25 @@ const Cell = (props) => {
     }
 
     return (
+        <>
         <div onContextMenu={(e) => { displayContextMenu(e) }} ref={(r) => { handleRef(r) }} onClick={() => { dispatchRemoveContext() }} className={style.cell}>
-            {cellValue}
+            { cellValue && 
+             cellValue.label}
         </div>
+        {
+            metaModalIsOpen &&
+            <ClassicModal
+            titleText={`Metadati cella: ${keyName}-${dataIndex}`}
+            text={cellValue.metadata.length > 0 ? JSON.stringify(cellValue.metadata, null, "\t") : 'Non ci sono metadati disponibili per questa cella'}
+            showState={metaModalIsOpen}
+            onClose={() => setMetaModalIsOpen(false)}
+            mainButtonLabel={cellValue.metadata.length > 0 ? 'Modifica': null}
+            mainButtonAction={()=>{/*Open Textarea Modal here */}}
+            secondaryButtonLabel="Chiudi"
+            secondaryButtonAction={()=> setMetaModalIsOpen(false)}
+            />
+        }
+        </>
     )
 }
 

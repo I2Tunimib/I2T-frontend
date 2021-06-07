@@ -8,7 +8,7 @@ import {getDayData, getSavedData, getExternalData} from "../../../Http/httpServi
 import {useDispatch} from "react-redux";
 import {displayError} from "./../../../Redux/action/error";
 import {setLoadingState, unsetLoadingState} from "../../../Redux/action/loading";
-import {loadDataSuccess, deleteData} from "../../../Redux/action/loadDataSuccess";
+import {loadDataSuccess, loadSavedDataSuccess} from "../../../Redux/action/loadDataSuccess";
 import {loadName} from "../../../Redux/action/loadName";
 import {convert} from "../../../LogicUtilities/formatConverter";
 
@@ -28,6 +28,9 @@ const GetData = () => {
     }
     const dispatchLoadedSuccess = (data) => {
         dispatch(loadDataSuccess(data));
+    }
+    const dispatchLoadSavedSuccess = (data) => {
+        dispatch(loadSavedDataSuccess(data));
     }
     const dispatchName = (name) => {
         dispatch(loadName(name));
@@ -145,7 +148,7 @@ const GetData = () => {
             getDayData(serverDataType, region, date, dispatchError, dispatchSetLoading, dispatchUnsetLoading, dispatchLoadedSuccess);
         } else {
             // callhttpservice
-           getSavedData(savedName, dispatchError, dispatchSetLoading, dispatchUnsetLoading, dispatchLoadedSuccess);
+           getSavedData(savedName, dispatchError, dispatchSetLoading, dispatchUnsetLoading, dispatchLoadSavedSuccess);
            dispatchName(savedName);
         }
 

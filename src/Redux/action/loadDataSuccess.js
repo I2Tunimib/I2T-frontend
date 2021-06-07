@@ -24,3 +24,20 @@ export const deleteLine = (index) => {
         index,
     }
 }
+
+export const loadSavedDataSuccess = (data) => {
+    return {
+        type: "LOADSVAED",
+        data,
+    }
+}
+
+export const addMetadata = (colName, index, metadata) => {
+    return {
+         type: "ADDMETA",
+         colName, 
+         index, 
+         metadata,
+    }
+
+}

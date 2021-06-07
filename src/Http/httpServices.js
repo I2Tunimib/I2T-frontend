@@ -1,4 +1,4 @@
-import {BASE_URL, GET_OPTIONS, SAVE, SINGLE_LINE} from "./paths";
+import {BASE_URL, GET_OPTIONS, SAVE, SINGLE_LINE, ALL_RECON, BASE_RECON_URL} from "./paths";
 import axios from "axios";
 import {convert} from "../LogicUtilities/formatConverter";
 
@@ -66,4 +66,13 @@ export async function saveTable(data, name) {
 
 export async function saveAsTable(data, name) {
     return axios.post(`${BASE_URL}save/${name}`, {data: data})
+}
+
+export async function getAllReconciliator() {
+    return axios.get(ALL_RECON);
+}
+
+export async function reconciliate(internalUrl, payload) {
+    console.log(`${BASE_RECON_URL}${internalUrl}`);
+    return axios.post(`${BASE_RECON_URL}${internalUrl}`, payload)
 }
