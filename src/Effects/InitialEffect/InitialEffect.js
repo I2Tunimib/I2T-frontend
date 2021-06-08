@@ -8,6 +8,9 @@ import {unsetLoadingState} from "../../Redux/action/loading";
 import { removeEditableCell } from "../../Redux/action/editableCell";
 import {deleteAllColumns} from "../../Redux/action/loadColumns";
 import {extendedRow} from "../../Redux/action/extendRow";
+import {getReconciliators} from "../../Redux/action/getRiconciliators";
+import {getAllReconciliator} from "../../Http/httpServices";
+import {displayError} from "../../Redux/action/error";
 
 const InitialEffect = () => {
     const dispatch = useDispatch();
@@ -25,6 +28,7 @@ const InitialEffect = () => {
     const dispatchHasNotExtended = () => {
         dispatch(hasNotExtended());
     }
+    
     const dispatchNoLoadingState = () => {
         dispatch(unsetLoadingState());
     }
@@ -40,6 +44,15 @@ const InitialEffect = () => {
     const dispatchNoExtendRow = () => {
         dispatch(extendedRow());
     }
+
+    const getReconciliatorsDispatcher = (reconciliators) => {
+        dispatch(getReconciliators(reconciliators));
+    }
+
+    const dispatchError = (err) =>{
+        dispatch(displayError(err))
+    }
+
     // on init cancel all data
     React.useEffect(()=>{
         dispatchNoToExtendCol();
@@ -50,6 +63,15 @@ const InitialEffect = () => {
         dispatchRemoveEditableCell();
         dispatchDeleteAllCols();
         dispatchNoExtendRow();
+        (async ()=>{
+            const respReconciliators = await getAllReconciliator();
+            if (respReconciliators.status === 200) {
+                const reconciliators = respReconciliators.data.reconciliators;
+                getReconciliatorsDispatcher(reconciliators);
+            } else {
+                dispatchError('Impossible to connect to riconciliator service.');
+            }
+        })()
     }, [])
     return(
         <>

@@ -7,3 +7,4 @@ icons attributions:
 - New icon: Pixel perfect https://www.flaticon.com/authors/pixel-perfect
 - Select icon: FreePik https://www.flaticon.com/authors/freepik
 - Tag (metadata) icon: FreePik https://www.flaticon.com/authors/freepik
+- Riconciliate icon: SmashIcon https://www.flaticon.com/authors/smashicons

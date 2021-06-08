@@ -9,7 +9,8 @@ import hasExtendedReducer from "./hasExtendedReducer";
 import toExtendRowsReducer from "./toExtendRowsReducer";
 import editableCellReducer from "./editableCellReducer";
 import extendRowReducer from "./extendRowReducer";
-
+import getReconciliatorsReducer from "./getReconciliatorsReducer";
+import reconciliateReducer from "./reconciliateReducer";
 
 
 const allReducers = combineReducers({
@@ -23,6 +24,8 @@ const allReducers = combineReducers({
     ToExtendRows: toExtendRowsReducer,
     EditableCell: editableCellReducer,
     ExtendRow: extendRowReducer,
+    Reconciliators: getReconciliatorsReducer,
+    ItemsToReconciliate: reconciliateReducer,
 })
 
 export default allReducers;

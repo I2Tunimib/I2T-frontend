@@ -72,7 +72,7 @@ export async function getAllReconciliator() {
     return axios.get(ALL_RECON);
 }
 
-export async function reconciliate(internalUrl, payload) {
+export async function reconciliateService(internalUrl, payload) {
     console.log(`${BASE_RECON_URL}${internalUrl}`);
     return axios.post(`${BASE_RECON_URL}${internalUrl}`, payload)
 }

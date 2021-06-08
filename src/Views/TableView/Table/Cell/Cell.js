@@ -3,10 +3,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { addEditableCell } from "../../../../Redux/action/editableCell";
 import { addContext, removeContext } from "../../../../Redux/action/openContext";
 import style from "./Cell.module.css";
-import { editContext, extContext, deleteLineContext, seeMetaDataContext } from "../../../../ContextItems/ContextItems";
+import { editContext, extContext, deleteLineContext, seeMetaDataContext, riconciliateContext } from "../../../../ContextItems/ContextItems";
 import { extendRow, extendedRow } from "../../../../Redux/action/extendRow";
 import { deleteLine } from "../../../../Redux/action/loadDataSuccess"
 import ClassicModal from "../../../../SharedComponents/ClassicModal/ClassicModal";
+import {reconciliate} from "../../../../Redux/action/reconciliate";
 
 const Cell = (props) => {
     const { dataIndex, keyName, rowsPerPage, pageIndex, lastDeletedCol, lastSortedCol } = props;
@@ -18,6 +19,14 @@ const Cell = (props) => {
     const [itHasToExt, setItHasToExt] = React.useState(false);
     const [metaModalIsOpen, setMetaModalIsOpen] = React.useState(false);
     let clickRef = React.useRef(null);
+
+    const cellValue = LoadedData[dataIndex] ? LoadedData[dataIndex][keyName] : null;
+    const payLoad = {
+        column: keyName,
+        index: dataIndex,
+        label: cellValue.label,
+    }
+
     const dispatch = useDispatch();
     const dispatchEditableCell = (rowIndex, keyName) => {
         dispatch(addEditableCell(rowIndex, keyName));
@@ -34,12 +43,16 @@ const Cell = (props) => {
     const dispatchDeleteLine = (index) => {
         dispatch(deleteLine(index));
     }
+    const dispatchReconciliate = (payload) => {
+        dispatch(reconciliate(payload));
+    }
 
-    const modContext = editContext(dataIndex, keyName, dispatchEditableCell, dispatchRemoveContext)
+    const modContext = editContext(dataIndex, keyName, dispatchEditableCell, dispatchRemoveContext);
     const extendContext = extContext(dataIndex, dispatchExtendRow, dispatchRemoveContext);
     const metaDataContext = seeMetaDataContext(setMetaModalIsOpen, dispatchRemoveContext);
     const deleteRowContext = deleteLineContext(dataIndex, dispatchDeleteLine, dispatchRemoveContext);
-    const [contextCellItems, setContextCellItems] = React.useState([modContext, deleteRowContext])
+    const riconciliateCellContext = riconciliateContext(dispatchReconciliate, payLoad, dispatchRemoveContext);
+    const [contextCellItems, setContextCellItems] = React.useState([modContext, deleteRowContext]);
    
 
     // setting context at init 
@@ -52,9 +65,9 @@ const Cell = (props) => {
     React.useEffect(() => {
         if (keyName !== 'index') {
             if (itHasToExt) {
-                setContextCellItems([modContext, extendContext, metaDataContext])
+                setContextCellItems([modContext, extendContext, metaDataContext, riconciliateCellContext])
             } else {
-                setContextCellItems([modContext, metaDataContext]);
+                setContextCellItems([modContext, metaDataContext, riconciliateCellContext]);
             }
         } else {
             setContextCellItems([deleteRowContext]);
@@ -63,8 +76,6 @@ const Cell = (props) => {
     }, [itHasToExt])
 
     // const [cellValue, setCellValue] = React.useState(null);
-
-    const cellValue = LoadedData[dataIndex] ? LoadedData[dataIndex][keyName] : null;
 
     /*React.useEffect(()=> {
         setCellValue(null)
@@ -101,6 +112,7 @@ const Cell = (props) => {
         dispatchContext(contextProps);
     }
 
+
     return (
         <>
         <div onContextMenu={(e) => { displayContextMenu(e) }} ref={(r) => { handleRef(r) }} onClick={() => { dispatchRemoveContext() }} className={style.cell}>
@@ -120,6 +132,7 @@ const Cell = (props) => {
             secondaryButtonAction={()=> setMetaModalIsOpen(false)}
             />
         }
+        
         </>
     )
 }

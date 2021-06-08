@@ -1,11 +1,10 @@
-import { removeContext } from "../Redux/action/openContext";
 import   {ReactComponent as SelectIcon} from "../Assets/icon-set/selected/select.svg";
 import  {ReactComponent as DeselectIcon} from "../Assets/icon-set/selected/select-empty.svg";
 import  {ReactComponent as DeleteIcon} from "../Assets/icon-set/delete/trash.svg";
 import {ReactComponent as EditIcon} from "../Assets/icon-set/edit/pencil.svg";
 import {ReactComponent as ExtendIcon} from "../Assets/icon-set/extend/extend.svg";
 import {ReactComponent as MetaIcon} from "../Assets/icon-set/metadata/tag.svg";
-
+import {ReactComponent as RiconciliateIcon} from "../Assets/icon-set/riconciliate/link.svg";
 export const selectContext = (col, selectCol, deselectCol, removeContext) => {
     let selectLabel = "";
     if (col.selected) {
@@ -82,6 +81,18 @@ export const seeMetaDataContext = (openModal, removeContext) => {
         action: () => {
             openModal(true);
             removeContext()
+        }
+    })
+}
+
+
+export const riconciliateContext = (reconciliate, payload, removeContext) => {
+    return({
+        icon: <RiconciliateIcon/>,
+        label: 'Riconcilia Cella',
+        action: () => {
+            reconciliate([payload])
+            removeContext();
         }
     })
 }

@@ -5,6 +5,7 @@ import ContextEffect from "../ContextEffect/ContextEffect";
 import HasExtendedEffect  from "../HasExtendedEffect/HasExtendedEffect";
 import EditableCellEffect from "../EditableCellEffect/EditableCellEffect";
 import ExtendCellEffect from "../ExtendCellEffect/ExtendCellEffect";
+import ReconciliateEffect from "../ReconciliateEffect/ReconciliateEffect";
 const AllEffects = () => {
     return (
         <>
@@ -15,6 +16,7 @@ const AllEffects = () => {
         <ContextEffect />
         <EditableCellEffect />
         <ExtendCellEffect/>
+        <ReconciliateEffect/>
         </>
     )
 }
