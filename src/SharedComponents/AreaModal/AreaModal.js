@@ -1,13 +1,13 @@
-import { Modal } from "react-bootstrap";
+import { Modal, Form } from "react-bootstrap";
 import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import React from "react";
-import style from "./ClassicModal.module.css";
 
 
-const ClassicModal = (props) => {
-    const { titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose } = props;
+const AreaModal = (props) => {
+    const { inputLabel, titleText, text, value, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
     const [show, setShow] = React.useState(true);
+
 
     React.useEffect(() => {
         setShow(showState);
@@ -19,28 +19,27 @@ const ClassicModal = (props) => {
         }
     }, [show])
 
+
+
     return (
         <>
-            <Modal show={show} onHide={() => { setShow(false) }} className={props.metadataModal ? style.metadataModal : null}>
+            <Modal show={show} onHide={() => { setShow(false) }}>
                 <Modal.Header closeButton>
                     <Modal.Title>{titleText}</Modal.Title>
                 </Modal.Header>
-                <Modal.Body
-                    className={props.metadataModal ? style.metadataText : null}>
-                    {props.metadataModal &&
-                        <pre>{text}</pre>
-                    }
-                    {!props.metadataModal &&
-                        <p>{text}</p>
-                    }
+                <Modal.Body>
+                    {text}
+                    <Form>
+                        <Form.Group>
+                            <Form.Label>{inputLabel}</Form.Label>
+                            <Form.Control as="textarea" onChange={(e) => { setInputValue(e.target.value) }} value={value}/>
+                        </Form.Group>
+                    </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     {
                         secondaryButtonLabel && secondaryButtonAction &&
-                        <SecondaryButton
-                            cta={secondaryButtonAction}
-                            label={secondaryButtonLabel} />
-
+                        <SecondaryButton cta={secondaryButtonAction} label={secondaryButtonLabel} />
                     }
                     {
                         mainButtonLabel && mainButtonAction &&
@@ -54,4 +53,4 @@ const ClassicModal = (props) => {
         </>
     )
 }
-export default ClassicModal;
+export default AreaModal;

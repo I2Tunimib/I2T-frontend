@@ -24,7 +24,7 @@ const ReconcileCol = () => {
             }
         }
         setSelectedColumns(selectedColumns);
-    }, LoadedColumns)
+    }, [LoadedColumns])
 
 
     const reconciliatePayload = () => {
