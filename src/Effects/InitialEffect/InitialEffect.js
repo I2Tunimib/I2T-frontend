@@ -11,12 +11,17 @@ import {extendedRow} from "../../Redux/action/extendRow";
 import {getReconciliators} from "../../Redux/action/getRiconciliators";
 import {getAllReconciliator} from "../../Http/httpServices";
 import {displayError} from "../../Redux/action/error";
+import {noReconciliate} from "../../Redux/action/reconciliate";
 
 const InitialEffect = () => {
     const dispatch = useDispatch();
 
     const dispatchRemoveEditableCell = () => {
         dispatch(removeEditableCell())
+    }
+
+    const dispatchNoReconciliate = () => {
+        dispatch(noReconciliate())
     }
 
     const dispatchDeleteData = () => {
@@ -63,6 +68,7 @@ const InitialEffect = () => {
         dispatchRemoveEditableCell();
         dispatchDeleteAllCols();
         dispatchNoExtendRow();
+        dispatchNoReconciliate();
         (async ()=>{
             const respReconciliators = await getAllReconciliator();
             if (respReconciliators.status === 200) {

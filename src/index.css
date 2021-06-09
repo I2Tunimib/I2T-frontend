@@ -18,3 +18,33 @@ code {
 .modal-footer{
   justify-content: space-between !important;
 }
+
+tr td:first-child{
+  max-width: 3rem;
+  width: 2rem;
+}
+tr th:first-child{
+  max-width: 3rem;
+  width: 2rem;
+}
+
+
+.MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:not(:first-child) {
+  font-weight: bold;
+  resize: horizontal;
+  overflow-x: overlay;
+  overflow-y: hidden;
+}
+
+.MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:first-child{
+  max-width: 3rem;
+  width: 3rem;
+  min-width: 0px;
+}
+.MuiTableBody-root .MuiTableRow-root .MuiTableCell-root:first-child{
+  max-width: 2rem;
+  width: 2rem;
+  min-width: none;
+  border-right: black 2px solid;
+  overflow-y: hidden;
+}

@@ -52,12 +52,13 @@ const Table = () => {
                     margin: "0",
                     paddingTop: '1rem',
                     textAlign: "center",
+
                 }
             },
             MUIDataTableHeadCell: {
                 root: {
                     padding: " 1rem 1rem",
-                    width: "100%",
+                    //width: "100%",
                     minWidth: "7rem",
                     maxWidth: "15rem",
                     textAlign: "center",
