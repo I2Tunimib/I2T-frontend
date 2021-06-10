@@ -19,7 +19,6 @@ const Cell = (props) => {
 
     const [itHasToExt, setItHasToExt] = React.useState(false);
     const [metaModalIsOpen, setMetaModalIsOpen] = React.useState(false);
-    const [editMetaModalIsOpen, setEditMetaModalIsOpen] = React.useState(false);
     let clickRef = React.useRef(null);
 
     const cellValue = LoadedData[dataIndex] ? LoadedData[dataIndex][keyName] : null;
@@ -128,9 +127,9 @@ const Cell = (props) => {
             titleText={`Metadati cella: ${keyName}-${dataIndex}`}
             text={cellValue.metadata.length > 0 ? JSON.stringify(cellValue.metadata, null, 2) : 'Non ci sono metadati disponibili per questa cella'}
             showState={metaModalIsOpen}
-            onClose={() => {/*DO something here */}}
+            onClose={() => {setMetaModalIsOpen(false)}}
             mainButtonLabel={cellValue.metadata.length > 0 ? 'Modifica': null}
-            mainButtonAction={()=>{setEditMetaModalIsOpen(true)}}
+            mainButtonAction={()=>{/*Do something here */}}
             secondaryButtonLabel="Chiudi"
             secondaryButtonAction={()=> setMetaModalIsOpen(false)}
             />

@@ -24,7 +24,7 @@ const EditableCellEffect = () => {
     React.useEffect(()=>{
         if(EditableCell) {
             setEditModalIsOpen(true);
-            setNewValue(LoadedData[EditableCell.rowIndex][EditableCell.keyName]);
+            setNewValue(LoadedData[EditableCell.rowIndex][EditableCell.keyName].label);
         } else {
             setEditModalIsOpen(false);
         }
@@ -32,8 +32,10 @@ const EditableCellEffect = () => {
     },[EditableCell])
 
     const edit = () => {
+        console.log(newValue);
         const newLine = JSON.parse(JSON.stringify(LoadedData[EditableCell.rowIndex]))
-        newLine[EditableCell.keyName] = newValue;
+        newLine[EditableCell.keyName].label = newValue;
+        console.log(newLine);
         dispatchUpdateLine(EditableCell.rowIndex, newLine);
         dispatchRemoveEditableCell()
     }

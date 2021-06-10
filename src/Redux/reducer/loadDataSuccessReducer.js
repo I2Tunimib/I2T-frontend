@@ -22,8 +22,8 @@ export const loadDataSuccessReducer = (state = [], action) => {
             const lineKeys = Object.keys(action.line);
             for (const key of lineKeys) {
                 action.line[key] = {
-                    label: action.line[key],
-                    metadata: [],
+                    label: action.line[key].label,
+                    metadata: action.line[key].metadata,
                 } 
             }
             const nextState = produce(state, draftState => {
