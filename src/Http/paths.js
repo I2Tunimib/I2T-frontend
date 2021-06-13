@@ -1,12 +1,7 @@
-export const BASE_URL = "http://localhost:3001/";
+export const BASE_URL = "http://localhost:3002/"
 
-export const GET_OPTIONS = "get-options/";
+export const ALL_RECON = BASE_URL + "reconciliator/";
 
-export const SAVE = "save/";
+export const TABLES = BASE_URL + "tables"
 
-export const SINGLE_LINE = "single-line/";
-
-
-export const BASE_RECON_URL = "http://localhost:3002/"
-
-export const ALL_RECON = BASE_RECON_URL + "reconciliator/";
+export const SAVED = BASE_URL + "saved"

@@ -8,9 +8,9 @@ import {ReactComponent as RiconciliateIcon} from "../Assets/icon-set/riconciliat
 export const selectContext = (col, selectCol, deselectCol, removeContext) => {
     let selectLabel = "";
     if (col.selected) {
-        selectLabel = "Deseleziona";
+        selectLabel = "Deseleziona colonna";
     } else {
-        selectLabel = "Seleziona";
+        selectLabel = "Seleziona colonna";
     }
     return ({
         icon: col.selected ? <DeselectIcon/> : <SelectIcon/>,
@@ -31,7 +31,7 @@ export const selectContext = (col, selectCol, deselectCol, removeContext) => {
 export const deleteContext = (col, deleteCol, removeContext) => {
     return ({
         icon: <DeleteIcon/>,
-        label: "Elimina",
+        label: "Elimina colonna",
         action: ()=> {
             deleteCol(col.name);
             removeContext();
@@ -43,7 +43,7 @@ export const deleteContext = (col, deleteCol, removeContext) => {
 export const editContext = (dataIndex, keyName, editableCell, removeContext) => {
     return ({
         icon: <EditIcon/>,
-        label: "Modifica",
+        label: "Modifica label",
         action: () => {
             editableCell(dataIndex, keyName);
             removeContext();

@@ -14,7 +14,7 @@ const SaveTable = () => {
     const LoadedName = useSelector(state => state.LoadedName);
     const [okModalIsOpen, setOkModalIsOpen] = React.useState(false);
     const [saveAsModalIsOpen, setSaveAsModalIsOpen] = React.useState(false);
-    const [saveAsName, setSaveAsName] = React.useState("");
+    const [saveAsName, setSaveAsName] = React.useState(LoadedName);
 
     const dispatch = useDispatch();
 
@@ -35,9 +35,9 @@ const SaveTable = () => {
         dispatchSetLoadingState();
         (async () => {
             const response = await saveTable(LoadedData, name);
-            if (response.status !== 200) {
+            if (await response.error) {
                 dispatchUnsetLoadingState();
-                dispatchError(`Error: ${response.status}, ${response.statusText}`)
+                dispatchError(response.error)
             } else {
                 dispatchUnsetLoadingState();
                 setOkModalIsOpen(true);
@@ -47,6 +47,7 @@ const SaveTable = () => {
     }
 
     const saveAs =() => {
+        setSaveAsName(LoadedName);
         setSaveAsModalIsOpen(true);
     }
 
@@ -75,6 +76,7 @@ const SaveTable = () => {
             mainButtonLabel="Conferma"
             mainButtonAction={ () => {save(saveAsName); setSaveAsModalIsOpen(false)}}
             secondaryButtonLabel="Annulla"
+            value={saveAsName}
             secondaryButtonAction={() => setSaveAsModalIsOpen(false)}
             onClose={()=>{setSaveAsModalIsOpen(false)}}
             showState={saveAsModalIsOpen}

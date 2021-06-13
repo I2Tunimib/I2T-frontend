@@ -71,11 +71,11 @@ const InitialEffect = () => {
         dispatchNoReconciliate();
         (async ()=>{
             const respReconciliators = await getAllReconciliator();
-            if (respReconciliators.status === 200) {
-                const reconciliators = respReconciliators.data.reconciliators;
-                getReconciliatorsDispatcher(reconciliators);
-            } else {
+            if (respReconciliators.error) {
                 dispatchError('Impossible to connect to riconciliator service.');
+            } else {
+                const reconciliators = respReconciliators.reconciliators;
+                getReconciliatorsDispatcher(reconciliators);
             }
         })()
     }, [])

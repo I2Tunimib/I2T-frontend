@@ -32,7 +32,7 @@ const InputModal = (props) => {
                     <Form>
                         <Form.Group>
                             <Form.Label>{inputLabel}</Form.Label>
-                            <Form.Control type="text" onChange={(e) => { setInputValue(e.target.value) }} value={value}/>
+                            <Form.Control type="text" onChange={(e) => {setInputValue(e.target.value)}} value={value}/>
                         </Form.Group>
                     </Form>
                 </Modal.Body>

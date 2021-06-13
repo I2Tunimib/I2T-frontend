@@ -2,7 +2,7 @@ import React from "react";
 import InputModal from "../../SharedComponents/InputModal/InputModal";
 import { useSelector, useDispatch } from "react-redux";
 import { loadName } from "../../Redux/action/loadName";
-import { deleteData } from "../../Redux/action/loadDataSuccess";
+import { deleteData, updateLine } from "../../Redux/action/loadDataSuccess";
 import { Redirect } from "react-router-dom";
 import { loadColumns } from "../../Redux/action/loadColumns";
 import { displayError } from "../../Redux/action/error";
@@ -15,7 +15,7 @@ const LoadedDataEffect = () => {
     const dispatch = useDispatch();
     // const history = useHistory();
     const [dataHasBeenLoaded, setDataHasBeenLoaded] = React.useState(false);
-    const [tableName, setTableName] = React.useState("");
+    const [tableName, setTableName] = React.useState(LoadedName);
     const [isConfirmed, setIsConfirmed] = React.useState(false);
 
 
@@ -31,7 +31,12 @@ const LoadedDataEffect = () => {
         dispatch(deleteData());
     }
 
+    const dispatchUpdate = (index, line) => {
+        dispatch(updateLine(index, line))
+    }
+
     const confirmAction = () => {
+        console.log(tableName);
         dispatchName(tableName);
         setIsConfirmed(true);
         setDataHasBeenLoaded(false);
@@ -57,19 +62,21 @@ const LoadedDataEffect = () => {
             selected: false,
             type: 'indexCol'
         });
-        // add first empty7 column
+        // add first empty column
         return keys;
     }
 
+
+
     React.useEffect(() => {
-        if (LoadedData.length >= 1 && !LoadedName) {
+        // reset index when loaded data changes
+        // resetIndex();
+        if (LoadedData.length >= 1  && LoadedColumns.length === 0) {
+            console.log('ciao');
             setDataHasBeenLoaded(true);
             dispatchColumns(setColumns());
-        } else if (LoadedData.length >= 1 && !LoadedColumns) {
-            setIsConfirmed(true);
-            dispatchColumns(setColumns());
-            setDataHasBeenLoaded(false);
-        } else if (LoadedData === 0) {
+            setTableName(LoadedName);
+        } else if (LoadedData.length === 0 && !LoadedColumns) {
             displayError("Error: data are empty");
             setDataHasBeenLoaded(false);
         }
@@ -82,10 +89,11 @@ const LoadedDataEffect = () => {
                     titleText="La tua tabella è stata caricata"
                     inputLabel="Che nome vuoi dare alla tabella?"
                     mainButtonLabel={"Conferma"}
-                    mainButtonAction={confirmAction}
+                    mainButtonAction={()=>{confirmAction()}}
                     setInputValue={(name) => { setTableName(name) }}
                     secondaryButtonLabel={"Annulla Caricamento"}
                     secondaryButtonAction={dispatchDeleteData}
+                    value={LoadedName}
                     showState={dataHasBeenLoaded}
                     onClose={() => { setDataHasBeenLoaded(false) }}
                 />

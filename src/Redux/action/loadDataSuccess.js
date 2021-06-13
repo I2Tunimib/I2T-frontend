@@ -27,7 +27,7 @@ export const deleteLine = (index) => {
 
 export const loadSavedDataSuccess = (data) => {
     return {
-        type: "LOADSVAED",
+        type: "LOADSAVED",
         data,
     }
 }

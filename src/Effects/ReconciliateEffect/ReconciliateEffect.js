@@ -61,6 +61,7 @@ const ReconciliateEffect = () => {
                     return;
                 }
                 for (const item of reconResponse.data.items){
+                    console.log(item);
                     console.log(item.metadata);
                     dispatchMeta(item.column, item.index, item.metadata);
                 }

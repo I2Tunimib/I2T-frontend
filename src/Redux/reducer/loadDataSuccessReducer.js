@@ -2,7 +2,8 @@ import produce from "immer";
 
 export const loadDataSuccessReducer = (state = [], action) => {
     switch(action.type) {
-        case 'LOADEDSAVED':
+        case 'LOADSAVED':
+            console.log(action.data);
             return state = action.data;
         case "LOADED":
             for (let i = 0; i < action.data.length; i++) {
@@ -31,10 +32,16 @@ export const loadDataSuccessReducer = (state = [], action) => {
             })
             return state = nextState;
         case "DELETELINE":
-            return state = [
+            const newState = [
                 ...state.slice(0, action.index),
                 ...state.slice(action.index + 1)
             ]
+            console.log(newState.length);
+            for (let i = 0; i < newState.length; i++){
+                newState[i]["index"] = {label: i.toString(), metadata: []};
+            }
+            console.log(newState);
+            return newState;
         case "ADDMETA":
              const nextStateMeta = produce(state, draftState => {
                  draftState[action.index][action.colName].metadata = action.metadata
