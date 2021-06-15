@@ -5,6 +5,7 @@ import Cell from "./Cell/Cell";
 import React from "react";
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import {deleteLine} from "../../../Redux/action/loadDataSuccess";
+import UpperBar from "../UpperBar/UpperBar";
 
 
 const Table = () => {
@@ -23,9 +24,14 @@ const Table = () => {
 
     const options = {
         draggableColumns: {
-            enabled: true,
+            enabled: false,
         },
-        tableBodyHeight: '70vh',
+        customToolbar: () => {
+            return (
+                <UpperBar/>
+            )
+        },
+        tableBodyHeight: (window.innerHeight - 150).toString() + "px",
         fixedHeader: true,
         rowsPerPageOptions: [10, 20, 50],
         onChangeRowsPerPage: (numberOfRows) => {
@@ -93,7 +99,6 @@ const Table = () => {
                             type: col.type,
                             new: col.new,
                             selected: col.selected,
-                            draggable: col.type === "indexCol" ? false : true,
                             customBodyRenderLite: (dataIndex, rowIndex) => {
                                 return (
                                     <>

@@ -52,15 +52,17 @@ const LoadedDataEffect = () => {
                             name: key,
                             selected: false,
                             type: 'dataCol',
+                            riconciliated: false,
                         }
                 })
             }
         }
         keys.unshift({
-            label: "",
+            label: "0",
             name: 'index',
             selected: false,
-            type: 'indexCol'
+            type: 'indexCol',
+            riconciliated: false,
         });
         // add first empty column
         return keys;
@@ -72,7 +74,6 @@ const LoadedDataEffect = () => {
         // reset index when loaded data changes
         // resetIndex();
         if (LoadedData.length >= 1  && LoadedColumns.length === 0) {
-            console.log('ciao');
             setDataHasBeenLoaded(true);
             dispatchColumns(setColumns());
             setTableName(LoadedName);

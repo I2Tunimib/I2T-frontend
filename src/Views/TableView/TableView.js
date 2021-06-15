@@ -10,7 +10,6 @@ const TableView = () => {
 
     return (
         <>
-            <UpperBar />
             {
                 LoadedColumns && LoadedData &&
                 <>

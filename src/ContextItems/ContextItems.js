@@ -77,7 +77,7 @@ export const deleteLineContext = (index, deleteRow, removeContext) => {
 export const seeMetaDataContext = (openModal, removeContext) => {
     return ({
         icon: <MetaIcon/>,
-        label: "Vedi metadati",
+        label: "Vedi sorgente metadati",
         action: () => {
             openModal(true);
             removeContext()

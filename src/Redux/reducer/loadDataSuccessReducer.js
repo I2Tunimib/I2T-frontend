@@ -7,7 +7,7 @@ export const loadDataSuccessReducer = (state = [], action) => {
             return state = action.data;
         case "LOADED":
             for (let i = 0; i < action.data.length; i++) {
-                action.data[i]['index'] = i;
+                action.data[i]['index'] = i + 1;
                 const lineKeys = Object.keys(action.data[i])
                 for (let k = 0; k < lineKeys.length; k++) {
                     action.data[i][lineKeys[k]] = {
@@ -38,7 +38,7 @@ export const loadDataSuccessReducer = (state = [], action) => {
             ]
             console.log(newState.length);
             for (let i = 0; i < newState.length; i++){
-                newState[i]["index"] = {label: i.toString(), metadata: []};
+                newState[i]["index"] = {label: (i + 1).toString(), metadata: []};
             }
             console.log(newState);
             return newState;

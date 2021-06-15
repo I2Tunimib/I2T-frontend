@@ -7,6 +7,7 @@ import { selectContext, deleteContext } from "../../../../ContextItems/ContextIt
 import { ReactComponent as SelectedIcon } from "../../../../Assets/icon-set/selected/select.svg";
 import { ReactComponent as UnselectedIcon } from "../../../../Assets/icon-set/selected/select-empty.svg";
 import { ReactComponent as NewIcon } from "../../../../Assets/icon-set/new/new.svg";
+import { ReactComponent as RiconciliatedIcon} from "../../../../Assets/icon-set/riconciliate/link.svg";
 import { Style } from "@material-ui/icons";
 
 const TableHeadCell = (props) => {
@@ -76,6 +77,10 @@ const TableHeadCell = (props) => {
                             col.new &&
                             <NewIcon />
                         }
+                        {
+                            col.riconciliated && 
+                            <RiconciliatedIcon/>
+                        }
                     </div>
                     <div className={style.accessorCell}>
                         <p>
@@ -84,11 +89,9 @@ const TableHeadCell = (props) => {
                     </div>
                 </div>
             }
-            {
-                <div className={style.indexCell}
-                
-                >
-
+            {   col.type === 'indexCol' &&
+                <div>
+                    {col.label}
                 </div>
 
             }

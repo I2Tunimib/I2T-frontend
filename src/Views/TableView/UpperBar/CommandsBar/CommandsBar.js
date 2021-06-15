@@ -5,8 +5,14 @@ import ReconcileCol from "./ReconcileCol/ReconcileCol";
 const CommandsBar = () => {
     return (
         <div className={style.commandsBar}>
-            <ReconcileCol/>
-            <SaveTable/>
+            <div>
+                <ReconcileCol/>
+            </div>
+            <div>
+                <SaveTable/>
+            </div>
+
+
         </div>
     )
 }

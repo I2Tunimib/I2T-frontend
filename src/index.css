@@ -27,7 +27,9 @@ tr th:first-child{
   max-width: 3rem;
   width: 2rem;
 }
-
+.MuiTableHead-root .MuiTableRow-root .MuiTableCell-head {
+  cursor: unset;
+}
 
 .MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:not(:first-child) {
   font-weight: bold;
@@ -40,11 +42,41 @@ tr th:first-child{
   max-width: 3rem;
   width: 3rem;
   min-width: 0px;
+  border-right: black 1px solid;
 }
+
+/*.MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:not(:first-child){
+  border-top: black 2px solid;
+  z-index: 5;
+}*/
 .MuiTableBody-root .MuiTableRow-root .MuiTableCell-root:first-child{
   max-width: 2rem;
   width: 2rem;
   min-width: none;
-  border-right: black 2px solid;
+  border-right: black 1px solid;
   overflow-y: hidden;
+}
+
+
+.MuiToolbar-root {
+  display: block !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-bottom: black 1px solid;
+}
+
+.MuiToolbar-regular.MuiToolbar-root .MuiButtonBase-root{
+  display: none !important;
+}
+
+.MuiTablePagination-root .MuiToolbar-root {
+  display: flex !important;
+}
+
+.MuiTableRow-root.MuiTableRow-footer .MuiTablePagination-actions button{
+  display: inline-flex !important;
+}
+
+.MuiPaper-root{
+  height: 100vh !important;
 }

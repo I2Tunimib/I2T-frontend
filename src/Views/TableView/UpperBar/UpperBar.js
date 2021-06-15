@@ -1,7 +1,7 @@
 import TableName from "./TableName/TableName";
 import CommandsBar from "./CommandsBar/CommandsBar";
 import style from "./UpperBar.module.css";
-import {Card} from "react-bootstrap";
+import { Card } from "react-bootstrap";
 
 
 const UpperBar = () => {
@@ -9,8 +9,12 @@ const UpperBar = () => {
         <Card>
             <Card.Body>
                 <div className={style.upperBar}>
+
                     <TableName />
+
                     <CommandsBar />
+
+
                 </div>
             </Card.Body>
         </Card>
