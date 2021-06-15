@@ -41,3 +41,12 @@ export const addMetadata = (colName, index, metadata) => {
     }
 
 }
+
+export const extendColMeta = (colName, reconciliator) => {
+    console.log(colName, reconciliator);
+    return {
+        type: "EXTENDMETA",
+        colName,
+        reconciliator,
+    }
+}

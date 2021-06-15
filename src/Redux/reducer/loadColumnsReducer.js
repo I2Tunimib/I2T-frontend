@@ -40,6 +40,34 @@ const loadColumnsReducer = (state = [], action) => {
             return state = newState;
         case "DELETEALLCOLS":
             return state = [];
+        case "RECONCILIATECOL":
+            let reconciliateColIndex = null;
+            for (let g = 0; g < state.length; g++) {
+                if (state[g].name === action.column){
+                    reconciliateColIndex = g;
+                }
+            }
+            const nextState3 = produce(state, draftState => {
+                draftState[reconciliateColIndex].reconciliated = action.reconciliator;
+            })
+            return nextState3;
+        case "ADDEXTMETACOL":
+            const newCol = {
+                label: action.name,
+                name: action.name,
+                type: action.colType,
+                selected: false,
+                new: true,
+                reconciliated: false,
+            }
+            let extendedColIndex = null;
+            for (let y = 0; y < state.length; y++) {
+                if(action.extendedCol === state[y].name) {
+                    extendedColIndex = y;
+                }
+            }
+            const newState2 = [...state.slice(0, extendedColIndex + 1), newCol, ...state.slice(extendedColIndex + 1)]
+            return state = newState2;
         default :
             return state;
     }

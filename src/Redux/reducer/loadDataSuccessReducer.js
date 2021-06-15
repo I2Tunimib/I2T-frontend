@@ -47,6 +47,23 @@ export const loadDataSuccessReducer = (state = [], action) => {
                  draftState[action.index][action.colName].metadata = action.metadata
              })
              return state = nextStateMeta;
+        case "EXTENDMETA":
+            console.log(action.colName);
+            const extendedState = JSON.parse(JSON.stringify(state));
+            for (const row of extendedState) {
+                const keys = Object.keys(row);
+                for (const key of keys) {
+                    if (key === action.colName) {
+                        // console.log(key);
+                        const idArray = [];
+                        for (const feature of row[key].metadata){
+                            idArray.push(feature.id);
+                        }
+                        row[`${action.colName} (${action.reconciliator})`] = idArray;
+                    }
+                }
+            }
+            return state = extendedState;
         default:
             return state;
     }

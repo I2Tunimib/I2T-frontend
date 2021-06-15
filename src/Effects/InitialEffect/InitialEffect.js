@@ -12,6 +12,7 @@ import {getReconciliators} from "../../Redux/action/getRiconciliators";
 import {getAllReconciliator} from "../../Http/httpServices";
 import {displayError} from "../../Redux/action/error";
 import {noReconciliate} from "../../Redux/action/reconciliate";
+import { removeContext } from "../../Redux/action/openContext";
 
 const InitialEffect = () => {
     const dispatch = useDispatch();
@@ -58,6 +59,10 @@ const InitialEffect = () => {
         dispatch(displayError(err))
     }
 
+    const dispatchRemoveContext = () => {
+        dispatch(removeContext());
+    }
+
     // on init cancel all data
     React.useEffect(()=>{
         dispatchNoToExtendCol();
@@ -69,6 +74,7 @@ const InitialEffect = () => {
         dispatchDeleteAllCols();
         dispatchNoExtendRow();
         dispatchNoReconciliate();
+        dispatchRemoveContext();
         (async ()=>{
             const respReconciliators = await getAllReconciliator();
             if (respReconciliators.error) {

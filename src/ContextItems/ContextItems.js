@@ -5,6 +5,7 @@ import {ReactComponent as EditIcon} from "../Assets/icon-set/edit/pencil.svg";
 import {ReactComponent as ExtendIcon} from "../Assets/icon-set/extend/extend.svg";
 import {ReactComponent as MetaIcon} from "../Assets/icon-set/metadata/tag.svg";
 import {ReactComponent as RiconciliateIcon} from "../Assets/icon-set/riconciliate/link.svg";
+
 export const selectContext = (col, selectCol, deselectCol, removeContext) => {
     let selectLabel = "";
     if (col.selected) {
@@ -94,5 +95,17 @@ export const riconciliateContext = (reconciliate, payload, removeContext) => {
             reconciliate([payload])
             removeContext();
         }
+    })
+}
+
+export const extendColMetaContext = (col, dispatchExtendColMeta, removeContext, dispatchAddExtMetaCol) => {
+    return ({
+            icon: <ExtendIcon/>,
+            label: "Estendi colonna con metadati",
+            action: () => {
+                dispatchExtendColMeta(col.name, col.reconciliated);
+                dispatchAddExtMetaCol(`${col.name} (${col.reconciliated})`, "extMetaCol", col.name);
+                removeContext();
+            }
     })
 }

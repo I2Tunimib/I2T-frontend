@@ -8,9 +8,11 @@
     justify-content: center;
     height: 2rem;
 }
+
 .statusCell svg{
     width:1.2rem;
     height:1.2rem;
+    margin: 0.2rem;
 }
 
 .accessorCell{

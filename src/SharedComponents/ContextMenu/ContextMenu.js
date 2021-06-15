@@ -8,21 +8,20 @@ const ContextMenu = (props) => {
     const { xPos, yPos, items } = properties;
 
     const dropItems = items.map((item) => {
-        console.log(item.icon);
-        return (
-            <li onClick={(e) => { item.action() }} key={item.label}>
-                {
-                    item.icon &&
-                    <div>
-                       {item.icon}
-                    </div>
-                }
+            return (
+                <li onClick={(e) => { item.action() }} key={item.label}>
+                    {
+                        item.icon &&
+                        <div>
+                            {item.icon}
+                        </div>
+                    }
+                    <p>
+                        {item.label}
+                    </p>
+                </li>
+            )
 
-                <p>
-                    {item.label}
-                </p>
-            </li>
-        )
     })
 
     const findContextCoord = () => {

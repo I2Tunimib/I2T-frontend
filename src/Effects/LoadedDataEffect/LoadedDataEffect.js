@@ -52,7 +52,7 @@ const LoadedDataEffect = () => {
                             name: key,
                             selected: false,
                             type: 'dataCol',
-                            riconciliated: false,
+                            reconciliated: false,
                         }
                 })
             }

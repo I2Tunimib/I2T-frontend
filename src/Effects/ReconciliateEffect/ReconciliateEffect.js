@@ -7,6 +7,7 @@ import DropdownModal from "../../SharedComponents/DropdownModal/DropdownModal";
 import {reconciliateService} from "../../Http/httpServices";
 import ClassicModal from "../../SharedComponents/ClassicModal/ClassicModal";
 import { noReconciliate} from "../../Redux/action/reconciliate";
+import {reconciliatedCol, addExtMetaCol} from "../../Redux/action/loadColumns";
 
 
 const ReconciliateEffect = () => {
@@ -35,12 +36,19 @@ const ReconciliateEffect = () => {
     const dispatchNoReconciliate = () => {
         dispatch(noReconciliate())
     }
+    const dispatchReconciliatedCol = (name, reconciliator) => {
+        dispatch(reconciliatedCol(name, reconciliator))
+    }
+
 
 
     React.useEffect(()=>{
         if(ItemsToReconciliate.length >= 1){
             setIsProcessOk(false);
             setReconciliatorsModalIsOpen(true);
+        } else {
+            setIsProcessOk(false);
+            setReconciliatorsModalIsOpen(false);
         }
     }, [ItemsToReconciliate])
 
@@ -60,10 +68,16 @@ const ReconciliateEffect = () => {
                     dispatchNoReconciliate();
                     return;
                 }
+                const reconciliatedCol = [];
                 for (const item of reconResponse.data.items){
-                    console.log(item);
-                    console.log(item.metadata);
                     dispatchMeta(item.column, item.index, item.metadata);
+                    if (!reconciliatedCol.includes(item.column)) {
+                        console.log(item.column);
+                        reconciliatedCol.push(item.column);
+                        console.log(selectedRecon);
+                        dispatchReconciliatedCol(item.column, selectedRecon.label);
+                        // dispatchAddExtMetaCol(`${item.column}(${selectedRecon})`, "extMetaCol", item.column);
+                    }
                 }
                 dispatchNoLoadingState();
                 setIsProcessOk(true);
@@ -73,7 +87,6 @@ const ReconciliateEffect = () => {
                 dispatchError('Impossible to connect to riconciliator service');
                 dispatchNoReconciliate();
             }
-            // TODO remvove reconciliateitems from state
         })()
     }
 

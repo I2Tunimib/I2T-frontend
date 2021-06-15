@@ -31,3 +31,20 @@ export const deleteAllColumns = () => {
         type: "DELETEALLCOLS"   
     }
 }
+
+export const reconciliatedCol = (column, reconciliator) => {
+    return {
+        type: "RECONCILIATECOL",
+        column,
+        reconciliator
+    }
+}
+
+export const addExtMetaCol = (name, colType, extendedCol ) => {
+    return {
+        type: "ADDEXTMETACOL",
+        name,
+        colType,
+        extendedCol,
+    }
+}

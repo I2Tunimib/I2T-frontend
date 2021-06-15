@@ -99,6 +99,7 @@ const Table = () => {
                             type: col.type,
                             new: col.new,
                             selected: col.selected,
+                            reconciliated: col.reconciliated,
                             customBodyRenderLite: (dataIndex, rowIndex) => {
                                 return (
                                     <>
@@ -106,6 +107,7 @@ const Table = () => {
                                             dataIndex={dataIndex}
                                             rowIndex={rowIndex}
                                             keyName={col.name}
+                                            col={col}
                                             rowsPerPage={rowsPerPage}
                                             pageIndex={pageIndex} 
                                             lastDeletedCol={lastDeletedCol}

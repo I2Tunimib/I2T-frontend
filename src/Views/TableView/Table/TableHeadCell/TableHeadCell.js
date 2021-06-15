@@ -3,12 +3,13 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { addContext, removeContext } from "../../../../Redux/action/openContext";
 import { selectColumn, deselectColumn, deleteColumn } from "../../../../Redux/action/loadColumns";
-import { selectContext, deleteContext } from "../../../../ContextItems/ContextItems";
+import { selectContext, deleteContext, extendColMetaContext } from "../../../../ContextItems/ContextItems";
 import { ReactComponent as SelectedIcon } from "../../../../Assets/icon-set/selected/select.svg";
 import { ReactComponent as UnselectedIcon } from "../../../../Assets/icon-set/selected/select-empty.svg";
 import { ReactComponent as NewIcon } from "../../../../Assets/icon-set/new/new.svg";
 import { ReactComponent as RiconciliatedIcon} from "../../../../Assets/icon-set/riconciliate/link.svg";
-import { Style } from "@material-ui/icons";
+import {extendColMeta} from "../../../../Redux/action/loadDataSuccess";
+import { addExtMetaCol} from "../../../../Redux/action/loadColumns";
 
 const TableHeadCell = (props) => {
 
@@ -31,7 +32,12 @@ const TableHeadCell = (props) => {
     const dispatchRemoveContext = () => {
         dispatch(removeContext());
     }
-
+    const dispatchExtendColMeta = (colName, reconciliator) => {
+        dispatch(extendColMeta(colName, reconciliator));
+    }
+    const dispatchAddExtMetaCol = (name, colType, extendedCol) => {
+        dispatch(addExtMetaCol(name, colType, extendedCol));
+    }
 
     const displayContextMenu = (e, col) => {
         e.preventDefault();
@@ -42,7 +48,12 @@ const TableHeadCell = (props) => {
             xPos,
             yPos,
             type: "headerContext",
-            items: [
+            items: col.reconciliated ? [
+                selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext),
+                deleteContext(col, dispatchDeleteCol, dispatchRemoveContext),
+                extendColMetaContext(col, dispatchExtendColMeta, dispatchRemoveContext, dispatchAddExtMetaCol),
+            ]: 
+            [
                 selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext),
                 deleteContext(col, dispatchDeleteCol, dispatchRemoveContext),
             ]
@@ -78,7 +89,7 @@ const TableHeadCell = (props) => {
                             <NewIcon />
                         }
                         {
-                            col.riconciliated && 
+                            col.reconciliated && 
                             <RiconciliatedIcon/>
                         }
                     </div>
@@ -94,6 +105,36 @@ const TableHeadCell = (props) => {
                     {col.label}
                 </div>
 
+            }
+            {
+                col.type === 'extMetaCol' &&
+                <div className={`${style.headerCell}`}
+                    ref={(r) => { handleRef(r) }}
+                    onContextMenu={(e) => { displayContextMenu(e, col) }}>
+                    <div className={style.statusCell}>
+                        {
+                            col.selected &&
+                            <SelectedIcon />
+                        }
+                        {
+                            !col.selected &&
+                            <UnselectedIcon />
+                        }
+                        {
+                            col.new &&
+                            <NewIcon />
+                        }
+                        {
+                            col.reconciliated && 
+                            <RiconciliatedIcon/>
+                        }
+                    </div>
+                    <div className={style.accessorCell}>
+                        <p>
+                            {col.label}
+                        </p>
+                    </div>
+                </div>
             }
 
         </>

@@ -39,6 +39,7 @@ const HasExtendedEffect = () => {
                         name: previousCol.name,
                         selected: previousCol.selected,
                         new: false,
+                        reconciliated: false,
                     })
                     break;
                 }
