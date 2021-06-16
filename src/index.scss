@@ -1,0 +1,164 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-y: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/*bootstrap styles */
+
+.modal-footer {
+  justify-content: space-between !important;
+}
+
+.main-table {
+  tr td:first-child {
+    max-width: 3rem;
+    width: 2rem;
+  }
+  tr th:first-child {
+    max-width: 3rem;
+    width: 2rem;
+  }
+  .MuiTableHead-root .MuiTableRow-root .MuiTableCell-head {
+    cursor: unset;
+  }
+
+  .MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:not(:first-child) {
+    font-weight: bold;
+    resize: horizontal;
+    overflow-x: overlay;
+    overflow-y: hidden;
+  }
+
+  .MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:first-child {
+    max-width: 3rem;
+    width: 3rem;
+    min-width: 0px;
+    border-right: black 1px solid;
+  }
+
+  /*.MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:not(:first-child){
+  border-top: black 2px solid;
+  z-index: 5;
+}*/
+  .MuiTableBody-root .MuiTableRow-root .MuiTableCell-root:first-child {
+    max-width: 2rem;
+    width: 2rem;
+    min-width: none;
+    border-right: black 1px solid;
+    overflow-y: hidden;
+  }
+
+  .MuiToolbar-root {
+    display: block !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-bottom: black 1px solid;
+  }
+
+  .MuiToolbar-regular.MuiToolbar-root .MuiButtonBase-root {
+    display: none !important;
+  }
+
+  .MuiTablePagination-root .MuiToolbar-root {
+    display: flex !important;
+  }
+
+  .MuiTableRow-root.MuiTableRow-footer .MuiTablePagination-actions button {
+    display: inline-flex !important;
+  }
+
+  .MuiPaper-root {
+    height: 100vh !important;
+  }
+
+  .green {
+    background-color: green;
+  }
+
+  .orange {
+    background-color: orange;
+  }
+
+  td.MuiTableCell-root {
+    resize: vertical;
+    overflow-y: overlay;
+    overflow-x: hidden;
+  }
+}
+
+.meta-data-table{
+  
+  .MuiToolbar-regular.MuiToolbar-root .MuiButtonBase-root {
+    display: none !important;
+  }
+
+  .MuiTablePagination-root .MuiToolbar-root {
+    display: flex !important;
+  }
+
+  .MuiTableRow-root.MuiTableRow-footer .MuiTablePagination-actions button {
+    display: inline-flex !important;
+  }
+
+  .MuiToolbar-regular{
+    min-height: 0 !important;
+  }
+}
+
+.big-modal{
+  .modal-dialog {
+    max-width: 60vw !important;
+  }
+}
+
+.green {
+  background-color: green;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.orange {
+  background-color: orange;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.flex-center {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.flex-inline {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  position:relative;
+  bottom: 0.7rem;
+  .action-icon {
+    width:1rem;
+    height: 1rem;
+    svg {
+      width:1rem;
+      height: 1rem;
+      cursor: pointer;
+    }
+  }
+}

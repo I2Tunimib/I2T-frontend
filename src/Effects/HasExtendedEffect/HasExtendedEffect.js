@@ -1,6 +1,6 @@
 import React from "react";
 import {useSelector, useDispatch} from "react-redux";
-import {loadColumns} from "../../Redux/action/loadColumns";
+import {loadColumns} from "../../Redux/action/columns";
 import {hasExtended} from "../../Redux/action/hasExtended";
 
 const HasExtendedEffect = () => {

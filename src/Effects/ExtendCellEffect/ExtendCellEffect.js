@@ -5,7 +5,7 @@ import {getOptionsToExtend, getLineToExtend} from "../../Http/httpServices";
 import {displayError} from "../../Redux/action/error";
 import InputModal from "../../SharedComponents/InputModal/InputModal";
 import RadioModal from "../../SharedComponents/RadioModal/RadioModal";
-import {updateLine} from "../../Redux/action/loadDataSuccess";
+import {updateLine} from "../../Redux/action/data";
 import {popToExtendCol} from "../../Redux/action/toExtendRows";
 import {extendedRow} from "../../Redux/action/extendRow";
 

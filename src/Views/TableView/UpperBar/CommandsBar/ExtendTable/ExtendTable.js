@@ -3,16 +3,17 @@ import { useSelector, useDispatch } from "react-redux";
 import { displayError } from "../../../../../Redux/action/error";
 import { setLoadingState, unsetLoadingState } from "../../../../../Redux/action/loading";
 import { getLineToExtend } from "../../../../../Http/httpServices";
-import { updateLine } from "../../../../../Redux/action/loadDataSuccess";
+import { updateLine } from "../../../../../Redux/action/data";
 import {isExtending} from "../../../../../Redux/action/hasExtended";
 import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
 import DropdownModal from "../../../../../SharedComponents/DropdownModal/DropdownModal";
 import {addToExtendRows, removeAllToExtendRows} from "../../../../../Redux/action/toExtendRows";
+import { RootState } from "../../../../../Redux/store";
 
 
 const ExtendTable = () => {
-    const LoadedColumns = useSelector(state => state.LoadedColumns);
-    const LoadedData = useSelector(state => state.LoadedData);
+    const LoadedColumns = useSelector((state) => state.Columns);
+    const LoadedData = useSelector((state )=> state.Data);
     const dispatch = useDispatch();
 
     const dispatchError = (error) => {
