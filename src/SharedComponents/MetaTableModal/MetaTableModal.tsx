@@ -12,7 +12,7 @@ import { ReactComponent as SelectIcon } from "../../Assets/icon-set/selected/sel
 import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/selected/select-empty.svg";
 import { addMetadata } from "../../Redux/action/data";
 import { useDispatch } from "react-redux";
-
+import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
 
 
 
@@ -108,6 +108,10 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         setShow(false);
     }
 
+    const undo = () => {
+        setMyMetaData(metaData);
+    }
+
 
     return (
         <>
@@ -115,7 +119,8 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
 
                 <Modal show={show} onHide={() => { setShow(false) }} className='big-modal'>
                     <Modal.Header closeButton>
-                        <Modal.Title>{titleText}</Modal.Title>
+                        <Modal.Title>{titleText} <img src={undoIcon} className={style.undoIcon} onClick={() => {undo()}}/></Modal.Title>
+                        
                     </Modal.Header>
                     <Modal.Body>
                         <div className='meta-data-table'>
