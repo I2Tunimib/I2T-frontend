@@ -14,9 +14,10 @@ import { contextTypeEnum } from "../../../../Enums/context-type.enum";
 import { cellPropsInterface } from "../../../../Interfaces/cell-props.interface";
 import { cellInterface } from "../../../../Interfaces/cell.interface";
 import MetaTableModal from "../../../../SharedComponents/MetaTableModal/MetaTableModal";
+import { couldStartTrivia } from "typescript";
 
 const Cell = (props: cellPropsInterface) => {
-    const { dataIndex, col, rowsPerPage, pageIndex, } = props;
+    const { dataIndex, col, rowsPerPage, pageIndex } = props;
     const keyName = col.name;
 
     const LoadedData = useSelector((state: RootState) => state.Data);
@@ -26,11 +27,13 @@ const Cell = (props: cellPropsInterface) => {
     const [idLinks, setIdLinks] = React.useState<JSX.Element[]>();
     const [itHasToExt, setItHasToExt] = React.useState(false);
     const [modMetaModalIsOpen, setModMetaModalIsOpen] = React.useState(false);
-    const [tableMetaModalIsOpen, setTableMetaModalsOpen] = React.useState (false);
+    const [tableMetaModalIsOpen, setTableMetaModalsOpen] = React.useState(false);
     const [dotColor, setDotColor] = React.useState('')
     let clickRef = React.useRef(null);
 
     const cellValue: cellInterface = LoadedData[dataIndex] ? LoadedData[dataIndex][keyName] : null;
+    const ids = cellValue ? cellValue.ids : [];
+    const meta = cellValue ? cellValue.metadata : [];
     const payLoad = {
         column: keyName,
         index: dataIndex,
@@ -39,22 +42,24 @@ const Cell = (props: cellPropsInterface) => {
 
     React.useEffect(() => {
         if (col.type === 'METAID') {
-            let idString = ''
-            setIdLinks(cellValue.ids.map((el: string) => {
-                const link = `https://www.wikidata.org/wiki/${el}`
-                return (
-                    <a key={el} href={link} target="_blank">
-                        {el}
-                    </a>
-                )
-            }));
+            if (cellValue.ids) {
+                setIdLinks(cellValue.ids.map((el: string) => {
+                    const link = `https://www.wikidata.org/wiki/${el}`
+                    return (
+                        <a key={el} href={link} target="_blank" rel="noreferrer">
+                            {el}
+                        </a>
+                    )
+                }));
+            }
+
             /*for (const el of idArr) {
                 idString = idString + {el} + '';
                 console.log(idString);
             }*/
             // setIdLinks(idString);
         }
-    }, [col.type])
+    }, [col.type, ids])
 
     const dispatch = useDispatch();
     const dispatchEditableCell = (rowIndex: number, keyName: string) => {
@@ -85,7 +90,7 @@ const Cell = (props: cellPropsInterface) => {
 
 
     const [contextCellItems, setContextCellItems] = React.useState([modContext, deleteRowContext]);
-    
+
 
 
     // setting context at init 
@@ -96,33 +101,43 @@ const Cell = (props: cellPropsInterface) => {
     }, [HasExtended, pageIndex, rowsPerPage, ToExtendRows])*/
 
     React.useEffect(() => {
-        if (keyName !== 'index') {
-            if (itHasToExt) {
-                // setContextCellItems([modContext, extendContext, metaDataContext, riconciliateCellContext])
-            } else {
-                if(cellValue.metadata.length > 0) {
-                    setContextCellItems([modContext, metaDataContext, riconciliateCellContext, viewMetaTableContext]);
-                } else  {
-                    setContextCellItems([modContext, metaDataContext, riconciliateCellContext]);
+        if (cellValue) {
+            if (keyName !== 'index') {
+                if (itHasToExt) {
+                    // setContextCellItems([modContext, extendContext, metaDataContext, riconciliateCellContext])
+                } else {
+                    if (cellValue.metadata.length > 0) {
+                        setContextCellItems([modContext, metaDataContext, riconciliateCellContext, viewMetaTableContext]);
+                    } else {
+                        setContextCellItems([modContext, metaDataContext, riconciliateCellContext]);
+                    }
+
                 }
-                
+            } else {
+                setContextCellItems([deleteRowContext]);
             }
-        } else {
-            setContextCellItems([deleteRowContext]);
         }
 
-    }, [itHasToExt,cellValue.metadata])
+
+    }, [itHasToExt, cellValue])
 
     React.useEffect(() => {
-        if (cellValue.type === "DATA" && cellValue.metadata.length > 0) {
-            setDotColor('orange');
-            for (const meta of cellValue.metadata) {
-                if (meta.match === true) {
-                    setDotColor('green');
+
+        if (cellValue) {
+
+            if (cellValue.type === "DATA" && cellValue.metadata.length > 0) {
+                setDotColor('orange');
+                console.log(cellValue.label);
+                for (const meta of cellValue.metadata) {
+                    if (meta.match === true) {
+                        console.log('ciao4')
+                        setDotColor('green');
+                    }
                 }
             }
         }
-    }, [cellValue.metadata])
+
+    }, [cellValue, meta])
 
     // const [cellValue, setCellValue] = React.useState(null);
 
@@ -163,55 +178,60 @@ const Cell = (props: cellPropsInterface) => {
 
 
     return (
-        <>
-            {col.type !== 'METAID' &&
-                <div onContextMenu={(e) => { displayContextMenu(e) }} ref={(r) => { handleRef(r) }} onClick={() => { dispatchRemoveContext() }} className={style.dataCell}>
-                    {cellValue.metadata.length > 0 &&
-                        <div className={`${style.metaDot} ` + dotColor}>
+        <> {
+            cellValue &&
+            <>
+                {
+                    col.type !== 'METAID' &&
+                    <div onContextMenu={(e) => { displayContextMenu(e) }} ref={(r) => { handleRef(r) }} onClick={() => { dispatchRemoveContext() }} className={style.dataCell}>
+                        {cellValue.metadata.length > 0 &&
+                            <div className={`${style.metaDot} ` + dotColor}>
 
+                            </div>
+                        }
+
+                        <div>
+                            {cellValue &&
+                                cellValue.label}
                         </div>
-                    }
-
-                    <div>
-                        {cellValue &&
-                            cellValue.label}
                     </div>
-                </div>
-            }
-            {col.type === 'METAID' &&
-                <div className={style.idLinksContainer}>
-                    {idLinks}
-                </div>
-            }
-            {
-                modMetaModalIsOpen &&
-                <ClassicModal
-                    metadataModal={true}
-                    titleText={`Metadati cella: ${keyName}-${dataIndex}`}
-                    text={cellValue.metadata.length > 0 ? JSON.stringify(cellValue.metadata, null, 2) : 'Non ci sono metadati disponibili per questa cella'}
-                    showState={modMetaModalIsOpen}
-                    onClose={() => { setModMetaModalIsOpen(false) }}
-                    mainButtonLabel={cellValue.metadata.length > 0 ? 'Modifica' : undefined}
-                    mainButtonAction={() => {/*Do something here */ }}
-                    secondaryButtonLabel="Chiudi"
-                    secondaryButtonAction={() => setModMetaModalIsOpen(false)}
-                />
-            }
-            { tableMetaModalIsOpen && 
-            <MetaTableModal 
-                titleText={cellValue.label}
-                metaData={cellValue.metadata}
-                dataIndex={dataIndex}
-                colName={keyName}
-                mainButtonLabel="Conferma"
-                secondaryButtonLabel='Annulla'
-                secondaryButtonAction={()=>{setTableMetaModalsOpen(false)}}
-                showState={tableMetaModalIsOpen}
-                onClose={()=>{setTableMetaModalsOpen(false)}}
+                }
+                {col.type === 'METAID' &&
+                    <div className={style.idLinksContainer}>
+                        {idLinks}
+                    </div>
+                }
+                {
+                    modMetaModalIsOpen &&
+                    <ClassicModal
+                        metadataModal={true}
+                        titleText={`Metadati cella: ${keyName}-${dataIndex}`}
+                        text={cellValue.metadata.length > 0 ? JSON.stringify(cellValue.metadata, null, 2) : 'Non ci sono metadati disponibili per questa cella'}
+                        showState={modMetaModalIsOpen}
+                        onClose={() => { setModMetaModalIsOpen(false) }}
+                        mainButtonLabel={cellValue.metadata.length > 0 ? 'Modifica' : undefined}
+                        mainButtonAction={() => {/*Do something here */ }}
+                        secondaryButtonLabel="Chiudi"
+                        secondaryButtonAction={() => setModMetaModalIsOpen(false)}
+                    />
+                }
+                {tableMetaModalIsOpen &&
+                    <MetaTableModal
+                        titleText={cellValue.label}
+                        metaData={cellValue.metadata}
+                        dataIndex={dataIndex}
+                        colName={keyName}
+                        mainButtonLabel="Conferma"
+                        secondaryButtonLabel='Annulla'
+                        secondaryButtonAction={() => { setTableMetaModalsOpen(false) }}
+                        showState={tableMetaModalIsOpen}
+                        onClose={() => { setTableMetaModalsOpen(false) }}
 
-            />
+                    />
 
-            }
+                }
+            </>
+        }
 
         </>
     )

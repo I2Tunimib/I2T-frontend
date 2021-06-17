@@ -1,8 +1,8 @@
 import produce from "immer";
 import { dataActionInterface } from "../../Interfaces/data-action.interface";
 
-export const loadDataSuccessReducer = (state: any[] = [], action:dataActionInterface) => {
-    switch(action.type) {
+export const loadDataSuccessReducer = (state: any[] = [], action: dataActionInterface) => {
+    switch (action.type) {
         case 'LOADSAVED':
             return state = action.data!;
         case "LOADED":
@@ -27,7 +27,9 @@ export const loadDataSuccessReducer = (state: any[] = [], action:dataActionInter
                 action.line[key] = {
                     label: action.line[key].label,
                     metadata: action.line[key].metadata,
-                } 
+                    type: action.line[key].type,
+                    ids: action.line[key].ids,
+                }
             }
             const nextState = produce(state, draftState => {
                 draftState[action.index!] = action.line;
@@ -39,21 +41,32 @@ export const loadDataSuccessReducer = (state: any[] = [], action:dataActionInter
                 ...state.slice(action.index! + 1)
             ]
             console.log(newState.length);
-            for (let i = 0; i < newState.length; i++){
+            /*for (let i = 0; i < newState.length; i++) {
+                console.log(i);
                 newState[i]["index"] = {
                     type: "INDEX",
                     label: (i + 1).toString(),
                     metadata: [],
                     ids: [],
                 };
-            }
+            }*/
+            const nextStateReassignIndex = produce(newState, draftState => {
+                for (let i = 0; i < newState.length; i++) {
+                    draftState[i]['index'] = {
+                        type: "INDEX",
+                        label: (i + 1).toString(),
+                        metadata: [],
+                        ids: [],
+                    }
+                }
+            })
             console.log(newState);
-            return newState;
+            return nextStateReassignIndex;
         case "ADDMETA":
-             const nextStateMeta = produce(state, draftState => {
-                 draftState[action.index!][action.colName!].metadata = action.metadata
-             })
-             return state = nextStateMeta;
+            const nextStateMeta = produce(state, draftState => {
+                draftState[action.index!][action.colName!].metadata = action.metadata
+            })
+            return state = nextStateMeta;
         case "EXTENDMETA":
             console.log(action.colName);
             const extendedState = JSON.parse(JSON.stringify(state));
@@ -63,7 +76,7 @@ export const loadDataSuccessReducer = (state: any[] = [], action:dataActionInter
                     if (key === action.colName) {
                         // console.log(key);
                         const idArray = [];
-                        for (const feature of row[key].metadata){
+                        for (const feature of row[key].metadata) {
                             idArray.push(feature.id);
                         }
                         row[`${action.colName} (${action.reconciliator})`] = {

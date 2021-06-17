@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { loadName } from "../../Redux/action/name";
 import { deleteData, updateLine } from "../../Redux/action/data";
 import { Redirect } from "react-router-dom";
-import { loadColumns } from "../../Redux/action/columns";
+import { deleteAllColumns, loadColumns } from "../../Redux/action/columns";
 import { displayError } from "../../Redux/action/error";
 import { RootState } from "../../Redux/store";
 import { colInterface } from "../../Interfaces/col.interface";
@@ -28,6 +28,10 @@ const LoadedDataEffect = () => {
 
     const dispatchColumns = (columns: colInterface[]) => {
         dispatch(loadColumns(columns));
+    }
+
+    const dispatchDeleteAllCols = () => {
+        dispatch(deleteAllColumns());
     }
 
     const dispatchDeleteData = () => {
@@ -103,7 +107,7 @@ const LoadedDataEffect = () => {
                     secondaryButtonAction={dispatchDeleteData}
                     value={LoadedName}
                     showState={dataHasBeenLoaded}
-                    onClose={() => { setDataHasBeenLoaded(false) }}
+                    onClose={() => { setDataHasBeenLoaded(false); dispatchDeleteAllCols(); }}
                 />
             }
             {   isConfirmed &&

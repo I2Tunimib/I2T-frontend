@@ -1,8 +1,12 @@
 .upperBar {
     display: flex;
     flex-direction: row;
+    padding:0.8rem 0 0.8rem 2rem;
+    display: flex;
+    justify-content: space-between;
 }
 .upperBar h2 {
-    width: 8em;
+    white-space: nowrap;
+
     text-align: left;
 }

@@ -1,6 +1,7 @@
 import   {ReactComponent as SelectIcon} from "../Assets/icon-set/selected/select.svg";
 import  {ReactComponent as DeselectIcon} from "../Assets/icon-set/selected/select-empty.svg";
 import  {ReactComponent as DeleteIcon} from "../Assets/icon-set/delete/trash.svg";
+
 import {ReactComponent as EditIcon} from "../Assets/icon-set/edit/pencil.svg";
 import {ReactComponent as ExtendIcon} from "../Assets/icon-set/extend/extend.svg";
 import {ReactComponent as MetaIcon} from "../Assets/icon-set/metadata/tag.svg";
@@ -115,7 +116,7 @@ export const extendColMetaContext = (col: colInterface, dispatchExtendColMeta: F
 
 export const viewMetaTable = (openModal: Function, removeContext: Function) => {
     return ({
-        icon: <></>,
+        icon: <MetaIcon/>,
         label: "Visualizza metadati",
         action: () => {
             openModal(true);

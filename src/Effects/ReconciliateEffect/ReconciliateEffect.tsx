@@ -64,6 +64,7 @@ const ReconciliateEffect = () => {
             }
             const reconResponse = await reconciliateService(selectedRecon!.value, reqPayload)
             if (await !reconResponse.error) {
+                console.log(reconResponse);
                 const reconciliatedCol: string[] = [];
                 for (const item of reconResponse.data.items){
                     dispatchMeta(item.column, item.index, item.metadata);

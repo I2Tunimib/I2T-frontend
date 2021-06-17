@@ -4,7 +4,7 @@ import { errorHandler } from "./errorHandler";
 import { httpResponseInterface } from "../Interfaces/http-response.interface";
 
 
-export async function getAllTables(): Promise <httpResponseInterface> {
+export async function getAllTables(): Promise <httpResponseInterface> { 
     const response = await axios.get(TABLES + "/");
     const error = errorHandler(await response);
     if (await !error){

@@ -4,7 +4,7 @@ import TableHeadCell from "./TableHeadCell/TableHeadCell";
 import Cell from "./Cell/Cell";
 import React from "react";
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
-import {deleteLine} from "../../../Redux/action/data";
+import { deleteLine } from "../../../Redux/action/data";
 import UpperBar from "../UpperBar/UpperBar";
 import { RootState } from "../../../Redux/store";
 import { colInterface } from "../../../Interfaces/col.interface";
@@ -30,7 +30,7 @@ const Table = () => {
         },
         customToolbar: () => {
             return (
-                <UpperBar/>
+                <UpperBar />
             )
         },
         tableBodyHeight: /*(window.innerHeight - 150).toString() + "px"*/ "75vh",
@@ -106,6 +106,7 @@ const Table = () => {
                             reconciliated: col.reconciliated,
                             reconciliator: col.reconciliator,
                             customBodyRenderLite: (dataIndex: number, rowIndex: number) => {
+
                                 return (
                                     <>
                                         <Cell
@@ -114,10 +115,10 @@ const Table = () => {
                                             keyName={col.name}
                                             col={col}
                                             rowsPerPage={rowsPerPage}
-                                            pageIndex={pageIndex} 
-                                            // lastDeletedCol={lastDeletedCol}
-                                            // lastSortedCol={lastSortedCol}
-                                            />
+                                            pageIndex={pageIndex}
+                                        // lastDeletedCol={lastDeletedCol}
+                                        // lastSortedCol={lastSortedCol}
+                                        />
                                     </>
                                 )
                             }

@@ -146,12 +146,12 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                                 {
                                                                     myMetaData[dataIndex].match &&
                                                                     <div className='action-icon'>
-                                                                        <DeselectIcon onClick={() => { deConfirmMeta(dataIndex) }} />
+                                                                        <SelectIcon onClick={() => { deConfirmMeta(dataIndex) }} />
                                                                     </div>
                                                                 }
                                                                 {   !myMetaData[dataIndex].match &&
                                                                     <div className='action-icon'>
-                                                                        <SelectIcon onClick={() => { confirmMeta(dataIndex) }} />
+                                                                        <DeselectIcon onClick={() => { confirmMeta(dataIndex) }} />
                                                                     </div>
                                                                 }
 

@@ -6,18 +6,14 @@ import { Card } from "react-bootstrap";
 
 const UpperBar = () => {
     return (
-        <Card>
-            <Card.Body>
+        <>
                 <div className={style.upperBar}>
 
                     <TableName />
 
                     <CommandsBar />
-
-
                 </div>
-            </Card.Body>
-        </Card>
+        </>
 
     )
 }

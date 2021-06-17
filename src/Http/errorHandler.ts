@@ -3,8 +3,8 @@ export const errorHandler = (response: any) => {
     
         return response.statusText;
     }
-    if (response.error){
-        return JSON.stringify(response.error);
+    if (response.data.error){
+        return JSON.stringify(response.data.error);
     }
     return false;
 
