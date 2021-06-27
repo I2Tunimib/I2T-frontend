@@ -3,11 +3,13 @@ import React from "react";
 import { RootState } from "../../../../../Redux/store";
 import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
 import { colInterface } from "../../../../../Interfaces/col.interface";
+import ExtendModal from "../../../../../SharedComponents/ExtendModal/ExtendModal";
 
 const ExtendTable = () => {
     const Columns = useSelector((state: RootState )=> state.Columns);
     const [isExtensible, setIsExtensible] = React.useState<boolean>(false);
     const [selectedCol, setSelectedCol] = React.useState<colInterface | null>(null)
+    const [extendDialogIsOpen, setExtendDialogIsOpen] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         const selectedAndReconciliated = [];    
@@ -26,9 +28,6 @@ const ExtendTable = () => {
     }, [Columns])
 
 
-    const extend = () => {
-        
-    }
     
     return (
         <>
@@ -37,9 +36,21 @@ const ExtendTable = () => {
             <>
             <MainButton
             label="Estendi Colonna Selezionata"
-            cta={() => {extend()}}
+            cta={() => {setExtendDialogIsOpen(true)}}
             />
             </>
+        }
+        {   extendDialogIsOpen &&
+            <ExtendModal
+            titleText={`Estendi colonna ${selectedCol!.label}`}
+            text={'Inserisci le opzioni di estensione'}
+            mainButtonAction={() => {}}
+            mainButtonLabel={'Conferma'}
+            secondaryButtonAction={()=>{setExtendDialogIsOpen(false)}}
+            secondaryButtonLabel={'Annulla'}
+            showState={extendDialogIsOpen}
+            onClose={()=>{setExtendDialogIsOpen(false)}}
+            />
         }
         </>
     )

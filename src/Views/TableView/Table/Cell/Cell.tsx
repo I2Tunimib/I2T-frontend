@@ -43,7 +43,7 @@ const Cell = (props: cellPropsInterface) => {
 
     React.useEffect(() => {
         if (cellValue) {
-            for (const reconciliator of Config.reconciliators) {
+            for (const reconciliator of Config!.reconciliators) {
                 if (reconciliator.name === col.reconciliator) {
                     setIdLinks(cellValue.metadata.map((el: any) => {
                         const link = reconciliator.entityPageUrl + el.id;
