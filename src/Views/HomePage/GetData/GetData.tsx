@@ -158,9 +158,9 @@ const GetData: React.FC = () => {
                                     Da dove vuoi caricare i dati?
                                 </Form.Label>
                                 <Form.Control as="select" onChange={(e) => { setDataSource(e.target.value); }}>
-                                    <option value="Table Server">Table Server</option>
-                                    <option value="Tabella Salvata">Tabella salvata</option>
-                                    <option value="File system">File system</option>
+                                    <option value="Table Server">Table Server (tutte le tabelle csv)</option>
+                                    <option value="Tabella Salvata">Table Server (tabelle salvate)</option>
+                                    <option value="File system">File system locale (CSV, JSON)</option>
                                 </Form.Control>
                             </Form.Group>
                         </Form>

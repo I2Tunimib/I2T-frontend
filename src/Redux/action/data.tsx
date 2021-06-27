@@ -1,4 +1,6 @@
+import { addAllMetaActionInterface } from "../../Interfaces/add-all-meta-action.interface"
 import { dataActionInterface } from "../../Interfaces/data-action.interface"
+import { metaResponseInterface } from "../../Interfaces/meta-response.interface"
 
 export const loadDataSuccess = (data: any []): dataActionInterface => {
     return {
@@ -11,7 +13,7 @@ export const deleteData = (): dataActionInterface => {
         type:"CANCELDATA"
     }
 }
-
+// TODO change reference here
 export const updateLine = (index: number, line: any): dataActionInterface => {
     return {
         type:"UPDATELINE",
@@ -42,6 +44,13 @@ export const addMetadata = (colName: string, index: number, metadata: any[]): da
          metadata,
     }
 
+}
+
+export const addAllMetaData = (responseMeta: metaResponseInterface): addAllMetaActionInterface => {
+    return ({
+        type: "ADDALLMETA",
+        responseMeta,
+    })
 }
 
 export const extendColMeta = (colName: string, reconciliator: string): dataActionInterface => {

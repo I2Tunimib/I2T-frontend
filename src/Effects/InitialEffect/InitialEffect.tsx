@@ -8,12 +8,11 @@ import {unsetLoadingState} from "../../Redux/action/loading";
 import { removeEditableCell } from "../../Redux/action/editableCell";
 import {deleteAllColumns} from "../../Redux/action/columns";
 import {extendedRow} from "../../Redux/action/extendRow";
-import {getReconciliators} from "../../Redux/action/getRiconciliators";
-import {getAllReconciliator} from "../../Http/httpServices";
+import {getConfig} from "../../Http/httpServices";
 import {displayError} from "../../Redux/action/error";
 import {noReconciliate} from "../../Redux/action/reconciliate";
 import { removeContext } from "../../Redux/action/contextMenu";
-import { reconciliatorInterface } from "../../Interfaces/reconciliator.interface";
+import { getConfigData } from "../../Redux/action/config";
 
 const InitialEffect = () => {
     const dispatch = useDispatch();
@@ -52,8 +51,8 @@ const InitialEffect = () => {
         dispatch(extendedRow());
     }
 
-    const getReconciliatorsDispatcher = (reconciliators: reconciliatorInterface[]) => {
-        dispatch(getReconciliators(reconciliators));
+    const getConfigDispatcher = (configData: any) => {
+        dispatch(getConfigData(configData));
     }
 
     const dispatchError = (err: string) =>{
@@ -77,12 +76,12 @@ const InitialEffect = () => {
         dispatchNoReconciliate();
         dispatchRemoveContext();
         (async ()=>{
-            const respReconciliators = await getAllReconciliator();
-            if (respReconciliators.error) {
-                dispatchError('Impossible to connect to riconciliator service.');
+            const respConfig = await getConfig();
+            if (respConfig.error) {
+                dispatchError(respConfig.errorText);
             } else {
-                const reconciliators = respReconciliators.data.reconciliators;
-                getReconciliatorsDispatcher(reconciliators);
+                const configData = respConfig.data;
+                getConfigDispatcher(configData);
             }
         })()
     }, [])

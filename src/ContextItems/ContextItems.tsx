@@ -1,13 +1,12 @@
 import   {ReactComponent as SelectIcon} from "../Assets/icon-set/selected/select.svg";
 import  {ReactComponent as DeselectIcon} from "../Assets/icon-set/selected/select-empty.svg";
 import  {ReactComponent as DeleteIcon} from "../Assets/icon-set/delete/trash.svg";
-
+import {ReactComponent as FilterIcon} from "../Assets/icon-set/filter/filter.svg";
 import {ReactComponent as EditIcon} from "../Assets/icon-set/edit/pencil.svg";
 import {ReactComponent as ExtendIcon} from "../Assets/icon-set/extend/extend.svg";
 import {ReactComponent as MetaIcon} from "../Assets/icon-set/metadata/tag.svg";
 import {ReactComponent as RiconciliateIcon} from "../Assets/icon-set/riconciliate/link.svg";
 import { colInterface } from "../Interfaces/col.interface";
-import { contextInterface } from "../Interfaces/context.interface";
 import { contextItemInterface } from "../Interfaces/context-items.interface";
 
 export const selectContext = (col:colInterface, selectCol: Function, deselectCol: Function, removeContext: Function): contextItemInterface => {
@@ -82,7 +81,7 @@ export const deleteLineContext = (index: number, deleteRow: Function, removeCont
 export const seeMetaDataContext = (openModal: Function, removeContext: Function) => {
     return ({
         icon: <MetaIcon/>,
-        label: "Modifica sorgente metadati",
+        label: "Visualizza sorgente metadati",
         action: () => {
             openModal(true);
             removeContext()
@@ -103,12 +102,14 @@ export const riconciliateContext = (reconciliate: Function, payload: any, remove
 }
 
 export const extendColMetaContext = (col: colInterface, dispatchExtendColMeta: Function, removeContext: Function, dispatchAddExtMetaCol: Function) => {
+    const wantToExtend = col.extendedMeta ? false : true;
+    console.log(col);
     return ({
             icon: <ExtendIcon/>,
-            label: "Estendi colonna con metadati",
+            label: wantToExtend ? "Estendi colonna delle entità": "Comprimi colonna delle entità",
             action: () => {
-                dispatchExtendColMeta(col.name, col.reconciliator); // this is broken
-                dispatchAddExtMetaCol(`${col.name} (${col.reconciliator})`, "METAID", col.name);
+                dispatchExtendColMeta(col.name, col.reconciliator); 
+                dispatchAddExtMetaCol(col.name, wantToExtend);
                 removeContext();
             }
     })
@@ -120,6 +121,33 @@ export const viewMetaTable = (openModal: Function, removeContext: Function) => {
         label: "Visualizza metadati",
         action: () => {
             openModal(true);
+            removeContext();
+        }
+    })
+}
+
+export const openFilterDialog = (col: colInterface, setFilterDialogIsOpen: Function,dispatchRemoveFilters: Function, removeContext: Function) => {
+    return ({
+        icon: <FilterIcon/>,
+        label: col.filtered ? "Rimuovi filtri" : "Filtra Colonna...",
+        action: !col.filtered ? () => {
+            console.log('ciao')
+            setFilterDialogIsOpen(true);
+            removeContext();
+        } : () => {
+            console.log('ciao2')
+            dispatchRemoveFilters();
+            removeContext();
+        }
+    })
+}
+
+export const openAutoMatchingDialog = (openAutoDialog: Function, removeContext: Function) => {
+    return ({
+        icon: <MetaIcon/>,
+        label: 'Automatching...',
+        action: () => {
+            openAutoDialog(true);
             removeContext();
         }
     })

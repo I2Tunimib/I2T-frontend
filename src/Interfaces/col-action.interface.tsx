@@ -2,6 +2,7 @@ import { cellTypeEnum } from "../Enums/cell-type.enum";
 import { colInterface } from "./col.interface";
 
 export interface colActionIterface {
+    isExtended?: boolean;
     type: string,
     //Loading phase
     columns?: colInterface [],
@@ -11,4 +12,5 @@ export interface colActionIterface {
     reconciliator: string,
     colType: cellTypeEnum,
     extendedCol: string,
+    filter: string,
 }

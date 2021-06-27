@@ -5,13 +5,10 @@ import loadingReducer from "./loadingReducer";
 import nameLoadReducer from "./nameReducer"
 import loadColumnsReducer from "./loadColumnsReducer";
 import contextReducer from "./contextMenuReducer";
-import hasExtendedReducer from "./hasExtendedReducer";
-import toExtendRowsReducer from "./toExtendRowsReducer";
 import editableCellReducer from "./editableCellReducer";
-import extendRowReducer from "./extendRowReducer";
-import getReconciliatorsReducer from "./getReconciliatorsReducer";
 import reconciliateReducer from "./reconciliateReducer";
-import store from "../store";
+import filterDataReducer from "./filerDataReducer";
+import configReducer from "./configReducer";
 
 
 const allReducers = combineReducers({
@@ -25,8 +22,10 @@ const allReducers = combineReducers({
     // ToExtendRows: toExtendRowsReducer,
     EditableCell: editableCellReducer,
     // ExtendRow: extendRowReducer,
-    Reconciliators: getReconciliatorsReducer,
+    Config: configReducer,
     ItemsToReconciliate: reconciliateReducer,
+    FilteredData: filterDataReducer
+
 })
 
 export default allReducers;

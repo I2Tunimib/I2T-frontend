@@ -1,7 +1,25 @@
-import {BASE_URL, ALL_RECON, SAVED, TABLES} from "./paths";
+import {BASE_URL, ALL_RECON, SAVED, TABLES, CONFIG} from "./paths";
 import axios from "axios";
 import { errorHandler } from "./errorHandler";
 import { httpResponseInterface } from "../Interfaces/http-response.interface";
+
+export async function getConfig(): Promise <httpResponseInterface> {
+    const response = await axios.get(CONFIG);
+    const error =  errorHandler(await response);
+    if(await !error) {
+        return {
+            data: response.data,
+            error: false,
+            errorText: "",
+        }
+    } else {
+        return {
+            errorText: error,
+            error: true, 
+            data: null,
+        }
+    }
+}
 
 
 export async function getAllTables(): Promise <httpResponseInterface> { 

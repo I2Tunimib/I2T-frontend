@@ -7,5 +7,7 @@ export interface colInterface {
     type: cellTypeEnum,
     reconciliated: boolean,
     reconciliator: string,
-    new: boolean
+    new: boolean, 
+    extendedMeta?: boolean,
+    filtered?: string | null,
 }

@@ -1,3 +1,5 @@
+import { metaResponseInterface } from "./meta-response.interface";
+
 export interface dataActionInterface {
     type: string,
     data?: any[],
@@ -7,4 +9,5 @@ export interface dataActionInterface {
     colName?: string,
     metadata?: any[],
     reconciliator?: string,
+    responseMeta?: metaResponseInterface,
 }

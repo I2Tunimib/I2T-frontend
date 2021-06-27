@@ -55,7 +55,17 @@ const loadColumnsReducer = (state: colInterface[] = [], action: colActionIterfac
             })
             return nextState3;
         case "ADDEXTMETACOL":
-            const newCol = {
+            let indexToextend: number | null = null; 
+            console.log(action.extendedCol);
+            for (let t = 0; t < state.length; t++) {
+                if (state[t].name === action.extendedCol) {
+                    indexToextend = t;
+                }
+            }
+            const newState2 = produce(state, draftState => {
+                draftState[indexToextend!].extendedMeta = action.isExtended;
+            })
+            /*const newCol = {
                 label: action.column!,
                 name: action.column!,
                 type: action.colType!,
@@ -70,8 +80,25 @@ const loadColumnsReducer = (state: colInterface[] = [], action: colActionIterfac
                     extendedColIndex = y;
                 }
             }
-            const newState2 = [...state.slice(0, extendedColIndex! + 1), newCol, ...state.slice(extendedColIndex! + 1)]
+            const newState2 = [...state.slice(0, extendedColIndex! + 1), newCol, ...state.slice(extendedColIndex! + 1)]*/
             return state = newState2;
+        case "ADDFILTER":
+            const filteredCols = produce(state, draftState => {
+                for (let f = 0; f < state.length; f++ ) {
+                    draftState[f].filtered = null;
+                    if (state[f].name === action.column) {
+                        draftState[f].filtered = action.filter;
+                    }
+                }
+            })
+            return state = filteredCols;
+        case "REMOVEFILTER":
+            const unfilteredCols = produce(state, draftState => {
+                for (const col of draftState) {
+                    col.filtered = null; 
+                }
+            })
+            return state = unfilteredCols;
         default :
             return state;
     }

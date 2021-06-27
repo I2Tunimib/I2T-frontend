@@ -13,16 +13,16 @@ import { colInterface } from "../../../Interfaces/col.interface";
 const Table = () => {
     const Columns = useSelector((state: RootState) => state.Columns);
     const Data = useSelector((state: RootState) => state.Data);
+    const FilteredData = useSelector((state: RootState) => state.FilteredData)
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const [pageIndex, setPageIndex] = React.useState(0);
     // const [lastDeletedCol, setLastDeletedCol] = React.useState(null);
     // const [lastSortedCol, setLastSortedCol] = React.useState(null);
 
-    const dispatch = useDispatch();
-
     /*const dispatchDeleteLine= (data) => {
         dispatch(deleteLine(data));
     }*/
+    console.log(FilteredData);
 
     const options = {
         draggableColumns: {
@@ -56,13 +56,15 @@ const Table = () => {
                 root: {
                     // backgroundColor: "#FF0000",
                     // change height to remove scrollbar on cell
-                    maxHeight: "8rem",
+                    // maxHeight: "8rem",
                     // width: "100%",
                     margin: "0",
-                    paddingTop: '1rem',
+                    paddingTop: '0.5rem',
+                   // display: "table-flex",
                     textAlign: "center",
                     maxWidth: "50rem",
-
+                    height: "100%",
+                    // width: '100%',
                 }
             },
             MUIDataTableHeadCell: {
@@ -86,7 +88,6 @@ const Table = () => {
 
 
 
-
     return (
         <div className="main-table"> <MuiThemeProvider theme={getMuiTheme()}>
             <MUIDataTable
@@ -105,6 +106,8 @@ const Table = () => {
                             selected: col.selected,
                             reconciliated: col.reconciliated,
                             reconciliator: col.reconciliator,
+                            extendedMeta: col.extendedMeta,
+                            filtered: col.filtered,
                             customBodyRenderLite: (dataIndex: number, rowIndex: number) => {
 
                                 return (
@@ -127,7 +130,7 @@ const Table = () => {
 
                     return newCol;
                 }) as any}
-                data={Data}
+                data={FilteredData}
                 title={""}
                 options={options as any}
             />

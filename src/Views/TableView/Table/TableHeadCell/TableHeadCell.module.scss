@@ -7,6 +7,9 @@
     display: flex;
     justify-content: center;
     height: 2rem;
+    .cursorPointer {
+        cursor: pointer;
+    }
 }
 
 .statusCell svg{
@@ -16,7 +19,9 @@
 }
 
 .accessorCell{
-    height: 2rem;
+    p{
+        margin: 0.2rem;
+    }
 }
 
 .selectedIcon{

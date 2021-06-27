@@ -5,14 +5,13 @@ import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import MainButton from "../MainButton/MainButton";
 import { metaTableModalPropsInterface } from "../../Interfaces/meta-table-modal-props.interface";
 import MUIDataTable from "mui-datatables";
-import { NetworkCellOutlined } from "@material-ui/icons";
-import { Action } from "redux";
 import { ReactComponent as DeleteIcon } from "../../Assets/icon-set/delete/trash.svg";
 import { ReactComponent as SelectIcon } from "../../Assets/icon-set/selected/select.svg";
 import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/selected/select-empty.svg";
 import { addMetadata } from "../../Redux/action/data";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
+import { RootState } from "../../Redux/store";
 
 
 
@@ -21,32 +20,40 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         titleText,
         metaData,
         dataIndex,
-        colName,
+        col,
         mainButtonLabel,
         secondaryButtonLabel,
         secondaryButtonAction,
         showState,
         onClose } = props;
     const [show, setShow] = React.useState(true);
+    const Config = useSelector((state: RootState) => state.Config)
+    const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
+    const colName = col.name;
 
-    const columns = [
-        {
-            name: 'id',
-            label: 'id',
-        }, {
-            name: 'score',
-            label: 'score',
-        }, {
-            name: 'name',
-            label: 'name',
-        }, {
-            name: 'match',
-            label: 'match',
-        }, {
-            name: 'action',
-            label: 'action'
+    React.useEffect(() => {
+        let myCols = []
+        if (Config) {
+            for (const recon of Config.reconciliators) {
+                if (col.reconciliator === recon.name) {
+                    for (const col of recon.metaToViz) {
+                        myCols.push({
+                            name: col,
+                            label: col
+                        })
+                    }
+                    myCols.push({
+                        name: 'action',
+                        label: "action",
+                    })
+                    setColumns(myCols);
+                    break;
+                }
+
+            }
         }
-    ]
+
+    }, [Config, col])
 
     const options = {
         selectableRows: "none",
@@ -119,8 +126,8 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
 
                 <Modal show={show} onHide={() => { setShow(false) }} className='big-modal'>
                     <Modal.Header closeButton>
-                        <Modal.Title>{titleText} <img src={undoIcon} className={style.undoIcon} onClick={() => {undo()}}/></Modal.Title>
-                        
+                        <Modal.Title>{titleText} <img src={undoIcon} className={style.undoIcon} onClick={() => { undo() }} /></Modal.Title>
+
                     </Modal.Header>
                     <Modal.Body>
                         <div className='meta-data-table'>
@@ -154,7 +161,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                                         <SelectIcon onClick={() => { deConfirmMeta(dataIndex) }} />
                                                                     </div>
                                                                 }
-                                                                {   !myMetaData[dataIndex].match &&
+                                                                {!myMetaData[dataIndex].match &&
                                                                     <div className='action-icon'>
                                                                         <DeselectIcon onClick={() => { confirmMeta(dataIndex) }} />
                                                                     </div>
@@ -163,7 +170,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                             </div>
                                                         )
                                                     default:
-                                                        return myMetaData[dataIndex][col.name];
+                                                        return myMetaData[dataIndex][col.name].toString();
                                                 }
                                             }
                                         }
@@ -189,7 +196,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                         }
                         {
                             mainButtonLabel &&
-                            <MainButton cta={() => {confirm()}} label={mainButtonLabel} />
+                            <MainButton cta={() => { confirm() }} label={mainButtonLabel} />
                         }
 
 

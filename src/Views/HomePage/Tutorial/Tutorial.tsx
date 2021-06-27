@@ -5,7 +5,7 @@ import style from "./Tutorial.module.css";
 const Tutorial: React.FC = () => {
     return (
         <>
-            <Accordion defaultActiveKey="0">
+            <Accordion >
                 <Card>
                     <Card.Header className={style.accordionHeader}>
                         <Accordion.Toggle as={Button} variant="link" eventKey="0">

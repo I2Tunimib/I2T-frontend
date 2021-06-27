@@ -36,10 +36,12 @@ const ReconcileCol = () => {
                 payLoad.push({
                     column: col.name,
                     index: i, 
-                    label: LoadedData[i][col.name].label,
+                    // TODO da vedere questa cosa
+                    label: LoadedData[i][col.name].label ? LoadedData[i][col.name].label.replaceAll("/", " ").replaceAll('&', " ") : '',
                 })
             }
         }
+        console.log(payLoad);
         dispatchReconciliate(payLoad);
     }
 

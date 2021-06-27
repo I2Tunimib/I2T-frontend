@@ -42,11 +42,24 @@ export const reconciliatedCol = (column: string, reconciliator: string) => {
     }
 }
 
-export const addExtMetaCol = (column: string, colType: string, extendedCol:string ) => {
+export const addExtMetaCol = (extendedCol:string, isExtended: boolean ) => {
     return {
         type: "ADDEXTMETACOL",
-        column,
-        colType,
         extendedCol,
+        isExtended,
+    }
+}
+
+export const filterCol = (filter: string | null, column: string) => {
+    return {
+        type: "ADDFILTER",
+        filter,
+        column
+    }
+}
+
+export const removeFilter = () => {
+    return {
+        type: "REMOVEFILTER",
     }
 }

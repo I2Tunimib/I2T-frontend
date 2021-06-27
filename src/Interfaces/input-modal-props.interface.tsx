@@ -2,7 +2,7 @@ export interface inputModalPropsInterface {
     inputLabel: string, 
     titleText: string, 
     text?: string, 
-    value: string,
+    value: string | number | undefined,
     mainButtonLabel: string,
     mainButtonAction: Function,
     secondaryButtonLabel: string,
