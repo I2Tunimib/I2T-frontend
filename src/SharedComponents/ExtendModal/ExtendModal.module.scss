@@ -20,3 +20,10 @@
 .dropdown button:hover{
     background-color: #063774 !important;
 }
+
+.fieldContainer {
+    padding: 0.6rem 0;
+    &:first-child {
+        padding-top: 1.2rem;
+    }
+}

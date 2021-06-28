@@ -1,6 +1,6 @@
 export enum inputModeEnum {
     SELECTED_COL = "selectedCol",
-    SELECT_COl = "selectCol",
+    SELECT_COL = "selectCol",
     CHECKBOXES = "checkboxes",
 }
 
@@ -22,8 +22,7 @@ export interface extensionServiceInterface {
                 label: string,
                 value: string,
                 responseValues: string[]
-            }
-            
+            }[]
         }[],
         responseParamsForItem: {
             id: string,
