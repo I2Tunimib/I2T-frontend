@@ -1,7 +1,8 @@
 export enum inputModeEnum {
     SELECTED_COL = "selectedCol",
     SELECT_COL = "selectCol",
-    CHECKBOXES = "checkboxes",
+    ENUMERATION = "enumeration",
+    NUMBER = "number"
 }
 
 export interface reconciliatorInterface {
@@ -18,16 +19,16 @@ export interface extensionServiceInterface {
             name: string,
             userManual: boolean,
             inputMode: inputModeEnum,
+            required?: boolean,
+            default?: any,
+            isMatchingParam: boolean
             values?: {
                 label: string,
                 value: string,
-                responseValues: string[]
+                responseValues?: string[]
             }[]
         }[],
-        responseParamsForItem: {
-            id: string,
-            date: string,
-        }
+        responseParamsToMatch: string[];
 }
 
 export interface configInterface {

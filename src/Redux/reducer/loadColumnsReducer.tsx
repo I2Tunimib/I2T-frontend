@@ -5,7 +5,7 @@ import { colInterface } from "../../Interfaces/col.interface";
 const loadColumnsReducer = (state: colInterface[] = [], action: colActionIterface) => {
     switch(action.type) {
         case "LOADCOLUMNS":
-            return state = action.columns!
+            return state = action.columns!;
         case "SELECTCOL":
             let colToSelectIndex: number | null = null;
             for (let i = 0; i < state.length; i++) {

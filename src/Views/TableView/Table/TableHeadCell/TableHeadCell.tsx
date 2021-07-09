@@ -8,7 +8,7 @@ import { ReactComponent as SelectedIcon } from "../../../../Assets/icon-set/sele
 import { ReactComponent as UnselectedIcon } from "../../../../Assets/icon-set/selected/select-empty.svg";
 import { ReactComponent as NewIcon } from "../../../../Assets/icon-set/new/new.svg";
 import { ReactComponent as RiconciliatedIcon } from "../../../../Assets/icon-set/riconciliate/link.svg";
-import { ReactComponent as FilterIcon} from "../../../../Assets/icon-set/filter/filter.svg";
+import { ReactComponent as FilterIcon } from "../../../../Assets/icon-set/filter/filter.svg";
 import { addAllMetaData, extendColMeta } from "../../../../Redux/action/data";
 import { addExtMetaCol } from "../../../../Redux/action/columns";
 import { colInterface } from "../../../../Interfaces/col.interface";
@@ -160,16 +160,18 @@ const TableHeadCell = (props: { col: colInterface }) => {
 
 
     React.useEffect(() => {
-        let matchingItemsNumber = 0;
-        for (const row of Data) {
-            for (const metaItem of row[col.name].metadata) {
-                if (metaItem.score >= (automatchingValue || 10000) || metaItem.match) {
-                    matchingItemsNumber++;
-                    break;
+        if (automatchingDialogIsOpen) {
+            let matchingItemsNumber = 0;
+            for (const row of Data) {
+                for (const metaItem of row[col.name].metadata) {
+                    if (metaItem.score >= (automatchingValue || 10000) || metaItem.match) {
+                        matchingItemsNumber++;
+                        break;
+                    }
                 }
             }
+            setMatchingNumber(matchingItemsNumber);
         }
-        setMatchingNumber(matchingItemsNumber);
     }, [Data, automatchingValue])
 
 
@@ -202,10 +204,10 @@ const TableHeadCell = (props: { col: colInterface }) => {
                         {
                             col.reconciliated &&
                             <RiconciliatedIcon />
-                        } 
+                        }
                         {
-                            col.filtered && 
-                            <FilterIcon/>
+                            col.filtered &&
+                            <FilterIcon />
                         }
                     </div>
                     <div className={style.accessorCell}>
@@ -250,7 +252,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
                         `Alla soglia selezionata si hanno ${matchingNumber} matching`
                     }
                     mainButtonLabel='Applica'
-                    mainButtonAction={() => {confirmAutoMatching(); setAutomatchingDialogIsOpen(false) }}
+                    mainButtonAction={() => { confirmAutoMatching(); setAutomatchingDialogIsOpen(false) }}
                     secondaryButtonLabel='Annulla'
                     secondaryButtonAction={() => { setAutomatchingDialogIsOpen(false) }}
                     showState={automatchingDialogIsOpen}

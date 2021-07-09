@@ -131,7 +131,7 @@ export async function getAllReconciliator(): Promise <httpResponseInterface> {
     }
 }
 
-export async function reconciliateService(internalUrl: string, payload: any): Promise <httpResponseInterface> {
+export async function metaService(internalUrl: string, payload: any): Promise <httpResponseInterface> {
     const response = await axios.post(`${BASE_URL}${internalUrl}/`, payload);
     const error = errorHandler(await response);
     if (await !error){

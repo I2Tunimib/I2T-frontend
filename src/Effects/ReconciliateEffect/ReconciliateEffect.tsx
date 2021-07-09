@@ -4,10 +4,10 @@ import { displayError } from "../../Redux/action/error";
 import { addAllMetaData } from "../../Redux/action/data";
 import { setLoadingState, unsetLoadingState } from "../../Redux/action/loading";
 import DropdownModal from "../../SharedComponents/DropdownModal/DropdownModal";
-import { reconciliateService } from "../../Http/httpServices";
+import { metaService } from "../../Http/httpServices";
 import ClassicModal from "../../SharedComponents/ClassicModal/ClassicModal";
 import { noReconciliate } from "../../Redux/action/reconciliate";
-import { reconciliatedCol, addExtMetaCol } from "../../Redux/action/columns";
+import { reconciliatedCol } from "../../Redux/action/columns";
 import { RootState } from "../../Redux/store";
 import { reconciliatorInterface } from "../../Interfaces/reconciliator.interface";
 import { metaResponseInterface } from "../../Interfaces/meta-response.interface";
@@ -74,9 +74,8 @@ const ReconciliateEffect = () => {
                 name: LoadedName,
                 items: ItemsToReconciliate,
             }
-            const reconResponse = await reconciliateService(selectedRecon!.value, reqPayload)
+            const reconResponse = await metaService(selectedRecon!.value, reqPayload)
             if (await !reconResponse.error) {
-                console.log(reconResponse);
                 dispatchMetaData(reconResponse.data);
                 const reconciliatedCol: string[] = [];
                 for (const item of reconResponse.data.items) {

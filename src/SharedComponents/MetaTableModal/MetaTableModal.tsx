@@ -30,7 +30,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     const Config = useSelector((state: RootState) => state.Config)
     const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
     const colName = col.name;
-
+    const Data = useSelector((state: RootState) => state.Data)
     React.useEffect(() => {
         let myCols = []
         if (Config) {
@@ -111,7 +111,13 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     }
 
     const confirm = () => {
-        dispatchMeta(colName, dataIndex, myMetaData);
+        const labelValue = Data[dataIndex].label;
+        for(let i = 0;  i < Data.length; i++) {
+            if(Data[i].label === labelValue) {
+                dispatchMeta(colName, i, myMetaData);
+            }
+        }
+        //dispatchMeta(colName, dataIndex, myMetaData);
         setShow(false);
     }
 

@@ -9,15 +9,24 @@ import { RootState } from "../../Redux/store";
 import DropdownMenu from "react-bootstrap/esm/DropdownMenu";
 import { configInterface, extensionServiceInterface, inputModeEnum } from "../../Interfaces/configInterface";
 import produce from "immer";
+import update from 'immutability-helper';
+import { ConfirmationNumberTwoTone } from "@material-ui/icons";
+import { copyFile } from "fs/promises";
+import { colInterface } from "../../Interfaces/col.interface";
 
 const ExtendModal = (props: classicModalPropsInterface) => {
     const { titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose } = props;
     const [show, setShow] = React.useState(true);
     const Config = useSelector((state: RootState) => state.Config);
+    const Data = useSelector((state: RootState) => state.Data);
     const [extendService, setExtendService] = React.useState<extensionServiceInterface | null>(null);
     const [paramsToSend, setParamsToSend] = React.useState<any>({});
-    const [markup, setMarkup] = React.useState<any[]>([]);
     const Columns = useSelector((state: RootState) => state.Columns);
+    const [paramError, setParamError] = React.useState<string | null>(null);
+    const [matchingCols, setMatchingCols] = React.useState<{colname: string, matchinParam: string}[]>([])
+    const [selectedCol, setSelectedCol] = React.useState<colInterface>(Columns.filter((col) => {
+        return col.selected;
+    })[0]);
 
     React.useEffect(() => {
         setShow(showState);
@@ -29,9 +38,6 @@ const ExtendModal = (props: classicModalPropsInterface) => {
         }
     }, [show])
 
-    React.useEffect(() => {
-        console.log(paramsToSend)
-    },[paramsToSend])
 
     const dropServiceItems = Config!.extensionServices.map((service) => {
         return (
@@ -39,18 +45,12 @@ const ExtendModal = (props: classicModalPropsInterface) => {
         )
     })
 
-    React.useEffect(() => {
-        if (extendService) {
-            requiredInput();
-        }
-    }, [extendService])
-
     const requiredInput = () => {
         const myMarkup: any[] = [];
         for (const param of extendService!.requiredParams) {
             if (param.userManual === true) {
                 switch (param.inputMode) {
-                    case inputModeEnum.SELECT_COL:
+                    /*case inputModeEnum.SELECT_COL:
                         myMarkup.push(
                             <div className={style.fieldContainer} key={param.name}>
                                 <Form.Group>
@@ -58,9 +58,22 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                         {param.name}
                                     </Form.Label>
                                     <Form.Control as="select" onChange={(e) => {
-                                        const newParamsToSend = JSON.parse(JSON.stringify(paramsToSend));
-                                        newParamsToSend[param.name] = e.target.value;
-                                        setParamsToSend(newParamsToSend);
+                                        const arrayValues2 = [];
+                                        const targetCol = e.target.value;
+                                        setMatchingCols([...matchingCols ,{colname: targetCol, matchinParam: param.name}]);
+                                        for (const row of Data) {
+                                            for (const meta of row[selectedCol.name].metadata) {
+                                                if (meta.match) {
+                                                    if (row[targetCol]) {
+                                                        arrayValues2.push(row[targetCol].label)
+                                                    }
+                                                    continue;
+                                                }
+                                            }
+                                        }
+                                        const newParams2 = { ...paramsToSend };
+                                        newParams2[param.name] = arrayValues2;
+                                        setParamsToSend(JSON.parse(JSON.stringify(newParams2)));
                                     }}>
                                         {Columns.map((col) => {
                                             return (
@@ -71,32 +84,40 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                         })}
                                     </Form.Control>
                                 </Form.Group>
-                            </div>
+                            </div >
 
                         )
-                        break;
-                    case inputModeEnum.CHECKBOXES:
+                        break;*/
+                    case inputModeEnum.ENUMERATION:
                         myMarkup.push(
-                            <div className={style.fieldContainer}>
-                                {param.values!.map((value) => {
+                            <div className={style.fieldContainer} key={param.name}>
+                                {param.values!.map((value, index) => {
                                     return (
                                         <div key={value.label}>
                                             <Form.Check
                                                 type="checkbox"
                                                 label={value.label}
-                                            
+                                                key={value.value}
                                                 onChange={(e) => {
-                                                   let newParamValues = paramsToSend[param.name];
-                                                   if(e.target.checked) {
-                                                       if(newParamValues === undefined) {
-                                                           newParamValues = [];
-                                                       }
-                                                       newParamValues.push(value.value);
-                                                   }
-                                                   console.log()
-                                                   const newParamsToSend = JSON.parse(JSON.stringify(paramsToSend));
-                                                   newParamsToSend[param.name]= newParamValues;
-                                                   setParamsToSend(newParamsToSend);
+                                                    if (e.target.checked) {
+                                                        const myPar = (paramsToSend[param.name] !== undefined) ? [...paramsToSend[param.name]] : [];
+                                                        myPar.push(value.value)
+                                                        const newPar = { ...paramsToSend };
+                                                        newPar[param.name] = myPar;
+                                                        setParamsToSend(newPar);
+                                                    } else {
+                                                        const myPar = [...paramsToSend[param.name]];
+                                                        let popIndex: number;
+                                                        for (let z = 0; z < myPar.length; z++) {
+                                                            if (myPar[z] === value.value) {
+                                                                popIndex = z;
+                                                            }
+                                                        }
+                                                        const myNewPar = [...myPar.slice(0, popIndex!), ...myPar.slice(popIndex! + 1)];
+                                                        const newPar = { ...paramsToSend };
+                                                        newPar[param.name] = myNewPar;
+                                                        setParamsToSend(newPar);
+                                                    }
                                                 }}
                                             />
 
@@ -105,11 +126,79 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                 })}
                             </div>
                         )
+                        break;
+                    case inputModeEnum.NUMBER:
+                        myMarkup.push(
+                            <div className={style.fieldContainer} key={param.name}>
+                                <Form.Group>
+                                    <Form.Label>{param.name}</Form.Label>
+                                    <Form.Control type="number" placeholder={`Enter ${param.name}`} onChange={(e) => {
+                                        const newPar = { ...paramsToSend };
+                                        newPar[param.name] = [e.target.value]
+                                        setParamsToSend(newPar);
+                                    }} />
+                                </Form.Group>
+                            </div>
+                        )
+                        break;
+                    default:
+                        continue;
                 }
             }
         }
-        setMarkup(myMarkup)
+        return myMarkup;
     }
+
+    React.useEffect(() => {
+        if (extendService) {
+            setParamsToSend({});
+            for (const param of extendService!.requiredParams) {
+                if (param.inputMode === inputModeEnum.SELECTED_COL) {
+                    const arrayValues = [];
+                    if (param.isMatchingParam) {
+                        setMatchingCols(JSON.parse(JSON.stringify([...matchingCols, {colname: selectedCol.name, matchingParam: param.name}]))); 
+                    }
+                    for (const row of Data) {
+                        for (const meta of row[selectedCol.name].metadata) {
+                            if (meta.match) {
+                                // console.log('ciao da id');
+                                arrayValues.push(meta.id);
+                            }
+                        }
+                    }
+                    const newParams = { ...paramsToSend };
+                    newParams[param.name] = arrayValues;
+                    setParamsToSend(JSON.parse(JSON.stringify(newParams)));
+                }
+            }
+        }
+
+    }, [extendService])
+
+    function checkIfAllParAreProvided(): boolean {
+        let paramsAreProvided = true;
+        for (const param of extendService!.requiredParams) {
+            if (param.required) {
+                if (paramsToSend[param.name]) {
+                    if (param.inputMode === inputModeEnum.ENUMERATION) {
+                        if (paramsToSend[param.name].length < 1) {
+                            setParamError(`Il campo ${param.name} è necessario`);
+                            paramsAreProvided = false;
+                        }
+                    }
+                } else {
+                    setParamError(`Il campo ${param.name} è necessario`)
+                    paramsAreProvided = false;
+                }
+            }
+        }
+        if(paramsAreProvided) {
+            setParamError(null);
+        }
+        return paramsAreProvided;
+    }
+
+    //togliere colonna selezionata dalla label
 
     return (
         <>
@@ -130,8 +219,12 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                 {dropServiceItems}
                             </Dropdown.Menu>
                             <Form>
-                                {markup}
+                                {extendService && requiredInput()}
                             </Form>
+                            {
+                                paramError &&
+                                <p className={style.paramError}>{paramError}</p>
+                            }
                         </Dropdown>
                     </Modal.Body>
                     <Modal.Footer>
@@ -144,7 +237,11 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         }
                         {
                             mainButtonLabel && mainButtonAction &&
-                            <MainButton cta={() => { console.log(paramsToSend) }} label={mainButtonLabel} />
+                            <MainButton cta={() => {
+                                if(checkIfAllParAreProvided()) {
+                                    mainButtonAction(paramsToSend, extendService?.relativeUrl, extendService, matchingCols)
+                                }
+                                 }} label={mainButtonLabel} />
                         }
 
 
