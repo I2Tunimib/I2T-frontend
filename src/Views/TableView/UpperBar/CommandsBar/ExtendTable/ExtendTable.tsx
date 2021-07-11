@@ -94,7 +94,6 @@ const ExtendTable = () => {
                         }
                     }
                 }
-                console.log(newData);
                 dispatchLoadData(newData);
                 dispatchColumns([...Columns, {
                     label: colName,
@@ -121,7 +120,7 @@ const ExtendTable = () => {
                 isExtensible &&
                 <>
                     <MainButton
-                        label="Estendi Colonna Selezionata"
+                        label="Estendi"
                         cta={() => { setExtendDialogIsOpen(true) }}
                     />
                 </>

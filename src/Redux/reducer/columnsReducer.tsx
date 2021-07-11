@@ -2,7 +2,7 @@ import produce from "immer";
 import { colActionIterface } from "../../Interfaces/col-action.interface";
 import { colInterface } from "../../Interfaces/col.interface";
 
-const loadColumnsReducer = (state: colInterface[] = [], action: colActionIterface) => {
+const columnsReducer = (state: colInterface[] = [], action: colActionIterface) => {
     switch(action.type) {
         case "LOADCOLUMNS":
             return state = action.columns!;
@@ -104,4 +104,4 @@ const loadColumnsReducer = (state: colInterface[] = [], action: colActionIterfac
     }
 }
 
-export default loadColumnsReducer;
+export default columnsReducer;

@@ -3,7 +3,7 @@ import {errorHandlerReducer} from "./errorReducer";
 import { loadDataSuccessReducer } from "./dataReducer";
 import loadingReducer from "./loadingReducer";
 import nameLoadReducer from "./nameReducer"
-import loadColumnsReducer from "./loadColumnsReducer";
+import columnsReducer from "./columnsReducer";
 import contextReducer from "./contextMenuReducer";
 import editableCellReducer from "./editableCellReducer";
 import reconciliateReducer from "./reconciliateReducer";
@@ -16,7 +16,7 @@ const allReducers = combineReducers({
     LoadingState: loadingReducer,
     Data: loadDataSuccessReducer,
     Name: nameLoadReducer,
-    Columns: loadColumnsReducer,
+    Columns: columnsReducer,
     Context: contextReducer,
     // HasExtended: hasExtendedReducer, 
     // ToExtendRows: toExtendRowsReducer,

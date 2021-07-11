@@ -131,11 +131,9 @@ export const openFilterDialog = (col: colInterface, setFilterDialogIsOpen: Funct
         icon: <FilterIcon/>,
         label: col.filtered ? "Rimuovi filtri" : "Filtra Colonna...",
         action: !col.filtered ? () => {
-            console.log('ciao')
             setFilterDialogIsOpen(true);
             removeContext();
         } : () => {
-            console.log('ciao2')
             dispatchRemoveFilters();
             removeContext();
         }
@@ -145,7 +143,7 @@ export const openFilterDialog = (col: colInterface, setFilterDialogIsOpen: Funct
 export const openAutoMatchingDialog = (openAutoDialog: Function, removeContext: Function) => {
     return ({
         icon: <MetaIcon/>,
-        label: 'Automatching...',
+        label: 'Raffina metadati',
         action: () => {
             openAutoDialog(true);
             removeContext();
