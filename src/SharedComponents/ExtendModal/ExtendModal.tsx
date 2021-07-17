@@ -7,7 +7,7 @@ import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import { RootState } from "../../Redux/store";
 import DropdownMenu from "react-bootstrap/esm/DropdownMenu";
-import { configInterface, extensionServiceInterface, inputModeEnum } from "../../Interfaces/configInterface";
+import { configInterface, extensionServiceInterface, inputModeEnum, selectColModeEnum } from "../../Interfaces/configInterface";
 import produce from "immer";
 import update from 'immutability-helper';
 import { ConfirmationNumberTwoTone } from "@material-ui/icons";
@@ -23,10 +23,10 @@ const ExtendModal = (props: classicModalPropsInterface) => {
     const [paramsToSend, setParamsToSend] = React.useState<any>({});
     const Columns = useSelector((state: RootState) => state.Columns);
     const [paramError, setParamError] = React.useState<string | null>(null);
-    const [matchingCols, setMatchingCols] = React.useState<{colname: string, matchinParam: string}[]>([])
-    const [selectedCol, setSelectedCol] = React.useState<colInterface>(Columns.filter((col) => {
+    const [matchingCols, setMatchingCols] = React.useState<{ colname: string, selectColMode: selectColModeEnum, matchinParam: string }[]>([])
+    const [selectedCol, setSelectedCol] = React.useState<colInterface[]>(Columns.filter((col) => {
         return col.selected;
-    })[0]);
+    }));
 
     React.useEffect(() => {
         setShow(showState);
@@ -48,132 +48,131 @@ const ExtendModal = (props: classicModalPropsInterface) => {
     const requiredInput = () => {
         const myMarkup: any[] = [];
         for (const param of extendService!.requiredParams) {
-            if (param.userManual === true) {
-                switch (param.inputMode) {
-                    /*case inputModeEnum.SELECT_COL:
-                        myMarkup.push(
-                            <div className={style.fieldContainer} key={param.name}>
-                                <Form.Group>
-                                    <Form.Label>
-                                        {param.name}
-                                    </Form.Label>
-                                    <Form.Control as="select" onChange={(e) => {
-                                        const arrayValues2 = [];
-                                        const targetCol = e.target.value;
-                                        setMatchingCols([...matchingCols ,{colname: targetCol, matchinParam: param.name}]);
+            switch (param.inputMode) {
+                case inputModeEnum.SELECT_COL:
+                    if (param.default) {
+                        const newPar = { ...paramsToSend };
+                        newPar[param.name] = [param.default]
+                        setParamsToSend(newPar);
+                    }
+                    myMarkup.push(
+                        <div className={style.fieldContainer} key={param.name}>
+                            <Form.Group>
+                                <Form.Label>
+                                    {param.name}
+                                </Form.Label>
+                                <Form.Control as="select" onChange={(e) => {
+                                    const arrayValues2 = [];
+                                    const targetColName = e.target.value;
+                                    const newMatchingCols = matchingCols.filter((col) => {
+                                        return col.colname !== targetColName;
+                                    });
+                                    setMatchingCols([...newMatchingCols, { colname: targetColName, selectColMode: param.selectColMode!, matchinParam: param.name }]);
+                                    if (param.selectColMode === selectColModeEnum.IDS){
                                         for (const row of Data) {
-                                            for (const meta of row[selectedCol.name].metadata) {
+                                            for (const meta of row[targetColName].metadata) {
                                                 if (meta.match) {
-                                                    if (row[targetCol]) {
-                                                        arrayValues2.push(row[targetCol].label)
-                                                    }
+                                                    arrayValues2.push(meta.id);
                                                     continue;
                                                 }
                                             }
                                         }
-                                        const newParams2 = { ...paramsToSend };
-                                        newParams2[param.name] = arrayValues2;
-                                        setParamsToSend(JSON.parse(JSON.stringify(newParams2)));
-                                    }}>
-                                        {Columns.map((col) => {
-                                            return (
-                                                <option value={col.name} key={col.name}>
-                                                    {col.name}
-                                                </option>
-                                            )
-                                        })}
-                                    </Form.Control>
-                                </Form.Group>
-                            </div >
+                                    } else if (param.selectColMode === selectColModeEnum.LABELS) {
+                                        for (const row of Data) {
+                                            if (row[targetColName]) {
+                                                arrayValues2.push(row[targetColName].label)
+                                            }
+                                        }
+                                    }
+                                    const newParams2 = { ...paramsToSend };
+                                    newParams2[param.name] = arrayValues2;
+                                    setParamsToSend(JSON.parse(JSON.stringify(newParams2)));
+                                }}>
+                                    <option selected disabled hidden>Selezionare una colonna per {param.name}</option>
+                                    {selectedCol.map((col) => {
+                                        return (
+                                            <option value={col.name} key={col.name}>
+                                                {col.name}
+                                            </option>
+                                        )
+                                    })}
+                                </Form.Control>
+                                <p>Valori selezionati: {paramsToSend[param.name] ? paramsToSend[param.name].length : 0}</p>
+                            </Form.Group>
+                        </div >
 
-                        )
-                        break;*/
-                    case inputModeEnum.ENUMERATION:
-                        myMarkup.push(
-                            <div className={style.fieldContainer} key={param.name}>
-                                {param.values!.map((value, index) => {
-                                    return (
-                                        <div key={value.label}>
-                                            <Form.Check
-                                                type="checkbox"
-                                                label={value.label}
-                                                key={value.value}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        const myPar = (paramsToSend[param.name] !== undefined) ? [...paramsToSend[param.name]] : [];
-                                                        myPar.push(value.value)
-                                                        const newPar = { ...paramsToSend };
-                                                        newPar[param.name] = myPar;
-                                                        setParamsToSend(newPar);
-                                                    } else {
-                                                        const myPar = [...paramsToSend[param.name]];
-                                                        let popIndex: number;
-                                                        for (let z = 0; z < myPar.length; z++) {
-                                                            if (myPar[z] === value.value) {
-                                                                popIndex = z;
-                                                            }
+                    )
+                    break;
+                case inputModeEnum.ENUMERATION:
+                    if (param.default) {
+                        const newPar = { ...paramsToSend };
+                        newPar[param.name] = [param.default];
+                        setParamsToSend(newPar);
+                    }
+                    myMarkup.push(
+                        <div className={style.fieldContainer} key={param.name}>
+                            {param.values!.map((value, index) => {
+                                return (
+                                    <div key={value.label}>
+                                        <Form.Check
+                                            type="checkbox"
+                                            label={value.label}
+                                            key={value.value}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    const myPar = (paramsToSend[param.name] !== undefined) ? [...paramsToSend[param.name]] : [];
+                                                    myPar.push(value.value)
+                                                    const newPar = { ...paramsToSend };
+                                                    newPar[param.name] = myPar;
+                                                    setParamsToSend(newPar);
+                                                } else {
+                                                    const myPar = [...paramsToSend[param.name]];
+                                                    let popIndex: number;
+                                                    for (let z = 0; z < myPar.length; z++) {
+                                                        if (myPar[z] === value.value) {
+                                                            popIndex = z;
                                                         }
-                                                        const myNewPar = [...myPar.slice(0, popIndex!), ...myPar.slice(popIndex! + 1)];
-                                                        const newPar = { ...paramsToSend };
-                                                        newPar[param.name] = myNewPar;
-                                                        setParamsToSend(newPar);
                                                     }
-                                                }}
-                                            />
+                                                    const myNewPar = [...myPar.slice(0, popIndex!), ...myPar.slice(popIndex! + 1)];
+                                                    const newPar = { ...paramsToSend };
+                                                    newPar[param.name] = myNewPar;
+                                                    setParamsToSend(newPar);
+                                                }
+                                            }}
+                                        />
 
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        )
-                        break;
-                    case inputModeEnum.NUMBER:
-                        myMarkup.push(
-                            <div className={style.fieldContainer} key={param.name}>
-                                <Form.Group>
-                                    <Form.Label>{param.name}</Form.Label>
-                                    <Form.Control type="number" placeholder={`Enter ${param.name}`} onChange={(e) => {
-                                        const newPar = { ...paramsToSend };
-                                        newPar[param.name] = [e.target.value]
-                                        setParamsToSend(newPar);
-                                    }} />
-                                </Form.Group>
-                            </div>
-                        )
-                        break;
-                    default:
-                        continue;
-                }
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )
+                    break;
+                case inputModeEnum.NUMBER:
+                    if (param.default) {
+                        const newPar = { ...paramsToSend };
+                        newPar[param.name] = [param.default]
+                        console.log(newPar);
+                        setParamsToSend(newPar);
+                    }
+                    myMarkup.push(
+                        <div className={style.fieldContainer} key={param.name}>
+                            <Form.Group>
+                                <Form.Label>{param.name}</Form.Label>
+                                <Form.Control type="number" placeholder={`Enter ${param.name}`} value={param.default} onChange={(e) => {
+                                    const newPar = { ...paramsToSend };
+                                    newPar[param.name] = [e.target.value]
+                                    setParamsToSend(newPar);
+                                }} />
+                            </Form.Group>
+                        </div>
+                    )
+                    break;
+                default:
+                    continue;
             }
         }
         return myMarkup;
     }
-
-    React.useEffect(() => {
-        if (extendService) {
-            setParamsToSend({});
-            for (const param of extendService!.requiredParams) {
-                if (param.inputMode === inputModeEnum.SELECTED_COL) {
-                    const arrayValues = [];
-                    if (param.isMatchingParam) {
-                        setMatchingCols(JSON.parse(JSON.stringify([...matchingCols, {colname: selectedCol.name, matchingParam: param.name}]))); 
-                    }
-                    for (const row of Data) {
-                        for (const meta of row[selectedCol.name].metadata) {
-                            if (meta.match) {
-                                // console.log('ciao da id');
-                                arrayValues.push(meta.id);
-                            }
-                        }
-                    }
-                    const newParams = { ...paramsToSend };
-                    newParams[param.name] = arrayValues;
-                    setParamsToSend(JSON.parse(JSON.stringify(newParams)));
-                }
-            }
-        }
-
-    }, [extendService])
 
     function checkIfAllParAreProvided(): boolean {
         let paramsAreProvided = true;
@@ -192,7 +191,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                 }
             }
         }
-        if(paramsAreProvided) {
+        if (paramsAreProvided) {
             setParamError(null);
         }
         return paramsAreProvided;
@@ -238,10 +237,10 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         {
                             mainButtonLabel && mainButtonAction &&
                             <MainButton cta={() => {
-                                if(checkIfAllParAreProvided()) {
+                                if (checkIfAllParAreProvided()) {
                                     mainButtonAction(paramsToSend, extendService?.relativeUrl, extendService, matchingCols)
                                 }
-                                 }} label={mainButtonLabel} />
+                            }} label={mainButtonLabel} />
                         }
 
 

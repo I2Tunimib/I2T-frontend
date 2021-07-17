@@ -6,11 +6,12 @@ import { colInterface } from "../../../../../Interfaces/col.interface";
 import ExtendModal from "../../../../../SharedComponents/ExtendModal/ExtendModal";
 import { metaService } from "../../../../../Http/httpServices";
 import { setLoadingState, unsetLoadingState } from "../../../../../Redux/action/loading";
-import { extensionServiceInterface } from "../../../../../Interfaces/configInterface";
+import { extensionServiceInterface, selectColModeEnum } from "../../../../../Interfaces/configInterface";
 import { loadDataSuccess, loadSavedDataSuccess } from "../../../../../Redux/action/data";
 import { loadColumns } from "../../../../../Redux/action/columns";
 import { cellTypeEnum } from "../../../../../Enums/cell-type.enum";
 import { displayError } from "../../../../../Redux/action/error";
+import { is } from "immer/dist/internal";
 
 const ExtendTable = () => {
     const Columns = useSelector((state: RootState) => state.Columns);
@@ -56,55 +57,158 @@ const ExtendTable = () => {
         }
     }, [Columns])
 
-    const callExtendService = (paramsToSend: any, internalUrl: string, extendConfig: extensionServiceInterface, matchingCols: { colname: string, matchinParam: string }[]) => {
+    const callExtendService = (paramsToSend: any, internalUrl: string, extendConfig: extensionServiceInterface, matchingCols: { colname: string, selectColMode: selectColModeEnum, matchinParam: string }[]) => {
         dispatchLoadingState();
         (async () => {
             const extensionResponse = await metaService(internalUrl, paramsToSend);
-            if(await !extensionResponse.error) {
-            const keys = Object.keys(extensionResponse.data);
-            const newData = [...Data];
-            const propsKeys = Object.keys(extensionResponse.data[keys[0]]);
-            for (const propKey of propsKeys) {
-                let colName = matchingCols[0].colname + '_' + propKey;
-                for (const key of keys) {
-                    // const matchingValue = extensionResponse.data[key];
-                    //const propsKeys = Object.keys(extensionResponse.data[key]);
-                    for (let i = 0; i < newData.length; i++) {
-                        let matchingId = null;
-                        for (const metaItem of newData[i][matchingCols[0].colname].metadata) {
-                            if (metaItem.match) {
-                                matchingId = metaItem.id;
+            if (await !extensionResponse.error) {
+                if (extensionResponse.data.items.length === 0) {
+                    dispatchError("Il sistema non ha riportato nessun dato per l'estensione")
+                } else {
+                    const newData = [...Data];
+                    // first af all i add columns
+                    let itemCounter = 0;
+                    const reallyTrueProps: string[] = [];
+                    let reallyNewColBaseName = '';
+                    for (const item of extensionResponse.data.items) {
+                        itemCounter = itemCounter + 1;
+                        const propsKeys = Object.keys(extensionResponse.data.items[0]);
+                        let rowIndex = undefined;
+                        for (let i = 0; i < newData.length; i++) {
+                            const isGoodIndex = [];
+                            for (const matchingCol of matchingCols) {
+                                if (matchingCol.selectColMode === selectColModeEnum.LABELS) {
+                                    if (item[matchingCol.matchinParam] === newData[i][matchingCol.colname].label) {
+                                        isGoodIndex.push(true);
+                                    }
+                                } else if (matchingCol.selectColMode === selectColModeEnum.IDS) {
+                                    let myId = undefined;
+                                    for (const meta of newData[i][matchingCol.colname].metadata) {
+                                        if (meta.match === true) {
+                                            myId = meta.id;
+                                            if(myId==='6557942') {
+                                                console.log('eccolo');
+                                            }
+                                        }
+                                    }
+
+                                    if (item[matchingCol.matchinParam] === myId) {
+                                        isGoodIndex.push(true);
+                                        if(myId==='6557942') {
+                                            console.log('pusho true');
+                                        }
+                                    }
+                                }
+                            }
+                            if (isGoodIndex.length === matchingCols.length) {
+                                rowIndex = i;
+                                if(i=== 1) {
+                                    console.log('setto rowIndex');
+                                }
                             }
                         }
-                        if (matchingId === key) {
-                            const newRow = JSON.parse(JSON.stringify(newData[i]));
-                            newRow[colName] = {
-                                ids: [extensionResponse.data[key][propKey][0].id],
-                                label: extensionResponse.data[key][propKey][0].name,
-                                metadata: [{
-                                    id: extensionResponse.data[key][propKey][0].id,
-                                    name: extensionResponse.data[key][propKey][0].name,
-                                    score: 100,
-                                    match: true,
-                                }],
-                                type: cellTypeEnum.data,
+                        if (rowIndex !== undefined) {
+                            let myNewColBaseName = '';
+                            for (const matchingCol of matchingCols) {
+                                myNewColBaseName = myNewColBaseName + matchingCol.colname + "_";
                             }
-                            newData[i] = newRow;
-                            // extensionResponse.data[key][propKey];
+                            if (!reallyNewColBaseName) {
+                                reallyNewColBaseName = myNewColBaseName;
+                            }
+
+                            const trueProps = propsKeys.filter((prop) => {
+                                let isTrue = true;
+                                for (const matchingCol of matchingCols) {
+                                    if (prop === matchingCol.matchinParam) {
+                                        isTrue = false
+                                    }
+                                }
+                                if (isTrue) {
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            })
+                            for (const prop of trueProps) {
+                                if (!reallyTrueProps.includes(prop)) {
+                                    reallyTrueProps.push(prop);
+                                }
+                                if (typeof item[prop] === "string") {
+                                    const newLine = { ...newData[rowIndex] };
+                                    newLine[`${myNewColBaseName}${prop}`] = {
+                                        label: item[prop],
+                                        metadata: [],
+                                        type: cellTypeEnum.data,
+                                        reconciliator: '',
+                                    }
+                                    newData[rowIndex] = newLine;
+                                } else if (typeof item[prop] === "object") {
+                                    const newLine = { ...newData[rowIndex] };
+                                    newLine[`${myNewColBaseName}${prop}`] = {
+                                        label: item[prop].name,
+                                        metadata: [item[prop]],
+                                        type: cellTypeEnum.data,
+                                    }
+                                    newData[rowIndex] = newLine;
+                                }
+                                /*if (itemCounter === 0) {
+                                    console.log('ciao')
+                                    let alreadyAdded = false;
+                                    for (const col of Columns) {
+                                        if (col.name === `${myNewColBaseName}${prop}`) {
+                                            console.log('ciao1');
+                                            alreadyAdded = true;
+                                        }
+                                    }
+                                    if(!alreadyAdded) {
+                                        console.log('ciao2')
+                                    }
+                                    if (!alreadyAdded) {
+                                        dispatchColumns([...Columns, {
+                                            label: `${myNewColBaseName}${prop}`,
+                                            name: `${myNewColBaseName}${prop}`,
+                                            selected: false,
+                                            type: cellTypeEnum.data,
+                                            reconciliated: true,
+                                            reconciliator: extendConfig.name,
+                                            new: true,
+                                        }])
+                                    }
+
+                                }*/
+                            }
                         }
                     }
+                    dispatchLoadData(newData);
+                    console.log(reallyTrueProps);
+                    const newColumns = reallyTrueProps.filter((prop)=>{
+                        let alreadyExist = false;
+                        for (const col of Columns) {
+                            if(col.name ===`${reallyNewColBaseName}${prop}`){
+                                alreadyExist = true;
+                            }
+                        }
+                        if(alreadyExist) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    }).map((prop) => {
+                        return (
+                            {
+                                label: `${reallyNewColBaseName}${prop}`,
+                                name: `${reallyNewColBaseName}${prop}`,
+                                selected: false,
+                                type: cellTypeEnum.data,
+                                reconciliated: true,
+                                reconciliator: extendConfig.name,
+                                new: true,
+                            }
+                        )
+                    })
+                    dispatchColumns([...Columns, ...newColumns])
                 }
-                dispatchLoadData(newData);
-                dispatchColumns([...Columns, {
-                    label: colName,
-                    name: colName,
-                    selected: false,
-                    type: cellTypeEnum.data,
-                    reconciliated: true,
-                    reconciliator: extendConfig.name,
-                    new: true,
-            }])
-            }
+
             } else {
                 dispatchError(extensionResponse.errorText);
             }
@@ -129,7 +233,7 @@ const ExtendTable = () => {
                 <ExtendModal
                     titleText={`Estendi colonna ${selectedCol!.label}`}
                     text={'Inserisci le opzioni di estensione'}
-                    mainButtonAction={(paramsToSend: any, internalUrl: string, extendConfig: extensionServiceInterface, matchingCols: { colname: string, matchinParam: string }[]) => {
+                    mainButtonAction={(paramsToSend: any, internalUrl: string, extendConfig: extensionServiceInterface, matchingCols: { colname: string, selectColMode: selectColModeEnum, matchinParam: string }[]) => {
                         callExtendService(paramsToSend, internalUrl, extendConfig, matchingCols);
                         setExtendDialogIsOpen(false)
                     }}

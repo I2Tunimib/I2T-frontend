@@ -2,11 +2,11 @@ import { Modal, Form } from "react-bootstrap";
 import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import React from "react";
-import { inputModalPropsInterface } from "../../Interfaces/input-modal-props.interface";
+import Slider from '@material-ui/core/Slider';
 
 
-const NumberInputModal = (props: inputModalPropsInterface) => {
-    const { inputLabel, titleText, text, value, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
+const NumberInputModal = (props: any) => {
+    const { inputLabel, titleText, text, minMax, value, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
     const [show, setShow] = React.useState(true);
 
 
@@ -20,6 +20,25 @@ const NumberInputModal = (props: inputModalPropsInterface) => {
         }
     }, [show])
 
+    React.useEffect(() => {
+        setInputValue(value);
+    },[])
+
+    const marks = [
+        {
+          value: minMax.min,
+          label: minMax.min.toString().substring(0,5),
+        },
+        {
+          value: minMax.max,
+          label: minMax.max.toString().substring(0,5),
+        },
+        {
+            value: value, 
+            label: value.toString().substring(0,5)
+        }
+      ];
+
 
 
     return (
@@ -31,10 +50,13 @@ const NumberInputModal = (props: inputModalPropsInterface) => {
                 <Modal.Body>
                     {text}
                     <Form>
-                        <Form.Group>
-                            <Form.Label>{inputLabel}</Form.Label>
-                            <Form.Control type="number" onChange={(e) => {setInputValue(e.target.value)}} defaultValue={value}/>
-                        </Form.Group>
+                        {/*
+                            <Form.Group>
+                                <Form.Label>{inputLabel}</Form.Label>
+                                <Form.Control type="number" onChange={(e) => { setInputValue(e.target.value) }} defaultValue={value} />
+                            </Form.Group>*/
+                        }
+                        <Slider min={minMax.min}  marks={marks} max={minMax.max} aria-labelledby="discrete-slider" onChange={(e, value) => { setInputValue(value) }}/>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>

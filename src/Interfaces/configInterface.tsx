@@ -5,6 +5,11 @@ export enum inputModeEnum {
     NUMBER = "number"
 }
 
+export enum selectColModeEnum {
+    IDS = 'ids',
+    LABELS = 'labels'
+}
+
 export interface reconciliatorInterface {
     name: string,
     relativeUrl: string,
@@ -17,8 +22,8 @@ export interface extensionServiceInterface {
         relativeUrl: string;
         requiredParams: {
             name: string,
-            userManual: boolean,
             inputMode: inputModeEnum,
+            selectColMode?: selectColModeEnum,
             required?: boolean,
             default?: any,
             isMatchingParam: boolean

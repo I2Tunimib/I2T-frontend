@@ -4,6 +4,6 @@ export interface cellInterface{
     type: cellTypeEnum,
     label: string,
     metadata: any[],
-    ids: string[],
+    ids?: string[],
     reconciliator: string,
 }

@@ -99,6 +99,7 @@ const GetData: React.FC = () => {
         const myFormat = getFormat(fileName);
         reader.onload = function (event) { //on loading file.
             const unconvertedFile = event.target!.result;
+            dispatchName(fileName.split('.')[0]);
             dispatchLoadedSuccess(convert(myFormat, unconvertedFile));
         }
         reader.readAsText(file);

@@ -71,7 +71,6 @@ export const deleteLineContext = (index: number, deleteRow: Function, removeCont
         icon: <DeleteIcon/>,
         label: "Elimina riga",
         action: () => {
-            console.log(index);
             deleteRow(index);
             removeContext();
         }
@@ -103,7 +102,6 @@ export const riconciliateContext = (reconciliate: Function, payload: any, remove
 
 export const extendColMetaContext = (col: colInterface, dispatchExtendColMeta: Function, removeContext: Function, dispatchAddExtMetaCol: Function) => {
     const wantToExtend = col.extendedMeta ? false : true;
-    console.log(col);
     return ({
             icon: <ExtendIcon/>,
             label: wantToExtend ? "Estendi colonna delle entità": "Comprimi colonna delle entità",
@@ -143,7 +141,7 @@ export const openFilterDialog = (col: colInterface, setFilterDialogIsOpen: Funct
 export const openAutoMatchingDialog = (openAutoDialog: Function, removeContext: Function) => {
     return ({
         icon: <MetaIcon/>,
-        label: 'Raffina metadati',
+        label: 'Finalizza matching',
         action: () => {
             openAutoDialog(true);
             removeContext();

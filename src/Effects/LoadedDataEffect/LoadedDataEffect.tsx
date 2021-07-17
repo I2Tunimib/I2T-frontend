@@ -86,7 +86,6 @@ const LoadedDataEffect = () => {
         // resetIndex();
         if (LoadedData.length >= 1  && LoadedColumns.length === 0) {
             setDataHasBeenLoaded(true);
-            dispatchColumns(setColumns());
             setTableName(LoadedName);
         } else if (LoadedData.length === 0 && !LoadedColumns) {
             displayError("Error: data are empty");
@@ -101,7 +100,7 @@ const LoadedDataEffect = () => {
                     titleText="La tua tabella è stata caricata"
                     inputLabel="Che nome vuoi dare alla tabella?"
                     mainButtonLabel={"Conferma"}
-                    mainButtonAction={()=>{confirmAction()}}
+                    mainButtonAction={()=>{confirmAction(); dispatchColumns(setColumns());}}
                     setInputValue={(name: SetStateAction<string>) => { setTableName(name) }}
                     secondaryButtonLabel={"Annulla Caricamento"}
                     secondaryButtonAction={dispatchDeleteData}

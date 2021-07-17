@@ -61,6 +61,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
             value: filterTypeEnum.metaFalse
         }
     ]
+    const [metaMinMax, setMetaMinMax] = React.useState<{ min: number, max: number }>({ min: 0, max: 0 })
     const dispatch = useDispatch();
     const dispatchContext = (context: contextInterface) => {
         dispatch(addContext(context));
@@ -174,6 +175,28 @@ const TableHeadCell = (props: { col: colInterface }) => {
         }
     }, [Data, automatchingValue])
 
+    React.useEffect(() => {
+            let maxValue = 0;
+            let minValue = 1000;
+
+            for (const row of Data) {
+                if (row[col.name]) {
+                    for (const metaItem of row[col.name].metadata) {
+                        if (metaItem.score >= maxValue) {
+                            maxValue = metaItem.score;
+                        }
+                        if (metaItem.score <= minValue) {
+                            minValue = metaItem.score;
+                        }
+                    }
+                }
+            setMetaMinMax({ min: minValue, max: maxValue });
+        }
+
+
+
+    }, [Data, automatchingDialogIsOpen])
+
 
     return (
         <>
@@ -247,10 +270,11 @@ const TableHeadCell = (props: { col: colInterface }) => {
                 automatchingDialogIsOpen &&
                 <NumberInputModal
                     inputLabel={'Scegli la soglia di score oltre la quale confermare il matching'}
-                    titleText={'Automatching'}
+                    titleText={'Finalizza matching'}
                     text={
                         `Alla soglia selezionata si hanno ${matchingNumber} matching`
                     }
+                    minMax={metaMinMax}
                     mainButtonLabel='Applica'
                     mainButtonAction={() => { confirmAutoMatching(); setAutomatchingDialogIsOpen(false) }}
                     secondaryButtonLabel='Annulla'
@@ -258,7 +282,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
                     showState={automatchingDialogIsOpen}
                     onClose={() => setAutomatchingDialogIsOpen(false)}
                     setInputValue={(value: number) => { setAutoMatchingValue(value) }}
-                    value={automatchingValue}
+                    value={automatchingValue || metaMinMax.min}
                 />
             }
 

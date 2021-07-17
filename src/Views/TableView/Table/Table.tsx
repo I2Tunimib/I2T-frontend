@@ -22,7 +22,6 @@ const Table = () => {
     /*const dispatchDeleteLine= (data) => {
         dispatch(deleteLine(data));
     }*/
-    console.log(FilteredData);
 
     const options = {
         draggableColumns: {
