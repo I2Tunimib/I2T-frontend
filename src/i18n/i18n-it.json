@@ -1,0 +1,93 @@
+{
+    "buttons": {
+        "confirm": "Conferma",
+        "cancel": "Annulla",
+        "load": "Carica",
+        "close": "Chiudi"
+    },
+    "homepage-content": {
+        "tutorial": {
+            "step-one": {
+                "title": "1. Carica i dati",
+                "content": "Carica i dati nella modalità che preferisci: dal tuo file system o dal nostro server. Puoi anche caricare una tabella precedentemente salvata."
+            },
+            "step-two": {
+                "title": "2. Visualizza la tabella",
+                "content": "Visualizza la tabella caricata e scopri le operazioni che puoi fare premendo il tasto destro del mouse su celle o colonne"
+            },
+            "step-three": {
+                "title": "3. Utilizza i comandi principali",
+                "content": "Riconcilia ed estendi la tua tabella con i comandi principali che compariranno nella barra in altro una volta selezionate una o più colonne"
+            }
+        },
+        "get-data": {
+            "where-to-load": {
+                "label": "Da dove vuoi caricare i dati?",
+                "options": {
+                    "table-server": "Table Server (tutte le tabelle csv)",
+                    "table-saved": "Table Server (tabelle salvate)",
+                    "file.-system": "File system locale (CSV, JSON)"
+                }
+            },
+            "choose-from": {
+                "server-tables": "Scegli tra le tabelle disponibili:",
+                "saved-tables": "Scegli tra le tabelle salvate:"
+            },
+            "choose-name-modal": {
+                "title-text": "La tua tabella è stata caricata",
+                "input-label": "Scegli un nome da dare alla tabella:"
+            }
+        }
+
+    },
+    "table": {
+        "cells": {
+            "editable-cell-modal": {
+                "input-label": "Inserisci un valore con cui vuoi modificare la label della cella:",
+                "title-text": "Modifica label cella"
+            }
+        }
+    },
+    "shared": {
+        "error": {
+            "title-text": "Error",
+            "data-loading": {
+                "empty": "No data loaded."
+            }, 
+            "reconciliation": {
+                "impossible-connect": "Impossible to connect to ricociliator service"
+            }
+        }
+    },
+    "commands-bar": {
+        "reconciliation": {
+            "select-reconciliator-modal": {
+                "input-label": "Seleziona un servizio:",
+                "title-text": "Riconcilia",
+                "text": "Seleziona un servizio con cui effettuare la riconciliazione"
+            },
+            "success-modal": {
+                "title-text": "Successo",
+                "text": "Riconciliazione avvenuta con successo"
+            }
+        },
+        "extension": {
+  
+        }
+    },
+    "context-items": {
+        "select-column": "Seleziona colonna",
+        "deselect-column": "Deseleziona colonna",
+        "delete-column": "Elimina colonna",
+        "edit-label": "Modifica label",
+        "delete-line": "Elimina riga",
+        "reconcile-cell": "Riconcilia cella",
+        "expand-entities": "Espandi colonna delle entità",
+        "collapse-entities": "Comprimi colonna delle entità",
+        "show-metadata": "Visualizza metadati",
+        "filter-column": "Filtra colonna",
+        "remove-filters": "Rimuovi filtri",
+        "finalize-matching": "Finalizza matching"
+    }
+
+}

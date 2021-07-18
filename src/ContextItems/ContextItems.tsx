@@ -9,12 +9,13 @@ import {ReactComponent as RiconciliateIcon} from "../Assets/icon-set/riconciliat
 import { colInterface } from "../Interfaces/col.interface";
 import { contextItemInterface } from "../Interfaces/context-items.interface";
 
-export const selectContext = (col:colInterface, selectCol: Function, deselectCol: Function, removeContext: Function): contextItemInterface => {
+
+export const selectContext = (col:colInterface, selectCol: Function, deselectCol: Function, removeContext: Function, t: any): contextItemInterface => {
     let selectLabel = "";
     if (col.selected) {
-        selectLabel = "Deseleziona colonna";
+        selectLabel = t('context-items.select-column')
     } else {
-        selectLabel = "Seleziona colonna";
+        selectLabel = t('context-items.deselect-column');
     }
     return ({
         icon: col.selected ? <DeselectIcon/> : <SelectIcon/>,
@@ -32,10 +33,10 @@ export const selectContext = (col:colInterface, selectCol: Function, deselectCol
 }
 
 
-export const deleteContext = (col: colInterface, deleteCol: Function, removeContext: Function) => {
+export const deleteContext = (col: colInterface, deleteCol: Function, removeContext: Function, t: any) => {
     return ({
         icon: <DeleteIcon/>,
-        label: "Elimina colonna",
+        label: t('context-items.delete-column'),
         action: ()=> {
             deleteCol(col.name);
             removeContext();
@@ -44,10 +45,10 @@ export const deleteContext = (col: colInterface, deleteCol: Function, removeCont
 }
     
 
-export const editContext = (dataIndex: number, keyName: string, editableCell: Function, removeContext: Function) => {
+export const editContext = (dataIndex: number, keyName: string, editableCell: Function, removeContext: Function, t: any) => {
     return ({
         icon: <EditIcon/>,
-        label: "Modifica label",
+        label: t('context-items.edit-label'),
         action: () => {
             editableCell(dataIndex, keyName);
             removeContext();
@@ -55,21 +56,11 @@ export const editContext = (dataIndex: number, keyName: string, editableCell: Fu
     })
 }
 
-export const extContext = (dataIndex: number, extendRow: Function, removeContext: Function) => {
-    return ({
-        icon: <ExtendIcon/>,
-        label: "Estendi riga",
-        action: () => {
-            extendRow(dataIndex);
-            removeContext();
-        }
-    })
-}
 
-export const deleteLineContext = (index: number, deleteRow: Function, removeContext: Function) => {
+export const deleteLineContext = (index: number, deleteRow: Function, removeContext: Function, t: any) => {
     return ({
         icon: <DeleteIcon/>,
-        label: "Elimina riga",
+        label: t('context-items.delete-line'),
         action: () => {
             deleteRow(index);
             removeContext();
@@ -77,22 +68,11 @@ export const deleteLineContext = (index: number, deleteRow: Function, removeCont
     })
 }
 
-export const seeMetaDataContext = (openModal: Function, removeContext: Function) => {
-    return ({
-        icon: <MetaIcon/>,
-        label: "Visualizza sorgente metadati",
-        action: () => {
-            openModal(true);
-            removeContext()
-        }
-    })
-}
 
-
-export const riconciliateContext = (reconciliate: Function, payload: any, removeContext: Function) => {
+export const riconciliateContext = (reconciliate: Function, payload: any, removeContext: Function, t:any) => {
     return({
         icon: <RiconciliateIcon/>,
-        label: 'Riconcilia Cella',
+        label: t('context-items.reconcile-cell'),
         action: () => {
             reconciliate([payload])
             removeContext();
@@ -100,11 +80,11 @@ export const riconciliateContext = (reconciliate: Function, payload: any, remove
     })
 }
 
-export const extendColMetaContext = (col: colInterface, dispatchExtendColMeta: Function, removeContext: Function, dispatchAddExtMetaCol: Function) => {
+export const extendColMetaContext = (col: colInterface, dispatchExtendColMeta: Function, removeContext: Function, dispatchAddExtMetaCol: Function, t: any) => {
     const wantToExtend = col.extendedMeta ? false : true;
     return ({
             icon: <ExtendIcon/>,
-            label: wantToExtend ? "Estendi colonna delle entità": "Comprimi colonna delle entità",
+            label: wantToExtend ? t('context-items.expand-entities'): t('context-items.collapse-entities'),
             action: () => {
                 dispatchExtendColMeta(col.name, col.reconciliator); 
                 dispatchAddExtMetaCol(col.name, wantToExtend);
@@ -113,10 +93,10 @@ export const extendColMetaContext = (col: colInterface, dispatchExtendColMeta: F
     })
 }
 
-export const viewMetaTable = (openModal: Function, removeContext: Function) => {
+export const viewMetaTable = (openModal: Function, removeContext: Function, t: any) => {
     return ({
         icon: <MetaIcon/>,
-        label: "Visualizza metadati",
+        label: t('context-items.show-metadata'),
         action: () => {
             openModal(true);
             removeContext();
@@ -124,10 +104,10 @@ export const viewMetaTable = (openModal: Function, removeContext: Function) => {
     })
 }
 
-export const openFilterDialog = (col: colInterface, setFilterDialogIsOpen: Function,dispatchRemoveFilters: Function, removeContext: Function) => {
+export const openFilterDialog = (col: colInterface, setFilterDialogIsOpen: Function,dispatchRemoveFilters: Function, removeContext: Function, t: any) => {
     return ({
         icon: <FilterIcon/>,
-        label: col.filtered ? "Rimuovi filtri" : "Filtra Colonna...",
+        label: col.filtered ? t('context-items.remove-filters') : t('context-items.filter-column'),
         action: !col.filtered ? () => {
             setFilterDialogIsOpen(true);
             removeContext();
@@ -138,10 +118,10 @@ export const openFilterDialog = (col: colInterface, setFilterDialogIsOpen: Funct
     })
 }
 
-export const openAutoMatchingDialog = (openAutoDialog: Function, removeContext: Function) => {
+export const openAutoMatchingDialog = (openAutoDialog: Function, removeContext: Function, t: any) => {
     return ({
         icon: <MetaIcon/>,
-        label: 'Finalizza matching',
+        label: t('context-items.finalize-matching'),
         action: () => {
             openAutoDialog(true);
             removeContext();

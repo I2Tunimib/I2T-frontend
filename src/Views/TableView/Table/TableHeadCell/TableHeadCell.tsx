@@ -22,9 +22,10 @@ import { filterTypeEnum } from "../../../../Enums/filters-type.enum";
 import NumberInputModal from "../../../../SharedComponents/NumberInputModal/NumberInputModal";
 import { RootState } from "../../../../Redux/store";
 import { metaResponseInterface } from "../../../../Interfaces/meta-response.interface";
+import { useTranslation } from "react-i18next";
 
 const TableHeadCell = (props: { col: colInterface }) => {
-
+    const { t } = useTranslation();
 
     const { col } = props;
     let clickRef = React.useRef(null);
@@ -104,15 +105,15 @@ const TableHeadCell = (props: { col: colInterface }) => {
             yPos,
             type: contextTypeEnum.header,
             items: col.reconciliated ? [
-                selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext),
-                deleteContext(col, dispatchDeleteCol, dispatchRemoveContext),
-                extendColMetaContext(col, dispatchExtendColMeta, dispatchRemoveContext, dispatchAddExtMetaCol),
-                openFilterDialog(col, setFilterDialogIsOpen, dispatchRemoveFilters, dispatchRemoveContext),
-                openAutoMatchingDialog(setAutomatchingDialogIsOpen, dispatchRemoveContext),
+                selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext, t),
+                deleteContext(col, dispatchDeleteCol, dispatchRemoveContext, t),
+                extendColMetaContext(col, dispatchExtendColMeta, dispatchRemoveContext, dispatchAddExtMetaCol, t),
+                openFilterDialog(col, setFilterDialogIsOpen, dispatchRemoveFilters, dispatchRemoveContext, t),
+                openAutoMatchingDialog(setAutomatchingDialogIsOpen, dispatchRemoveContext, t),
             ] :
                 [
-                    selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext),
-                    deleteContext(col, dispatchDeleteCol, dispatchRemoveContext),
+                    selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext, t),
+                    deleteContext(col, dispatchDeleteCol, dispatchRemoveContext, t),
                 ]
         }
         dispatchContext(contextProps);
@@ -141,6 +142,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
             for (const metaItem of newMeta) {
                 if (metaItem.score === higherScore && metaItem.score > (automatchingValue || 10000)) {
                     metaItem.match = true;
+                    break;
                     /*metaToChange.items.push({
                         column: col.name,
                         index: i,

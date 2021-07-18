@@ -1,0 +1,23 @@
+{
+    "buttons": {
+        "confirm": "Conferma",
+        "cancel": "Annulla"
+    },
+    "homepage-content": {
+        "tutorial": {
+            "step-one": {
+                "title": "1. Carica i dati",
+                "content": "Carica i dati nella modalità che preferisci: dal tuo file system o dal nostro server. Puoi anche caricare una tabella precedentemente salvata."
+            },
+            "step-two": {
+                "title": "2. Visualizza la tabella",
+                "content": "Visualizza la tabella caricata e scopri le operazioni che puoi fare premendo il tasto destro del mouse su celle o colonne"
+            },
+            "step-three": {
+                "title": "3. Utilizza i comandi principali",
+                "content": "Riconcilia ed estendi la tua tabella con i comandi principali che compariranno nella barra in altro una volta selezionate una o più colonne"
+            }
+        }
+
+    }
+}

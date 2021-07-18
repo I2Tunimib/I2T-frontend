@@ -4,9 +4,11 @@ import InputModal from "../../SharedComponents/InputModal/InputModal";
 import {removeEditableCell} from "../../Redux/action/editableCell";
 import {updateLine} from "../../Redux/action/data";
 import { RootState } from "../../Redux/store";
+import { useTranslation } from 'react-i18next';
 
 
 const EditableCellEffect = () => {
+    const { t } = useTranslation();
     const EditableCell = useSelector((state: RootState) => state.EditableCell);
     const LoadedData = useSelector((state: RootState) => state.Data)
 
@@ -33,10 +35,8 @@ const EditableCellEffect = () => {
     },[EditableCell])
 
     const edit = () => {
-        console.log(newValue);
         const newLine = JSON.parse(JSON.stringify(LoadedData[EditableCell!.rowIndex]))
         newLine[EditableCell!.keyName].label = newValue;
-        console.log(newLine);
         dispatchUpdateLine(EditableCell!.rowIndex, newLine);
         dispatchRemoveEditableCell()
     }
@@ -45,10 +45,10 @@ const EditableCellEffect = () => {
         <>
         { editModalIsOpen &&
         <InputModal 
-            inputLabel="Inserisci il valore con cui vuoi editare la cella:"
-            titleText="Edita cella"
-            mainButtonLabel="Conferma"
-            secondaryButtonLabel="Annulla"
+            inputLabel={t('table.cells.editable-cell-modal.input-label')}
+            titleText={t('table.cells.editable-cell-modal.title-text')}
+            mainButtonLabel={t('buttons.confirm')}
+            secondaryButtonLabel={t('buttons.cancel')}
             secondaryButtonAction={()=>{dispatchRemoveEditableCell()}}
             mainButtonAction={()=>{edit()}}
             setInputValue={(value: SetStateAction<string>)=>{setNewValue(value)}}

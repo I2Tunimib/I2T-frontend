@@ -1,8 +1,11 @@
 import React from "react";
 import { Accordion, Card, Button } from "react-bootstrap";
 import style from "./Tutorial.module.css";
+import { useTranslation } from 'react-i18next';
+
 
 const Tutorial: React.FC = () => {
+    const { t, i18n } = useTranslation();
     return (
         <>
             <Accordion >
@@ -19,11 +22,11 @@ const Tutorial: React.FC = () => {
                                 <div>
                                     <Card>
                                         <Card.Title className={style.cardTitle}>
-                                            1. Carica i dati
+                                            {t('homepage-content.tutorial.step-one.title')}
                                         </Card.Title>
                                         <Card.Body className={style.cardBody}>
                                             <p>
-                                                Carica i dati con la modalità che preferisci: dal nostro server, da un servizio esterno o dal tuo file system.
+                                                {t('homepage-content.tutorial.step-one.content')}
                                             </p>
                                         </Card.Body>
                                     </Card>
@@ -32,20 +35,20 @@ const Tutorial: React.FC = () => {
                                 <div>
                                     <Card>
                                         <Card.Title className={style.cardTitle}>
-                                            2. Visualizza la tabella
+                                            {t('homepage-content.tutorial.step-two.title')}
                                         </Card.Title>
                                         <Card.Body className={style.cardBody}>
-                                            Visualizza la tabella che hai caricato nell'interfaccia del tuo browser.
+                                            {t('homepage-content.tutorial.step-two.content')}
                                         </Card.Body>
                                     </Card>
                                 </div>
                                 <div>
                                     <Card>
                                         <Card.Title className={style.cardTitle}>
-                                            3. Utilizza i comandi
+                                            {t('homepage-content.tutorial.step-three.title')}
                                         </Card.Title>
                                         <Card.Body className={style.cardBody}>
-                                            Lavora sulla tabella estendendola o editando e riempiendo le celle.
+                                            {t('homepage-content.tutorial.step-three.content')}
                                         </Card.Body>
                                     </Card>
                                 </div>

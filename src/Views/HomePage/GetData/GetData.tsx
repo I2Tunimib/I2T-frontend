@@ -1,18 +1,28 @@
-import { Card, Form, FormControl, InputGroup } from "react-bootstrap";
+import { Card, Form } from "react-bootstrap";
 import style from "./GetData.module.css";
-import React from "react";
+import React, { SetStateAction } from "react";
 import MainButton from "../../../SharedComponents/MainButton/MainButton";
-import { getAllTables, getAllSaved, getTable, getSaved} from "../../../Http/httpServices";
-import { useDispatch } from "react-redux";
+import { getAllTables, getAllSaved, getTable, getSaved } from "../../../Http/httpServices";
+import { useDispatch, useSelector } from "react-redux";
 import { displayError } from "../../../Redux/action/error";
 import { setLoadingState, unsetLoadingState } from "../../../Redux/action/loading";
-import { loadDataSuccess, loadSavedDataSuccess } from "../../../Redux/action/data";
+import { deleteData, loadDataSuccess, loadSavedDataSuccess } from "../../../Redux/action/data";
 import { loadName } from "../../../Redux/action/name";
 import { convert } from "../../../LogicUtilities/formatConverter";
+import { useTranslation } from 'react-i18next';
+import { colInterface } from "../../../Interfaces/col.interface";
+import { cellTypeEnum } from "../../../Enums/cell-type.enum";
+import { RootState } from "../../../Redux/store";
+import InputModal from "../../../SharedComponents/InputModal/InputModal";
+import { Redirect } from "react-router-dom";
+import { deleteAllColumns, loadColumns } from "../../../Redux/action/columns";
 
 
 const GetData: React.FC = () => {
-
+    const { t } = useTranslation();
+    const LoadedData = useSelector((state: RootState) => state.Data);
+    const LoadedName = useSelector((state: RootState )=> state.Name);
+    const LoadedColumns = useSelector((state: RootState )=> state.Columns);
     const dispatch = useDispatch();
 
     const dispatchError = (error: string) => {
@@ -34,15 +44,29 @@ const GetData: React.FC = () => {
         dispatch(loadName(name));
     }
 
+    const dispatchColumns = (columns: colInterface[]) => {
+        dispatch(loadColumns(columns));
+    }
+
+    const dispatchDeleteAllCols = () => {
+        dispatch(deleteAllColumns());
+    }
+
+    const dispatchDeleteData = () => {
+        dispatch(deleteData());
+    }
+
 
 
     const [dataSource, setDataSource] = React.useState("Table Server");
     const [savedName, setSavedName] = React.useState("");
-    const [externalUrl, setExternalUrl] = React.useState("");
+    // const [externalUrl, setExternalUrl] = React.useState("");
     const [tableName, setTableName] = React.useState('');
-    const [format, setFormat] = React.useState("csv");
+    // const [format, setFormat] = React.useState("csv");
     const [allSaved, setAllSaved] = React.useState([]);
     const [allTables, setAllTables] = React.useState([])
+    const [dataHasBeenLoaded, setDataHasBeenLoaded] = React.useState(false);
+    const [isConfirmed, setIsConfirmed] = React.useState(false);
 
     const savedOptions = allSaved.map((saved) => {
         return (
@@ -109,7 +133,7 @@ const GetData: React.FC = () => {
     // calling TableServer
     function getTableData() {
         dispatchSetLoading()
-         switch(dataSource){
+        switch (dataSource) {
             case "Table Server":
                 (async () => {
                     const tableData = await getTable(tableName);
@@ -119,7 +143,7 @@ const GetData: React.FC = () => {
                     } else {
                         dispatchName(tableName);
                         dispatchUnsetLoading();
-                        dispatchLoadedSuccess(convert( "csv", tableData.data));
+                        dispatchLoadedSuccess(convert("csv", tableData.data));
                     }
                 })();
                 break;
@@ -138,17 +162,66 @@ const GetData: React.FC = () => {
                 })();
                 break;
             default:
-                return; 
-         }
+                return;
+        }
+    }
+
+    const setColumns = () => {
+        let keys: colInterface[] = [];
+        for (let i = 0; i < LoadedData.length; i++) {
+            if (Object.keys(LoadedData[i]).length > keys.length) {
+                keys = Object.keys(LoadedData[i]).filter(key => key !== 'index').map((key) => {
+                        return {
+                            label: key,
+                            name: key,
+                            selected: false,
+                            type: cellTypeEnum.data,
+                            reconciliated: false,
+                            reconciliator: '',
+                            new: false,
+                        }
+                })
+            }
+        }
+        keys.unshift({
+            label: "0",
+            name: 'index',
+            selected: false,
+            type: cellTypeEnum.index,
+            reconciliated: false,
+            reconciliator: "",
+            new: false,
+        });
+        // add first empty column
+        return keys;
     }
 
 
 
+    React.useEffect(() => {
+        // reset index when loaded data changes
+        // resetIndex();
+        if (LoadedData.length >= 1  && LoadedColumns.length === 0) {
+            setDataHasBeenLoaded(true);
+            setTableName(LoadedName);
+        } else if (LoadedData.length === 0 && !LoadedColumns) {
+            displayError(t('shared.error.data-loading.empty'));
+            setDataHasBeenLoaded(false);
+        }
+    }, [LoadedData])
 
+
+    const confirmAction = () => {
+        console.log(tableName);
+        dispatchName(tableName);
+        setIsConfirmed(true);
+        setDataHasBeenLoaded(false);
+    }
 
 
 
     return (
+        <>
         <div className={style.getDataContainer}>
             <div>
                 <Card className={style.card}>
@@ -156,12 +229,12 @@ const GetData: React.FC = () => {
                         <Form>
                             <Form.Group>
                                 <Form.Label>
-                                    Da dove vuoi caricare i dati?
+                                    {t('homepage-content.get-data.where-to-load.label')}
                                 </Form.Label>
                                 <Form.Control as="select" onChange={(e) => { setDataSource(e.target.value); }}>
-                                    <option value="Table Server">Table Server (tutte le tabelle csv)</option>
-                                    <option value="Tabella Salvata">Table Server (tabelle salvate)</option>
-                                    <option value="File system">File system locale (CSV, JSON)</option>
+                                    <option value="Table Server">{t('homepage-content.get-data.where-to-load.options.table-server')}</option>
+                                    <option value="Tabella Salvata">{t('homepage-content.get-data.where-to-load.options.table-saved')}</option>
+                                    <option value="File system">{t('homepage-content.get-data.where-to-load.options.file.-system')}</option>
                                 </Form.Control>
                             </Form.Group>
                         </Form>
@@ -177,14 +250,14 @@ const GetData: React.FC = () => {
                                 <Form>
                                     <Form.Group>
                                         <Form.Label>
-                                            Scegli tra le tabelle disponibili:
+                                            {t('homepage-content.get-data.choose-from.server-tables')}
                                         </Form.Label>
                                         <Form.Control as="select" onChange={(e) => { setTableName(e.target.value); }}>
                                             {tablesOptions}
                                         </Form.Control>
                                     </Form.Group>
                                 </Form>
-                                <MainButton label="Carica" cta={() => {getTableData()}} />
+                                <MainButton label={t('buttons.load')} cta={() => { getTableData() }} />
                             </div>
                         }
                         {
@@ -193,42 +266,14 @@ const GetData: React.FC = () => {
                                 <Form>
                                     <Form.Group>
                                         <Form.Label>
-                                            Scegli tra le tabelle salvate:
+                                            {t('homepage-content.get-data.choose-from.saved-tables')}
                                         </Form.Label>
                                         <Form.Control as="select" onChange={(e) => { setSavedName(e.target.value); }}>
                                             {savedOptions}
                                         </Form.Control>
                                     </Form.Group>
                                 </Form>
-                                <MainButton label="Carica" cta={getTableData} />
-                            </div>
-                        }
-                        {
-                            dataSource === "Servizio Esterno" &&
-                            <div>
-                                <label htmlFor="basic-url">Inserisci l'URL</label>
-                                <InputGroup className="mb-3">
-                                    <InputGroup.Prepend>
-                                        <InputGroup.Text id="basic-addon3">
-                                            GET
-                                        </InputGroup.Text>
-                                    </InputGroup.Prepend>
-                                    <FormControl id="basic-url" aria-describedby="basic-addon3" onChange={(e) => { setExternalUrl(e.target.value); }} />
-                                </InputGroup>
-                                <Form>
-                                    <Form.Group>
-                                        <Form.Label>
-                                            Scegli il formato dei dati in arrivo:
-                                        </Form.Label>
-                                        <Form.Control as="select" onChange={(e) => { setFormat(e.target.value); }}>
-                                            <option value="csv">CSV</option>
-                                            <option value="ssv">SSV</option>
-                                            <option value="json">JSON</option>
-                                        </Form.Control>
-                                    </Form.Group>
-                                </Form>
-
-                                <MainButton label="Carica" cta={getTableData} />
+                                <MainButton label={t('buttons.load')} cta={getTableData} />
                             </div>
                         }
                         {
@@ -246,6 +291,26 @@ const GetData: React.FC = () => {
             </div>
 
         </div>
+        { dataHasBeenLoaded && LoadedData &&
+                <InputModal
+                    titleText={t('homepage-content.get-data.choose-name-modal.title-text')}
+                    inputLabel={t('homepage-content.get-data.choose-name-modal.input-label')}
+                    mainButtonLabel={t('buttons.confirm')}
+                    mainButtonAction={()=>{confirmAction(); dispatchColumns(setColumns());}}
+                    setInputValue={(name: SetStateAction<string>) => { setTableName(name) }}
+                    secondaryButtonLabel={t('buttons.cancel')}
+                    secondaryButtonAction={dispatchDeleteData}
+                    value={LoadedName}
+                    showState={dataHasBeenLoaded}
+                    onClose={() => { setDataHasBeenLoaded(false); dispatchDeleteAllCols(); }}
+                />
+            }
+            {   isConfirmed &&
+                <Redirect to={{
+                    pathname: "/table"
+                }} />
+            }
+        </>
     )
 }
 

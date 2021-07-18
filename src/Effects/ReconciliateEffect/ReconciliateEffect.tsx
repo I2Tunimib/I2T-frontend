@@ -11,9 +11,11 @@ import { reconciliatedCol } from "../../Redux/action/columns";
 import { RootState } from "../../Redux/store";
 import { reconciliatorInterface } from "../../Interfaces/reconciliator.interface";
 import { metaResponseInterface } from "../../Interfaces/meta-response.interface";
+import { useTranslation } from 'react-i18next';
 
 
 const ReconciliateEffect = () => {
+    const { t } = useTranslation();
 
     const ItemsToReconciliate = useSelector((state: RootState) => state.ItemsToReconciliate);
     //const reconciliatorsData = useSelector((state: RootState) => state.Config) ? useSelector((state: RootState) => state.Config).reconciliators : null;
@@ -93,7 +95,7 @@ const ReconciliateEffect = () => {
                 dispatchNoReconciliate();
             } else {
                 dispatchNoLoadingState();
-                dispatchError('Impossible to connect to riconciliator service');
+                dispatchError(t('shared.error.reconciliation.impossible-connect'));
                 dispatchNoReconciliate();
             }
         })()
@@ -104,12 +106,12 @@ const ReconciliateEffect = () => {
             {
                 reconciliatorsModalIsOpen &&
                 <DropdownModal
-                    inputLabel="Seleziona"
-                    titleText="Riconcilia colonne"
-                    text="Seleziona una API con cui riconciliare le colonne selezionate"
-                    mainButtonLabel="Conferma"
+                    inputLabel={t('commands-bar.reconciliation.select-reconciliator-modal.input-label')}
+                    titleText={t('commands-bar.reconciliation.select-reconciliator-modal.title-text')}
+                    text={t('commands-bar.reconciliation.select-reconciliator-modal.text')}
+                    mainButtonLabel={t('buttons.confirm')}
                     mainButtonAction={() => { riconciliate() }}
-                    secondaryButtonLabel="Annulla"
+                    secondaryButtonLabel={t('buttons.cancel')}
                     secondaryButtonAction={() => setReconciliatorsModalIsOpen(false)}
                     showState={reconciliatorsModalIsOpen}
                     inputValues={reconciliators}
@@ -120,9 +122,9 @@ const ReconciliateEffect = () => {
             {
                 isProcessOk &&
                 <ClassicModal
-                    titleText="Ok"
-                    text="Riconciliazione avvenuta con successo"
-                    mainButtonLabel="Ok"
+                    titleText={t('commands-bar.reconciliation.success-modal.title-text')}
+                    text={t('commands-bar.reconciliation.success-modal.text')}
+                    mainButtonLabel={t('buttons.close')}
                     mainButtonAction={() => { setIsProcessOk(false) }}
                     showState={isProcessOk}
                     onClose={() => { setIsProcessOk(false) }}

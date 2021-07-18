@@ -8,8 +8,6 @@ import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import { RootState } from "../../Redux/store";
 import DropdownMenu from "react-bootstrap/esm/DropdownMenu";
 import { configInterface, extensionServiceInterface, inputModeEnum, selectColModeEnum } from "../../Interfaces/configInterface";
-import produce from "immer";
-import update from 'immutability-helper';
 import { ConfirmationNumberTwoTone } from "@material-ui/icons";
 import { copyFile } from "fs/promises";
 import { colInterface } from "../../Interfaces/col.interface";
