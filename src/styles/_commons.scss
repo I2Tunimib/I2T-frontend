@@ -1,0 +1,30 @@
+.dropdown {
+    button {
+        border-radius: 0;
+        background-color: $brand-color-two-base;
+        border: $brand-color-two-base;
+        &:hover {
+            background-color: $brand-color-two-hover;
+            border: $brand-color-two-hover;
+        }
+        &:focus {
+            background-color: $brand-color-two-hover !important;
+            border: $brand-color-two-hover !important;
+            box-shadow: none !important;
+        }
+        &:active {
+            background-color: $brand-color-two-hover !important;
+            border: $brand-color-two-hover !important;
+            box-shadow: none !important;
+        }
+    }
+    .dropdown-menu {
+        overflow: visible;
+        border-radius: 0;
+        padding: 0;
+        a.dropdown-item {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+    }
+}

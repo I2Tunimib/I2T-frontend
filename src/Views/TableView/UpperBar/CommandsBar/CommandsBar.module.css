@@ -11,3 +11,7 @@
 .commandsBar button{
     margin: 0 1rem;
 }
+
+.languageContainer{
+    align-self: flex-end;
+}

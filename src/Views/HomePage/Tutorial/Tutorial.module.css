@@ -1,15 +1,3 @@
-.accordionHeader{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.infoIcon {
-    background-image: url("./../../../Assets/Icons/info-blue.png");
-    background-size: contain;
-    height: 2rem;
-    width: 2rem;
-}
 
 .stepContainer{
     display: flex;

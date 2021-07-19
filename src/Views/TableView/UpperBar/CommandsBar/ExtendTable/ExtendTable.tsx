@@ -232,7 +232,7 @@ const ExtendTable = () => {
             }
             {extendDialogIsOpen &&
                 <ExtendModal
-                    titleText={`${t('commands-bar.extension.extension-modal.titleText')}`}
+                    titleText={`${t('commands-bar.extension.extension-modal.title-text')}`}
                     text={t('commands-bar.extension.extension-modal.text')}
                     mainButtonAction={(paramsToSend: any, internalUrl: string, extendConfig: extensionServiceInterface, matchingCols: { colname: string, selectColMode: selectColModeEnum, matchinParam: string }[]) => {
                         callExtendService(paramsToSend, internalUrl, extendConfig, matchingCols);

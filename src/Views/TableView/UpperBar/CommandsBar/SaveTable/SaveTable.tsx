@@ -58,14 +58,14 @@ const SaveTable = () => {
     return (
         <>
         <div className={style.saveDiv}>
-            <SecondaryButton label="Salva con nome" cta={() => {saveAs()}}/>
-            <MainButton label="Salva" cta ={() => {save()}}/>
+            <SecondaryButton label={t('commands-bar.save-as.button-label')} cta={() => {saveAs()}}/>
+            <MainButton label={t('commands-bar.save.button-label')} cta ={() => {save()}}/>
         </div>
         {
             okModalIsOpen &&
             <ClassicModal 
-            titleText={t('commandr-bar.save.success-modal.title-text')}
-            text={t('commandr-bar.save.success-modal.text')}
+            titleText={t('commands-bar.save.success-modal.title-text')}
+            text={t('commands-bar.save.success-modal.text')}
             mainButtonLabel={t('buttons.close')}
             mainButtonAction={() => {setOkModalIsOpen(false)}}
             showState={okModalIsOpen}

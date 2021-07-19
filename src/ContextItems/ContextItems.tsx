@@ -45,12 +45,12 @@ export const deleteContext = (col: colInterface, deleteCol: Function, removeCont
 }
     
 
-export const editContext = (dataIndex: number, keyName: string, editableCell: Function, removeContext: Function, t: any) => {
+export const editContext = (dataIndex: number, keyName: string, editCell: Function, removeContext: Function, t: any) => {
     return ({
         icon: <EditIcon/>,
         label: t('context-items.edit-label'),
         action: () => {
-            editableCell(dataIndex, keyName);
+            editCell(true);
             removeContext();
         }
     })

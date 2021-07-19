@@ -63,7 +63,7 @@ const FilterDataEffect = () => {
                         break;
                     case "metadata-false":
                         newFilteredData = Data.filter((row: any) => {
-                            return row[col.name].metadata.length = 0;
+                            return row[col.name].metadata.length === 0;
                         })
                         
                         break;

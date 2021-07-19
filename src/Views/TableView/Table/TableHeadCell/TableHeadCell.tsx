@@ -232,7 +232,10 @@ const TableHeadCell = (props: { col: colInterface }) => {
                         }
                         {
                             col.filtered &&
-                            <FilterIcon />
+                            <span onClick={()=> {dispatchRemoveFilters();}} className={style.cursorPointer}>
+                                <FilterIcon />
+                            </span>
+
                         }
                     </div>
                     <div className={style.accessorCell}>

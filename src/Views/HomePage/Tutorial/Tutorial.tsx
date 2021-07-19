@@ -2,19 +2,24 @@ import React from "react";
 import { Accordion, Card, Button } from "react-bootstrap";
 import style from "./Tutorial.module.css";
 import { useTranslation } from 'react-i18next';
+import LanguageDropdown from "../../TableView/UpperBar/CommandsBar/LanguageDropdown/LanguageDropdown";
 
 
 const Tutorial: React.FC = () => {
     const { t, i18n } = useTranslation();
     return (
-        <>
+        <div className='tutorial'>
             <Accordion >
                 <Card>
-                    <Card.Header className={style.accordionHeader}>
-                        <Accordion.Toggle as={Button} variant="link" eventKey="0">
-                            <div className={style.infoIcon}>
+                    <Card.Header className='accordion-header'>
+                        <Accordion.Toggle as={Button} className='info-button' variant="link" eventKey="0">
+                            <div className='info-icon'>
                             </div>
                         </Accordion.Toggle>
+                        <div className="language-dropdown">
+                            <LanguageDropdown />
+                        </div>
+                        
                     </Card.Header>
                     <Accordion.Collapse eventKey="0">
                         <Card.Body>
@@ -57,7 +62,7 @@ const Tutorial: React.FC = () => {
                     </Accordion.Collapse>
                 </Card>
             </Accordion>
-        </>
+        </div>
     )
 }
 

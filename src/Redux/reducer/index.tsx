@@ -5,23 +5,20 @@ import loadingReducer from "./loadingReducer";
 import nameLoadReducer from "./nameReducer"
 import columnsReducer from "./columnsReducer";
 import contextReducer from "./contextMenuReducer";
-import editableCellReducer from "./editableCellReducer";
 import reconciliateReducer from "./reconciliateReducer";
 import filterDataReducer from "./filerDataReducer";
 import configReducer from "./configReducer";
+import languageReducer from "./languageReducer";
 
 
 const allReducers = combineReducers({
+    Language: languageReducer,
     Error: errorHandlerReducer,
     LoadingState: loadingReducer,
     Data: loadDataSuccessReducer,
     Name: nameLoadReducer,
     Columns: columnsReducer,
     Context: contextReducer,
-    // HasExtended: hasExtendedReducer, 
-    // ToExtendRows: toExtendRowsReducer,
-    EditableCell: editableCellReducer,
-    // ExtendRow: extendRowReducer,
     Config: configReducer,
     ItemsToReconciliate: reconciliateReducer,
     FilteredData: filterDataReducer
