@@ -1,23 +1,118 @@
 {
     "buttons": {
-        "confirm": "Conferma",
-        "cancel": "Annulla"
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "load": "Upload",
+        "close": "Close"
     },
     "homepage-content": {
         "tutorial": {
             "step-one": {
-                "title": "1. Carica i dati",
-                "content": "Carica i dati nella modalità che preferisci: dal tuo file system o dal nostro server. Puoi anche caricare una tabella precedentemente salvata."
+                "title": "1. Upload the data",
+                "content": "Upload the data in the way you prefer: from your file system or from our server. You can also load a previously saved table."
             },
             "step-two": {
-                "title": "2. Visualizza la tabella",
-                "content": "Visualizza la tabella caricata e scopri le operazioni che puoi fare premendo il tasto destro del mouse su celle o colonne"
+                "title": "2. View the table",
+                "content": "View the loaded table and discover the operations you can do by pressing the right mouse button on cells or columns."
             },
             "step-three": {
-                "title": "3. Utilizza i comandi principali",
-                "content": "Riconcilia ed estendi la tua tabella con i comandi principali che compariranno nella barra in altro una volta selezionate una o più colonne"
+                "title": "3. Use the main commands",
+                "content": "Reconcile and extend your table with the main commands that will appear in the top bar one you select one or more columns."
+            }
+        },
+        "get-data": {
+            "where-to-load": {
+                "label": "Where do you want to upload the data from? ",
+                "options": {
+                    "table-server": "Table Server (all csv tables)",
+                    "table-saved": "Table Server (saved tables)",
+                    "file.-system": "Local file system (CSV, JSON)"
+                }
+            },
+            "choose-from": {
+                "server-tables": "Choose from available tables",
+                "saved-tables": "Choose from saved tables"
+            },
+            "choose-name-modal": {
+                "title-text": "Your table has been loaded",
+                "input-label": "Choose how to name your table"
             }
         }
 
+    },
+    "table": {
+        "cells": {
+            "editable-cell-modal": {
+                "input-label": "Insert a value to change the cella label with",
+                "title-text": "Edit cell label"
+            }
+        }
+    },
+    "shared": {
+        "error": {
+            "title-text": "Error",
+            "data-loading": {
+                "empty": "No data loaded."
+            }, 
+            "reconciliation": {
+                "impossible-connect": "Impossible to connect to ricociliator service"
+            }
+        }
+    },
+    "commands-bar": {
+        "reconciliation": {
+            "button-label": "Reconcile",
+            "select-reconciliator-modal": {
+                "input-label": "Select a service",
+                "title-text": "Reconcile",
+                "text": "Select a service to reconcile with"
+            },
+            "success-modal": {
+                "title-text": "Success",
+                "text": "Successful reconciliation"
+            }
+        },
+        "extension": {
+            "button-label": "Extend",
+            "extension-modal": {
+                "title-text": "Extend column",
+                "text": "Enter the requested extension options"
+            }, 
+            "success-modal": {
+                "title-text": "Success",
+                "text": "Successful extension"
+            } 
+        },
+        "save": {
+            "button-label": "Save",
+            "success-modal": {
+                "title-text": "Success",
+                "text": "Your table has been successfully saved"
+
+            }
+        },
+        "save-as": {
+            "button-label": "Save as",
+            "save-as-modal": {
+                "title-text" : "Save as",
+                "input-label" : "Choose the name with which to save the table"
+
+            }
+        }
+    },
+    "context-items": {
+        "select-column": "Select column",
+        "deselect-column": "Deselect column",
+        "delete-column": "Delete column",
+        "edit-label": "Edit label",
+        "delete-line": "Delete row",
+        "reconcile-cell": "Reconciliate cell",
+        "expand-entities": "Expand entity column",
+        "collapse-entities": "Collapse entity column",
+        "show-metadata": "Show metadata",
+        "filter-column": "Filter column",
+        "remove-filters": "Remove filters",
+        "finalize-matching": "Finalize matching"
     }
+
 }

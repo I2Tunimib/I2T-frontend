@@ -50,17 +50,18 @@
     },
     "shared": {
         "error": {
-            "title-text": "Error",
+            "title-text": "Errore",
             "data-loading": {
-                "empty": "No data loaded."
+                "empty": "Nessun dato caricato"
             }, 
             "reconciliation": {
-                "impossible-connect": "Impossible to connect to ricociliator service"
+                "impossible-connect": "Impossibile connettersi al server"
             }
         }
     },
     "commands-bar": {
         "reconciliation": {
+            "button-label": "Riconcilia",
             "select-reconciliator-modal": {
                 "input-label": "Seleziona un servizio:",
                 "title-text": "Riconcilia",
@@ -72,7 +73,31 @@
             }
         },
         "extension": {
-  
+            "button-label": "Estendi",
+            "extension-modal": {
+                "title-text": "Estendi colonna",
+                "text": "Inserisci le opzioni di estensione richieste"
+            }, 
+            "success-modal": {
+                "title-text": "Successo",
+                "text": "Estensione avvenuta con successo"
+            } 
+        },
+        "save": {
+            "button-label": "Salva",
+            "success-modal": {
+                "title-text": "Successo",
+                "text": "La tua tabella è stata salvata con successo"
+
+            }
+        },
+        "save-as": {
+            "button-label": "Salva con nome",
+            "save-as-modal": {
+                "title-text" : "Salva con nome",
+                "input-label" : "Scegli il nome con cui vuoi salvare la tua tabella"
+
+            }
         }
     },
     "context-items": {

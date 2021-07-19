@@ -7,11 +7,11 @@ import ExtendModal from "../../../../../SharedComponents/ExtendModal/ExtendModal
 import { metaService } from "../../../../../Http/httpServices";
 import { setLoadingState, unsetLoadingState } from "../../../../../Redux/action/loading";
 import { extensionServiceInterface, selectColModeEnum } from "../../../../../Interfaces/configInterface";
-import { loadDataSuccess, loadSavedDataSuccess } from "../../../../../Redux/action/data";
+import { loadSavedDataSuccess } from "../../../../../Redux/action/data";
 import { loadColumns } from "../../../../../Redux/action/columns";
 import { cellTypeEnum } from "../../../../../Enums/cell-type.enum";
 import { displayError } from "../../../../../Redux/action/error";
-import { is } from "immer/dist/internal";
+import { useTranslation } from "react-i18next";
 
 const ExtendTable = () => {
     const Columns = useSelector((state: RootState) => state.Columns);
@@ -19,6 +19,7 @@ const ExtendTable = () => {
     const [isExtensible, setIsExtensible] = React.useState<boolean>(false);
     const [selectedCol, setSelectedCol] = React.useState<colInterface | null>(null)
     const [extendDialogIsOpen, setExtendDialogIsOpen] = React.useState<boolean>(false);
+    const {t} = useTranslation();
 
     const dispatch = useDispatch();
 
@@ -224,22 +225,22 @@ const ExtendTable = () => {
                 isExtensible &&
                 <>
                     <MainButton
-                        label="Estendi"
+                        label={t('commands-bar.extension.button-label')}
                         cta={() => { setExtendDialogIsOpen(true) }}
                     />
                 </>
             }
             {extendDialogIsOpen &&
                 <ExtendModal
-                    titleText={`Estendi colonna ${selectedCol!.label}`}
-                    text={'Inserisci le opzioni di estensione'}
+                    titleText={`${t('commands-bar.extension.extension-modal.titleText')}`}
+                    text={t('commands-bar.extension.extension-modal.text')}
                     mainButtonAction={(paramsToSend: any, internalUrl: string, extendConfig: extensionServiceInterface, matchingCols: { colname: string, selectColMode: selectColModeEnum, matchinParam: string }[]) => {
                         callExtendService(paramsToSend, internalUrl, extendConfig, matchingCols);
                         setExtendDialogIsOpen(false)
                     }}
-                    mainButtonLabel={'Conferma'}
+                    mainButtonLabel={t('buttons.confirm')}
                     secondaryButtonAction={() => { setExtendDialogIsOpen(false) }}
-                    secondaryButtonLabel={'Annulla'}
+                    secondaryButtonLabel={t('buttons.cancel')}
                     showState={extendDialogIsOpen}
                     onClose={() => { setExtendDialogIsOpen(false) }}
                 />

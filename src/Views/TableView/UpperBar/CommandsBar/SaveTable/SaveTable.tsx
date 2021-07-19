@@ -9,6 +9,7 @@ import ClassicModal from "../../../../../SharedComponents/ClassicModal/ClassicMo
 import InputModal from "../../../../../SharedComponents/InputModal/InputModal";
 import React from "react";
 import { RootState } from "../../../../../Redux/store";
+import { useTranslation } from "react-i18next";
 
 const SaveTable = () => {
     const LoadedData = useSelector((state: RootState )=> state.Data);
@@ -16,6 +17,7 @@ const SaveTable = () => {
     const [okModalIsOpen, setOkModalIsOpen] = React.useState(false);
     const [saveAsModalIsOpen, setSaveAsModalIsOpen] = React.useState(false);
     const [saveAsName, setSaveAsName] = React.useState <string>(LoadedName);
+    const { t } = useTranslation();
 
     const dispatch = useDispatch();
 
@@ -62,9 +64,9 @@ const SaveTable = () => {
         {
             okModalIsOpen &&
             <ClassicModal 
-            titleText="Salvataggio avvenuto con successo"
-            text="La tua tabella è stata salvata con successo"
-            mainButtonLabel="Ok"
+            titleText={t('commandr-bar.save.success-modal.title-text')}
+            text={t('commandr-bar.save.success-modal.text')}
+            mainButtonLabel={t('buttons.close')}
             mainButtonAction={() => {setOkModalIsOpen(false)}}
             showState={okModalIsOpen}
             onClose = {() => setOkModalIsOpen(false)}
@@ -72,11 +74,11 @@ const SaveTable = () => {
         } {
             saveAsModalIsOpen && 
             <InputModal 
-            titleText={"Salva con nome"}
-            inputLabel="Scegli il nome con cui vuoi salvare la tua tabella:"
-            mainButtonLabel="Conferma"
+            titleText={t('commands-bar.save-as.save-as-modal.title-text')}
+            inputLabel={t('commands-bar.save-as.save-as-modal.input-label')}
+            mainButtonLabel={t('buttons.confirm')}
             mainButtonAction={ () => {save(saveAsName); setSaveAsModalIsOpen(false)}}
-            secondaryButtonLabel="Annulla"
+            secondaryButtonLabel={t('buttons.cancel')}
             value={saveAsName}
             secondaryButtonAction={() => setSaveAsModalIsOpen(false)}
             onClose={()=>{setSaveAsModalIsOpen(false)}}

@@ -4,11 +4,13 @@ import MainButton from "../../../../../SharedComponents/MainButton/MainButton";
 import { reconciliate} from "../../../../../Redux/action/reconciliate";
 import { RootState } from "../../../../../Redux/store";
 import { colInterface } from "../../../../../Interfaces/col.interface";
+import { useTranslation } from "react-i18next";
 
 const ReconcileCol = () => {
     const LoadedColumns = useSelector((state: RootState) => state.Columns);
     const LoadedData = useSelector((state: RootState )=> state.Data);
     const [selectedColumns, setSelectedColumns] = React.useState <colInterface[]>([]);
+    const {t} = useTranslation();
 
 
     const dispatch = useDispatch();
@@ -74,7 +76,7 @@ const ReconcileCol = () => {
         <>
         {
             selectedColumns.length >= 1 &&
-            <MainButton label='Riconcilia' cta={()=>{reconciliatePayload()}}/>
+            <MainButton label={t('commands-bar.reconciliation.button-label')} cta={()=>{reconciliatePayload()}}/>
         }
         </>
     )
