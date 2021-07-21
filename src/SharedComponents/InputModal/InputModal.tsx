@@ -24,9 +24,9 @@ const InputModal = (props: inputModalPropsInterface) => {
 
     return (
         <>
-            <Modal show={show} onHide={() => { setShow(false) }}>
+            <Modal show={show} onHide={() => { setShow(false) }} className='modal'>
                 <Modal.Header closeButton>
-                    <Modal.Title>{titleText}</Modal.Title>
+                    <Modal.Title><h3>{titleText}</h3></Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     {text}

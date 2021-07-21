@@ -32,7 +32,7 @@ const LanguageDropdown = () => {
     }, [Language])
 
     return (
-        <>
+        <div className='language-dropdown'>
             <Dropdown className='dropdown'>
                 <Dropdown.Toggle id="dropdown-basic">
                     {Language}
@@ -48,7 +48,7 @@ const LanguageDropdown = () => {
                     })}
                 </Dropdown.Menu>
             </Dropdown>
-        </>
+        </div>
     )
 }
 

@@ -19,7 +19,7 @@ const ExtendTable = () => {
     const [isExtensible, setIsExtensible] = React.useState<boolean>(false);
     const [selectedCol, setSelectedCol] = React.useState<colInterface | null>(null)
     const [extendDialogIsOpen, setExtendDialogIsOpen] = React.useState<boolean>(false);
-    const {t} = useTranslation();
+    const { t } = useTranslation();
 
     const dispatch = useDispatch();
 
@@ -84,18 +84,21 @@ const ExtendTable = () => {
                                     }
                                 } else if (matchingCol.selectColMode === selectColModeEnum.IDS) {
                                     let myId = undefined;
-                                    for (const meta of newData[i][matchingCol.colname].metadata) {
-                                        if (meta.match === true) {
-                                            myId = meta.id;
-                                            if(myId==='6557942') {
-                                                console.log('eccolo');
+                                    if (newData[i][matchingCol.colname]) {
+                                        for (const meta of newData[i][matchingCol.colname].metadata) {
+                                            if (meta.match === true) {
+                                                myId = meta.id;
+                                                if (myId === '6557942') {
+                                                    console.log('eccolo');
+                                                }
                                             }
                                         }
                                     }
 
+
                                     if (item[matchingCol.matchinParam] === myId) {
                                         isGoodIndex.push(true);
-                                        if(myId==='6557942') {
+                                        if (myId === '6557942') {
                                             console.log('pusho true');
                                         }
                                     }
@@ -103,7 +106,7 @@ const ExtendTable = () => {
                             }
                             if (isGoodIndex.length === matchingCols.length) {
                                 rowIndex = i;
-                                if(i=== 1) {
+                                if (i === 1) {
                                     console.log('setto rowIndex');
                                 }
                             }
@@ -182,14 +185,14 @@ const ExtendTable = () => {
                     }
                     dispatchLoadData(newData);
                     console.log(reallyTrueProps);
-                    const newColumns = reallyTrueProps.filter((prop)=>{
+                    const newColumns = reallyTrueProps.filter((prop) => {
                         let alreadyExist = false;
                         for (const col of Columns) {
-                            if(col.name ===`${reallyNewColBaseName}${prop}`){
+                            if (col.name === `${reallyNewColBaseName}${prop}`) {
                                 alreadyExist = true;
                             }
                         }
-                        if(alreadyExist) {
+                        if (alreadyExist) {
                             return false;
                         } else {
                             return true;

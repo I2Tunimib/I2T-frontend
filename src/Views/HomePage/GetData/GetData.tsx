@@ -1,5 +1,4 @@
 import { Card, Form } from "react-bootstrap";
-import style from "./GetData.module.css";
 import React, { SetStateAction } from "react";
 import MainButton from "../../../SharedComponents/MainButton/MainButton";
 import { getAllTables, getAllSaved, getTable, getSaved } from "../../../Http/httpServices";
@@ -222,9 +221,9 @@ const GetData: React.FC = () => {
 
     return (
         <>
-        <div className={style.getDataContainer}>
+        <div className='get-data'>
             <div>
-                <Card className={style.card}>
+                <Card className="get-data-card">
                     <Card.Body>
                         <Form>
                             <Form.Group>
@@ -242,7 +241,7 @@ const GetData: React.FC = () => {
                 </Card>
             </div>
             <div>
-                <Card className={style.card}>
+                <Card className="get-data-card">
                     <Card.Body >
                         {
                             dataSource === "Table Server" &&

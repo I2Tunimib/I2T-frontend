@@ -1,6 +1,5 @@
 import React from "react";
 import { Accordion, Card, Button } from "react-bootstrap";
-import style from "./Tutorial.module.css";
 import { useTranslation } from 'react-i18next';
 import LanguageDropdown from "../../TableView/UpperBar/CommandsBar/LanguageDropdown/LanguageDropdown";
 
@@ -16,20 +15,16 @@ const Tutorial: React.FC = () => {
                             <div className='info-icon'>
                             </div>
                         </Accordion.Toggle>
-                        <div className="language-dropdown">
-                            <LanguageDropdown />
-                        </div>
-                        
                     </Card.Header>
                     <Accordion.Collapse eventKey="0">
                         <Card.Body>
-                            <div className={style.stepContainer}>
+                            <div className='step-container'>
                                 <div>
-                                    <Card>
-                                        <Card.Title className={style.cardTitle}>
-                                            {t('homepage-content.tutorial.step-one.title')}
+                                    <Card className="tutorial-card">
+                                        <Card.Title>
+                                            <h4>{t('homepage-content.tutorial.step-one.title')}</h4>
                                         </Card.Title>
-                                        <Card.Body className={style.cardBody}>
+                                        <Card.Body className="card-body">
                                             <p>
                                                 {t('homepage-content.tutorial.step-one.content')}
                                             </p>
@@ -38,21 +33,23 @@ const Tutorial: React.FC = () => {
 
                                 </div>
                                 <div>
-                                    <Card>
-                                        <Card.Title className={style.cardTitle}>
-                                            {t('homepage-content.tutorial.step-two.title')}
+                                    <Card className="tutorial-card">
+                                        <Card.Title>
+                                            <h4>{t('homepage-content.tutorial.step-two.title')}</h4>
                                         </Card.Title>
-                                        <Card.Body className={style.cardBody}>
+                                        <Card.Body className="card-body">
                                             {t('homepage-content.tutorial.step-two.content')}
                                         </Card.Body>
                                     </Card>
                                 </div>
                                 <div>
-                                    <Card>
-                                        <Card.Title className={style.cardTitle}>
-                                            {t('homepage-content.tutorial.step-three.title')}
+                                    <Card className="tutorial-card">
+                                        <Card.Title>
+                                            <h4>
+                                                {t('homepage-content.tutorial.step-three.title')}
+                                            </h4>
                                         </Card.Title>
-                                        <Card.Body className={style.cardBody}>
+                                        <Card.Body className="card-body">
                                             {t('homepage-content.tutorial.step-three.content')}
                                         </Card.Body>
                                     </Card>

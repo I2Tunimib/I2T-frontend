@@ -1,4 +1,4 @@
-import style from "./ExtendModal.module.scss";
+
 import { Dropdown, Form, Modal } from "react-bootstrap";
 import React from "react";
 import { classicModalPropsInterface } from "../../Interfaces/classic-modal-props.interface";
@@ -46,6 +46,10 @@ const ExtendModal = (props: classicModalPropsInterface) => {
     const requiredInput = () => {
         const myMarkup: any[] = [];
         for (const param of extendService!.requiredParams) {
+            myMarkup.push(
+                <div className="divider">
+                </div>
+            )
             switch (param.inputMode) {
                 case inputModeEnum.SELECT_COL:
                     if (param.default) {
@@ -54,10 +58,10 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         setParamsToSend(newPar);
                     }
                     myMarkup.push(
-                        <div className={style.fieldContainer} key={param.name}>
+                        <div className='field-container' key={param.name}>
                             <Form.Group>
                                 <Form.Label>
-                                    {param.name}
+                                    <p className='field-label'>Seleziona una colonna per i valori: <b>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
                                 </Form.Label>
                                 <Form.Control as="select" onChange={(e) => {
                                     const arrayValues2 = [];
@@ -66,12 +70,14 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                         return col.colname !== targetColName;
                                     });
                                     setMatchingCols([...newMatchingCols, { colname: targetColName, selectColMode: param.selectColMode!, matchinParam: param.name }]);
-                                    if (param.selectColMode === selectColModeEnum.IDS){
+                                    if (param.selectColMode === selectColModeEnum.IDS) {
                                         for (const row of Data) {
-                                            for (const meta of row[targetColName].metadata) {
-                                                if (meta.match) {
-                                                    arrayValues2.push(meta.id);
-                                                    continue;
+                                            if (row[targetColName]) {
+                                                for (const meta of row[targetColName].metadata) {
+                                                    if (meta.match) {
+                                                        arrayValues2.push(meta.id);
+                                                        continue;
+                                                    }
                                                 }
                                             }
                                         }
@@ -86,7 +92,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                     newParams2[param.name] = arrayValues2;
                                     setParamsToSend(JSON.parse(JSON.stringify(newParams2)));
                                 }}>
-                                    <option selected disabled hidden>Selezionare una colonna per {param.name}</option>
+                                    <option selected disabled hidden>Selezionare una colonna</option>
                                     {selectedCol.map((col) => {
                                         return (
                                             <option value={col.name} key={col.name}>
@@ -95,7 +101,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                         )
                                     })}
                                 </Form.Control>
-                                <p>Valori selezionati: {paramsToSend[param.name] ? paramsToSend[param.name].length : 0}</p>
+                                <p className='field-hint'>Valori selezionati: {paramsToSend[param.name] ? paramsToSend[param.name].length : 0}</p>
                             </Form.Group>
                         </div >
 
@@ -108,7 +114,8 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         setParamsToSend(newPar);
                     }
                     myMarkup.push(
-                        <div className={style.fieldContainer} key={param.name}>
+                        <div  key={param.name} className='field-container'>
+                            <p className='field-label'>Seleziona uno o più valori per la proprietà: <b>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
                             {param.values!.map((value, index) => {
                                 return (
                                     <div key={value.label}>
@@ -153,9 +160,9 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         setParamsToSend(newPar);
                     }
                     myMarkup.push(
-                        <div className={style.fieldContainer} key={param.name}>
+                        <div key={param.name} className='field-container'>
                             <Form.Group>
-                                <Form.Label>{param.name}</Form.Label>
+                                <Form.Label><p className='field-label'><b>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p></Form.Label>
                                 <Form.Control type="number" placeholder={`Enter ${param.name}`} value={param.default} onChange={(e) => {
                                     const newPar = { ...paramsToSend };
                                     newPar[param.name] = [e.target.value]
@@ -200,14 +207,14 @@ const ExtendModal = (props: classicModalPropsInterface) => {
     return (
         <>
             <>
-                <Modal show={show} onHide={() => { setShow(false) }} className={props.metadataModal ? style.metadataModal : undefined}>
+                <Modal show={show} onHide={() => { setShow(false) }} className='modal extend-modal'>
                     <Modal.Header closeButton>
-                        <Modal.Title>{titleText}</Modal.Title>
+                        <Modal.Title><h3>{titleText}</h3></Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        {text}
+                        <p>{text}</p>
 
-                        <Dropdown className={style.dropdown}>
+                        <Dropdown className='dropdown'>
                             <Dropdown.Toggle variant="primary" id="dropdown-basic">
                                 {extendService ? extendService!.name : 'Scegli un servizio'}
                             </Dropdown.Toggle>
@@ -220,7 +227,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                             </Form>
                             {
                                 paramError &&
-                                <p className={style.paramError}>{paramError}</p>
+                                <p>{paramError}</p>
                             }
                         </Dropdown>
                     </Modal.Body>

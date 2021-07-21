@@ -7,7 +7,7 @@ function SecondaryButton(props: buttonsPropsInterface) {
     const {label, disabled, cta} = props;
 
     return( 
-        <Button onClick={(e) => cta()} className={style.button} disabled={disabled}>
+        <Button onClick={(e) => cta()} className='secondary-button' disabled={disabled}>
             {label}
         </Button>
     )

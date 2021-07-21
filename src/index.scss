@@ -1,33 +1,16 @@
+// base sass
+
 @import "./styles/_colors.scss";
 @import "./styles/_fonts.scss";
 @import "./styles/_commons.scss";
+@import "./styles/_forms.scss";
 
-.tutorial {
-  .accordion-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: $neutral-color-base;
-    position: relative;
-    .info-button {
-      &:focus {
-        box-shadow: none;
-      }
-      .info-icon {
-        background-image: url("./Assets/Icons/info-blue.png");
-        background-size: contain;
-        height: 2rem;
-        width: 2rem;
-      }
-    }
-    .language-dropdown {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      overflow: visible;
-    }
-  }
-}
+//components
+
+@import  "./styles/components/language-dropdown.scss";
+@import "./styles/components/tutorial.scss";
+@import "./styles/components/get-data.scss";
+@import "./styles/components/extend-modal.scss";
 
 .modal-footer {
   justify-content: space-between !important;

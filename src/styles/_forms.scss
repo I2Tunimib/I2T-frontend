@@ -1,0 +1,13 @@
+select {
+    &:focus {
+        box-shadow: none !important;
+        border: 2px solid $brand-color-two-hover !important;
+    }
+}
+
+input {
+    &:focus {
+        box-shadow: none !important;
+        border: 2px solid $brand-color-two-hover !important;
+    }
+}

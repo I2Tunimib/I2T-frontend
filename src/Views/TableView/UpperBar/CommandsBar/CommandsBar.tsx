@@ -14,7 +14,6 @@ const CommandsBar = () => {
             </div>
             <div>
                 <SaveTable/>
-                <LanguageDropdown/>
             </div>
         </div>
     )
