@@ -6,7 +6,7 @@ const UpperBar = () => {
     return (
         <>
                 <div className='upper-bar'>
-
+                    
                     <TableName />
 
                     <CommandsBar />
