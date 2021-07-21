@@ -1,0 +1,38 @@
+.table-head-cell {
+  .header-cell {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-cell {
+    display: flex;
+    justify-content: center;
+    height: 2rem;
+    .cursor-pointer {
+      cursor: pointer;
+    }
+  }
+
+  .status-cell {
+    svg {
+      width: 1.2rem;
+      height: 1.2rem;
+      margin: 0.2rem;
+      &.stroke {
+        stroke: $brand-color-two-base;
+      }
+      &:not(.stroke) {
+        fill: $brand-color-two-base;
+      }
+    }
+  }
+
+  .accessor-cell {
+    p {
+      margin: 0.2rem;
+    }
+  }
+  .spacer {
+    height: 1.8rem;
+  }
+}

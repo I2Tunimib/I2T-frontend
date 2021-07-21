@@ -1,7 +1,4 @@
-
-import React from "react";
 import { contextInterface } from "../../Interfaces/context.interface";
-import style from "./ContextMenu.module.css";
 
 
 const ContextMenu = (props: contextInterface) => {
@@ -32,7 +29,7 @@ const ContextMenu = (props: contextInterface) => {
     return (
         <>
 
-            <div style={{ position: "absolute", top: findContextCoord()[1], left: findContextCoord()[0] }} className={style.contextMenu}>
+            <div style={{ position: "absolute", top: findContextCoord()[1], left: findContextCoord()[0] }} className='context-menu'>
                 <ul>
                     {dropItems}
                 </ul>

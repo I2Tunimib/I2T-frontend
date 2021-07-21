@@ -1,7 +1,6 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { addContext, removeContext } from "../../../../Redux/action/contextMenu";
-import style from "./Cell.module.css";
 import { editContext, deleteLineContext, riconciliateContext, viewMetaTable } from "../../../../ContextItems/ContextItems";
 import { deleteLine, updateLine } from "../../../../Redux/action/data"
 import { reconciliate } from "../../../../Redux/action/reconciliate";
@@ -22,7 +21,7 @@ const Cell = (props: cellPropsInterface) => {
 
     const Config = useSelector((state: RootState) => state.Config);
     const FilteredData = useSelector((state: RootState) => state.FilteredData);
-    const Data = useSelector((state: RootState )=> state.Data)
+    const Data = useSelector((state: RootState) => state.Data)
     // const ToExtendRows = useSelector((state: RootState) => state.ToExtendRows);
     // const HasExtended = useSelector(state => state.HasExtended);
 
@@ -60,12 +59,12 @@ const Cell = (props: cellPropsInterface) => {
     }, [col.type, cellValue])
 
     React.useEffect(() => {
-        if(editModalIsOpen) {
+        if (editModalIsOpen) {
             setNewValue(Data[realDataIndex!][keyName].label);
         } else {
             setNewValue('');
         }
-        
+
     }, [editModalIsOpen])
 
     const dispatch = useDispatch();
@@ -155,23 +154,29 @@ const Cell = (props: cellPropsInterface) => {
     return (
         <> {
             cellValue &&
-            <>
-                <div onContextMenu={(e) => { displayContextMenu(e) }} ref={(r) => { handleRef(r) }} onClick={() => { dispatchRemoveContext() }} className={style.dataCell}>
+            <div className='cell'>
+                <div
+                    onContextMenu={(e) => { displayContextMenu(e) }} ref={(r) => { handleRef(r) }}
+                    onClick={() => { dispatchRemoveContext() }}
+                    className='data-cell'>
                     <div>
                         {cellValue.metadata.length > 0 &&
-                            <div className={`${style.metaDot} ` + dotColor}>
+                            <div className={`meta-dot ` + dotColor}>
 
                             </div>
                         }
 
-                        <div className={style.labelCell}>
-                            {cellValue &&
-                                cellValue.label}
+                        <div className='label-cell'>
+                            <p>
+                                {cellValue &&
+                                    cellValue.label}
+                            </p>
+
                         </div>
                     </div>
                     {
                         col.extendedMeta &&
-                        <div className={style.idLinksContainer}>
+                        <div className='id-links-container'>
                             {idLinks}
                         </div>
                     }
@@ -191,7 +196,7 @@ const Cell = (props: cellPropsInterface) => {
                     />
 
                 }
-            </>
+            </div>
         }
             {editModalIsOpen &&
                 <InputModal
@@ -199,7 +204,7 @@ const Cell = (props: cellPropsInterface) => {
                     titleText={t('table.cells.editable-cell-modal.title-text')}
                     mainButtonLabel={t('buttons.confirm')}
                     secondaryButtonLabel={t('buttons.cancel')}
-                    secondaryButtonAction={() => {setEditModalIsOpen(false) }}
+                    secondaryButtonAction={() => { setEditModalIsOpen(false) }}
                     mainButtonAction={() => { edit() }}
                     setInputValue={(value: SetStateAction<string>) => { setNewValue(value) }}
                     value={newValue}

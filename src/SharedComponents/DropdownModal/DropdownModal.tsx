@@ -1,5 +1,4 @@
 import MainButton from "../MainButton/MainButton";
-import style from "./DropdownModal.module.css";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import {Dropdown, Modal } from "react-bootstrap";
 import React from "react";
@@ -37,12 +36,12 @@ const DropdownModal = (props: dropdownModalPropsInterface) => {
         <>
             <Modal show={show} onHide={() => { setShow(false) }}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{titleText}</Modal.Title>
+                    <Modal.Title><h3>{titleText}</h3></Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {text}
+                    <p>{text}</p>
 
-                    <Dropdown className={style.dropdown}>
+                    <Dropdown>
                         <Dropdown.Toggle variant="primary" id="dropdown-basic">
                             {dropValue ? dropValue!.label : inputLabel}
                         </Dropdown.Toggle>

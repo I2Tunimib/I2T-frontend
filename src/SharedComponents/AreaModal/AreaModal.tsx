@@ -26,14 +26,17 @@ const AreaModal = (props: areaModalPropsInterface) => {
         <>
             <Modal show={show} onHide={() => { setShow(false) }}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{titleText}</Modal.Title>
+                    <Modal.Title><h3>{titleText}</h3></Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {text}
+                    <p>
+                        {text}
+                    </p>
+
                     <Form>
                         <Form.Group>
                             <Form.Label>{inputLabel}</Form.Label>
-                            <Form.Control as="textarea" onChange={(e) => { setInputValue(e.target.value) }} value={value}/>
+                            <Form.Control as="textarea" onChange={(e) => { setInputValue(e.target.value) }} value={value} />
                         </Form.Group>
                     </Form>
                 </Modal.Body>

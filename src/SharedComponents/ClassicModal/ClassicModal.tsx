@@ -2,7 +2,6 @@ import { Modal } from "react-bootstrap";
 import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import React from "react";
-import style from "./ClassicModal.module.css";
 import { classicModalPropsInterface } from "../../Interfaces/classic-modal-props.interface";
 
 
@@ -22,12 +21,11 @@ const ClassicModal = (props: classicModalPropsInterface) => {
 
     return (
         <>
-            <Modal show={show} onHide={() => { setShow(false) }} className={props.metadataModal ? style.metadataModal : undefined}>
+            <Modal show={show} onHide={() => { setShow(false) }}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{titleText}</Modal.Title>
+                    <Modal.Title><h3>{titleText}</h3></Modal.Title>
                 </Modal.Header>
-                <Modal.Body
-                    className={props.metadataModal ? style.metadataText : undefined}>
+                <Modal.Body>
                     {props.metadataModal &&
                         <pre>{text}</pre>
                     }

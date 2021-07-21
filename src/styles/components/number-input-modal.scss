@@ -1,0 +1,17 @@
+.number-input-modal {
+    .MuiSlider-root {
+        width: calc(100% - 2rem);
+        margin: 1rem 1rem;
+        margin-top: 0;
+        .MuiSlider-rail, .MuiSlider-track {
+            background-color: $brand-color-two-base;
+        }
+        .MuiSlider-markLabel {
+            font-family: 'Roboto', 'Sans-serif';
+            color: $brand-color-two-base;
+        }
+        .MuiSlider-thumb {
+            background-color: $brand-color-one-base;
+        }
+    }
+}

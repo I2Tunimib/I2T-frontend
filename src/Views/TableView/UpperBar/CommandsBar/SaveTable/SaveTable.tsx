@@ -57,7 +57,7 @@ const SaveTable = () => {
 
     return (
         <>
-        <div className={style.saveDiv}>
+        <div className='save-div'>
             <SecondaryButton label={t('commands-bar.save-as.button-label')} cta={() => {saveAs()}}/>
             <MainButton label={t('commands-bar.save.button-label')} cta ={() => {save()}}/>
         </div>

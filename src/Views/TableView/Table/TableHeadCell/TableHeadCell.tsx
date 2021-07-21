@@ -1,4 +1,3 @@
-import style from "./TableHeadCell.module.scss";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addContext, removeContext } from "../../../../Redux/action/contextMenu";
@@ -13,10 +12,7 @@ import { addAllMetaData, extendColMeta } from "../../../../Redux/action/data";
 import { addExtMetaCol } from "../../../../Redux/action/columns";
 import { colInterface } from "../../../../Interfaces/col.interface";
 import { contextInterface } from "../../../../Interfaces/context.interface";
-import { reconciliatorInterface } from "../../../../Interfaces/reconciliator.interface";
-import { cellTypeEnum } from "../../../../Enums/cell-type.enum";
 import { contextTypeEnum } from "../../../../Enums/context-type.enum";
-import { compileFunction } from "vm";
 import DropdownModal from "../../../../SharedComponents/DropdownModal/DropdownModal";
 import { filterTypeEnum } from "../../../../Enums/filters-type.enum";
 import NumberInputModal from "../../../../SharedComponents/NumberInputModal/NumberInputModal";
@@ -178,20 +174,20 @@ const TableHeadCell = (props: { col: colInterface }) => {
     }, [Data, automatchingValue])
 
     React.useEffect(() => {
-            let maxValue = 0;
-            let minValue = 1000;
+        let maxValue = 0;
+        let minValue = 1000;
 
-            for (const row of Data) {
-                if (row[col.name]) {
-                    for (const metaItem of row[col.name].metadata) {
-                        if (metaItem.score >= maxValue) {
-                            maxValue = metaItem.score;
-                        }
-                        if (metaItem.score <= minValue) {
-                            minValue = metaItem.score;
-                        }
+        for (const row of Data) {
+            if (row[col.name]) {
+                for (const metaItem of row[col.name].metadata) {
+                    if (metaItem.score >= maxValue) {
+                        maxValue = metaItem.score;
+                    }
+                    if (metaItem.score <= minValue) {
+                        minValue = metaItem.score;
                     }
                 }
+            }
             setMetaMinMax({ min: minValue, max: maxValue });
         }
 
@@ -202,59 +198,68 @@ const TableHeadCell = (props: { col: colInterface }) => {
 
     return (
         <>
-            {
-                col.type === 'DATA' &&
-                <div className={`${style.headerCell}`}
-                    ref={(r) => { handleRef(r) }}
-                    onContextMenu={(e) => { displayContextMenu(e, col) }}>
-                    <div className={style.statusCell}>
-                        {
-                            col.selected &&
-                            <span onClick={() => { dispatchDeselectCol(col.name) }} className={style.cursorPointer}>
-                                <SelectedIcon />
-                            </span>
+            <div className='table-head-cell'>
+                {
+                    col.type === 'DATA' &&
+                    <div className='header-cell'
+                        ref={(r) => { handleRef(r) }}
+                        onContextMenu={(e) => { displayContextMenu(e, col) }}>
+                        <div className='status-cell'>
+                            {
+                                col.selected &&
+                                <span onClick={() => { dispatchDeselectCol(col.name) }} className='cursor-pointer'>
+                                    <SelectedIcon className='stroke'/>
+                                </span>
 
-                        }
-                        {
-                            !col.selected &&
-                            <span onClick={() => { dispatchSelectCol(col.name) }} className={style.cursorPointer}>
-                                <UnselectedIcon />
-                            </span>
+                            }
+                            {
+                                !col.selected &&
+                                <span onClick={() => { dispatchSelectCol(col.name) }} className='cursor-pointer'>
+                                    <UnselectedIcon  className='stroke'/>
+                                </span>
 
-                        }
-                        {
-                            col.new &&
-                            <NewIcon />
-                        }
-                        {
-                            col.reconciliated &&
-                            <RiconciliatedIcon />
-                        }
-                        {
-                            col.filtered &&
-                            <span onClick={()=> {dispatchRemoveFilters();}} className={style.cursorPointer}>
-                                <FilterIcon />
-                            </span>
+                            }
+                            {
+                                col.new &&
+                                <NewIcon />
+                            }
+                            {
+                                col.reconciliated &&
+                                <RiconciliatedIcon />
+                            }
+                            {
+                                col.filtered &&
+                                <span onClick={() => { dispatchRemoveFilters(); }} className='cursor-pointer'>
+                                    <FilterIcon />
+                                </span>
 
-                        }
-                    </div>
-                    <div className={style.accessorCell}>
-                        <p>
-                            {col.label}
-                        </p>
-                        {col.reconciliated &&
+                            }
+                        </div>
+                        <div className='accessor-cell'>
                             <p>
-                                {col.reconciliator}
-                            </p>}
-                    </div>
-                </div>
-            }
-            {col.type === 'INDEX' &&
-                <div>
-                    {col.label}
-                </div>
+                                {col.label}
+                            </p>
+                            {col.reconciliated &&
+                                <p>
+                                    {col.reconciliator}
+                                </p>
+                            }
+                            {
+                                !col.reconciliated &&
+                                <div className='spacer'>
 
-            }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                {col.type === 'INDEX' &&
+                    <div>
+                        {col.label}
+                    </div>
+
+                }
+            </div>
             {
                 filterDialogIsOpen &&
                 <DropdownModal

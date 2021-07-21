@@ -10,8 +10,9 @@ import { ReactComponent as SelectIcon } from "../../Assets/icon-set/selected/sel
 import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/selected/select-empty.svg";
 import { addMetadata } from "../../Redux/action/data";
 import { useDispatch, useSelector } from "react-redux";
-import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
+//import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
 import { RootState } from "../../Redux/store";
+import { ReactComponent as UndoIcon } from '../../Assets/icon-set/undo-circular-arrow.svg';
 
 
 
@@ -128,11 +129,11 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
 
     return (
         <>
-            <div className='big-modal'>
+            <div>
 
                 <Modal show={show} onHide={() => { setShow(false) }} className='big-modal'>
                     <Modal.Header closeButton>
-                        <Modal.Title>{titleText} <img src={undoIcon} className={style.undoIcon} onClick={() => { undo() }} /></Modal.Title>
+                        <Modal.Title> <h3 className='inline'>{titleText}</h3> <UndoIcon className='undo-icon' onClick={() => { undo() }} /></Modal.Title>
 
                     </Modal.Header>
                     <Modal.Body>
@@ -158,18 +159,18 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                     case 'action':
                                                         return (
                                                             <div className='flex-inline'>
-                                                                <div className='action-icon'>
-                                                                    <DeleteIcon onClick={() => { removeMeta(dataIndex) }} />
+                                                                <div>
+                                                                    <DeleteIcon className='action-icon' onClick={() => { removeMeta(dataIndex) }} />
                                                                 </div>
                                                                 {
                                                                     myMetaData[dataIndex].match &&
-                                                                    <div className='action-icon'>
-                                                                        <SelectIcon onClick={() => { deConfirmMeta(dataIndex) }} />
+                                                                    <div>
+                                                                        <SelectIcon className='action-icon stroke' onClick={() => { deConfirmMeta(dataIndex) }} />
                                                                     </div>
                                                                 }
                                                                 {!myMetaData[dataIndex].match &&
-                                                                    <div className='action-icon'>
-                                                                        <DeselectIcon onClick={() => { confirmMeta(dataIndex) }} />
+                                                                    <div >
+                                                                        <DeselectIcon className='action-icon stroke' onClick={() => { confirmMeta(dataIndex) }} />
                                                                     </div>
                                                                 }
 

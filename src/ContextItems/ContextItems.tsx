@@ -18,7 +18,7 @@ export const selectContext = (col:colInterface, selectCol: Function, deselectCol
         selectLabel = t('context-items.deselect-column');
     }
     return ({
-        icon: col.selected ? <DeselectIcon/> : <SelectIcon/>,
+        icon: col.selected ? <DeselectIcon className='stroke'/> : <SelectIcon className='stroke'/>,
         label: selectLabel,
         action: () => {
             if (col.selected) {

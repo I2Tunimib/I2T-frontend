@@ -22,33 +22,36 @@ const NumberInputModal = (props: any) => {
 
     React.useEffect(() => {
         setInputValue(value);
-    },[])
+    }, [])
 
     const marks = [
         {
-          value: minMax.min,
-          label: minMax.min.toString().substring(0,5),
+            value: minMax.min,
+            label: minMax.min.toString().substring(0, 5),
         },
         {
-          value: minMax.max,
-          label: minMax.max.toString().substring(0,5),
+            value: minMax.max,
+            label: minMax.max.toString().substring(0, 5),
         },
         {
-            value: value, 
-            label: value.toString().substring(0,5)
+            value: value,
+            label: value.toString().substring(0, 5)
         }
-      ];
+    ];
 
 
 
     return (
         <>
-            <Modal show={show} onHide={() => { setShow(false) }}>
+            <Modal show={show} onHide={() => { setShow(false) }} className='number-input-modal'>
                 <Modal.Header closeButton>
-                    <Modal.Title>{titleText}</Modal.Title>
+                    <Modal.Title><h3>{titleText}</h3></Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {text}
+                    <p>
+                        {text}
+                    </p>
+
                     <Form>
                         {/*
                             <Form.Group>
@@ -56,7 +59,7 @@ const NumberInputModal = (props: any) => {
                                 <Form.Control type="number" onChange={(e) => { setInputValue(e.target.value) }} defaultValue={value} />
                             </Form.Group>*/
                         }
-                        <Slider min={minMax.min}  marks={marks} max={minMax.max} aria-labelledby="discrete-slider" onChange={(e, value) => { setInputValue(value) }}/>
+                        <Slider min={minMax.min} marks={marks} max={minMax.max} aria-labelledby="discrete-slider" onChange={(e, value) => { setInputValue(value) }} />
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>

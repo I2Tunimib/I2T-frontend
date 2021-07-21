@@ -1,9 +1,8 @@
 import {Spinner} from "react-bootstrap";
-import style from "./LoadingSpinner.module.css";
 
 const LoadingSpinner = () => {
     return(
-        <div className={style.backOverlay}>
+        <div className='overlay'>
             <Spinner animation="border" variant="info" />
         </div>
     )

@@ -1,0 +1,12 @@
+.commands-bar {
+    padding: 0.3rem 5rem 0 2rem;
+    width:100%;
+    display: inline-flex;
+    justify-content: space-between;
+    > div {
+        display: inline-flex;
+        button {
+            margin: 0 1rem;
+        }
+    }
+}

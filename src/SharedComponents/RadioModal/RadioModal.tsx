@@ -40,10 +40,12 @@ const RadioModal = (props: radioModalPropsInterface) => {
         <>
             <Modal show={show} onHide={() => { setShow(false) }}>
                 <Modal.Header closeButton>
-                    <Modal.Title>{titleText}</Modal.Title>
+                    <Modal.Title><h3>{titleText}</h3></Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {text}
+                    <p>
+                        {text}
+                    </p>
                     <Form>
                         {radioFiels}
                     </Form>

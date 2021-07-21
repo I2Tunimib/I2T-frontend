@@ -25,15 +25,15 @@ const Table = () => {
 
     const options = {
         draggableColumns: {
-            enabled: false,
+            enabled: true,
         },
         customToolbar: () => {
             return (
                 <UpperBar />
             )
         },
-        tableBodyHeight: /*(window.innerHeight - 150).toString() + "px"*/ "75vh",
-        fixedHeader: true,
+        // tableBodyHeight: /*(window.innerHeight - 150).toString() + "px"*/ "75vh",
+        // fixedHeader: true,
         rowsPerPageOptions: [10, 20, 50],
         onChangeRowsPerPage: (numberOfRows: number) => {
             setRowsPerPage(numberOfRows);
