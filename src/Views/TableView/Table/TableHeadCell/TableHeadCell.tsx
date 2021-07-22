@@ -2,7 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addContext, removeContext } from "../../../../Redux/action/contextMenu";
 import { selectColumn, deselectColumn, deleteColumn, filterCol, removeFilter } from "../../../../Redux/action/columns";
-import { selectContext, deleteContext, extendColMetaContext, openFilterDialog, openAutoMatchingDialog } from "../../../../ContextItems/ContextItems";
+import { selectContext, deleteContext, extendColMetaContext, openFilterDialog, openAutoMatchingDialog, viewMetaTable } from "../../../../ContextItems/ContextItems";
 import { ReactComponent as SelectedIcon } from "../../../../Assets/icon-set/selected/select.svg";
 import { ReactComponent as UnselectedIcon } from "../../../../Assets/icon-set/selected/select-empty.svg";
 import { ReactComponent as NewIcon } from "../../../../Assets/icon-set/new/new.svg";
@@ -19,6 +19,7 @@ import NumberInputModal from "../../../../SharedComponents/NumberInputModal/Numb
 import { RootState } from "../../../../Redux/store";
 import { metaResponseInterface } from "../../../../Interfaces/meta-response.interface";
 import { useTranslation } from "react-i18next";
+import MetaTableModal from "../../../../SharedComponents/MetaTableModal/MetaTableModal";
 
 const TableHeadCell = (props: { col: colInterface }) => {
     const { t } = useTranslation();
@@ -32,6 +33,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
     const [filterToApply, setFilterToApply] = React.useState<string | null>(null);
     const [automatchingValue, setAutoMatchingValue] = React.useState<number | undefined>(undefined);
     const [matchingNumber, setMatchingNumber] = React.useState<number>(0);
+    const  [tableMetaModalIsOpen, setTableMetaModalsOpen] = React.useState<boolean>(false);
     const availableFilters = [
         {
             label: "Match: true",
@@ -96,21 +98,25 @@ const TableHeadCell = (props: { col: colInterface }) => {
         // let bounds = clickRef.current.getBoundingClientRect();
         let xPos = e.clientX // - bounds.left;
         let yPos = e.clientY // - bounds.top;
+        const contextItems = col.reconciliated ? [
+            selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext, t),
+            deleteContext(col, dispatchDeleteCol, dispatchRemoveContext, t),
+            extendColMetaContext(col, dispatchExtendColMeta, dispatchRemoveContext, dispatchAddExtMetaCol, t),
+            openFilterDialog(col, setFilterDialogIsOpen, dispatchRemoveFilters, dispatchRemoveContext, t),
+            openAutoMatchingDialog(setAutomatchingDialogIsOpen, dispatchRemoveContext, t),
+        ] :
+            [
+                selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext, t),
+                deleteContext(col, dispatchDeleteCol, dispatchRemoveContext, t),
+            ];
+        if(col.metadata.length >= 1) {
+            contextItems.push(viewMetaTable(setTableMetaModalsOpen, dispatchRemoveContext, t))
+        }
         const contextProps = {
             xPos,
             yPos,
             type: contextTypeEnum.header,
-            items: col.reconciliated ? [
-                selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext, t),
-                deleteContext(col, dispatchDeleteCol, dispatchRemoveContext, t),
-                extendColMetaContext(col, dispatchExtendColMeta, dispatchRemoveContext, dispatchAddExtMetaCol, t),
-                openFilterDialog(col, setFilterDialogIsOpen, dispatchRemoveFilters, dispatchRemoveContext, t),
-                openAutoMatchingDialog(setAutomatchingDialogIsOpen, dispatchRemoveContext, t),
-            ] :
-                [
-                    selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext, t),
-                    deleteContext(col, dispatchDeleteCol, dispatchRemoveContext, t),
-                ]
+            items: contextItems,
         }
         dispatchContext(contextProps);
 
@@ -208,14 +214,14 @@ const TableHeadCell = (props: { col: colInterface }) => {
                             {
                                 col.selected &&
                                 <span onClick={() => { dispatchDeselectCol(col.name) }} className='cursor-pointer'>
-                                    <SelectedIcon className='stroke'/>
+                                    <SelectedIcon className='stroke' />
                                 </span>
 
                             }
                             {
                                 !col.selected &&
                                 <span onClick={() => { dispatchSelectCol(col.name) }} className='cursor-pointer'>
-                                    <UnselectedIcon  className='stroke'/>
+                                    <UnselectedIcon className='stroke' />
                                 </span>
 
                             }
@@ -295,6 +301,21 @@ const TableHeadCell = (props: { col: colInterface }) => {
                     value={automatchingValue || metaMinMax.min}
                 />
             }
+            {tableMetaModalIsOpen &&
+                    <MetaTableModal
+                        titleText={col.label}
+                        metaData={col.metadata}
+                        dataIndex={-1}
+                        col={col}
+                        mainButtonLabel={t('buttons.confirm')}
+                        secondaryButtonLabel={t('buttons.cancel')}
+                        secondaryButtonAction={() => { setTableMetaModalsOpen(false) }}
+                        showState={tableMetaModalIsOpen}
+                        onClose={() => { setTableMetaModalsOpen(false) }}
+
+                    />
+
+                }
 
         </>
     )

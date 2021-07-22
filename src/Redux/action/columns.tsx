@@ -63,3 +63,11 @@ export const removeFilter = () => {
         type: "REMOVEFILTER",
     }
 }
+
+export const addMetaColumn = (meta: any, column: string) => {
+    return {
+        type: 'ADDMETACOLUMN',
+        meta, 
+        column
+    }
+} 

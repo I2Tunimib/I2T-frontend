@@ -207,6 +207,7 @@ const ExtendTable = () => {
                                 reconciliated: true,
                                 reconciliator: extendConfig.name,
                                 new: true,
+                                metadata: [],
                             }
                         )
                     })

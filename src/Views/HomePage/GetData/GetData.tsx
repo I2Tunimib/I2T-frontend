@@ -20,8 +20,8 @@ import { deleteAllColumns, loadColumns } from "../../../Redux/action/columns";
 const GetData: React.FC = () => {
     const { t } = useTranslation();
     const LoadedData = useSelector((state: RootState) => state.Data);
-    const LoadedName = useSelector((state: RootState )=> state.Name);
-    const LoadedColumns = useSelector((state: RootState )=> state.Columns);
+    const LoadedName = useSelector((state: RootState) => state.Name);
+    const LoadedColumns = useSelector((state: RootState) => state.Columns);
     const dispatch = useDispatch();
 
     const dispatchError = (error: string) => {
@@ -155,8 +155,9 @@ const GetData: React.FC = () => {
                     } else {
                         dispatchName(savedName);
                         dispatchUnsetLoading();
-                        console.log(tableData);
-                        dispatchLoadSavedSuccess(tableData.data);
+                        //console.log(tableData);
+                        dispatchLoadSavedSuccess(tableData.data.table);
+                        dispatchColumns(tableData.data.columns);
                     }
                 })();
                 break;
@@ -170,15 +171,16 @@ const GetData: React.FC = () => {
         for (let i = 0; i < LoadedData.length; i++) {
             if (Object.keys(LoadedData[i]).length > keys.length) {
                 keys = Object.keys(LoadedData[i]).filter(key => key !== 'index').map((key) => {
-                        return {
-                            label: key,
-                            name: key,
-                            selected: false,
-                            type: cellTypeEnum.data,
-                            reconciliated: false,
-                            reconciliator: '',
-                            new: false,
-                        }
+                    return {
+                        label: key,
+                        name: key,
+                        selected: false,
+                        type: cellTypeEnum.data,
+                        reconciliated: false,
+                        reconciliator: '',
+                        new: false,
+                        metadata: [],
+                    }
                 })
             }
         }
@@ -190,6 +192,7 @@ const GetData: React.FC = () => {
             reconciliated: false,
             reconciliator: "",
             new: false,
+            metadata: [],
         });
         // add first empty column
         return keys;
@@ -200,7 +203,7 @@ const GetData: React.FC = () => {
     React.useEffect(() => {
         // reset index when loaded data changes
         // resetIndex();
-        if (LoadedData.length >= 1  && LoadedColumns.length === 0) {
+        if (LoadedData.length >= 1 && LoadedColumns.length === 0) {
             setDataHasBeenLoaded(true);
             setTableName(LoadedName);
         } else if (LoadedData.length === 0 && !LoadedColumns) {
@@ -221,81 +224,86 @@ const GetData: React.FC = () => {
 
     return (
         <>
-        <div className='get-data'>
-            <div>
-                <Card className="get-data-card">
-                    <Card.Body>
-                        <Form>
-                            <Form.Group>
-                                <Form.Label>
-                                    {t('homepage-content.get-data.where-to-load.label')}
-                                </Form.Label>
-                                <Form.Control as="select" onChange={(e) => { setDataSource(e.target.value); }}>
-                                    <option value="Table Server">{t('homepage-content.get-data.where-to-load.options.table-server')}</option>
-                                    <option value="Tabella Salvata">{t('homepage-content.get-data.where-to-load.options.table-saved')}</option>
-                                    <option value="File system">{t('homepage-content.get-data.where-to-load.options.file.-system')}</option>
-                                </Form.Control>
-                            </Form.Group>
-                        </Form>
-                    </Card.Body>
-                </Card>
-            </div>
-            <div>
-                <Card className="get-data-card">
-                    <Card.Body >
-                        {
-                            dataSource === "Table Server" &&
-                            <div>
-                                <Form>
-                                    <Form.Group>
-                                        <Form.Label>
-                                            {t('homepage-content.get-data.choose-from.server-tables')}
-                                        </Form.Label>
-                                        <Form.Control as="select" onChange={(e) => { setTableName(e.target.value); }}>
-                                            {tablesOptions}
-                                        </Form.Control>
-                                    </Form.Group>
-                                </Form>
-                                <MainButton label={t('buttons.load')} cta={() => { getTableData() }} />
-                            </div>
-                        }
-                        {
-                            dataSource === "Tabella Salvata" &&
-                            <div>
-                                <Form>
-                                    <Form.Group>
-                                        <Form.Label>
-                                            {t('homepage-content.get-data.choose-from.saved-tables')}
-                                        </Form.Label>
-                                        <Form.Control as="select" onChange={(e) => { setSavedName(e.target.value); }}>
-                                            {savedOptions}
-                                        </Form.Control>
-                                    </Form.Group>
-                                </Form>
-                                <MainButton label={t('buttons.load')} cta={getTableData} />
-                            </div>
-                        }
-                        {
-                            dataSource === "File system" &&
-                            <div>
-                                <Form>
-                                    <Form.Group>
-                                        <Form.File id="exampleFormControlFile1" label="Scegli file:" onChange={(e: any) => { handlingUpload(e) }} />
-                                    </Form.Group>
-                                </Form>
-                            </div>
-                        }
-                    </Card.Body>
-                </Card>
-            </div>
+            <div className='get-data'>
+                <div>
+                    <Card className="get-data-card">
+                        <Card.Body>
+                            <Form>
+                                <Form.Group>
+                                    <Form.Label>
+                                        {t('homepage-content.get-data.where-to-load.label')}
+                                    </Form.Label>
+                                    <Form.Control as="select" onChange={(e) => { setDataSource(e.target.value); }}>
+                                        <option value="Table Server">{t('homepage-content.get-data.where-to-load.options.table-server')}</option>
+                                        <option value="Tabella Salvata">{t('homepage-content.get-data.where-to-load.options.table-saved')}</option>
+                                        <option value="File system">{t('homepage-content.get-data.where-to-load.options.file.-system')}</option>
+                                    </Form.Control>
+                                </Form.Group>
+                            </Form>
+                        </Card.Body>
+                    </Card>
+                </div>
+                <div>
+                    <Card className="get-data-card">
+                        <Card.Body >
+                            {
+                                dataSource === "Table Server" &&
+                                <div>
+                                    <Form>
+                                        <Form.Group>
+                                            <Form.Label>
+                                                {t('homepage-content.get-data.choose-from.server-tables')}
+                                            </Form.Label>
+                                            <Form.Control as="select" onChange={(e) => { setTableName(e.target.value); }}>
+                                                {tablesOptions}
+                                            </Form.Control>
+                                        </Form.Group>
+                                    </Form>
+                                    <MainButton label={t('buttons.load')} cta={() => { getTableData() }} />
+                                </div>
+                            }
+                            {
+                                dataSource === "Tabella Salvata" &&
+                                <div>
+                                    <Form>
+                                        <Form.Group>
+                                            <Form.Label>
+                                                {t('homepage-content.get-data.choose-from.saved-tables')}
+                                            </Form.Label>
+                                            <Form.Control as="select" onChange={(e) => { setSavedName(e.target.value); }}>
+                                                {savedOptions}
+                                            </Form.Control>
+                                        </Form.Group>
+                                    </Form>
+                                    <MainButton label={t('buttons.load')} cta={getTableData} />
+                                </div>
+                            }
+                            {
+                                dataSource === "File system" &&
+                                <div>
+                                    <Form>
+                                        <Form.Group>
+                                            <Form.File id="exampleFormControlFile1" label="Scegli file:" onChange={(e: any) => { handlingUpload(e) }} />
+                                        </Form.Group>
+                                    </Form>
+                                </div>
+                            }
+                        </Card.Body>
+                    </Card>
+                </div>
 
-        </div>
-        { dataHasBeenLoaded && LoadedData &&
+            </div>
+            {dataHasBeenLoaded && LoadedData &&
                 <InputModal
                     titleText={t('homepage-content.get-data.choose-name-modal.title-text')}
                     inputLabel={t('homepage-content.get-data.choose-name-modal.input-label')}
                     mainButtonLabel={t('buttons.confirm')}
-                    mainButtonAction={()=>{confirmAction(); dispatchColumns(setColumns());}}
+                    mainButtonAction={() => {
+                        confirmAction();
+                        if (dataSource !== 'Tabella Salvata') {
+                            dispatchColumns(setColumns());
+                        }
+                    }}
                     setInputValue={(name: SetStateAction<string>) => { setTableName(name) }}
                     secondaryButtonLabel={t('buttons.cancel')}
                     secondaryButtonAction={dispatchDeleteData}
@@ -304,7 +312,7 @@ const GetData: React.FC = () => {
                     onClose={() => { setDataHasBeenLoaded(false); dispatchDeleteAllCols(); }}
                 />
             }
-            {   isConfirmed &&
+            {isConfirmed &&
                 <Redirect to={{
                     pathname: "/table"
                 }} />

@@ -13,4 +13,5 @@ export interface colActionIterface {
     colType: cellTypeEnum,
     extendedCol: string,
     filter: string,
+    meta?: any,
 }

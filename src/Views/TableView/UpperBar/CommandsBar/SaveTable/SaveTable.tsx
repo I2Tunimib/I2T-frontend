@@ -10,10 +10,12 @@ import InputModal from "../../../../../SharedComponents/InputModal/InputModal";
 import React from "react";
 import { RootState } from "../../../../../Redux/store";
 import { useTranslation } from "react-i18next";
+import { colInterface } from "../../../../../Interfaces/col.interface";
 
 const SaveTable = () => {
     const LoadedData = useSelector((state: RootState )=> state.Data);
     const LoadedName = useSelector((state: RootState) => state.Name);
+    const Columns = useSelector((state: RootState) => state.Columns);
     const [okModalIsOpen, setOkModalIsOpen] = React.useState(false);
     const [saveAsModalIsOpen, setSaveAsModalIsOpen] = React.useState(false);
     const [saveAsName, setSaveAsName] = React.useState <string>(LoadedName);
@@ -36,8 +38,19 @@ const SaveTable = () => {
     
     const save = (name = LoadedName) => {
         dispatchSetLoadingState();
+        const columnToSave: colInterface[] = Columns.map((col: colInterface) => {
+            const newCol = {...col};
+            newCol.new = false;
+            newCol.selected = false;
+            return (
+                newCol
+            )
+        });
         (async () => {
-            const response = await saveTable(LoadedData, name);
+            const response = await saveTable({
+                columns: columnToSave,
+                table: LoadedData
+            }, name);
             if (await response.error) {
                 dispatchUnsetLoadingState();
                 dispatchError(response.errorText)

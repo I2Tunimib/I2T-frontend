@@ -9,6 +9,7 @@ import { ReactComponent as DeleteIcon } from "../../Assets/icon-set/delete/trash
 import { ReactComponent as SelectIcon } from "../../Assets/icon-set/selected/select.svg";
 import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/selected/select-empty.svg";
 import { addMetadata } from "../../Redux/action/data";
+import { addMetaColumn } from "../../Redux/action/columns";
 import { useDispatch, useSelector } from "react-redux";
 //import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
 import { RootState } from "../../Redux/store";
@@ -73,7 +74,9 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     const dispatchMeta = (colName: string, index: number, metadata: any[]) => {
         dispatch(addMetadata(colName, index, metadata))
     }
-
+    const dispatchMetaColumns = (meta: any, column: string) => {
+        dispatch(addMetaColumn(meta, column));
+    }
     React.useEffect(() => {
         setShow(showState);
     }, [showState])
@@ -112,10 +115,14 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     }
 
     const confirm = () => {
-        const labelValue = Data[dataIndex].label;
-        for(let i = 0;  i < Data.length; i++) {
-            if(Data[i].label === labelValue) {
-                dispatchMeta(colName, i, myMetaData);
+        if (dataIndex === -1) {
+            dispatchMetaColumns(myMetaData, col.name);
+        } else {
+            const labelValue = Data[dataIndex].label;
+            for (let i = 0; i < Data.length; i++) {
+                if (Data[i].label === labelValue) {
+                    dispatchMeta(colName, i, myMetaData);
+                }
             }
         }
         //dispatchMeta(colName, dataIndex, myMetaData);

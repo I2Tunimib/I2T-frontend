@@ -107,6 +107,7 @@ const Table = () => {
                             reconciliator: col.reconciliator,
                             extendedMeta: col.extendedMeta,
                             filtered: col.filtered,
+                            metadata: col.metadata,
                             customBodyRenderLite: (dataIndex: number, rowIndex: number) => {
 
                                 return (

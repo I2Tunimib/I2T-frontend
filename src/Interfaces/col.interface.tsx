@@ -10,4 +10,5 @@ export interface colInterface {
     new: boolean, 
     extendedMeta?: boolean,
     filtered?: string | null,
+    metadata: any [],
 }

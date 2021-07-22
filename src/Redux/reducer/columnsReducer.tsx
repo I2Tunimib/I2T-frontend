@@ -99,6 +99,15 @@ const columnsReducer = (state: colInterface[] = [], action: colActionIterface) =
                 }
             })
             return state = unfilteredCols;
+        case "ADDMETACOLUMN": 
+            const addedMetaCols = produce(state, draftState => {
+                for (const col of draftState){
+                    if(col.name === action.column) {
+                        col.metadata = action.meta
+                    }
+                }
+            })
+            return state = addedMetaCols;
         default :
             return state;
     }
