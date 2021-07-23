@@ -65,5 +65,6 @@
     "@svgr/webpack": "^5.5.0",
     "@types/mui-datatables": "^3.7.4",
     "@types/react-router-dom": "^5.1.7"
-  }
+  }, 
+  "homepage": "."
 }

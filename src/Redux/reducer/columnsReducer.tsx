@@ -29,7 +29,7 @@ const columnsReducer = (state: colInterface[] = [], action: colActionIterface) =
             const nextState2 = produce(state, draftState => {
                 draftState[colToDeselectIndex!].selected = false;
             })
-            console.log(nextState2);
+            //console.log(nextState2);
             return state = nextState2;
         case "DELETECOL":
             let colToDeleteIndex = null;
@@ -56,7 +56,7 @@ const columnsReducer = (state: colInterface[] = [], action: colActionIterface) =
             return nextState3;
         case "ADDEXTMETACOL":
             let indexToextend: number | null = null; 
-            console.log(action.extendedCol);
+            //console.log(action.extendedCol);
             for (let t = 0; t < state.length; t++) {
                 if (state[t].name === action.extendedCol) {
                     indexToextend = t;

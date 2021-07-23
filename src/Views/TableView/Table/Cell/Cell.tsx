@@ -15,6 +15,7 @@ import InputModal from "../../../../SharedComponents/InputModal/InputModal";
 import { SetStateAction } from "react";
 
 const Cell = (props: cellPropsInterface) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { dataIndex, col, rowsPerPage, pageIndex } = props;
     const keyName = col.name;
     const { t } = useTranslation();
@@ -34,7 +35,14 @@ const Cell = (props: cellPropsInterface) => {
 
     const cellValue: cellInterface = FilteredData[dataIndex] ? FilteredData[dataIndex][keyName] : null;
     const realDataIndex = cellValue ? (parseInt(FilteredData[dataIndex].index.label) - 1) : null;
-    const meta = cellValue ? cellValue.metadata : [];
+    // const meta = cellValue ? cellValue.metadata : [];
+    const meta = React.useMemo(() => {
+        if (cellValue) {
+            return cellValue.metadata
+        } else {
+            return [];
+        }
+    }, [cellValue])
     const payLoad = {
         column: keyName,
         index: dataIndex,
@@ -56,6 +64,7 @@ const Cell = (props: cellPropsInterface) => {
                 }
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [col.type, cellValue])
 
     React.useEffect(() => {
@@ -64,7 +73,7 @@ const Cell = (props: cellPropsInterface) => {
         } else {
             setNewValue('');
         }
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editModalIsOpen])
 
     const dispatch = useDispatch();
@@ -105,8 +114,7 @@ const Cell = (props: cellPropsInterface) => {
                 setContextCellItems([deleteRowContext]);
             }
         }
-
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cellValue])
 
     React.useEffect(() => {

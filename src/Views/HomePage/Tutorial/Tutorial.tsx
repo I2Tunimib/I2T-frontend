@@ -1,11 +1,10 @@
 import React from "react";
 import { Accordion, Card, Button } from "react-bootstrap";
 import { useTranslation } from 'react-i18next';
-import LanguageDropdown from "../../TableView/UpperBar/CommandsBar/LanguageDropdown/LanguageDropdown";
 
 
 const Tutorial: React.FC = () => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     return (
         <div className='tutorial'>
             <Accordion >

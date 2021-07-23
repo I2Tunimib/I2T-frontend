@@ -43,7 +43,7 @@ const ReconcileCol = () => {
                 })
             }
         }
-        console.log(payLoad);
+        //console.log(payLoad);
         dispatchReconciliate(payLoad);
     }
 
@@ -59,9 +59,9 @@ const ReconcileCol = () => {
                     dispatchError(reconResponse.data.error);
                     return;
                 }
-                console.log(reconResponse.data);
+                //console.log(reconResponse.data);
                 for (const item of reconResponse.data.items){
-                    console.log(item.metadata);
+                    //console.log(item.metadata);
                     dispatchMeta(item.column, item.index, item.metadata);
                 }
                 dispatchNoLoadingState();

@@ -1,5 +1,4 @@
 import { Modal } from "react-bootstrap";
-import style from "./MetaTableModal.module.scss";
 import React from "react";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import MainButton from "../MainButton/MainButton";
@@ -85,6 +84,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         if (show === false) {
             onClose();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show])
 
     React.useEffect(() => {

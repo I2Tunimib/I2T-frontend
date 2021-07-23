@@ -11,17 +11,20 @@ const DropdownModal = (props: dropdownModalPropsInterface) => {
 
     React.useEffect(() => {
         setInputValue(dropValue);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dropValue])
 
 
     React.useEffect(() => {
         setShow(showState);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showState])
 
     React.useEffect(() => {
         if (show === false && typeof onClose === "function") {
             onClose();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show])
 
 

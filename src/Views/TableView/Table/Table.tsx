@@ -1,10 +1,9 @@
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import MUIDataTable from "mui-datatables";
 import TableHeadCell from "./TableHeadCell/TableHeadCell";
 import Cell from "./Cell/Cell";
 import React from "react";
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
-import { deleteLine } from "../../../Redux/action/data";
 import UpperBar from "../UpperBar/UpperBar";
 import { RootState } from "../../../Redux/store";
 import { colInterface } from "../../../Interfaces/col.interface";
@@ -12,7 +11,7 @@ import { colInterface } from "../../../Interfaces/col.interface";
 
 const Table = () => {
     const Columns = useSelector((state: RootState) => state.Columns);
-    const Data = useSelector((state: RootState) => state.Data);
+    //const Data = useSelector((state: RootState) => state.Data);
     const FilteredData = useSelector((state: RootState) => state.FilteredData)
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const [pageIndex, setPageIndex] = React.useState(0);
@@ -64,6 +63,7 @@ const Table = () => {
                     maxWidth: "50rem",
                     height: "100%",
                     // width: '100%',
+                    //overflowY: 'scroll',
                 }
             },
             MUIDataTableHeadCell: {

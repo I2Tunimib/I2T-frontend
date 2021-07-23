@@ -108,6 +108,7 @@ const GetData: React.FC = () => {
                 dispatchError(allTables.errorText);
             }
         })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // handling file upload
@@ -210,11 +211,12 @@ const GetData: React.FC = () => {
             displayError(t('shared.error.data-loading.empty'));
             setDataHasBeenLoaded(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [LoadedData])
 
 
     const confirmAction = () => {
-        console.log(tableName);
+        //console.log(tableName);
         dispatchName(tableName);
         setIsConfirmed(true);
         setDataHasBeenLoaded(false);

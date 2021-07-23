@@ -1,7 +1,5 @@
 import Table from "./Table/Table";
-import UpperBar from "./UpperBar/UpperBar";
 import { useSelector } from "react-redux";
-import React from "react";
 import { RootState } from "../../Redux/store";
 
 const TableView = () => {

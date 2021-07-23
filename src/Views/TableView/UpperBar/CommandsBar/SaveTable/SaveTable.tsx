@@ -1,6 +1,5 @@
 import MainButton from "../../../../../SharedComponents/MainButton/MainButton"
 import SecondaryButton from "../../../../../SharedComponents/SecondaryButton/SecondaryButton";
-import style from "./SaveTable.module.css";
 import {useSelector, useDispatch} from "react-redux";
 import {saveTable} from "../../../../../Http/httpServices";
 import {setLoadingState, unsetLoadingState} from "../../../../../Redux/action/loading";

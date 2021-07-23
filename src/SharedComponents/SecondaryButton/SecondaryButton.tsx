@@ -1,6 +1,5 @@
 import {Button} from "react-bootstrap";
 import { buttonsPropsInterface } from "../../Interfaces/buttons-props.interface";
-import style from "./SecondaryButton.module.css";
 
 
 function SecondaryButton(props: buttonsPropsInterface) {

@@ -1,5 +1,4 @@
 import produce from "immer";
-import { isTemplateExpression } from "typescript";
 import { dataActionInterface } from "../../Interfaces/data-action.interface";
 
 export const loadDataSuccessReducer = (state: any[] = [], action: dataActionInterface) => {
@@ -41,7 +40,7 @@ export const loadDataSuccessReducer = (state: any[] = [], action: dataActionInte
                 ...state.slice(0, action.index),
                 ...state.slice(action.index! + 1)
             ]
-            console.log(newState.length);
+            //console.log(newState.length);
             /*for (let i = 0; i < newState.length; i++) {
                 console.log(i);
                 newState[i]["index"] = {
@@ -61,7 +60,7 @@ export const loadDataSuccessReducer = (state: any[] = [], action: dataActionInte
                     }
                 }
             })
-            console.log(newState);
+            //console.log(newState);
             return nextStateReassignIndex;
         case "ADDMETA":
             const nextStateMeta = produce(state, draftState => {
@@ -69,7 +68,7 @@ export const loadDataSuccessReducer = (state: any[] = [], action: dataActionInte
             })
             return state = nextStateMeta;
         case "EXTENDMETA":
-            console.log(action.colName);
+            //console.log(action.colName);
             const extendedState = JSON.parse(JSON.stringify(state));
             for (const row of extendedState) {
                 const keys = Object.keys(row);

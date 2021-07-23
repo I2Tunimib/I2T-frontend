@@ -1,4 +1,3 @@
-
 import { Dropdown, Form, Modal } from "react-bootstrap";
 import React from "react";
 import { classicModalPropsInterface } from "../../Interfaces/classic-modal-props.interface";
@@ -6,10 +5,7 @@ import { useSelector } from "react-redux";
 import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import { RootState } from "../../Redux/store";
-import DropdownMenu from "react-bootstrap/esm/DropdownMenu";
-import { configInterface, extensionServiceInterface, inputModeEnum, selectColModeEnum } from "../../Interfaces/configInterface";
-import { ConfirmationNumberTwoTone } from "@material-ui/icons";
-import { copyFile } from "fs/promises";
+import { extensionServiceInterface, inputModeEnum, selectColModeEnum } from "../../Interfaces/configInterface";
 import { colInterface } from "../../Interfaces/col.interface";
 
 const ExtendModal = (props: classicModalPropsInterface) => {
@@ -22,6 +18,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
     const Columns = useSelector((state: RootState) => state.Columns);
     const [paramError, setParamError] = React.useState<string | null>(null);
     const [matchingCols, setMatchingCols] = React.useState<{ colname: string, selectColMode: selectColModeEnum, matchinParam: string }[]>([])
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [selectedCol, setSelectedCol] = React.useState<colInterface[]>(Columns.filter((col) => {
         return col.selected;
     }));
@@ -34,6 +31,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
         if (show === false) {
             onClose();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show])
 
 
@@ -156,7 +154,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                     if (param.default) {
                         const newPar = { ...paramsToSend };
                         newPar[param.name] = [param.default]
-                        console.log(newPar);
+                        //console.log(newPar);
                         setParamsToSend(newPar);
                     }
                     myMarkup.push(

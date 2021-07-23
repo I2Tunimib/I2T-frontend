@@ -2,7 +2,7 @@ import { contextInterface } from "../../Interfaces/context.interface";
 
 
 const ContextMenu = (props: contextInterface) => {
-    const { xPos, yPos, items, type } = props;
+    const { xPos, yPos, items } = props;
 
     const dropItems = items.map((item) => {
             return (

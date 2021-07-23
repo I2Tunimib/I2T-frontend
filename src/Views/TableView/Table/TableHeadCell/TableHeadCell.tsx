@@ -33,7 +33,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
     const [filterToApply, setFilterToApply] = React.useState<string | null>(null);
     const [automatchingValue, setAutoMatchingValue] = React.useState<number | undefined>(undefined);
     const [matchingNumber, setMatchingNumber] = React.useState<number>(0);
-    const  [tableMetaModalIsOpen, setTableMetaModalsOpen] = React.useState<boolean>(false);
+    const [tableMetaModalIsOpen, setTableMetaModalsOpen] = React.useState<boolean>(false);
     const availableFilters = [
         {
             label: "Match: true",
@@ -109,7 +109,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
                 selectContext(col, dispatchSelectCol, dispatchDeselectCol, dispatchRemoveContext, t),
                 deleteContext(col, dispatchDeleteCol, dispatchRemoveContext, t),
             ];
-        if(col.metadata.length >= 1) {
+        if (col.metadata.length >= 1) {
             contextItems.push(viewMetaTable(setTableMetaModalsOpen, dispatchRemoveContext, t))
         }
         const contextProps = {
@@ -177,6 +177,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
             }
             setMatchingNumber(matchingItemsNumber);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Data, automatchingValue])
 
     React.useEffect(() => {
@@ -196,9 +197,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
             }
             setMetaMinMax({ min: minValue, max: maxValue });
         }
-
-
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Data, automatchingDialogIsOpen])
 
 
@@ -302,20 +301,20 @@ const TableHeadCell = (props: { col: colInterface }) => {
                 />
             }
             {tableMetaModalIsOpen &&
-                    <MetaTableModal
-                        titleText={col.label}
-                        metaData={col.metadata}
-                        dataIndex={-1}
-                        col={col}
-                        mainButtonLabel={t('buttons.confirm')}
-                        secondaryButtonLabel={t('buttons.cancel')}
-                        secondaryButtonAction={() => { setTableMetaModalsOpen(false) }}
-                        showState={tableMetaModalIsOpen}
-                        onClose={() => { setTableMetaModalsOpen(false) }}
+                <MetaTableModal
+                    titleText={col.label}
+                    metaData={col.metadata}
+                    dataIndex={-1}
+                    col={col}
+                    mainButtonLabel={t('buttons.confirm')}
+                    secondaryButtonLabel={t('buttons.cancel')}
+                    secondaryButtonAction={() => { setTableMetaModalsOpen(false) }}
+                    showState={tableMetaModalIsOpen}
+                    onClose={() => { setTableMetaModalsOpen(false) }}
 
-                    />
+                />
 
-                }
+            }
 
         </>
     )

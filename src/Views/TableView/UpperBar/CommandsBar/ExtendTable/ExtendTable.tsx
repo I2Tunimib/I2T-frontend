@@ -17,7 +17,7 @@ const ExtendTable = () => {
     const Columns = useSelector((state: RootState) => state.Columns);
     const Data = useSelector((state: RootState) => state.Data)
     const [isExtensible, setIsExtensible] = React.useState<boolean>(false);
-    const [selectedCol, setSelectedCol] = React.useState<colInterface | null>(null)
+    //const [selectedCol, setSelectedCol] = React.useState<colInterface | null>(null)
     const [extendDialogIsOpen, setExtendDialogIsOpen] = React.useState<boolean>(false);
     const { t } = useTranslation();
 
@@ -51,10 +51,10 @@ const ExtendTable = () => {
         }
         if (selectedAndReconciliated.length === 1) {
             setIsExtensible(true);
-            setSelectedCol(selectedAndReconciliated[0]);
+            //setSelectedCol(selectedAndReconciliated[0]);
         } else {
             setIsExtensible(false);
-            setSelectedCol(null);
+            //setSelectedCol(null);
         }
     }, [Columns])
 
@@ -79,13 +79,13 @@ const ExtendTable = () => {
                             }
                         }
                     }
-                    console.log('props are:' + propsKeys);
+                    //console.log('props are:' + propsKeys);
                     for (const item of extensionResponse.data.items) {
                         itemCounter = itemCounter + 1;
                         //let rowIndex = undefined;
                         let rowIndexes = [];
                         if (item.ids === '6690189') {
-                            console.log('ecco il target');
+                            //console.log('ecco il target');
                         }
                         for (let i = 0; i < newData.length; i++) {
                             const isGoodIndex = [];
@@ -93,7 +93,7 @@ const ExtendTable = () => {
                                 if (matchingCol.selectColMode === selectColModeEnum.LABELS) {
                                     if (item[matchingCol.matchinParam] === newData[i][matchingCol.colname].label) {
                                         isGoodIndex.push(true);
-                                        console.log('trovato' + [i]);
+                                        //console.log('trovato' + [i]);
                                     }
                                 } else if (matchingCol.selectColMode === selectColModeEnum.IDS) {
                                     let myId = undefined;
@@ -112,10 +112,10 @@ const ExtendTable = () => {
                                 }
                             }
                             if (item.ids === '6690189') {
-                                console.log(isGoodIndex.length);
+                                //console.log(isGoodIndex.length);
                             }
                             if (isGoodIndex.length === matchingCols.length) {
-                                console.log('found goodindex.length = matchincol.lenght ' + i)
+                                //console.log('found goodindex.length = matchincol.lenght ' + i)
                                 rowIndexes.push(i);
                             }
                         }
@@ -158,7 +158,7 @@ const ExtendTable = () => {
                                             type: cellTypeEnum.data,
                                             reconciliator: '',
                                         }
-                                        console.log('aggiungo linea' + newLine)
+                                        //console.log('aggiungo linea' + newLine)
                                         newData[rowIndex] = newLine;
                                     }
 
@@ -175,16 +175,16 @@ const ExtendTable = () => {
 
                                 }
                                 /*if (itemCounter === 0) {
-                                    console.log('ciao')
+                                    //console.log('ciao')
                                     let alreadyAdded = false;
                                     for (const col of Columns) {
                                         if (col.name === `${myNewColBaseName}${prop}`) {
-                                            console.log('ciao1');
+                                            //console.log('ciao1');
                                             alreadyAdded = true;
                                         }
                                     }
                                     if(!alreadyAdded) {
-                                        console.log('ciao2')
+                                        //console.log('ciao2')
                                     }
                                     if (!alreadyAdded) {
                                         dispatchColumns([...Columns, {

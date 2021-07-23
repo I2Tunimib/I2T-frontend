@@ -1,6 +1,5 @@
 import { createStore, compose } from "redux";
 import allReducers from "./reducer/index";
-import { configureStore } from '@reduxjs/toolkit';
 
 declare global {
     interface Window {

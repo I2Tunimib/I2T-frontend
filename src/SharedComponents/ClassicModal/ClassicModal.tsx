@@ -17,6 +17,7 @@ const ClassicModal = (props: classicModalPropsInterface) => {
         if (show === false) {
             onClose();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show])
 
     return (

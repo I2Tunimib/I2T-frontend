@@ -29,6 +29,7 @@ const LanguageDropdown = () => {
 
     React.useEffect(() => {
         i18n.changeLanguage(Language);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Language])
 
     return (

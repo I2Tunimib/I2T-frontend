@@ -6,22 +6,25 @@ import Slider from '@material-ui/core/Slider';
 
 
 const NumberInputModal = (props: any) => {
-    const { inputLabel, titleText, text, minMax, value, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
+    const { titleText, text, minMax, value, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
     const [show, setShow] = React.useState(true);
 
 
     React.useEffect(() => {
         setShow(showState);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showState])
 
     React.useEffect(() => {
         if (show === false && typeof onClose === "function") {
             onClose();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show])
 
     React.useEffect(() => {
         setInputValue(value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const marks = [

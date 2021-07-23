@@ -22,7 +22,7 @@ const FilterDataEffect = () => {
         let newFilteredData = Data;
         for (const col of Columns) {
             if (col.filtered) {
-                console.log(col.filtered);
+                //console.log(col.filtered);
                 switch (col.filtered) {
                     case "match-true":
                         newFilteredData = [];
@@ -55,7 +55,7 @@ const FilterDataEffect = () => {
                         }
                         break;
                     case "metadata-true":
-                        console.log('ciao!!!!');
+                        //console.log('ciao!!!!');
                         newFilteredData = Data.filter((row: any) => {
                             return row[col.name].metadata.length >= 1;
                         })
@@ -95,6 +95,7 @@ const FilterDataEffect = () => {
             }
         }
         dispatchFilteredData(newFilteredData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Columns, Data])
 
 
