@@ -37,7 +37,10 @@ const Tutorial: React.FC = () => {
                                             <h4>{t('homepage-content.tutorial.step-two.title')}</h4>
                                         </Card.Title>
                                         <Card.Body className="card-body">
-                                            {t('homepage-content.tutorial.step-two.content')}
+                                            <p>
+                                                {t('homepage-content.tutorial.step-two.content')}
+                                            </p>
+
                                         </Card.Body>
                                     </Card>
                                 </div>
@@ -49,7 +52,10 @@ const Tutorial: React.FC = () => {
                                             </h4>
                                         </Card.Title>
                                         <Card.Body className="card-body">
-                                            {t('homepage-content.tutorial.step-three.content')}
+                                            <p>
+                                                {t('homepage-content.tutorial.step-three.content')}
+                                            </p>
+
                                         </Card.Body>
                                     </Card>
                                 </div>

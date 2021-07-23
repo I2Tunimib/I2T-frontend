@@ -122,9 +122,9 @@
       }
       p {
         display: inline-block;
-        margin: 0;
+        margin: 0 !important;
         color: $brand-color-two-base;
-        font-weight: bold;
+        font-weight: bold !important;
       }
       div {
         display: inline-block;

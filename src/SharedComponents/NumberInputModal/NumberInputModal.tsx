@@ -1,4 +1,4 @@
-import { Modal, Form } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import React from "react";
