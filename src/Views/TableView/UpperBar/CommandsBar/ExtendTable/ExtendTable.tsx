@@ -71,16 +71,29 @@ const ExtendTable = () => {
                     let itemCounter = 0;
                     const reallyTrueProps: string[] = [];
                     let reallyNewColBaseName = '';
+                    const propsKeys: any[] = [];
+                    for (const item of extensionResponse.data.items) {
+                        for (const prop of Object.keys(item)) {
+                            if (!propsKeys.includes(prop)) {
+                                propsKeys.push(prop)
+                            }
+                        }
+                    }
+                    console.log('props are:' + propsKeys);
                     for (const item of extensionResponse.data.items) {
                         itemCounter = itemCounter + 1;
-                        const propsKeys = Object.keys(extensionResponse.data.items[0]);
-                        let rowIndex = undefined;
+                        //let rowIndex = undefined;
+                        let rowIndexes = [];
+                        if (item.ids === '6690189') {
+                            console.log('ecco il target');
+                        }
                         for (let i = 0; i < newData.length; i++) {
                             const isGoodIndex = [];
                             for (const matchingCol of matchingCols) {
                                 if (matchingCol.selectColMode === selectColModeEnum.LABELS) {
                                     if (item[matchingCol.matchinParam] === newData[i][matchingCol.colname].label) {
                                         isGoodIndex.push(true);
+                                        console.log('trovato' + [i]);
                                     }
                                 } else if (matchingCol.selectColMode === selectColModeEnum.IDS) {
                                     let myId = undefined;
@@ -88,9 +101,6 @@ const ExtendTable = () => {
                                         for (const meta of newData[i][matchingCol.colname].metadata) {
                                             if (meta.match === true) {
                                                 myId = meta.id;
-                                                if (myId === '6557942') {
-                                                    console.log('eccolo');
-                                                }
                                             }
                                         }
                                     }
@@ -98,20 +108,19 @@ const ExtendTable = () => {
 
                                     if (item[matchingCol.matchinParam] === myId) {
                                         isGoodIndex.push(true);
-                                        if (myId === '6557942') {
-                                            console.log('pusho true');
-                                        }
                                     }
                                 }
                             }
+                            if (item.ids === '6690189') {
+                                console.log(isGoodIndex.length);
+                            }
                             if (isGoodIndex.length === matchingCols.length) {
-                                rowIndex = i;
-                                if (i === 1) {
-                                    console.log('setto rowIndex');
-                                }
+                                console.log('found goodindex.length = matchincol.lenght ' + i)
+                                rowIndexes.push(i);
                             }
                         }
-                        if (rowIndex !== undefined) {
+                        if (rowIndexes.length > 0) {
+                            //console.log('rowindex è definito ' + rowIndex);
                             let myNewColBaseName = '';
                             for (const matchingCol of matchingCols) {
                                 myNewColBaseName = myNewColBaseName + matchingCol.colname + "_";
@@ -133,27 +142,37 @@ const ExtendTable = () => {
                                     return false;
                                 }
                             })
+                            //console.log('true props' + trueProps);
+                            //console.log('basename' + reallyNewColBaseName);
                             for (const prop of trueProps) {
                                 if (!reallyTrueProps.includes(prop)) {
                                     reallyTrueProps.push(prop);
                                 }
-                                if (typeof item[prop] === "string") {
-                                    const newLine = { ...newData[rowIndex] };
-                                    newLine[`${myNewColBaseName}${prop}`] = {
-                                        label: item[prop],
-                                        metadata: [],
-                                        type: cellTypeEnum.data,
-                                        reconciliator: '',
+                                //console.log(item[prop]);
+                                if (typeof item[prop] === "string" || typeof item[prop] === "number") {
+                                    for (const rowIndex of rowIndexes) {
+                                        const newLine = { ...newData[rowIndex] };
+                                        newLine[`${myNewColBaseName}${prop}`] = {
+                                            label: item[prop],
+                                            metadata: [],
+                                            type: cellTypeEnum.data,
+                                            reconciliator: '',
+                                        }
+                                        console.log('aggiungo linea' + newLine)
+                                        newData[rowIndex] = newLine;
                                     }
-                                    newData[rowIndex] = newLine;
+
                                 } else if (typeof item[prop] === "object") {
-                                    const newLine = { ...newData[rowIndex] };
-                                    newLine[`${myNewColBaseName}${prop}`] = {
-                                        label: item[prop].name,
-                                        metadata: [item[prop]],
-                                        type: cellTypeEnum.data,
+                                    for (const rowIndex of rowIndexes) {
+                                        const newLine = { ...newData[rowIndex] };
+                                        newLine[`${myNewColBaseName}${prop}`] = {
+                                            label: item[prop].name,
+                                            metadata: [item[prop]],
+                                            type: cellTypeEnum.data,
+                                        }
+                                        newData[rowIndex] = newLine;
                                     }
-                                    newData[rowIndex] = newLine;
+
                                 }
                                 /*if (itemCounter === 0) {
                                     console.log('ciao')
@@ -184,7 +203,7 @@ const ExtendTable = () => {
                         }
                     }
                     dispatchLoadData(newData);
-                    console.log(reallyTrueProps);
+                    //console.log(reallyTrueProps);
                     const newColumns = reallyTrueProps.filter((prop) => {
                         let alreadyExist = false;
                         for (const col of Columns) {
@@ -211,7 +230,21 @@ const ExtendTable = () => {
                             }
                         )
                     })
-                    dispatchColumns([...Columns, ...newColumns])
+                    let indexToInsert = 0;
+                    for (let i = 0; i < Columns.length; i++) {
+                        for (const matchingCol of matchingCols) {
+                            if (matchingCol.colname === Columns[i].name) {
+                                if (indexToInsert < i + 1)
+                                    indexToInsert = i + 1;
+                            }
+                        }
+                    }
+                    const ColumnsTwo = [...Columns];
+                    const ColumnsThree = [...Columns];
+                    // console.log(indexToInsert);
+                    //console.log(ColumnsTwo.splice(0, indexToInsert));
+                    //console.log(ColumnsThree.splice(indexToInsert));
+                    dispatchColumns([...ColumnsTwo.splice(0, indexToInsert), ...newColumns, ...ColumnsThree.splice(indexToInsert)])
                 }
 
             } else {
