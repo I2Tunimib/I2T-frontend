@@ -3,7 +3,7 @@ import MUIDataTable from "mui-datatables";
 import TableHeadCell from "./TableHeadCell/TableHeadCell";
 import Cell from "./Cell/Cell";
 import React from "react";
-import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
+import { createTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import UpperBar from "../UpperBar/UpperBar";
 import { RootState } from "../../../Redux/store";
 import { colInterface } from "../../../Interfaces/col.interface";
@@ -48,7 +48,7 @@ const Table = () => {
         sort: false,
     }
 
-    const getMuiTheme = () => createMuiTheme({
+    const getMuiTheme = () => createTheme({
         overrides: {
             MUIDataTableBodyCell: {
                 root: {

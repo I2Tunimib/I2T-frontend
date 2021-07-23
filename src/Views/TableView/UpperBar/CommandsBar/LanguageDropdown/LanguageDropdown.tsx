@@ -44,7 +44,7 @@ const LanguageDropdown = () => {
                         return lan.value !== Language;
                     }).map((lan) => {
                         return (
-                            <Dropdown.Item onClick={() => { dispatchLanguage(lan.value) }}>{lan.value}</Dropdown.Item>
+                            <Dropdown.Item key={lan.value} onClick={() => { dispatchLanguage(lan.value) }}>{lan.value}</Dropdown.Item>
                         )
                     })}
                 </Dropdown.Menu>

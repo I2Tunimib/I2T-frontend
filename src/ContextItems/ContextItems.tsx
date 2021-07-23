@@ -13,9 +13,9 @@ import { contextItemInterface } from "../Interfaces/context-items.interface";
 export const selectContext = (col:colInterface, selectCol: Function, deselectCol: Function, removeContext: Function, t: any): contextItemInterface => {
     let selectLabel = "";
     if (col.selected) {
-        selectLabel = t('context-items.select-column')
+        selectLabel = t('context-items.deselect-column')
     } else {
-        selectLabel = t('context-items.deselect-column');
+        selectLabel = t('context-items.select-column');
     }
     return ({
         icon: col.selected ? <DeselectIcon className='stroke'/> : <SelectIcon className='stroke'/>,

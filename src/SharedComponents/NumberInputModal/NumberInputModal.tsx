@@ -8,7 +8,7 @@ import Slider from '@material-ui/core/Slider';
 const NumberInputModal = (props: any) => {
     const { titleText, text, minMax, value, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, setInputValue } = props;
     const [show, setShow] = React.useState(true);
-
+    //console.log(value);
 
     React.useEffect(() => {
         setShow(showState);
@@ -55,15 +55,13 @@ const NumberInputModal = (props: any) => {
                         {text}
                     </p>
 
-                    <Form>
                         {/*
                             <Form.Group>
                                 <Form.Label>{inputLabel}</Form.Label>
                                 <Form.Control type="number" onChange={(e) => { setInputValue(e.target.value) }} defaultValue={value} />
                             </Form.Group>*/
                         }
-                        <Slider min={minMax.min} marks={marks} max={minMax.max} aria-labelledby="discrete-slider" onChange={(e, value) => { setInputValue(value) }} />
-                    </Form>
+                        <Slider min={minMax.min} marks={marks} max={minMax.max} value={value} aria-labelledby="discrete-slider" onChange={(e, value) => {console.log(value); e.preventDefault(); setInputValue(value) }} />
                 </Modal.Body>
                 <Modal.Footer>
                     {

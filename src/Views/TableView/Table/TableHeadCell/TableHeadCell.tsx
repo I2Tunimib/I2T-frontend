@@ -297,7 +297,7 @@ const TableHeadCell = (props: { col: colInterface }) => {
                     showState={automatchingDialogIsOpen}
                     onClose={() => setAutomatchingDialogIsOpen(false)}
                     setInputValue={(value: number) => { setAutoMatchingValue(value) }}
-                    value={automatchingValue || metaMinMax.min}
+                    value={automatchingValue || ((metaMinMax.max + metaMinMax.min) / 2)}
                 />
             }
             {tableMetaModalIsOpen &&
