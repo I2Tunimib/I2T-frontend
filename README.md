@@ -2,69 +2,70 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+## Workflows
+Two workflows are defined for this repository:
 
-In the project directory, you can run:
+1. **push-image**: triggered on a push action on `dev` branch. This workflow builds a docker image with the backend and frontend builds and pushes it to both DockerHub and GitHub Container.
 
-### `npm start`
+2. **deploy-pipeline**: triggered on (TBD: probably on push on `main` branch or when tagging a commit with a new release). This workflow adds a step to the previous pipeline which pulls the **release** image from GitHub Container and builds a container on a remote host.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+**Notes about the pipelines**: since the backend serves both the API and the frontend static files, the only way to have an updated image is to build both frontend and backend for each repository when a new version is released.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+#### Skip workflows
+To skip workflows add to the commit message `[skip ci]`. This way it won't be triggered.
 
-### `npm test`
+## Pulling an image
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Pulling an image from DockerHub and build a container
+The image is available here: https://hub.docker.com/repository/docker/i2tunimib/i2t.
 
-### `npm run build`
+1. Login to DockerHub:
+```bash
+docker login i2tunimib
+```
+2. As password insert the DockerHub token. You can find it [here](https://drive.google.com/file/d/1i5OQcZP-MeiwKtVomkBrBoqmOD2Q6ETX/view?usp=sharing).
+3. Pull the image:
+```bash
+docker pull i2tunimib/i2t
+```
+4. Build container
+```bash
+docker run -d -p 3002:3002 i2tunimib/i2t
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Pulling an image from GitHub Container and build a container
+The image is available here: https://github.com/I2Tunimib/I2T-backend/pkgs/container/i2t.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Create a new **Personal Access Token** with `write:packages` permissions. https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token
+2. Save your token as environment variable:
+```bash
+export CR_PAT=YOUR_TOKEN
+```
+3. Login to the Container registry:
+```bash
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+```
+3. Pull the image:
+```bash
+docker pull ghcr.io/i2tunimib/i2t:latest
+```
+4. Build container
+```bash
+docker run -d -p 3002:3002 ghcr.io/i2tunimib/i2t
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**N.B.:** since GitHub has rate limits when pulling images from the container try to keep the GitHub image for release only (i.e.: automatically deployed by the pipeline on a new release)
 
-### `npm run eject`
+## Build an image locally
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+1. Build the frontend application and move the build folder in the root of the backend repository https://github.com/I2Tunimib/I2T-backend.
+2. Build an image:
+```bash
+docker-compose build ['candidate' | 'release']
+``` 
+**candidate** and **release** build the same image. What changes is the registry where it's going to be pushed (if pushed). Candidate pushes to DockerHub, release pushes to GitHub.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+3. Build a container with the built image:
+```bash
+docker-compose up -d ['candidate' | 'release']
+```
