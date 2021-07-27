@@ -13,7 +13,6 @@ import { useDispatch, useSelector } from "react-redux";
 //import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
 import { RootState } from "../../Redux/store";
 import { ReactComponent as UndoIcon } from '../../Assets/icon-set/undo-circular-arrow.svg';
-import { colInterface } from "../../Interfaces/col.interface";
 
 
 
@@ -75,6 +74,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         setColumns(myCols);
 
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Config, col])
 
     const options = {
