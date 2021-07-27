@@ -63,8 +63,13 @@ const ExtendTable = () => {
         (async () => {
             const extensionResponse = await metaService(internalUrl, paramsToSend);
             if (await !extensionResponse.error) {
+                if (!extensionResponse.data.items) {
+                    dispatchError(t('shared.error.extension.no-data'));
+                    dispatchNoLoadingState();
+                    return;
+                }
                 if (extensionResponse.data.items.length === 0) {
-                    dispatchError("Il sistema non ha riportato nessun dato per l'estensione")
+                    dispatchError(t('shared.error.extension.data-empty'))
                 } else {
                     const newData = [...Data];
                     // first af all i add columns
@@ -84,9 +89,6 @@ const ExtendTable = () => {
                         itemCounter = itemCounter + 1;
                         //let rowIndex = undefined;
                         let rowIndexes = [];
-                        if (item.ids === '6690189') {
-                            //console.log('ecco il target');
-                        }
                         for (let i = 0; i < newData.length; i++) {
                             const isGoodIndex = [];
                             for (const matchingCol of matchingCols) {
@@ -110,9 +112,6 @@ const ExtendTable = () => {
                                         isGoodIndex.push(true);
                                     }
                                 }
-                            }
-                            if (item.ids === '6690189') {
-                                //console.log(isGoodIndex.length);
                             }
                             if (isGoodIndex.length === matchingCols.length) {
                                 //console.log('found goodindex.length = matchincol.lenght ' + i)

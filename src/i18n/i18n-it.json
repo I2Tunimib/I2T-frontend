@@ -45,6 +45,10 @@
             "editable-cell-modal": {
                 "input-label": "Inserisci un valore con cui vuoi modificare la label della cella:",
                 "title-text": "Modifica label cella"
+            },
+            "meta-tooltip": {
+                "is-true": "La cella è etichettata ed è presente un match true",
+                "is-not-true": "La cella è etichettata ma non è presente un match true"
             }
         }
     },
@@ -56,6 +60,10 @@
             }, 
             "reconciliation": {
                 "impossible-connect": "Impossibile connettersi al server"
+            },
+            "extension": {
+                "no-data": "Si è verificato un errore. Controlla di aver inserito i dati richiesti correttamente",
+                "data-empty": "Il sistema non ha riportato nessun dato per l'estensione"
             }
         }
     },

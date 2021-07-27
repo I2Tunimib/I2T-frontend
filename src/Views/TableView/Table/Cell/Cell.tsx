@@ -13,19 +13,20 @@ import MetaTableModal from "../../../../SharedComponents/MetaTableModal/MetaTabl
 import { useTranslation } from 'react-i18next';
 import InputModal from "../../../../SharedComponents/InputModal/InputModal";
 import { SetStateAction } from "react";
+import { Overlay, Tooltip } from "react-bootstrap";
 
 const Cell = (props: cellPropsInterface) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { dataIndex, col, rowsPerPage, pageIndex } = props;
     const keyName = col.name;
     const { t } = useTranslation();
-
+    const target = React.useRef(null);
     const Config = useSelector((state: RootState) => state.Config);
     const FilteredData = useSelector((state: RootState) => state.FilteredData);
     const Data = useSelector((state: RootState) => state.Data)
     // const ToExtendRows = useSelector((state: RootState) => state.ToExtendRows);
     // const HasExtended = useSelector(state => state.HasExtended);
-
+    const [tooltipShow, setTooltipShow] = React.useState<boolean>(false);
     const [idLinks, setIdLinks] = React.useState<JSX.Element[]>();
     const [tableMetaModalIsOpen, setTableMetaModalsOpen] = React.useState(false);
     const [dotColor, setDotColor] = React.useState('');
@@ -169,7 +170,11 @@ const Cell = (props: cellPropsInterface) => {
                     className='data-cell'>
                     <div>
                         {cellValue.metadata.length > 0 &&
-                            <div className={`meta-dot ` + dotColor}>
+                            <div 
+                            className={`meta-dot ` + dotColor} 
+                            ref={target} 
+                            onMouseEnter={(e) => { setTooltipShow(true) }}
+                            onMouseLeave={() => {setTooltipShow(false)}}>
 
                             </div>
                         }
@@ -220,6 +225,23 @@ const Cell = (props: cellPropsInterface) => {
                     onClose={() => { setEditModalIsOpen(false) }}
                 />
             }
+            <Overlay target={target.current} show={tooltipShow} placement="top">
+                {(props) => (
+                    <Tooltip id="overlay-example" {...props}>
+                        {dotColor === 'green' &&
+                            <>
+                                {t('table.cells.meta-tooltip.is-true')}
+                            </>
+                        }
+                        {dotColor === 'orange' &&
+                            <>
+                                {t('table.cells.meta-tooltip.is-not-true')}
+                            </>
+                        }
+
+                    </Tooltip>
+                )}
+            </Overlay>
 
         </>
     )

@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 //import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
 import { RootState } from "../../Redux/store";
 import { ReactComponent as UndoIcon } from '../../Assets/icon-set/undo-circular-arrow.svg';
+import { colInterface } from "../../Interfaces/col.interface";
 
 
 
@@ -31,28 +32,48 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     const Config = useSelector((state: RootState) => state.Config)
     const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
     const colName = col.name;
-    const Data = useSelector((state: RootState) => state.Data)
+    const Data = useSelector((state: RootState) => state.Data);
+    // console.log(metaData);
     React.useEffect(() => {
-        let myCols = []
-        if (Config) {
-            for (const recon of Config.reconciliators) {
-                if (col.reconciliator === recon.name) {
-                    for (const col of recon.metaToViz) {
+        let myCols: any[] = []
+        if (dataIndex === -1) {
+            myCols = [{
+                name: "id",
+                label: "id"
+            }, {
+                name: "score",
+                label: "score",
+            }, {
+                name: "match",
+                label: "match"
+            }, {
+                name: "name",
+                label: "name"
+            }, {
+                name: "action",
+                label: "action"
+            }]
+        } else {
+            if (Config) {
+                for (const recon of Config.reconciliators) {
+                    if (col.reconciliator === recon.name) {
+                        for (const col of recon.metaToViz) {
+                            myCols.push({
+                                name: col,
+                                label: col
+                            })
+                        }
                         myCols.push({
-                            name: col,
-                            label: col
+                            name: 'action',
+                            label: "action",
                         })
+                        break;
                     }
-                    myCols.push({
-                        name: 'action',
-                        label: "action",
-                    })
-                    setColumns(myCols);
-                    break;
                 }
-
             }
         }
+        setColumns(myCols);
+
 
     }, [Config, col])
 
@@ -118,9 +139,10 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         if (dataIndex === -1) {
             dispatchMetaColumns(myMetaData, col.name);
         } else {
-            const labelValue = Data[dataIndex].label;
+            console.log(Data[dataIndex]);
+            const labelValue = Data[dataIndex][col.name].label;
             for (let i = 0; i < Data.length; i++) {
-                if (Data[i].label === labelValue) {
+                if (Data[i][col.name].label === labelValue) {
                     dispatchMeta(colName, i, myMetaData);
                 }
             }

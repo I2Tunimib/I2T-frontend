@@ -45,6 +45,10 @@
             "editable-cell-modal": {
                 "input-label": "Insert a value to change the cella label with",
                 "title-text": "Edit cell label"
+            },
+            "meta-tooltip": {
+                "is-true": "The cell is labeled and there is a true match",
+                "is-not-true": "The cell is labeled but there is no true match"
             }
         }
     },
@@ -56,6 +60,10 @@
             }, 
             "reconciliation": {
                 "impossible-connect": "Impossible to connect to ricociliator service"
+            },
+            "extension": {
+                "no-data": "An error has occurred. Check that you have entered the required data correctly",
+                "data-empty": "The system did not report any data for the extension"
             }
         }
     },

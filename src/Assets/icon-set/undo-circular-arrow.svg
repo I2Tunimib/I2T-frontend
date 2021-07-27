@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<svg height="100%" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;" version="1.1" viewBox="0 0 24 24" width="100%" xmlSpace="preserve" xmlns="http://www.w3.org/2000/svg" xmlnsSerif="http://www.serif.com/" xmlnsXlink="http://www.w3.org/1999/xlink">
+<svg height="100%" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;" version="1.1" viewBox="0 0 24 24" width="100%" xmlSpace="preserve" xmlns="http://www.w3.org/2000/svg" xmlnsserif="http://www.serif.com/" xmlnsXlink="http://www.w3.org/1999/xlink">
     <g id="Icon">
         <path d="M4.105,7.942c1.475,-2.787 4.424,-4.692 7.819,-4.692c4.873,0 8.826,3.923 8.826,8.75c-0,4.827 -3.953,8.75 -8.826,8.75c-4.312,-0 -7.903,-3.072 -8.673,-7.124c-0.077,-0.406 0.19,-0.799 0.597,-0.876c0.406,-0.078 0.799,0.19 0.877,0.596c0.638,3.361 3.622,5.904 7.199,5.904c4.041,-0 7.326,-3.247 7.326,-7.25c-0,-4.003 -3.285,-7.25 -7.326,-7.25c-2.862,0 -5.345,1.628 -6.55,4.001l1.389,-0.463c0.393,-0.13 0.818,0.082 0.949,0.475c0.13,0.393 -0.082,0.818 -0.475,0.949l-3,1c-0.393,0.13 -0.818,-0.082 -0.949,-0.475l-1,-3c-0.13,-0.393 0.082,-0.818 0.475,-0.949c0.393,-0.13 0.818,0.082 0.949,0.475l0.393,1.179Z" />
     </g>

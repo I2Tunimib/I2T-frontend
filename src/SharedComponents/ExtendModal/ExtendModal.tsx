@@ -59,7 +59,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         <div className='field-container' key={param.name}>
                             <Form.Group>
                                 <Form.Label>
-                                    <p className='field-label'>Seleziona una colonna per i valori: <b>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
+                                    <p className='field-label'>Seleziona una colonna per i valori: <b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
                                 </Form.Label>
                                 <Form.Control as="select" onChange={(e) => {
                                     const arrayValues2 = [];
@@ -113,7 +113,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                     }
                     myMarkup.push(
                         <div  key={param.name} className='field-container'>
-                            <p className='field-label'>Seleziona uno o più valori per la proprietà: <b>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
+                            <p className='field-label'>Seleziona uno o più valori per la proprietà: <b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
                             {param.values!.map((value, index) => {
                                 return (
                                     <div key={value.label}>
@@ -160,7 +160,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                     myMarkup.push(
                         <div key={param.name} className='field-container'>
                             <Form.Group>
-                                <Form.Label><p className='field-label'><b>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p></Form.Label>
+                                <Form.Label><p className='field-label'><b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p></Form.Label>
                                 <Form.Control type="number" placeholder={`Enter ${param.name}`} value={param.default} onChange={(e) => {
                                     const newPar = { ...paramsToSend };
                                     newPar[param.name] = [e.target.value]

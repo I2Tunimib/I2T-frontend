@@ -20,20 +20,23 @@ import { RootState } from "../../../../Redux/store";
 import { metaResponseInterface } from "../../../../Interfaces/meta-response.interface";
 import { useTranslation } from "react-i18next";
 import MetaTableModal from "../../../../SharedComponents/MetaTableModal/MetaTableModal";
-
+import { Overlay, Tooltip } from "react-bootstrap";
 const TableHeadCell = (props: { col: colInterface }) => {
     const { t } = useTranslation();
 
     const { col } = props;
     let clickRef = React.useRef(null);
     const Data = useSelector((state: RootState) => state.Data);
-    const Name = useSelector((state: RootState) => state.Name)
+    const Name = useSelector((state: RootState) => state.Name);
+    const target = React.useRef(null);
     const [filterDialogIsOpen, setFilterDialogIsOpen] = React.useState<boolean>(false);
     const [automatchingDialogIsOpen, setAutomatchingDialogIsOpen] = React.useState<boolean>(false);
     const [filterToApply, setFilterToApply] = React.useState<string | null>(null);
     const [automatchingValue, setAutoMatchingValue] = React.useState<number | undefined>(undefined);
     const [matchingNumber, setMatchingNumber] = React.useState<number>(0);
     const [tableMetaModalIsOpen, setTableMetaModalsOpen] = React.useState<boolean>(false);
+    const [headerReconState, setHeaderReconState] = React.useState<string>('none');
+    const [tooltipShow, setTooltipShow] = React.useState<boolean>(false);
     const availableFilters = [
         {
             label: "Match: true",
@@ -200,6 +203,23 @@ const TableHeadCell = (props: { col: colInterface }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Data, automatchingDialogIsOpen])
 
+    React.useEffect(() => {
+        if (col.metadata.length >= 1) {
+            let isTrue = false;
+            for (const metaItem of col.metadata) {
+                if (metaItem.match === true) {
+                    isTrue = true;
+                }
+            }
+            if (isTrue) {
+                // console.log('ciao');
+                setHeaderReconState('green');
+            } else {
+                setHeaderReconState('orange');
+            }
+        }
+    }, [col.metadata, col])
+
 
     return (
         <>
@@ -241,9 +261,21 @@ const TableHeadCell = (props: { col: colInterface }) => {
                             }
                         </div>
                         <div className='accessor-cell'>
-                            <p>
-                                {col.label}
-                            </p>
+                            <div className="label-cell">
+                                {
+                                    headerReconState !== 'none' &&
+                                    <div
+                                        ref={target}
+                                        className={`meta-dot ${headerReconState}`}
+                                        onMouseEnter={(e) => { setTooltipShow(true) }}
+                                        onMouseLeave={() => { setTooltipShow(false) }}>
+                                    </div>
+                                }
+                                <p>
+                                    {col.label}
+                                </p>
+                            </div>
+
                             {col.reconciliated &&
                                 <p>
                                     {col.reconciliator}
@@ -315,7 +347,23 @@ const TableHeadCell = (props: { col: colInterface }) => {
                 />
 
             }
+            <Overlay target={target.current} show={tooltipShow} placement="top">
+                {(props) => (
+                    <Tooltip id="overlay-example" {...props}>
+                        {headerReconState === 'green' &&
+                            <>
+                                {t('table.cells.meta-tooltip.is-true')}
+                            </>
+                        }
+                        {headerReconState === 'orange' &&
+                            <>
+                                {t('table.cells.meta-tooltip.is-not-true')}
+                            </>
+                        }
 
+                    </Tooltip>
+                )}
+            </Overlay>
         </>
     )
 

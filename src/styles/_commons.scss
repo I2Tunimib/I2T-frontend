@@ -227,3 +227,14 @@
     opacity: 0.8 !important;
   }
 }
+
+.tooltip {
+  .arrow {
+    &:before {
+      border-top-color: $brand-color-one-base !important;
+    }
+  }
+  .tooltip-inner {
+    background-color: $brand-color-one-base !important;
+  }
+}
