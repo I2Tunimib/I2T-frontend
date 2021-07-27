@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:3002/api/"
+export const BASE_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 export const ALL_RECON = BASE_URL + "reconciliator/";
 
