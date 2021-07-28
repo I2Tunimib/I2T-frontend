@@ -46,7 +46,7 @@ const Cell = (props: cellPropsInterface) => {
     }, [cellValue])
     const payLoad = {
         column: keyName,
-        index: dataIndex,
+        index: realDataIndex!,
         label: cellValue ? cellValue.label : '',
     }
 
