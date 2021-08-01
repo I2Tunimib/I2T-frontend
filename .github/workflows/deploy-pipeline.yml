@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir backend/build 
           mv frontend/build/* backend/build/ 
-          cd backend/build
+          cd backend
           ls
 
       - name: Login to Docker Hub
