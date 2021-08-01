@@ -2,7 +2,7 @@ name: Workflow to deploy app on remote docker engine
 on: 
   push:
     branches:
-      - pipeline-deploy
+      - main
 jobs:
   Deploy-App:
     runs-on: ubuntu-latest
