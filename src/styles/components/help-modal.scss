@@ -1,11 +1,30 @@
 .help-accordion {
-  .card-header {
-    background-color: $neutral-color-light;
-    text-align: left;
-    button {
-      border: none;
-      text-align: left;
+  .card {
+    border-radius: 0;
+    border: none;
+    .card-header {
       background-color: $neutral-color-light;
+      text-align: left;
+      border: none;
+      // padding-top: 0;
+      border-bottom: $neutral-color-base 1px solid;
+      button {
+        border: none;
+        text-align: left;
+        width: 100%;
+        background-color: $neutral-color-light;
+        // border-bottom: $neutral-color-base 1px solid;
+      }
+    }
+  }
+  &:first-child {
+    .card {
+      border-radius: 3px 3px 0 0;
+    }
+  }
+  &:last-child {
+    .card {
+      border-radius: 0px 0px 3px 3px;
     }
   }
 }

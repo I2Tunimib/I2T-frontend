@@ -56,8 +56,12 @@ const Cell = (props: cellPropsInterface) => {
                 if (reconciliator.name === col.reconciliator) {
                     setIdLinks(cellValue.metadata.map((el: any) => {
                         const link = reconciliator.entityPageUrl + el.id;
+                        let css = '';
+                        if(el.match) {
+                            css = 'match'
+                        }
                         return (
-                            <a key={el.id} href={link} target="_blank" rel="noreferrer">
+                            <a key={el.id} href={link} className={css} target="_blank" rel="noreferrer">
                                 {el.name}
                             </a>
                         )
