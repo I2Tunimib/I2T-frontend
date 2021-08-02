@@ -5,8 +5,8 @@ import MainButton from "../MainButton/MainButton";
 import { metaTableModalPropsInterface } from "../../Interfaces/meta-table-modal-props.interface";
 import MUIDataTable from "mui-datatables";
 import { ReactComponent as DeleteIcon } from "../../Assets/icon-set/delete/trash.svg";
-import { ReactComponent as SelectIcon } from "../../Assets/icon-set/selected/select.svg";
-import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/selected/select-empty.svg";
+import { ReactComponent as SelectIcon } from "../../Assets/icon-set/radio_button/full.svg";
+import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/radio_button/empty.svg";
 import { addMetadata } from "../../Redux/action/data";
 import { addMetaColumn } from "../../Redux/action/columns";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,6 +32,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
     const colName = col.name;
     const Data = useSelector((state: RootState) => state.Data);
+    const [link, setLink] = React.useState<string | null>();
     // console.log(metaData);
     React.useEffect(() => {
         let myCols: any[] = []
@@ -56,6 +57,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
             if (Config) {
                 for (const recon of Config.reconciliators) {
                     if (col.reconciliator === recon.name) {
+                        setLink(recon.entityPageUrl);
                         for (const col of recon.metaToViz) {
                             myCols.push({
                                 name: col,
@@ -74,7 +76,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         setColumns(myCols);
 
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Config, col])
 
     const options = {
@@ -194,7 +196,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                                 {
                                                                     myMetaData[dataIndex].match &&
                                                                     <div>
-                                                                        <SelectIcon className='action-icon stroke' onClick={() => { deConfirmMeta(dataIndex) }} />
+                                                                        <SelectIcon className='action-icon' onClick={() => { deConfirmMeta(dataIndex) }} />
                                                                     </div>
                                                                 }
                                                                 {!myMetaData[dataIndex].match &&
@@ -205,6 +207,14 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
 
                                                             </div>
                                                         )
+                                                    case 'name':
+                                                        return <p><a className={myMetaData[dataIndex].match ? 'meta-table-link match' : 'meta-table-link'}
+                                                            href={link + myMetaData[dataIndex].id}
+                                                            target="_blank"
+                                                            rel="noreferrer">
+                                                            {myMetaData[dataIndex][col.name].toString()}
+                                                        </a>
+                                                        </p>
                                                     default:
                                                         return myMetaData[dataIndex][col.name].toString();
                                                 }

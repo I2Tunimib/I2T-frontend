@@ -1,0 +1,23 @@
+.help-bar {
+  border-left: 2px solid $brand-color-two-base;
+  padding-left: 1rem;
+  position: absolute;
+  top: 1.2rem;
+  right: 1rem;
+  z-index: 999;
+  display: flex;
+  justify-content: space-between;
+  .dropdown {
+      margin-left: 10px;
+      &:last-child {
+          margin-right: 10px;
+      }
+    .dropdown-menu {
+      a {
+        &:active {
+          background-color: white;
+        }
+      }
+    }
+  }
+}

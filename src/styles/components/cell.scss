@@ -33,9 +33,15 @@
                 margin: 0.2rem 0.2rem;
                 display: inline-block;
                 text-align: left;
-                color: $brand-color-one-base;
+                color: $brand-color-two-base;
                 &:hover {
-                    color: $brand-color-one-hover;
+                    color: $brand-color-two-hover;
+                }
+                &.match {
+                    color: $brand-color-one-base;
+                    &:hover {
+                        color: $brand-color-one-hover;
+                    }
                 }
             }
         }

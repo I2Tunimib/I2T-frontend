@@ -6,8 +6,6 @@
 @import "./styles/_forms.scss";
 
 //components
-
-@import  "./styles/components/language-dropdown.scss";
 @import "./styles/components/tutorial.scss";
 @import "./styles/components/get-data.scss";
 @import "./styles/components/extend-modal.scss";
@@ -20,4 +18,5 @@
 @import "./styles/components/meta-table-modal.scss";
 @import "./styles/components/number-input-modal.scss";
 @import "./styles/components/table-name.scss";
-
+@import "./styles/components/help-bar.scss";
+@import "./styles/components/help-modal.scss";
