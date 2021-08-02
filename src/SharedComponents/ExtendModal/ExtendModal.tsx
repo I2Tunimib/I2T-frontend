@@ -7,6 +7,8 @@ import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import { RootState } from "../../Redux/store";
 import { extensionServiceInterface, inputModeEnum, selectColModeEnum } from "../../Interfaces/configInterface";
 import { colInterface } from "../../Interfaces/col.interface";
+import { Help } from "@material-ui/icons";
+import HelpModal from "../HelpModal/HelpModal";
 
 const ExtendModal = (props: classicModalPropsInterface) => {
     const { titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose } = props;
@@ -112,7 +114,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         setParamsToSend(newPar);
                     }
                     myMarkup.push(
-                        <div  key={param.name} className='field-container'>
+                        <div key={param.name} className='field-container'>
                             <p className='field-label'>Seleziona uno o più valori per la proprietà: <b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
                             {param.values!.map((value, index) => {
                                 return (
@@ -211,7 +213,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                     </Modal.Header>
                     <Modal.Body>
                         <p>{text}</p>
-
+                    <div className='help-drop-container'>
                         <Dropdown className='dropdown'>
                             <Dropdown.Toggle variant="primary" id="dropdown-basic">
                                 {extendService ? extendService!.name : 'Scegli un servizio'}
@@ -228,6 +230,9 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                 <p>{paramError}</p>
                             }
                         </Dropdown>
+                        <HelpModal />
+                    </div>
+                        
                     </Modal.Body>
                     <Modal.Footer>
                         {

@@ -13,7 +13,15 @@
         text-align: left;
         width: 100%;
         background-color: $neutral-color-light;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
         // border-bottom: $neutral-color-base 1px solid;
+        svg {
+          fill: $brand-color-two-dark;
+          width: 24px;
+          height: 24px;
+        }
       }
     }
   }
