@@ -59,11 +59,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image and push it to DockerHub and GitHub
+      - name: Build image and push it to DockerHub
         run: |
           cd backend
-          docker-compose build
-          docker-compose push
+          docker-compose -f docker-compose.yml build
+          docker-compose -f docker-compose.yml push
       
       - name: Create env file for runtime
         run: |
@@ -89,7 +89,7 @@ jobs:
       - name: Copy docker-compose and .env to remote host
         run: |
           cd backend
-          scp docker-compose.yml .env ${{ secrets.REMOTE_HOST_USERNAME }}@${{ secrets.REMOTE_HOST_URL }}:/datahdd/asia/I2T-backend/deploy
+          scp docker-compose.prod.yml .env ${{ secrets.REMOTE_HOST_USERNAME }}@${{ secrets.REMOTE_HOST_URL }}:/datahdd/asia/I2T-backend/deploy
 
       - name: Deploy through ssh
         uses: appleboy/ssh-action@master
@@ -100,8 +100,8 @@ jobs:
           script: |
             cd /datahdd/asia/I2T-backend
             ls -A
-            docker-compose down --rmi all
+            docker-compose -f docker-compose.prod.yml down --rmi all
             shopt -s dotglob nullglob
             mv deploy/* .
-            docker-compose pull release
-            docker-compose up -d release
+            docker-compose -f docker-compose.prod.yml pull release
+            docker-compose -f docker-compose.prod.yml up -d release
