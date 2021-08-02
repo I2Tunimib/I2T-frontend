@@ -37,6 +37,7 @@
 
 .action-icon {
     cursor: pointer;
+    margin-top: 0.5rem;
     &.stroke {
         stroke: $brand-color-two-base;
         &:hover {

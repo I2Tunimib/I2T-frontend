@@ -5,8 +5,8 @@ import MainButton from "../MainButton/MainButton";
 import { metaTableModalPropsInterface } from "../../Interfaces/meta-table-modal-props.interface";
 import MUIDataTable from "mui-datatables";
 import { ReactComponent as DeleteIcon } from "../../Assets/icon-set/delete/trash.svg";
-import { ReactComponent as SelectIcon } from "../../Assets/icon-set/selected/select.svg";
-import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/selected/select-empty.svg";
+import { ReactComponent as SelectIcon } from "../../Assets/icon-set/radio_button/full.svg";
+import { ReactComponent as DeselectIcon } from "../../Assets/icon-set/radio_button/empty.svg";
 import { addMetadata } from "../../Redux/action/data";
 import { addMetaColumn } from "../../Redux/action/columns";
 import { useDispatch, useSelector } from "react-redux";
@@ -194,7 +194,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                                 {
                                                                     myMetaData[dataIndex].match &&
                                                                     <div>
-                                                                        <SelectIcon className='action-icon stroke' onClick={() => { deConfirmMeta(dataIndex) }} />
+                                                                        <SelectIcon className='action-icon' onClick={() => { deConfirmMeta(dataIndex) }} />
                                                                     </div>
                                                                 }
                                                                 {!myMetaData[dataIndex].match &&
