@@ -32,6 +32,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
     const colName = col.name;
     const Data = useSelector((state: RootState) => state.Data);
+    const [link, setLink] = React.useState<string | null>();
     // console.log(metaData);
     React.useEffect(() => {
         let myCols: any[] = []
@@ -56,6 +57,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
             if (Config) {
                 for (const recon of Config.reconciliators) {
                     if (col.reconciliator === recon.name) {
+                        setLink(recon.entityPageUrl);
                         for (const col of recon.metaToViz) {
                             myCols.push({
                                 name: col,
@@ -74,7 +76,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         setColumns(myCols);
 
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Config, col])
 
     const options = {
@@ -205,6 +207,14 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
 
                                                             </div>
                                                         )
+                                                    case 'name':
+                                                        return <p><a className={myMetaData[dataIndex].match ? 'meta-table-link match' : 'meta-table-link'}
+                                                            href={link + myMetaData[dataIndex].id}
+                                                            target="_blank"
+                                                            rel="noreferrer">
+                                                            {myMetaData[dataIndex][col.name].toString()}
+                                                        </a>
+                                                        </p>
                                                     default:
                                                         return myMetaData[dataIndex][col.name].toString();
                                                 }

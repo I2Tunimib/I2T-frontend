@@ -1,57 +1,73 @@
 .meta-data-table {
-    .MuiToolbar-regular.MuiToolbar-root .MuiButtonBase-root {
-      display: none !important;
-    }
-  
-    .MuiTablePagination-root .MuiToolbar-root {
-      display: flex !important;
-    }
-  
-    .MuiTableRow-root.MuiTableRow-footer .MuiTablePagination-actions button {
-      display: inline-flex !important;
-    }
-  
-    .MuiToolbar-regular {
-      min-height: 0 !important;
-    }
+  .MuiToolbar-regular.MuiToolbar-root .MuiButtonBase-root {
+    display: none !important;
+  }
+
+  .MuiTablePagination-root .MuiToolbar-root {
+    display: flex !important;
+  }
+
+  .MuiTableRow-root.MuiTableRow-footer .MuiTablePagination-actions button {
+    display: inline-flex !important;
+  }
+
+  .MuiToolbar-regular {
+    min-height: 0 !important;
+  }
 }
 
-.undo-icon{
-    width: 1.5rem;
-    margin-right: 0.5rem;
-    position: relative;
-    bottom: 0.1rem;
-    display: inline-block;
-    cursor: pointer;
-    fill: $brand-color-two-base;
-    &:hover {
-        fill: $brand-color-one-base;
-    }
+.undo-icon {
+  width: 1.5rem;
+  margin-right: 0.5rem;
+  position: relative;
+  bottom: 0.1rem;
+  display: inline-block;
+  cursor: pointer;
+  fill: $brand-color-two-base;
+  &:hover {
+    fill: $brand-color-one-base;
+  }
 }
 
 .big-modal {
-    .modal-dialog {
-       max-width:70vw; 
-    }
+  .modal-dialog {
+    max-width: 70vw;
+  }
 }
 
 .action-icon {
-    cursor: pointer;
-    margin-top: 0.5rem;
-    &.stroke {
-        stroke: $brand-color-two-base;
-        &:hover {
-            stroke: $brand-color-one-base;
-        }
+  cursor: pointer;
+  margin-top: 0.5rem;
+  &.stroke {
+    stroke: $brand-color-two-base;
+    &:hover {
+      stroke: $brand-color-one-base;
     }
-    &:not(.stroke) {
-        fill: $brand-color-two-base;
-        &:hover {
-            fill: $brand-color-one-base;
-        }
+  }
+  &:not(.stroke) {
+    fill: $brand-color-two-base;
+    &:hover {
+      fill: $brand-color-one-base;
     }
+  }
 }
 
 .inline {
-    display: inline-block;
+  display: inline-block;
+}
+
+.meta-table-link {
+  margin: 0.2rem 0.2rem;
+  display: inline-block;
+  text-align: left;
+  color: $brand-color-two-base;
+  &:hover {
+    color: $brand-color-two-hover;
+  }
+  &.match {
+    color: $brand-color-one-base;
+    &:hover {
+      color: $brand-color-one-hover;
+    }
+  }
 }
