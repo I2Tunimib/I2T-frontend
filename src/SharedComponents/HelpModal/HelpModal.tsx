@@ -36,7 +36,7 @@ const HelpModal = () => {
             <Modal show={helpModalIsOpen} onHide={() => { setHelpModalIsOpen(false) }}>
                 <Modal.Header closeButton>
                     <Modal.Title>
-                        {t('help.' + section + '-help.title')}
+                        <h3>{t('help.' + section + '-help.title')}</h3>
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
