@@ -16,11 +16,19 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        margin: 0.5rem 0;
         // border-bottom: $neutral-color-base 1px solid;
         svg {
           fill: $brand-color-two-dark;
           width: 24px;
           height: 24px;
+        }
+        &:hover {
+          svg {
+            fill: $brand-color-one-base;
+            width: 24px;
+            height: 24px;
+          }
         }
       }
     }

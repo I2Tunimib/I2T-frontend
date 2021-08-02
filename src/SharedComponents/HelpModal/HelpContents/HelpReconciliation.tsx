@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Accordion, Card } from 'react-bootstrap';
-
+import {ReactComponent as BottomArrow} from '../../../Assets/Icons/arrow-bottom.svg';
 
 export const HelpReconciliationTitle = () => {
     const { t } = useTranslation();
@@ -35,6 +35,7 @@ export const HelpReconciliation = () => {
                                     <h4>
                                         {t('help.reconciliation-help.topics.' + topic + '.title')}
                                     </h4>
+                                    <BottomArrow/>
                                 </Accordion.Toggle>
                             </Card.Header>
                             <Accordion.Collapse eventKey="0">

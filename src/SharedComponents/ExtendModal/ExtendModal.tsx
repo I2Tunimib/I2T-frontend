@@ -7,7 +7,6 @@ import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import { RootState } from "../../Redux/store";
 import { extensionServiceInterface, inputModeEnum, selectColModeEnum } from "../../Interfaces/configInterface";
 import { colInterface } from "../../Interfaces/col.interface";
-import { Help } from "@material-ui/icons";
 import HelpModal from "../HelpModal/HelpModal";
 
 const ExtendModal = (props: classicModalPropsInterface) => {
