@@ -9,7 +9,7 @@ import InputModal from "../../../../../SharedComponents/InputModal/InputModal";
 import React from "react";
 import { RootState } from "../../../../../Redux/store";
 import { useTranslation } from "react-i18next";
-import { colInterface } from "../../../../../Interfaces/col.interface";
+import { convertToSaveFormat } from "@utils/saver";
 
 const SaveTable = () => {
     const LoadedData = useSelector((state: RootState )=> state.Data);
@@ -37,28 +37,17 @@ const SaveTable = () => {
     
     const save = (name = LoadedName) => {
         dispatchSetLoadingState();
-        const columnToSave: colInterface[] = Columns.map((col: colInterface) => {
-            const newCol = {...col};
-            newCol.new = false;
-            newCol.selected = false;
-            return (
-                newCol
-            )
-        });
+        const saveFormat = convertToSaveFormat(Columns, LoadedData);
         (async () => {
-            const response = await saveTable({
-                columns: columnToSave,
-                table: LoadedData
-            }, name);
-            if (await response.error) {
+            const response = await saveTable(saveFormat, name);
+            if (response.error) {
                 dispatchUnsetLoadingState();
                 dispatchError(response.errorText)
             } else {
                 dispatchUnsetLoadingState();
                 setOkModalIsOpen(true);
             }
-        })()
-        
+        })()        
     }
 
     const saveAs =() => {

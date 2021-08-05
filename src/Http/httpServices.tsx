@@ -61,8 +61,8 @@ export async function getAllSaved(): Promise <httpResponseInterface> {
 
 export async function getTable(name: string): Promise <httpResponseInterface> {
     const response = await axios.get(`${TABLES}/${name}/`);
-    const error = errorHandler(await response);
-    if (await !error){
+    const error = errorHandler(response);
+    if (!error){
         return {
             data: response.data,
             error: false,
@@ -79,8 +79,8 @@ export async function getTable(name: string): Promise <httpResponseInterface> {
 
 export async function getSaved(name: string): Promise<httpResponseInterface> {
     const response = await axios.get(`${SAVED}/${name}/`);
-    const error = errorHandler(await response);
-    if (await !error){
+    const error = errorHandler(response);
+    if (!error){
         return {
             data: response.data,
             error: false,

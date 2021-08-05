@@ -7,7 +7,6 @@ import { displayError } from "../../../Redux/action/error";
 import { setLoadingState, unsetLoadingState } from "../../../Redux/action/loading";
 import { deleteData, loadDataSuccess, loadSavedDataSuccess } from "../../../Redux/action/data";
 import { loadName } from "../../../Redux/action/name";
-import { convert } from "../../../LogicUtilities/formatConverter";
 import { useTranslation } from 'react-i18next';
 import { colInterface } from "../../../Interfaces/col.interface";
 import { cellTypeEnum } from "../../../Enums/cell-type.enum";
@@ -15,6 +14,8 @@ import { RootState } from "../../../Redux/store";
 import InputModal from "../../../SharedComponents/InputModal/InputModal";
 import { Redirect } from "react-router-dom";
 import { deleteAllColumns, loadColumns } from "../../../Redux/action/columns";
+import { convert } from "../../../utils/format-converter/formatConverter";
+import { convertFromAppData } from "@utils/format-converter/converters";
 
 
 const GetData: React.FC = () => {
@@ -150,15 +151,15 @@ const GetData: React.FC = () => {
             case "Tabella Salvata":
                 (async () => {
                     const tableData = await getSaved(savedName);
-                    if (await tableData.error) {
+                    const [columns, table] = convertFromAppData(tableData.data);
+                    if (tableData.error) {
                         dispatchUnsetLoading();
                         dispatchError(tableData.errorText);
                     } else {
                         dispatchName(savedName);
                         dispatchUnsetLoading();
-                        //console.log(tableData);
-                        dispatchLoadSavedSuccess(tableData.data.table);
-                        dispatchColumns(tableData.data.columns);
+                        dispatchLoadSavedSuccess(table);
+                        dispatchColumns(columns);
                     }
                 })();
                 break;

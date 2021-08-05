@@ -38,9 +38,9 @@
   },
   "proxy": "http://localhost:3002",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -64,6 +64,8 @@
   "devDependencies": {
     "@svgr/webpack": "^5.5.0",
     "@types/mui-datatables": "^3.7.4",
-    "@types/react-router-dom": "^5.1.7"
+    "@types/react-router-dom": "^5.1.7",
+    "react-app-rewire-alias": "^1.0.3",
+    "react-app-rewired": "^2.1.8"
   }
 }

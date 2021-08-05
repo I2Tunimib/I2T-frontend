@@ -4,6 +4,7 @@ import { dataActionInterface } from "../../Interfaces/data-action.interface";
 export const loadDataSuccessReducer = (state: any[] = [], action: dataActionInterface) => {
     switch (action.type) {
         case 'LOADSAVED':
+            console.log(action.data);
             return state = action.data!;
         case "LOADED":
             for (let i = 0; i < action.data!.length; i++) {
