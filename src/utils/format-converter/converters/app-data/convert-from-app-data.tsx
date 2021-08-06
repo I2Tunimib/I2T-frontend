@@ -35,8 +35,19 @@ export const convertFromAppData = (savedData: SaveFormat) => {
 
     // convert data to table rows
 
-    // get rows excluding header
-    const table = savedData.data.slice(1);
+    // get rows excluding header and add data type
+    const rows = savedData.data.slice(1);
+
+    let table: any = [];
+    rows.forEach(row => {
+        const a = Object.keys(row).reduce((acc, key) => {
+            return {
+                ...acc,
+                [key]: {...row[key], type: cellTypeEnum.data}
+            }
+        }, {})
+        table = [...table, a];
+    })
 
     return [columns, table];
 }

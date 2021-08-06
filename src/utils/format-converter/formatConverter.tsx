@@ -1,4 +1,4 @@
-import { convertFromCSV, convertFromAppData } from "./converters";
+import { convertFromCSV, convertFromAppData, convertFromJSON } from "./converters";
 
 export const convert = (format: string, data: any) => {
     switch (format) {
@@ -6,6 +6,8 @@ export const convert = (format: string, data: any) => {
             return convertFromCSV(data);
         case "app-data":
             return convertFromAppData(data);
+        case "json":
+            return convertFromJSON(data);
         case "ssv":
             const lines = data.toString().split("\n");
 
@@ -26,12 +28,7 @@ export const convert = (format: string, data: any) => {
 
             }
             return result;
-
-        case "json":
-
-            return JSON.parse(data);
-
         default:
-            break;
+            return convertFromCSV(data);
     }
 }

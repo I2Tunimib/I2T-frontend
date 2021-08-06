@@ -19,6 +19,5 @@ export const convertFromCSV = (data: any, separator: CsvSeparator = CsvSeparator
         });
         converted = [...converted, obj];
     });
-    console.log(converted);
     return converted;
 }
