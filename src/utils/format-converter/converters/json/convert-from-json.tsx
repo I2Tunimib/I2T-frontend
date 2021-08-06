@@ -38,8 +38,19 @@ export const convertFromJSON = (data: any) => {
         ...columns
     ];
 
-    // get rows excluding header
-    const table = data.slice(1);
+    // get rows excluding header and add data type
+    const rows = data.slice(1);
+
+    let table: any = [];
+    rows.forEach((row: any) => {
+        const a = Object.keys(row).reduce((acc, key) => {
+            return {
+                ...acc,
+                [key]: {...row[key], type: cellTypeEnum.data}
+            }
+        }, {})
+        table = [...table, a];
+    })
 
     return [columns, table];
 }
