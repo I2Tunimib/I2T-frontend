@@ -17,6 +17,9 @@ import { ReactComponent as UndoIcon } from '../../Assets/icon-set/undo-circular-
 
 
 export const MetaTableModal = (props: metaTableModalPropsInterface) => {
+
+    // this modal show metadata of a cell.
+
     const {
         titleText,
         metaData,
@@ -27,6 +30,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         secondaryButtonAction,
         showState,
         onClose } = props;
+        console.log(metaData);
     const [show, setShow] = React.useState(true);
     const Config = useSelector((state: RootState) => state.Config)
     const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
@@ -36,7 +40,9 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     // console.log(metaData);
     React.useEffect(() => {
         let myCols: any[] = []
-        if (dataIndex === -1) {
+        // if i want to look at headercell metadata or i dont have infos about which reconciliation service i've used to get metadata,
+        // i use default columns
+        if (dataIndex === -1 || col.reconciliator === "") {
             myCols = [{
                 name: "id",
                 label: "id"
@@ -54,6 +60,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                 label: "action"
             }]
         } else {
+            // else if i've saved in the column a reconciliator, i look for columns to display in config data
             if (Config) {
                 for (const recon of Config.reconciliators) {
                     if (col.reconciliator === recon.name) {
@@ -79,6 +86,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [Config, col])
 
+    // options for the table
     const options = {
         selectableRows: "none",
         customToolbar: () => {
@@ -114,12 +122,13 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         setMyMetaData(metaData);
     }, [metaData])
 
+    // if i remove an annotation i set the new metadata in myMetaData
     const removeMeta = (dataIndex: number) => {
         let newMeta = JSON.parse(JSON.stringify(myMetaData));
         newMeta = [...newMeta.slice(0, dataIndex), ...newMeta.slice(dataIndex + 1)]
         setMyMetaData(newMeta);
     }
-
+    
     const confirmMeta = (dataIndex: number) => {
         let newMeta = JSON.parse(JSON.stringify(myMetaData));
         for (const meta of newMeta) {
@@ -128,7 +137,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         newMeta[dataIndex].match = true;
         setMyMetaData(newMeta);
     }
-
+    
     const deConfirmMeta = (dataIndex: number) => {
         let newMeta = JSON.parse(JSON.stringify(myMetaData));
         for (const meta of newMeta) {
@@ -137,6 +146,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         setMyMetaData(newMeta);
     }
 
+    //when i confirm i dispatch changes to the store
     const confirm = () => {
         if (dataIndex === -1) {
             dispatchMetaColumns(myMetaData, col.name);

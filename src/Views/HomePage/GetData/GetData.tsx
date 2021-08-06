@@ -15,7 +15,7 @@ import InputModal from "../../../SharedComponents/InputModal/InputModal";
 import { Redirect } from "react-router-dom";
 import { deleteAllColumns, loadColumns } from "../../../Redux/action/columns";
 import { convert } from "../../../utils/format-converter/formatConverter";
-import { convertFromAppData } from "@utils/format-converter/converters";
+import { convertFromAppData, convertFromJSON } from "@utils/format-converter/converters";
 
 
 const GetData: React.FC = () => {
@@ -67,6 +67,7 @@ const GetData: React.FC = () => {
     const [allTables, setAllTables] = React.useState([])
     const [dataHasBeenLoaded, setDataHasBeenLoaded] = React.useState(false);
     const [isConfirmed, setIsConfirmed] = React.useState(false);
+    const [format, setFormat] = React.useState<string>('');
 
     const savedOptions = allSaved.map((saved) => {
         return (
@@ -80,7 +81,7 @@ const GetData: React.FC = () => {
         )
     })
 
-
+     // at the first rendering i take all saved tables and al csv tables
     React.useEffect(() => {
         //getting all saved
         (async () => {
@@ -95,7 +96,7 @@ const GetData: React.FC = () => {
                 dispatchError(allSaved.errorText);
             }
         })();
-        // getting al tables
+        // getting all tables
         (async () => {
             dispatchSetLoading();
             const allTables = await getAllTables();
@@ -117,21 +118,40 @@ const GetData: React.FC = () => {
         const reader = new FileReader();
         const file = e.target.files[0];
         let fileName = file.name.split(" ").join("-");
+        // get the format from the filename
         function getFormat(fileName: string) {
             const nameArr = fileName.split(".");
             return nameArr[nameArr.length - 1];
         }
         const myFormat = getFormat(fileName);
+        setFormat(myFormat);
         reader.onload = function (event) { //on loading file.
             const unconvertedFile = event.target!.result;
             dispatchName(fileName.split('.')[0]);
-            dispatchLoadedSuccess(convert(myFormat, unconvertedFile));
+            if(myFormat === 'csv') { // if the format its csv i convert it and dispatch
+                dispatchLoadedSuccess(convert(myFormat, unconvertedFile));
+            } else if(myFormat === 'json') { // if the format is json i convert it and add a index column
+                const [columns, table ] = convertFromJSON(JSON.parse(JSON.stringify(unconvertedFile!)));
+                dispatchColumns(columns);
+                for (let i = 0; i < table.length; i++) {
+                    table[i]['index'] = {
+                        label: i+1,
+                        type: cellTypeEnum.index,
+                        metadata: []
+                    }
+                }
+                console.log(table);
+                dispatchLoadSavedSuccess(table);
+                // if both columns and table has been loaded, i set dataHasBeenLaoded on true, so i open the modal to choose the name and go to the next view
+                setDataHasBeenLoaded(true);
+            }
+            
         }
         reader.readAsText(file);
     }
 
 
-    // calling TableServer
+    // calling TableServer to get  a raw or a saved table
     function getTableData() {
         dispatchSetLoading()
         switch (dataSource) {
@@ -168,6 +188,7 @@ const GetData: React.FC = () => {
         }
     }
 
+    // when i load raw data i have to build columns from table
     const setColumns = () => {
         let keys: colInterface[] = [];
         for (let i = 0; i < LoadedData.length; i++) {
@@ -201,10 +222,9 @@ const GetData: React.FC = () => {
     }
 
 
-
+    // listen for Data change, if are there data but not columns, i open the modal and set the name.
+    // columns will be loaded when the user will close the modal 
     React.useEffect(() => {
-        // reset index when loaded data changes
-        // resetIndex();
         if (LoadedData.length >= 1 && LoadedColumns.length === 0) {
             setDataHasBeenLoaded(true);
             setTableName(LoadedName);
@@ -217,7 +237,7 @@ const GetData: React.FC = () => {
 
 
     const confirmAction = () => {
-        //console.log(tableName);
+        // on confirmation (orange button of the modal) i dispatch the name, set isConfirmed to go to the next view and reset dataHasBeenLoaded
         dispatchName(tableName);
         setIsConfirmed(true);
         setDataHasBeenLoaded(false);
@@ -296,20 +316,21 @@ const GetData: React.FC = () => {
                 </div>
 
             </div>
-            {dataHasBeenLoaded && LoadedData &&
+            {dataHasBeenLoaded && LoadedData && // when data are loaded i open a modal to choose the name, then confirm and go to the next view
                 <InputModal
                     titleText={t('homepage-content.get-data.choose-name-modal.title-text')}
                     inputLabel={t('homepage-content.get-data.choose-name-modal.input-label')}
                     mainButtonLabel={t('buttons.confirm')}
                     mainButtonAction={() => {
                         confirmAction();
-                        if (dataSource !== 'Tabella Salvata') {
+                        if (dataSource === 'Table Server' || (dataSource === "File system" && format !== 'json')) {
+                            // is columns arent already been loaded i get them from the data structure
                             dispatchColumns(setColumns());
                         }
                     }}
                     setInputValue={(name: SetStateAction<string>) => { setTableName(name) }}
                     secondaryButtonLabel={t('buttons.cancel')}
-                    secondaryButtonAction={dispatchDeleteData}
+                    secondaryButtonAction={() => {dispatchDeleteData(); setDataHasBeenLoaded(false)}}
                     value={LoadedName}
                     showState={dataHasBeenLoaded}
                     onClose={() => { setDataHasBeenLoaded(false); dispatchDeleteAllCols(); }}

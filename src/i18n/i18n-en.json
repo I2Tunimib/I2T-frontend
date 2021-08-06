@@ -24,9 +24,9 @@
       "where-to-load": {
         "label": "Where do you want to upload the data from? ",
         "options": {
-          "table-server": "Table Server (all csv tables)",
-          "table-saved": "Table Server (saved tables)",
-          "file.-system": "Local file system (CSV, JSON)"
+          "table-server": "Table Server (raw tables)",
+          "table-saved": "Table Server (annotated tables)",
+          "file.-system": "Local file system (tabelle CSV e JSON)"
         }
       },
       "choose-from": {
@@ -114,7 +114,7 @@
     "reconcile-cell": "Reconciliate cell",
     "expand-entities": "Expand entity column",
     "collapse-entities": "Collapse entity column",
-    "show-metadata": "Show metadata",
+    "show-metadata": "Manage metadata",
     "filter-column": "Filter column",
     "remove-filters": "Remove filters",
     "finalize-matching": "Finalize matching"

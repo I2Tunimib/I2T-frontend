@@ -47,14 +47,6 @@ const TableHeadCell = (props: { col: colInterface }) => {
             value: filterTypeEnum.matchFalse
         },
         {
-            label: "Score: > 50",
-            value: filterTypeEnum.scoreOver
-        },
-        {
-            label: "Score: < 50",
-            value: filterTypeEnum.scoreUnder
-        },
-        {
             label: "Metadata: disponibili",
             value: filterTypeEnum.metaTrue
         },

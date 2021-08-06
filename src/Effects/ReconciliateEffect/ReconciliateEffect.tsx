@@ -15,6 +15,10 @@ import { useTranslation } from 'react-i18next';
 
 
 const ReconciliateEffect = () => {
+
+    // reconciliate effect listen for ItemsToRecociliate in the redux state
+    // if there are items to Reconciliate it open a modal to choose the reconciliation service, call the service
+    // and dispatch metadata in the table data structure
     const { t } = useTranslation();
 
     const ItemsToReconciliate = useSelector((state: RootState) => state.ItemsToReconciliate);

@@ -6,6 +6,8 @@ import { RootState } from "../../Redux/store";
 import { useTranslation } from 'react-i18next';
 
 const ErrorEffect = () => {
+    // error Effect listen to Error part of the state. 
+    // if there is as error, it open a modal displaying it
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const error = useSelector((state: RootState) => state.Error);

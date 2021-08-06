@@ -11,6 +11,7 @@ import { removeContext } from "../../Redux/action/contextMenu";
 import { getConfigData } from "../../Redux/action/config";
 
 const InitialEffect = () => {
+    // initial effect reset redux state at the first rendering
     const dispatch = useDispatch();
 
     const dispatchNoReconciliate = () => {

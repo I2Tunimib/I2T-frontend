@@ -24,9 +24,9 @@
       "where-to-load": {
         "label": "Da dove vuoi caricare i dati?",
         "options": {
-          "table-server": "Table Server (tutte le tabelle csv)",
-          "table-saved": "Table Server (tabelle salvate)",
-          "file.-system": "File system locale (CSV, JSON)"
+          "table-server": "Table Server (tabelle non annotate)",
+          "table-saved": "Table Server (tabelle annotate)",
+          "file.-system": "File system locale (tabelle CSV e JSON)"
         }
       },
       "choose-from": {
@@ -114,7 +114,7 @@
     "reconcile-cell": "Riconcilia cella",
     "expand-entities": "Espandi colonna delle entità",
     "collapse-entities": "Comprimi colonna delle entità",
-    "show-metadata": "Visualizza metadati",
+    "show-metadata": "Gestisci metadati",
     "filter-column": "Filtra colonna",
     "remove-filters": "Rimuovi filtri",
     "finalize-matching": "Finalizza matching"

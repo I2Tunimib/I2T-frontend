@@ -17,6 +17,7 @@ const addIndexColumn = (): colInterface => {
 
 export const convertFromAppData = (savedData: SaveFormat) => {
     // convert headers to columns array of objects
+    //console.log(savedData);
     const headersUI = savedData.application.ui[0];
     const headersData = savedData.data[0];
     

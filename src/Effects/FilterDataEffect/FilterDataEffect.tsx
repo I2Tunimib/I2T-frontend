@@ -5,6 +5,9 @@ import { setFilterData } from "../../Redux/action/filterData";
 
 
 const FilterDataEffect = () => {
+
+    //FilterDataEffect listen to Columns and looks for a filtered columns
+    // if a filtered column is found, it makes the contextual operations on data
     const Columns = useSelector((state: RootState) => state.Columns);
     const Data = useSelector((state: RootState) => state.Data)
     const dispatch = useDispatch();

@@ -5,6 +5,12 @@ import ContextMenu from "../../SharedComponents/ContextMenu/ContextMenu";
 import { RootState } from "../../Redux/store";
 
 const ContextEffect = () => {
+
+    //context effect listen for changes in the Context part of the state 
+    // if there is a context open a context menu in the given position with the given items
+    // items objects can be found in ./src/ContextItems and are dispatched in the state by different components
+
+
     const dispatch = useDispatch();
     const OpenedContext = useSelector((state: RootState) => state.Context);
     const removeContextDispatch = () => {

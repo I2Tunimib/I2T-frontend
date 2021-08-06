@@ -5,6 +5,8 @@ import ReconciliateEffect from "../ReconciliateEffect/ReconciliateEffect";
 import FilterDataEffect from "../FilterDataEffect/FilterDataEffect";
 
 const AllEffects = () => {
+    // this component groups all effects
+    // effects are components that listen for changes in the state and make different things
     return (
         <>
         <ErrorEffect/>

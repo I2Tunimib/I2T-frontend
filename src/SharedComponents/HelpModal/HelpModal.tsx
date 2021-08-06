@@ -20,7 +20,7 @@ const HelpModal = () => {
         <>
             <Dropdown className='dropdown help-dropdown'>
                 <Dropdown.Toggle id="dropdown-basic">
-                    <HelpIcon className='help-icon'/>
+                    ?
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu>

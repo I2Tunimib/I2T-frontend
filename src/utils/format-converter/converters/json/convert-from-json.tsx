@@ -23,7 +23,7 @@ export const convertFromJSON = (data: any) => {
     let columns = Object.keys(headers).map((key, index): any => {
         return {
             ...headers[key],
-            name: key,
+            name: headers[key].label,
             selected: false,
             reconciliated: false,
             reconciliator: '',

@@ -5,6 +5,9 @@ import { RootState } from "../../Redux/store";
 
 
 const LoadingEffect = () => {
+
+    // loadingEffect listen for LoadingState part of the state.
+    // if it is set on true, it show a loading spinner
     const loadingState = useSelector((state: RootState) => state.LoadingState);
 
     React.useEffect(()=>{
