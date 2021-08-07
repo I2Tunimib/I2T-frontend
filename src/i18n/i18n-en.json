@@ -215,9 +215,15 @@
         },
         "weather": {
           "title": "Weather",
-          "content": "ASIA weather-based extension service. It is possible to extend the table with some meteorological data starting from a locality column of administrative order 1 (Regions or states) reconciled with geonames and a column of dates (dd-mm-yyyy format). It is also necessary to choose a meteorological property with which to extend the table and the offset (move the date of interest with respect to the one entered in input)."
+          "content": "ASIA weather-based extension service. It is possible to extend the table with some meteorological data starting from a locality column of administrative order 1 (Regions or states) reconciled with geonames and a column of dates (yyyy-mm-dd format). It is also necessary to choose a meteorological property with which to extend the table and the offset (move the date of interest with respect to the one entered in input)."
         }
       }
     }
+  },
+  "estension-modal": {
+    "select-columns": "Select a column for the values: ",
+    "select-columns-2": "Selezionare una colonna",
+    "selected-values": "Selected values: ",
+    "select-values": "Select one or more property values: "
   }
 }

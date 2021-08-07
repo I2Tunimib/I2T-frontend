@@ -30,9 +30,9 @@ export const HelpExtension = () => {
                         <Card>
                             <Card.Header>
                                 <Accordion.Toggle eventKey="0">
-                                    <h4>
+                                    <h5 className="topic-title">
                                         {t('help.extension-help.topics.' + topic + '.title')}
-                                    </h4>
+                                    </h5>
                                     <BottomArrow/>
                                 </Accordion.Toggle>
                             </Card.Header>

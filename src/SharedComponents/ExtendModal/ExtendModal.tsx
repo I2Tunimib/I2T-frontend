@@ -8,8 +8,10 @@ import { RootState } from "../../Redux/store";
 import { extensionServiceInterface, inputModeEnum, selectColModeEnum } from "../../Interfaces/configInterface";
 import { colInterface } from "../../Interfaces/col.interface";
 import HelpModal from "../HelpModal/HelpModal";
+import { useTranslation } from "react-i18next";
 
 const ExtendModal = (props: classicModalPropsInterface) => {
+    const { t } = useTranslation();
     const { titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose } = props;
     const [show, setShow] = React.useState(true);
     const Config = useSelector((state: RootState) => state.Config);
@@ -60,7 +62,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                         <div className='field-container' key={param.name}>
                             <Form.Group>
                                 <Form.Label>
-                                    <p className='field-label'>Seleziona una colonna per i valori: <b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
+                                    <p className='field-label'>{t('estension-modal.select-columns')}<b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
                                 </Form.Label>
                                 <Form.Control as="select" onChange={(e) => {
                                     const arrayValues2 = [];
@@ -91,7 +93,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                     newParams2[param.name] = arrayValues2;
                                     setParamsToSend(JSON.parse(JSON.stringify(newParams2)));
                                 }}>
-                                    <option selected disabled hidden>Selezionare una colonna</option>
+                                    <option selected disabled hidden>{t('estension-modal.select-columns-2')}</option>
                                     {selectedCol.map((col) => {
                                         return (
                                             <option value={col.name} key={col.name}>
@@ -100,7 +102,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                                         )
                                     })}
                                 </Form.Control>
-                                <p className='field-hint'>Valori selezionati: {paramsToSend[param.name] ? paramsToSend[param.name].length : 0}</p>
+                                <p className='field-hint'>{t('estension-modal.selected-values')}{paramsToSend[param.name] ? paramsToSend[param.name].length : 0}</p>
                             </Form.Group>
                         </div >
 
@@ -114,7 +116,7 @@ const ExtendModal = (props: classicModalPropsInterface) => {
                     }
                     myMarkup.push(
                         <div key={param.name} className='field-container'>
-                            <p className='field-label'>Seleziona uno o più valori per la proprietà: <b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
+                            <p className='field-label'>{t('estension-modal.select-values')}<b className='bold'>{param.name.charAt(0).toUpperCase() + param.name.slice(1)}</b></p>
                             {param.values!.map((value, index) => {
                                 return (
                                     <div key={value.label}>

@@ -215,9 +215,15 @@
             }, 
             "weather": {
                 "title": "Weather",
-                "content": "Servizio di estensione di ASIA basato su weather. È possibile estendere la tabella con alcuni dati metereologici a partire da una colonna di località di ordine amministrativo 1 (Regioni o stati) riconciliata con geonames e una colonna di date (formato gg-mm-aaaa). È inoltre necessario scegliere una proprietà metereologica con la quale estendere la tabella e l'offset (sposta la data di interesse rispetto a quella inserita in input)."
+                "content": "Servizio di estensione di ASIA basato su weather. È possibile estendere la tabella con alcuni dati metereologici a partire da una colonna di località di ordine amministrativo 1 (Regioni o stati) riconciliata con geonames e una colonna di date (formato aaaa-mm-gg). È inoltre necessario scegliere una proprietà metereologica con la quale estendere la tabella e l'offset (sposta la data di interesse rispetto a quella inserita in input)."
             }
         }
     }
+  },
+  "estension-modal": {
+    "select-columns": "Seleziona una colonna per i valori: ",
+    "select-columns-2": "Selezionare una colonna",
+    "selected-values": "Valori selezionati: ",
+    "select-values": "Seleziona uno o più valori per la proprietà: "
   }
 }

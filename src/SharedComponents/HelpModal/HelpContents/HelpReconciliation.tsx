@@ -32,9 +32,9 @@ export const HelpReconciliation = () => {
                         <Card>
                             <Card.Header>
                                 <Accordion.Toggle eventKey="0">
-                                    <h4>
+                                    <h5 className="topic-title">
                                         {t('help.reconciliation-help.topics.' + topic + '.title')}
-                                    </h4>
+                                    </h5>
                                     <BottomArrow/>
                                 </Accordion.Toggle>
                             </Card.Header>

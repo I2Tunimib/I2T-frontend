@@ -8,6 +8,10 @@
       border: none;
       // padding-top: 0;
       border-bottom: $neutral-color-base 1px solid;
+      padding: 0.2rem 1.5rem;
+      .topic-title {
+        margin-bottom: 0;
+      }
       button {
         border: none;
         text-align: left;
