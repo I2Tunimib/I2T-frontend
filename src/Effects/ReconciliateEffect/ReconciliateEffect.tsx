@@ -113,6 +113,7 @@ const ReconciliateEffect = () => {
                     inputLabel={t('commands-bar.reconciliation.select-reconciliator-modal.input-label')}
                     titleText={t('commands-bar.reconciliation.select-reconciliator-modal.title-text')}
                     text={t('commands-bar.reconciliation.select-reconciliator-modal.text')}
+                    help={true}
                     mainButtonLabel={t('buttons.confirm')}
                     mainButtonAction={() => { riconciliate() }}
                     secondaryButtonLabel={t('buttons.cancel')}

@@ -2,6 +2,7 @@ export interface dropdownModalPropsInterface {
     inputLabel: string,
     titleText: string, 
     text: string, 
+    help?: boolean,
     mainButtonLabel: string, 
     mainButtonAction: Function, 
     secondaryButtonAction: Function,

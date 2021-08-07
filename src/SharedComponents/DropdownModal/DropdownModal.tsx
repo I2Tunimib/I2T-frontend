@@ -1,13 +1,14 @@
 import MainButton from "../MainButton/MainButton";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
-import {Dropdown, Modal } from "react-bootstrap";
+import { Dropdown, Modal } from "react-bootstrap";
 import React from "react";
 import { dropdownModalPropsInterface } from "../../Interfaces/dropdown-modal-props.interface";
+import HelpModal from "../HelpModal/HelpModal";
 
 const DropdownModal = (props: dropdownModalPropsInterface) => {
-    const { inputLabel, titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, inputValues, setInputValue } = props;
+    const { help, inputLabel, titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, inputValues, setInputValue } = props;
     const [show, setShow] = React.useState(true);
-    const [dropValue, setDropValue] = React.useState <{label: string, value: string}> ();
+    const [dropValue, setDropValue] = React.useState<{ label: string, value: string }>();
 
     React.useEffect(() => {
         setInputValue(dropValue);
@@ -43,16 +44,18 @@ const DropdownModal = (props: dropdownModalPropsInterface) => {
                 </Modal.Header>
                 <Modal.Body>
                     <p>{text}</p>
+                    <div className='help-drop-container'>
+                        <Dropdown>
+                            <Dropdown.Toggle variant="primary" id="dropdown-basic">
+                                {dropValue ? dropValue!.label : inputLabel}
+                            </Dropdown.Toggle>
 
-                    <Dropdown>
-                        <Dropdown.Toggle variant="primary" id="dropdown-basic">
-                            {dropValue ? dropValue!.label : inputLabel}
-                        </Dropdown.Toggle>
-
-                        <Dropdown.Menu>
-                            {dropdownItems}
-                        </Dropdown.Menu>
-                    </Dropdown>
+                            <Dropdown.Menu>
+                                {dropdownItems}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                        <HelpModal />
+                    </div>
                 </Modal.Body>
                 <Modal.Footer>
                     {
@@ -61,7 +64,7 @@ const DropdownModal = (props: dropdownModalPropsInterface) => {
                     }
                     {
                         mainButtonLabel && mainButtonAction &&
-                        <MainButton cta={mainButtonAction} label={mainButtonLabel}/>
+                        <MainButton cta={mainButtonAction} label={mainButtonLabel} />
                     }
 
 
