@@ -1,9 +1,10 @@
 .help-bar {
-  border-left: 2px solid $brand-color-two-base;
+  border-left: 2px solid $neutral-color-light;
   padding-left: 1rem;
-  position: absolute;
-  top: 1.2rem;
-  right: 1rem;
+  padding-right: 2rem;
+  // position: absolute;
+  // top: 1.2rem;
+  //right: 1rem;
   z-index: 999;
   display: flex;
   justify-content: space-between;
@@ -14,6 +15,12 @@
       }
       button {
         font-weight: bold;
+        background-color: $neutral-color-light;
+        color: $brand-color-two-base;
+        &:hover { 
+          background-color: $brand-color-two-hover !important;
+          color: $neutral-color-light;
+        }
       }
     .dropdown-menu {
       a {

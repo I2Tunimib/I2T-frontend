@@ -15,7 +15,9 @@
     font-weight: bold;
     resize: horizontal;
     overflow-x: overlay;
+    -moz-scrollbars-horizontal: overlay;
     overflow-y: hidden;
+    -moz-scrollbars-vertical: hidden;
   }
 
   .MuiTableHead-root .MuiTableRow-root .MuiTableCell-head:first-child {
@@ -35,6 +37,7 @@
     min-width: none;
     // border-right: black 1px solid;
     overflow-y: hidden;
+    -moz-scrollbars-vertical: hidden;
     //overflow-x: scroll;
   }
 
@@ -75,6 +78,8 @@
     //display: flex;
     overflow-y: overlay;
     overflow-x: hidden;
+    -moz-scrollbars-horizontal: hidden;
+    -moz-scrollbars-vertical: overlay;
     //width: 100%;
   }
 }

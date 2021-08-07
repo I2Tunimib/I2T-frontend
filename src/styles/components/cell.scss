@@ -21,6 +21,9 @@
             &.orange {
                 background-color: orange;
             }
+            &.red {
+                background-color: red;
+            }
         }
         .id-links-container {
             width: 50%;
@@ -29,6 +32,7 @@
             // flex-wrap: wrap;
             height: 100%;
             margin-left: 0.5rem;
+            overflow-y: scroll;
             a {
                 margin: 0.2rem 0.2rem;
                 display: inline-block;

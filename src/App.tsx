@@ -3,14 +3,14 @@ import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import HomePage from "./Views/HomePage/HomePage";
 import TableView from "./Views/TableView/TableView";
 import AllEffects from "./Effects/AllEffects/AllEffects";
-import HelpBar from './SharedComponents/HelpBar/HelpBar';
+import Header from './Views/Header/Header';
 
 const App: React.FC = () => {
   return (
     <>
       <BrowserRouter>
         <AllEffects />
-        <HelpBar/>
+        <Header/>
         <Switch>
           <Route path="/" exact component={HomePage} />
           <Route path="/table" component={TableView} />

@@ -1,0 +1,35 @@
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  //height: 6rem;
+  align-items: center;
+  background: linear-gradient(
+    0.25turn,
+    $brand-color-two-dark,
+    $brand-color-two-base
+  );
+  // background-color: $brand-color-two-base;
+  padding: 0.8rem 0;
+  //box-shadow:  8px 10px $brand-color-two-base;
+  .header-left {
+      display: flex;
+      align-items: center;
+    h1,
+    h5 {
+      margin-bottom: 0;
+      color: $neutral-color-light;
+      padding-left: 1rem;
+    }
+    svg {
+      width: 2.2rem;
+      height: 2.2rem;
+      margin: 0 0.5rem 0 1rem;
+      cursor: pointer;
+      fill: $neutral-color-light;
+      &:hover {
+        fill: $neutral-color-base;
+      }
+    }
+  }
+}

@@ -8,7 +8,9 @@ const HomePage: React.FC = () => {
     return(
         <>
         <InitialEffect/>
-        <Tutorial/>
+        {
+        //<Tutorial/>
+        }
         <GetData/>
         </>
     )

@@ -133,6 +133,8 @@ const Cell = (props: cellPropsInterface) => {
                         setDotColor('green');
                     }
                 }
+            } else if (col.reconciliated && cellValue.metadata.length === 0){
+                setDotColor('red');
             }
         }
 
@@ -173,7 +175,7 @@ const Cell = (props: cellPropsInterface) => {
                     onClick={() => { dispatchRemoveContext() }}
                     className='data-cell'>
                     <div>
-                        {cellValue.metadata.length > 0 &&
+                        {// cellValue.metadata.length > 0 &&
                             <div 
                             className={`meta-dot ` + dotColor} 
                             ref={target} 
