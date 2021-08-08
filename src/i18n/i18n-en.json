@@ -120,8 +120,17 @@
     "finalize-matching": "Finalize matching"
   },
   "help": {
+    "title": "Help",
     "general-help": {
       "title": "General guide",
+      "titles": {
+        "about": "About",
+        "columns": "Columns",
+        "cells": "Cells",
+        "row": "Rows",
+        "commands": "Commands",
+        "metadata": "Metadata"
+      },
       "topics": {
         "interaction": {
           "title": "Interaction",
@@ -156,7 +165,7 @@
           "content": "To reconcile a column select it, then press the reconcile button in the command bar. Choose the most suitable reconciliation service by reading its description in the dedicated 'help' section."
         },
         "view-meta": {
-          "title": "View annotations of a cell",
+          "title": "Manage metadata",
           "content": "To view the metadata of a cell, right click on the cell and choose 'View metadata', from this modal you can also assign a match: true to one or more annotations."
         },
         "filter-column": {
@@ -164,7 +173,7 @@
           "content": "You can filter a column based on cell metadata properties after reconciling it. Press with the right mouse button on the header cell of the reconciled column and choose 'Filter column', now choose the criterion to filter."
         },
         "finalize-matching": {
-          "title": "Finalize the matching of a column",
+          "title": "Finalize the matching",
           "content": "To finalize the matching of a reconciled column, right click on the column and choose finalize matching. It is now possible to wake up a threshold above which to assign a true match to cell annotations."
         },
         "extension": {
@@ -175,6 +184,10 @@
     },
     "reconciliation-help": {
       "title": "Reconciliation services",
+      "titles": {
+        "about": "About",
+        "services": "Services"
+      },
       "topics": {
         "general": {
           "title": "General notes",
@@ -204,6 +217,10 @@
     },
     "extension-help": {
       "title": "Extension services",
+      "titles": {
+        "about": "About",
+        "services": "Services"
+      },
       "topics": {
         "general": {
           "title": "General notes",
@@ -211,11 +228,11 @@
         },
         "geonames": {
           "title": "Geonames",
-          "content": "ASIA extension service based on geonames. It is possible to extend the table with a new column containing locations of a certain administrative order, starting from an existing column reconciled with geonames with a different administrative order."
+          "content": "ASIA extension service based on geonames. With geonames it is possible to retrieve data on locations of a certain administrative order, given a reconciled column containing locations of a different administrative order. \nTo extend the table with geonames you need: \n - A column reconciled and matched with geonames. \n - Enter the administrative level of the locations you want to output. \nNote: The geonames extension service may not work correctly for locations outside of Germany."
         },
         "weather": {
           "title": "Weather",
-          "content": "ASIA weather-based extension service. It is possible to extend the table with some meteorological data starting from a locality column of administrative order 1 (Regions or states) reconciled with geonames and a column of dates (yyyy-mm-dd format). It is also necessary to choose a meteorological property with which to extend the table and the offset (move the date of interest with respect to the one entered in input)."
+          "content": "ASIA weather-based extension service. With weather it is possible to retrieve meteorological data for given locations and dates. \nTo extend with weather you need: \n - A column reconciled and matched or extended with geonames containing locations of the first administrative level (Regions). \n - A column of dates in ISO format yyyy-mm-dd \n - Insert one or more WeatherParameters, these correspond to the meteorological parameter with which you want to extend the table. \n - Enter the offset: the difference in days for which we want to retrieve the data with respect to the input dates. \nNote: the weather extension service is available only for the years between 2017 and 2019 and only for the regions German."
         }
       }
     }

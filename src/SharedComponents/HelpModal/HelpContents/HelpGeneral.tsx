@@ -13,43 +13,44 @@ export const HelpGeneralTitle = () => {
     )
 }
 
-export const HelpGeneral = () => {
+export const HelpGeneral = (props: any) => {
+    const {structure, sectionName} = props;
     const { t } = useTranslation();
-    const topics = ['interaction',
-        'context-menu',
-        'drag-columns',
-        'select-column',
-        'delete-column',
-        'edit-label',
-        'delete-row',
-        'reconcile-column',
-        'view-meta',
-        'filter-column',
-        'finalize-matching',
-        'extension']
 
     return (
-        <> {
-            topics.map((topic) => {
+        <> 
+        {
+            structure.map((section: {title: string, items: string[]}) => {
                 return (
-                    <Accordion className='help-accordion' >
-                        <Card>
-                            <Card.Header>
-                                <Accordion.Toggle eventKey="0">
-                                    <h5 className="topic-title">
-                                        {t('help.general-help.topics.' + topic + '.title')}
-                                    </h5>
-                                    <BottomArrow/>
-                                </Accordion.Toggle>
-                            </Card.Header>
-                            <Accordion.Collapse eventKey="0">
-                                <Card.Body>
-                                    <p>{t('help.general-help.topics.' + topic + '.content')}
-                                    </p>
-                                </Card.Body>
-                            </Accordion.Collapse>
-                        </Card>
-                    </Accordion>
+                    <div className='section'>
+                    <h5>
+                        {t('help.' + sectionName + '-help.titles.' + section.title)}
+                    </h5>
+                    {
+                        section.items.map((item)=> {
+                            return (
+                                <Accordion className='help-accordion' >
+                                    <Card>
+                                        <Card.Header>
+                                            <Accordion.Toggle eventKey="0">
+                                                <h6 className="topic-title">
+                                                    {t('help.' + sectionName + '-help.topics.' + item + '.title')}
+                                                </h6>
+                                                <BottomArrow/>
+                                            </Accordion.Toggle>
+                                        </Card.Header>
+                                        <Accordion.Collapse eventKey="0">
+                                            <Card.Body>
+                                                <p>{t('help.'+ sectionName +'-help.topics.' + item + '.content')}
+                                                </p>
+                                            </Card.Body>
+                                        </Accordion.Collapse>
+                                    </Card>
+                                </Accordion>
+                            )
+                        })
+                    }
+                    </div>
                 )
             })
         }

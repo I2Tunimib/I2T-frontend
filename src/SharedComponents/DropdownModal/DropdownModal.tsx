@@ -6,7 +6,7 @@ import { dropdownModalPropsInterface } from "../../Interfaces/dropdown-modal-pro
 import HelpModal from "../HelpModal/HelpModal";
 
 const DropdownModal = (props: dropdownModalPropsInterface) => {
-    const { help, inputLabel, titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, inputValues, setInputValue } = props;
+    const { inputLabel, titleText, text, mainButtonLabel, mainButtonAction, secondaryButtonLabel, secondaryButtonAction, showState, onClose, inputValues, setInputValue } = props;
     const [show, setShow] = React.useState(true);
     const [dropValue, setDropValue] = React.useState<{ label: string, value: string }>();
 

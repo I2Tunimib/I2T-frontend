@@ -120,8 +120,17 @@
     "finalize-matching": "Finalizza matching"
   },
   "help": {
+    "title": "Aiuto",
     "general-help": {
       "title": "Guida generale",
+      "titles": {
+        "about": "About",
+        "columns": "Colonne",
+        "cells": "Celle",
+        "row": "Righe",
+        "commands": "Comandi",
+        "metadata": "Metadata"
+      },
       "topics": {
         "interaction": {
           "title": "Interazione",
@@ -133,7 +142,7 @@
         },
         "drag-columns": {
             "title": "Cambiare ordine delle colonne",
-            "content": "È possibile cambiare l'ordine delle colonne premendo sulla cella header di ciscuna di esse e trascinandola nella posizione desiderata"
+            "content": "È possibile cambiare l'ordine delle colonne premendo sulla cella header di ciascuna di esse e trascinandola nella posizione desiderata"
         },
         "select-column": {
             "title": "Selezionare una colonne",
@@ -156,7 +165,7 @@
             "content": "Per riconciliare una colonna selezionala, poi premi il bottone riconcilia nella barra dei comandi. Scegli il servizio di riconciliazione più adatto leggendone la descrizione nella seziona 'help' dedicata"
         },
         "view-meta": {
-            "title": "Visualizzare i metadati di una cella",
+            "title": "Gestire i metadati",
             "content": "Per visualizzare i metadati di una cella, premere con il tasto destro sulla cella e scegliere 'Visualizza metadati', da questa modale puoi inoltre assegnare un match: true ad una o più annotazioni"
         },
         "filter-column": {
@@ -164,7 +173,7 @@
             "content": "È possibile filtrare una colonna in base alle proprietà dei metadati delle celle dopo averla riconciliata. Premi con il tasto destro del mouse sulla cella header dellac colonna riconciliata e scegli 'Filtra colonna', scegliere adesso il criterio con cui filtrare"
         },
         "finalize-matching": {
-            "title": "Finalizzare il matching di una colonna",
+            "title": "Finalizzare il matching",
             "content": "Per finalizzare il matching di una colonna riconciliata premi con il tasto destro sulla colonna e scegli finalizza matching. È possibile adesso svegliere una soglia sopra la quale assegnare un match true alle annotazioni delle celle."
         }, 
         "extension": {
@@ -175,6 +184,10 @@
     },
     "reconciliation-help": {
         "title": "Servizi di riconciliazione",
+        "titles": {
+          "about": "About",
+          "services": "Servizi"
+        },
         "topics": {
             "general": {
                 "title": "Note generali",
@@ -204,6 +217,10 @@
     }, 
     "extension-help": {
         "title": "Servizi di estensione",
+        "titles": {
+          "about": "About",
+          "services": "Servizi"
+        },
         "topics": {
             "general": {
                 "title": "Note generali",
@@ -211,11 +228,11 @@
             },
             "geonames":{
                 "title": "Geonames",
-                "content": "Servizio di estensione di ASIA basato su geonames. È possibile estendere la tabella con una nuova colonna contentente località di un certo ordine amministrativo, a partire da una colonna esistente riconciliata con geonames con un ordine amministrativo diverso. "
+                "content": "Servizio di estensione di ASIA basato su geonames. Con geonames è possibile recuperare dati su località di un certo ordine amministrativo, data una colonna riconciliata contenente località di ordine amministrativo differente.\nPer estendere la tabella con geonames sono necessari: \n - Una colonna riconciliata e matchata con geonames. \n - Inserire il livello amministrativo delle località che si vogliono avere in output. \nNota: il servizio di estensione di geonames potrebbe non funzionare correttamente per località fuori dalla Germania."
             }, 
             "weather": {
                 "title": "Weather",
-                "content": "Servizio di estensione di ASIA basato su weather. È possibile estendere la tabella con alcuni dati metereologici a partire da una colonna di località di ordine amministrativo 1 (Regioni o stati) riconciliata con geonames e una colonna di date (formato aaaa-mm-gg). È inoltre necessario scegliere una proprietà metereologica con la quale estendere la tabella e l'offset (sposta la data di interesse rispetto a quella inserita in input)."
+                "content": "Servizio di estensione di ASIA basato su weather. Con weather è possibile recuperare i dati metereologici per date località e data.\n Per estendere con weather sono necessari: \n - Una colonna riconciliata e matchata o estesa con geonames contenente località di ordine amministrativo 1 (Regioni). \n - Una colonna di date in formato ISO aaaa-mm-gg \n - Inserire uno o più WeatherParameters, questi corrispondono al parametro metereologico con il quale si vuole estendere la tabella. \n - Inserire l'offset: la differenza in giorni per cui vogliamo recuperare i dati rispetto alle date in input.\nNota: il servizio di estensione weather è disponibile soltanto per gli anni compresi fra il 2017 ed il 2019 e soltanto per le regioni tedesche."
             }
         }
     }

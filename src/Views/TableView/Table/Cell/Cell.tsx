@@ -138,6 +138,7 @@ const Cell = (props: cellPropsInterface) => {
             }
         }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cellValue, meta])
 
 

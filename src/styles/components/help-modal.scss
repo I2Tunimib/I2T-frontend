@@ -1,68 +1,101 @@
-.help-accordion {
-  .card {
-    border-radius: 0;
-    border: none;
-    .card-header {
-      background-color: $neutral-color-light;
-      text-align: left;
-      border: none;
-      // padding-top: 0;
-      border-bottom: $neutral-color-base 1px solid;
-      padding: 0.2rem 1.5rem;
-      .topic-title {
-        margin-bottom: 0;
-      }
-      button {
-        border: none;
-        text-align: left;
-        width: 100%;
-        background-color: $neutral-color-light;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        margin: 0.5rem 0;
-        // border-bottom: $neutral-color-base 1px solid;
-        svg {
-          fill: $brand-color-two-dark;
-          width: 24px;
-          height: 24px;
+.help-modal {
+  .modal-dialog {
+    max-width: 700px;
+    .modal-body {
+      nav {
+        a.nav-item {
+          font-weight: bold;
+          color: $brand-color-two-base;
+          &.active {
+            color: $brand-color-one-base;
+          }
         }
-        &:hover {
-          svg {
-            fill: $brand-color-one-base;
-            width: 24px;
-            height: 24px;
+      }
+      .section {
+        padding: 0.8rem 0;
+        h5 {
+          padding-left: 1rem;
+          margin-bottom: 0.5rem !important;
+        }
+        .help-accordion {
+          .card {
+            border-radius: 0;
+            border: none;
+            .card-header {
+              background-color: $neutral-color-light;
+              text-align: left;
+              border: none;
+              // padding-top: 0;
+              border-bottom: $neutral-color-base 1px solid;
+              padding: 0.2rem 1rem;
+              .topic-title {
+                margin-bottom: 0;
+              }
+              button {
+                border: none;
+                text-align: left;
+                width: 100%;
+                background-color: $neutral-color-light;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                margin: 0.5rem 0;
+                // border-bottom: $neutral-color-base 1px solid;
+                svg {
+                  fill: $brand-color-two-dark;
+                  width: 24px;
+                  height: 24px;
+                }
+                &:hover {
+                  svg {
+                    fill: $brand-color-one-base;
+                    width: 24px;
+                    height: 24px;
+                  }
+                }
+              }
+            }
+            .card-body {
+              p {
+                white-space: pre-line;
+              }
+            }
+          }
+          &:nth-child(2) {
+            .card {
+              border-radius: 3px 3px 0 0;
+            }
+          }
+          &:last-child {
+            .card {
+              border-radius: 0px 0px 3px 3px;
+            }
           }
         }
       }
     }
   }
-  &:first-child {
-    .card {
-      border-radius: 3px 3px 0 0;
-    }
-  }
-  &:last-child {
-    .card {
-      border-radius: 0px 0px 3px 3px;
-    }
-  }
 }
 
-.help-dropdown {
+.help-button {
   button {
-    &:after {
-      display: none;
+    background-color: $neutral-color-light !important;
+    color: $brand-color-two-base;
+    border: none !important;
+    &:hover {
+      background-color: $brand-color-two-hover !important;
+      color: $neutral-color-light !important;
+    }
+    &:active {
+      background-color: $brand-color-two-hover !important;
+      color: $neutral-color-light !important;
+    }
+    &:focus {
+      background-color: $brand-color-two-hover !important;
+      color: $neutral-color-light !important;
     }
   }
-  .help-icon {
-    width: 22px;
-    height: 22px;
-    fill: $white;
-    stroke: $white;
-  }
 }
-
 .language-dropdown {
   button {
     font-weight: bold !important;
