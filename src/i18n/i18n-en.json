@@ -237,7 +237,7 @@
       }
     }
   },
-  "estension-modal": {
+  "extension-modal": {
     "select-columns": "Select a column for the values: ",
     "select-columns-2": "Selezionare una colonna",
     "selected-values": "Selected values: ",

@@ -22,7 +22,7 @@ const Header = () => {
                     }
                     <div>
                         <h1>I2T4E</h1>
-                        <h5>Interactive Interpretation of Tables for Estension</h5>
+                        <h5>Interactive Interpretation of Tables for Extension</h5>
                     </div>
 
                 </div>
