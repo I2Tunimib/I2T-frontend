@@ -1,53 +1,33 @@
 {
-  "name": "table-project",
+  "name": "app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@material-ui/core": "^4.12.1",
+    "@craco/craco": "^6.2.0",
+    "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",
-    "@reduxjs/toolkit": "^1.6.0",
-    "@testing-library/jest-dom": "^5.12.0",
-    "@testing-library/react": "^11.2.6",
+    "@reduxjs/toolkit": "^1.6.1",
+    "@testing-library/jest-dom": "^5.14.1",
+    "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
-    "@types/jest": "^26.0.23",
-    "@types/node": "^15.12.2",
-    "@types/react": "^17.0.11",
-    "@types/react-dom": "^17.0.7",
-    "axios": "^0.21.1",
-    "bootstrap": "^4.6.0",
-    "create-react-class": "^15.7.0",
-    "i18next": "^20.3.3",
-    "immer": "^9.0.2",
-    "material-table": "^1.69.3",
-    "moment": "^2.29.1",
-    "mui-datatables": "^3.7.7",
-    "node-sass": "^4.14.1",
+    "@types/jest": "^26.0.24",
+    "@types/node": "^12.20.19",
+    "@types/react": "^17.0.16",
+    "@types/react-dom": "^17.0.9",
+    "craco-alias": "^3.0.1",
     "react": "^17.0.2",
-    "react-bootstrap": "^1.5.2",
-    "react-bootstrap-date-picker": "^5.1.0",
-    "react-datetime": "^3.0.4",
     "react-dom": "^17.0.2",
-    "react-i18next": "^11.11.3",
     "react-redux": "^7.2.4",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
-    "react-table": "^7.7.0",
-    "redux": "^4.1.0",
-    "typescript": "^4.3.2",
-    "web-vitals": "^1.1.1"
+    "styled-components": "^5.3.0",
+    "typescript": "^4.3.5",
+    "web-vitals": "^1.1.2"
   },
-  "proxy": "http://localhost:3002",
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test"
   },
   "browserslist": {
     "production": [
@@ -62,10 +42,16 @@
     ]
   },
   "devDependencies": {
-    "@svgr/webpack": "^5.5.0",
-    "@types/mui-datatables": "^3.7.4",
-    "@types/react-router-dom": "^5.1.7",
-    "react-app-rewire-alias": "^1.0.3",
-    "react-app-rewired": "^2.1.8"
+    "@types/node-sass": "^4.11.2",
+    "@typescript-eslint/eslint-plugin": "^4.29.0",
+    "@typescript-eslint/parser": "^4.29.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-import-resolver-typescript": "^2.4.0",
+    "eslint-plugin-import": "^2.24.0",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-react": "^7.24.0",
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "node-sass": "^6.0.1"
   }
 }

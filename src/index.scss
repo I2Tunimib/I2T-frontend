@@ -1,23 +1,7 @@
-// base sass
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
 
-@import "./styles/_colors.scss";
-@import "./styles/_fonts.scss";
-@import "./styles/_commons.scss";
-@import "./styles/_forms.scss";
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+}
 
-//components
-@import "./styles/components/tutorial.scss";
-@import "./styles/components/get-data.scss";
-@import "./styles/components/extend-modal.scss";
-@import "./styles/components/commands-bar.scss";
-@import "./styles/components/table.scss";
-@import "./styles/components/cell.scss";
-@import "./styles/components/table-head-cell.scss";
-@import "./styles/components/save-table.scss";
-@import "./styles/components/upper-bar.scss";
-@import "./styles/components/meta-table-modal.scss";
-@import "./styles/components/number-input-modal.scss";
-@import "./styles/components/table-name.scss";
-@import "./styles/components/help-bar.scss";
-@import "./styles/components/help-modal.scss";
-@import "./styles/components/header.scss";

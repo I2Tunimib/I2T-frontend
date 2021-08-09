@@ -1,9 +1,13 @@
 {
     "compilerOptions": {
-      "baseUrl": ".",
-      "paths": {
-        "@utils/*": ["src/utils/*"],
-        "@enums/*": ["src/Enums/*"]
-      }
+        "baseUrl": "./src",
+        "paths": {
+           "@components/*" : ["components/*"],
+           "@assets/*" : ["assets/*"],
+           "@pages/*" : ["pages/*"],
+           "@store/*" : ["store/*"],
+           "@store" : ["store"],
+           "@hooks" : ["hooks/*"]
+         }
     }
-  }
+}
