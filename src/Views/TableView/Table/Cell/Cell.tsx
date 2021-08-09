@@ -245,7 +245,7 @@ const Cell = (props: cellPropsInterface) => {
                                 {t('table.cells.meta-tooltip.is-not-true')}
                             </>
                         }
-                        {dotColor == 'red' &&
+                        {dotColor === 'red' &&
                         <>
                             {t('table.cells.meta-tooltip.no-label')}
                         </>
