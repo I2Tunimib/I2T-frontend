@@ -30,7 +30,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         secondaryButtonAction,
         showState,
         onClose } = props;
-        console.log(metaData);
+    console.log(metaData);
     const [show, setShow] = React.useState(true);
     const Config = useSelector((state: RootState) => state.Config)
     const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
@@ -128,7 +128,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         newMeta = [...newMeta.slice(0, dataIndex), ...newMeta.slice(dataIndex + 1)]
         setMyMetaData(newMeta);
     }
-    
+
     const confirmMeta = (dataIndex: number) => {
         let newMeta = JSON.parse(JSON.stringify(myMetaData));
         for (const meta of newMeta) {
@@ -137,7 +137,7 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         newMeta[dataIndex].match = true;
         setMyMetaData(newMeta);
     }
-    
+
     const deConfirmMeta = (dataIndex: number) => {
         let newMeta = JSON.parse(JSON.stringify(myMetaData));
         for (const meta of newMeta) {
@@ -218,13 +218,23 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                             </div>
                                                         )
                                                     case 'name':
-                                                        return <p><a className={myMetaData[dataIndex].match ? 'meta-table-link match' : 'meta-table-link'}
-                                                            href={link + myMetaData[dataIndex].id}
-                                                            target="_blank"
-                                                            rel="noreferrer">
-                                                            {myMetaData[dataIndex][col.name].toString()}
-                                                        </a>
-                                                        </p>
+                                                        if (link && myMetaData[dataIndex].id) {
+                                                            return <p><a className={myMetaData[dataIndex].match ? 'meta-table-link match' : 'meta-table-link'}
+                                                                href={link + myMetaData[dataIndex].id}
+                                                                target="_blank"
+                                                                rel="noreferrer">
+                                                                {myMetaData[dataIndex][col.name].toString()}
+                                                            </a>
+                                                            </p>
+                                                        } else {
+                                                            return (
+                                                                <p>
+                                                                    {myMetaData[dataIndex][col.name].toString()}
+                                                                </p>
+                                                            )
+
+                                                        }
+
                                                     default:
                                                         return myMetaData[dataIndex][col.name].toString();
                                                 }

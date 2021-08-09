@@ -47,7 +47,8 @@
       },
       "meta-tooltip": {
         "is-true": "The cell is labeled and there is a true match",
-        "is-not-true": "The cell is labeled but there is no true match"
+        "is-not-true": "The cell is labeled but there is no true match",
+        "no-label": "The cell could not be reconciled"
       }
     }
   },
@@ -166,7 +167,7 @@
         },
         "view-meta": {
           "title": "Manage metadata",
-          "content": "To view the metadata of a cell, right click on the cell and choose 'View metadata', from this modal you can also assign a match: true to one or more annotations."
+          "content": "To view and manage the metadata of a cell, right click on the cell and choose 'Manage metadata', from this modal you can also assign a match: true to one or more annotations."
         },
         "filter-column": {
           "title": "Filter a column",

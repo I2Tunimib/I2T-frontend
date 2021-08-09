@@ -47,7 +47,8 @@
       },
       "meta-tooltip": {
         "is-true": "La cella è etichettata ed è presente un match true",
-        "is-not-true": "La cella è etichettata ma non è presente un match true"
+        "is-not-true": "La cella è etichettata ma non è presente un match true",
+        "no-label": "Non è stato possibile riconciliare la cella"
       }
     }
   },
@@ -166,7 +167,7 @@
         },
         "view-meta": {
             "title": "Gestire i metadati",
-            "content": "Per visualizzare i metadati di una cella, premere con il tasto destro sulla cella e scegliere 'Visualizza metadati', da questa modale puoi inoltre assegnare un match: true ad una o più annotazioni"
+            "content": "Per visualizzare e gestire i metadati di una cella, premere con il tasto destro sulla cella e scegliere 'Gestisci metadati', da questa modale puoi inoltre assegnare un match: true ad una o più annotazioni"
         },
         "filter-column": {
             "title": "Filtrare una colonna",
@@ -237,7 +238,7 @@
         }
     }
   },
-  "estension-modal": {
+  "extension-modal": {
     "select-columns": "Seleziona una colonna per i valori: ",
     "select-columns-2": "Selezionare una colonna",
     "selected-values": "Valori selezionati: ",
