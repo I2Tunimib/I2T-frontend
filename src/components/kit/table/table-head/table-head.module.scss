@@ -1,0 +1,17 @@
+.table-head {
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 10;
+
+  // add bottom border workaround for sticky header
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: #ededed;
+  }
+}

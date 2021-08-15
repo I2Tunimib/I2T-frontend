@@ -1,0 +1,43 @@
+.row-cell {
+  position: relative;
+  padding: 18px 10px;
+  text-align: center;
+  vertical-align: middle;
+
+  .badge {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  // add border to index column
+  &:first-child {
+    border-right: 1px solid #ededed;
+  }
+  
+  // apply style to cell if column is selected
+  &.selected-column {
+    background: rgba(112,182,246,0.12);
+  }
+
+  // color cell if not selected
+  &:hover {
+    &:not(.selected) {
+      background-color: #ededed;
+    }
+  }
+
+
+  .selectable-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    // apply style to cell if cell is selected
+    &.selected {
+      background: rgba(33, 148, 255, 0.12);
+    }
+  }
+}

@@ -1,0 +1,19 @@
+.header-cell {
+  padding: 12px 10px;
+  vertical-align: middle;
+  font-size: 16px;
+  font-weight: normal;
+  color: rgba(27,31,59,0.65);
+
+  .header-content {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  // add border to index column
+  &:first-child {
+    border-right: 1px solid #ededed;
+  }
+}

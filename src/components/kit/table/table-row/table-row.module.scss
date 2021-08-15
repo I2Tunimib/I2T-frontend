@@ -1,0 +1,13 @@
+.table-row {
+  // apply style to rows on hover
+  &:hover {
+    // the header is a row so do not apply the style to it
+    &:not(:only-child) {
+      background-color: #f6f6f6;
+    }
+  }
+  // apply to all rows but header row and last row
+  &:not(:only-child, :last-child) {
+    border-bottom: 1px solid #ededed;
+  }
+}

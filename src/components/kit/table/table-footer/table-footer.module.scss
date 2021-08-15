@@ -1,0 +1,14 @@
+.table-footer {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  border-top: 1px solid #ededed;
+  background-color: var(--white);
+  z-index: 10;
+  box-sizing: border-box;
+}
