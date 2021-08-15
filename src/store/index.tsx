@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import counterReducer from './counter/counter.slice';
+import tableReducer from './table/table.slice';
+import configReducer from './config/config.slice';
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer
+    config: configReducer,
+    table: tableReducer
   }
 });
 
