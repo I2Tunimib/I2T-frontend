@@ -1,0 +1,15 @@
+.container {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+
+  &.error {
+    background-color: #f45725;
+  }
+  &.warn {
+    background-color: #ffc700;
+  }
+  &.success {
+    background-color: #4ac99b;
+  }
+}
