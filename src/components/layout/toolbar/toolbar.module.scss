@@ -1,0 +1,32 @@
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(
+    0.25turn,
+    var(--brand-color-two-dark),
+    var(--brand-color-two-base)
+  );
+  padding: 0.8rem 0;
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    h1, h5 {
+      margin-bottom: 0;
+      color: var(--neutral-color-light);
+      padding-left: 1rem;
+    }
+    svg {
+      width: 2.2rem;
+      height: 2.2rem;
+      margin: 0 0.5rem 0 1rem;
+      cursor: pointer;
+      fill: var(--neutral-color-light);
+      &:hover {
+        fill: var(--neutral-color-base);
+      }
+    }
+  }
+}
