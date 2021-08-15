@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid #ededed;
+  gap: 20px;
+
+  padding: 8px 12px;
+  box-sizing: border-box;
+  
+  .column-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    // actions row
+    .row-menu {
+      display: flex;
+      flex-direction: row;
+      gap: 5px;
+      margin-left: 9px;
+
+      .small-button {
+        min-width: 38px;
+      }
+    }
+  }
+}

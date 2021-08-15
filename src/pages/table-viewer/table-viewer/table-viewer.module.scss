@@ -1,0 +1,10 @@
+.table-container {
+  overflow-y: scroll;
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.26);
+  }
+  &::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+}
