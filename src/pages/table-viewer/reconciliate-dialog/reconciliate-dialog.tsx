@@ -50,6 +50,7 @@ const ReconciliateDialog = () => {
     asiaGeoEndpoint({ data: selectedColumns }),
     {
       manual: true,
+      mappingFn: (columns) => ({ columns }),
       dispatchFn: updateColumns,
       dispatchParams: [{ reconciliator: currentService }]
     }

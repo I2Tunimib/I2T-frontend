@@ -1,4 +1,4 @@
-import { IColumn, IRow } from '@components/kit/table/interfaces/table';
+import { IBodyCell, IColumn, IRow } from '@components/kit/table/interfaces/table';
 import {
   createSelector,
   createSlice,
@@ -23,10 +23,7 @@ interface ITableConfigState {
 interface ITableUIState {
   openReconciliateDialog: boolean;
   selectedColumnsIds: string[];
-  selectedCell: {
-    rowId?: number,
-    columnId?: string
-  }
+  selectedCell?: string;
 }
 
 interface ISetDataAction {
@@ -37,7 +34,7 @@ interface ISetDataAction {
 }
 
 interface IUpdateColumnsAction {
-  data: Record<string, any[]>;
+  columns: Record<string, IBodyCell[]>;
   reconciliator: string;
 }
 
@@ -56,8 +53,7 @@ const initialState: ITableState = {
   },
   ui: {
     openReconciliateDialog: false,
-    selectedColumnsIds: [],
-    selectedCell: {}
+    selectedColumnsIds: []
   }
 };
 
@@ -74,14 +70,14 @@ export const tableSlice = createSlice({
       return state;
     },
     updateColumns: (state, { payload }: PayloadAction<IUpdateColumnsAction>) => {
-      const { data, reconciliator } = payload;
+      const { reconciliator, columns } = payload;
 
-      const columnKeys = Object.keys(data);
+      const columnKeys = Object.keys(columns);
       // update columns cells
       state.data = state.data.map((row, index) => (
         columnKeys.reduce((acc, key) => ({
           ...acc,
-          [key]: { ...row[key], ...data[key][index] }
+          [key]: { ...row[key], ...columns[key][index] }
         }), row)));
       // update column headers
       state.columns = state.columns.map((col) => {
@@ -108,17 +104,14 @@ export const tableSlice = createSlice({
         .filter((col) => col.selected)
         .map((col) => col.accessor);
     },
-    updateSelectedCell: (state, { payload }: PayloadAction<{
-      rowId: number, columnId: string
-    }>) => {
-      const { rowId: previousRowId, columnId: previousColumnId } = state.ui.selectedCell;
-      const { rowId, columnId } = payload;
+    updateSelectedCell: (state, { payload }: PayloadAction<string>) => {
+      const { selectedCell } = state.ui;
       // if cell is reclicked set to null
-      if (rowId === previousRowId && columnId === previousColumnId) {
-        return { ...state, ui: { ...state.ui, selectedCell: {} } };
+      if (selectedCell === payload) {
+        return { ...state, ui: { ...state.ui, selectedCell: '' } };
       }
       // if new cell is clicked
-      return { ...state, ui: { ...state.ui, selectedCell: { rowId, columnId } } };
+      return { ...state, ui: { ...state.ui, selectedCell: payload } };
     },
     updateUI: (state, { payload }: PayloadAction<Partial<ITableUIState>>) => {
       state.ui = { ...state.ui, ...payload };
@@ -165,7 +158,7 @@ export const selectTable = (state: RootState) => state.table;
  */
 export const selectTableData = createSelector(
   selectTable,
-  (table) => table
+  ({ columns, data }) => ({ columns, data })
 );
 
 /**
@@ -191,11 +184,11 @@ export const selectSelectedColumns = createSelector(
  */
 export const selectSelectedColumnsAsiaGeo = createSelector(
   selectTable,
-  ({ data, ui: { selectedColumnsIds } }) => selectedColumnsIds.map((id) => ({
-    [id]: data.map((row) => {
+  ({ data, ui: { selectedColumnsIds } }) => selectedColumnsIds.map((colId) => ({
+    [colId]: data.map((row) => {
       // deconstruct required objects
-      const { label } = row[id];
-      return { label };
+      const { id, label } = row[colId];
+      return { id, label };
     })
   }))
 );
@@ -213,15 +206,7 @@ export const selectReconciliateDialogOpen = createSelector(
  */
 export const selectSelectedCell = createSelector(
   selectTable,
-  ({ ui: { selectedCell } }) => selectedCell
-);
-
-/**
- * Selector which returns true if a cell is selected, false otherwise
- */
-export const selectIsCellSelected = createSelector(
-  selectSelectedCell,
-  ({ rowId, columnId }) => rowId && columnId
+  ({ ui }) => ui.selectedCell
 );
 
 export default tableSlice.reducer;

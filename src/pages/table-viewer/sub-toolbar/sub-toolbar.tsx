@@ -1,5 +1,5 @@
 import { Button, IconButton } from '@material-ui/core';
-import { selectIsCellSelected, selectIsColumnSelected, updateUI } from '@store/table/table.slice';
+import { selectIsColumnSelected, selectSelectedCell, updateUI } from '@store/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
@@ -22,7 +22,7 @@ const ActionGroup = ({ children }: any) => (
 const SubToolbar = () => {
   const dispatch = useAppDispatch();
   const isColumnSelected = useAppSelector(selectIsColumnSelected);
-  const isCellSelected = useAppSelector(selectIsCellSelected);
+  const selectedCell = useAppSelector(selectSelectedCell);
 
   const handleReconciliateButtonClick = () => {
     dispatch(updateUI({
@@ -45,7 +45,7 @@ const SubToolbar = () => {
           </IconButton>
         </ActionGroup>
         <ActionGroup>
-          <Button disabled={!isCellSelected} variant="contained">View metadata</Button>
+          <Button disabled={!selectedCell} variant="contained">View metadata</Button>
         </ActionGroup>
         <ActionGroup>
           <Button color="primary" disabled={!isColumnSelected} onClick={handleReconciliateButtonClick} variant="contained">Reconcile</Button>

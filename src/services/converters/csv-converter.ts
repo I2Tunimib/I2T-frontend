@@ -21,17 +21,23 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
     extension: ''
   }));
 
+  let id = 0;
+
   // build rows
   const data: IRow[] = rowsRaw.map((row: string) => {
     const rowValues = row.split(separator);
 
-    return headerLabels.reduce((acc, accessor, index) => ({
-      ...acc,
-      [accessor]: {
-        label: rowValues[index] || '',
-        metadata: []
-      }
-    }), {});
+    return headerLabels.reduce((acc, accessor, index) => {
+      id += 1;
+      return {
+        ...acc,
+        [accessor]: {
+          id: `${id}`,
+          label: rowValues[index] || '',
+          metadata: []
+        }
+      };
+    }, {});
   });
 
   return { columns, data };

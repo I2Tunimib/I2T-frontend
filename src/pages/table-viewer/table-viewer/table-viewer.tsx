@@ -27,9 +27,9 @@ const TableViewer = () => {
   const { columns, data } = useAppSelector(selectTableData);
   const selectedCell = useAppSelector(selectSelectedCell);
 
-  const handleRowCellClick = (rowId: number, columnId: string) => {
+  const handleRowCellClick = (cellId: string) => {
     // set selected cell
-    dispatch(updateSelectedCell({ rowId, columnId }));
+    dispatch(updateSelectedCell(cellId));
   };
 
   const handleSelectChange = useCallback((id: string) => {

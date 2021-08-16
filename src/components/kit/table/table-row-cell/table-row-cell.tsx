@@ -5,7 +5,7 @@ import StatusBadge from '@components/core/status-badge/status-badge';
 import clsx from 'clsx';
 import styles from './table-row-cell.module.scss';
 
-interface ITableRowCellProps extends Record<string, any> {}
+interface ITableRowCellProps extends Record<string, any> { }
 
 /**
  * Table row cell
@@ -14,7 +14,7 @@ const TableRowCell = ({
   children,
   column: { selected, id: columnId },
   row: { id: rowId },
-  selectedCell: { rowId: currentRowId, columnId: currentColumnId },
+  selectedCell,
   value,
   handleRowCellClick
 }: ITableRowCellProps) => {
@@ -42,15 +42,18 @@ const TableRowCell = ({
           {value.label}
         </>
       )}
-      <div
-        className={clsx(
-          styles['selectable-overlay'],
-          {
-            [styles.selected]: currentRowId === rowId && currentColumnId === columnId
-          }
+      {columnId !== 'index'
+        && (
+          <div
+            className={clsx(
+              styles['selectable-overlay'],
+              {
+                [styles.selected]: selectedCell === value.id
+              }
+            )}
+            onClick={() => handleRowCellClick(value.id)}
+          />
         )}
-        onClick={() => handleRowCellClick(rowId, columnId)}
-      />
     </td>
   );
 };

@@ -1,13 +1,20 @@
 /* eslint-disable react/destructuring-assignment */
 import { Checkbox, Chip } from '@material-ui/core';
 import LinkRoundedIcon from '@material-ui/icons/LinkRounded';
+import clsx from 'clsx';
 import styles from './table-header-cell.module.scss';
 
 /**
  * Table head cell
  */
 const TableHeaderCell = (props: any) => (
-  <th className={styles['header-cell']}>
+  <th className={clsx([
+    styles['header-cell'],
+    {
+      [styles['header-index']]: props.index === 0
+    }
+  ])}
+  >
     <div className={styles['header-content']}>
       {props.index !== 0
         && (

@@ -21,6 +21,7 @@ export interface IRow extends Record<string, IBodyCell> { }
  * A cell of the body of the table
  */
 export interface IBodyCell {
+  id: string;
   label: string;
   metadata?: Record<string, any>;
 }
