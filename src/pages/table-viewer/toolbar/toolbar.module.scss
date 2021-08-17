@@ -1,4 +1,4 @@
-.container {
+.Container {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -8,19 +8,19 @@
   padding: 8px 12px;
   box-sizing: border-box;
   
-  .column-menu {
+  .ColumnMenu {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 
     // actions row
-    .row-menu {
+    .RowMenu {
       display: flex;
       flex-direction: row;
       gap: 5px;
       margin-left: 9px;
 
-      .small-button {
+      .SmallButton {
         min-width: 38px;
       }
     }

@@ -28,15 +28,15 @@ const Toolbar = () => {
 
   return (
     <>
-      <div className={styles.container}>
+      <div className={styles.Container}>
         <IconButton>
           <ArrowBackIosRoundedIcon />
         </IconButton>
-        <div className={styles['column-menu']}>
+        <div className={styles.ColumnMenu}>
           <InlineInput onBlur={onBlurTableName} onChange={onChangeTableName} value={tableName} />
-          <div className={styles['row-menu']}>
-            <Button className={styles['small-button']} size="small">File</Button>
-            <Button className={styles['small-button']} size="small">Edit</Button>
+          <div className={styles.RowMenu}>
+            <Button className={styles.SmallButton} size="small">File</Button>
+            <Button className={styles.SmallButton} size="small">Edit</Button>
           </div>
         </div>
       </div>

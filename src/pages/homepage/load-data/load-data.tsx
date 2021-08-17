@@ -45,8 +45,8 @@ const LoadData = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <Paper className={styles.card} variant="outlined">
+    <div className={styles.Container}>
+      <Paper className={styles.Card} variant="outlined">
         <p>Where do you want to upload the data from?</p>
         <FormControl className="field">
           <Select
@@ -62,7 +62,7 @@ const LoadData = () => {
           </Select>
         </FormControl>
       </Paper>
-      <Paper className={styles.card} variant="outlined">
+      <Paper className={styles.Card} variant="outlined">
         {dataSource !== 'fs' && <p>Choose from available tables</p>}
         {dataSource !== 'fs' && currentTable
           ? (

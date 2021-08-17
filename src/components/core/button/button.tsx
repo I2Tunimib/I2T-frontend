@@ -34,17 +34,18 @@ const Button: FC<IButtonProps> = ({
     className={
       clsx(
         className,
-        styles['app-button'],
-        styles[variant],
-        styles[iconAlign],
+        styles.AppButton,
         {
-          [styles.link]: to
+          [styles.Primary]: variant === 'primary',
+          [styles.IconLeft]: iconAlign === 'left',
+          [styles.IconRight]: iconAlign === 'right',
+          [styles.Link]: to
         }
       )
     }
   >
     {children}
-    {Icon && <Icon className={iconAlign === 'left' ? styles['icon-left'] : styles['icon-right']} />}
+    {Icon && <Icon className={iconAlign === 'left' ? styles.IconLeft : styles.IconRight} />}
   </ButtonBase>
 );
 

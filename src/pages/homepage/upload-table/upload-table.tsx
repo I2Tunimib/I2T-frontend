@@ -2,9 +2,7 @@ import { Button } from '@components/core';
 import { Uploader } from '@components/kit';
 import {
   useState,
-  ChangeEvent,
-  MouseEvent,
-  KeyboardEvent
+  ChangeEvent
 } from 'react';
 import styles from './upload-table.module.scss';
 

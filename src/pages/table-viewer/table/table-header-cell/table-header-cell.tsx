@@ -9,13 +9,13 @@ import styles from './table-header-cell.module.scss';
  */
 const TableHeaderCell = (props: any) => (
   <th className={clsx([
-    styles['header-cell'],
+    styles.TableHeaderCell,
     {
-      [styles['header-index']]: props.index === 0
+      [styles.TableHeaderIndex]: props.index === 0
     }
   ])}
   >
-    <div className={styles['header-content']}>
+    <div className={styles.TableHeaderContent}>
       {props.index !== 0
         && (
           <Checkbox

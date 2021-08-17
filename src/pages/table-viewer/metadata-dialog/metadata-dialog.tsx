@@ -3,9 +3,10 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle
+  DialogTitle,
+  makeStyles
 } from '@material-ui/core';
-import { selectMetadataDialogOpen, selectSelectedCell } from '@store/table/table.slice';
+import { selectMetadataDialogOpen, selectSelectedCellMetadataTableFormat } from '@store/table/table.slice';
 import {
   forwardRef,
   Ref,
@@ -14,16 +15,17 @@ import {
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
 import { useAppSelector } from '@hooks/store';
+import { SimpleTable } from '@components/kit';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
   ref: Ref<unknown>,
 ) => (<Slide direction="down" ref={ref} {...props} />));
 
-const ReconciliateDialog = () => {
+const MetadataDialog = () => {
   // keep track of open state
   const open = useAppSelector(selectMetadataDialogOpen);
-  const selectedCell = useAppSelector(selectSelectedCell);
+  const { columns, rows } = useAppSelector(selectSelectedCellMetadataTableFormat);
 
   // useEffect(() => {
   //   // set initial value of select
@@ -45,15 +47,15 @@ const ReconciliateDialog = () => {
 
   return (
     <Dialog
-      className="default-dialog"
-      open={false}
+      maxWidth="md"
+      open={open}
       TransitionComponent={Transition}
       keepMounted
       onClose={handleClose}
     >
-      <DialogTitle>Reconciliation</DialogTitle>
+      <DialogTitle>Metadata</DialogTitle>
       <DialogContent>
-        a
+        <SimpleTable columns={columns} rows={rows} />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>
@@ -67,4 +69,4 @@ const ReconciliateDialog = () => {
   );
 };
 
-export default ReconciliateDialog;
+export default MetadataDialog;

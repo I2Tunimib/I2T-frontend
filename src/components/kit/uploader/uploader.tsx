@@ -24,7 +24,7 @@ const Uploader = ({ selectedFile, handleChangeFile }: IUploaderProps) => {
 
   return (
     <>
-      <div className={styles['button-container']}>
+      <div className={styles.ButtonContainer}>
         <Button onClick={handleClick}>
           Choose file
         </Button>
@@ -33,11 +33,11 @@ const Uploader = ({ selectedFile, handleChangeFile }: IUploaderProps) => {
           label={selectedFile ? `Selected file: ${selectedFile.name}` : 'No file selected'}
         />
       </div>
-      <div role="button" tabIndex={0} onClick={handleClick} onKeyDown={handleClick} className={styles.container}>
-        <PublishRoundedIcon className={styles.icon} />
+      <div role="button" tabIndex={0} onClick={handleClick} onKeyDown={handleClick} className={styles.InnerContainer}>
+        <PublishRoundedIcon className={styles.Icon} />
         <p>Drop a table here</p>
       </div>
-      <input onChange={handleChangeFile} ref={inputFileRef} type="file" name="file" className={styles['input-file']} />
+      <input onChange={handleChangeFile} ref={inputFileRef} type="file" name="file" className={styles.InputFile} />
     </>
   );
 };

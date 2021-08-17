@@ -10,7 +10,7 @@ interface IRouteContainerProps {
  * Renders active route
  */
 const RouteContainer = ({ routes }: IRouteContainerProps) => (
-  <div className={styles['route-container']}>
+  <div className={styles.Container}>
     <Switch>
       {routes.map(({ path, Component, exact }) => (
         <Route key={path} path={path} exact={exact} component={Component} />))}

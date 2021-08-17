@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import styles from './status-badge.module.scss';
 
 interface IStatusBadgeProps {
-  status: 'error' | 'warn' | 'success';
+  status: 'Error' | 'Warn' | 'Success';
   className?: string;
 }
 
@@ -12,7 +12,7 @@ interface IStatusBadgeProps {
 const StatusBadge = ({ status, className }: IStatusBadgeProps) => (
   <div className={clsx(
     className,
-    styles.container,
+    styles.Container,
     [styles[status]]
   )}
   />

@@ -1,5 +1,5 @@
 import Uploader from './uploader/uploader';
-import Table from './table/table/table';
 import InlineInput from './inline-input/inline-input';
+import SimpleTable from './simple-table/simple-table';
 
-export { Uploader, Table, InlineInput };
+export { Uploader, InlineInput, SimpleTable };

@@ -1,10 +1,10 @@
-.row-cell {
+.TableRowCell {
   position: relative;
   padding: 18px 10px;
   text-align: center;
   vertical-align: middle;
 
-  .badge {
+  .Badge {
     position: absolute;
     left: 10px;
     top: 50%;
@@ -17,19 +17,19 @@
   }
   
   // apply style to cell if column is selected
-  &.selected-column {
+  &.SelectedColumn {
     background: rgba(112,182,246,0.12);
   }
 
   // color cell if not selected
   &:hover {
-    &:not(.selected) {
+    &:not(.Selected) {
       background-color: #ededed;
     }
   }
 
 
-  .selectable-overlay {
+  .SelectableOverlay {
     position: absolute;
     top: 0;
     left: 0;

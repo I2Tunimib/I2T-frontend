@@ -19,14 +19,14 @@ const TableRowCell = ({
   value,
   handleRowCellClick
 }: ITableRowCellProps) => {
-  const getBadgeStatus = (match: boolean) => (match ? 'success' : 'warn');
+  const getBadgeStatus = (match: boolean) => (match ? 'Success' : 'Warn');
 
   return (
     <td
       className={clsx(
-        styles['row-cell'],
+        styles.TableRowCell,
         {
-          [styles['selected-column']]: selectedColumnsIds.includes(columnId)
+          [styles.SelectedColumn]: selectedColumnsIds.includes(columnId)
         }
       )}
     >
@@ -35,7 +35,7 @@ const TableRowCell = ({
           {value.metadata.length > 0
             && (
               <StatusBadge
-                className={styles.badge}
+                className={styles.Badge}
                 status={getBadgeStatus(value.metadata.match)}
               />
             )
@@ -47,7 +47,7 @@ const TableRowCell = ({
         && (
           <div
             className={clsx(
-              styles['selectable-overlay'],
+              styles.SelectableOverlay,
               {
                 [styles.selected]: selectedCell === value.id
               }

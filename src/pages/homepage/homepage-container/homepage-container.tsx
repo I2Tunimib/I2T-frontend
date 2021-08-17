@@ -5,7 +5,7 @@ import styles from './homepage-container.module.scss';
 const HomepageContainer = () => (
   <>
     <Toolbar />
-    <div className={styles.container}>
+    <div className={styles.Container}>
       <LoadData />
     </div>
   </>

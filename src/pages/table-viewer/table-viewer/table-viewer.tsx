@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom';
 import { useMemo, useCallback, useEffect } from 'react';
-import { Table } from '@components/kit';
 import {
   selectSelectedCell,
   selectSelectedColumnsIds,
@@ -12,6 +11,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { useFetch } from '@hooks/fetch';
 import { ITableDataResponse, tableDataEndpoint } from '@services/api/endpoints/table';
+import { Table } from '../table';
 import Toolbar from '../toolbar/toolbar';
 import styles from './table-viewer.module.scss';
 
@@ -48,7 +48,7 @@ const TableViewer = () => {
   return (
     <>
       <Toolbar />
-      <div className={styles['table-container']}>
+      <div className={styles.TableContainer}>
         <Table
           data={dataTable}
           columns={columnsTable}

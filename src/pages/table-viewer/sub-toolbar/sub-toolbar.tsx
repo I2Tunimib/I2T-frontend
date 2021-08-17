@@ -6,12 +6,13 @@ import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import styles from './sub-toolbar.module.scss';
 import ReconciliateDialog from '../reconciliate-dialog/reconciliate-dialog';
+import MetadataDialog from '../metadata-dialog/metadata-dialog';
 
 /**
  * Action container
  */
 const ActionGroup = ({ children }: any) => (
-  <div className={styles['action-group']}>
+  <div className={styles.ActionGroup}>
     {children}
   </div>
 );
@@ -24,15 +25,9 @@ const SubToolbar = () => {
   const isColumnSelected = useAppSelector(selectIsColumnSelected);
   const selectedCell = useAppSelector(selectSelectedCell);
 
-  const handleReconciliateButtonClick = () => {
-    dispatch(updateUI({
-      openReconciliateDialog: true
-    }));
-  };
-
   return (
     <>
-      <div className={styles['sub-toolbar-container']}>
+      <div className={styles.Container}>
         <ActionGroup>
           <IconButton size="small">
             <UndoRoundedIcon />
@@ -45,14 +40,28 @@ const SubToolbar = () => {
           </IconButton>
         </ActionGroup>
         <ActionGroup>
-          <Button disabled={!selectedCell} variant="contained">View metadata</Button>
+          <Button
+            disabled={!selectedCell}
+            variant="contained"
+            onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
+          >
+            View metadata
+          </Button>
         </ActionGroup>
         <ActionGroup>
-          <Button color="primary" disabled={!isColumnSelected} onClick={handleReconciliateButtonClick} variant="contained">Reconcile</Button>
+          <Button
+            color="primary"
+            disabled={!isColumnSelected}
+            onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
+            variant="contained"
+          >
+            Reconcile
+          </Button>
           <Button disabled variant="contained">Extend</Button>
         </ActionGroup>
       </div>
       <ReconciliateDialog />
+      <MetadataDialog />
     </>
   );
 };

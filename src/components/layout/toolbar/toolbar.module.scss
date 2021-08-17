@@ -1,4 +1,4 @@
-.header {
+.Header {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -10,7 +10,7 @@
   );
   padding: 0.8rem 0;
   
-  .header-left {
+  .HeaderLeft {
     display: flex;
     align-items: center;
     h1, h5 {

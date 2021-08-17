@@ -21,12 +21,12 @@ const InlineInput = ({
   onBlur,
   onChange
 }: IInlineInputProps) => (
-  <div className={styles.container}>
-    <span className={styles.text}>
+  <div className={styles.Container}>
+    <span className={styles.Text}>
       {value}
     </span>
     <input
-      className={styles.input}
+      className={styles.Input}
       value={value}
       onChange={onChange}
       onBlur={onBlur}

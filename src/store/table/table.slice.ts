@@ -39,7 +39,7 @@ interface ICellState {
   metadata: IMetadataState[];
 }
 
-interface IMetadataState {
+interface IMetadataState extends Record<string, unknown> {
   id: string;
   name: string;
   match: boolean;
@@ -47,7 +47,7 @@ interface IMetadataState {
   type: {
     id: string;
     name: string;
-  }
+  }[]
 }
 
 export interface IColumnsState extends IBaseState {
@@ -193,10 +193,50 @@ export const {
 } = tableSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
-export const selectTableState = (state: RootState) => state.table;
-export const selectEntitiesState = (state: RootState) => state.table.entities;
-export const selectUIState = (state: RootState) => state.table.ui;
-export const selectSelectedColumnsState = (state: RootState) => state.table.ui.selectedColumnsIds;
+const selectTableState = (state: RootState) => state.table;
+const selectEntitiesState = (state: RootState) => state.table.entities;
+const selectCellsState = (state: RootState) => state.table.entities.cells;
+const selectUIState = (state: RootState) => state.table.ui;
+const selectSelectedColumnsState = (state: RootState) => state.table.ui.selectedColumnsIds;
+const selectSelectedCellState = (state: RootState) => state.table.ui.selectedCell;
+
+const getFormattedRows = (rows: IRowsState, cells: ICellsState, rowCell: IRowCellState) => (
+  rows.allIds.map((rowId) => (
+    // reduce to row object
+    rowCell.allIds
+      .reduce((acc, rowCellId) => {
+        if (rowCell.byId[rowCellId].rowId === rowId) {
+          const {
+            id, label,
+            metadata, columnId
+          } = cells.byId[rowCell.byId[rowCellId].cellId];
+          return {
+            ...acc,
+            [columnId]: {
+              id,
+              label,
+              metadata
+            }
+          };
+        }
+        return acc;
+      }, {})))
+);
+
+const getFormattedColumns = (columns: IColumnsState) => (
+  columns.allIds.map((colId) => {
+    const {
+      id: accessor, label: Header,
+      reconciliator, extension
+    } = (columns.byId[colId]);
+    return {
+      Header,
+      accessor,
+      reconciliator,
+      extension
+    };
+  })
+);
 
 export const selectTableData = createSelector(
   selectEntitiesState,
@@ -207,42 +247,33 @@ export const selectTableData = createSelector(
     cells
   }) => {
     // return an array of rows formatted for the table component
-    const formattedRows = rows.allIds.map((rowId) => (
-      // reduce to row object
-      rowCell.allIds
-        .reduce((acc, rowCellId) => {
-          if (rowCell.byId[rowCellId].rowId === rowId) {
-            const {
-              id, label,
-              metadata, columnId
-            } = cells.byId[rowCell.byId[rowCellId].cellId];
-            return {
-              ...acc,
-              [columnId]: {
-                id,
-                label,
-                metadata
-              }
-            };
-          }
-          return acc;
-        }, {})));
-    const formattedColumns = columns.allIds.map((colId) => {
-      const {
-        id: accessor, label: Header,
-        reconciliator, extension
-      } = (columns.byId[colId]);
-      return {
-        Header,
-        accessor,
-        reconciliator,
-        extension
-      };
-    });
+    const formattedRows = getFormattedRows(rows, cells, rowCell);
+    // return an array of columns formatted for the table component
+    const formattedColumns = getFormattedColumns(columns);
     return {
       data: formattedRows,
       columns: formattedColumns
     };
+  }
+);
+
+export const selectSelectedCellMetadata = createSelector(
+  selectSelectedCellState,
+  selectCellsState,
+  (cellId, cells) => (cellId ? cells.byId[cellId].metadata : [])
+);
+
+export const selectSelectedCellMetadataTableFormat = createSelector(
+  selectSelectedCellMetadata,
+  (metadata) => {
+    if (metadata.length === 0) {
+      return { columns: [], rows: [] };
+    }
+    const columns = Object.keys(metadata[0]);
+    const rows = metadata
+      .map((metadataItem) => columns
+        .map((col) => (col === 'type' ? metadataItem[col][0].name : `${metadataItem[col]}`))) as string[][];
+    return { columns, rows };
   }
 );
 
@@ -299,7 +330,7 @@ export const selectCellsReconciliationRequest = createSelector(
  */
 export const selectMetadataDialogOpen = createSelector(
   selectTableState,
-  ({ ui }) => ui.openReconciliateDialog
+  ({ ui }) => ui.openMetadataDialog
 );
 
 /**

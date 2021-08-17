@@ -8,7 +8,7 @@ interface ITableFooterProps {
  * Table footer element
  */
 const TableFooter = ({ rows }: ITableFooterProps) => (
-  <div className={styles['table-footer']}>
+  <div className={styles.TableFooter}>
     {`${rows.length} rows`}
   </div>
 );

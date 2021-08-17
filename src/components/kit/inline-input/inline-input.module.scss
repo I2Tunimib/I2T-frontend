@@ -1,18 +1,9 @@
-// .input {
-//   border: 1px solid transparent;
-//   outline: none;
-//   font-size: 16px;
-
-//   &:hover {
-//     border: 1px solid #ededed;
-//   }
-// }
-.container {
+.Container {
   display: block;
   position: relative;
   height: 40px;
 
-  .input, .text {
+  .Input, .Text {
     margin: 0;
     padding: 2px 10px;
     font-size: 24px;
@@ -23,14 +14,14 @@
     box-sizing: border-box;
   }
 
-  .text {
+  .Text {
     display: inline-block;
     visibility: hidden;
     white-space: pre;
     border: 2px solid;
   }
   
-  .input {
+  .Input {
     position: absolute;
     top: 0;
     left: 0;

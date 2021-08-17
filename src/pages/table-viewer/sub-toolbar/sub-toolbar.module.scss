@@ -1,4 +1,4 @@
-.sub-toolbar-container {
+.Container {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -6,7 +6,7 @@
   padding: 10px 12px;
   border-bottom: 1px solid #ededed;
 
-  .action-group {
+  .ActionGroup {
     position: relative;
     display: flex;
     flex-direction: row;

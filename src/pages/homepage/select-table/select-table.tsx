@@ -23,7 +23,7 @@ const SelectTable = ({ value, options, onChange }: ISelectTableProps) => (
         ))}
       </Select>
     </FormControl>
-    <Button to={`table/${value}`} className={styles['upload-button']}>
+    <Button to={`table/${value}`} className={styles.UploadButton}>
       Upload
     </Button>
   </>

@@ -1,15 +1,15 @@
-.container {
+.Container {
   width: 10px;
   height: 10px;
   border-radius: 50%;
 
-  &.error {
+  &.Error {
     background-color: #f45725;
   }
-  &.warn {
+  &.Warn {
     background-color: #ffc700;
   }
-  &.success {
+  &.Success {
     background-color: #4ac99b;
   }
 }

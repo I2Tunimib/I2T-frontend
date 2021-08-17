@@ -4,7 +4,7 @@ import styles from './table-root.module.scss';
  * Table root element
  */
 const TableRoot = ({ children }: any) => (
-  <table className={styles.root}>
+  <table className={styles.TableRoot}>
     {children}
   </table>
 );

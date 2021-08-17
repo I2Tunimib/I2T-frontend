@@ -1,4 +1,4 @@
-.app-button {
+.AppButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,7 +16,7 @@
   transition: all 0.15s ease-in-out;
 
   // primary theme button
-  &.primary {
+  &.Primary {
     background-color: #ff711f;
     border: 2px solid #ff711f;
     color: #fff;
@@ -33,25 +33,25 @@
   }
 
   // styles applied if icon aligned left
-  &.left {
+  &.Left {
     flex-direction: row-reverse;
 
-    .icon-left {
+    .IconLeft {
       margin-right: 5px;
     }
   }
 
   // styles applied if icon aligned right
-  &.right {
+  &.Right {
     flex-direction: row;
 
-    .icon-right {
+    .IconRight {
       margin-left: 5px;
     }
   }
 
   // styles applied if link button
-  &.link {
+  &.Link {
     text-decoration: none;
   }
 }

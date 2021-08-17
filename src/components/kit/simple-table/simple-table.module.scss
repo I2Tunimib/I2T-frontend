@@ -1,0 +1,23 @@
+.TableRoot {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.TableHeaderCell {
+  padding: 12px 10px;
+  vertical-align: middle;
+  font-size: 16px;
+  font-weight: normal;
+  color: rgba(27, 31, 59, 0.65);
+}
+
+.TableRow {
+  border-bottom: 1px solid #ededed;
+}
+
+.TableRowCell {
+  position: relative;
+  padding: 18px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
