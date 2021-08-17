@@ -7,7 +7,7 @@ import { isObject } from '@services/utils/is-object';
 export interface IFetchParams extends AxiosRequestConfig { }
 
 export interface IFetchConfig {
-  mappingFn?: (result: any) => any; // function which will be executed before returning the response
+  mappingFn?: (...params: any) => any;
   dispatchFn?: (...params: any) => any; // to dispatch automatically to a store
   dispatchParams?: any[]; // any params you can pass to the dispatch function
   manual?: boolean; // to configure when the fetch is happening

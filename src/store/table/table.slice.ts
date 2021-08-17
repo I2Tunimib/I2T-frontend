@@ -1,59 +1,126 @@
-import { IBodyCell, IColumn, IRow } from '@components/kit/table/interfaces/table';
 import {
   createSelector,
   createSlice,
-  current,
   PayloadAction
 } from '@reduxjs/toolkit';
 import { convertFromCSV } from '@services/converters/csv-converter';
 import { RootState } from '@store';
+import merge from 'lodash/merge';
 
 // Define a type for the slice state
 interface ITableState {
-  columns: IColumn[];
-  data: IRow[];
-  tableConfig: ITableConfigState;
-  ui: ITableUIState
+  entities: {
+    columns: IColumnsState;
+    rows: IRowsState;
+    cells: ICellsState;
+    columnCell: IColumnCellState;
+    rowCell: IRowCellState;
+  }
+  ui: ITableUIState;
 }
 
-interface ITableConfigState {
-  compact: boolean;
+interface IBaseState {
+  byId: Record<string, unknown>;
+  allIds: string[];
+}
+
+interface IColumnState {
+  id: string;
+  label: string;
+  reconciliator: string;
+  extension: string;
+}
+
+interface ICellState {
+  id: string;
+  rowId: string;
+  columnId: string;
+  label: string;
+  metadata: IMetadataState[];
+}
+
+interface IMetadataState {
+  id: string;
+  name: string;
+  match: boolean;
+  score: number;
+  type: {
+    id: string;
+    name: string;
+  }
+}
+
+export interface IColumnsState extends IBaseState {
+  byId: {
+    [id: string]: IColumnState
+  }
+}
+
+export interface IRowsState extends IBaseState {
+  byId: {
+    [id: string]: {
+      id: string;
+    }
+  }
+}
+
+export interface ICellsState extends IBaseState {
+  byId: {
+    [id: string]: ICellState
+  }
+}
+
+export interface IRowCellState extends IBaseState {
+  byId: {
+    [id: string]: {
+      id: string;
+      rowId: string;
+      cellId: string;
+    }
+  }
+}
+
+export interface IColumnCellState extends IBaseState {
+  byId: {
+    [id: string]: {
+      id: string;
+      columnId: string;
+      cellId: string;
+    }
+  }
 }
 
 interface ITableUIState {
   openReconciliateDialog: boolean;
+  openMetadataDialog: boolean;
   selectedColumnsIds: string[];
-  selectedCell?: string;
+  selectedCell: string;
 }
 
 interface ISetDataAction {
-  data: {
-    format: string;
-    content: string;
-  }
+  format: string;
+  data: string;
 }
 
-interface IUpdateColumnsAction {
-  columns: Record<string, IBodyCell[]>;
+interface IAddCellsColumnMetadataAction {
+  data: Partial<ICellsState>;
   reconciliator: string;
-}
-
-interface IUpdateData {
-  rowIndex: number,
-  columnId: string,
-  value: string
 }
 
 // Define the initial state using that type
 const initialState: ITableState = {
-  columns: [],
-  data: [],
-  tableConfig: {
-    compact: false
+  entities: {
+    columns: { byId: {}, allIds: [] },
+    rows: { byId: {}, allIds: [] },
+    cells: { byId: {}, allIds: [] },
+    columnCell: { byId: {}, allIds: [] },
+    rowCell: { byId: {}, allIds: [] }
   },
   ui: {
     openReconciliateDialog: false,
-    selectedColumnsIds: []
+    openMetadataDialog: false,
+    selectedColumnsIds: [],
+    selectedCell: ''
   }
 };
 
@@ -63,46 +130,27 @@ export const tableSlice = createSlice({
   initialState,
   reducers: {
     setData: (state, { payload }: PayloadAction<ISetDataAction>) => {
-      const { data } = payload;
-      if (data.format === 'csv') {
-        return { ...state, ...convertFromCSV(data.content) };
+      const { data, format } = payload;
+      if (format === 'csv') {
+        const entities = convertFromCSV(data);
+        state.entities = entities;
       }
       return state;
     },
-    updateColumns: (state, { payload }: PayloadAction<IUpdateColumnsAction>) => {
-      const { reconciliator, columns } = payload;
-
-      const columnKeys = Object.keys(columns);
-      // update columns cells
-      state.data = state.data.map((row, index) => (
-        columnKeys.reduce((acc, key) => ({
-          ...acc,
-          [key]: { ...row[key], ...columns[key][index] }
-        }), row)));
-      // update column headers
-      state.columns = state.columns.map((col) => {
-        if (columnKeys.indexOf(col.accessor) !== -1) {
-          return { ...col, reconciliator };
-        }
-        return col;
-      });
-    },
-    updateHeaderData: (state, { payload }: PayloadAction<string>) => {
-      const { columns, ui } = state;
-      // set selection
-      state.columns = columns.map((col) => {
-        if (col.accessor === payload) {
-          return {
-            ...col,
-            selected: !col.selected
-          };
-        }
-        return col;
-      });
-      // set which columns are selected
-      ui.selectedColumnsIds = state.columns
-        .filter((col) => col.selected)
-        .map((col) => col.accessor);
+    updateSelectedColumns: (state, { payload }: PayloadAction<string>) => {
+      const { selectedColumnsIds } = state.ui;
+      if (!selectedColumnsIds.includes(payload)) {
+        // add id if not yet selected
+        return {
+          ...state,
+          ui: { ...state.ui, selectedColumnsIds: [...selectedColumnsIds, payload] }
+        };
+      }
+      // remove id if already selected
+      return {
+        ...state,
+        ui: { ...state.ui, selectedColumnsIds: selectedColumnsIds.filter((id) => id !== payload) }
+      };
     },
     updateSelectedCell: (state, { payload }: PayloadAction<string>) => {
       const { selectedCell } = state.ui;
@@ -115,89 +163,142 @@ export const tableSlice = createSlice({
     },
     updateUI: (state, { payload }: PayloadAction<Partial<ITableUIState>>) => {
       state.ui = { ...state.ui, ...payload };
+    },
+    updateCells: (state, { payload }: PayloadAction<Partial<ICellsState>>) => {
+      const updatedCells = merge({}, state.entities.cells.byId, payload);
+      state.entities.cells.byId = updatedCells;
+    },
+    addCellsColumnMetadata: (state, { payload }: PayloadAction<IAddCellsColumnMetadataAction>) => {
+      const { data, reconciliator } = payload;
+      // add metadata to cells
+      const updatedCells = merge({}, state.entities.cells.byId, data);
+      state.entities.cells.byId = updatedCells;
+      // add reconciliator name to columns
+      const { entities: { columns }, ui: { selectedColumnsIds } } = state;
+      selectedColumnsIds.forEach((id) => {
+        columns.byId[id].reconciliator = reconciliator;
+      });
     }
-    // updateData: (state, { payload }: PayloadAction<IUpdateData>) => {
-    //   const { data } = state;
-    //   state.data = data.map((row, index) => {
-    //     if (index === payload.rowIndex) {
-    //       return {
-    //         ...data[payload.rowIndex],
-    //         [payload.columnId]: { label: payload.value }
-    //       };
-    //     }
-    //     return row;
-    //   });
-    // },
-    // updateHeader: (state, action: PayloadAction<any>) => {
-    //   const { columns } = state.table;
-    // }
-    // decrement: (state) => {
-    //   state.value -= 1;
-    // },
-    // // Use the PayloadAction type to declare the contents of `action.payload`
-    // incrementByAmount: (state, action: PayloadAction<number>) => {
-    //   state.value += action.payload;
-    // }
   }
 });
 
 // export const { increment, decrement, incrementByAmount } = counterSlice.actions;
 export const {
   setData,
-  updateColumns,
-  updateHeaderData,
+  updateCells,
+  addCellsColumnMetadata,
+  updateSelectedColumns,
   updateSelectedCell,
   updateUI
 } = tableSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
-export const selectTable = (state: RootState) => state.table;
+export const selectTableState = (state: RootState) => state.table;
+export const selectEntitiesState = (state: RootState) => state.table.entities;
+export const selectUIState = (state: RootState) => state.table.ui;
+export const selectSelectedColumnsState = (state: RootState) => state.table.ui.selectedColumnsIds;
+
+export const selectTableData = createSelector(
+  selectEntitiesState,
+  ({
+    columns,
+    rows,
+    rowCell,
+    cells
+  }) => {
+    // return an array of rows formatted for the table component
+    const formattedRows = rows.allIds.map((rowId) => (
+      // reduce to row object
+      rowCell.allIds
+        .reduce((acc, rowCellId) => {
+          if (rowCell.byId[rowCellId].rowId === rowId) {
+            const {
+              id, label,
+              metadata, columnId
+            } = cells.byId[rowCell.byId[rowCellId].cellId];
+            return {
+              ...acc,
+              [columnId]: {
+                id,
+                label,
+                metadata
+              }
+            };
+          }
+          return acc;
+        }, {})));
+    const formattedColumns = columns.allIds.map((colId) => {
+      const {
+        id: accessor, label: Header,
+        reconciliator, extension
+      } = (columns.byId[colId]);
+      return {
+        Header,
+        accessor,
+        reconciliator,
+        extension
+      };
+    });
+    return {
+      data: formattedRows,
+      columns: formattedColumns
+    };
+  }
+);
 
 /**
- * Selector which returns columns and data
+ * Selector which returns ids of selected columns
  */
-export const selectTableData = createSelector(
-  selectTable,
-  ({ columns, data }) => ({ columns, data })
+export const selectSelectedColumnsIds = createSelector(
+  selectUIState,
+  (ui) => ui.selectedColumnsIds
 );
 
 /**
  * Selector which returns if at least a column is selected
  */
 export const selectIsColumnSelected = createSelector(
-  selectTable,
+  selectTableState,
   ({ ui: { selectedColumnsIds } }) => selectedColumnsIds.length > 0
-);
-
-/**
- * Selector which returns selected columns data
- */
-export const selectSelectedColumns = createSelector(
-  selectTable,
-  ({ data, ui: { selectedColumnsIds } }) => selectedColumnsIds.map((id) => ({
-    [id]: data.map((row) => row[id])
-  }))
-);
-
-/**
- * Selector which returns selected columns for Asia Geonames request
- */
-export const selectSelectedColumnsAsiaGeo = createSelector(
-  selectTable,
-  ({ data, ui: { selectedColumnsIds } }) => selectedColumnsIds.map((colId) => ({
-    [colId]: data.map((row) => {
-      // deconstruct required objects
-      const { id, label } = row[colId];
-      return { id, label };
-    })
-  }))
 );
 
 /**
  * Selector which returns the state of reconciliate dialog
  */
 export const selectReconciliateDialogOpen = createSelector(
-  selectTable,
+  selectTableState,
+  ({ ui }) => ui.openReconciliateDialog
+);
+
+/**
+ * Selector which returns cells selected by columns
+ */
+export const selectSelectedColumnsCells = createSelector(
+  selectEntitiesState,
+  selectSelectedColumnsState,
+  ({ cells }, selectedColumnsIds) => selectedColumnsIds.reduce((acc, colId) => {
+    const filteredCells = cells.allIds
+      .filter((cellId) => cells.byId[cellId].columnId === colId)
+      .map((filteredCellId) => cells.byId[filteredCellId]);
+
+    return [...acc, ...filteredCells];
+  }, [] as ICellState[])
+);
+
+/**
+ * Selector which returns cells selected by columns processed for reconciliation
+ * request
+ */
+export const selectCellsReconciliationRequest = createSelector(
+  selectSelectedColumnsCells,
+  (cells) => cells.map(({ id, label }) => ({ id, label }))
+);
+
+/**
+ * Selector which returns the state of the metadata dialog
+ */
+export const selectMetadataDialogOpen = createSelector(
+  selectTableState,
   ({ ui }) => ui.openReconciliateDialog
 );
 
@@ -205,7 +306,7 @@ export const selectReconciliateDialogOpen = createSelector(
  * Selector which returns the state of the selected cell
  */
 export const selectSelectedCell = createSelector(
-  selectTable,
+  selectTableState,
   ({ ui }) => ui.selectedCell
 );
 

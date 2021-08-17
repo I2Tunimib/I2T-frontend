@@ -1,12 +1,13 @@
 import { useParams } from 'react-router-dom';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { Table } from '@components/kit';
 import {
   selectSelectedCell,
+  selectSelectedColumnsIds,
   selectTableData,
   setData,
-  updateHeaderData,
-  updateSelectedCell
+  updateSelectedCell,
+  updateSelectedColumns
 } from '@store/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { useFetch } from '@hooks/fetch';
@@ -26,6 +27,7 @@ const TableViewer = () => {
 
   const { columns, data } = useAppSelector(selectTableData);
   const selectedCell = useAppSelector(selectSelectedCell);
+  const selectedColumnsIds = useAppSelector(selectSelectedColumnsIds);
 
   const handleRowCellClick = (cellId: string) => {
     // set selected cell
@@ -33,7 +35,7 @@ const TableViewer = () => {
   };
 
   const handleSelectChange = useCallback((id: string) => {
-    dispatch(updateHeaderData(id));
+    dispatch(updateSelectedColumns(id));
   }, []);
 
   const updateTableData = (rowIndex: number, columnId: string, value: string) => {
@@ -61,6 +63,7 @@ const TableViewer = () => {
             row,
             value,
             selectedCell,
+            selectedColumnsIds,
             handleRowCellClick
           })}
           updateTableData={updateTableData}

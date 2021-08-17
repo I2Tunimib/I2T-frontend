@@ -12,9 +12,9 @@ import {
   Select
 } from '@material-ui/core';
 import {
+  addCellsColumnMetadata,
+  selectCellsReconciliationRequest,
   selectReconciliateDialogOpen,
-  selectSelectedColumnsAsiaGeo,
-  updateColumns,
   updateUI
 } from '@store/table/table.slice';
 import {
@@ -27,8 +27,8 @@ import {
 } from 'react';
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
-import { asiaGeoEndpoint } from '@services/api/endpoints/table';
 import { selectServicesConfig } from '@store/config/config.slice';
+import { asiaGeoEndpoint } from '@services/api/endpoints/table';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -44,14 +44,14 @@ const ReconciliateDialog = () => {
   const open = useAppSelector(selectReconciliateDialogOpen);
   const { reconciliators } = useAppSelector(selectServicesConfig);
   // selected columns
-  const selectedColumns = useAppSelector(selectSelectedColumnsAsiaGeo);
+  const selectedColumnsCells = useAppSelector(selectCellsReconciliationRequest);
   // make request to reconciliate selected columns
   const { response, fetchManualData } = useFetch(
-    asiaGeoEndpoint({ data: selectedColumns }),
+    asiaGeoEndpoint({ data: selectedColumnsCells }),
     {
       manual: true,
-      mappingFn: (columns) => ({ columns }),
-      dispatchFn: updateColumns,
+      dispatchFn: addCellsColumnMetadata,
+      mappingFn: (data) => ({ data }),
       dispatchParams: [{ reconciliator: currentService }]
     }
   );

@@ -14,6 +14,7 @@ const TableRowCell = ({
   children,
   column: { selected, id: columnId },
   row: { id: rowId },
+  selectedColumnsIds,
   selectedCell,
   value,
   handleRowCellClick
@@ -25,7 +26,7 @@ const TableRowCell = ({
       className={clsx(
         styles['row-cell'],
         {
-          [styles['selected-column']]: selected
+          [styles['selected-column']]: selectedColumnsIds.includes(columnId)
         }
       )}
     >

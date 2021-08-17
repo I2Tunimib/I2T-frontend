@@ -1,3 +1,4 @@
+import { ICellsState } from '@store/table/table.slice';
 import { IFetchParams } from 'hooks/fetch/fetch';
 
 /**
@@ -29,13 +30,12 @@ export const tableDataEndpoint = (dataSource: string, name: string): IFetchParam
  * Reconciliation request to Asia Geonames
  */
 export interface IAsiaGeoRequest {
-  data: IAsiaGeoItem[];
-}
-interface IAsiaGeoItem {
-  [key: string]: {
+  data: {
+    id: string;
     label: string;
   }[];
 }
+
 export const asiaGeoEndpoint = (data: IAsiaGeoRequest): IFetchParams => ({
   method: 'POST',
   url: '/asia/reconcile/geonames',
