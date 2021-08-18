@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/control-has-associated-label */
+import { MouseEvent } from 'react';
 import StatusBadge from '@components/core/status-badge/status-badge';
 import clsx from 'clsx';
 import styles from './table-row-cell.module.scss';
@@ -17,12 +18,14 @@ const TableRowCell = ({
   selectedColumnsIds,
   selectedCell,
   value,
+  handleCellRightClick,
   handleRowCellClick
 }: ITableRowCellProps) => {
   const getBadgeStatus = (match: boolean) => (match ? 'Success' : 'Warn');
 
   return (
     <td
+      onContextMenu={(e) => handleCellRightClick(e, 'cell', value.id)}
       className={clsx(
         styles.TableRowCell,
         {

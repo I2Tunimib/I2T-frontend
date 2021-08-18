@@ -19,6 +19,14 @@ interface ITableState {
   ui: ITableUIState;
 }
 
+interface ITableUIState {
+  openReconciliateDialog: boolean;
+  openMetadataDialog: boolean;
+  selectedColumnsIds: string[];
+  selectedCell: string;
+  contextualMenu: IContextualMenuState;
+}
+
 interface IBaseState {
   byId: Record<string, unknown>;
   allIds: string[];
@@ -90,11 +98,13 @@ export interface IColumnCellState extends IBaseState {
   }
 }
 
-interface ITableUIState {
-  openReconciliateDialog: boolean;
-  openMetadataDialog: boolean;
-  selectedColumnsIds: string[];
-  selectedCell: string;
+interface IContextualMenuState {
+  mouseX: number | null;
+  mouseY: number | null;
+  target: {
+    id: string;
+    type: 'cell' | 'column';
+  } | null;
 }
 
 interface ISetDataAction {
@@ -120,7 +130,12 @@ const initialState: ITableState = {
     openReconciliateDialog: false,
     openMetadataDialog: false,
     selectedColumnsIds: [],
-    selectedCell: ''
+    selectedCell: '',
+    contextualMenu: {
+      mouseX: null,
+      mouseY: null,
+      target: null
+    }
   }
 };
 
@@ -329,16 +344,21 @@ export const selectCellsReconciliationRequest = createSelector(
  * Selector which returns the state of the metadata dialog
  */
 export const selectMetadataDialogOpen = createSelector(
-  selectTableState,
-  ({ ui }) => ui.openMetadataDialog
+  selectUIState,
+  (ui) => ui.openMetadataDialog
 );
 
 /**
  * Selector which returns the state of the selected cell
  */
 export const selectSelectedCell = createSelector(
-  selectTableState,
-  ({ ui }) => ui.selectedCell
+  selectUIState,
+  (ui) => ui.selectedCell
+);
+
+export const selectContextualMenuState = createSelector(
+  selectUIState,
+  (ui) => ui.contextualMenu
 );
 
 export default tableSlice.reducer;
