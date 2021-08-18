@@ -18,7 +18,7 @@
   
   // apply style to cell if column is selected
   &.SelectedColumn {
-    background: rgba(112,182,246,0.12);
+    background-color: rgb(245, 0, 87, 0.05);
   }
 
   // color cell if not selected
@@ -36,8 +36,9 @@
     bottom: 0;
     right: 0;
     // apply style to cell if cell is selected
-    &.selected {
-      background: rgba(33, 148, 255, 0.12);
+    &.Selected {
+      // background: rgba(33, 148, 255, 0.12);
+      background-color: rgb(245, 0, 87, 0.1);
     }
   }
 }

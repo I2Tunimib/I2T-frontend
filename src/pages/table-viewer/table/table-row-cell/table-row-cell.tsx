@@ -49,7 +49,7 @@ const TableRowCell = ({
             className={clsx(
               styles.SelectableOverlay,
               {
-                [styles.selected]: selectedCell === value.id
+                [styles.Selected]: selectedCell === value.id
               }
             )}
             onClick={() => handleRowCellClick(value.id)}

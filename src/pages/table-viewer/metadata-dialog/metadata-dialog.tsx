@@ -3,10 +3,10 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
-  makeStyles
+  DialogContentText,
+  DialogTitle
 } from '@material-ui/core';
-import { selectMetadataDialogOpen, selectSelectedCellMetadataTableFormat } from '@store/table/table.slice';
+import { selectMetadataDialogOpen, selectSelectedCellMetadataTableFormat, updateUI } from '@store/table/table.slice';
 import {
   forwardRef,
   Ref,
@@ -14,7 +14,7 @@ import {
 } from 'react';
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
-import { useAppSelector } from '@hooks/store';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { SimpleTable } from '@components/kit';
 
 const Transition = forwardRef((
@@ -23,27 +23,17 @@ const Transition = forwardRef((
 ) => (<Slide direction="down" ref={ref} {...props} />));
 
 const MetadataDialog = () => {
+  const dispatch = useAppDispatch();
   // keep track of open state
   const open = useAppSelector(selectMetadataDialogOpen);
   const { columns, rows } = useAppSelector(selectSelectedCellMetadataTableFormat);
 
-  // useEffect(() => {
-  //   // set initial value of select
-  //   if (reconciliators) {
-  //     setCurrentService(reconciliators[0].name);
-  //   }
-  // }, [reconciliators]);
-
   const handleClose = () => {
     // fetchManualData();
-    // dispatch(updateUI({
-    //   openReconciliateDialog: false
-    // }));
+    dispatch(updateUI({
+      openMetadataDialog: false
+    }));
   };
-
-  // const handleChange = (event: ChangeEvent<{ value: unknown }>) => {
-  //   setCurrentService(event.target.value as string);
-  // };
 
   return (
     <Dialog
@@ -55,7 +45,14 @@ const MetadataDialog = () => {
     >
       <DialogTitle>Metadata</DialogTitle>
       <DialogContent>
-        <SimpleTable columns={columns} rows={rows} />
+        <DialogContentText>
+          Choose to which entity the cell is reconciliated to.
+        </DialogContentText>
+        <SimpleTable
+          selectableRows
+          columns={columns}
+          rows={rows}
+        />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>

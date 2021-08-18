@@ -14,9 +14,7 @@
     align-items: flex-start;
 
     // actions row
-    .RowMenu {
-      display: flex;
-      flex-direction: row;
+    .ActionsContainer {
       gap: 5px;
       margin-left: 9px;
 
@@ -24,5 +22,21 @@
         min-width: 38px;
       }
     }
+
+    .RowMenu {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .SaveIcon {
+      width: 20px;
+      margin-left: 10px;
+      color: #5F6368;
+    }
+  }
+
+  .SaveButton {
+    margin-left: auto;
   }
 }

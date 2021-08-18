@@ -1,11 +1,21 @@
+import { Radio } from '@material-ui/core';
+import { useState } from 'react';
+import clsx from 'clsx';
 import styles from './simple-table.module.scss';
 
 interface ISimpleTableProps {
   columns: string[],
   rows: string[][];
+  selectableRows?: boolean;
 }
 
-const SimpleTable = ({ columns, rows }: ISimpleTableProps) => {
+const SimpleTable = ({
+  columns,
+  rows,
+  selectableRows = false
+}: ISimpleTableProps) => {
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
+
   /**
    * Preprare columns with ids
    */
@@ -30,6 +40,10 @@ const SimpleTable = ({ columns, rows }: ISimpleTableProps) => {
     }))
   );
 
+  const handleChange = (radioId: number) => {
+    setSelectedRow(radioId);
+  };
+
   return (
     <table className={styles.TableRoot}>
       <thead>
@@ -41,10 +55,32 @@ const SimpleTable = ({ columns, rows }: ISimpleTableProps) => {
       </thead>
       <tbody>
         {prepareRows(rows).map((row) => (
-          <tr className={styles.TableRow} key={row.id}>
+          <tr
+            onClick={() => handleChange(row.id)}
+            className={clsx(
+              styles.TableRow,
+              {
+                [styles.Selectable]: selectableRows,
+                [styles.Selected]: selectedRow === row.id
+              }
+            )}
+            key={row.id}
+          >
             {row.cells.map((cell) => (
               <td className={styles.TableRowCell} key={cell.id}>{cell.value}</td>
             ))}
+            {selectableRows && (
+              <td
+                className={styles.TableRowCell}
+                key={row.id}
+              >
+                <Radio
+                  checked={selectedRow === row.id}
+                  onChange={() => handleChange(row.id)}
+                  value={`radio-${row.id}`}
+                />
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

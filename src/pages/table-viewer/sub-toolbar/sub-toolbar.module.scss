@@ -3,7 +3,7 @@
   flex-direction: row;
   align-items: center;
 
-  padding: 10px 12px;
+  padding: 0px 12px;
   border-bottom: 1px solid #ededed;
 
   .ActionGroup {
@@ -27,5 +27,46 @@
         background-color: #ededed;
       }
     }
-  }  
+  }
+
+  .ActionsContainer {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+    padding: 10px 0px;
+    margin-left: 10px;
+
+    // container the size of the hidden menu
+    .MenusContainer {
+      position: relative;
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      transition: transform 250ms ease-out;
+
+      &.Hidden {
+        transform: translateX(-100%);
+      }
+      &.Visible {
+        transform: translateX(0);
+      }
+  
+      .VisibleMenu {
+        position: absolute;
+        left: 100%;
+      }
+
+      .HiddenMenu {
+        padding-left: 0;
+        transition: opacity 250ms ease-out;
+        &.Hidden {
+          opacity: 0;
+        }
+        &.Visible {
+          opacity: 1;
+        }
+      }
+    }
+  }
+
 }
