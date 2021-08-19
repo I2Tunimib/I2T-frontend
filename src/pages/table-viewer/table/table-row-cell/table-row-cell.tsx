@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { MouseEvent } from 'react';
 import StatusBadge from '@components/core/status-badge/status-badge';
 import clsx from 'clsx';
 import styles from './table-row-cell.module.scss';
@@ -17,11 +16,18 @@ const TableRowCell = ({
   row: { id: rowId },
   selectedColumnsIds,
   selectedCell,
+  selectedMetadatasCells,
   value,
   handleCellRightClick,
   handleRowCellClick
 }: ITableRowCellProps) => {
-  const getBadgeStatus = (match: boolean) => (match ? 'Success' : 'Warn');
+  const getBadgeStatus = (match: boolean) => {
+    const idMetadata = selectedMetadatasCells[value.id];
+    if (idMetadata) {
+      return 'Success';
+    }
+    return value.metadata.match ? 'Success' : 'Warn';
+  };
 
   return (
     <td

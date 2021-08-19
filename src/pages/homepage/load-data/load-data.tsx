@@ -1,47 +1,42 @@
 import { FormControl, MenuItem, Select } from '@material-ui/core';
 import { ChangeEvent, useState, useEffect } from 'react';
-import { tableNamesEndpoint, ITableNamesResponse } from '@services/api/endpoints/table';
-import { useFetch } from '@hooks/fetch';
 import Paper from '@material-ui/core/Paper';
+import { useAppDispatch } from '@hooks/store';
+import { getTableNames } from '@store/table/table.thunk';
 import styles from './load-data.module.scss';
 import SelectTable from '../select-table/select-table';
 import UploadTable from '../upload-table/upload-table';
 
 const LoadData = () => {
+  const dispatch = useAppDispatch();
   // current data source selected
   const [dataSource, setDataSource] = useState('tables');
-  // set skip fetch
-  const [skip, setSkip] = useState(false);
-  // table names for current data source
-  const {
-    response
-  } = useFetch<ITableNamesResponse>(
-    tableNamesEndpoint(dataSource),
-    { manual: skip }
-  );
+  // current table name
+  const [tables, setTables] = useState<string[]>([]);
   // current table selected
-  const [currentTable, setCurrentTable] = useState<string>();
+  const [selectedTable, setSelectedTable] = useState<string>();
 
   useEffect(() => {
-    // when data changes set initial value of select
-    if (response) {
-      setCurrentTable(response.data[0]);
+    if (dataSource !== 'fs') {
+      dispatch(getTableNames(dataSource))
+        .unwrap()
+        .then((result) => {
+          // handle result here
+          setTables(result.data);
+          setSelectedTable(result.data[0]);
+        })
+        .catch((rejectedValueOrSerializedError) => {
+          // handle error here
+        });
     }
-  }, [response]);
+  }, [dataSource]);
 
   const handleChangeDataSource = (event: ChangeEvent<{ value: unknown }>) => {
-    const value = event.target.value as string;
-    if (value === 'fs') {
-      // do not fetch tables if selected option is file system
-      setSkip(true);
-    } else {
-      setSkip(false);
-    }
-    setDataSource(value);
+    setDataSource(event.target.value as string);
   };
 
   const handleChangeTable = (event: ChangeEvent<{ value: unknown }>) => {
-    setCurrentTable(event.target.value as string);
+    setSelectedTable(event.target.value as string);
   };
 
   return (
@@ -64,11 +59,11 @@ const LoadData = () => {
       </Paper>
       <Paper className={styles.Card} variant="outlined">
         {dataSource !== 'fs' && <p>Choose from available tables</p>}
-        {dataSource !== 'fs' && currentTable
+        {dataSource !== 'fs' && selectedTable
           ? (
             <SelectTable
-              value={currentTable}
-              options={response && response.data}
+              value={selectedTable}
+              options={tables}
               onChange={(e) => handleChangeTable(e)}
             />
           ) : <UploadTable />}

@@ -1,10 +1,8 @@
 import {
-  ICellsState,
-  IColumnCellState,
-  IColumnsState,
-  IRowCellState,
+  ICellsState, IColumnCellState,
+  IColumnsState, IRowCellState,
   IRowsState
-} from '@store/table/table.slice';
+} from '@store/table/interfaces/table';
 
 export enum CsvSeparator {
   COMMA = ',',

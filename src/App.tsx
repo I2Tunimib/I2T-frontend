@@ -1,11 +1,10 @@
-import { RouteContainer, Toolbar } from '@components/layout';
+import { RouteContainer } from '@components/layout';
 import { IRoute } from '@components/layout/route-container/interfaces';
-import { useFetch } from '@hooks/fetch';
+import { useAppDispatch } from '@hooks/store';
 import { HomepageContainer } from '@pages/homepage';
 import { TableViewer } from '@pages/table-viewer';
-import { IConfigResponse, servicesConfigEndpoint } from '@services/api/endpoints/services-config';
-import { setConfig } from '@store/config/config.slice';
-import React from 'react';
+import { getConfig } from '@store/config/config.thunk';
+import React, { useEffect } from 'react';
 
 /**
  * Define routes
@@ -24,14 +23,11 @@ const routes: IRoute[] = [
 ];
 
 const App = () => {
-  // fetch configuration file
-  useFetch<IConfigResponse>(
-    servicesConfigEndpoint(),
-    {
-      mappingFn: (res) => ({ servicesConfig: res.data }),
-      dispatchFn: setConfig
-    }
-  );
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(getConfig());
+  }, []);
 
   return (
     <RouteContainer routes={routes} />

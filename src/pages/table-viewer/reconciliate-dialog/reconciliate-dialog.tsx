@@ -1,7 +1,7 @@
-import { useFetch } from '@hooks/fetch';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,8 +12,8 @@ import {
   Select
 } from '@material-ui/core';
 import {
-  addCellsColumnMetadata,
   selectCellsReconciliationRequest,
+  selectReconcileRequestStatus,
   selectReconciliateDialogOpen,
   updateUI
 } from '@store/table/table.slice';
@@ -28,7 +28,8 @@ import {
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
 import { selectServicesConfig } from '@store/config/config.slice';
-import { asiaGeoEndpoint } from '@services/api/endpoints/table';
+import { reconcile } from '@store/table/table.thunk';
+import styles from './reconciliate-dialog.module.scss';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -37,7 +38,7 @@ const Transition = forwardRef((
 
 const ReconciliateDialog = () => {
   // keep track of selected service
-  const [currentService, setCurrentService] = useState<string>('');
+  const [currentService, setCurrentService] = useState<any>();
 
   const dispatch = useAppDispatch();
   // keep track of open state
@@ -45,33 +46,39 @@ const ReconciliateDialog = () => {
   const { reconciliators } = useAppSelector(selectServicesConfig);
   // selected columns
   const selectedColumnsCells = useAppSelector(selectCellsReconciliationRequest);
-  // make request to reconciliate selected columns
-  const { response, fetchManualData } = useFetch(
-    asiaGeoEndpoint({ data: selectedColumnsCells }),
-    {
-      manual: true,
-      dispatchFn: addCellsColumnMetadata,
-      mappingFn: (data) => ({ data }),
-      dispatchParams: [{ reconciliator: currentService }]
-    }
-  );
+  // loading state for reconciliation request
+  const { loading } = useAppSelector(selectReconcileRequestStatus);
 
   useEffect(() => {
     // set initial value of select
     if (reconciliators) {
-      setCurrentService(reconciliators[0].name);
+      setCurrentService(reconciliators[0]);
     }
   }, [reconciliators]);
 
+  const handleConfirm = () => {
+    // fetchManualData();
+    dispatch(reconcile({
+      baseUrl: currentService.relativeUrl,
+      data: selectedColumnsCells,
+      reconciliator: currentService.name
+    }))
+      .unwrap()
+      .then((result) => {
+        dispatch(updateUI({
+          openReconciliateDialog: false
+        }));
+      });
+  };
+
   const handleClose = () => {
-    fetchManualData();
     dispatch(updateUI({
       openReconciliateDialog: false
     }));
   };
 
   const handleChange = (event: ChangeEvent<{ value: unknown }>) => {
-    setCurrentService(event.target.value as string);
+    setCurrentService(event.target.value);
   };
 
   return (
@@ -86,26 +93,28 @@ const ReconciliateDialog = () => {
       <DialogContent>
         <DialogContentText>
           Select a service to reconcile with:
+          {`LOADING: ${loading}`}
         </DialogContentText>
-        <FormControl className="field">
-          <Select
-            value={currentService}
-            onChange={(e) => handleChange(e)}
-            variant="outlined"
-          >
-            {reconciliators && reconciliators.map((service: any) => (
-              <MenuItem key={service.name} value={service.name}>{service.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
+        {currentService && (
+          <FormControl className="field">
+            <Select
+              value={currentService}
+              onChange={(e) => handleChange(e)}
+              variant="outlined"
+            >
+              {reconciliators && reconciliators.map((service: any) => (
+                <MenuItem key={service.name} value={service}>{service.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <Button onClick={handleClose} color="primary">
-          Confirm
+        <Button onClick={handleConfirm} color="primary">
+          {loading ? <CircularProgress className={styles.Progress} /> : 'Confirm'}
         </Button>
       </DialogActions>
     </Dialog>

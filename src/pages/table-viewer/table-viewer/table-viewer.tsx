@@ -1,19 +1,21 @@
 import { useParams } from 'react-router-dom';
-import { useMemo, useCallback, MouseEvent } from 'react';
 import {
+  useMemo, useCallback,
+  MouseEvent, useEffect
+} from 'react';
+import {
+  selectAllCellsMetadata,
   selectContextualMenuState,
   selectSelectedCell,
   selectSelectedColumnsIds,
   selectTableData,
-  setData,
   updateSelectedCell,
   updateSelectedColumns,
   updateUI
 } from '@store/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { useFetch } from '@hooks/fetch';
-import { ITableDataResponse, tableDataEndpoint } from '@services/api/endpoints/table';
 import { Menu, MenuItem } from '@material-ui/core';
+import { getTable } from '@store/table/table.thunk';
 import { Table } from '../table';
 import Toolbar from '../toolbar/toolbar';
 import styles from './table-viewer.module.scss';
@@ -29,16 +31,16 @@ const TableViewer = () => {
   const dispatch = useAppDispatch();
   // get table name from query params
   const { name } = useParams<{ name: string }>();
-  // get table and store in slice
-  useFetch<ITableDataResponse>(
-    tableDataEndpoint('tables', name),
-    { dispatchFn: setData }
-  );
 
   const { columns, data } = useAppSelector(selectTableData);
   const selectedCell = useAppSelector(selectSelectedCell);
   const selectedColumnsIds = useAppSelector(selectSelectedColumnsIds);
   const contextualMenuState = useAppSelector(selectContextualMenuState);
+  const selectedMetadatasCells = useAppSelector(selectAllCellsMetadata);
+
+  useEffect(() => {
+    dispatch(getTable({ dataSource: 'tables', name }));
+  }, [name]);
 
   const handleRowCellClick = (cellId: string) => {
     dispatch(updateSelectedCell(cellId));
@@ -92,12 +94,13 @@ const TableViewer = () => {
             handleCellRightClick,
             handleSelectChange
           })}
-          getCellProps={({ column, row, value }: any) => ({
+          getCellProps={({ column, row, value }) => ({
             column,
             row,
             value,
             selectedCell,
             selectedColumnsIds,
+            selectedMetadatasCells,
             handleRowCellClick,
             handleCellRightClick
           })}
@@ -120,7 +123,6 @@ const TableViewer = () => {
         </Menu>
       </div>
     </>
-    // <div>{isLoading ? 'LOADING' : data}</div>
   );
 };
 
