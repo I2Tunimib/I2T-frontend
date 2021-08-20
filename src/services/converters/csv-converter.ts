@@ -78,8 +78,8 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
           ...rowCell.byId,
           [`${cellId}`]: {
             id: `${cellId}`,
-            rowId,
-            cellId: `${cellId}`
+            primaryKey: rowId,
+            foreignKey: `${cellId}`
           }
         },
         allIds: [...rowCell.allIds, `${cellId}`]
@@ -90,8 +90,8 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
           ...columnCell.byId,
           [`${cellId}`]: {
             id: `${cellId}`,
-            columnId,
-            cellId: `${cellId}`
+            primaryKey: columnId,
+            foreignKey: `${cellId}`
           }
         },
         allIds: [...columnCell.allIds, `${cellId}`]

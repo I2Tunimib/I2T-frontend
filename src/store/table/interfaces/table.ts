@@ -75,8 +75,8 @@ export interface IRowCellState extends IBaseState {
   byId: {
     [id: string]: {
       id: string;
-      rowId: string;
-      cellId: string;
+      primaryKey: string;
+      foreignKey: string;
     }
   }
 }
@@ -85,8 +85,8 @@ export interface IColumnCellState extends IBaseState {
   byId: {
     [id: string]: {
       id: string;
-      columnId: string;
-      cellId: string;
+      primaryKey: string;
+      foreignKey: string;
     }
   }
 }

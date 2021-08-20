@@ -1,5 +1,8 @@
 import { Button, IconButton } from '@material-ui/core';
-import { selectIsColumnSelected, selectSelectedCell, updateUI } from '@store/table/table.slice';
+import {
+  deleteColumn, selectIsColumnSelected,
+  selectSelectedCell, updateUI
+} from '@store/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
@@ -30,6 +33,10 @@ const SubToolbar = () => {
   const isColumnSelected = useAppSelector(selectIsColumnSelected);
   const selectedCell = useAppSelector(selectSelectedCell);
 
+  const handleDelete = () => {
+    dispatch(deleteColumn(null));
+  };
+
   return (
     <>
       <div className={styles.Container}>
@@ -40,7 +47,7 @@ const SubToolbar = () => {
           <IconButton size="small">
             <RedoRoundedIcon />
           </IconButton>
-          <IconButton disabled={!isColumnSelected} size="small">
+          <IconButton onClick={handleDelete} disabled={!isColumnSelected} size="small">
             <DeleteOutlineRoundedIcon />
           </IconButton>
         </ActionGroup>

@@ -9,6 +9,7 @@ import { createSliceWithRequests, getRequestStatus } from '@store/requests/reque
 import merge from 'lodash/merge';
 import {
   IAddCellsColumnMetadataAction, ICellsState, ICellState,
+  IColumnCellState,
   IColumnsState, IRowCellState, IRowsState,
   ISetDataAction, ITableState, ITableUIState
 } from './interfaces/table';
@@ -36,6 +37,47 @@ const initialState: ITableState = {
     }
   },
   requests: { byId: {}, allIds: [] }
+};
+
+const removeColumns = (columns: IColumnsState, columnIds: string[]) => {
+  const newColsIds = columns.allIds
+    .filter((colId) => columnIds.indexOf(colId) === -1);
+  const newColumns = newColsIds.reduce((acc, colId) => ({
+    ...acc,
+    [colId]: columns.byId[colId]
+  }), {});
+  return { newColumns, newColsIds };
+};
+
+const removeCells = (cells: ICellsState, columnIds: string[]) => {
+  const newCellsIds = cells.allIds
+    .filter((cellId) => columnIds.indexOf(cells.byId[cellId].columnId) === -1);
+  const newCells = newCellsIds.reduce((acc, cellId) => ({
+    ...acc,
+    [cellId]: cells.byId[cellId]
+  }), {} as any);
+  return { newCells, newCellsIds };
+};
+
+const removeRowCells = (rowCell: IRowCellState, newCells: {[key: string]: any}) => {
+  const newRowCellIds = rowCell.allIds
+    .filter((rowId) => !!newCells[rowCell.byId[rowId].foreignKey]);
+  const newRowCell = newRowCellIds.reduce((acc, relationId) => ({
+    ...acc,
+    [relationId]: rowCell.byId[relationId]
+  }), {} as any);
+  return { newRowCell, newRowCellIds };
+};
+
+const removeColumnCells = (columnCell: IColumnCellState, columnIds: string[]) => {
+  const newColumnCellIds = columnCell.allIds
+    .filter((relationId) => columnIds
+      .indexOf(columnCell.byId[relationId].primaryKey) === -1);
+  const newColumnCell = newColumnCellIds.reduce((acc, relationId) => ({
+    ...acc,
+    [relationId]: columnCell.byId[relationId]
+  }), {});
+  return { newColumnCell, newColumnCellIds };
 };
 
 export const tableSlice = createSliceWithRequests({
@@ -66,6 +108,30 @@ export const tableSlice = createSliceWithRequests({
       }
       // if new cell is clicked
       return { ...state, ui: { ...state.ui, selectedCellId: payload } };
+    },
+    deleteColumn: (state, action: PayloadAction<void>) => {
+      const {
+        columns, columnCell,
+        cells, rowCell, rows
+      } = state.entities;
+      const { selectedColumnsIds } = state.ui;
+
+      const { newColumns, newColsIds } = removeColumns(columns, selectedColumnsIds);
+      const { newCells, newCellsIds } = removeCells(cells, selectedColumnsIds);
+      const { newRowCell, newRowCellIds } = removeRowCells(rowCell, newCells);
+      const { newColumnCell, newColumnCellIds } = removeColumnCells(columnCell, selectedColumnsIds);
+
+      if (newCellsIds.length === 0) {
+        state.entities.rows = {
+          byId: {},
+          allIds: []
+        };
+      }
+
+      state.entities.columns = { byId: newColumns, allIds: newColsIds };
+      state.entities.cells = { byId: newCells, allIds: newCellsIds };
+      state.entities.columnCell = { byId: newColumnCell, allIds: newColumnCellIds };
+      state.entities.rowCell = { byId: newRowCell, allIds: newRowCellIds };
     },
     updateUI: (state, { payload }: PayloadAction<Partial<ITableUIState>>) => {
       state.ui = { ...state.ui, ...payload };
@@ -110,6 +176,7 @@ export const tableSlice = createSliceWithRequests({
 export const {
   setData,
   updateCells,
+  deleteColumn,
   addCellsColumnMetadata,
   updateSelectedColumns,
   updateSelectedCell,
@@ -138,11 +205,11 @@ const getFormattedRows = (rows: IRowsState, cells: ICellsState, rowCell: IRowCel
     // reduce to row object
     rowCell.allIds
       .reduce((acc, rowCellId) => {
-        if (rowCell.byId[rowCellId].rowId === rowId) {
+        if (rowCell.byId[rowCellId].primaryKey === rowId) {
           const {
             id, label,
             metadata, columnId
-          } = cells.byId[rowCell.byId[rowCellId].cellId];
+          } = cells.byId[rowCell.byId[rowCellId].foreignKey];
           return {
             ...acc,
             [columnId]: {
