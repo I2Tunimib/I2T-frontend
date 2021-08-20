@@ -27,7 +27,10 @@ export const getTable = createAsyncThunk(
 
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,
-  async ({ baseUrl, data, reconciliator }: {baseUrl: string, data: any, reconciliator: string}) => {
+  async (
+    { baseUrl, data, reconciliator }: {baseUrl: string, data: any, reconciliator: string},
+    { rejectWithValue }
+  ) => {
     const response = await tableAPI.reconcile(baseUrl, data);
     return {
       data: response.data,

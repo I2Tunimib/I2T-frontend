@@ -1,6 +1,5 @@
 import {
   createSelector,
-  createSlice,
   current,
   PayloadAction
 } from '@reduxjs/toolkit';
@@ -70,7 +69,6 @@ export const tableSlice = createSliceWithRequests({
     },
     updateUI: (state, { payload }: PayloadAction<Partial<ITableUIState>>) => {
       state.ui = { ...state.ui, ...payload };
-      console.log(current(state));
     },
     updateCells: (state, { payload }: PayloadAction<Partial<ICellsState>>) => {
       const updatedCells = merge({}, state.entities.cells.byId, payload);

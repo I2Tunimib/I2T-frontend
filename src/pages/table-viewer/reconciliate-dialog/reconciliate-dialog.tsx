@@ -29,6 +29,7 @@ import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
 import { selectServicesConfig } from '@store/config/config.slice';
 import { reconcile } from '@store/table/table.thunk';
+import { useSnackbar } from 'notistack';
 import styles from './reconciliate-dialog.module.scss';
 
 const Transition = forwardRef((
@@ -39,6 +40,7 @@ const Transition = forwardRef((
 const ReconciliateDialog = () => {
   // keep track of selected service
   const [currentService, setCurrentService] = useState<any>();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const dispatch = useAppDispatch();
   // keep track of open state
@@ -68,6 +70,12 @@ const ReconciliateDialog = () => {
         dispatch(updateUI({
           openReconciliateDialog: false
         }));
+      })
+      .catch((e) => {
+        enqueueSnackbar(e.message, {
+          variant: 'error',
+          autoHideDuration: 3000
+        });
       });
   };
 
