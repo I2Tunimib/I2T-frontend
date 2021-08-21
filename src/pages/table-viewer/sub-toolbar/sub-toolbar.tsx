@@ -1,13 +1,14 @@
 import { Button, IconButton } from '@material-ui/core';
-import {
-  deleteColumn, selectIsColumnSelected,
-  selectSelectedCell, updateUI
-} from '@store/table/table.slice';
+// import {
+//   deleteColumn, selectIsColumnSelected,
+//   updateUI
+// } from '@store/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import clsx from 'clsx';
+import { selectIsCellSelected, selectIsMetadataButtonEnabled, updateUI } from '@store/table/table.slice';
 import styles from './sub-toolbar.module.scss';
 import ReconciliateDialog from '../reconciliate-dialog/reconciliate-dialog';
 import MetadataDialog from '../metadata-dialog/metadata-dialog';
@@ -30,11 +31,13 @@ const ActionGroup = ({ children, className }: any) => (
  */
 const SubToolbar = () => {
   const dispatch = useAppDispatch();
-  const isColumnSelected = useAppSelector(selectIsColumnSelected);
-  const selectedCell = useAppSelector(selectSelectedCell);
+  const isCellSelected = useAppSelector(selectIsCellSelected);
+  const isMetadataButtonEnabled = useAppSelector(selectIsMetadataButtonEnabled);
+  // const isColumnSelected = useAppSelector(selectIsColumnSelected);
+  // const selectedCell = useAppSelector(selectSelectedCell);
 
   const handleDelete = () => {
-    dispatch(deleteColumn(null));
+    // dispatch(deleteColumn(null));
   };
 
   return (
@@ -47,7 +50,7 @@ const SubToolbar = () => {
           <IconButton size="small">
             <RedoRoundedIcon />
           </IconButton>
-          <IconButton onClick={handleDelete} disabled={!isColumnSelected} size="small">
+          <IconButton onClick={handleDelete} disabled={!false} size="small">
             <DeleteOutlineRoundedIcon />
           </IconButton>
         </ActionGroup>
@@ -55,21 +58,20 @@ const SubToolbar = () => {
           <div className={clsx(
             styles.MenusContainer,
             {
-              [styles.Hidden]: !selectedCell,
-              [styles.Visible]: selectedCell
+              [styles.Hidden]: !isMetadataButtonEnabled,
+              [styles.Visible]: isMetadataButtonEnabled
             }
           )}
           >
             <ActionGroup className={clsx(
               styles.HiddenMenu,
               {
-                [styles.Hidden]: !selectedCell,
-                [styles.Visible]: selectedCell
+                [styles.Hidden]: !isMetadataButtonEnabled,
+                [styles.Visible]: isMetadataButtonEnabled
               }
             )}
             >
               <Button
-                disabled={!selectedCell}
                 variant="contained"
                 onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
               >
@@ -79,7 +81,7 @@ const SubToolbar = () => {
             <ActionGroup className={styles.VisibleMenu}>
               <Button
                 color="primary"
-                disabled={!isColumnSelected}
+                disabled={!isCellSelected}
                 onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
                 variant="contained"
               >

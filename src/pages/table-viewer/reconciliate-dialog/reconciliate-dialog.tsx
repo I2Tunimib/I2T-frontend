@@ -1,7 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,12 +10,6 @@ import {
   MenuItem,
   Select
 } from '@material-ui/core';
-import {
-  selectCellsReconciliationRequest,
-  selectReconcileRequestStatus,
-  selectReconciliateDialogOpen,
-  updateUI
-} from '@store/table/table.slice';
 import {
   forwardRef,
   Ref,
@@ -30,7 +23,11 @@ import { TransitionProps } from '@material-ui/core/transitions';
 import { selectServicesConfig } from '@store/config/config.slice';
 import { reconcile } from '@store/table/table.thunk';
 import { useSnackbar } from 'notistack';
-import styles from './reconciliate-dialog.module.scss';
+import {
+  selectAllSelectedCellForReconciliation, selectReconcileDialogStatus,
+  selectReconcileRequestStatus, updateUI
+} from '@store/table/table.slice';
+import { ButtonLoading } from '@components/core';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -44,11 +41,9 @@ const ReconciliateDialog = () => {
 
   const dispatch = useAppDispatch();
   // keep track of open state
-  const open = useAppSelector(selectReconciliateDialogOpen);
+  const open = useAppSelector(selectReconcileDialogStatus);
   const { reconciliators } = useAppSelector(selectServicesConfig);
-  // selected columns
-  const selectedColumnsCells = useAppSelector(selectCellsReconciliationRequest);
-  // loading state for reconciliation request
+  const selectedCells = useAppSelector(selectAllSelectedCellForReconciliation);
   const { loading } = useAppSelector(selectReconcileRequestStatus);
 
   useEffect(() => {
@@ -59,10 +54,9 @@ const ReconciliateDialog = () => {
   }, [reconciliators]);
 
   const handleConfirm = () => {
-    // fetchManualData();
     dispatch(reconcile({
       baseUrl: currentService.relativeUrl,
-      data: selectedColumnsCells,
+      data: selectedCells,
       reconciliator: currentService.name
     }))
       .unwrap()
@@ -80,9 +74,11 @@ const ReconciliateDialog = () => {
   };
 
   const handleClose = () => {
-    dispatch(updateUI({
-      openReconciliateDialog: false
-    }));
+    if (!loading) {
+      dispatch(updateUI({
+        openReconciliateDialog: false
+      }));
+    }
   };
 
   const handleChange = (event: ChangeEvent<{ value: unknown }>) => {
@@ -101,7 +97,6 @@ const ReconciliateDialog = () => {
       <DialogContent>
         <DialogContentText>
           Select a service to reconcile with:
-          {`LOADING: ${loading}`}
         </DialogContentText>
         {currentService && (
           <FormControl className="field">
@@ -121,9 +116,9 @@ const ReconciliateDialog = () => {
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <Button onClick={handleConfirm} color="primary">
-          {loading ? <CircularProgress className={styles.Progress} /> : 'Confirm'}
-        </Button>
+        <ButtonLoading onClick={handleConfirm} loading={loading}>
+          Confirm
+        </ButtonLoading>
       </DialogActions>
     </Dialog>
   );

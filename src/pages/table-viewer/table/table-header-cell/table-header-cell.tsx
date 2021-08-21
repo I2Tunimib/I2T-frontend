@@ -14,7 +14,7 @@ const TableHeaderCell = ({
   reconciliator,
   children,
   handleCellRightClick,
-  handleSelectChange
+  handleSelectedColumnChange
 }: any) => (
   <th
     onContextMenu={(e) => handleCellRightClick(e, 'column', id)}
@@ -30,7 +30,7 @@ const TableHeaderCell = ({
         && (
           <Checkbox
             checked={selected}
-            onChange={() => handleSelectChange(id)}
+            onChange={() => handleSelectedColumnChange(id)}
             inputProps={{ 'aria-label': 'primary checkbox' }}
           />
         )}

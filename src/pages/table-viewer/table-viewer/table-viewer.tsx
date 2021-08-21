@@ -1,27 +1,34 @@
 import { useParams } from 'react-router-dom';
 import {
   useMemo, useCallback,
-  MouseEvent, useEffect
+  MouseEvent, useEffect,
+  useState
 } from 'react';
-import {
-  selectAllCellsMetadata,
-  selectContextualMenuState,
-  selectSelectedCell,
-  selectSelectedColumnsIds,
-  selectTableData,
-  updateSelectedCell,
-  updateSelectedColumns,
-  updateUI
-} from '@store/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { Menu, MenuItem } from '@material-ui/core';
 import { getTable } from '@store/table/table.thunk';
+import {
+  selectCellMetadata,
+  selectDataTableFormat, selectSelectedCells,
+  selectSelectedColumns, updateCellSelection,
+  updateColumnSelection
+} from '@store/table/table.slice';
+import { ID } from '@store/table/interfaces/table';
 import { Table } from '../table';
 import Toolbar from '../toolbar/toolbar';
 import styles from './table-viewer.module.scss';
 
+interface MenuState {
+  mouseX: number | null;
+  mouseY: number | null;
+  target: {
+    id: string;
+    type: 'cell' | 'column';
+  } | null;
+}
+
 // contextual close state
-const contextualMenuCloseState = {
+const contextualMenuCloseState: MenuState = {
   mouseX: null,
   mouseY: null,
   target: null
@@ -29,90 +36,100 @@ const contextualMenuCloseState = {
 
 const TableViewer = () => {
   const dispatch = useAppDispatch();
-  // get table name from query params
+  const [menuPosition, setMenu] = useState(contextualMenuCloseState);
   const { name } = useParams<{ name: string }>();
+  const { columns, rows } = useAppSelector(selectDataTableFormat);
 
-  const { columns, data } = useAppSelector(selectTableData);
-  const selectedCell = useAppSelector(selectSelectedCell);
-  const selectedColumnsIds = useAppSelector(selectSelectedColumnsIds);
-  const contextualMenuState = useAppSelector(selectContextualMenuState);
-  const selectedMetadatasCells = useAppSelector(selectAllCellsMetadata);
+  const selectedColumns = useAppSelector(selectSelectedColumns);
+  const selectedCells = useAppSelector(selectSelectedCells);
+  const selectedCellMetadata = useAppSelector(selectCellMetadata);
 
   useEffect(() => {
     dispatch(getTable({ dataSource: 'tables', name }));
   }, [name]);
 
-  const handleRowCellClick = (cellId: string) => {
-    dispatch(updateSelectedCell(cellId));
+  const handleSelectedCellChange = (event: MouseEvent, id: ID) => {
+    if (event.ctrlKey) {
+      dispatch(updateCellSelection({ id, multi: true }));
+    } else {
+      dispatch(updateCellSelection({ id }));
+    }
   };
 
   const handleCellRightClick = (
     event: MouseEvent<HTMLDivElement>,
-    cellType: 'cell' | 'column', cellId: string
+    cellType: 'cell' | 'column', id: string
   ) => {
     event.preventDefault();
-    dispatch(updateUI({
-      contextualMenu: {
-        mouseX: event.clientX - 2,
-        mouseY: event.clientY - 4,
-        target: {
-          id: cellId,
-          type: cellType
-        }
+    handleSelectedCellChange(event, id);
+    setMenu({
+      mouseX: event.clientX - 2,
+      mouseY: event.clientY - 4,
+      target: {
+        id,
+        type: cellType
       }
-    }));
+    });
   };
 
   const handleMenuClose = () => {
-    dispatch(updateUI({
-      contextualMenu: contextualMenuCloseState
-    }));
+    setMenu(contextualMenuCloseState);
   };
 
-  const handleSelectChange = useCallback((id: string) => {
-    dispatch(updateSelectedColumns(id));
+  const handleSelectedColumnChange = useCallback((id: ID) => {
+    dispatch(updateColumnSelection(id));
   }, []);
 
   const updateTableData = (rowIndex: number, columnId: string, value: string) => {
     // dispatch(updateData({ rowIndex, columnId, value }));
   };
 
-  const dataTable = useMemo(() => data, [data]);
   const columnsTable = useMemo(() => columns, [columns]);
+  const rowsTable = useMemo(() => rows, [rows]);
 
   return (
     <>
       <Toolbar />
       <div className={styles.TableContainer}>
         <Table
-          data={dataTable}
+          data={rowsTable}
           columns={columnsTable}
-          getHeaderProps={({ selected, id, reconciliator }) => ({
-            selected,
+          getHeaderProps={({ id, reconciliator }) => ({
             id,
             reconciliator,
+            selected: !!selectedColumns[id],
             handleCellRightClick,
-            handleSelectChange
+            handleSelectedColumnChange
           })}
-          getCellProps={({ column, row, value }) => ({
-            column,
-            row,
-            value,
-            selectedCell,
-            selectedColumnsIds,
-            selectedMetadatasCells,
-            handleRowCellClick,
-            handleCellRightClick
-          })}
+          getCellProps={({ column, row, value }) => {
+            let selected = false;
+            let matching = false;
+            if (column.id !== 'index') {
+              selected = !!selectedColumns[column.id] || selectedCells[`${value.rowId}$${column.id}`];
+              matching = !!selectedCellMetadata[`${value.rowId}$${column.id}`];
+            }
+            return {
+              column,
+              row,
+              value,
+              selected,
+              matching,
+              // selectedCell,
+              // selectedColumnsIds,
+              // selectedMetadatasCells,
+              handleSelectedCellChange,
+              handleCellRightClick
+            };
+          }}
           updateTableData={updateTableData}
         />
         <Menu
-          open={contextualMenuState.mouseY !== null}
+          open={menuPosition.mouseY !== null}
           onClose={handleMenuClose}
           anchorReference="anchorPosition"
           anchorPosition={
-            contextualMenuState.mouseY !== null && contextualMenuState.mouseX !== null
-              ? { top: contextualMenuState.mouseY, left: contextualMenuState.mouseX }
+            menuPosition.mouseY !== null && menuPosition.mouseX !== null
+              ? { top: menuPosition.mouseY, left: menuPosition.mouseX }
               : undefined
           }
         >

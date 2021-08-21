@@ -1,8 +1,4 @@
-import {
-  ICellsState, IColumnCellState,
-  IColumnsState, IRowCellState,
-  IRowsState
-} from '@store/table/interfaces/table';
+import { ColumnState, RowState } from '@store/table/interfaces/table';
 
 export enum CsvSeparator {
   COMMA = ',',
@@ -17,93 +13,38 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
   const headerValues = headerRaw.split(separator) as string[];
   const rowsValues = rowsRaw.map((row: string) => row.split(separator)) as string[][];
 
-  let columns: IColumnsState = { byId: {}, allIds: [] as string[] };
-  let rows: IRowsState = { byId: {}, allIds: [] as string[] };
-  let cells: ICellsState = { byId: {}, allIds: [] as string[] };
-  let rowCell: IRowCellState = { byId: {}, allIds: [] as string[] };
-  let columnCell: IColumnCellState = { byId: {}, allIds: [] as string[] };
+  const columns = headerValues.reduce((acc, label, index) => ({
+    byId: {
+      ...acc.byId,
+      [`${label}`]: {
+        id: `${label}`,
+        label,
+        reconciliator: '',
+        extension: ''
+      }
+    },
+    allIds: [...acc.allIds, `${label}`]
+  }), { byId: {}, allIds: [] as string[] } as ColumnState);
 
-  headerValues.forEach((label, index) => {
-    const id = `${index + 1}`;
-    columns = {
-      byId: {
-        ...columns.byId,
-        [id]: {
-          id,
-          label,
-          reconciliator: '',
-          extension: ''
-        }
-      },
-      allIds: [...columns.allIds, id]
-    };
-  });
-
-  let cellId = 0;
-
-  rowsValues.forEach((rowValues, i) => {
-    const rowId = `${i + 1}`;
-    rows = {
-      byId: {
-        ...rows.byId,
-        [rowId]: {
-          id: rowId
-        }
-      },
-      allIds: [...rows.allIds, rowId]
-    };
-    headerValues.forEach((label, j) => {
-      const columnId = `${j + 1}`;
-      cellId += 1;
-
-      // construct cells state
-      cells = {
-        byId: {
-          ...cells.byId,
-          [`${cellId}`]: {
-            id: `${cellId}`,
-            columnId,
-            rowId,
-            label: rowValues[j],
+  const rows = rowsValues.reduce((allRows, rowValues, rowIndex) => ({
+    byId: {
+      ...allRows.byId,
+      [`r${rowIndex}`]: {
+        id: `r${rowIndex}`,
+        cells: headerValues.reduce((allRowCells, label, colIndex) => ({
+          ...allRowCells,
+          [label]: {
+            label: rowValues[colIndex],
             metadata: []
           }
-        },
-        allIds: [...cells.allIds, `${cellId}`]
-      };
-      // construct row-cell state
-      // I can use the cellId, it doesn't matter.
-      // It must be unique within this state
-      rowCell = {
-        byId: {
-          ...rowCell.byId,
-          [`${cellId}`]: {
-            id: `${cellId}`,
-            primaryKey: rowId,
-            foreignKey: `${cellId}`
-          }
-        },
-        allIds: [...rowCell.allIds, `${cellId}`]
-      };
-      // construct column-cell state
-      columnCell = {
-        byId: {
-          ...columnCell.byId,
-          [`${cellId}`]: {
-            id: `${cellId}`,
-            primaryKey: columnId,
-            foreignKey: `${cellId}`
-          }
-        },
-        allIds: [...columnCell.allIds, `${cellId}`]
-      };
-    });
-  });
+        }), {})
+      }
+    },
+    allIds: [...allRows.allIds, `r${rowIndex}`]
+  }), { byId: {}, allIds: [] as string[] } as RowState);
 
   return {
     columns,
-    rows,
-    cells,
-    rowCell,
-    columnCell
+    rows
   };
 };

@@ -1,47 +1,51 @@
 import { IRequestState } from '@store/requests/interfaces/requests';
 
-export interface ITableState extends IRequestState {
+export interface TableState extends IRequestState {
   entities: {
-    columns: IColumnsState;
-    rows: IRowsState;
-    cells: ICellsState;
-    columnCell: IColumnCellState;
-    rowCell: IRowCellState;
-  }
-  ui: ITableUIState;
+    columns: ColumnState;
+    rows: RowState;
+  },
+  ui: TableUIState;
 }
 
-export interface ITableUIState {
+export interface TableUIState {
   openReconciliateDialog: boolean;
   openMetadataDialog: boolean;
-  selectedColumnsIds: string[];
-  selectedCellId: string;
-  selectedCellMetadataId: ICellMetadataState;
-  contextualMenu: IContextualMenuState;
+  selectedColumnsIds: Record<ID, boolean>;
+  selectedRowsIds: Record<ID, boolean>;
+  selectedCellIds: Record<ID, boolean>;
+  selectedCellMetadataId: Record<ID, string>;
 }
 
-export interface IBaseState {
-  byId: Record<string, unknown>;
+export type ID = string;
+
+interface BaseState<T> {
+  byId: Record<ID, T>;
   allIds: string[];
 }
 
-export interface IColumnState {
-  id: string;
+export interface ColumnState extends BaseState<Column> {}
+export interface RowState extends BaseState<Row> {}
+
+export interface Column {
+  id: ID;
   label: string;
   reconciliator: string;
   extension: string;
 }
-
-export interface ICellState {
-  id: string;
-  rowId: string;
-  columnId: string;
-  label: string;
-  metadata: IMetadataState[];
+export interface Row {
+  id: ID;
+  cells: Record<ID, Cell>
 }
-
-export interface IMetadataState extends Record<string, unknown> {
-  id: string;
+export interface Cell {
+  id: ID;
+  rowId: ID;
+  columnId: ID;
+  label: string;
+  metadata: Metadata[];
+}
+export interface Metadata extends Record<string, unknown> {
+  id: ID;
   name: string;
   match: boolean;
   score: number;
@@ -50,66 +54,34 @@ export interface IMetadataState extends Record<string, unknown> {
     name: string;
   }[]
 }
-
-export interface IColumnsState extends IBaseState {
-  byId: {
-    [id: string]: IColumnState
-  }
+export interface JoinTable {
+  id: ID;
+  primaryId: ID;
+  foreignId: ID;
 }
 
-export interface IRowsState extends IBaseState {
-  byId: {
-    [id: string]: {
-      id: string;
-    }
-  }
-}
-
-export interface ICellsState extends IBaseState {
-  byId: {
-    [id: string]: ICellState
-  }
-}
-
-export interface IRowCellState extends IBaseState {
-  byId: {
-    [id: string]: {
-      id: string;
-      primaryKey: string;
-      foreignKey: string;
-    }
-  }
-}
-
-export interface IColumnCellState extends IBaseState {
-  byId: {
-    [id: string]: {
-      id: string;
-      primaryKey: string;
-      foreignKey: string;
-    }
-  }
-}
-
-export interface IContextualMenuState {
-  mouseX: number | null;
-  mouseY: number | null;
-  target: {
-    id: string;
-    type: 'cell' | 'column';
-  } | null;
-}
-
-export interface ICellMetadataState {
-  [cellId: string]: string;
-}
-
+/**
+ * ACTIONS
+ */
 export interface ISetDataAction {
   format: string;
   data: string;
 }
 
-export interface IAddCellsColumnMetadataAction {
-  data: Partial<ICellsState>;
+export interface UpdateSelectedCellsAction {
+  id: ID;
+  multi?: boolean;
+}
+
+export interface ReconciliationFulfilledAction {
+  data: {
+    id: ID,
+    metadata: Metadata[]
+  }[],
   reconciliator: string;
+}
+
+export interface UpdateCellMetadata {
+  metadataId: ID,
+  cellId: ID
 }

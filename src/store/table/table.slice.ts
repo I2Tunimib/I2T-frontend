@@ -1,148 +1,87 @@
+import { ISimpleColumn, ISimpleRow } from '@components/kit/simple-table/interfaces/simple-table';
 import {
   createSelector,
   current,
   PayloadAction
 } from '@reduxjs/toolkit';
 import { convertFromCSV } from '@services/converters/csv-converter';
+import { isEmptyObject } from '@services/utils/is-object';
 import { RootState } from '@store';
 import { createSliceWithRequests, getRequestStatus } from '@store/requests/requests-utils';
 import merge from 'lodash/merge';
 import {
-  IAddCellsColumnMetadataAction, ICellsState, ICellState,
-  IColumnCellState,
-  IColumnsState, IRowCellState, IRowsState,
-  ISetDataAction, ITableState, ITableUIState
+  ID,
+  ISetDataAction,
+  ReconciliationFulfilledAction,
+  TableState,
+  TableUIState,
+  UpdateCellMetadata,
+  UpdateSelectedCellsAction
 } from './interfaces/table';
 import { getTable, reconcile, TableEndpoints } from './table.thunk';
 
 // Define the initial state using that type
-const initialState: ITableState = {
+const initialState: TableState = {
   entities: {
     columns: { byId: {}, allIds: [] },
-    rows: { byId: {}, allIds: [] },
-    cells: { byId: {}, allIds: [] },
-    columnCell: { byId: {}, allIds: [] },
-    rowCell: { byId: {}, allIds: [] }
+    rows: { byId: {}, allIds: [] }
   },
   ui: {
     openReconciliateDialog: false,
     openMetadataDialog: false,
-    selectedColumnsIds: [],
-    selectedCellId: '',
-    selectedCellMetadataId: {},
-    contextualMenu: {
-      mouseX: null,
-      mouseY: null,
-      target: null
-    }
+    selectedColumnsIds: {},
+    selectedRowsIds: {},
+    selectedCellIds: {},
+    selectedCellMetadataId: {}
   },
   requests: { byId: {}, allIds: [] }
 };
 
-const removeColumns = (columns: IColumnsState, columnIds: string[]) => {
-  const newColsIds = columns.allIds
-    .filter((colId) => columnIds.indexOf(colId) === -1);
-  const newColumns = newColsIds.reduce((acc, colId) => ({
-    ...acc,
-    [colId]: columns.byId[colId]
-  }), {});
-  return { newColumns, newColsIds };
+const addObject = <T, K>(oldObject: T, newObject: T): T => ({
+  ...oldObject,
+  ...newObject
+});
+
+const updateObject = <T>(oldObject: T, fields: Partial<T>): T => merge(oldObject, fields);
+
+const removeObject = <T, K extends keyof T>(object: T, property: K): Omit<T, K> => {
+  const { [property]: omit, ...rest } = object;
+  return rest;
 };
 
-const removeCells = (cells: ICellsState, columnIds: string[]) => {
-  const newCellsIds = cells.allIds
-    .filter((cellId) => columnIds.indexOf(cells.byId[cellId].columnId) === -1);
-  const newCells = newCellsIds.reduce((acc, cellId) => ({
-    ...acc,
-    [cellId]: cells.byId[cellId]
-  }), {} as any);
-  return { newCells, newCellsIds };
-};
-
-const removeRowCells = (rowCell: IRowCellState, newCells: {[key: string]: any}) => {
-  const newRowCellIds = rowCell.allIds
-    .filter((rowId) => !!newCells[rowCell.byId[rowId].foreignKey]);
-  const newRowCell = newRowCellIds.reduce((acc, relationId) => ({
-    ...acc,
-    [relationId]: rowCell.byId[relationId]
-  }), {} as any);
-  return { newRowCell, newRowCellIds };
-};
-
-const removeColumnCells = (columnCell: IColumnCellState, columnIds: string[]) => {
-  const newColumnCellIds = columnCell.allIds
-    .filter((relationId) => columnIds
-      .indexOf(columnCell.byId[relationId].primaryKey) === -1);
-  const newColumnCell = newColumnCellIds.reduce((acc, relationId) => ({
-    ...acc,
-    [relationId]: columnCell.byId[relationId]
-  }), {});
-  return { newColumnCell, newColumnCellIds };
+const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
+  if (oldObject[id]) {
+    return removeObject(oldObject, id);
+  }
+  const newObject = { [id]: value };
+  return addObject(oldObject, newObject);
 };
 
 export const tableSlice = createSliceWithRequests({
   name: 'table',
-  // `createSlice` will infer the state type from the `initialState` argument
   initialState,
   reducers: {
-    updateSelectedColumns: (state, { payload }: PayloadAction<string>) => {
-      const { selectedColumnsIds } = state.ui;
-      if (!selectedColumnsIds.includes(payload)) {
-        // add id if not yet selected
-        return {
-          ...state,
-          ui: { ...state.ui, selectedColumnsIds: [...selectedColumnsIds, payload] }
-        };
+    updateCellMetadata: (state, action: PayloadAction<UpdateCellMetadata>) => {
+      const { selectedCellMetadataId } = state.ui;
+      const { metadataId, cellId } = action.payload;
+      selectedCellMetadataId[cellId] = metadataId;
+    },
+    updateColumnSelection: (state, action: PayloadAction<ID>) => {
+      const id = action.payload;
+      state.ui.selectedCellIds = {};
+      state.ui.selectedColumnsIds = toggleObject(state.ui.selectedColumnsIds, id, true);
+    },
+    updateCellSelection: (state, action: PayloadAction<UpdateSelectedCellsAction>) => {
+      const { id, multi } = action.payload;
+      if (multi) {
+        state.ui.selectedCellIds = toggleObject(state.ui.selectedCellIds, id, true);
+      } else if (!state.ui.selectedCellIds[id]) {
+        state.ui.selectedColumnsIds = {};
+        state.ui.selectedCellIds = addObject({}, { [id]: true });
       }
-      // remove id if already selected
-      return {
-        ...state,
-        ui: { ...state.ui, selectedColumnsIds: selectedColumnsIds.filter((id) => id !== payload) }
-      };
     },
-    updateSelectedCell: (state, { payload }: PayloadAction<string>) => {
-      const { selectedCellId } = state.ui;
-      // if cell is reclicked set to null
-      if (selectedCellId === payload) {
-        return { ...state, ui: { ...state.ui, selectedCellId: '' } };
-      }
-      // if new cell is clicked
-      return { ...state, ui: { ...state.ui, selectedCellId: payload } };
-    },
-    deleteColumn: (state, action: PayloadAction<void>) => {
-      const {
-        columns, columnCell,
-        cells, rowCell, rows
-      } = state.entities;
-      const { selectedColumnsIds } = state.ui;
-
-      const { newColumns, newColsIds } = removeColumns(columns, selectedColumnsIds);
-      const { newCells, newCellsIds } = removeCells(cells, selectedColumnsIds);
-      const { newRowCell, newRowCellIds } = removeRowCells(rowCell, newCells);
-      const { newColumnCell, newColumnCellIds } = removeColumnCells(columnCell, selectedColumnsIds);
-
-      if (newCellsIds.length === 0) {
-        state.entities.rows = {
-          byId: {},
-          allIds: []
-        };
-      }
-
-      state.entities.columns = { byId: newColumns, allIds: newColsIds };
-      state.entities.cells = { byId: newCells, allIds: newCellsIds };
-      state.entities.columnCell = { byId: newColumnCell, allIds: newColumnCellIds };
-      state.entities.rowCell = { byId: newRowCell, allIds: newRowCellIds };
-    },
-    updateUI: (state, { payload }: PayloadAction<Partial<ITableUIState>>) => {
-      state.ui = { ...state.ui, ...payload };
-    },
-    updateCells: (state, { payload }: PayloadAction<Partial<ICellsState>>) => {
-      const updatedCells = merge({}, state.entities.cells.byId, payload);
-      state.entities.cells.byId = updatedCells;
-    },
-    updateCellMetadata: (state, { payload }: PayloadAction<string>) => {
-      const { selectedCellMetadataId, selectedCellId } = state.ui;
-      selectedCellMetadataId[selectedCellId] = payload;
+    updateUI: (state, action: PayloadAction<Partial<TableUIState>>) => {
+      state.ui = { ...state.ui, ...action.payload };
     }
   },
   extraRules: (builder) => (
@@ -158,40 +97,38 @@ export const tableSlice = createSliceWithRequests({
       })
       // set metadata on request fulfilled
       .addCase(reconcile.fulfilled, (
-        state, { payload }: PayloadAction<IAddCellsColumnMetadataAction>
+        state, action: PayloadAction<ReconciliationFulfilledAction>
       ) => {
-        const { data, reconciliator } = payload;
+        const { data, reconciliator } = action.payload;
         // add metadata to cells
-        const updatedCells = merge({}, state.entities.cells.byId, data);
-        state.entities.cells.byId = updatedCells;
-        // add reconciliator name to columns
-        const { entities: { columns }, ui: { selectedColumnsIds } } = state;
-        selectedColumnsIds.forEach((id) => {
-          columns.byId[id].reconciliator = reconciliator;
+        data.forEach((item) => {
+          const [rowId, colId] = item.id.split('$');
+          state.entities.rows.byId[rowId].cells[colId].metadata = item.metadata;
+          // update column reconciliator
+          if (state.entities.columns.byId[colId].reconciliator !== reconciliator) {
+            state.entities.columns.byId[colId].reconciliator = reconciliator;
+          }
         });
       })
   )
 });
 
 export const {
-  setData,
-  updateCells,
-  deleteColumn,
-  addCellsColumnMetadata,
-  updateSelectedColumns,
-  updateSelectedCell,
   updateCellMetadata,
+  updateColumnSelection,
+  updateCellSelection,
   updateUI
 } = tableSlice.actions;
 
 // Input selectors
 const selectTableState = (state: RootState) => state.table;
 const selectEntitiesState = (state: RootState) => state.table.entities;
-const selectCellsState = (state: RootState) => state.table.entities.cells;
+const selectColumnsState = (state: RootState) => state.table.entities.columns;
+const selectRowsState = (state: RootState) => state.table.entities.rows;
 const selectUIState = (state: RootState) => state.table.ui;
-const selectSelectedColumnsState = (state: RootState) => state.table.ui.selectedColumnsIds;
-const selectSelectedCellState = (state: RootState) => state.table.ui.selectedCellId;
-const selectCellMetadataState = (state: RootState) => state.table.ui.selectedCellMetadataId;
+const selectSelectedColumnsIds = (state: RootState) => state.table.ui.selectedColumnsIds;
+const selectSelectedCellIds = (state: RootState) => state.table.ui.selectedCellIds;
+const selecteSelectedCellMetadataId = (state: RootState) => state.table.ui.selectedCellMetadataId;
 const selectRequests = (state: RootState) => state.table.requests;
 
 // Loading selectors
@@ -200,167 +137,311 @@ export const selectReconcileRequestStatus = createSelector(
   (requests) => getRequestStatus(requests, TableEndpoints.RECONCILE)
 );
 
-const getFormattedRows = (rows: IRowsState, cells: ICellsState, rowCell: IRowCellState) => (
-  rows.allIds.map((rowId) => (
-    // reduce to row object
-    rowCell.allIds
-      .reduce((acc, rowCellId) => {
-        if (rowCell.byId[rowCellId].primaryKey === rowId) {
-          const {
-            id, label,
-            metadata, columnId
-          } = cells.byId[rowCell.byId[rowCellId].foreignKey];
-          return {
-            ...acc,
-            [columnId]: {
-              id,
-              label,
-              metadata
-            }
-          };
-        }
-        return acc;
-      }, {})))
-);
-
-const getFormattedColumns = (columns: IColumnsState) => (
-  columns.allIds.map((colId) => {
-    const {
-      id: accessor, label: Header,
-      reconciliator, extension
-    } = (columns.byId[colId]);
-    return {
-      Header,
-      accessor,
-      reconciliator,
-      extension
-    };
-  })
-);
-
-export const selectTableData = createSelector(
+/**
+ * All selectors
+ */
+export const selectDataTableFormat = createSelector(
   selectEntitiesState,
-  ({
-    columns,
-    rows,
-    rowCell,
-    cells
-  }) => {
-    // return an array of rows formatted for the table component
-    const formattedRows = getFormattedRows(rows, cells, rowCell);
-    // return an array of columns formatted for the table component
-    const formattedColumns = getFormattedColumns(columns);
-    return {
-      data: formattedRows,
-      columns: formattedColumns
-    };
-  }
-);
-
-export const selectSelectedCellMetadata = createSelector(
-  selectSelectedCellState,
-  selectCellsState,
-  (cellId, cells) => (cellId ? cells.byId[cellId].metadata : [])
-);
-
-export const selectSelectedCellMetadataTableFormat = createSelector(
-  selectSelectedCellMetadata,
-  (metadata) => {
-    if (metadata.length === 0) {
-      return { columns: [], rows: [] };
-    }
-    const columns = Object.keys(metadata[0]).map((key) => ({
-      id: key
+  (entities) => {
+    const columns = entities.columns.allIds.map((colId) => ({
+      Header: entities.columns.byId[colId].label,
+      accessor: colId,
+      reconciliator: entities.columns.byId[colId].reconciliator,
+      extension: entities.columns.byId[colId].extension
     }));
-    const rows = metadata
-      .map((metadataItem) => ({
-        id: metadataItem.id,
-        cells: columns.map((col) => (col.id === 'type'
-          ? metadataItem.type[0].name
-          : metadataItem[col.id] as string))
-      }));
+    const rows = entities.rows.allIds.map((rowId) => (
+      Object.keys(entities.rows.byId[rowId].cells).reduce((acc, cellId) => ({
+        ...acc,
+        [cellId]: {
+          ...entities.rows.byId[rowId].cells[cellId],
+          rowId
+        }
+      }), {})
+    ));
     return { columns, rows };
   }
 );
 
-export const selectCellMetadata = createSelector(
-  selectCellMetadataState,
-  selectSelectedCellState,
-  (cellMetadataIds, cellId) => cellMetadataIds[cellId]
-);
-
-export const selectAllCellsMetadata = createSelector(
-  selectUIState,
-  (ui) => ui.selectedCellMetadataId
-);
-
-/**
- * Selector which returns ids of selected columns
- */
-export const selectSelectedColumnsIds = createSelector(
+export const selectSelectedColumns = createSelector(
   selectUIState,
   (ui) => ui.selectedColumnsIds
 );
 
-/**
- * Selector which returns if at least a column is selected
- */
-export const selectIsColumnSelected = createSelector(
-  selectTableState,
-  ({ ui: { selectedColumnsIds } }) => selectedColumnsIds.length > 0
+export const selectSelectedCells = createSelector(
+  selectUIState,
+  (ui) => ui.selectedCellIds
 );
 
-/**
- * Selector which returns the state of reconciliate dialog
- */
-export const selectReconciliateDialogOpen = createSelector(
+export const selectCellMetadata = createSelector(
+  selectUIState,
+  (ui) => ui.selectedCellMetadataId
+);
+
+export const selectReconcileDialogStatus = createSelector(
   selectTableState,
   ({ ui }) => ui.openReconciliateDialog
 );
 
-/**
- * Selector which returns cells selected by columns
- */
-export const selectSelectedColumnsCells = createSelector(
-  selectEntitiesState,
-  selectSelectedColumnsState,
-  ({ cells }, selectedColumnsIds) => selectedColumnsIds.reduce((acc, colId) => {
-    const filteredCells = cells.allIds
-      .filter((cellId) => cells.byId[cellId].columnId === colId)
-      .map((filteredCellId) => cells.byId[filteredCellId]);
-
-    return [...acc, ...filteredCells];
-  }, [] as ICellState[])
+export const selectMetadataDialogStatus = createSelector(
+  selectTableState,
+  ({ ui }) => ui.openMetadataDialog
 );
 
-/**
- * Selector which returns cells selected by columns processed for reconciliation
- * request
- */
-export const selectCellsReconciliationRequest = createSelector(
-  selectSelectedColumnsCells,
-  (cells) => cells.map(({ id, label }) => ({ id, label }))
+export const selectAllSelectedCellForReconciliation = createSelector(
+  selectSelectedColumnsIds,
+  selectSelectedCellIds,
+  selectRowsState,
+  (colIds, cellIds, rows) => {
+    const selectedFromCells = Object.keys(cellIds).map((cellId) => {
+      const [rowId, colId] = cellId.split('$');
+      return {
+        id: cellId,
+        label: rows.byId[rowId].cells[colId].label
+      };
+    });
+    const selectedFromColumns = Object.keys(colIds).reduce((acc, colId) => (
+      [
+        ...acc,
+        ...rows.allIds.map((rowId) => ({
+          id: `${rowId}$${colId}`,
+          label: rows.byId[rowId].cells[colId].label
+        }))
+      ]
+    ), [] as any[]);
+    return selectedFromCells.concat(selectedFromColumns);
+  }
 );
 
-/**
- * Selector which returns the state of the metadata dialog
- */
-export const selectMetadataDialogOpen = createSelector(
-  selectUIState,
-  (ui) => ui.openMetadataDialog
+export const selectIsCellSelected = createSelector(
+  selectSelectedColumnsIds,
+  selectSelectedCellIds,
+  (colIds, cellIds) => !isEmptyObject(colIds) || !isEmptyObject(cellIds)
 );
 
-/**
- * Selector which returns the state of the selected cell
- */
-export const selectSelectedCell = createSelector(
-  selectUIState,
-  (ui) => ui.selectedCellId
+export const selectIsMetadataButtonEnabled = createSelector(
+  selectSelectedColumnsIds,
+  selectSelectedCellIds,
+  (colIds, cellIds) => isEmptyObject(colIds) && Object.keys(cellIds).length === 1
 );
 
-export const selectContextualMenuState = createSelector(
-  selectUIState,
-  (ui) => ui.contextualMenu
+export const selectCellIfOne = createSelector(
+  selectIsMetadataButtonEnabled,
+  selectSelectedCellIds,
+  selectRowsState,
+  (isMetadataButtonEnabled, selectedCells, rows) => {
+    if (!isMetadataButtonEnabled) {
+      return '';
+    }
+    const selectedCellId = Object.keys(selectedCells)[0];
+    return selectedCellId;
+  }
 );
+
+export const selectMetdataCellId = createSelector(
+  selectCellIfOne,
+  selecteSelectedCellMetadataId,
+  (cellId, metadataCell) => metadataCell[cellId]
+);
+
+export const selectSelectedCellMetadataTableFormat = createSelector(
+  selectCellIfOne,
+  selectRowsState,
+  (cellId, rows): {
+    columns: ISimpleColumn[], rows: ISimpleRow[], selectedCellId: string
+  } => {
+    if (!cellId) {
+      return { columns: [] as ISimpleColumn[], rows: [] as ISimpleRow[], selectedCellId: '' };
+    }
+    const [rowId, colId] = cellId.split('$');
+    const { metadata } = rows.byId[rowId].cells[colId];
+
+    if (metadata.length > 0) {
+      const formattedCols = Object.keys(metadata[0]).map((key) => ({
+        id: key
+      }));
+      const formattedRows = rows.byId[rowId].cells[colId].metadata
+        .map((metadataItem) => ({
+          id: metadataItem.id,
+          cells: formattedCols.map((col) => (col.id === 'type'
+            ? metadataItem.type[0].name
+            : metadataItem[col.id] as string))
+        }));
+      return { columns: formattedCols, rows: formattedRows, selectedCellId: cellId };
+    }
+    return { columns: [] as ISimpleColumn[], rows: [] as ISimpleRow[], selectedCellId: '' };
+  }
+);
+// ...rows.allIds.map((rowId) => ({
+//   [`${rowId}-${colId}`]: rows.byId[rowId].cells[colId].label
+// }));
+// const selectCellsState = (state: RootState) => state.table.entities.cells;
+// const selectUIState = (state: RootState) => state.table.ui;
+// const selectSelectedColumnsState = (state: RootState) => state.table.ui.selectedColumnsIds;
+// const selectSelectedCellState = (state: RootState) => state.table.ui.selectedCellId;
+// const selectCellMetadataState = (state: RootState) => state.table.ui.selectedCellMetadataId;
+// const selectRequests = (state: RootState) => state.table.requests;
+
+// const getFormattedRows = (rows: IRowsState, cells: ICellsState, rowCell: IRowCellState) => (
+//   rows.allIds.map((rowId) => (
+//     // reduce to row object
+//     rowCell.allIds
+//       .reduce((acc, rowCellId) => {
+//         if (rowCell.byId[rowCellId].primaryKey === rowId) {
+//           const {
+//             id, label,
+//             metadata, columnId
+//           } = cells.byId[rowCell.byId[rowCellId].foreignKey];
+//           return {
+//             ...acc,
+//             [columnId]: {
+//               id,
+//               label,
+//               metadata
+//             }
+//           };
+//         }
+//         return acc;
+//       }, {})))
+// );
+
+// const getFormattedColumns = (columns: IColumnsState) => (
+//   columns.allIds.map((colId) => {
+//     const {
+//       id: accessor, label: Header,
+//       reconciliator, extension
+//     } = (columns.byId[colId]);
+//     return {
+//       Header,
+//       accessor,
+//       reconciliator,
+//       extension
+//     };
+//   })
+// );
+
+// export const selectTableData = createSelector(
+//   selectEntitiesState,
+//   ({
+//     columns,
+//     rows,
+//     rowCell,
+//     cells
+//   }) => {
+//     // return an array of rows formatted for the table component
+//     const formattedRows = getFormattedRows(rows, cells, rowCell);
+//     // return an array of columns formatted for the table component
+//     const formattedColumns = getFormattedColumns(columns);
+//     return {
+//       data: formattedRows,
+//       columns: formattedColumns
+//     };
+//   }
+// );
+
+// export const selectSelectedCellMetadata = createSelector(
+//   selectSelectedCellState,
+//   selectCellsState,
+//   (cellId, cells) => (cellId ? cells.byId[cellId].metadata : [])
+// );
+
+// export const selectSelectedCellMetadataTableFormat = createSelector(
+//   selectSelectedCellMetadata,
+//   (metadata) => {
+//     if (metadata.length === 0) {
+//       return { columns: [], rows: [] };
+//     }
+//     const columns = Object.keys(metadata[0]).map((key) => ({
+//       id: key
+//     }));
+//     const rows = metadata
+//       .map((metadataItem) => ({
+//         id: metadataItem.id,
+//         cells: columns.map((col) => (col.id === 'type'
+//           ? metadataItem.type[0].name
+//           : metadataItem[col.id] as string))
+//       }));
+//     return { columns, rows };
+//   }
+// );
+
+// export const selectCellMetadata = createSelector(
+//   selectCellMetadataState,
+//   selectSelectedCellState,
+//   (cellMetadataIds, cellId) => cellMetadataIds[cellId]
+// );
+
+// export const selectAllCellsMetadata = createSelector(
+//   selectUIState,
+//   (ui) => ui.selectedCellMetadataId
+// );
+
+// /**
+//  * Selector which returns ids of selected columns
+//  */
+// export const selectSelectedColumnsIds = createSelector(
+//   selectUIState,
+//   (ui) => ui.selectedColumnsIds
+// );
+
+// /**
+//  * Selector which returns if at least a column is selected
+//  */
+// export const selectIsColumnSelected = createSelector(
+//   selectTableState,
+//   ({ ui: { selectedColumnsIds } }) => selectedColumnsIds.length > 0
+// );
+
+// /**
+//  * Selector which returns the state of reconciliate dialog
+//  */
+// export const selectReconciliateDialogOpen = createSelector(
+//   selectTableState,
+//   ({ ui }) => ui.openReconciliateDialog
+// );
+
+// /**
+//  * Selector which returns cells selected by columns
+//  */
+// export const selectSelectedColumnsCells = createSelector(
+//   selectEntitiesState,
+//   selectSelectedColumnsState,
+//   ({ cells }, selectedColumnsIds) => selectedColumnsIds.reduce((acc, colId) => {
+//     const filteredCells = cells.allIds
+//       .filter((cellId) => cells.byId[cellId].columnId === colId)
+//       .map((filteredCellId) => cells.byId[filteredCellId]);
+
+//     return [...acc, ...filteredCells];
+//   }, [] as ICellState[])
+// );
+
+// /**
+//  * Selector which returns cells selected by columns processed for reconciliation
+//  * request
+//  */
+// export const selectCellsReconciliationRequest = createSelector(
+//   selectSelectedColumnsCells,
+//   (cells) => cells.map(({ id, label }) => ({ id, label }))
+// );
+
+// /**
+//  * Selector which returns the state of the metadata dialog
+//  */
+// export const selectMetadataDialogOpen = createSelector(
+//   selectUIState,
+//   (ui) => ui.openMetadataDialog
+// );
+
+// /**
+//  * Selector which returns the state of the selected cell
+//  */
+// export const selectSelectedCell = createSelector(
+//   selectUIState,
+//   (ui) => ui.selectedCellId
+// );
+
+// export const selectContextualMenuState = createSelector(
+//   selectUIState,
+//   (ui) => ui.contextualMenu
+// );
 
 export default tableSlice.reducer;

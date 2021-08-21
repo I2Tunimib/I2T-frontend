@@ -12,30 +12,30 @@ interface ITableRowCellProps extends Record<string, any> { }
  */
 const TableRowCell = ({
   children,
-  column: { selected, id: columnId },
+  column: { id: columnId },
   row: { id: rowId },
+  selected,
+  matching,
   selectedColumnsIds,
-  selectedCell,
   selectedMetadatasCells,
   value,
   handleCellRightClick,
-  handleRowCellClick
+  handleSelectedCellChange
 }: ITableRowCellProps) => {
   const getBadgeStatus = (match: boolean) => {
-    const idMetadata = selectedMetadatasCells[value.id];
-    if (idMetadata) {
+    if (matching) {
       return 'Success';
     }
-    return value.metadata.match ? 'Success' : 'Warn';
+    return match ? 'Success' : 'Warn';
   };
 
   return (
     <td
-      onContextMenu={(e) => handleCellRightClick(e, 'cell', value.id)}
+      onContextMenu={(e) => handleCellRightClick(e, 'cell', `${value.rowId}$${columnId}`)}
       className={clsx(
         styles.TableRowCell,
         {
-          [styles.SelectedColumn]: selectedColumnsIds.includes(columnId)
+          [styles.SelectedColumn]: false
         }
       )}
     >
@@ -58,10 +58,10 @@ const TableRowCell = ({
             className={clsx(
               styles.SelectableOverlay,
               {
-                [styles.Selected]: selectedCell === value.id
+                [styles.Selected]: selected
               }
             )}
-            onClick={() => handleRowCellClick(value.id)}
+            onClick={(event) => handleSelectedCellChange(event, `${value.rowId}$${columnId}`)}
           />
         )}
     </td>

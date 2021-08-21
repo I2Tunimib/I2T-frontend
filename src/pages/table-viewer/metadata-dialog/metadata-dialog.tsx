@@ -6,10 +6,10 @@ import {
   DialogContentText,
   DialogTitle
 } from '@material-ui/core';
-import {
-  selectCellMetadata, selectMetadataDialogOpen,
-  selectSelectedCellMetadataTableFormat, updateCellMetadata, updateUI
-} from '@store/table/table.slice';
+// import {
+//   selectMetadataDialogOpen,
+//   updateCellMetadata, updateUI
+// } from '@store/table/table.slice';
 import {
   forwardRef,
   Ref,
@@ -21,6 +21,10 @@ import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { SimpleTable } from '@components/kit';
+import {
+  selectMetadataDialogStatus, selectMetdataCellId, selectSelectedCellMetadataTableFormat,
+  updateCellMetadata, updateUI
+} from '@store/table/table.slice';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -30,10 +34,9 @@ const Transition = forwardRef((
 const MetadataDialog = () => {
   const dispatch = useAppDispatch();
   const [selectedMetadata, setSelectedMetadata] = useState<string>('');
-
-  const open = useAppSelector(selectMetadataDialogOpen);
-  const { columns, rows } = useAppSelector(selectSelectedCellMetadataTableFormat);
-  const selectedMetadataId = useAppSelector(selectCellMetadata);
+  const open = useAppSelector(selectMetadataDialogStatus);
+  const { columns, rows, selectedCellId } = useAppSelector(selectSelectedCellMetadataTableFormat);
+  const selectedMetadataId = useAppSelector(selectMetdataCellId);
 
   useEffect(() => {
     setSelectedMetadata(selectedMetadataId);
@@ -53,7 +56,7 @@ const MetadataDialog = () => {
 
   const handleConfirm = () => {
     // update global state if confirmed
-    dispatch(updateCellMetadata(selectedMetadata));
+    dispatch(updateCellMetadata({ metadataId: selectedMetadata, cellId: selectedCellId }));
     handleClose();
   };
 
