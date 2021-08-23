@@ -35,10 +35,9 @@ const initialState: TableState = {
   },
   _requests: { byId: {}, allIds: [] },
   _draft: {
-    changes: {},
-    currentVersion: -1,
-    canUndo: false,
-    canRedo: false
+    past: [],
+    present: [],
+    future: []
   }
 };
 
@@ -144,7 +143,7 @@ const selectSelectedColumnsIds = (state: RootState) => state.table.ui.selectedCo
 const selectSelectedCellIds = (state: RootState) => state.table.ui.selectedCellIds;
 const selecteSelectedCellMetadataId = (state: RootState) => state.table.ui.selectedCellMetadataId;
 const selectRequests = (state: RootState) => state.table._requests;
-const selectDraft = (state: RootState) => state.table._draft;
+const selectDraftState = (state: RootState) => state.table._draft;
 
 /**
  * All selectors
@@ -161,9 +160,13 @@ export const selectGetTableRequestStatus = createSelector(
 );
 
 // Undo selectors
-export const selectUndoState = createSelector(
-  selectDraft,
-  (draft) => ({ canUndo: draft.canUndo, canRedo: draft.canRedo })
+export const selectCanUndo = createSelector(
+  selectDraftState,
+  (draft) => draft.past.length > 0
+);
+export const selectCanRedo = createSelector(
+  selectDraftState,
+  (draft) => draft.future.length > 0
 );
 
 /**

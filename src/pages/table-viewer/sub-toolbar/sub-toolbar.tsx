@@ -10,8 +10,9 @@ import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import clsx from 'clsx';
 import {
   redo,
+  selectCanRedo,
+  selectCanUndo,
   selectIsCellSelected, selectIsMetadataButtonEnabled,
-  selectUndoState,
   undo, updateUI
 } from '@store/table/table.slice';
 import styles from './sub-toolbar.module.scss';
@@ -38,7 +39,8 @@ const SubToolbar = () => {
   const dispatch = useAppDispatch();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsMetadataButtonEnabled);
-  const { canUndo, canRedo } = useAppSelector(selectUndoState);
+  const canUndo = useAppSelector(selectCanUndo);
+  const canRedo = useAppSelector(selectCanRedo);
   // const isColumnSelected = useAppSelector(selectIsColumnSelected);
   // const selectedCell = useAppSelector(selectSelectedCell);
 

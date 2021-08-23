@@ -12,10 +12,9 @@ import produce, {
  */
 export interface UndoEnhancedState {
   _draft: {
-    changes: Record<string, PatchItem>,
-    currentVersion: number,
-    canUndo: boolean;
-    canRedo: boolean;
+    past: Patch[][];
+    present: Patch[];
+    future: Patch[][];
   }
 }
 /**
@@ -49,27 +48,25 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
   // eslint-disable-next-line consistent-return
   return produce(nextState, (draft) => {
     if (draft) {
-      draft._draft.currentVersion += 1;
-      draft._draft.changes[draft._draft.currentVersion] = {
-        redo: patches,
-        undo: inversePatches
-      };
-      draft._draft.canUndo = true;
-      draft._draft.canRedo = false;
+      if (draft._draft.future.length > 0) {
+        draft._draft.future = [];
+      }
+      draft._draft.past.push([...draft._draft.present, ...inversePatches]);
+      draft._draft.present = patches;
     }
   }) as T;
 };
 
 /**
- * Apply undo patches and set 'canUndo' and 'canRedo' states.
- * Additional mutations can be passed to this function.
+ * Apply undo patches and set past, present and future patches.
  */
 export const applyUndoPatches = <T extends UndoEnhancedState>(
   state: T, mutations?: (draft: T) => void
 ) => {
-  const newDraft = applyPatches(state, state._draft.changes[state._draft.currentVersion--].undo);
-  newDraft._draft.canUndo = !!newDraft._draft.changes[state._draft.currentVersion];
-  newDraft._draft.canRedo = true;
+  const presentPatch = state._draft.past.pop();
+  state._draft.future.push(state._draft.present);
+  state._draft.present = presentPatch || [];
+  const newDraft = applyPatches(state, state._draft.present);
   if (mutations) {
     mutations(newDraft);
   }
@@ -77,15 +74,15 @@ export const applyUndoPatches = <T extends UndoEnhancedState>(
 };
 
 /**
- * Apply redo patches and set 'canUndo' and 'canRedo' states.
- * Additional mutations can be passed to this function.
+ * Apply redo patches and set past, present and future patches.
  */
 export const applyRedoPatches = <T extends UndoEnhancedState>(
   state: T, mutations?: (draft: T) => void
 ) => {
-  const newDraft = applyPatches(state, state._draft.changes[++state._draft.currentVersion].redo);
-  newDraft._draft.canUndo = true;
-  newDraft._draft.canRedo = !!newDraft._draft.changes[newDraft._draft.currentVersion + 1];
+  const presentPatch = state._draft.future.pop();
+  state._draft.past.push(state._draft.present);
+  state._draft.present = presentPatch || [];
+  const newDraft = applyPatches(state, state._draft.present);
   if (mutations) {
     mutations(newDraft);
   }
