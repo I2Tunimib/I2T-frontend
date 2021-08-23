@@ -1,4 +1,4 @@
-import { ISimpleColumn, ISimpleRow } from '@components/kit/simple-table/interfaces/simple-table';
+import { ISimpleColumn, ISimpleRow } from '@components/kit/SimpleTable';
 import {
   createSelector,
   PayloadAction

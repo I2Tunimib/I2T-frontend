@@ -1,8 +1,8 @@
 import { SvgIconComponent } from '@material-ui/icons';
 import { FC, HTMLAttributes } from 'react';
 import clsx from 'clsx';
-import ButtonBase from '../button-base/button-base';
-import styles from './button.module.scss';
+import ButtonBase from '../ButtonBase/ButtonBase';
+import styles from './Button.module.scss';
 
 export interface IButtonProps extends HTMLAttributes<HTMLDivElement> {
   type?: 'button' | 'submit'; // type of button

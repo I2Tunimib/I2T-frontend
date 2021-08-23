@@ -1,4 +1,4 @@
-import styles from './toolbar.module.scss';
+import styles from './Toolbar.module.scss';
 
 const Toolbar = () => (
   <div className={styles.Header}>

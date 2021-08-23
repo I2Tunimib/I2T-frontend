@@ -1,3 +1,3 @@
-import HomepageContainer from './homepage-container/homepage-container';
+import Homepage from './Homepage';
 
-export { HomepageContainer };
+export { Homepage };

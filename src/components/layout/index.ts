@@ -1,5 +1,5 @@
-import Toolbar from './toolbar/toolbar';
-import RouteContainer from './route-container/route-container';
+import Toolbar from './Toolbar';
+import RouteContainer from './RouteContainer';
 
 /**
  * Exportable components

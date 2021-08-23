@@ -1,8 +1,8 @@
 import { RouteContainer } from '@components/layout';
-import { IRoute } from '@components/layout/route-container/interfaces';
+import { IRoute } from '@components/layout/RouteContainer';
 import { useAppDispatch } from '@hooks/store';
-import { HomepageContainer } from '@pages/homepage';
-import { TableViewer } from '@pages/table-viewer';
+import { Homepage } from '@pages/Homepage';
+import { TableViewer } from '@pages/TableViewer';
 import { getConfig } from '@store/config/config.thunk';
 import React, { useEffect } from 'react';
 
@@ -13,7 +13,7 @@ const routes: IRoute[] = [
   {
     path: '/',
     exact: true,
-    Component: HomepageContainer
+    Component: Homepage
   },
   {
     path: '/table/:name',

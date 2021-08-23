@@ -1,4 +1,4 @@
-import Button from './button/button';
-import ButtonLoading from './button-loading/button-loading';
+import Button from './Button';
+import ButtonLoading from './ButtonLoading/ButtonLoading';
 
 export { Button, ButtonLoading };

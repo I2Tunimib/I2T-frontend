@@ -3,7 +3,7 @@ import { Chip } from '@material-ui/core';
 import { ChangeEvent, useRef } from 'react';
 import PublishRoundedIcon from '@material-ui/icons/PublishRounded';
 import DescriptionRoundedIcon from '@material-ui/icons/DescriptionRounded';
-import styles from './uploader.module.scss';
+import styles from './Uploader.module.scss';
 
 interface IUploaderProps {
   selectedFile: File | undefined,
