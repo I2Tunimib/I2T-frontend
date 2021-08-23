@@ -1,6 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { enablePatches } from 'immer';
 import tableReducer from './table/table.slice';
 import configReducer from './config/config.slice';
+
+enablePatches();
 
 export const store = configureStore({
   reducer: {

@@ -1,6 +1,7 @@
-import { IRequestState } from '@store/requests/interfaces/requests';
+import { RequestEnhancedState } from '@store/enhancers/requests';
+import { UndoEnhancedState } from '@store/enhancers/undo';
 
-export interface TableState extends IRequestState {
+export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   entities: {
     columns: ColumnState;
     rows: RowState;

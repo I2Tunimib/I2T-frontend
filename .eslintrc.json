@@ -20,6 +20,9 @@
         "@typescript-eslint"
     ],
     "rules": {
+        "arrow-body-style": "off",
+        "no-plusplus": "off",
+        "no-underscore-dangle": "off",
         "react/require-default-props": "off",
         "react/prop-types": "off",
         "no-shadow": "off",

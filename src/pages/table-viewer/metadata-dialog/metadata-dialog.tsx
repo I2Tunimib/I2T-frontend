@@ -77,13 +77,19 @@ const MetadataDialog = () => {
         <DialogContentText>
           Choose to which entity the cell is reconciliated to:
         </DialogContentText>
-        <SimpleTable
-          selectableRows
-          selectedValue={selectedMetadata}
-          handleSelectRow={handleSelectRow}
-          columns={columns}
-          rows={rows}
-        />
+        {columns.length === 0 && rows.length === 0
+          ? 'The cell doesn\'t have metadata'
+          : (
+            <SimpleTable
+              selectableRows
+              selectedValue={selectedMetadata}
+              handleSelectRow={handleSelectRow}
+              columns={columns}
+              rows={rows}
+            />
+          )
+        }
+
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancel}>

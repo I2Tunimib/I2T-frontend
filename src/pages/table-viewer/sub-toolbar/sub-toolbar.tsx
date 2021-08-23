@@ -8,7 +8,12 @@ import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import clsx from 'clsx';
-import { selectIsCellSelected, selectIsMetadataButtonEnabled, updateUI } from '@store/table/table.slice';
+import {
+  redo,
+  selectIsCellSelected, selectIsMetadataButtonEnabled,
+  selectUndoState,
+  undo, updateUI
+} from '@store/table/table.slice';
 import styles from './sub-toolbar.module.scss';
 import ReconciliateDialog from '../reconciliate-dialog/reconciliate-dialog';
 import MetadataDialog from '../metadata-dialog/metadata-dialog';
@@ -33,6 +38,7 @@ const SubToolbar = () => {
   const dispatch = useAppDispatch();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsMetadataButtonEnabled);
+  const { canUndo, canRedo } = useAppSelector(selectUndoState);
   // const isColumnSelected = useAppSelector(selectIsColumnSelected);
   // const selectedCell = useAppSelector(selectSelectedCell);
 
@@ -44,10 +50,10 @@ const SubToolbar = () => {
     <>
       <div className={styles.Container}>
         <ActionGroup>
-          <IconButton size="small">
+          <IconButton disabled={!canUndo} onClick={() => dispatch(undo())} size="small">
             <UndoRoundedIcon />
           </IconButton>
-          <IconButton size="small">
+          <IconButton disabled={!canRedo} onClick={() => dispatch(redo())} size="small">
             <RedoRoundedIcon />
           </IconButton>
           <IconButton onClick={handleDelete} disabled={!false} size="small">

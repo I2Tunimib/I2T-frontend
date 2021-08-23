@@ -5,11 +5,11 @@ import {
   useState
 } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { Menu, MenuItem } from '@material-ui/core';
+import { LinearProgress, Menu, MenuItem } from '@material-ui/core';
 import { getTable } from '@store/table/table.thunk';
 import {
   selectCellMetadata,
-  selectDataTableFormat, selectSelectedCells,
+  selectDataTableFormat, selectGetTableRequestStatus, selectSelectedCells,
   selectSelectedColumns, updateCellSelection,
   updateColumnSelection
 } from '@store/table/table.slice';
@@ -36,10 +36,10 @@ const contextualMenuCloseState: MenuState = {
 
 const TableViewer = () => {
   const dispatch = useAppDispatch();
-  const [menuPosition, setMenu] = useState(contextualMenuCloseState);
+  const [menuState, setMenuState] = useState(contextualMenuCloseState);
   const { name } = useParams<{ name: string }>();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
-
+  const { loading } = useAppSelector(selectGetTableRequestStatus);
   const selectedColumns = useAppSelector(selectSelectedColumns);
   const selectedCells = useAppSelector(selectSelectedCells);
   const selectedCellMetadata = useAppSelector(selectCellMetadata);
@@ -61,8 +61,10 @@ const TableViewer = () => {
     cellType: 'cell' | 'column', id: string
   ) => {
     event.preventDefault();
-    handleSelectedCellChange(event, id);
-    setMenu({
+    if (cellType === 'cell') {
+      handleSelectedCellChange(event, id);
+    }
+    setMenuState({
       mouseX: event.clientX - 2,
       mouseY: event.clientY - 4,
       target: {
@@ -73,7 +75,7 @@ const TableViewer = () => {
   };
 
   const handleMenuClose = () => {
-    setMenu(contextualMenuCloseState);
+    setMenuState(contextualMenuCloseState);
   };
 
   const handleSelectedColumnChange = useCallback((id: ID) => {
@@ -91,45 +93,46 @@ const TableViewer = () => {
     <>
       <Toolbar />
       <div className={styles.TableContainer}>
-        <Table
-          data={rowsTable}
-          columns={columnsTable}
-          getHeaderProps={({ id, reconciliator }) => ({
-            id,
-            reconciliator,
-            selected: !!selectedColumns[id],
-            handleCellRightClick,
-            handleSelectedColumnChange
-          })}
-          getCellProps={({ column, row, value }) => {
-            let selected = false;
-            let matching = false;
-            if (column.id !== 'index') {
-              selected = !!selectedColumns[column.id] || selectedCells[`${value.rowId}$${column.id}`];
-              matching = !!selectedCellMetadata[`${value.rowId}$${column.id}`];
-            }
-            return {
-              column,
-              row,
-              value,
-              selected,
-              matching,
-              // selectedCell,
-              // selectedColumnsIds,
-              // selectedMetadatasCells,
-              handleSelectedCellChange,
-              handleCellRightClick
-            };
-          }}
-          updateTableData={updateTableData}
-        />
+        {!loading ? (
+          <Table
+            data={rowsTable}
+            columns={columnsTable}
+            getHeaderProps={({ id, reconciliator }) => ({
+              id,
+              reconciliator,
+              selected: !!selectedColumns[id],
+              handleCellRightClick,
+              handleSelectedColumnChange
+            })}
+            getCellProps={({ column, row, value }) => {
+              let selected = false;
+              let matching = false;
+              if (column.id !== 'index') {
+                selected = !!selectedColumns[column.id] || selectedCells[`${value.rowId}$${column.id}`];
+                matching = !!selectedCellMetadata[`${value.rowId}$${column.id}`];
+              }
+              return {
+                column,
+                row,
+                value,
+                selected,
+                matching,
+                handleSelectedCellChange,
+                handleCellRightClick
+              };
+            }}
+            updateTableData={updateTableData}
+          />
+        ) : <LinearProgress />
+        }
+
         <Menu
-          open={menuPosition.mouseY !== null}
+          open={menuState.mouseY !== null}
           onClose={handleMenuClose}
           anchorReference="anchorPosition"
           anchorPosition={
-            menuPosition.mouseY !== null && menuPosition.mouseX !== null
-              ? { top: menuPosition.mouseY, left: menuPosition.mouseX }
+            menuState.mouseY !== null && menuState.mouseX !== null
+              ? { top: menuState.mouseY, left: menuState.mouseX }
               : undefined
           }
         >
