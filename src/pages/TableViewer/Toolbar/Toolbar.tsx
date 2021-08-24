@@ -1,6 +1,6 @@
 import { Button, IconButton } from '@material-ui/core';
 import { InlineInput } from '@components/kit';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   ChangeEvent, FocusEvent,
   MouseEvent, useState
@@ -38,7 +38,7 @@ const Toolbar = () => {
   return (
     <>
       <div className={styles.Container}>
-        <IconButton>
+        <IconButton component={Link} to="/">
           <ArrowBackIosRoundedIcon />
         </IconButton>
         <div className={styles.ColumnMenu}>

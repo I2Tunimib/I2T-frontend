@@ -64,6 +64,10 @@ const MetadataDialog = () => {
     setSelectedMetadata(id);
   };
 
+  const handleDeleteRow = (id: string) => {
+    console.log(id);
+  };
+
   return (
     <Dialog
       maxWidth="md"
@@ -81,9 +85,11 @@ const MetadataDialog = () => {
           ? 'The cell doesn\'t have metadata'
           : (
             <SimpleTable
+              deletableRows
               selectableRows
               selectedValue={selectedMetadata}
               handleSelectRow={handleSelectRow}
+              handleDeleteRow={handleDeleteRow}
               columns={columns}
               rows={rows}
             />

@@ -55,7 +55,7 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
       if (draft._draft.future.length > 0) {
         draft._draft.future = [];
       }
-      draft._draft.past.push([...draft._draft.present, ...inversePatches]);
+      draft._draft.past.push([...inversePatches, ...draft._draft.present]);
       draft._draft.present = patches;
     }
   }) as T;
