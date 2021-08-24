@@ -33,6 +33,8 @@ export const selectServicesConfig = createSelector(
   selectConfig,
   (config) => config.servicesConfig
 );
+
+// Loading selectors
 export const selectGetConfigRequest = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, ConfigEndpoints.GET_CONFIG)

@@ -4,7 +4,7 @@ import {
 } from '@reduxjs/toolkit';
 import produce, {
   applyPatches, original,
-  produceWithPatches, Patch
+  produceWithPatches, Patch, Immutable
 } from 'immer';
 
 /**
@@ -31,7 +31,8 @@ interface PatchItem {
 export const produceWithPatch = <T extends UndoEnhancedState>(
   state: T,
   undoable: boolean,
-  mutations: (draft: T) => void
+  mutations: (draft: T) => void,
+  mutationsWithoutPatches?: (draft: Draft<Immutable<T>>) => void
 ) => {
   if (!undoable) {
     mutations(state);
@@ -48,6 +49,9 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
   // eslint-disable-next-line consistent-return
   return produce(nextState, (draft) => {
     if (draft) {
+      if (mutationsWithoutPatches) {
+        mutationsWithoutPatches(draft);
+      }
       if (draft._draft.future.length > 0) {
         draft._draft.future = [];
       }

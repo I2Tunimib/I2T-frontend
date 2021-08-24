@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import ButtonBase from '../ButtonBase/ButtonBase';
 import styles from './Button.module.scss';
 
-export interface IButtonProps extends HTMLAttributes<HTMLDivElement> {
+export interface ButtonProps extends HTMLAttributes<HTMLDivElement> {
   type?: 'button' | 'submit'; // type of button
   variant?: 'primary'; // theme variant
   iconAlign?: 'left' | 'right'; // icon alignment
@@ -17,7 +17,7 @@ export interface IButtonProps extends HTMLAttributes<HTMLDivElement> {
  * Button component.
  * App button which works both as a react-router-dom Link or button.
  */
-const Button: FC<IButtonProps> = ({
+const Button: FC<ButtonProps> = ({
   to = undefined,
   type = 'button',
   iconAlign = 'left',
@@ -26,7 +26,7 @@ const Button: FC<IButtonProps> = ({
   onClick = undefined,
   className,
   children
-}: IButtonProps) => (
+}: ButtonProps) => (
   <ButtonBase
     to={to}
     onClick={onClick}

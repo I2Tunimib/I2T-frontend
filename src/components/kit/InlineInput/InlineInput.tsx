@@ -1,24 +1,27 @@
 import {
   ChangeEvent,
-  FocusEvent
+  FC,
+  FocusEvent,
+  HTMLAttributes
 } from 'react';
 import styles from './InlineInput.module.scss';
 
-interface IInlineInputProps {
+interface InlineInputProps extends HTMLAttributes<HTMLInputElement> {
+  /**
+   * Value of the input
+   */
   value: string;
-  onBlur: (event: FocusEvent<HTMLInputElement>) => void;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 /**
  * An inline input which behaves as text unless it is hoverd/clickd.
  * When clicked it becomes an input.
  */
-const InlineInput = ({
+const InlineInput: FC<InlineInputProps> = ({
   value,
   onBlur,
   onChange
-}: IInlineInputProps) => (
+}) => (
   <div className={styles.Container}>
     <span className={styles.Text}>
       {value}

@@ -24,7 +24,7 @@ import { SimpleTable } from '@components/kit';
 import {
   selectMetadataDialogStatus, selectMetdataCellId, selectSelectedCellMetadataTableFormat,
   updateCellMetadata, updateUI
-} from '@store/table/table.slice';
+} from '@store/slices/table/table.slice';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },

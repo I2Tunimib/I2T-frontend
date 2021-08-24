@@ -1,15 +1,15 @@
 import { Button } from '@components/core';
 import { FormControl, MenuItem, Select } from '@material-ui/core';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, FC } from 'react';
 import styles from './SelectTable.module.scss';
 
-interface ISelectTableProps {
+interface SelectTableProps {
   value: string;
   options: string[] | undefined;
   onChange: (event: ChangeEvent<{ value: unknown }>) => void;
 }
 
-const SelectTable = ({ value, options, onChange }: ISelectTableProps) => (
+const SelectTable: FC<SelectTableProps> = ({ value, options, onChange }) => (
   <>
     <FormControl className="field">
       <Select

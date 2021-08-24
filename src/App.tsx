@@ -1,15 +1,15 @@
 import { RouteContainer } from '@components/layout';
-import { IRoute } from '@components/layout/RouteContainer';
+import { RouteOption } from '@components/layout/RouteContainer';
 import { useAppDispatch } from '@hooks/store';
 import { Homepage } from '@pages/Homepage';
 import { TableViewer } from '@pages/TableViewer';
-import { getConfig } from '@store/config/config.thunk';
+import { getConfig } from '@store/slices/config/config.thunk';
 import React, { useEffect } from 'react';
 
 /**
  * Define routes
  */
-const routes: IRoute[] = [
+const routes: RouteOption[] = [
   {
     path: '/',
     exact: true,

@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import styles from './TableHeaderCell.module.scss';
 
 /**
- * Table head cell
+ * Table head cell.
  */
 const TableHeaderCell = ({
   id,

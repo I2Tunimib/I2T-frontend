@@ -1,4 +1,4 @@
-import { ColumnState, RowState } from '@store/table/interfaces/table';
+import { ColumnState, RowState } from '@store/slices/table/interfaces/table';
 
 export enum CsvSeparator {
   COMMA = ',',

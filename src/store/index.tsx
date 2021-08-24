@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { enablePatches } from 'immer';
-import tableReducer from './table/table.slice';
-import configReducer from './config/config.slice';
+import tableReducer from './slices/table/table.slice';
+import configReducer from './slices/config/config.slice';
 
 enablePatches();
 

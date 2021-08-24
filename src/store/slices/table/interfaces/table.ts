@@ -1,6 +1,10 @@
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
 
+/**
+ * Table slice state.
+ * It extends requests and undo states to support requests status and undo behaviour.
+ */
 export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   entities: {
     columns: ColumnState;
@@ -9,6 +13,9 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   ui: TableUIState;
 }
 
+/**
+ * Table UI state.
+ */
 export interface TableUIState {
   openReconciliateDialog: boolean;
   openMetadataDialog: boolean;
@@ -19,7 +26,9 @@ export interface TableUIState {
 }
 
 export type ID = string;
-
+/**
+ * Base state for entities.
+ */
 interface BaseState<T> {
   byId: Record<ID, T>;
   allIds: string[];
@@ -28,16 +37,25 @@ interface BaseState<T> {
 export interface ColumnState extends BaseState<Column> {}
 export interface RowState extends BaseState<Row> {}
 
+/**
+ * A column instance.
+ */
 export interface Column {
   id: ID;
   label: string;
   reconciliator: string;
   extension: string;
 }
+/**
+ * A row instance.
+ */
 export interface Row {
   id: ID;
   cells: Record<ID, Cell>
 }
+/**
+ * A cell instance.
+ */
 export interface Cell {
   id: ID;
   rowId: ID;
@@ -45,6 +63,9 @@ export interface Cell {
   label: string;
   metadata: Metadata[];
 }
+/**
+ * A metadata instance.
+ */
 export interface Metadata extends Record<string, unknown> {
   id: ID;
   name: string;
@@ -55,26 +76,21 @@ export interface Metadata extends Record<string, unknown> {
     name: string;
   }[]
 }
-export interface JoinTable {
-  id: ID;
-  primaryId: ID;
-  foreignId: ID;
-}
 
 /**
  * ACTIONS
  */
-export interface ISetDataAction {
+export interface SetDataPayload {
   format: string;
   data: string;
 }
 
-export interface UpdateSelectedCellsAction {
+export interface UpdateSelectedCellsPayload {
   id: ID;
   multi?: boolean;
 }
 
-export interface ReconciliationFulfilledAction {
+export interface ReconciliationFulfilledPayload {
   data: {
     id: ID,
     metadata: Metadata[]
@@ -82,7 +98,7 @@ export interface ReconciliationFulfilledAction {
   reconciliator: string;
 }
 
-export interface UpdateCellMetadata {
+export interface UpdateCellMetadataPayload {
   metadataId: ID,
   cellId: ID
 }

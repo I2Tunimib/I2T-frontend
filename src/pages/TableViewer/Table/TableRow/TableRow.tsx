@@ -1,7 +1,7 @@
 import styles from './TableRow.module.scss';
 
 /**
- * Table row element
+ * Table row element.
  */
 const TableRow = ({ children }: any) => (
   <tr className={styles.TableRow}>

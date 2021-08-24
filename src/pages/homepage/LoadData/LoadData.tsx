@@ -1,7 +1,7 @@
 import { FormControl, MenuItem, Select } from '@material-ui/core';
 import { ChangeEvent, useState, useEffect } from 'react';
 import { useAppDispatch } from '@hooks/store';
-import { getTableNames } from '@store/table/table.thunk';
+import { getTableNames } from '@store/slices/table/table.thunk';
 import Paper from '@material-ui/core/Paper';
 import SelectTable from '../SelectTable';
 import UploadTable from '../UploadTable';

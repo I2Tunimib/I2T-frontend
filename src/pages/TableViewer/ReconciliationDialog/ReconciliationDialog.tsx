@@ -20,13 +20,13 @@ import {
 } from 'react';
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
-import { selectServicesConfig } from '@store/config/config.slice';
-import { reconcile } from '@store/table/table.thunk';
+import { selectServicesConfig } from '@store/slices/config/config.slice';
+import { reconcile } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
 import {
   selectAllSelectedCellForReconciliation, selectReconcileDialogStatus,
   selectReconcileRequestStatus, updateUI
-} from '@store/table/table.slice';
+} from '@store/slices/table/table.slice';
 import { ButtonLoading } from '@components/core';
 
 const Transition = forwardRef((

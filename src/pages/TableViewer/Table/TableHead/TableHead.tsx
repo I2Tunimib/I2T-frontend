@@ -1,7 +1,7 @@
 import styles from './TableHead.module.scss';
 
 /**
- * Table head element
+ * Table head element.
  */
 const TableHead = ({ children }: any) => (
   <thead className={styles.TableHead}>

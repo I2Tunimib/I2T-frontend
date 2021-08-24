@@ -1,21 +1,36 @@
-import { ComponentType } from 'react';
+import { ComponentType, FC } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import styles from './RouteContainer.module.scss';
 
-interface IRouteContainerProps {
-  routes: IRoute[];
+interface RouteContainerProps {
+  /**
+   * Routes configuration.
+   */
+  routes: RouteOption[];
 }
 
-export interface IRoute {
+/**
+ * A single route configuration.
+ */
+export interface RouteOption {
+  /**
+   * Path to render the route.
+   */
   path: string;
+  /**
+   * If the path should be matched exactly.
+   */
   exact: boolean;
+  /**
+   * The component to render at given path.
+   */
   Component: ComponentType;
 }
 
 /**
- * Renders active route
+ * Renders active route.
  */
-const RouteContainer = ({ routes }: IRouteContainerProps) => (
+const RouteContainer: FC<RouteContainerProps> = ({ routes }) => (
   <div className={styles.Container}>
     <Switch>
       {routes.map(({ path, Component, exact }) => (

@@ -1,19 +1,25 @@
 import { Button } from '@components/core';
 import { Chip } from '@material-ui/core';
-import { ChangeEvent, useRef } from 'react';
+import { ChangeEvent, FC, useRef } from 'react';
 import PublishRoundedIcon from '@material-ui/icons/PublishRounded';
 import DescriptionRoundedIcon from '@material-ui/icons/DescriptionRounded';
 import styles from './Uploader.module.scss';
 
-interface IUploaderProps {
+interface UploaderProps {
+  /**
+   * File selected from the file system.
+   */
   selectedFile: File | undefined,
+  /**
+   * Handler function on new file selected.
+   */
   handleChangeFile: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 /**
- * File uploader
+ * File uploader.
  */
-const Uploader = ({ selectedFile, handleChangeFile }: IUploaderProps) => {
+const Uploader: FC<UploaderProps> = ({ selectedFile, handleChangeFile }) => {
   // ref to hidden input file
   const inputFileRef = useRef<HTMLInputElement>(null);
 

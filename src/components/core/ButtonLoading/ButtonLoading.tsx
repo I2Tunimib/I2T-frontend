@@ -1,18 +1,26 @@
-import { Button, CircularProgress } from '@material-ui/core';
-import { MouseEvent, ReactNode } from 'react';
+import { Button, ButtonProps, CircularProgress } from '@material-ui/core';
+import { FC, MouseEvent } from 'react';
 import styles from './ButtonLoading.module.scss';
 
-interface ButtonLoadingProps {
+interface ButtonLoadingProps extends ButtonProps {
+  /**
+   * Show or hide loading status.
+   */
   loading: boolean;
-  children?: ReactNode;
+  /**
+   * onClick handler function.
+   */
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-const ButtonLoading = ({
+/**
+ * HOC component for the material button which provides a loading status.
+ */
+const ButtonLoading: FC<ButtonLoadingProps> = ({
   loading,
   children,
   onClick
-}: ButtonLoadingProps) => (
+}) => (
   <Button
     onClick={(event) => (onClick ? onClick(event) : undefined)}
     color="primary"

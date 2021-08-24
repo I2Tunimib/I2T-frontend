@@ -8,18 +8,20 @@ import { isEmptyObject } from '@services/utils/is-object';
 import { RootState } from '@store';
 import { createSliceWithRequests, getRequestStatus } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
+import { Payload } from '@store/interfaces/store';
 import {
+  ColumnState,
   ID,
-  ISetDataAction,
-  ReconciliationFulfilledAction,
+  ReconciliationFulfilledPayload,
+  RowState,
+  SetDataPayload,
   TableState,
   TableUIState,
-  UpdateCellMetadata,
-  UpdateSelectedCellsAction
+  UpdateCellMetadataPayload,
+  UpdateSelectedCellsPayload
 } from './interfaces/table';
 import { getTable, reconcile, TableEndpoints } from './table.thunk';
 
-// Define the initial state using that type
 const initialState: TableState = {
   entities: {
     columns: { byId: {}, allIds: [] },
@@ -41,16 +43,45 @@ const initialState: TableState = {
   }
 };
 
+/**
+ * Add a property to another object given old and new object.
+ */
 const addObject = <T, K>(oldObject: T, newObject: T): T => ({
   ...oldObject,
   ...newObject
 });
 
+/**
+ * Remove property of an object given the property
+ */
 const removeObject = <T, K extends keyof T>(object: T, property: K): Omit<T, K> => {
   const { [property]: omit, ...rest } = object;
   return rest;
 };
 
+const deleteOneColumn = (columns: ColumnState, rows: RowState, id: ID) => {
+  const newColumns: ColumnState = {
+    byId: removeObject(columns.byId, id),
+    allIds: columns.allIds.filter((colId) => colId !== id)
+  };
+  const newRows: RowState = {
+    byId: rows.allIds.reduce((acc, rowId) => {
+      return {
+        ...acc,
+        [rowId]: {
+          ...rows.byId[rowId],
+          cells: removeObject(rows.byId[rowId].cells, id)
+        }
+      };
+    }, {}),
+    allIds: [...rows.allIds]
+  };
+  return { newColumns, newRows };
+};
+
+/**
+ * Toggle object by ID.
+ */
 const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
   if (oldObject[id]) {
     return removeObject(oldObject, id);
@@ -63,17 +94,30 @@ export const tableSlice = createSliceWithRequests({
   name: 'table',
   initialState,
   reducers: {
-    updateCellMetadata: (state, action: PayloadAction<UpdateCellMetadata>) => {
-      const { selectedCellMetadataId } = state.ui;
-      const { metadataId, cellId } = action.payload;
-      selectedCellMetadataId[cellId] = metadataId;
+    /**
+     * Handle the assignment of a metadata to a cell.
+     * --UNDOABLE ACTION--
+     */
+    updateCellMetadata: (state, action: PayloadAction<Payload<UpdateCellMetadataPayload>>) => {
+      const { metadataId, cellId, undoable = true } = action.payload;
+      return produceWithPatch(state, undoable, (draft) => {
+        draft.ui.selectedCellMetadataId[cellId] = metadataId;
+      });
     },
+    /**
+     * Handle changes to selected columns.
+     * It toggles the selection of column given the ID.
+     */
     updateColumnSelection: (state, action: PayloadAction<ID>) => {
       const id = action.payload;
       state.ui.selectedCellIds = {};
       state.ui.selectedColumnsIds = toggleObject(state.ui.selectedColumnsIds, id, true);
     },
-    updateCellSelection: (state, action: PayloadAction<UpdateSelectedCellsAction>) => {
+    /**
+     *
+     * Handle changes to selected cells.
+     */
+    updateCellSelection: (state, action: PayloadAction<Payload<UpdateSelectedCellsPayload>>) => {
       const { id, multi } = action.payload;
       if (multi) {
         state.ui.selectedCellIds = toggleObject(state.ui.selectedCellIds, id, true);
@@ -82,12 +126,42 @@ export const tableSlice = createSliceWithRequests({
         state.ui.selectedCellIds = addObject({}, { [id]: true });
       }
     },
-    updateUI: (state, action: PayloadAction<Partial<TableUIState>>) => {
-      state.ui = { ...state.ui, ...action.payload };
+    /**
+     * Merges parameters of the UI to the current state.
+     */
+    updateUI: (state, action: PayloadAction<Payload<Partial<TableUIState>>>) => {
+      const { undoable, ...rest } = action.payload;
+      state.ui = { ...state.ui, ...rest };
     },
+    /**
+     * Delete selected columns.
+     * --UNDOABLE ACTION--
+     */
+    deleteColumn: (state, action: PayloadAction<Payload>) => {
+      const { undoable } = action.payload;
+      const { selectedColumnsIds } = state.ui;
+
+      return produceWithPatch(state, !!undoable, (draft) => {
+        const { columns, rows } = draft.entities;
+        Object.keys(selectedColumnsIds).forEach((colId) => {
+          const { newColumns, newRows } = deleteOneColumn(columns, rows, colId);
+          draft.entities.columns = newColumns;
+          draft.entities.rows = newRows;
+        });
+      }, (draft) => {
+        // also remove selection from deleted columns without generating patches
+        draft.ui.selectedColumnsIds = {};
+      });
+    },
+    /**
+     * Perform an undo by applying undo patches (past patches).
+     */
     undo: (state, action: PayloadAction<void>) => {
       return applyUndoPatches(state);
     },
+    /**
+     * Perform a redo by applying redo patches (future patches).
+     */
     redo: (state, action: PayloadAction<void>) => {
       return applyRedoPatches(state);
     }
@@ -95,7 +169,7 @@ export const tableSlice = createSliceWithRequests({
   extraRules: (builder) => (
     builder
       // set table on request fulfilled
-      .addCase(getTable.fulfilled, (state, { payload }: PayloadAction<ISetDataAction>) => {
+      .addCase(getTable.fulfilled, (state, { payload }: PayloadAction<Payload<SetDataPayload>>) => {
         const { data, format } = payload;
         if (format === 'csv') {
           const entities = convertFromCSV(data);
@@ -103,13 +177,16 @@ export const tableSlice = createSliceWithRequests({
         }
         return state;
       })
-      // set metadata on request fulfilled
+      /**
+       * Set metadata on request fulfilled.
+       * --UNDOABLE ACTION--
+       */
       .addCase(reconcile.fulfilled, (
-        state, action: PayloadAction<ReconciliationFulfilledAction>
+        state, action: PayloadAction<Payload<ReconciliationFulfilledPayload>>
       ) => {
-        const { data, reconciliator } = action.payload;
+        const { data, reconciliator, undoable = true } = action.payload;
 
-        return produceWithPatch(state, true, (draft) => {
+        return produceWithPatch(state, undoable, (draft) => {
           // add metadata to cells
           data.forEach((item) => {
             const [rowId, colId] = item.id.split('$');
@@ -129,6 +206,7 @@ export const {
   updateColumnSelection,
   updateCellSelection,
   updateUI,
+  deleteColumn,
   undo,
   redo
 } = tableSlice.actions;
@@ -175,6 +253,11 @@ export const selectCanRedo = createSelector(
 export const selectSelectedColumns = createSelector(
   selectUIState,
   (ui) => ui.selectedColumnsIds
+);
+
+export const selectCanDelete = createSelector(
+  selectSelectedColumns,
+  (ids) => Object.keys(ids).length > 0
 );
 
 /**

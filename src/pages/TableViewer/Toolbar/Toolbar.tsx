@@ -10,7 +10,7 @@ import SubToolbar from '../SubToolbar/SubToolbar';
 import styles from './Toolbar.module.scss';
 
 /**
- * Toolbar element
+ * Toolbar element.
  */
 const Toolbar = () => {
   // get table name from query params

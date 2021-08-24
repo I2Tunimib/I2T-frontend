@@ -8,7 +8,7 @@ import styles from './TableRowCell.module.scss';
 interface ITableRowCellProps extends Record<string, any> { }
 
 /**
- * Table row cell
+ * Table row cell.
  */
 const TableRowCell = ({
   children,

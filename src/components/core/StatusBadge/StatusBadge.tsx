@@ -1,15 +1,18 @@
 import clsx from 'clsx';
+import { FC, HTMLAttributes } from 'react';
 import styles from './StatusBadge.module.scss';
 
-interface IStatusBadgeProps {
+interface StatusBadgeProps extends HTMLAttributes<HTMLDivElement> {
+  /**
+   * Color of the badge
+   */
   status: 'Error' | 'Warn' | 'Success';
-  className?: string;
 }
 
 /**
- * Signal status between 'error' | 'warn' | 'success'
+ * Badge which signals status between 'error' | 'warn' | 'success'
  */
-const StatusBadge = ({ status, className }: IStatusBadgeProps) => (
+const StatusBadge: FC<StatusBadgeProps> = ({ status, className }) => (
   <div className={clsx(
     className,
     styles.Container,

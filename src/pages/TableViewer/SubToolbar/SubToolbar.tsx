@@ -9,12 +9,14 @@ import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import clsx from 'clsx';
 import {
+  deleteColumn,
   redo,
+  selectCanDelete,
   selectCanRedo,
   selectCanUndo,
   selectIsCellSelected, selectIsMetadataButtonEnabled,
   undo, updateUI
-} from '@store/table/table.slice';
+} from '@store/slices/table/table.slice';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog/ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog/MetadataDialog';
@@ -41,11 +43,10 @@ const SubToolbar = () => {
   const isMetadataButtonEnabled = useAppSelector(selectIsMetadataButtonEnabled);
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
-  // const isColumnSelected = useAppSelector(selectIsColumnSelected);
-  // const selectedCell = useAppSelector(selectSelectedCell);
+  const canDelete = useAppSelector(selectCanDelete);
 
   const handleDelete = () => {
-    // dispatch(deleteColumn(null));
+    dispatch(deleteColumn({ undoable: true }));
   };
 
   return (
@@ -58,7 +59,7 @@ const SubToolbar = () => {
           <IconButton disabled={!canRedo} onClick={() => dispatch(redo())} size="small">
             <RedoRoundedIcon />
           </IconButton>
-          <IconButton onClick={handleDelete} disabled={!false} size="small">
+          <IconButton onClick={handleDelete} disabled={!canDelete} size="small">
             <DeleteOutlineRoundedIcon />
           </IconButton>
         </ActionGroup>

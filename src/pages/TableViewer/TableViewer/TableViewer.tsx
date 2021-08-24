@@ -6,14 +6,14 @@ import {
 } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { LinearProgress, Menu, MenuItem } from '@material-ui/core';
-import { getTable } from '@store/table/table.thunk';
+import { getTable } from '@store/slices/table/table.thunk';
 import {
   selectCellMetadata,
   selectDataTableFormat, selectGetTableRequestStatus, selectSelectedCells,
   selectSelectedColumns, updateCellSelection,
   updateColumnSelection
-} from '@store/table/table.slice';
-import { ID } from '@store/table/interfaces/table';
+} from '@store/slices/table/table.slice';
+import { ID } from '@store/slices/table/interfaces/table';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';

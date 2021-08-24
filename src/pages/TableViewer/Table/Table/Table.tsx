@@ -1,4 +1,5 @@
 import { useTable } from 'react-table';
+import { FC } from 'react';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
@@ -7,7 +8,7 @@ import TableRow from '../TableRow';
 import EditableCell from '../EditableCell';
 import TableFooter from '../TableFooter';
 
-interface ITableProps {
+interface TableProps {
   columns: any,
   data: any,
   getHeaderProps: (col: any) => any;
@@ -21,13 +22,13 @@ const defaultColumn = {
   Cell: EditableCell
 };
 
-const Table = ({
+const Table: FC<TableProps> = ({
   columns,
   data,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter,
   updateTableData
-}: ITableProps) => {
+}) => {
   const {
     getTableProps,
     getTableBodyProps,

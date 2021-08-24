@@ -4,30 +4,54 @@ import clsx from 'clsx';
 import { ReactElement } from 'react';
 import styles from './SimpleTable.module.scss';
 
-interface ISimpleTableProps<T> {
+interface SimpleTableProps<T> {
+  /**
+   * An array of columns for the table.
+   */
   columns: ISimpleColumn[];
+  /**
+   * An array of rows for the table.
+   */
   rows: ISimpleRow<T>[];
-  selectedValue?: string;
+  /**
+   * Makes rows selectable.
+   */
   selectableRows?: boolean;
+  /**
+   * Selected value if rows are selectable.
+   */
+  selectedValue?: string;
+  /**
+   * Handler function for row selection.
+   */
   handleSelectRow?: (rowId: string) => void;
 }
 
+/**
+ * A column of the table.
+ */
 export interface ISimpleColumn {
   id: string;
 }
 
+/**
+ * A row of the table is composed by cells.
+ */
 export interface ISimpleRow<T = any> {
   id: string;
   cells: T[];
 }
 
-export function SimpleTable<T>({
+/**
+ * A table with optional selectable rows.
+ */
+function SimpleTable<T>({
   columns,
   rows,
   selectedValue = '',
   selectableRows = false,
   handleSelectRow = undefined
-}: ISimpleTableProps<T>): ReactElement | null {
+}: SimpleTableProps<T>): ReactElement {
   /**
    * Preprare rows with ids
    */
