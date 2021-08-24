@@ -140,14 +140,16 @@ export const tableSlice = createSliceWithRequests({
     deleteColumn: (state, action: PayloadAction<Payload>) => {
       const { undoable } = action.payload;
       const { selectedColumnsIds } = state.ui;
+      let { columns, rows } = state.entities;
 
       return produceWithPatch(state, !!undoable, (draft) => {
-        const { columns, rows } = draft.entities;
         Object.keys(selectedColumnsIds).forEach((colId) => {
           const { newColumns, newRows } = deleteOneColumn(columns, rows, colId);
-          draft.entities.columns = newColumns;
-          draft.entities.rows = newRows;
+          columns = newColumns;
+          rows = newRows;
         });
+        draft.entities.columns = columns;
+        draft.entities.rows = rows;
       }, (draft) => {
         // also remove selection from deleted columns without generating patches
         draft.ui.selectedColumnsIds = {};

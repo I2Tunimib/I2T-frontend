@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import {
   ChangeEvent,
   FC,
@@ -19,6 +20,8 @@ interface InlineInputProps extends HTMLAttributes<HTMLInputElement> {
  */
 const InlineInput: FC<InlineInputProps> = ({
   value,
+  className,
+  onClick,
   onBlur,
   onChange
 }) => (
@@ -27,8 +30,9 @@ const InlineInput: FC<InlineInputProps> = ({
       {value}
     </span>
     <input
-      className={styles.Input}
+      className={clsx(styles.Input, className)}
       value={value}
+      onClick={onClick}
       onChange={onChange}
       onBlur={onBlur}
       autoComplete="off"

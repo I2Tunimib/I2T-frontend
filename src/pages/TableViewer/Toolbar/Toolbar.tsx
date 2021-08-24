@@ -1,7 +1,10 @@
-import { Button, IconButton, Typography } from '@material-ui/core';
+import { Button, IconButton } from '@material-ui/core';
 import { InlineInput } from '@components/kit';
 import { useParams } from 'react-router-dom';
-import { ChangeEvent, FocusEvent, useState } from 'react';
+import {
+  ChangeEvent, FocusEvent,
+  MouseEvent, useState
+} from 'react';
 import ArrowBackIosRoundedIcon from '@material-ui/icons/ArrowBackIosRounded';
 import SaveRoundedIcon from '@material-ui/icons/SaveRounded';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
@@ -16,7 +19,7 @@ const Toolbar = () => {
   // get table name from query params
   const { name } = useParams<{ name: string }>();
   // keep track of table name
-  const [tableName, setTableName] = useState<string>(name);
+  const [tableName, setTableName] = useState<string>('Table name');
 
   const onChangeTableName = (event: ChangeEvent<HTMLInputElement>) => {
     // keep track of name
@@ -26,7 +29,10 @@ const Toolbar = () => {
   const onBlurTableName = (event: FocusEvent<HTMLInputElement>) => {
     const newValue = event.target.value === '' ? 'Table name' : event.target.value;
     setTableName(newValue);
-    // update name only on blur (saving to redux)
+  };
+
+  const onInputClick = (event: MouseEvent<HTMLInputElement>) => {
+    event.currentTarget.select();
   };
 
   return (
@@ -37,7 +43,15 @@ const Toolbar = () => {
         </IconButton>
         <div className={styles.ColumnMenu}>
           <div className={clsx(styles.RowMenu)}>
-            <InlineInput onBlur={onBlurTableName} onChange={onChangeTableName} value={tableName} />
+            <InlineInput
+              onClick={onInputClick}
+              onBlur={onBlurTableName}
+              onChange={onChangeTableName}
+              value={tableName}
+              className={clsx({
+                [styles.DefaultName]: tableName === 'Table name'
+              })}
+            />
             <CloudOffIcon className={styles.SaveIcon} />
           </div>
           <div className={clsx(styles.RowMenu, styles.ActionsContainer)}>
