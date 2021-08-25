@@ -35,7 +35,8 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
           ...allRowCells,
           [label]: {
             label: rowValues[colIndex],
-            metadata: []
+            metadata: [],
+            editable: false
           }
         }), {})
       }

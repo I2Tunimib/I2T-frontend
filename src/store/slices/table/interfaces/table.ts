@@ -57,11 +57,9 @@ export interface Row {
  * A cell instance.
  */
 export interface Cell {
-  id: ID;
-  rowId: ID;
-  columnId: ID;
   label: string;
   metadata: Metadata[];
+  editable: boolean;
 }
 /**
  * A metadata instance.
@@ -100,5 +98,14 @@ export interface ReconciliationFulfilledPayload {
 
 export interface UpdateCellMetadataPayload {
   metadataId: ID,
+  cellId: ID
+}
+
+export interface UpdateCellLabelPayload {
+  cellId: ID,
+  value: string
+}
+
+export interface UpdateCellEditablePayload {
   cellId: ID
 }

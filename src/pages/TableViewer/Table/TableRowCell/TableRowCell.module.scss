@@ -3,12 +3,12 @@
   padding: 18px 10px;
   text-align: center;
   vertical-align: middle;
+  cursor: default;
+  // border: 1px solid transparent;
 
-  .Badge {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+  &.Selected {
+    // background: rgba(33, 148, 255, 0.12);
+    background-color: rgb(245, 0, 87, 0.1);
   }
 
   // add border to index column
@@ -37,8 +37,8 @@
     right: 0;
     // apply style to cell if cell is selected
     &.Selected {
-      // background: rgba(33, 148, 255, 0.12);
-      background-color: rgb(245, 0, 87, 0.1);
+      background: rgba(33, 148, 255, 0.12);
+      // background-color: rgb(245, 0, 87, 0.1);
     }
   }
 }

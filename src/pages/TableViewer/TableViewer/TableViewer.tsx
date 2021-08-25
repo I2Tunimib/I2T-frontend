@@ -10,13 +10,14 @@ import { getTable } from '@store/slices/table/table.thunk';
 import {
   selectCellMetadata,
   selectDataTableFormat, selectGetTableRequestStatus, selectSelectedCells,
-  selectSelectedColumns, updateCellSelection,
+  selectSelectedColumns, updateCellEditable, updateCellLabel, updateCellSelection,
   updateColumnSelection
 } from '@store/slices/table/table.slice';
 import { ID } from '@store/slices/table/interfaces/table';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
+import { TableCell, TableColumn } from '../Table/interfaces/table';
 
 interface MenuState {
   mouseX: number | null;
@@ -82,8 +83,52 @@ const TableViewer = () => {
     dispatch(updateColumnSelection(id));
   }, []);
 
-  const updateTableData = (rowIndex: number, columnId: string, value: string) => {
-    // dispatch(updateData({ rowIndex, columnId, value }));
+  const updateTableData = (cellId: ID, value: string) => {
+    dispatch(updateCellLabel({ cellId, value }));
+  };
+
+  const onEditCell = () => {
+    if (menuState.target) {
+      dispatch(updateCellEditable({ cellId: menuState.target.id }));
+    }
+    setMenuState(contextualMenuCloseState);
+  };
+
+  /**
+   * Properties to pass to each header.
+   */
+  const getHeaderProps = ({ id, reconciliator, ...props }: TableColumn) => {
+    return {
+      id,
+      reconciliator,
+      selected: !!selectedColumns[id],
+      handleCellRightClick,
+      handleSelectedColumnChange
+    };
+  };
+
+  /**
+   * Properties to pass to each cell.
+   */
+  const getCellProps = ({
+    column, row, value, ...props
+  }: TableCell) => {
+    let selected = false;
+    let matching = false;
+    if (column.id !== 'index') {
+      selected = !!selectedColumns[column.id] || selectedCells[`${value.rowId}$${column.id}`];
+      matching = !!selectedCellMetadata[`${value.rowId}$${column.id}`];
+    }
+    return {
+      column,
+      row,
+      value,
+      selected,
+      matching,
+      handleSelectedCellChange,
+      handleCellRightClick,
+      updateTableData
+    };
   };
 
   const columnsTable = useMemo(() => columns, [columns]);
@@ -97,31 +142,8 @@ const TableViewer = () => {
           <Table
             data={rowsTable}
             columns={columnsTable}
-            getHeaderProps={({ id, reconciliator }) => ({
-              id,
-              reconciliator,
-              selected: !!selectedColumns[id],
-              handleCellRightClick,
-              handleSelectedColumnChange
-            })}
-            getCellProps={({ column, row, value }) => {
-              let selected = false;
-              let matching = false;
-              if (column.id !== 'index') {
-                selected = !!selectedColumns[column.id] || selectedCells[`${value.rowId}$${column.id}`];
-                matching = !!selectedCellMetadata[`${value.rowId}$${column.id}`];
-              }
-              return {
-                column,
-                row,
-                value,
-                selected,
-                matching,
-                handleSelectedCellChange,
-                handleCellRightClick
-              };
-            }}
-            updateTableData={updateTableData}
+            getHeaderProps={getHeaderProps}
+            getCellProps={getCellProps}
           />
         ) : <LinearProgress />
         }
@@ -136,10 +158,7 @@ const TableViewer = () => {
               : undefined
           }
         >
-          <MenuItem>Copy</MenuItem>
-          <MenuItem>Print</MenuItem>
-          <MenuItem>Highlight</MenuItem>
-          <MenuItem>Email</MenuItem>
+          <MenuItem onClick={onEditCell}>Edit cell</MenuItem>
         </Menu>
       </div>
     </>

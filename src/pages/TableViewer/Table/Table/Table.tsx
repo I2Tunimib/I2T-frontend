@@ -1,5 +1,6 @@
-import { useTable } from 'react-table';
+import { Column, useTable } from 'react-table';
 import { FC } from 'react';
+import { ID } from '@store/slices/table/interfaces/table';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
@@ -9,33 +10,26 @@ import EditableCell from '../EditableCell';
 import TableFooter from '../TableFooter';
 
 interface TableProps {
-  columns: any,
-  data: any,
+  columns: any[],
+  data: any[],
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
-  updateTableData: (rowIndex: number, columnId: string, value: string) => any;
 }
 // default prop getter for when it is not provided
 const defaultPropGetter = () => ({});
-// default column is editable
-const defaultColumn = {
-  Cell: EditableCell
-};
 
 const Table: FC<TableProps> = ({
   columns,
   data,
   getHeaderProps = defaultPropGetter,
-  getCellProps = defaultPropGetter,
-  updateTableData
+  getCellProps = defaultPropGetter
 }) => {
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
-    prepareRow,
-    visibleColumns
+    prepareRow
   } = useTable({
     columns,
     data
@@ -49,10 +43,12 @@ const Table: FC<TableProps> = ({
         id: 'index',
         Header: 'N.',
         // eslint-disable-next-line react/prop-types
-        Cell: ({ row, flatRows }) => (
-          // eslint-disable-next-line react/prop-types
-          <div>{flatRows.indexOf(row) + 1}</div>
-        )
+        Cell: ({ row, flatRows, ...rest }) => {
+          return (
+            // eslint-disable-next-line react/prop-types
+            <div>{flatRows.indexOf(row) + 1}</div>
+          );
+        }
       },
       ...cols
     ]);
@@ -94,9 +90,9 @@ const Table: FC<TableProps> = ({
                   {// Loop over the rows cells
                     row.cells.map((cell) => (
                       // Apply the cell prop
-                      <TableRowCell {...cell.getCellProps([getCellProps(cell)])}>
+                      <TableRowCell {...cell.getCellProps([getCellProps(cell)]) as any}>
                         {// Render the cell contents
-                          cell.render('Cell')}
+                          cell.render('Cell', { value: 'prova' })}
                       </TableRowCell>
                     ))}
                 </TableRow>

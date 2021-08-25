@@ -1,4 +1,6 @@
+import { Metadata } from '@store/slices/table/interfaces/table';
 import { ReactNode } from 'react';
+import { Cell, ColumnInstance, Row } from 'react-table';
 
 /**
  * A column of the table
@@ -10,6 +12,22 @@ export interface IColumn {
   reconciliator?: string; // if a column is reconciliated
   extension?: string; // if a column is the result of an extension
   Cell?: (prop: any) => string | ReactNode; // What to render inside a cell
+}
+
+export interface TableColumn extends ColumnInstance {
+  reconciliator: string;
+  extension: string;
+}
+
+export interface TableRow extends Row {}
+
+export interface TableCell extends Cell {
+  value: {
+    rowId: string;
+    label: string;
+    metadata: Metadata[];
+    editable: boolean;
+  }
 }
 
 /**

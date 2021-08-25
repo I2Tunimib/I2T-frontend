@@ -17,6 +17,8 @@ import {
   SetDataPayload,
   TableState,
   TableUIState,
+  UpdateCellEditablePayload,
+  UpdateCellLabelPayload,
   UpdateCellMetadataPayload,
   UpdateSelectedCellsPayload
 } from './interfaces/table';
@@ -94,6 +96,32 @@ export const tableSlice = createSliceWithRequests({
   name: 'table',
   initialState,
   reducers: {
+    /**
+     * Set cell editable.
+     */
+    updateCellEditable: (state, action: PayloadAction<Payload<UpdateCellEditablePayload>>) => {
+      const { cellId } = action.payload;
+      const [rowId, colId] = cellId.split('$');
+      state.entities.rows.byId[rowId].cells[colId].editable = true;
+    },
+    /**
+     * Handle update of cell label.
+     * --UNDOABLE ACTION--
+     */
+    updateCellLabel: (state, action: PayloadAction<Payload<UpdateCellLabelPayload>>) => {
+      const { cellId, value, undoable = true } = action.payload;
+      const [rowId, colId] = cellId.split('$');
+      if (state.entities.rows.byId[rowId].cells[colId].label !== value) {
+        return produceWithPatch(state, undoable, (draft) => {
+          draft.entities.rows.byId[rowId].cells[colId].label = value;
+        }, (draft) => {
+          // do not include in undo history
+          draft.entities.rows.byId[rowId].cells[colId].editable = false;
+        });
+      }
+      // if value is the same just stop editing cell
+      state.entities.rows.byId[rowId].cells[colId].editable = false;
+    },
     /**
      * Handle the assignment of a metadata to a cell.
      * --UNDOABLE ACTION--
@@ -204,6 +232,8 @@ export const tableSlice = createSliceWithRequests({
 });
 
 export const {
+  updateCellEditable,
+  updateCellLabel,
   updateCellMetadata,
   updateColumnSelection,
   updateCellSelection,
