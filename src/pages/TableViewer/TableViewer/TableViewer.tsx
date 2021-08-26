@@ -4,40 +4,62 @@ import {
   MouseEvent, useEffect,
   useState
 } from 'react';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { LinearProgress, Menu, MenuItem } from '@material-ui/core';
-import { getTable } from '@store/slices/table/table.thunk';
 import {
   selectCellMetadata,
   selectDataTableFormat, selectGetTableRequestStatus, selectSelectedCells,
   selectSelectedColumns, updateCellEditable, updateCellLabel, updateCellSelection,
   updateColumnSelection
 } from '@store/slices/table/table.slice';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { LinearProgress } from '@material-ui/core';
+import { getTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/slices/table/interfaces/table';
+import { MenuActions } from '@components/core';
+import EditRoundedIcon from '@material-ui/icons/EditRounded';
+import LinkRoundedIcon from '@material-ui/icons/LinkRounded';
+import SettingsEthernetRoundedIcon from '@material-ui/icons/SettingsEthernetRounded';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
 import { TableCell, TableColumn } from '../Table/interfaces/table';
 
 interface MenuState {
-  mouseX: number | null;
-  mouseY: number | null;
-  target: {
-    id: string;
-    type: 'cell' | 'column';
-  } | null;
+  open: boolean;
+  targetId: string | null;
+  targetType: 'cell' | 'column' | null;
 }
 
 // contextual close state
 const contextualMenuCloseState: MenuState = {
-  mouseX: null,
-  mouseY: null,
-  target: null
+  open: false,
+  targetId: null,
+  targetType: null
+};
+
+const contextMenuActions = {
+  cell: [
+    {
+      id: 'context-edit',
+      label: 'Edit cell',
+      Icon: <EditRoundedIcon className={styles.ContextMenuIcon} />
+    },
+    {
+      id: 'context-reconciliate',
+      label: 'Reconciliate cell',
+      Icon: <LinkRoundedIcon className={styles.ContextMenuIcon} />
+    },
+    {
+      id: 'context-manage-metadata',
+      label: 'Manage metadata',
+      Icon: <SettingsEthernetRoundedIcon className={styles.ContextMenuIcon} />
+    }
+  ]
 };
 
 const TableViewer = () => {
   const dispatch = useAppDispatch();
   const [menuState, setMenuState] = useState(contextualMenuCloseState);
+  const [anchorEl, setAnchorEl] = useState<null | any>(null);
   const { name } = useParams<{ name: string }>();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableRequestStatus);
@@ -57,28 +79,6 @@ const TableViewer = () => {
     }
   };
 
-  const handleCellRightClick = (
-    event: MouseEvent<HTMLDivElement>,
-    cellType: 'cell' | 'column', id: string
-  ) => {
-    event.preventDefault();
-    if (cellType === 'cell') {
-      handleSelectedCellChange(event, id);
-    }
-    setMenuState({
-      mouseX: event.clientX - 2,
-      mouseY: event.clientY - 4,
-      target: {
-        id,
-        type: cellType
-      }
-    });
-  };
-
-  const handleMenuClose = () => {
-    setMenuState(contextualMenuCloseState);
-  };
-
   const handleSelectedColumnChange = useCallback((id: ID) => {
     dispatch(updateColumnSelection(id));
   }, []);
@@ -87,9 +87,45 @@ const TableViewer = () => {
     dispatch(updateCellLabel({ cellId, value }));
   };
 
-  const onEditCell = () => {
-    if (menuState.target) {
-      dispatch(updateCellEditable({ cellId: menuState.target.id }));
+  const editCell = () => {
+    if (menuState.targetId) {
+      dispatch(updateCellEditable({ cellId: menuState.targetId }));
+    }
+  };
+
+  const handleCellRightClick = (e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | null, id: string) => {
+    e.preventDefault();
+    if (type === 'cell') {
+      handleSelectedCellChange(e, id);
+    }
+
+    setMenuState({
+      open: true,
+      targetId: id,
+      targetType: type
+    });
+    // create a virtual anchor element for the menu
+    const { clientX, clientY } = e;
+    const virtualElement = {
+      getBoundingClientRect: () => ({
+        width: 0,
+        height: 0,
+        top: clientY,
+        right: clientX,
+        bottom: clientY,
+        left: clientX
+      })
+    };
+    setAnchorEl(virtualElement);
+  };
+
+  const handleMenuClose = () => {
+    setMenuState(contextualMenuCloseState);
+  };
+
+  const handleContextMenuItemClick = (id: string) => {
+    if (id === 'context-edit') {
+      editCell();
     }
     setMenuState(contextualMenuCloseState);
   };
@@ -147,19 +183,13 @@ const TableViewer = () => {
           />
         ) : <LinearProgress />
         }
-
-        <Menu
-          open={menuState.mouseY !== null}
-          onClose={handleMenuClose}
-          anchorReference="anchorPosition"
-          anchorPosition={
-            menuState.mouseY !== null && menuState.mouseX !== null
-              ? { top: menuState.mouseY, left: menuState.mouseX }
-              : undefined
-          }
-        >
-          <MenuItem onClick={onEditCell}>Edit cell</MenuItem>
-        </Menu>
+        <MenuActions
+          open={menuState.open}
+          handleMenuItemClick={handleContextMenuItemClick}
+          handleClose={handleMenuClose}
+          anchorElement={anchorEl}
+          actions={menuState.targetType === 'cell' ? contextMenuActions.cell : []}
+        />
       </div>
     </>
   );
