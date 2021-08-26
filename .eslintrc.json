@@ -20,6 +20,7 @@
         "@typescript-eslint"
     ],
     "rules": {
+        "react/jsx-closing-bracket-location": "off",
         "consistent-return": "off",
         "arrow-body-style": "off",
         "no-plusplus": "off",

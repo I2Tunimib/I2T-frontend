@@ -1,0 +1,22 @@
+.Container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 10px;
+  gap: 5px;
+
+  // add separator between action groups
+  &:not(:last-child) {
+    &::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      height: 100%;
+      transform: translateY(-50%);
+      width: 2px;
+      background-color: #ededed;
+    }
+  }
+}

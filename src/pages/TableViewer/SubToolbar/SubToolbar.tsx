@@ -1,4 +1,4 @@
-import { Button, IconButton } from '@material-ui/core';
+import { Button, IconButton, Tooltip } from '@material-ui/core';
 // import {
 //   deleteColumn, selectIsColumnSelected,
 //   updateUI
@@ -7,6 +7,8 @@ import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
+import SettingsEthernetRoundedIcon from '@material-ui/icons/SettingsEthernetRounded';
+import PlaylistAddCheckRoundedIcon from '@material-ui/icons/PlaylistAddCheckRounded';
 import clsx from 'clsx';
 import {
   deleteColumn,
@@ -17,22 +19,11 @@ import {
   selectIsCellSelected, selectIsMetadataButtonEnabled,
   undo, updateUI
 } from '@store/slices/table/table.slice';
+import { ToolbarActions } from '@components/kit';
+import { ActionGroup, IconButtonTooltip } from '@components/core';
 import styles from './SubToolbar.module.scss';
-import ReconciliateDialog from '../ReconciliationDialog/ReconciliationDialog';
-import MetadataDialog from '../MetadataDialog/MetadataDialog';
-
-/**
- * Action container
- */
-const ActionGroup = ({ children, className }: any) => (
-  <div className={clsx(
-    styles.ActionGroup,
-    className
-  )}
-  >
-    {children}
-  </div>
-);
+import ReconciliateDialog from '../ReconciliationDialog';
+import MetadataDialog from '../MetadataDialog';
 
 /**
  * Sub toolbar for common and contextual actions
@@ -51,56 +42,52 @@ const SubToolbar = () => {
 
   return (
     <>
-      <div className={styles.Container}>
+      <ToolbarActions>
         <ActionGroup>
-          <IconButton disabled={!canUndo} onClick={() => dispatch(undo())} size="small">
-            <UndoRoundedIcon />
-          </IconButton>
-          <IconButton disabled={!canRedo} onClick={() => dispatch(redo())} size="small">
-            <RedoRoundedIcon />
-          </IconButton>
-          <IconButton onClick={handleDelete} disabled={!canDelete} size="small">
-            <DeleteOutlineRoundedIcon />
-          </IconButton>
+          <IconButtonTooltip
+            tooltipText="Undo"
+            Icon={UndoRoundedIcon}
+            disabled={!canUndo}
+            onClick={() => dispatch(undo())}
+          />
+          <IconButtonTooltip
+            tooltipText="Redo"
+            Icon={RedoRoundedIcon}
+            disabled={!canRedo}
+            onClick={() => dispatch(redo())}
+          />
+          <IconButtonTooltip
+            tooltipText="Delete selected"
+            Icon={DeleteOutlineRoundedIcon}
+            disabled={!canDelete}
+            onClick={handleDelete}
+          />
         </ActionGroup>
-        <div className={styles.ActionsContainer}>
-          <div className={clsx(
-            styles.MenusContainer,
-            {
-              [styles.Hidden]: !isMetadataButtonEnabled,
-              [styles.Visible]: isMetadataButtonEnabled
-            }
-          )}
-          >
-            <ActionGroup className={clsx(
-              styles.HiddenMenu,
-              {
-                [styles.Hidden]: !isMetadataButtonEnabled,
-                [styles.Visible]: isMetadataButtonEnabled
-              }
-            )}
-            >
-              <Button
-                variant="contained"
-                onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
-              >
-                Manage Metadata
-              </Button>
-            </ActionGroup>
-            <ActionGroup className={styles.VisibleMenu}>
-              <Button
-                color="primary"
-                disabled={!isCellSelected}
-                onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
-                variant="contained"
-              >
-                Reconcile
-              </Button>
-              <Button disabled variant="contained">Extend</Button>
-            </ActionGroup>
-          </div>
-        </div>
-      </div>
+        <ActionGroup>
+          <IconButtonTooltip
+            tooltipText="Manage metadata"
+            Icon={SettingsEthernetRoundedIcon}
+            disabled={!isMetadataButtonEnabled}
+            onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
+          />
+          <IconButtonTooltip
+            tooltipText="Auto reconciliation"
+            Icon={PlaylistAddCheckRoundedIcon}
+            disabled
+            onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
+          />
+        </ActionGroup>
+        <ActionGroup className={styles.VisibleMenu}>
+          <Button
+            color="primary"
+            disabled={!isCellSelected}
+            onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
+            variant="contained">
+            Reconcile
+          </Button>
+          <Button disabled variant="contained">Extend</Button>
+        </ActionGroup>
+      </ToolbarActions>
       <ReconciliateDialog />
       <MetadataDialog />
     </>
