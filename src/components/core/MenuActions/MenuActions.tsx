@@ -4,11 +4,12 @@ import {
 } from '@material-ui/core';
 import { FC, ReactNode } from 'react';
 import MenuBase from '../MenuBase';
+import styles from './MenuActions.module.scss';
 
 interface MenuActionsProps {
   open: boolean;
   anchorElement: any;
-  actions: Action[];
+  actionGroups: Action[][];
   id?: string;
   placement?: PopperPlacementType | undefined;
   handleClose: () => void;
@@ -38,7 +39,7 @@ const useMenuStyles = makeStyles({
 });
 
 const MenuActions: FC<MenuActionsProps> = ({
-  actions,
+  actionGroups,
   handleMenuItemClick,
   ...props
 }) => {
@@ -47,17 +48,20 @@ const MenuActions: FC<MenuActionsProps> = ({
   return (
     <MenuBase {...props}>
       <MenuList className={menuClasses.list} autoFocus>
-        {actions.map((action) => (
-          <MenuItem
-            key={action.id}
-            className={menuClasses.root}
-            onClick={() => handleMenuItemClick(action.id)}
-          >
-            {action.Icon && action.Icon}
-            {action.label}
-          </MenuItem>
+        {actionGroups.map((group) => (
+          <div className={styles.MenuActionGroup}>
+            {group.map((action) => (
+              <MenuItem
+                key={action.id}
+                className={menuClasses.root}
+                onClick={() => handleMenuItemClick(action.id)}
+              >
+                {action.Icon && action.Icon}
+                {action.label}
+              </MenuItem>
+            ))}
+          </div>
         ))}
-
       </MenuList>
     </MenuBase>
   );

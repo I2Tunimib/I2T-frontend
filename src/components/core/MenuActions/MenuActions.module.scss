@@ -1,0 +1,6 @@
+.MenuActionGroup {
+  &:not(:last-child) {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ededed;
+  }
+}
