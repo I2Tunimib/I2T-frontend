@@ -1,6 +1,6 @@
 import {
   CreateSliceOptions, createSlice,
-  PayloadAction, Draft, ValidateSliceCaseReducers, SliceCaseReducers
+  PayloadAction, Draft
 } from '@reduxjs/toolkit';
 import produce, {
   applyPatches, original,
@@ -46,7 +46,6 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
     }
   );
 
-  // eslint-disable-next-line consistent-return
   return produce(nextState, (draft) => {
     if (draft) {
       if (mutationsWithoutPatches) {
@@ -67,14 +66,16 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
 export const applyUndoPatches = <T extends UndoEnhancedState>(
   state: T, mutations?: (draft: T) => void
 ) => {
-  const presentPatch = state._draft.past.pop();
-  state._draft.future.push(state._draft.present);
-  state._draft.present = presentPatch || [];
-  const newDraft = applyPatches(state, state._draft.present);
-  if (mutations) {
-    mutations(newDraft);
+  if (state._draft.past.length > 0) {
+    const presentPatch = state._draft.past.pop();
+    state._draft.future.push(state._draft.present);
+    state._draft.present = presentPatch || [];
+    const newDraft = applyPatches(state, state._draft.present);
+    if (mutations) {
+      mutations(newDraft);
+    }
+    return newDraft;
   }
-  return newDraft;
 };
 
 /**
@@ -83,14 +84,16 @@ export const applyUndoPatches = <T extends UndoEnhancedState>(
 export const applyRedoPatches = <T extends UndoEnhancedState>(
   state: T, mutations?: (draft: T) => void
 ) => {
-  const presentPatch = state._draft.future.pop();
-  state._draft.past.push(state._draft.present);
-  state._draft.present = presentPatch || [];
-  const newDraft = applyPatches(state, state._draft.present);
-  if (mutations) {
-    mutations(newDraft);
+  if (state._draft.future.length > 0) {
+    const presentPatch = state._draft.future.pop();
+    state._draft.past.push(state._draft.present);
+    state._draft.present = presentPatch || [];
+    const newDraft = applyPatches(state, state._draft.present);
+    if (mutations) {
+      mutations(newDraft);
+    }
+    return newDraft;
   }
-  return newDraft;
 };
 
 const undoReducer = <T extends UndoEnhancedState>(
