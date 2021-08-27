@@ -9,6 +9,7 @@ import { RootState } from '@store';
 import { createSliceWithRequests, getRequestStatus } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
 import { Payload } from '@store/interfaces/store';
+import { selectServicesConfig } from '../config/config.slice';
 import {
   ColumnState,
   ID,
@@ -39,9 +40,10 @@ const initialState: TableState = {
   },
   _requests: { byId: {}, allIds: [] },
   _draft: {
-    past: [],
-    present: [],
-    future: []
+    patches: [],
+    inversePatches: [],
+    undoPointer: -1,
+    redoPointer: -1
   }
 };
 
@@ -128,8 +130,16 @@ export const tableSlice = createSliceWithRequests({
      */
     updateCellMetadata: (state, action: PayloadAction<Payload<UpdateCellMetadataPayload>>) => {
       const { metadataId, cellId, undoable = true } = action.payload;
+      const [rowId, colId] = cellId.split('$');
       return produceWithPatch(state, undoable, (draft) => {
         draft.ui.selectedCellMetadataId[cellId] = metadataId;
+        draft.entities.rows.byId[rowId].cells[colId].metadata.forEach((metaItem) => {
+          if (metaItem.id === metadataId) {
+            metaItem.match = true;
+          } else {
+            metaItem.match = false;
+          }
+        });
       });
     },
     /**
@@ -272,11 +282,11 @@ export const selectGetTableRequestStatus = createSelector(
 // Undo selectors
 export const selectCanUndo = createSelector(
   selectDraftState,
-  (draft) => draft.past.length > 0
+  (draft) => draft.undoPointer > -1
 );
 export const selectCanRedo = createSelector(
   selectDraftState,
-  (draft) => draft.future.length > 0
+  (draft) => draft.redoPointer > -1
 );
 
 /**
@@ -398,19 +408,25 @@ export const selectMetdataCellId = createSelector(
 
 export const selectSelectedCellMetadataTableFormat = createSelector(
   selectCellIfOne,
+  selectServicesConfig,
+  selectColumnsState,
   selectRowsState,
-  (cellId, rows): {
+  (cellId, config, columns, rows): {
     columns: ISimpleColumn[], rows: ISimpleRow[], selectedCellId: string
   } => {
     if (!cellId) {
       return { columns: [] as ISimpleColumn[], rows: [] as ISimpleRow[], selectedCellId: '' };
     }
     const [rowId, colId] = cellId.split('$');
+
+    const currentService = config.reconciliators
+      .find((service: any) => service.name === columns.byId[colId].reconciliator);
+
     const { metadata } = rows.byId[rowId].cells[colId];
 
     if (metadata.length > 0) {
-      const formattedCols = Object.keys(metadata[0]).map((key) => ({
-        id: key
+      const formattedCols: ISimpleColumn[] = currentService.metaToViz.map((label: string) => ({
+        id: label
       }));
       const formattedRows = rows.byId[rowId].cells[colId].metadata
         .map((metadataItem) => ({
