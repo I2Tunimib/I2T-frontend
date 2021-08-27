@@ -1,0 +1,25 @@
+.MenuContent {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  padding: 10px;
+
+  .Row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0 50px 0;
+  }
+
+  .Slider {
+    max-width: 90%;
+    align-self: center;
+  }
+
+  .ConfirmButton {
+    margin-top: 10px;
+    align-self: flex-end;
+  }
+}

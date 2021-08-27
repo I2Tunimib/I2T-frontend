@@ -21,15 +21,19 @@ import {
 } from '@store/slices/table/table.slice';
 import { ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
+import { MouseEvent, useState } from 'react';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
+import AutoMatching from '../AutoMatching';
 
 /**
  * Sub toolbar for common and contextual actions
  */
 const SubToolbar = () => {
   const dispatch = useAppDispatch();
+  const [isAutoMatching, setIsAutoMatching] = useState(false);
+  const [autoMatchingAnchor, setAutoMatchingAnchor] = useState<null | HTMLElement>(null);
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsMetadataButtonEnabled);
   const canUndo = useAppSelector(selectCanUndo);
@@ -38,6 +42,14 @@ const SubToolbar = () => {
 
   const handleDelete = () => {
     dispatch(deleteColumn({ undoable: true }));
+  };
+
+  const handleClickAutoMatching = (event: MouseEvent<HTMLElement>) => {
+    setIsAutoMatching(true);
+    setAutoMatchingAnchor(event.currentTarget);
+  };
+  const handleCloseAutoMatching = () => {
+    setIsAutoMatching(false);
   };
 
   return (
@@ -71,10 +83,10 @@ const SubToolbar = () => {
             onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
           />
           <IconButtonTooltip
-            tooltipText="Auto reconciliation"
+            tooltipText="Auto matching"
             Icon={PlaylistAddCheckRoundedIcon}
-            disabled
-            onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
+            disabled={false}
+            onClick={handleClickAutoMatching}
           />
         </ActionGroup>
         <ActionGroup className={styles.VisibleMenu}>
@@ -90,6 +102,11 @@ const SubToolbar = () => {
       </ToolbarActions>
       <ReconciliateDialog />
       <MetadataDialog />
+      <AutoMatching
+        open={isAutoMatching}
+        anchorElement={autoMatchingAnchor}
+        handleClose={handleCloseAutoMatching}
+      />
     </>
   );
 };

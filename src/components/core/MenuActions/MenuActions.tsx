@@ -48,8 +48,8 @@ const MenuActions: FC<MenuActionsProps> = ({
   return (
     <MenuBase {...props}>
       <MenuList className={menuClasses.list} autoFocus>
-        {actionGroups.map((group) => (
-          <div className={styles.MenuActionGroup}>
+        {actionGroups.map((group, index) => (
+          <div key={index} className={styles.MenuActionGroup}>
             {group.map((action) => (
               <MenuItem
                 key={action.id}

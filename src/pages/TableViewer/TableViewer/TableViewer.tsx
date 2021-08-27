@@ -5,9 +5,10 @@ import {
   useState
 } from 'react';
 import {
+  redo,
   selectCellMetadata,
   selectDataTableFormat, selectGetTableRequestStatus, selectSelectedCells,
-  selectSelectedColumns, updateCellEditable, updateCellLabel, updateCellSelection,
+  selectSelectedColumns, undo, updateCellEditable, updateCellLabel, updateCellSelection,
   updateColumnSelection
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -15,6 +16,7 @@ import { LinearProgress } from '@material-ui/core';
 import { getTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/slices/table/interfaces/table';
 import { MenuActions } from '@components/core';
+import { HotKeys } from 'react-hotkeys';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
@@ -34,6 +36,12 @@ const contextualMenuCloseState: MenuState = {
   targetType: null
 };
 
+const keyMap = {
+  SAVE: 'ctrl+s',
+  UNDO: 'ctrl+z',
+  REDO: 'ctrl+shift+z'
+};
+
 const TableViewer = () => {
   const dispatch = useAppDispatch();
   const [menuState, setMenuState] = useState(contextualMenuCloseState);
@@ -44,12 +52,14 @@ const TableViewer = () => {
   const selectedColumns = useAppSelector(selectSelectedColumns);
   const selectedCells = useAppSelector(selectSelectedCells);
   const selectedCellMetadata = useAppSelector(selectCellMetadata);
-  const contextualMenuActions = CONTEXT_MENU_ACTIONS;
 
   useEffect(() => {
     dispatch(getTable({ dataSource: 'tables', name }));
   }, [name]);
 
+  /**
+   * Handle selection of a cell.
+   */
   const handleSelectedCellChange = (event: MouseEvent, id: ID) => {
     if (event.ctrlKey) {
       dispatch(updateCellSelection({ id, multi: true }));
@@ -58,26 +68,51 @@ const TableViewer = () => {
     }
   };
 
+  /**
+   * Handle selection of a column.
+   */
   const handleSelectedColumnChange = useCallback((id: ID) => {
     dispatch(updateColumnSelection(id));
   }, []);
 
+  /**
+   * Handle update of cell values.
+   */
   const updateTableData = (cellId: ID, value: string) => {
     dispatch(updateCellLabel({ cellId, value }));
   };
 
+  /**
+   * Handle edit cell action.
+   */
   const editCell = () => {
     if (menuState.targetId) {
       dispatch(updateCellEditable({ cellId: menuState.targetId }));
     }
   };
 
+  /**
+   * Generate getBoundingClientRect function.
+   */
+  const generateGetBoundingClientRect = (x: number, y: number) => {
+    return () => ({
+      width: 0,
+      height: 0,
+      top: y,
+      right: x,
+      bottom: y,
+      left: x
+    });
+  };
+
+  /**
+   * Handle cell / column right click.
+   */
   const handleCellRightClick = (e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | null, id: string) => {
     e.preventDefault();
     if (type === 'cell') {
       handleSelectedCellChange(e, id);
     }
-
     setMenuState({
       open: true,
       targetId: id,
@@ -86,22 +121,23 @@ const TableViewer = () => {
     // create a virtual anchor element for the menu
     const { clientX, clientY } = e;
     const virtualElement = {
-      getBoundingClientRect: () => ({
-        width: 0,
-        height: 0,
-        top: clientY,
-        right: clientX,
-        bottom: clientY,
-        left: clientX
-      })
+      clientWidth: clientX,
+      clientHeight: clientY,
+      getBoundingClientRect: generateGetBoundingClientRect(clientX, clientY)
     };
     setAnchorEl(virtualElement);
   };
 
+  /**
+   * Close contextual menu.
+   */
   const handleMenuClose = () => {
     setMenuState(contextualMenuCloseState);
   };
 
+  /**
+   * Handle action context menu.
+   */
   const handleContextMenuItemClick = (id: string) => {
     if (id === 'context-edit') {
       editCell();
@@ -146,11 +182,33 @@ const TableViewer = () => {
     };
   };
 
+  /**
+   * Keyboard shortcut handlers
+   */
+  const saveWork = useCallback((event: KeyboardEvent | undefined) => {
+    if (event) {
+      event.preventDefault();
+    }
+    // Saving
+  }, []);
+  const undoOperation = useCallback(() => {
+    dispatch(undo());
+  }, []);
+  const redoOperation = useCallback(() => {
+    dispatch(redo());
+  }, []);
+
+  const keyHandlers = {
+    SAVE: saveWork,
+    UNDO: undoOperation,
+    REDO: redoOperation
+  };
+
   const columnsTable = useMemo(() => columns, [columns]);
   const rowsTable = useMemo(() => rows, [rows]);
 
   return (
-    <>
+    <HotKeys keyMap={keyMap} handlers={keyHandlers}>
       <Toolbar />
       <div className={styles.TableContainer}>
         {!loading ? (
@@ -167,10 +225,10 @@ const TableViewer = () => {
           handleMenuItemClick={handleContextMenuItemClick}
           handleClose={handleMenuClose}
           anchorElement={anchorEl}
-          actionGroups={menuState.targetType === 'cell' ? contextualMenuActions.cell : contextualMenuActions.column}
+          actionGroups={menuState.targetType === 'cell' ? CONTEXT_MENU_ACTIONS.cell : CONTEXT_MENU_ACTIONS.column}
         />
       </div>
-    </>
+    </HotKeys>
   );
 };
 
