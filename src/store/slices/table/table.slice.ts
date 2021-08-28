@@ -1,6 +1,7 @@
 import { ISimpleColumn, ISimpleRow } from '@components/kit/SimpleTable';
 import {
   createSelector,
+  Draft,
   PayloadAction
 } from '@reduxjs/toolkit';
 import { convertFromCSV } from '@services/converters/csv-converter';
@@ -17,6 +18,7 @@ import {
   ColumnState,
   ID,
   Metadata,
+  MetadataInstance,
   ReconciliationFulfilledPayload,
   RowState,
   SetDataPayload,
@@ -105,16 +107,26 @@ const setMatchingMetadata = (
   threshold: number, selectedCellMetadataId: Record<ID, ID>
 ) => {
   let maxIndex = { index: -1, max: -1 };
-  metadata.forEach((item, i) => {
+  metadata.values.forEach((item, i) => {
     if (item.score > threshold && item.score > maxIndex.max) {
       maxIndex = { index: i, max: item.score };
     }
   });
 
   if (maxIndex.index !== -1) {
-    metadata[maxIndex.index].match = true;
-    selectedCellMetadataId[cellId] = metadata[maxIndex.index].id;
+    metadata.values[maxIndex.index].match = true;
+    selectedCellMetadataId[cellId] = metadata.values[maxIndex.index].id;
   }
+};
+
+const isColumnReconciliated = (state: Draft<TableState>, colId: ID) => {
+  const { allIds: rowIds } = state.entities.rows;
+  const { rows } = state.entities;
+  return rowIds.every((rowId) => {
+    const cell = rows.byId[rowId].cells[colId];
+    return cell.metadata.values.length === 0
+    && cell.metadata.reconciliator === rows.byId[rowIds[0]].cells[colId].metadata.reconciliator;
+  });
 };
 
 export const tableSlice = createSliceWithRequests({
@@ -156,7 +168,7 @@ export const tableSlice = createSliceWithRequests({
       const [rowId, colId] = getIdsFromCell(cellId);
       return produceWithPatch(state, undoable, (draft) => {
         draft.ui.selectedCellMetadataId[cellId] = metadataId;
-        draft.entities.rows.byId[rowId].cells[colId].metadata.forEach((metaItem) => {
+        draft.entities.rows.byId[rowId].cells[colId].metadata.values.forEach((metaItem) => {
           if (metaItem.id === metadataId) {
             metaItem.match = true;
           } else {
@@ -190,7 +202,8 @@ export const tableSlice = createSliceWithRequests({
       const id = action.payload;
       const { rows } = state.entities;
       state.ui.selectedColumnsIds = toggleObject(state.ui.selectedColumnsIds, id, true);
-      state.ui.selectedCellIds = Object.keys(state.ui.selectedColumnsIds)
+      // get selected cells in the column selected/deselected
+      const selectedCellsColumns = Object.keys(state.ui.selectedColumnsIds)
         .reduce((accCol, colId) => {
           return {
             ...accCol,
@@ -200,6 +213,19 @@ export const tableSlice = createSliceWithRequests({
             }), {})
           };
         }, {});
+      // get selected cells which are not in the column selected/deselected
+      const selectedCells = Object.keys(state.ui.selectedCellIds)
+        .reduce((accCell, cellId) => {
+          const [rowId, colId] = getIdsFromCell(cellId);
+          if (colId !== id) {
+            return {
+              ...accCell,
+              [`${rowId}$${colId}`]: true
+            };
+          }
+          return accCell;
+        }, {});
+      state.ui.selectedCellIds = { ...selectedCellsColumns, ...selectedCells };
     },
     /**
      *
@@ -251,6 +277,8 @@ export const tableSlice = createSliceWithRequests({
       }, (draft) => {
         // also remove selection from deleted columns without generating patches
         draft.ui.selectedColumnsIds = {};
+        // TODO: check more specifically on which cells to delete
+        draft.ui.selectedCellIds = {};
       });
     },
     /**
@@ -287,13 +315,24 @@ export const tableSlice = createSliceWithRequests({
         const { data, reconciliator, undoable = true } = action.payload;
 
         return produceWithPatch(state, undoable, (draft) => {
+          const updatedColumns = new Set<string>();
           // add metadata to cells
           data.forEach((item) => {
+            draft.ui.selectedCellMetadataId = removeObject(
+              draft.ui.selectedCellMetadataId, item.id
+            );
             const [rowId, colId] = getIdsFromCell(item.id);
-            draft.entities.rows.byId[rowId].cells[colId].metadata = item.metadata;
-            // update column reconciliator
-            if (draft.entities.columns.byId[colId].reconciliator !== reconciliator) {
-              draft.entities.columns.byId[colId].reconciliator = reconciliator;
+            updatedColumns.add(colId);
+            draft.entities.rows.byId[rowId].cells[colId].metadata.reconciliator = reconciliator;
+            draft.entities.rows.byId[rowId].cells[colId].metadata.values = item.metadata;
+          });
+          updatedColumns.forEach((colId) => {
+            if (isColumnReconciliated(state, colId)) {
+              if (draft.entities.columns.byId[colId].reconciliator !== reconciliator) {
+                draft.entities.columns.byId[colId].reconciliator = reconciliator;
+              }
+            } else {
+              draft.entities.columns.byId[colId].reconciliator = '';
             }
           });
         });
@@ -358,11 +397,6 @@ export const selectSelectedColumns = createSelector(
   (ui) => ui.selectedColumnsIds
 );
 
-export const selectCanDelete = createSelector(
-  selectSelectedColumns,
-  (ids) => Object.keys(ids).length > 0
-);
-
 /**
  * Get selected cells ids as object.
  */
@@ -389,16 +423,23 @@ export const selectSelectedCells = createSelector(
   })
 );
 
+export const selectCanDelete = createSelector(
+  selectSelectedColumns,
+  selectSelectedCellsIdsAsArray,
+  (selectedColumns, selectedCells) => selectedCells.length > 0 && selectedCells
+    .every((cellId) => getIdsFromCell(cellId)[1] in selectedColumns)
+);
+
 /**
  * Auto matching should be enabled when all selected cells have metadatas.
  */
 export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
   (selectedCells) => selectedCells.length > 0
-    && !selectedCells.some((cell) => cell.metadata.length === 0)
+    && !selectedCells.some((cell) => cell.metadata.values.length === 0)
 );
 
-const getMinMaxScore = (metadataArray: Metadata[]) => {
+const getMinMaxScore = (metadataArray: MetadataInstance[]) => {
   const scores = metadataArray.map((metadataItem) => metadataItem.score);
   const max = Math.max(...scores);
   const min = Math.min(...scores);
@@ -411,7 +452,7 @@ export const selectAutoMatchingCells = createSelector(
       minScoreAcc: minScore,
       maxScoreAcc: maxScore
     } = selectedCells.reduce(({ minScoreAcc, maxScoreAcc }, cell) => {
-      const { min, max } = getMinMaxScore(cell.metadata);
+      const { min, max } = getMinMaxScore(cell.metadata.values);
       return {
         minScoreAcc: minScoreAcc < min ? minScoreAcc : min,
         maxScoreAcc: maxScoreAcc > max ? maxScoreAcc : max
@@ -525,9 +566,8 @@ export const selectMetdataCellId = createSelector(
 export const selectSelectedCellMetadataTableFormat = createSelector(
   selectCellIfOne,
   selectServicesConfig,
-  selectColumnsState,
   selectRowsState,
-  (cellId, config, columns, rows): {
+  (cellId, config, rows): {
     columns: ISimpleColumn[], rows: ISimpleRow[], selectedCellId: string
   } => {
     if (!cellId) {
@@ -536,15 +576,16 @@ export const selectSelectedCellMetadataTableFormat = createSelector(
     const [rowId, colId] = getIdsFromCell(cellId);
 
     const currentService = config.reconciliators
-      .find((service: any) => service.name === columns.byId[colId].reconciliator);
+      .find((service: any) => service.name
+        === rows.byId[rowId].cells[colId].metadata.reconciliator);
 
     const { metadata } = rows.byId[rowId].cells[colId];
 
-    if (metadata.length > 0) {
+    if (metadata.values.length > 0) {
       const formattedCols: ISimpleColumn[] = currentService.metaToViz.map((label: string) => ({
         id: label
       }));
-      const formattedRows = rows.byId[rowId].cells[colId].metadata
+      const formattedRows = rows.byId[rowId].cells[colId].metadata.values
         .map((metadataItem) => ({
           id: metadataItem.id,
           cells: formattedCols.map((col) => (col.id === 'type'

@@ -58,13 +58,17 @@ export interface Row {
  */
 export interface Cell {
   label: string;
-  metadata: Metadata[];
+  metadata: Metadata;
   editable: boolean;
+}
+export interface Metadata {
+  reconciliator: string;
+  values: MetadataInstance[];
 }
 /**
  * A metadata instance.
  */
-export interface Metadata extends Record<string, unknown> {
+export interface MetadataInstance extends Record<string, unknown> {
   id: ID;
   name: string;
   match: boolean;
@@ -91,7 +95,7 @@ export interface UpdateSelectedCellsPayload {
 export interface ReconciliationFulfilledPayload {
   data: {
     id: ID,
-    metadata: Metadata[]
+    metadata: MetadataInstance[]
   }[],
   reconciliator: string;
 }

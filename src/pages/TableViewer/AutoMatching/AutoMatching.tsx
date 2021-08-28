@@ -38,7 +38,8 @@ const AutoMatching: FC<AutoMatchingProps> = ({
 
   const getNumberOfReconciliatedCells = (allCells: Cell[], thresholdReconciliation: number) => {
     return allCells.reduce((acc, cell) => {
-      if (cell.metadata.some((metadataItem) => metadataItem.score >= thresholdReconciliation)) {
+      if (cell.metadata.values
+        .some((metadataItem) => metadataItem.score >= thresholdReconciliation)) {
         return acc + 1;
       }
       return acc;

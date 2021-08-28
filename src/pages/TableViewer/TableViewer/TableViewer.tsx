@@ -167,8 +167,8 @@ const TableViewer = () => {
     let selected = false;
     let matching = false;
     if (column.id !== 'index') {
-      selected = `${value.rowId}$${column.id}` in selectedCells;
-      matching = `${value.rowId}$${column.id}` in selectedCellMetadata;
+      selected = !!selectedCells[`${value.rowId}$${column.id}`];
+      matching = !!selectedCellMetadata[`${value.rowId}$${column.id}`];
     }
     return {
       column,

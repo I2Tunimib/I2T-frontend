@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import StatusBadge from '@components/core/StatusBadge';
+import { Metadata } from '@store/slices/table/interfaces/table';
 import styles from './NormalCell.module.scss';
 
 interface NormalCellProps {
@@ -13,19 +14,22 @@ const NormalCell: FC<NormalCellProps> = ({
   value,
   matching
 }) => {
-  const getBadgeStatus = (match: boolean) => {
+  const getBadgeStatus = (metadata: Metadata) => {
     if (matching) {
       return 'Success';
     }
-    return match ? 'Success' : 'Warn';
+    if (metadata.reconciliator && metadata.values.length > 0) {
+      return 'Warn';
+    }
+    return 'Error';
   };
 
   return (
     <>
-      {value.metadata.length > 0 && (
+      {!!value.metadata.reconciliator && (
         <StatusBadge
           className={styles.Badge}
-          status={getBadgeStatus(value.metadata.match)}
+          status={getBadgeStatus(value.metadata)}
         />
       )}
       {label}
