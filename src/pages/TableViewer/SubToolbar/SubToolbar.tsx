@@ -16,12 +16,13 @@ import {
   selectCanDelete,
   selectCanRedo,
   selectCanUndo,
+  selectIsAutoMatchingEnabled,
   selectIsCellSelected, selectIsMetadataButtonEnabled,
   undo, updateUI
 } from '@store/slices/table/table.slice';
 import { ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useState, useEffect } from 'react';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
@@ -36,6 +37,7 @@ const SubToolbar = () => {
   const [autoMatchingAnchor, setAutoMatchingAnchor] = useState<null | HTMLElement>(null);
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsMetadataButtonEnabled);
+  const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
@@ -85,7 +87,7 @@ const SubToolbar = () => {
           <IconButtonTooltip
             tooltipText="Auto matching"
             Icon={PlaylistAddCheckRoundedIcon}
-            disabled={false}
+            disabled={!isAutoMatchingEnabled}
             onClick={handleClickAutoMatching}
           />
         </ActionGroup>

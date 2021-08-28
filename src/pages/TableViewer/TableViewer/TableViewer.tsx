@@ -7,7 +7,7 @@ import {
 import {
   redo,
   selectCellMetadata,
-  selectDataTableFormat, selectGetTableRequestStatus, selectSelectedCells,
+  selectDataTableFormat, selectGetTableRequestStatus, selectSelectedCellsIds,
   selectSelectedColumns, undo, updateCellEditable, updateCellLabel, updateCellSelection,
   updateColumnSelection
 } from '@store/slices/table/table.slice';
@@ -50,7 +50,7 @@ const TableViewer = () => {
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableRequestStatus);
   const selectedColumns = useAppSelector(selectSelectedColumns);
-  const selectedCells = useAppSelector(selectSelectedCells);
+  const selectedCells = useAppSelector(selectSelectedCellsIds);
   const selectedCellMetadata = useAppSelector(selectCellMetadata);
 
   useEffect(() => {
@@ -167,8 +167,8 @@ const TableViewer = () => {
     let selected = false;
     let matching = false;
     if (column.id !== 'index') {
-      selected = !!selectedColumns[column.id] || selectedCells[`${value.rowId}$${column.id}`];
-      matching = !!selectedCellMetadata[`${value.rowId}$${column.id}`];
+      selected = `${value.rowId}$${column.id}` in selectedCells;
+      matching = `${value.rowId}$${column.id}` in selectedCellMetadata;
     }
     return {
       column,
@@ -208,7 +208,7 @@ const TableViewer = () => {
   const rowsTable = useMemo(() => rows, [rows]);
 
   return (
-    <HotKeys keyMap={keyMap} handlers={keyHandlers}>
+    <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
       <Toolbar />
       <div className={styles.TableContainer}>
         {!loading ? (

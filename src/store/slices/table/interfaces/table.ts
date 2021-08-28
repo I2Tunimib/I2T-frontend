@@ -109,3 +109,7 @@ export interface UpdateCellLabelPayload {
 export interface UpdateCellEditablePayload {
   cellId: ID
 }
+
+export interface AutoMatchingPayload {
+  threshold: number;
+}

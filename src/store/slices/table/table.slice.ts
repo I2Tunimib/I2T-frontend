@@ -5,14 +5,18 @@ import {
 } from '@reduxjs/toolkit';
 import { convertFromCSV } from '@services/converters/csv-converter';
 import { isEmptyObject } from '@services/utils/is-object';
+import { floor } from '@services/utils/math';
 import { RootState } from '@store';
 import { createSliceWithRequests, getRequestStatus } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
 import { Payload } from '@store/interfaces/store';
 import { selectServicesConfig } from '../config/config.slice';
 import {
+  AutoMatchingPayload,
+  Cell,
   ColumnState,
   ID,
+  Metadata,
   ReconciliationFulfilledPayload,
   RowState,
   SetDataPayload,
@@ -94,6 +98,25 @@ const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
   return addObject(oldObject, newObject);
 };
 
+const getIdsFromCell = (cellId: ID) => cellId.split('$') as [ID, ID];
+
+const setMatchingMetadata = (
+  { metadata }: Cell, cellId: ID,
+  threshold: number, selectedCellMetadataId: Record<ID, ID>
+) => {
+  let maxIndex = { index: -1, max: -1 };
+  metadata.forEach((item, i) => {
+    if (item.score > threshold && item.score > maxIndex.max) {
+      maxIndex = { index: i, max: item.score };
+    }
+  });
+
+  if (maxIndex.index !== -1) {
+    metadata[maxIndex.index].match = true;
+    selectedCellMetadataId[cellId] = metadata[maxIndex.index].id;
+  }
+};
+
 export const tableSlice = createSliceWithRequests({
   name: 'table',
   initialState,
@@ -103,7 +126,7 @@ export const tableSlice = createSliceWithRequests({
      */
     updateCellEditable: (state, action: PayloadAction<Payload<UpdateCellEditablePayload>>) => {
       const { cellId } = action.payload;
-      const [rowId, colId] = cellId.split('$');
+      const [rowId, colId] = getIdsFromCell(cellId);
       state.entities.rows.byId[rowId].cells[colId].editable = true;
     },
     /**
@@ -112,7 +135,7 @@ export const tableSlice = createSliceWithRequests({
      */
     updateCellLabel: (state, action: PayloadAction<Payload<UpdateCellLabelPayload>>) => {
       const { cellId, value, undoable = true } = action.payload;
-      const [rowId, colId] = cellId.split('$');
+      const [rowId, colId] = getIdsFromCell(cellId);
       if (state.entities.rows.byId[rowId].cells[colId].label !== value) {
         return produceWithPatch(state, undoable, (draft) => {
           draft.entities.rows.byId[rowId].cells[colId].label = value;
@@ -130,7 +153,7 @@ export const tableSlice = createSliceWithRequests({
      */
     updateCellMetadata: (state, action: PayloadAction<Payload<UpdateCellMetadataPayload>>) => {
       const { metadataId, cellId, undoable = true } = action.payload;
-      const [rowId, colId] = cellId.split('$');
+      const [rowId, colId] = getIdsFromCell(cellId);
       return produceWithPatch(state, undoable, (draft) => {
         draft.ui.selectedCellMetadataId[cellId] = metadataId;
         draft.entities.rows.byId[rowId].cells[colId].metadata.forEach((metaItem) => {
@@ -143,25 +166,62 @@ export const tableSlice = createSliceWithRequests({
       });
     },
     /**
+     * Handle auto matching operations.
+     * It updates cell matching metadata based on threshold.
+     * --UNDOABLE ACTION--
+     */
+    autoMatching: (state, action: PayloadAction<Payload<AutoMatchingPayload>>) => {
+      const { threshold, undoable = true } = action.payload;
+      return produceWithPatch(state, undoable, (draft) => {
+        const { rows } = draft.entities;
+        const { selectedCellIds, selectedCellMetadataId } = draft.ui;
+        Object.keys(selectedCellIds).forEach((cellId) => {
+          const [rowId, colId] = getIdsFromCell(cellId);
+          const cell = rows.byId[rowId].cells[colId];
+          setMatchingMetadata(cell, cellId, threshold, selectedCellMetadataId);
+        });
+      });
+    },
+    /**
      * Handle changes to selected columns.
      * It toggles the selection of column given the ID.
      */
     updateColumnSelection: (state, action: PayloadAction<ID>) => {
       const id = action.payload;
-      state.ui.selectedCellIds = {};
+      const { rows } = state.entities;
       state.ui.selectedColumnsIds = toggleObject(state.ui.selectedColumnsIds, id, true);
+      state.ui.selectedCellIds = Object.keys(state.ui.selectedColumnsIds)
+        .reduce((accCol, colId) => {
+          return {
+            ...accCol,
+            ...rows.allIds.reduce((accRows, rowId) => ({
+              ...accRows,
+              [`${rowId}$${colId}`]: true
+            }), {})
+          };
+        }, {});
     },
     /**
      *
      * Handle changes to selected cells.
      */
     updateCellSelection: (state, action: PayloadAction<Payload<UpdateSelectedCellsPayload>>) => {
-      const { id, multi } = action.payload;
+      const { id: cellId, multi } = action.payload;
+      const [_, colId] = getIdsFromCell(cellId);
+
       if (multi) {
-        state.ui.selectedCellIds = toggleObject(state.ui.selectedCellIds, id, true);
-      } else if (!state.ui.selectedCellIds[id]) {
+        state.ui.selectedCellIds = toggleObject(state.ui.selectedCellIds, cellId, true);
+        state.ui.selectedColumnsIds = removeObject(state.ui.selectedColumnsIds, colId);
+      } else {
+        state.ui.selectedCellIds = addObject({}, { [cellId]: true });
         state.ui.selectedColumnsIds = {};
-        state.ui.selectedCellIds = addObject({}, { [id]: true });
+      }
+
+      // check if by selecting a cell I selected a whole column
+      const cellsOfColumn = Object.keys(state.ui.selectedCellIds)
+        .filter((id) => id.endsWith(colId));
+      if (cellsOfColumn.length === state.entities.rows.allIds.length) {
+        state.ui.selectedColumnsIds[colId] = true;
       }
     },
     /**
@@ -229,7 +289,7 @@ export const tableSlice = createSliceWithRequests({
         return produceWithPatch(state, undoable, (draft) => {
           // add metadata to cells
           data.forEach((item) => {
-            const [rowId, colId] = item.id.split('$');
+            const [rowId, colId] = getIdsFromCell(item.id);
             draft.entities.rows.byId[rowId].cells[colId].metadata = item.metadata;
             // update column reconciliator
             if (draft.entities.columns.byId[colId].reconciliator !== reconciliator) {
@@ -245,6 +305,7 @@ export const {
   updateCellEditable,
   updateCellLabel,
   updateCellMetadata,
+  autoMatching,
   updateColumnSelection,
   updateCellSelection,
   updateUI,
@@ -303,11 +364,66 @@ export const selectCanDelete = createSelector(
 );
 
 /**
- * Get selected cells
+ * Get selected cells ids as object.
  */
-export const selectSelectedCells = createSelector(
+export const selectSelectedCellsIds = createSelector(
   selectUIState,
   (ui) => ui.selectedCellIds
+);
+/**
+ * Get selected cells ids as array.
+ */
+export const selectSelectedCellsIdsAsArray = createSelector(
+  selectSelectedCellsIds,
+  (selectedCells) => Object.keys(selectedCells)
+);
+/**
+ * Get selected cells.
+ */
+export const selectSelectedCells = createSelector(
+  selectSelectedCellsIdsAsArray,
+  selectRowsState,
+  (selectedCellsIds, rows) => selectedCellsIds.map((cellId) => {
+    const [rowId, colId] = getIdsFromCell(cellId);
+    return rows.byId[rowId].cells[colId];
+  })
+);
+
+/**
+ * Auto matching should be enabled when all selected cells have metadatas.
+ */
+export const selectIsAutoMatchingEnabled = createSelector(
+  selectSelectedCells,
+  (selectedCells) => selectedCells.length > 0
+    && !selectedCells.some((cell) => cell.metadata.length === 0)
+);
+
+const getMinMaxScore = (metadataArray: Metadata[]) => {
+  const scores = metadataArray.map((metadataItem) => metadataItem.score);
+  const max = Math.max(...scores);
+  const min = Math.min(...scores);
+  return { min, max };
+};
+export const selectAutoMatchingCells = createSelector(
+  selectSelectedCells,
+  (selectedCells) => {
+    const {
+      minScoreAcc: minScore,
+      maxScoreAcc: maxScore
+    } = selectedCells.reduce(({ minScoreAcc, maxScoreAcc }, cell) => {
+      const { min, max } = getMinMaxScore(cell.metadata);
+      return {
+        minScoreAcc: minScoreAcc < min ? minScoreAcc : min,
+        maxScoreAcc: maxScoreAcc > max ? maxScoreAcc : max
+      };
+    }, { minScoreAcc: 500, maxScoreAcc: 0 });
+    return {
+      selectedCells,
+      n: selectedCells.length,
+      minScore: floor(minScore),
+      maxScore: floor(maxScore)
+    };
+  }
 );
 
 /**
@@ -368,7 +484,7 @@ export const selectAllSelectedCellForReconciliation = createSelector(
   selectRowsState,
   (colIds, cellIds, rows) => {
     const selectedFromCells = Object.keys(cellIds).map((cellId) => {
-      const [rowId, colId] = cellId.split('$');
+      const [rowId, colId] = getIdsFromCell(cellId);
       return {
         id: cellId,
         label: rows.byId[rowId].cells[colId].label
@@ -417,7 +533,7 @@ export const selectSelectedCellMetadataTableFormat = createSelector(
     if (!cellId) {
       return { columns: [] as ISimpleColumn[], rows: [] as ISimpleRow[], selectedCellId: '' };
     }
-    const [rowId, colId] = cellId.split('$');
+    const [rowId, colId] = getIdsFromCell(cellId);
 
     const currentService = config.reconciliators
       .find((service: any) => service.name === columns.byId[colId].reconciliator);

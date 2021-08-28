@@ -4,9 +4,15 @@ import {
   Button, Chip, makeStyles, PopperPlacementType,
   Slider, Typography
 } from '@material-ui/core';
-import { FC, useState } from 'react';
+import {
+  FC, useState,
+  useEffect, useMemo
+} from 'react';
 import DoneRoundedIcon from '@material-ui/icons/DoneRounded';
 import DoneIcon from '@material-ui/icons/Done';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { autoMatching, selectAutoMatchingCells } from '@store/slices/table/table.slice';
+import { Cell } from '@store/slices/table/interfaces/table';
 import styles from './AutoMatching.module.scss';
 
 interface AutoMatchingProps {
@@ -17,27 +23,53 @@ interface AutoMatchingProps {
   handleClose: () => void;
 }
 
-const marks = [
-  {
-    value: 0,
-    label: '0'
-  },
-  {
-    value: 100,
-    label: '100'
-  }
-];
-
 const AutoMatching: FC<AutoMatchingProps> = ({
   open,
   anchorElement,
   handleClose
 }) => {
-  const [value, setValue] = useState<number>(30);
+  const dispatch = useAppDispatch();
+  const [reconciliatedCells, setReconciliatedCells] = useState<number>(30);
+  const [threshold, setThreshold] = useState<number>(0);
+  const {
+    selectedCells, n,
+    minScore, maxScore
+  } = useAppSelector(selectAutoMatchingCells);
+
+  const getNumberOfReconciliatedCells = (allCells: Cell[], thresholdReconciliation: number) => {
+    return allCells.reduce((acc, cell) => {
+      if (cell.metadata.some((metadataItem) => metadataItem.score >= thresholdReconciliation)) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+  };
+
+  useEffect(() => {
+    setReconciliatedCells(
+      getNumberOfReconciliatedCells(selectedCells, threshold)
+    );
+  }, [selectedCells, threshold]);
 
   const handleChange = (event: any, newValue: number | number[]) => {
-    setValue(newValue as number);
+    setThreshold(newValue as number);
   };
+
+  const handleConfirm = () => {
+    dispatch(autoMatching({ threshold }));
+    handleClose();
+  };
+
+  const marks = useMemo(() => [
+    {
+      value: minScore,
+      label: minScore.toString()
+    },
+    {
+      value: maxScore,
+      label: maxScore.toString()
+    }
+  ], [minScore, maxScore]);
 
   return (
     <MenuBase
@@ -55,16 +87,24 @@ const AutoMatching: FC<AutoMatchingProps> = ({
           <Chip
             color="primary"
             variant="outlined"
-            size="small"
-            avatar={<Avatar>24</Avatar>}
+            size="medium"
+            avatar={<Avatar>{reconciliatedCells}</Avatar>}
             label="Reconciliated cells"
             deleteIcon={<DoneIcon />}
           />
           /
-          <Chip size="small" variant="outlined" avatar={<Avatar>42</Avatar>} label="Selected cells" />
+          <Chip size="medium" variant="outlined" avatar={<Avatar>{n}</Avatar>} label="Selected cells" />
         </div>
-        <Slider className={styles.Slider} valueLabelDisplay="on" marks={marks} value={value} onChange={handleChange} />
-        <Button color="primary" className={styles.ConfirmButton}>Confirm</Button>
+        <Slider
+          className={styles.Slider}
+          valueLabelDisplay="on"
+          marks={marks}
+          value={threshold}
+          min={minScore}
+          max={maxScore}
+          onChange={handleChange}
+        />
+        <Button onClick={handleConfirm} color="primary" className={styles.ConfirmButton}>Confirm</Button>
       </div>
     </MenuBase>
   );
