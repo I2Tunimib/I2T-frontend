@@ -23,11 +23,12 @@ import { TransitionProps } from '@material-ui/core/transitions';
 import { selectServicesConfig } from '@store/slices/config/config.slice';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
-import {
-  selectAllSelectedCellForReconciliation, selectReconcileDialogStatus,
-  selectReconcileRequestStatus, updateUI
-} from '@store/slices/table/table.slice';
 import { ButtonLoading } from '@components/core';
+import {
+  selectReconcileDialogStatus, selectAllSelectedCellForReconciliation,
+  selectReconcileRequestStatus
+} from '@store/slices/table/table.selectors';
+import { updateUI } from '@store/slices/table/table.slice';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },

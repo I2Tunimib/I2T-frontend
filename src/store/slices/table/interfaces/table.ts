@@ -92,6 +92,16 @@ export interface UpdateSelectedCellsPayload {
   multi?: boolean;
 }
 
+export interface UpdateSelectedRowPayload {
+  id: ID;
+  multi?: boolean;
+}
+
+export interface UpdateSelectedColumnPayload {
+  id: ID;
+  multi?: boolean;
+}
+
 export interface ReconciliationFulfilledPayload {
   data: {
     id: ID,

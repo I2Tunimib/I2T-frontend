@@ -1,18 +1,18 @@
 import { MenuBase } from '@components/core';
 import {
   Avatar,
-  Button, Chip, makeStyles, PopperPlacementType,
+  Button, Chip, PopperPlacementType,
   Slider, Typography
 } from '@material-ui/core';
 import {
   FC, useState,
   useEffect, useMemo
 } from 'react';
-import DoneRoundedIcon from '@material-ui/icons/DoneRounded';
 import DoneIcon from '@material-ui/icons/Done';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { autoMatching, selectAutoMatchingCells } from '@store/slices/table/table.slice';
+import { autoMatching } from '@store/slices/table/table.slice';
 import { Cell } from '@store/slices/table/interfaces/table';
+import { selectAutoMatchingCells } from '@store/slices/table/table.selectors';
 import styles from './AutoMatching.module.scss';
 
 interface AutoMatchingProps {

@@ -40,15 +40,17 @@ export const CONTEXT_MENU_ACTIONS: Record<string, Action[][]> = {
   column: [
     [
       {
-        id: 'context-select-column',
-        label: 'Select column',
-        Icon: <LibraryAddCheckRoundedIcon className={styles.ContextMenuIcon} />
-      }
-    ],
-    [
-      {
         id: 'context-delete-column',
         label: 'Delete column',
+        Icon: <DeleteOutlineRoundedIcon className={styles.ContextMenuIcon} />
+      }
+    ]
+  ],
+  row: [
+    [
+      {
+        id: 'context-delete-row',
+        label: 'Delete row',
         Icon: <DeleteOutlineRoundedIcon className={styles.ContextMenuIcon} />
       }
     ]

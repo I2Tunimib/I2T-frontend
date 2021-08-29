@@ -18,6 +18,7 @@ interface TableRowCellProps extends TableCell {
   row: TableRow;
   selected: boolean;
   matching: boolean;
+  handleSelectedRowChange: (event: MouseEvent<any>, id: string) => void;
   handleSelectedCellChange: (event: MouseEvent<any>, id: string) => void;
   handleCellRightClick: (event: MouseEvent<any>, type: string, id: string) => void;
   updateTableData: (cellId: ID, value: string) => any;
@@ -29,9 +30,11 @@ interface TableRowCellProps extends TableCell {
 const TableRowCell: FC<TableRowCellProps> = ({
   children,
   column: { id: columnId },
+  row: { id: rowId, ...restRow },
   selected,
   matching,
   value,
+  handleSelectedRowChange,
   handleCellRightClick,
   handleSelectedCellChange,
   updateTableData
@@ -68,11 +71,27 @@ const TableRowCell: FC<TableRowCellProps> = ({
     updateTableData(cellId, event.target.value);
   };
 
+  const handleSelectCell = (event: MouseEvent<HTMLElement>) => {
+    if (columnId === 'index') {
+      handleSelectedRowChange(event, rowId);
+    } else {
+      handleSelectedCellChange(event, `${rowId}$${columnId}`);
+    }
+  };
+
+  const handleOnContextMenu = (event: MouseEvent<HTMLElement>) => {
+    if (columnId === 'index') {
+      handleCellRightClick(event, 'index', rowId);
+    } else {
+      handleCellRightClick(event, 'cell', `${rowId}$${columnId}`);
+    }
+  };
+
   return (
     <td
       role="gridcell"
-      onClick={(event) => handleSelectedCellChange(event, `${value.rowId}$${columnId}`)}
-      onContextMenu={(e) => handleCellRightClick(e, 'cell', `${value.rowId}$${columnId}`)}
+      onClick={(event) => handleSelectCell(event)}
+      onContextMenu={(event) => handleOnContextMenu(event)}
       className={clsx(
         styles.TableRowCell,
         {
@@ -99,31 +118,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
           )}
         </>
       )}
-      {/* {columnId === 'index' ? children : (
-        <>
-          {value.metadata.length > 0
-            && (
-              <StatusBadge
-                className={styles.Badge}
-                status={getBadgeStatus(value.metadata.match)}
-              />
-            )
-          }
-          {value.label}
-        </>
-      )}
-      {columnId !== 'index'
-        && (
-          <div
-            className={clsx(
-              styles.SelectableOverlay,
-              // {
-              //   [styles.Selected]: selected
-              // }
-            )}
-            onClick={(event) => handleSelectedCellChange(event, `${value.rowId}$${columnId}`)}
-          />
-        )} */}
     </td>
   );
 };

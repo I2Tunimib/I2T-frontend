@@ -1,12 +1,11 @@
-import { Column, useTable } from 'react-table';
-import { FC } from 'react';
+import { Column, Row, useTable } from 'react-table';
+import { FC, useCallback } from 'react';
 import { ID } from '@store/slices/table/interfaces/table';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
 import TableRowCell from '../TableRowCell';
 import TableRow from '../TableRow';
-import EditableCell from '../EditableCell';
 import TableFooter from '../TableFooter';
 
 interface TableProps {
@@ -24,6 +23,13 @@ const Table: FC<TableProps> = ({
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
 }) => {
+  /**
+   * Custom function id.
+   */
+  const getRowId = useCallback((row: any, relativeIndex: number, parent?: Row<any> | undefined) => {
+    return (parent ? [parent.id, relativeIndex].join('.') : row[Object.keys(row)[0]].rowId) as string;
+  }, []);
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -32,7 +38,8 @@ const Table: FC<TableProps> = ({
     prepareRow
   } = useTable({
     columns,
-    data
+    data,
+    getRowId
     // defaultColumn,
     // updateTableData
   },

@@ -12,17 +12,16 @@ import PlaylistAddCheckRoundedIcon from '@material-ui/icons/PlaylistAddCheckRoun
 import clsx from 'clsx';
 import {
   deleteColumn,
-  redo,
-  selectCanDelete,
-  selectCanRedo,
-  selectCanUndo,
-  selectIsAutoMatchingEnabled,
-  selectIsCellSelected, selectIsMetadataButtonEnabled,
-  undo, updateUI
+  redo, undo, updateUI
 } from '@store/slices/table/table.slice';
 import { ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
 import { MouseEvent, useState, useEffect } from 'react';
+import {
+  selectIsCellSelected, selectIsMetadataButtonEnabled,
+  selectIsAutoMatchingEnabled, selectCanUndo,
+  selectCanRedo, selectCanDelete
+} from '@store/slices/table/table.selectors';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';

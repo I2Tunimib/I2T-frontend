@@ -21,10 +21,12 @@ import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { SimpleTable } from '@components/kit';
+import { updateCellMetadata, updateUI } from '@store/slices/table/table.slice';
 import {
-  selectMetadataDialogStatus, selectMetdataCellId, selectSelectedCellMetadataTableFormat,
-  updateCellMetadata, updateUI
-} from '@store/slices/table/table.slice';
+  selectMetadataDialogStatus,
+  selectSelectedCellMetadataTableFormat,
+  selectMetdataCellId
+} from '@store/slices/table/table.selectors';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
