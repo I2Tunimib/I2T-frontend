@@ -20,12 +20,12 @@ import {
 } from 'react';
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
-import { selectServicesConfig } from '@store/slices/config/config.slice';
+import { selectServicesConfig } from '@store/slices/config/config.selectors';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
 import { ButtonLoading } from '@components/core';
 import {
-  selectReconcileDialogStatus, selectAllSelectedCellForReconciliation,
+  selectReconcileDialogStatus, selectReconciliationCells,
   selectReconcileRequestStatus
 } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
@@ -44,7 +44,7 @@ const ReconciliateDialog = () => {
   // keep track of open state
   const open = useAppSelector(selectReconcileDialogStatus);
   const { reconciliators } = useAppSelector(selectServicesConfig);
-  const selectedCells = useAppSelector(selectAllSelectedCellForReconciliation);
+  const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading } = useAppSelector(selectReconcileRequestStatus);
 
   useEffect(() => {

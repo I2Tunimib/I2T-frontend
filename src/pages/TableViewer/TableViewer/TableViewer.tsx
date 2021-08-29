@@ -18,8 +18,8 @@ import { MenuActions } from '@components/core';
 import { HotKeys } from 'react-hotkeys';
 import {
   selectDataTableFormat, selectGetTableRequestStatus,
-  selectSelectedColumns, selectSelectedRowsIds,
-  selectSelectedCellsIds, selectCellMetadata
+  selectSelectedColumnIds, selectSelectedRowIds,
+  selectSelectedCellIds, selectCellMetadataIds
 } from '@store/slices/table/table.selectors';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
@@ -55,10 +55,10 @@ const TableViewer = () => {
   const { name } = useParams<{ name: string }>();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableRequestStatus);
-  const selectedColumns = useAppSelector(selectSelectedColumns);
-  const selectedRows = useAppSelector(selectSelectedRowsIds);
-  const selectedCells = useAppSelector(selectSelectedCellsIds);
-  const selectedCellMetadata = useAppSelector(selectCellMetadata);
+  const selectedColumns = useAppSelector(selectSelectedColumnIds);
+  const selectedRows = useAppSelector(selectSelectedRowIds);
+  const selectedCells = useAppSelector(selectSelectedCellIds);
+  const selectedCellMetadata = useAppSelector(selectCellMetadataIds);
 
   useEffect(() => {
     dispatch(getTable({ dataSource: 'tables', name }));

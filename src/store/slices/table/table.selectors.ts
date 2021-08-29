@@ -1,12 +1,11 @@
 import { ISimpleColumn, ISimpleRow } from '@components/kit/SimpleTable';
 import { createSelector } from '@reduxjs/toolkit';
-import { isEmptyObject } from '@services/utils/is-object';
 import { floor } from '@services/utils/math';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
-import { selectServicesConfig } from '../config/config.slice';
-import { MetadataInstance } from './interfaces/table';
+import { selectServicesConfig } from '../config/config.selectors';
 import { TableEndpoints } from './table.thunk';
+import { getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getIdsFromCell } from './utils/table.utils';
 
 // Input selectors
@@ -15,17 +14,11 @@ const selectEntitiesState = (state: RootState) => state.table.entities;
 const selectColumnsState = (state: RootState) => state.table.entities.columns;
 const selectRowsState = (state: RootState) => state.table.entities.rows;
 const selectUIState = (state: RootState) => state.table.ui;
-const selectSelectedColumnsIds = (state: RootState) => state.table.ui.selectedColumnsIds;
-const selectSelectedCellIds = (state: RootState) => state.table.ui.selectedCellIds;
 const selecteSelectedCellMetadataId = (state: RootState) => state.table.ui.selectedCellMetadataId;
 const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
 
-/**
- * All selectors
- */
-
-// Loading selectors
+// LOADING SELECTORS
 export const selectReconcileRequestStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableEndpoints.RECONCILE)
@@ -35,7 +28,7 @@ export const selectGetTableRequestStatus = createSelector(
   (requests) => getRequestStatus(requests, TableEndpoints.GET_TABLE)
 );
 
-// Undo selectors
+// UNDO SELECTORS
 export const selectCanUndo = createSelector(
   selectDraftState,
   (draft) => draft.undoPointer > -1
@@ -46,25 +39,38 @@ export const selectCanRedo = createSelector(
 );
 
 /**
- * Get selected columns.
+ * Get selected columns ids as object.
  */
-export const selectSelectedColumns = createSelector(
+export const selectSelectedColumnIds = createSelector(
   selectUIState,
   (ui) => ui.selectedColumnsIds
 );
-
 /**
- * Get selected rows.
+ * Get selected columns ids as array.
  */
-export const selectSelectedRowsIds = createSelector(
-  selectUIState,
-  (ui) => ui.selectedRowsIds
+export const selectSelectedColumnIdsAsArray = createSelector(
+  selectSelectedColumnIds,
+  (colIds) => Object.keys(colIds)
 );
 
 /**
+ * Get selected rows ids as object.
+ */
+export const selectSelectedRowIds = createSelector(
+  selectUIState,
+  (ui) => ui.selectedRowsIds
+);
+/**
+ * Get selected rows ids as array.
+ */
+export const selectSelectedRowIdsAsArray = createSelector(
+  selectSelectedRowIds,
+  (rowIds) => Object.keys(rowIds)
+);
+/**
  * Get selected cells ids as object.
  */
-export const selectSelectedCellsIds = createSelector(
+export const selectSelectedCellIds = createSelector(
   selectUIState,
   (ui) => ui.selectedCellIds
 );
@@ -72,11 +78,12 @@ export const selectSelectedCellsIds = createSelector(
  * Get selected cells ids as array.
  */
 export const selectSelectedCellsIdsAsArray = createSelector(
-  selectSelectedCellsIds,
-  (selectedCells) => Object.keys(selectedCells)
+  selectSelectedCellIds,
+  (cellIds) => Object.keys(cellIds)
 );
 /**
  * Get selected cells.
+ * Get array of selected Cell objects.
  */
 export const selectSelectedCells = createSelector(
   selectSelectedCellsIdsAsArray,
@@ -86,16 +93,84 @@ export const selectSelectedCells = createSelector(
     return rows.byId[rowId].cells[colId];
   })
 );
-
-export const selectCanDelete = createSelector(
-  selectSelectedColumns,
+/**
+ * Check if AT LEAST a cell is selected.
+ */
+export const selectIsCellSelected = createSelector(
   selectSelectedCellsIdsAsArray,
-  (selectedColumns, selectedCells) => selectedCells.length > 0 && selectedCells
-    .every((cellId) => getIdsFromCell(cellId)[1] in selectedColumns)
+  (cellIds) => cellIds.length > 0
+);
+/**
+ * Check if ONLY ONE cell is selected.
+ */
+export const selectIsOnlyOneCellSelected = createSelector(
+  selectSelectedCellsIdsAsArray,
+  (cellIds) => cellIds.length === 1
+);
+/**
+ * Get cell id if only one is selected.
+ */
+export const selectCellIdIfOneSelected = createSelector(
+  selectIsOnlyOneCellSelected,
+  selectSelectedCellsIdsAsArray,
+  (isOnlyOneCell, cellIds) => {
+    if (!isOnlyOneCell) {
+      return '';
+    }
+    return cellIds[0];
+  }
+);
+/**
+ * Get cell metadata ids as object.
+ */
+export const selectCellMetadataIds = createSelector(
+  selectUIState,
+  (ui) => ui.selectedCellMetadataId
+);
+/**
+ * Get selected metadata for current selected cell.
+ */
+export const selectMetdataCellId = createSelector(
+  selectCellIdIfOneSelected,
+  selecteSelectedCellMetadataId,
+  (cellId, metadataCell) => (cellId ? metadataCell[cellId] : '')
+);
+
+// SELECTORS FOR UI DIALOGS AND MENUS
+
+/**
+ * Get reconciliation dialog status.
+ */
+export const selectReconcileDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openReconciliateDialog
+);
+/**
+ * Get metadata dialog status.
+ */
+export const selectMetadataDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openMetadataDialog
+);
+
+// SELECTORS TO CHECK IF AN ACTION IS ENABLED
+
+/**
+ * Check if delete action is enabled.
+ * If only rows and/or columns are selected returns true, false otherwise.
+ */
+export const selectCanDelete = createSelector(
+  selectSelectedColumnIds,
+  selectSelectedRowIds,
+  selectSelectedCellsIdsAsArray,
+  (colIds, rowIds, cellIds) => cellIds.length > 0 && cellIds.every((cellId) => (
+    getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
+  ))
 );
 
 /**
- * Auto matching should be enabled when all selected cells have metadatas.
+ * Check if Auto matching action is enabled.
+ * When all selected cells have metadatas returns true, false otherwise.
  */
 export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
@@ -103,12 +178,56 @@ export const selectIsAutoMatchingEnabled = createSelector(
     && !selectedCells.some((cell) => cell.metadata.values.length === 0)
 );
 
-const getMinMaxScore = (metadataArray: MetadataInstance[]) => {
-  const scores = metadataArray.map((metadataItem) => metadataItem.score);
-  const max = Math.max(...scores);
-  const min = Math.min(...scores);
-  return { min, max };
-};
+// DATA TRANSFORMATION SELECTORS
+
+/**
+ * Get data to display in main table component.
+ * Transform data in Column and Data objects for react-table component.
+ */
+export const selectDataTableFormat = createSelector(
+  selectEntitiesState,
+  (entities) => {
+    const columns = entities.columns.allIds.map((colId) => ({
+      Header: entities.columns.byId[colId].label,
+      accessor: colId,
+      reconciliator: entities.columns.byId[colId].reconciliator,
+      extension: entities.columns.byId[colId].extension
+    }));
+    const rows = entities.rows.allIds.map((rowId) => (
+      Object.keys(entities.rows.byId[rowId].cells).reduce((acc, cellId) => ({
+        ...acc,
+        [cellId]: {
+          ...entities.rows.byId[rowId].cells[cellId],
+          rowId
+        }
+      }), {})
+    ));
+    return { columns, rows };
+  }
+);
+
+/**
+ * Get cells for Reconciliation action.
+ * Transform data to array of objects {id, label}.
+ */
+export const selectReconciliationCells = createSelector(
+  selectSelectedCellsIdsAsArray,
+  selectRowsState,
+  (cellIds, rows) => {
+    return cellIds.map((cellId) => {
+      const [rowId, colId] = getIdsFromCell(cellId);
+      return {
+        id: cellId,
+        label: rows.byId[rowId].cells[colId].label
+      };
+    });
+  }
+);
+
+/**
+ * Get cells for Auto Matching action.
+ * Transform data to get selected cells object, number and min and max scores.
+ */
 export const selectAutoMatchingCells = createSelector(
   selectSelectedCells,
   (selectedCells) => {
@@ -132,103 +251,10 @@ export const selectAutoMatchingCells = createSelector(
 );
 
 /**
- * Get cell metadata ids
+ * Get metadata formatted to display as table.
  */
-export const selectCellMetadata = createSelector(
-  selectUIState,
-  (ui) => ui.selectedCellMetadataId
-);
-
-export const selectReconcileDialogStatus = createSelector(
-  selectTableState,
-  ({ ui }) => ui.openReconciliateDialog
-);
-
-export const selectMetadataDialogStatus = createSelector(
-  selectTableState,
-  ({ ui }) => ui.openMetadataDialog
-);
-
-export const selectIsCellSelected = createSelector(
-  selectSelectedColumnsIds,
-  selectSelectedCellIds,
-  (colIds, cellIds) => !isEmptyObject(colIds) || !isEmptyObject(cellIds)
-);
-
-export const selectIsMetadataButtonEnabled = createSelector(
-  selectSelectedColumnsIds,
-  selectSelectedCellIds,
-  (colIds, cellIds) => isEmptyObject(colIds) && Object.keys(cellIds).length === 1
-);
-
-export const selectDataTableFormat = createSelector(
-  selectEntitiesState,
-  (entities) => {
-    const columns = entities.columns.allIds.map((colId) => ({
-      Header: entities.columns.byId[colId].label,
-      accessor: colId,
-      reconciliator: entities.columns.byId[colId].reconciliator,
-      extension: entities.columns.byId[colId].extension
-    }));
-    const rows = entities.rows.allIds.map((rowId) => (
-      Object.keys(entities.rows.byId[rowId].cells).reduce((acc, cellId) => ({
-        ...acc,
-        [cellId]: {
-          ...entities.rows.byId[rowId].cells[cellId],
-          rowId
-        }
-      }), {})
-    ));
-    return { columns, rows };
-  }
-);
-
-export const selectAllSelectedCellForReconciliation = createSelector(
-  selectSelectedColumnsIds,
-  selectSelectedCellIds,
-  selectRowsState,
-  (colIds, cellIds, rows) => {
-    const selectedFromCells = Object.keys(cellIds).map((cellId) => {
-      const [rowId, colId] = getIdsFromCell(cellId);
-      return {
-        id: cellId,
-        label: rows.byId[rowId].cells[colId].label
-      };
-    });
-    const selectedFromColumns = Object.keys(colIds).reduce((acc, colId) => (
-      [
-        ...acc,
-        ...rows.allIds.map((rowId) => ({
-          id: `${rowId}$${colId}`,
-          label: rows.byId[rowId].cells[colId].label
-        }))
-      ]
-    ), [] as any[]);
-    return selectedFromCells.concat(selectedFromColumns);
-  }
-);
-
-export const selectCellIfOne = createSelector(
-  selectIsMetadataButtonEnabled,
-  selectSelectedCellIds,
-  selectRowsState,
-  (isMetadataButtonEnabled, selectedCells, rows) => {
-    if (!isMetadataButtonEnabled) {
-      return '';
-    }
-    const selectedCellId = Object.keys(selectedCells)[0];
-    return selectedCellId;
-  }
-);
-
-export const selectMetdataCellId = createSelector(
-  selectCellIfOne,
-  selecteSelectedCellMetadataId,
-  (cellId, metadataCell) => metadataCell[cellId]
-);
-
-export const selectSelectedCellMetadataTableFormat = createSelector(
-  selectCellIfOne,
+export const selectCellMetadataTableFormat = createSelector(
+  selectCellIdIfOneSelected,
   selectServicesConfig,
   selectRowsState,
   (cellId, config, rows): {

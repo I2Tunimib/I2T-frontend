@@ -6,10 +6,6 @@ import {
   DialogContentText,
   DialogTitle
 } from '@material-ui/core';
-// import {
-//   selectMetadataDialogOpen,
-//   updateCellMetadata, updateUI
-// } from '@store/table/table.slice';
 import {
   forwardRef,
   Ref,
@@ -24,7 +20,7 @@ import { SimpleTable } from '@components/kit';
 import { updateCellMetadata, updateUI } from '@store/slices/table/table.slice';
 import {
   selectMetadataDialogStatus,
-  selectSelectedCellMetadataTableFormat,
+  selectCellMetadataTableFormat,
   selectMetdataCellId
 } from '@store/slices/table/table.selectors';
 
@@ -37,7 +33,7 @@ const MetadataDialog = () => {
   const dispatch = useAppDispatch();
   const [selectedMetadata, setSelectedMetadata] = useState<string>('');
   const open = useAppSelector(selectMetadataDialogStatus);
-  const { columns, rows, selectedCellId } = useAppSelector(selectSelectedCellMetadataTableFormat);
+  const { columns, rows, selectedCellId } = useAppSelector(selectCellMetadataTableFormat);
   const selectedMetadataId = useAppSelector(selectMetdataCellId);
 
   useEffect(() => {

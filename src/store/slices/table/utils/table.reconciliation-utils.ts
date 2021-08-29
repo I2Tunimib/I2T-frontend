@@ -1,5 +1,8 @@
 import { Draft } from '@reduxjs/toolkit';
-import { Cell, ID, TableState } from '../interfaces/table';
+import {
+  Cell, ID,
+  MetadataInstance, TableState
+} from '../interfaces/table';
 
 /**
  * Set matching metadata to cell based on threshold.
@@ -32,4 +35,14 @@ export const isColumnReconciliated = (state: Draft<TableState>, colId: ID) => {
     return cell.metadata.values.length > 0
       && cell.metadata.reconciliator === rows.byId[rowIds[0]].cells[colId].metadata.reconciliator;
   });
+};
+
+/**
+ * Get min and max scores between metadataItems of a cell.
+ */
+export const getMinMaxScore = (metadataArray: MetadataInstance[]) => {
+  const scores = metadataArray.map((metadataItem) => metadataItem.score);
+  const max = Math.max(...scores);
+  const min = Math.min(...scores);
+  return { min, max };
 };

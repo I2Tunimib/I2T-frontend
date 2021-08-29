@@ -1,8 +1,4 @@
 import { Button, IconButton, Tooltip } from '@material-ui/core';
-// import {
-//   deleteColumn, selectIsColumnSelected,
-//   updateUI
-// } from '@store/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
@@ -18,7 +14,7 @@ import { ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
 import { MouseEvent, useState, useEffect } from 'react';
 import {
-  selectIsCellSelected, selectIsMetadataButtonEnabled,
+  selectIsCellSelected, selectIsOnlyOneCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
   selectCanRedo, selectCanDelete
 } from '@store/slices/table/table.selectors';
@@ -35,7 +31,7 @@ const SubToolbar = () => {
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [autoMatchingAnchor, setAutoMatchingAnchor] = useState<null | HTMLElement>(null);
   const isCellSelected = useAppSelector(selectIsCellSelected);
-  const isMetadataButtonEnabled = useAppSelector(selectIsMetadataButtonEnabled);
+  const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
