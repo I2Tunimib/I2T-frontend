@@ -5,6 +5,9 @@ import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enh
 import { Payload } from '@store/interfaces/store';
 import {
   AutoMatchingPayload,
+  DeleteColumnPayload,
+  DeleteRowPayload,
+  DeleteSelectedPayload,
   ReconciliationFulfilledPayload,
   SetDataPayload,
   TableState,
@@ -17,9 +20,14 @@ import {
   UpdateSelectedRowPayload
 } from './interfaces/table';
 import { getTable, reconcile } from './table.thunk';
-import { deleteOneColumn } from './utils/table.delete-utils';
+import {
+  deleteOneColumn, deleteOneRow,
+  deleteSelectedColumns, deleteSelectedRows
+} from './utils/table.delete-utils';
 import { isColumnReconciliated, setMatchingMetadata } from './utils/table.reconciliation-utils';
 import {
+  areOnlyRowsSelected,
+  areRowsColumnsSelected,
   selectOneCell,
   selectOneRow,
   toggleCellSelection,
@@ -154,26 +162,41 @@ export const tableSlice = createSliceWithRequests({
       state.ui = { ...state.ui, ...rest };
     },
     /**
-     * Delete selected columns.
+     * Delete selected columns and/or rows.
      * --UNDOABLE ACTION--
      */
-    deleteColumn: (state, action: PayloadAction<Payload>) => {
-      const { undoable } = action.payload;
-      const { selectedColumnsIds } = state.ui;
-      let { columns, rows } = state.entities;
-
-      return produceWithPatch(state, !!undoable, (draft) => {
-        Object.keys(selectedColumnsIds).forEach((colId) => {
-          const { newColumns, newRows } = deleteOneColumn(columns, rows, colId);
-          columns = newColumns;
-          rows = newRows;
-        });
-        draft.entities.columns = columns;
-        draft.entities.rows = rows;
+    deleteSelected: (state, action: PayloadAction<Payload<DeleteSelectedPayload>>) => {
+      const { undoable = true } = action.payload;
+      return produceWithPatch(state, undoable, (draft) => {
+        if (areRowsColumnsSelected(draft)) {
+          if (areOnlyRowsSelected(draft)) {
+            deleteSelectedRows(draft);
+          } else {
+            deleteSelectedColumns(draft);
+            deleteSelectedRows(draft);
+          }
+        }
       }, (draft) => {
-        // also remove selection from deleted columns without generating patches
         draft.ui.selectedColumnsIds = {};
-        // TODO: check more specifically on which cells to delete
+        draft.ui.selectedRowsIds = {};
+        draft.ui.selectedCellIds = {};
+      });
+    },
+    deleteColumn: (state, action: PayloadAction<Payload<DeleteColumnPayload>>) => {
+      const { undoable = true, colId } = action.payload;
+      return produceWithPatch(state, undoable, (draft) => {
+        deleteOneColumn(draft, colId);
+      }, (draft) => {
+        draft.ui.selectedColumnsIds = {};
+        draft.ui.selectedCellIds = {};
+      });
+    },
+    deleteRow: (state, action: PayloadAction<Payload<DeleteRowPayload>>) => {
+      const { undoable = true, rowId } = action.payload;
+      return produceWithPatch(state, undoable, (draft) => {
+        deleteOneRow(draft, rowId);
+      }, (draft) => {
+        draft.ui.selectedRowsIds = {};
         draft.ui.selectedCellIds = {};
       });
     },
@@ -246,6 +269,8 @@ export const {
   updateCellSelection,
   updateUI,
   deleteColumn,
+  deleteRow,
+  deleteSelected,
   undo,
   redo
 } = tableSlice.actions;

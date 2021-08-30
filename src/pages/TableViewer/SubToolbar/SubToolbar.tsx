@@ -7,7 +7,7 @@ import SettingsEthernetRoundedIcon from '@material-ui/icons/SettingsEthernetRoun
 import PlaylistAddCheckRoundedIcon from '@material-ui/icons/PlaylistAddCheckRounded';
 import clsx from 'clsx';
 import {
-  deleteColumn,
+  deleteSelected,
   redo, undo, updateUI
 } from '@store/slices/table/table.slice';
 import { ToolbarActions } from '@components/kit';
@@ -38,7 +38,7 @@ const SubToolbar = () => {
   const canDelete = useAppSelector(selectCanDelete);
 
   const handleDelete = () => {
-    dispatch(deleteColumn({ undoable: true }));
+    dispatch(deleteSelected({}));
   };
 
   const handleClickAutoMatching = (event: MouseEvent<HTMLElement>) => {

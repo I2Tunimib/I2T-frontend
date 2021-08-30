@@ -5,7 +5,7 @@ import {
 import { FC } from 'react';
 import styles from './MenuBase.module.scss';
 
-interface MenuBaseProps {
+export interface MenuBaseProps {
   open: boolean;
   anchorElement: any;
   id?: string;
@@ -16,9 +16,7 @@ interface MenuBaseProps {
 const useMenuStyles = makeStyles({
   paper: {
     maxHeight: 'calc(100% - 96px)',
-    WebkitOverflowScrolling: 'touch'
-  },
-  list: {
+    WebkitOverflowScrolling: 'touch',
     outline: 0
   }
 });

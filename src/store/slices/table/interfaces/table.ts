@@ -127,3 +127,13 @@ export interface UpdateCellEditablePayload {
 export interface AutoMatchingPayload {
   threshold: number;
 }
+
+export interface DeleteSelectedPayload {}
+
+export interface DeleteColumnPayload {
+  colId: ID;
+}
+
+export interface DeleteRowPayload {
+  rowId: ID;
+}

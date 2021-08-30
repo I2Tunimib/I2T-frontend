@@ -5,10 +5,14 @@ import {
   useState
 } from 'react';
 import {
+  deleteColumn,
+  deleteRow,
+  deleteSelected,
   redo,
   undo, updateCellEditable, updateCellLabel, updateCellSelection,
   updateColumnSelection,
-  updateRowSelection
+  updateRowSelection,
+  updateUI
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { LinearProgress } from '@material-ui/core';
@@ -21,25 +25,26 @@ import {
   selectSelectedColumnIds, selectSelectedRowIds,
   selectSelectedCellIds, selectCellMetadataIds
 } from '@store/slices/table/table.selectors';
+import { getIdsFromCell } from '@store/slices/table/utils/table.utils';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
 import { TableCell, TableColumn } from '../Table/interfaces/table';
 import { CONTEXT_MENU_ACTIONS } from './contextual-menu-actions';
+import { ContextMenuCell, ContextMenuColumn, ContextMenuRow } from '../Menus/ContextMenus';
 
 interface MenuState {
-  open: boolean;
-  currentOptions: any;
-  targetId: string | null;
-  targetType: 'cell' | 'column' | 'index' | null;
+  status: Record<string, boolean>
+  data: any | undefined;
 }
 
-// contextual close state
-const contextualMenuCloseState: MenuState = {
-  open: false,
-  currentOptions: null,
-  targetId: null,
-  targetType: null
+const initialMenuState: MenuState = {
+  status: {
+    cell: false,
+    row: false,
+    column: false
+  },
+  data: {}
 };
 
 const keyMap = {
@@ -50,7 +55,7 @@ const keyMap = {
 
 const TableViewer = () => {
   const dispatch = useAppDispatch();
-  const [menuState, setMenuState] = useState(contextualMenuCloseState);
+  const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
   const { name } = useParams<{ name: string }>();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
@@ -98,15 +103,6 @@ const TableViewer = () => {
   };
 
   /**
-   * Handle edit cell action.
-   */
-  const editCell = () => {
-    if (menuState.targetId) {
-      dispatch(updateCellEditable({ cellId: menuState.targetId }));
-    }
-  };
-
-  /**
    * Generate getBoundingClientRect function.
    */
   const generateGetBoundingClientRect = (x: number, y: number) => {
@@ -123,24 +119,23 @@ const TableViewer = () => {
   /**
    * Handle cell / column right click.
    */
-  const handleCellRightClick = (e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | 'index' | null, id: string) => {
+  const handleCellRightClick = (e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | 'row' | null, id: string) => {
     e.preventDefault();
-    let currentOptions;
     if (type === 'cell') {
-      currentOptions = CONTEXT_MENU_ACTIONS.cell;
-      handleSelectedCellChange(e, id);
-    } else if (type === 'index') {
-      currentOptions = CONTEXT_MENU_ACTIONS.row;
-      handleSelectedRowChange(e, id);
+      dispatch(updateCellSelection({ id }));
+    } else if (type === 'row') {
+      dispatch(updateRowSelection({ id }));
     } else {
-      currentOptions = CONTEXT_MENU_ACTIONS.column;
+      dispatch(updateColumnSelection({ id }));
     }
-    setMenuState({
-      open: true,
-      currentOptions,
-      targetId: id,
-      targetType: type
-    });
+
+    const status = Object.keys(menuState.status).reduce((acc, key) => ({
+      ...acc,
+      [key]: key === type
+    }), {});
+    const data = { id };
+    setMenuState({ status, data });
+
     // create a virtual anchor element for the menu
     const { clientX, clientY } = e;
     const virtualElement = {
@@ -155,17 +150,7 @@ const TableViewer = () => {
    * Close contextual menu.
    */
   const handleMenuClose = () => {
-    setMenuState(contextualMenuCloseState);
-  };
-
-  /**
-   * Handle action context menu.
-   */
-  const handleContextMenuItemClick = (id: string) => {
-    if (id === 'context-edit') {
-      editCell();
-    }
-    setMenuState(contextualMenuCloseState);
+    setMenuState(initialMenuState);
   };
 
   /**
@@ -243,17 +228,23 @@ const TableViewer = () => {
           />
         ) : <LinearProgress />
         }
-        {menuState.currentOptions
-          && (
-            <MenuActions
-              open={menuState.open}
-              handleMenuItemClick={handleContextMenuItemClick}
-              handleClose={handleMenuClose}
-              anchorElement={anchorEl}
-              actionGroups={menuState.currentOptions}
-            />
-          )}
-
+        <ContextMenuCell
+          open={menuState.status.cell}
+          anchorElement={anchorEl}
+          handleClose={handleMenuClose}
+          data={menuState.data}
+        />
+        <ContextMenuColumn
+          open={menuState.status.column}
+          anchorElement={anchorEl}
+          handleClose={handleMenuClose}
+          data={menuState.data}
+        />
+        <ContextMenuRow
+          open={menuState.status.row}
+          anchorElement={anchorEl}
+          handleClose={handleMenuClose}
+        />
       </div>
     </HotKeys>
   );

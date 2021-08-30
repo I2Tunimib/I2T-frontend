@@ -5,6 +5,8 @@ import MenuBase from './MenuBase';
 import StatusBadge from './StatusBadge';
 import ActionGroup from './ActionGroup';
 import IconButtonTooltip from './IconButtonTooltip';
+import MenuItemIconLabel from './MenuItemIconLabel';
+import MenuDivider from './MenuDivider';
 
 export {
   Button,
@@ -12,6 +14,8 @@ export {
   StatusBadge,
   MenuBase,
   MenuActions,
+  MenuItemIconLabel,
+  MenuDivider,
   ActionGroup,
   IconButtonTooltip
 };

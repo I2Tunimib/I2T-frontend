@@ -1,4 +1,5 @@
 import { Draft } from '@reduxjs/toolkit';
+import { isEmptyObject } from '@services/utils/is-object';
 import { ID, TableState } from '../interfaces/table';
 import { addObject, removeObject, getIdsFromCell } from './table.utils';
 
@@ -17,6 +18,21 @@ export const isColumnSelected = (state: Draft<TableState>, colId: ID) => {
 export const areAllColumnsSelected = (state: Draft<TableState>) => {
   return state.entities.columns.allIds
     .every((colId) => colId in state.ui.selectedColumnsIds);
+};
+
+export const areOnlyRowsSelected = (state: Draft<TableState>) => {
+  return !isEmptyObject(state.ui.selectedRowsIds) && isEmptyObject(state.ui.selectedColumnsIds);
+};
+
+/**
+ * Check if only rows and columns are selected.
+ */
+export const areRowsColumnsSelected = (state: Draft<TableState>) => {
+  return !isEmptyObject(state.ui.selectedCellIds)
+  && Object.keys(state.ui.selectedCellIds).every((cellId) => (
+    getIdsFromCell(cellId)[0] in state.ui.selectedRowsIds
+    || getIdsFromCell(cellId)[1] in state.ui.selectedColumnsIds
+  ));
 };
 
 /**

@@ -81,7 +81,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
 
   const handleOnContextMenu = (event: MouseEvent<HTMLElement>) => {
     if (columnId === 'index') {
-      handleCellRightClick(event, 'index', rowId);
+      handleCellRightClick(event, 'row', rowId);
     } else {
       handleCellRightClick(event, 'cell', `${rowId}$${columnId}`);
     }

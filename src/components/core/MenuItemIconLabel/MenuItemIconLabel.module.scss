@@ -1,0 +1,35 @@
+.MenuItemOuterWrapper {
+  display: flex;
+  flex-direction: column;
+
+  .MenuItemRoot {
+    padding-left: 0 !important;
+
+    .Icon {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 5px;
+      top: 50%;
+      color: #707070;
+      transform: translateY(-50%);
+    }
+  }
+
+  .MenuItemInnerWrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 36px;
+  
+    .Text {
+      margin-right: 15px;
+    }
+  
+    .ShortcutLabel {
+      margin-left: auto;
+    }
+  }
+}
