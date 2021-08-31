@@ -26,13 +26,15 @@ const NormalCell: FC<NormalCellProps> = ({
 
   return (
     <>
-      {!!value.metadata.reconciliator && (
-        <StatusBadge
-          className={styles.Badge}
-          status={getBadgeStatus(value.metadata)}
-        />
-      )}
-      {label}
+      <div className={styles.CellLabel}>
+        {!!value.metadata.reconciliator && (
+          <StatusBadge
+            className={styles.Badge}
+            status={getBadgeStatus(value.metadata)}
+          />
+        )}
+        {label}
+      </div>
     </>
   );
 };

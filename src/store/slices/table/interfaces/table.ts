@@ -17,6 +17,7 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
  * Table UI state.
  */
 export interface TableUIState {
+  denseView: boolean;
   openReconciliateDialog: boolean;
   openMetadataDialog: boolean;
   selectedColumnsIds: Record<ID, boolean>;

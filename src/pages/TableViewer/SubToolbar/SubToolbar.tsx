@@ -5,6 +5,8 @@ import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import SettingsEthernetRoundedIcon from '@material-ui/icons/SettingsEthernetRounded';
 import PlaylistAddCheckRoundedIcon from '@material-ui/icons/PlaylistAddCheckRounded';
+import ViewStreamRoundedIcon from '@material-ui/icons/ViewStreamRounded';
+import ReorderRoundedIcon from '@material-ui/icons/ReorderRounded';
 import clsx from 'clsx';
 import {
   deleteSelected,
@@ -16,7 +18,7 @@ import { MouseEvent, useState, useEffect } from 'react';
 import {
   selectIsCellSelected, selectIsOnlyOneCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
-  selectCanRedo, selectCanDelete
+  selectCanRedo, selectCanDelete, selectIsDenseView
 } from '@store/slices/table/table.selectors';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
@@ -33,6 +35,7 @@ const SubToolbar = () => {
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
+  const isDenseView = useAppSelector(selectIsDenseView);
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
@@ -86,7 +89,14 @@ const SubToolbar = () => {
             onClick={handleClickAutoMatching}
           />
         </ActionGroup>
-        <ActionGroup className={styles.VisibleMenu}>
+        <ActionGroup>
+          <IconButtonTooltip
+            tooltipText={isDenseView ? 'Accessible view' : 'Dense view'}
+            Icon={isDenseView ? ViewStreamRoundedIcon : ReorderRoundedIcon}
+            onClick={() => dispatch(updateUI({ denseView: !isDenseView }))}
+          />
+        </ActionGroup>
+        <ActionGroup>
           <Button
             color="primary"
             disabled={!isCellSelected}

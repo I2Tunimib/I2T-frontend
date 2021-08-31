@@ -3,9 +3,13 @@
   flex-direction: column;
   flex-grow: 1;
   overflow-y: hidden;
+  outline: none;
 
   .TableContainer {
+    display: flex;
+    flex-direction: column;
     overflow-y: scroll;
+    flex-grow: 1;
     &::-webkit-scrollbar-thumb {
       background: rgba(0,0,0,.26);
     }

@@ -136,7 +136,12 @@ export const selectMetdataCellId = createSelector(
   (cellId, metadataCell) => (cellId ? metadataCell[cellId] : '')
 );
 
-// SELECTORS FOR UI DIALOGS AND MENUS
+// SELECTORS FOR UI STATUS
+
+export const selectIsDenseView = createSelector(
+  selectUIState,
+  (ui) => ui.denseView
+);
 
 /**
  * Get reconciliation dialog status.

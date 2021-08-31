@@ -18,6 +18,7 @@ interface TableRowCellProps extends TableCell {
   row: TableRow;
   selected: boolean;
   matching: boolean;
+  dense: boolean;
   handleSelectedRowChange: (event: MouseEvent<any>, id: string) => void;
   handleSelectedCellChange: (event: MouseEvent<any>, id: string) => void;
   handleCellRightClick: (event: MouseEvent<any>, type: string, id: string) => void;
@@ -34,6 +35,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
   selected,
   matching,
   value,
+  dense,
   handleSelectedRowChange,
   handleCellRightClick,
   handleSelectedCellChange,
@@ -95,6 +97,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
       className={clsx(
         styles.TableRowCell,
         {
+          [styles.Dense]: dense,
           [styles.Selected]: selected
         }
       )}

@@ -11,6 +11,8 @@ import TableFooter from '../TableFooter';
 interface TableProps {
   columns: any[],
   data: any[],
+  dense?: boolean,
+  getGlobalProps: () => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
 }
@@ -20,6 +22,8 @@ const defaultPropGetter = () => ({});
 const Table: FC<TableProps> = ({
   columns,
   data,
+  dense = false,
+  getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
 }) => {
@@ -40,8 +44,6 @@ const Table: FC<TableProps> = ({
     columns,
     data,
     getRowId
-    // defaultColumn,
-    // updateTableData
   },
   (hooks) => {
     // push a column for the index
@@ -64,17 +66,17 @@ const Table: FC<TableProps> = ({
   return (
     // apply the table props
     <>
-      <TableRoot {...getTableProps()}>
+      <TableRoot {...getTableProps([getGlobalProps()])}>
         <TableHead>
           {// Loop over the header rows
             headerGroups.map((headerGroup) => (
               // Apply the header row props
-              <TableRow {...headerGroup.getHeaderGroupProps()}>
+              <TableRow {...headerGroup.getHeaderGroupProps([getGlobalProps()])}>
                 {// Loop over the headers in each row
                   headerGroup.headers.map((column, index) => (
                     // Apply the header cell props
                     <TableHeaderCell {...column.getHeaderProps(
-                      [getHeaderProps(column), { index }]
+                      [getHeaderProps(column), getGlobalProps(), { index }]
                     )}
                     >
                       {// Render the header
@@ -93,11 +95,13 @@ const Table: FC<TableProps> = ({
               prepareRow(row);
               return (
                 // Apply the row props
-                <TableRow {...row.getRowProps()}>
+                <TableRow {...row.getRowProps(getGlobalProps())}>
                   {// Loop over the rows cells
                     row.cells.map((cell) => (
                       // Apply the cell prop
-                      <TableRowCell {...cell.getCellProps([getCellProps(cell)]) as any}>
+                      <TableRowCell {...cell.getCellProps([
+                        getCellProps(cell), getGlobalProps()
+                      ]) as any}>
                         {// Render the cell contents
                           cell.render('Cell', { value: 'prova' })}
                       </TableRowCell>

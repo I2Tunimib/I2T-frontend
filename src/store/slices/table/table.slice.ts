@@ -42,6 +42,7 @@ const initialState: TableState = {
     rows: { byId: {}, allIds: [] }
   },
   ui: {
+    denseView: false,
     openReconciliateDialog: false,
     openMetadataDialog: false,
     selectedColumnsIds: {},

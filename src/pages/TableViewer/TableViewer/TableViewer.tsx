@@ -5,32 +5,25 @@ import {
   useState
 } from 'react';
 import {
-  deleteColumn,
-  deleteRow,
-  deleteSelected,
   redo,
-  undo, updateCellEditable, updateCellLabel, updateCellSelection,
+  undo, updateCellLabel, updateCellSelection,
   updateColumnSelection,
-  updateRowSelection,
-  updateUI
+  updateRowSelection
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { LinearProgress } from '@material-ui/core';
 import { getTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/slices/table/interfaces/table';
-import { MenuActions } from '@components/core';
 import { HotKeys } from 'react-hotkeys';
 import {
   selectDataTableFormat, selectGetTableRequestStatus,
   selectSelectedColumnIds, selectSelectedRowIds,
-  selectSelectedCellIds, selectCellMetadataIds
+  selectSelectedCellIds, selectCellMetadataIds, selectIsDenseView
 } from '@store/slices/table/table.selectors';
-import { getIdsFromCell } from '@store/slices/table/utils/table.utils';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
 import { TableCell, TableColumn } from '../Table/interfaces/table';
-import { CONTEXT_MENU_ACTIONS } from './contextual-menu-actions';
 import { ContextMenuCell, ContextMenuColumn, ContextMenuRow } from '../Menus/ContextMenus';
 
 interface MenuState {
@@ -64,29 +57,52 @@ const TableViewer = () => {
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
   const selectedCellMetadata = useAppSelector(selectCellMetadataIds);
+  const isDenseView = useAppSelector(selectIsDenseView);
 
   useEffect(() => {
     dispatch(getTable({ dataSource: 'tables', name }));
   }, [name]);
 
   /**
+ * Keyboard shortcut handlers
+ */
+  const saveWork = useCallback((event: KeyboardEvent | undefined) => {
+    if (event) {
+      event.preventDefault();
+    }
+    // Saving
+  }, []);
+  const undoOperation = useCallback(() => {
+    dispatch(undo());
+  }, []);
+  const redoOperation = useCallback(() => {
+    dispatch(redo());
+  }, []);
+
+  const keyHandlers = {
+    SAVE: saveWork,
+    UNDO: undoOperation,
+    REDO: redoOperation
+  };
+
+  /**
    * Handle selection of a cell.
    */
-  const handleSelectedCellChange = (event: MouseEvent, id: ID) => {
+  const handleSelectedCellChange = useCallback((event: MouseEvent, id: ID) => {
     if (event.ctrlKey) {
       dispatch(updateCellSelection({ id, multi: true }));
     } else {
       dispatch(updateCellSelection({ id }));
     }
-  };
+  }, []);
 
-  const handleSelectedRowChange = (event: MouseEvent, id: ID) => {
+  const handleSelectedRowChange = useCallback((event: MouseEvent, id: ID) => {
     if (event.ctrlKey) {
       dispatch(updateRowSelection({ id, multi: true }));
     } else {
       dispatch(updateRowSelection({ id }));
     }
-  };
+  }, []);
 
   /**
    * Handle selection of a column.
@@ -98,14 +114,14 @@ const TableViewer = () => {
   /**
    * Handle update of cell values.
    */
-  const updateTableData = (cellId: ID, value: string) => {
+  const updateTableData = useCallback((cellId: ID, value: string) => {
     dispatch(updateCellLabel({ cellId, value }));
-  };
+  }, []);
 
   /**
    * Generate getBoundingClientRect function.
    */
-  const generateGetBoundingClientRect = (x: number, y: number) => {
+  const generateGetBoundingClientRect = useCallback((x: number, y: number) => {
     return () => ({
       width: 0,
       height: 0,
@@ -114,12 +130,12 @@ const TableViewer = () => {
       bottom: y,
       left: x
     });
-  };
+  }, []);
 
   /**
    * Handle cell / column right click.
    */
-  const handleCellRightClick = (e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | 'row' | null, id: string) => {
+  const handleCellRightClick = useCallback((e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | 'row' | null, id: string) => {
     e.preventDefault();
     if (type === 'cell') {
       dispatch(updateCellSelection({ id }));
@@ -144,19 +160,19 @@ const TableViewer = () => {
       getBoundingClientRect: generateGetBoundingClientRect(clientX, clientY)
     };
     setAnchorEl(virtualElement);
-  };
+  }, []);
 
   /**
    * Close contextual menu.
    */
-  const handleMenuClose = () => {
+  const handleMenuClose = useCallback(() => {
     setMenuState(initialMenuState);
-  };
+  }, []);
 
   /**
    * Properties to pass to each header.
    */
-  const getHeaderProps = ({ id, reconciliator, ...props }: TableColumn) => {
+  const getHeaderProps = useCallback(({ id, reconciliator, ...props }: TableColumn) => {
     return {
       id,
       reconciliator,
@@ -164,12 +180,12 @@ const TableViewer = () => {
       handleCellRightClick,
       handleSelectedColumnChange
     };
-  };
+  }, [selectedColumns]);
 
   /**
    * Properties to pass to each cell.
    */
-  const getCellProps = ({
+  const getCellProps = useCallback(({
     column, row, value, ...props
   }: TableCell) => {
     const selected = !!selectedCells[`${row.id}$${column.id}`] || !!selectedRows[row.id];
@@ -188,29 +204,15 @@ const TableViewer = () => {
       handleCellRightClick,
       updateTableData
     };
-  };
+  }, [
+    selectedCells,
+    selectedRows,
+    selectedCellMetadata
+  ]);
 
-  /**
-   * Keyboard shortcut handlers
-   */
-  const saveWork = useCallback((event: KeyboardEvent | undefined) => {
-    if (event) {
-      event.preventDefault();
-    }
-    // Saving
-  }, []);
-  const undoOperation = useCallback(() => {
-    dispatch(undo());
-  }, []);
-  const redoOperation = useCallback(() => {
-    dispatch(redo());
-  }, []);
-
-  const keyHandlers = {
-    SAVE: saveWork,
-    UNDO: undoOperation,
-    REDO: redoOperation
-  };
+  const getGlobalProps = useCallback(() => ({
+    dense: isDenseView
+  }), [isDenseView]);
 
   const columnsTable = useMemo(() => columns, [columns]);
   const rowsTable = useMemo(() => rows, [rows]);
@@ -223,6 +225,7 @@ const TableViewer = () => {
           <Table
             data={rowsTable}
             columns={columnsTable}
+            getGlobalProps={getGlobalProps}
             getHeaderProps={getHeaderProps}
             getCellProps={getCellProps}
           />
