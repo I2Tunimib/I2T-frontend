@@ -1,18 +1,14 @@
 .TableRowCell {
   position: relative;
-  padding: 18px 10px;
   text-align: center;
   vertical-align: middle;
   cursor: default;
-
-  &.Dense {
-    padding: 6px 4px;
-  }
-  // border: 1px solid transparent;
+  background-color: inherit;
 
   &.Selected {
     // background: rgba(33, 148, 255, 0.12);
-    background-color: rgb(245, 0, 87, 0.1);
+    // background-color: rgb(245, 0, 87, 0.1);
+    background-color: #FEF2F6;
   }
 
   // add border to index column
@@ -26,23 +22,10 @@
   }
 
   // color cell if not selected
-  &:hover {
-    &:not(.Selected) {
-      background-color: #ededed;
-    }
-  }
-
-
-  .SelectableOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    // apply style to cell if cell is selected
-    &.Selected {
-      background: rgba(33, 148, 255, 0.12);
-      // background-color: rgb(245, 0, 87, 0.1);
-    }
-  }
+  // &:hover {
+  //   &:not(.Selected) {
+  //     background-color: #f6f6f6;
+  //     // background-color: #ededed;
+  //   }
+  // }
 }

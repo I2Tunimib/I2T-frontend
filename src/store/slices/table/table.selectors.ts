@@ -1,4 +1,4 @@
-import { ISimpleColumn, ISimpleRow } from '@components/kit/SimpleTable';
+import { SimpleColumn, SimpleRow } from '@components/kit/SimpleTable';
 import { createSelector } from '@reduxjs/toolkit';
 import { floor } from '@services/utils/math';
 import { RootState } from '@store';
@@ -191,7 +191,8 @@ export const selectIsAutoMatchingEnabled = createSelector(
  */
 export const selectDataTableFormat = createSelector(
   selectEntitiesState,
-  (entities) => {
+  selectServicesConfig,
+  (entities, config) => {
     const columns = entities.columns.allIds.map((colId) => ({
       Header: entities.columns.byId[colId].label,
       accessor: colId,
@@ -199,13 +200,25 @@ export const selectDataTableFormat = createSelector(
       extension: entities.columns.byId[colId].extension
     }));
     const rows = entities.rows.allIds.map((rowId) => (
-      Object.keys(entities.rows.byId[rowId].cells).reduce((acc, cellId) => ({
-        ...acc,
-        [cellId]: {
-          ...entities.rows.byId[rowId].cells[cellId],
-          rowId
-        }
-      }), {})
+      Object.keys(entities.rows.byId[rowId].cells).reduce((acc, colId) => {
+        const currentService = config.reconciliators
+          .find((service: any) => service.name
+            === entities.rows.byId[rowId].cells[colId].metadata.reconciliator);
+        return {
+          ...acc,
+          [colId]: {
+            ...entities.rows.byId[rowId].cells[colId],
+            metadata: {
+              ...entities.rows.byId[rowId].cells[colId].metadata,
+              values: [
+                ...entities.rows.byId[rowId].cells[colId].metadata.values
+              ],
+              resourceUrl: currentService ? currentService.entityPageUrl : ''
+            },
+            rowId
+          }
+        };
+      }, {})
     ));
     return { columns, rows };
   }
@@ -263,10 +276,10 @@ export const selectCellMetadataTableFormat = createSelector(
   selectServicesConfig,
   selectRowsState,
   (cellId, config, rows): {
-    columns: ISimpleColumn[], rows: ISimpleRow[], selectedCellId: string
+    columns: SimpleColumn[], rows: SimpleRow[], selectedCellId: string
   } => {
     if (!cellId) {
-      return { columns: [] as ISimpleColumn[], rows: [] as ISimpleRow[], selectedCellId: '' };
+      return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
     }
     const [rowId, colId] = getIdsFromCell(cellId);
 
@@ -277,18 +290,19 @@ export const selectCellMetadataTableFormat = createSelector(
     const { metadata } = rows.byId[rowId].cells[colId];
 
     if (metadata.values.length > 0) {
-      const formattedCols: ISimpleColumn[] = currentService.metaToViz.map((label: string) => ({
+      const formattedCols: SimpleColumn[] = currentService.metaToViz.map((label: string) => ({
         id: label
       }));
       const formattedRows = rows.byId[rowId].cells[colId].metadata.values
         .map((metadataItem) => ({
           id: metadataItem.id,
+          resourceUrl: `${currentService.entityPageUrl}/${metadataItem.id}`,
           cells: formattedCols.map((col) => (col.id === 'type'
             ? metadataItem.type[0].name
             : metadataItem[col.id] as string))
         }));
       return { columns: formattedCols, rows: formattedRows, selectedCellId: cellId };
     }
-    return { columns: [] as ISimpleColumn[], rows: [] as ISimpleRow[], selectedCellId: '' };
+    return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
   }
 );

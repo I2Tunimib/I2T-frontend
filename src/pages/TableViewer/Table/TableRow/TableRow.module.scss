@@ -1,9 +1,10 @@
 .TableRow {
+  background-color: #FFF;
   // apply style to rows on hover
   &:hover {
     // the header is a row so do not apply the style to it
     &:not(:only-child) {
-      background-color: #f6f6f6;
+      background-color: #f9f9f9;
     }
   }
   // apply to all rows but header row and last row

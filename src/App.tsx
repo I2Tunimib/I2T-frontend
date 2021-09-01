@@ -1,8 +1,9 @@
 import { RouteContainer } from '@components/layout';
 import { RouteOption } from '@components/layout/RouteContainer';
-import { useAppDispatch } from '@hooks/store';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { Homepage } from '@pages/Homepage';
 import { TableViewer } from '@pages/TableViewer';
+import { selectGetConfigRequest } from '@store/slices/config/config.selectors';
 import { getConfig } from '@store/slices/config/config.thunk';
 import React, { useEffect } from 'react';
 
@@ -24,13 +25,14 @@ const routes: RouteOption[] = [
 
 const App = () => {
   const dispatch = useAppDispatch();
+  const { loading } = useAppSelector(selectGetConfigRequest);
 
   useEffect(() => {
     dispatch(getConfig());
   }, []);
 
   return (
-    <RouteContainer routes={routes} />
+    <RouteContainer loadChildren={!loading} routes={routes} />
   );
 };
 

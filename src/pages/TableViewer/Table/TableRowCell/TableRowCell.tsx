@@ -97,7 +97,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
       className={clsx(
         styles.TableRowCell,
         {
-          [styles.Dense]: dense,
           [styles.Selected]: selected
         }
       )}
@@ -111,12 +110,14 @@ const TableRowCell: FC<TableRowCellProps> = ({
               onKeyDown={onKeyDown}
               onBlur={onBlur}
               ref={inputRef}
+              dense={dense}
             />
           ) : (
             <NormalCell
               label={cellValue}
               value={value}
               matching={matching}
+              dense={dense}
             />
           )}
         </>

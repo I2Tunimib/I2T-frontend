@@ -1,9 +1,9 @@
 import {
-  createStyles, makeStyles,
+  createStyles, Link, makeStyles,
   Radio, Theme
 } from '@material-ui/core';
 import { assertFC } from '@services/utils/is-fc-component';
-import { ReactElement, MouseEvent } from 'react';
+import { ReactElement, MouseEvent, useCallback } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import clsx from 'clsx';
@@ -14,11 +14,15 @@ interface SimpleTableProps<T> {
   /**
    * An array of columns for the table.
    */
-  columns: ISimpleColumn[];
+  columns: SimpleColumn[];
   /**
    * An array of rows for the table.
    */
-  rows: ISimpleRow<T>[];
+  rows: SimpleRow<T>[];
+  /**
+   * Set linkable item row.
+   */
+  link?: SimpleLink;
   /**
    * Make rows deletable.
    */
@@ -44,16 +48,21 @@ interface SimpleTableProps<T> {
 /**
  * A column of the table.
  */
-export interface ISimpleColumn {
+export interface SimpleColumn {
   id: string;
 }
 
 /**
  * A row of the table is composed by cells.
  */
-export interface ISimpleRow<T = any> {
+export interface SimpleRow<T = any> {
   id: string;
+  resourceUrl?: string;
   cells: T[];
+}
+
+interface SimpleLink {
+  propertyToLink: string;
 }
 
 const useStyles = makeStyles((theme: Theme) => (
@@ -72,6 +81,7 @@ const useStyles = makeStyles((theme: Theme) => (
 function SimpleTable<T>({
   columns,
   rows,
+  link,
   selectedValue = '',
   deletableRows,
   selectableRows,
@@ -82,9 +92,10 @@ function SimpleTable<T>({
   /**
    * Preprare rows with ids
    */
-  const prepareRows = (originalRows: ISimpleRow[]) => (
+  const prepareRows = (originalRows: SimpleRow[]) => (
     originalRows.map((row) => ({
       id: row.id,
+      resourceUrl: row.resourceUrl,
       cells: row.cells.map((cell, idCell) => ({
         id: idCell,
         value: typeof cell === 'number' ? cell.toFixed(2) : `${cell}`
@@ -98,6 +109,10 @@ function SimpleTable<T>({
       handleDeleteRow(id);
     }
   };
+
+  const handleClickLink = useCallback((event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+  }, []);
 
   return (
     <>
@@ -122,8 +137,12 @@ function SimpleTable<T>({
               )}
               key={row.id}
             >
-              {row.cells.map((cell) => (
-                <td className={styles.TableRowCell} key={cell.id}>{cell.value}</td>
+              {row.cells.map((cell, index) => (
+                <td className={styles.TableRowCell} key={cell.id}>
+                  {link && columns[index].id === link.propertyToLink
+                    ? <Link onClick={handleClickLink} href={row.resourceUrl} target="_blank">{cell.value}</Link>
+                    : cell.value}
+                </td>
               ))}
               {deletableRows && (
                 <td

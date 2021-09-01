@@ -1,12 +1,35 @@
-.CellLabel {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.Container {
+  display: flex;
+  align-items: center;
+  background-color: inherit;
+  min-height: 28px;
+  
+  .CellLabel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 18px 10px;
 
-  .Badge {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+    &.Dense {
+      padding: 6px 4px;
+    }
+  
+    .Badge {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+
+  .ExpandableList {
+    flex-shrink: 0;
+    border-right: 1px solid #ededed;
+    border-left: 1px solid #ededed;
+  }
+
+  .LinkMatched {
+    color: #4AC99B;
   }
 }
+

@@ -13,4 +13,8 @@
   box-sizing: border-box;
   box-shadow: rgb(0 0 0 / 12%) 0px 4px 16px;
   border: 1px solid #F50057;
+
+  &.Dense {
+    padding: 6px 4px;
+  }
 }

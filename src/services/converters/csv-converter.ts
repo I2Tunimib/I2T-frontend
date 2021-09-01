@@ -39,7 +39,8 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
               reconciliator: '',
               values: []
             },
-            editable: false
+            editable: false,
+            expandend: false
           }
         }), {})
       }

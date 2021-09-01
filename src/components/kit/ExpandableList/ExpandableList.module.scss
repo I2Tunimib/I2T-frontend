@@ -1,0 +1,44 @@
+.Container {
+  width: 300px;
+  max-height: 400px;
+  overflow-y: scroll;
+  background-color: inherit;
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.26);
+  }
+  &::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+
+  .ListTitle {
+    position: sticky;
+    top: 0;
+    background-color: inherit;
+    border-bottom: 1px solid #ededed;
+  }
+
+  .EmptyList {
+    padding: 10px;
+  }
+
+  .Footer {
+    width: 100%;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    position: sticky;
+    bottom: 0;
+    background-color: inherit;
+    border-top: 1px solid #ededed;
+    
+    .IconButton {
+      transform: rotate(0);
+      transition: transform 350ms ease-out;
+
+      &.Expanded {
+        transform: rotate(-180deg);
+      }
+    }
+
+  }
+}

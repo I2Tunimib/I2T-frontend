@@ -7,10 +7,11 @@ import SettingsEthernetRoundedIcon from '@material-ui/icons/SettingsEthernetRoun
 import PlaylistAddCheckRoundedIcon from '@material-ui/icons/PlaylistAddCheckRounded';
 import ViewStreamRoundedIcon from '@material-ui/icons/ViewStreamRounded';
 import ReorderRoundedIcon from '@material-ui/icons/ReorderRounded';
+import ArrowRightAltRoundedIcon from '@material-ui/icons/ArrowRightAltRounded';
 import clsx from 'clsx';
 import {
   deleteSelected,
-  redo, undo, updateUI
+  redo, undo, updateSelectedCellExpanded, updateUI
 } from '@store/slices/table/table.slice';
 import { ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
@@ -36,6 +37,7 @@ const SubToolbar = () => {
   const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
   const isDenseView = useAppSelector(selectIsDenseView);
+  const isACellSelected = useAppSelector(selectIsCellSelected);
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
@@ -87,6 +89,12 @@ const SubToolbar = () => {
             Icon={PlaylistAddCheckRoundedIcon}
             disabled={!isAutoMatchingEnabled}
             onClick={handleClickAutoMatching}
+          />
+          <IconButtonTooltip
+            tooltipText="Expand cell"
+            Icon={ArrowRightAltRoundedIcon}
+            disabled={!isACellSelected}
+            onClick={() => dispatch(updateSelectedCellExpanded({}))}
           />
         </ActionGroup>
         <ActionGroup>

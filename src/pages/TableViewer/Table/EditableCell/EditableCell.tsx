@@ -2,10 +2,12 @@ import {
   ChangeEvent, FocusEvent,
   forwardRef, KeyboardEvent
 } from 'react';
+import clsx from 'clsx';
 import styles from './EditableCell.module.scss';
 
 interface EditableCellProps {
   value: string;
+  dense: boolean;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onBlur: (event: FocusEvent<HTMLInputElement>) => void;
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
@@ -13,6 +15,7 @@ interface EditableCellProps {
 
 const EditableCell = forwardRef<HTMLInputElement, EditableCellProps>(({
   value,
+  dense,
   onChange,
   onBlur,
   onKeyDown
@@ -22,7 +25,12 @@ const EditableCell = forwardRef<HTMLInputElement, EditableCellProps>(({
       ref={ref}
       autoComplete="off"
       spellCheck="false"
-      className={styles.CellInput}
+      className={clsx(
+        styles.CellInput,
+        {
+          [styles.Dense]: dense
+        }
+      )}
       value={value}
       onChange={onChange}
       onBlur={onBlur}

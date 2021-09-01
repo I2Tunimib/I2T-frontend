@@ -90,6 +90,9 @@ const MetadataDialog = () => {
               handleDeleteRow={handleDeleteRow}
               columns={columns}
               rows={rows}
+              link={{
+                propertyToLink: 'name'
+              }}
             />
           )
         }

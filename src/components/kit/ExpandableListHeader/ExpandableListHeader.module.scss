@@ -1,0 +1,8 @@
+.HeaderContainer {
+  display: flex;
+  flex-direction: column;
+
+  &:not(:nth-child(2)) {
+    border-bottom: 1px solid #ededed;
+  }
+}

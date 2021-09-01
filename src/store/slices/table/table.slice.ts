@@ -64,6 +64,17 @@ export const tableSlice = createSliceWithRequests({
   initialState,
   reducers: {
     /**
+     *  Set selected cell as expanded.
+     */
+    updateSelectedCellExpanded: (state, action: PayloadAction<Payload>) => {
+      const { undoable = false } = action.payload;
+      Object.keys(state.ui.selectedCellIds).forEach((cellId) => {
+        const [rowId, colId] = getIdsFromCell(cellId);
+        state.entities.rows.byId[rowId].cells[colId].expanded = !state.entities.rows
+          .byId[rowId].cells[colId].expanded;
+      });
+    },
+    /**
      * Set cell editable.
      */
     updateCellEditable: (state, action: PayloadAction<Payload<UpdateCellEditablePayload>>) => {
@@ -261,6 +272,7 @@ export const tableSlice = createSliceWithRequests({
 });
 
 export const {
+  updateSelectedCellExpanded,
   updateCellEditable,
   updateCellLabel,
   updateCellMetadata,

@@ -1,0 +1,11 @@
+.Container {
+  padding: 10px;
+  white-space: nowrap;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid #ededed;
+  }
+}

@@ -61,6 +61,7 @@ export interface Cell {
   label: string;
   metadata: Metadata;
   editable: boolean;
+  expanded: boolean;
 }
 export interface Metadata {
   reconciliator: string;
