@@ -5,6 +5,7 @@ import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enh
 import { Payload } from '@store/interfaces/store';
 import {
   AutoMatchingPayload,
+  ColumnStatus,
   DeleteColumnPayload,
   DeleteRowPayload,
   DeleteSelectedPayload,
@@ -24,7 +25,7 @@ import {
   deleteOneColumn, deleteOneRow,
   deleteSelectedColumns, deleteSelectedRows
 } from './utils/table.delete-utils';
-import { isColumnReconciliated, setMatchingMetadata } from './utils/table.reconciliation-utils';
+import { isColumnReconciliated, setMatchingMetadata, hasColumnMetadata } from './utils/table.reconciliation-utils';
 import {
   areOnlyRowsSelected,
   areRowsColumnsSelected,
@@ -42,6 +43,7 @@ const initialState: TableState = {
     rows: { byId: {}, allIds: [] }
   },
   ui: {
+    search: { filter: 'all', value: '' },
     denseView: false,
     openReconciliateDialog: false,
     openMetadataDialog: false,
@@ -116,6 +118,9 @@ export const tableSlice = createSliceWithRequests({
             metaItem.match = false;
           }
         });
+        if (isColumnReconciliated(draft, colId)) {
+          draft.entities.columns.byId[colId].status = ColumnStatus.RECONCILIATED;
+        }
       });
     },
     /**
@@ -132,6 +137,9 @@ export const tableSlice = createSliceWithRequests({
           const [rowId, colId] = getIdsFromCell(cellId);
           const cell = rows.byId[rowId].cells[colId];
           setMatchingMetadata(cell, cellId, threshold, selectedCellMetadataId);
+          if (isColumnReconciliated(draft, colId)) {
+            draft.entities.columns.byId[colId].status = ColumnStatus.RECONCILIATED;
+          }
         });
       });
     },
@@ -247,6 +255,7 @@ export const tableSlice = createSliceWithRequests({
 
         return produceWithPatch(state, undoable, (draft) => {
           const updatedColumns = new Set<string>();
+          const reconciliators = {} as any;
           // add metadata to cells
           data.forEach((item) => {
             draft.ui.selectedCellMetadataId = removeObject(
@@ -254,16 +263,24 @@ export const tableSlice = createSliceWithRequests({
             );
             const [rowId, colId] = getIdsFromCell(item.id);
             updatedColumns.add(colId);
+            // keep track of reconciliators for each column
+            if (!reconciliators[colId]) {
+              reconciliators[colId] = [];
+            }
+            reconciliators[colId] = [
+              ...reconciliators[colId],
+              reconciliator
+            ];
             draft.entities.rows.byId[rowId].cells[colId].metadata.reconciliator = reconciliator;
             draft.entities.rows.byId[rowId].cells[colId].metadata.values = item.metadata;
           });
           updatedColumns.forEach((colId) => {
-            if (isColumnReconciliated(draft, colId)) {
-              if (draft.entities.columns.byId[colId].reconciliator !== reconciliator) {
-                draft.entities.columns.byId[colId].reconciliator = reconciliator;
-              }
-            } else {
-              draft.entities.columns.byId[colId].reconciliator = '';
+            draft.entities.columns.byId[colId].reconciliators = Array.from(
+              new Set<string>(reconciliators[colId]
+                .concat(draft.entities.columns.byId[colId].reconciliators))
+            );
+            if (hasColumnMetadata(draft, colId)) {
+              draft.entities.columns.byId[colId].status = ColumnStatus.PENDING;
             }
           });
         });

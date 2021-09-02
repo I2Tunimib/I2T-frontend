@@ -158,6 +158,11 @@ export const selectMetadataDialogStatus = createSelector(
   (ui) => ui.openMetadataDialog
 );
 
+export const selectSearchStatus = createSelector(
+  selectUIState,
+  (ui) => ui.search
+);
+
 // SELECTORS TO CHECK IF AN ACTION IS ENABLED
 
 /**
@@ -196,7 +201,8 @@ export const selectDataTableFormat = createSelector(
     const columns = entities.columns.allIds.map((colId) => ({
       Header: entities.columns.byId[colId].label,
       accessor: colId,
-      reconciliator: entities.columns.byId[colId].reconciliator,
+      status: entities.columns.byId[colId].status,
+      reconciliators: entities.columns.byId[colId].reconciliators,
       extension: entities.columns.byId[colId].extension
     }));
     const rows = entities.rows.allIds.map((rowId) => (

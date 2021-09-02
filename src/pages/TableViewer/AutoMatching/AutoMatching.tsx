@@ -89,7 +89,11 @@ const AutoMatching: FC<AutoMatchingProps> = ({
             color="primary"
             variant="outlined"
             size="medium"
-            avatar={<Avatar>{reconciliatedCells}</Avatar>}
+            avatar={(
+              <Avatar className={styles.NumberOfReconciliatedCells} key={reconciliatedCells}>
+                {reconciliatedCells}
+              </Avatar>
+            )}
             label="Reconciliated cells"
             deleteIcon={<DoneIcon />}
           />

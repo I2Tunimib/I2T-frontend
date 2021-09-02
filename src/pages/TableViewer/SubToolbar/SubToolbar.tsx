@@ -13,18 +13,26 @@ import {
   deleteSelected,
   redo, undo, updateSelectedCellExpanded, updateUI
 } from '@store/slices/table/table.slice';
-import { ToolbarActions } from '@components/kit';
+import { Searchbar, ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
-import { MouseEvent, useState, useEffect } from 'react';
+import {
+  ChangeEvent, MouseEvent,
+  useState, useCallback, FormEvent
+} from 'react';
 import {
   selectIsCellSelected, selectIsOnlyOneCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
-  selectCanRedo, selectCanDelete, selectIsDenseView
+  selectCanRedo, selectCanDelete, selectIsDenseView, selectSearchStatus
 } from '@store/slices/table/table.selectors';
+import { useDebouncedCallback } from 'use-debounce';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
 import AutoMatching from '../AutoMatching';
+
+const tagRegex = /:([A-Za-z]+):/;
+
+const permittedTags = ['meta'];
 
 /**
  * Sub toolbar for common and contextual actions
@@ -33,6 +41,7 @@ const SubToolbar = () => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [autoMatchingAnchor, setAutoMatchingAnchor] = useState<null | HTMLElement>(null);
+  const [tag, setTag] = useState<string>('all');
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
@@ -41,6 +50,22 @@ const SubToolbar = () => {
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
+  const searchFilter = useAppSelector(selectSearchStatus);
+
+  const debouncedSearchChange = useDebouncedCallback((event: any) => {
+    if (event.target) {
+      dispatch(updateUI({
+        search: {
+          filter: tag,
+          value: event.target.value || ''
+        }
+      }));
+    }
+  }, 300);
+
+  const handleTagChange = (newTag: string) => {
+    setTag(newTag);
+  };
 
   const handleDelete = () => {
     dispatch(deleteSelected({}));
@@ -114,6 +139,14 @@ const SubToolbar = () => {
           </Button>
           <Button disabled variant="contained">Extend</Button>
         </ActionGroup>
+        <Searchbar
+          defaultTag="all"
+          tagRegex={tagRegex}
+          permittedTags={permittedTags}
+          onTagChange={handleTagChange}
+          onChange={(e) => debouncedSearchChange(e)}
+          className={styles.Search}
+        />
       </ToolbarActions>
       <ReconciliateDialog />
       <MetadataDialog />

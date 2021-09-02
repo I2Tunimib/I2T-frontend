@@ -1,4 +1,4 @@
-import { ColumnState, RowState } from '@store/slices/table/interfaces/table';
+import { ColumnState, ColumnStatus, RowState } from '@store/slices/table/interfaces/table';
 
 export enum CsvSeparator {
   COMMA = ',',
@@ -19,7 +19,8 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
       [`${label}`]: {
         id: `${label}`,
         label,
-        reconciliator: '',
+        status: ColumnStatus.EMPTY,
+        reconciliators: [],
         extension: ''
       }
     },
@@ -34,7 +35,7 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
         cells: headerValues.reduce((allRowCells, label, colIndex) => ({
           ...allRowCells,
           [label]: {
-            label: rowValues[colIndex],
+            label: rowValues[colIndex] || '',
             metadata: {
               reconciliator: '',
               values: []

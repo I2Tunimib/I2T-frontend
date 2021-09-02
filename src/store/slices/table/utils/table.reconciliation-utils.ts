@@ -33,9 +33,34 @@ export const isColumnReconciliated = (state: Draft<TableState>, colId: ID) => {
   return rowIds.every((rowId) => {
     const cell = rows.byId[rowId].cells[colId];
     return cell.metadata.values.length > 0
+      && cell.metadata.values.some((metadataItem) => metadataItem.match);
+    // && cell.metadata.reconciliator === rows.byId[rowIds[0]].cells[colId].metadata.reconciliator;
+  });
+};
+
+export const hasColumnMetadata = (state: Draft<TableState>, colId: ID) => {
+  const { allIds: rowIds } = state.entities.rows;
+  const { rows } = state.entities;
+  return rowIds.some((rowId) => {
+    const cell = rows.byId[rowId].cells[colId];
+    return cell.metadata.values.length > 0
       && cell.metadata.reconciliator === rows.byId[rowIds[0]].cells[colId].metadata.reconciliator;
   });
 };
+
+export const isReconciliatorPresent = (
+  state: Draft<TableState>, colId: ID, reconciliator: string
+) => {
+  const { allIds: rowIds } = state.entities.rows;
+  const { rows } = state.entities;
+  return rowIds.some((rowId) => {
+    const cell = rows.byId[rowId].cells[colId];
+    return cell.metadata.values.length > 0
+      && cell.metadata.reconciliator === reconciliator;
+  });
+};
+
+/** */
 
 /**
  * Get min and max scores between metadataItems of a cell.

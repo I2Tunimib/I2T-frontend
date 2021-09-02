@@ -17,6 +17,7 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
  * Table UI state.
  */
 export interface TableUIState {
+  search: { filter: string; value: string };
   denseView: boolean;
   openReconciliateDialog: boolean;
   openMetadataDialog: boolean;
@@ -38,13 +39,20 @@ interface BaseState<T> {
 export interface ColumnState extends BaseState<Column> {}
 export interface RowState extends BaseState<Row> {}
 
+export enum ColumnStatus {
+  RECONCILIATED='reconciliated',
+  PENDING='pending',
+  EMPTY='empty'
+}
+
 /**
  * A column instance.
  */
 export interface Column {
   id: ID;
   label: string;
-  reconciliator: string;
+  status: ColumnStatus;
+  reconciliators: string[];
   extension: string;
 }
 /**

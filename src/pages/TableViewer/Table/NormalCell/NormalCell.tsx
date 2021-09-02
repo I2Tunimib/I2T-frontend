@@ -59,7 +59,7 @@ const NormalCell: FC<NormalCellProps> = ({
       </div>
       {value.expanded && (
         <ExpandableList
-          listTitle="Metadata"
+          listTitle={`Metadata - ${value.metadata.reconciliator} `}
           messageIfNoContent="Cell doesn't have any metadata"
           className={styles.ExpandableList}>
           <ExpandableListHeader>

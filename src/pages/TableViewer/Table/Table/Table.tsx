@@ -1,6 +1,9 @@
-import { Column, Row, useTable } from 'react-table';
-import { FC, useCallback } from 'react';
-import { ID } from '@store/slices/table/interfaces/table';
+import { Row, useGlobalFilter, useTable } from 'react-table';
+import {
+  FC, useCallback,
+  useEffect
+} from 'react';
+import { MetadataInstance } from '@store/slices/table/interfaces/table';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
@@ -9,19 +12,27 @@ import TableRow from '../TableRow';
 import TableFooter from '../TableFooter';
 
 interface TableProps {
-  columns: any[],
-  data: any[],
-  dense?: boolean,
+  columns: any[];
+  data: any[];
+  searchFilter?: TableGlobalFilter;
+  dense?: boolean;
   getGlobalProps: () => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
 }
+
+interface TableGlobalFilter {
+  filter: string;
+  value: string;
+}
+
 // default prop getter for when it is not provided
 const defaultPropGetter = () => ({});
 
 const Table: FC<TableProps> = ({
   columns,
   data,
+  searchFilter,
   dense = false,
   getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
@@ -34,17 +45,63 @@ const Table: FC<TableProps> = ({
     return (parent ? [parent.id, relativeIndex].join('.') : row[Object.keys(row)[0]].rowId) as string;
   }, []);
 
+  /**
+ * Returns row which have at least a cell with label which starts with filter value.
+ */
+  const filterAll = useCallback((
+    rows: Array<Row>, colIds: Array<string>, filterValue: string
+  ) => {
+    return rows.filter((row) => colIds
+      .some((colId) => row.values[colId].label
+        .toLowerCase()
+        .startsWith(filterValue.toLowerCase())));
+  }, []);
+
+  /**
+   * Returns row which have at least a cell with metadata name which starts with filter value.
+   */
+  const filterMeta = useCallback((
+    rows: Array<Row>, colIds: Array<string>, filterValue: string
+  ) => {
+    return rows.filter((row) => colIds
+      .some((colId) => row.values[colId].metadata.values
+        .some((item: MetadataInstance) => item.name
+          .toLowerCase()
+          .startsWith(filterValue.toLowerCase()))));
+  }, []);
+
+  const customGlobalFilter = useCallback((
+    rows: Array<Row>, [index, ...colIds]: Array<string>, { filter, value }: TableGlobalFilter
+  ) => {
+    // return all rows if value is empty
+    if (value === '') {
+      return rows;
+    }
+    switch (filter) {
+      case 'all':
+        return filterAll(rows, colIds, value);
+      case 'meta':
+        return filterMeta(rows, colIds, value);
+      default:
+        return filterAll(rows, colIds, value);
+    }
+  }, []);
+
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
-    prepareRow
+    prepareRow,
+    setGlobalFilter
   } = useTable({
     columns,
     data,
-    getRowId
+    getRowId,
+    globalFilter: customGlobalFilter,
+    autoResetGlobalFilter: false
   },
+  useGlobalFilter,
   (hooks) => {
     // push a column for the index
     hooks.visibleColumns.push((cols) => [
@@ -62,6 +119,12 @@ const Table: FC<TableProps> = ({
       ...cols
     ]);
   });
+
+  useEffect(() => {
+    if (searchFilter) {
+      setGlobalFilter(searchFilter);
+    }
+  }, [searchFilter]);
 
   return (
     // apply the table props

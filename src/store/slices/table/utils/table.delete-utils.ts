@@ -1,9 +1,9 @@
 import { Draft, original } from '@reduxjs/toolkit';
 import {
   ColumnState, RowState,
-  ID, TableState
+  ID, TableState, ColumnStatus
 } from '../interfaces/table';
-import { isColumnReconciliated } from './table.reconciliation-utils';
+import { hasColumnMetadata, isColumnReconciliated, isReconciliatorPresent } from './table.reconciliation-utils';
 import { removeObject } from './table.utils';
 
 /**
@@ -38,19 +38,32 @@ export const deleteOneRow = (state: Draft<TableState>, rowId: ID) => {
  */
 export const deleteSelectedRows = (state: Draft<TableState>) => {
   const { selectedRowsIds } = state.ui;
+  // keep track of which reconciliators are going to be deleted
+  // when deleting a cell
+  const reconciliatorsToBeDiscarded = new Set<string>();
   Object.keys(selectedRowsIds).forEach((rowId) => {
+    state.entities.columns.allIds.forEach((colId) => {
+      const { reconciliator } = state.entities.rows.byId[rowId].cells[colId].metadata;
+      reconciliatorsToBeDiscarded.add(reconciliator);
+    });
     state.entities.rows.byId = removeObject(state.entities.rows.byId, rowId);
   });
   state.entities.rows.allIds = state.entities.rows.allIds.filter((id) => !(id in selectedRowsIds));
   // when a row is deleted check if a column is reconciliated
   state.entities.columns.allIds.forEach((colId) => {
+    // check column status after deleting a row
     if (isColumnReconciliated(state, colId)) {
-      const rowId = state.entities.rows.allIds[0];
-      const { reconciliator } = state.entities.rows.byId[rowId].cells[colId].metadata;
-      if (state.entities.columns.byId[colId].reconciliator !== reconciliator) {
-        state.entities.columns.byId[colId].reconciliator = reconciliator;
-      }
+      state.entities.columns.byId[colId].status = ColumnStatus.RECONCILIATED;
+    } else if (!hasColumnMetadata(state, colId)) {
+      state.entities.columns.byId[colId].status = ColumnStatus.EMPTY;
     }
+    // check which reconciliators needs to be discarded
+    reconciliatorsToBeDiscarded.forEach((reconToDiscard) => {
+      if (!isReconciliatorPresent(state, colId, reconToDiscard)) {
+        state.entities.columns.byId[colId].reconciliators = state.entities.columns.byId[colId]
+          .reconciliators.filter((item) => item !== reconToDiscard);
+      }
+    });
   });
 };
 

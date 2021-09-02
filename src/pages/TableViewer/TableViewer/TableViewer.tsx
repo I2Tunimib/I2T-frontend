@@ -18,7 +18,7 @@ import { HotKeys } from 'react-hotkeys';
 import {
   selectDataTableFormat, selectGetTableRequestStatus,
   selectSelectedColumnIds, selectSelectedRowIds,
-  selectSelectedCellIds, selectCellMetadataIds, selectIsDenseView
+  selectSelectedCellIds, selectCellMetadataIds, selectIsDenseView, selectSearchStatus
 } from '@store/slices/table/table.selectors';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
@@ -53,6 +53,7 @@ const TableViewer = () => {
   const { name } = useParams<{ name: string }>();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableRequestStatus);
+  const searchFilter = useAppSelector(selectSearchStatus);
   const selectedColumns = useAppSelector(selectSelectedColumnIds);
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
@@ -172,10 +173,13 @@ const TableViewer = () => {
   /**
    * Properties to pass to each header.
    */
-  const getHeaderProps = useCallback(({ id, reconciliator, ...props }: TableColumn) => {
+  const getHeaderProps = useCallback(({
+    id, reconciliators, status, ...props
+  }: TableColumn) => {
     return {
       id,
-      reconciliator,
+      reconciliators,
+      status,
       selected: !!selectedColumns[id],
       handleCellRightClick,
       handleSelectedColumnChange
@@ -216,6 +220,7 @@ const TableViewer = () => {
 
   const columnsTable = useMemo(() => columns, [columns]);
   const rowsTable = useMemo(() => rows, [rows]);
+  const searchFilterTable = useMemo(() => searchFilter, [searchFilter]);
 
   return (
     <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
@@ -225,6 +230,7 @@ const TableViewer = () => {
           <Table
             data={rowsTable}
             columns={columnsTable}
+            searchFilter={searchFilterTable}
             getGlobalProps={getGlobalProps}
             getHeaderProps={getHeaderProps}
             getCellProps={getCellProps}
