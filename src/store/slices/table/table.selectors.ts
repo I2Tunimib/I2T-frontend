@@ -37,6 +37,10 @@ export const selectCanRedo = createSelector(
   selectDraftState,
   (draft) => draft.redoPointer > -1
 );
+export const selectLastChangeDate = createSelector(
+  selectDraftState,
+  (draft) => draft.lastChange
+);
 
 /**
  * Get selected columns ids as object.

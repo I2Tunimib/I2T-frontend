@@ -7,7 +7,7 @@
   gap: 5px;
 
   // add separator between action groups
-  &:not(:last-child) {
+  &:not(:last-of-type) {
     &::after {
       content: "";
       position: absolute;

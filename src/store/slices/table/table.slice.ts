@@ -57,7 +57,8 @@ const initialState: TableState = {
     patches: [],
     inversePatches: [],
     undoPointer: -1,
-    redoPointer: -1
+    redoPointer: -1,
+    lastChange: undefined
   }
 };
 

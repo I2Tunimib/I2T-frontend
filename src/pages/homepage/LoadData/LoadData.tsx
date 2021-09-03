@@ -17,18 +17,24 @@ const LoadData = () => {
   const [selectedTable, setSelectedTable] = useState<string>();
 
   useEffect(() => {
+    let mounted = true;
     if (dataSource !== 'fs') {
       dispatch(getTableNames(dataSource))
         .unwrap()
         .then((result) => {
-          // handle result here
-          setTables(result.data);
-          setSelectedTable(result.data[0]);
+          if (mounted) {
+            // handle result here
+            setTables(result.data);
+            setSelectedTable(result.data[0]);
+          }
         })
         .catch((rejectedValueOrSerializedError) => {
           // handle error here
         });
     }
+    return () => {
+      mounted = false;
+    };
   }, [dataSource]);
 
   const handleChangeDataSource = (event: ChangeEvent<{ value: unknown }>) => {

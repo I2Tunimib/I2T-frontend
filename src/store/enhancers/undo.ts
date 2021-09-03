@@ -28,6 +28,10 @@ export interface UndoEnhancedState {
      * Pointer to the current redo version.
      */
     redoPointer: number;
+    /**
+     * Last change
+     */
+    lastChange: number | undefined;
   }
 }
 
@@ -89,6 +93,7 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
       draft._draft.patches.unshift(patches);
       draft._draft.inversePatches.push(inversePatches);
       draft._draft.undoPointer += 1;
+      draft._draft.lastChange = Date.now();
     }
   }) as T;
 };
@@ -105,6 +110,7 @@ export const applyUndoPatches = <T extends UndoEnhancedState>(
     if (mutations) {
       mutations(newDraft);
     }
+    state._draft.lastChange = Date.now();
     return newDraft;
   }
 };
@@ -121,6 +127,7 @@ export const applyRedoPatches = <T extends UndoEnhancedState>(
     if (mutations) {
       mutations(newDraft);
     }
+    state._draft.lastChange = Date.now();
     return newDraft;
   }
 };

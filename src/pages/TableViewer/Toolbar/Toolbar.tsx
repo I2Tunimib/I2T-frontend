@@ -16,6 +16,7 @@ import SubToolbar from '../SubToolbar/SubToolbar';
 import styles from './Toolbar.module.scss';
 import FileMenu from '../Menus/FileMenu';
 import EditMenu from '../Menus/EditMenu';
+import SaveIndicator from '../SaveIndicator';
 
 interface MenuState extends Record<string, boolean> { }
 
@@ -86,7 +87,7 @@ const Toolbar = () => {
                 [styles.DefaultName]: tableName === 'Table name'
               })}
             />
-            <CloudOffIcon className={styles.SaveIcon} />
+            <SaveIndicator className={styles.SaveIcon} />
           </div>
           <div className={clsx(styles.RowMenu, styles.ActionsContainer)}>
             <Button
