@@ -20,7 +20,7 @@ const SaveIndicator: FC<SaveIndicatorProps> = ({
       <IconButton size="small" className={className}>
         <CloudOffIcon className={styles.Icon} />
       </IconButton>
-      <Typography color="textSecondary" variant="body2">
+      <Typography className={styles.LastChange} color="textSecondary" variant="body2">
         {lastChange
           ? (
             <TimeAgo formatter={timeAgoFormatter} date={lastChange} />

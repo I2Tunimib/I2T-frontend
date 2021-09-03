@@ -273,6 +273,12 @@ export const tableSlice = createSliceWithRequests({
               reconciliator
             ];
             draft.entities.rows.byId[rowId].cells[colId].metadata.reconciliator = reconciliator;
+            // check if there are matching metadata for a given cell
+            item.metadata.forEach((metadataItem) => {
+              if (metadataItem.match) {
+                draft.ui.selectedCellMetadataId[item.id] = metadataItem.id;
+              }
+            });
             draft.entities.rows.byId[rowId].cells[colId].metadata.values = item.metadata;
           });
           updatedColumns.forEach((colId) => {
