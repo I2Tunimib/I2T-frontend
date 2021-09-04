@@ -13,5 +13,64 @@
     width: 20px;
     height: 20px;
     color: #5F6368;
+
+    &.Loading {
+      animation: rotate360 1.5s linear infinite;
+    }
+
+    &.Error {
+      color: #f45725;
+    }
+    &.UnsavedChanges {
+      color: #ffc700;
+    }
+    &.SavedChanges {
+      color: #188038;
+    }
+  }
+}
+
+.Column {
+  width: 300px;
+  .BaseTooltipHeader {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+  
+    &.Error {
+      background-color: rgba(244,87,37,0.12);
+      color: #f45725;
+    }
+
+    &.UnsavedChanges {
+      background-color: rgba(255,199,0,0.12);
+      color: #ffc700;
+    }
+
+    &.SavedChanges {
+      background-color: #e6f4ea;
+      color: #188038;
+    }
+  
+    .TooltipIcon {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .BaseTooltipBody {
+    padding: 10px;
+  }
+}
+
+
+@keyframes rotate360 {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(-360deg);
   }
 }
