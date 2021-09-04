@@ -4,29 +4,40 @@
   align-items: center;
   gap: 10px;
 
+  .Button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-transform: none;
+
+    .Icon {
+      width: 18px;
+      height: 18px;
+      color: #5F6368;
+  
+      &.Loading {
+        animation: rotate360 1.5s linear infinite;
+      }
+    }
+
+    &:hover {
+      .Icon {
+        &.Error {
+          color: #f45725;
+        }
+        &.UnsavedChanges {
+          color: #ffc700;
+        }
+        &.SavedChanges {
+          color: #188038;
+        }
+      }
+    }
+  }
+
   .LastChange {
     display: flex;
     align-items: center;
-  }
-  
-  .Icon {
-    width: 20px;
-    height: 20px;
-    color: #5F6368;
-
-    &.Loading {
-      animation: rotate360 1.5s linear infinite;
-    }
-
-    &.Error {
-      color: #f45725;
-    }
-    &.UnsavedChanges {
-      color: #ffc700;
-    }
-    &.SavedChanges {
-      color: #188038;
-    }
   }
 }
 

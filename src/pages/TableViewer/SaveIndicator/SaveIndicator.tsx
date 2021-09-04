@@ -1,8 +1,9 @@
 import { FC, HTMLAttributes, useState } from 'react';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
 import LoopRoundedIcon from '@material-ui/icons/LoopRounded';
-import CloudDoneRoundedIcon from '@material-ui/icons/CloudDoneRounded';
+import CloudDoneOutlinedIcon from '@material-ui/icons/CloudDoneOutlined';
 import {
+  Button,
   IconButton, Theme,
   Tooltip, Typography,
   withStyles
@@ -49,7 +50,7 @@ const TooltipContent: FC<TooltipContentProps> = ({
       )}>
         {status === TooltipStatus.UNSAVED
           ? <CloudOffIcon className={styles.TooltipIcon} />
-          : <CloudDoneRoundedIcon className={styles.TooltipIcon} />
+          : <CloudDoneOutlinedIcon className={styles.TooltipIcon} />
         }
         <Typography variant="subtitle2">
           {status === TooltipStatus.UNSAVED
@@ -92,44 +93,47 @@ const SaveIndicator: FC<SaveIndicatorProps> = ({
         title={(
           <TooltipContent status={status} />
         )}>
-        <IconButton size="small" className={className}>
-          {loading
-            ? (
-              <LoopRoundedIcon className={clsx(
-                styles.Icon,
-                styles.Loading
-              )} />
-            )
-            : [
-              status === TooltipStatus.SAVED
-                ? (
-                  <CloudDoneRoundedIcon
-                    key="saved"
-                    className={clsx(
-                      styles.Icon,
-                      styles.SavedChanges
-                    )} />
-                )
-                : (
-                  <CloudOffIcon
-                    key="unsaved"
-                    className={clsx(
-                      styles.Icon,
-                      styles.UnsavedChanges
-                    )} />
-                )
-            ]
+        <Button
+          startIcon={
+            loading
+              ? (
+                <LoopRoundedIcon className={clsx(
+                  styles.Icon,
+                  styles.Loading
+                )} />
+              )
+              : [
+                status === TooltipStatus.SAVED
+                  ? (
+                    <CloudDoneOutlinedIcon
+                      key="saved"
+                      className={clsx(
+                        styles.Icon,
+                        styles.SavedChanges
+                      )} />
+                  )
+                  : (
+                    <CloudOffIcon
+                      key="unsaved"
+                      className={clsx(
+                        styles.Icon,
+                        styles.UnsavedChanges
+                      )} />
+                  )
+              ]
           }
-        </IconButton>
+          size="small"
+          className={clsx(className, styles.Button)}>
+          <Typography className={styles.LastChange} color="textSecondary" variant="body2">
+            {lastChange
+              ? (
+                <TimeAgo title="" formatter={timeAgoFormatter} date={lastChange} />
+              )
+              : 'No changes yet'
+            }
+          </Typography>
+        </Button>
       </LightTooltip>
-      <Typography className={styles.LastChange} color="textSecondary" variant="body2">
-        {lastChange
-          ? (
-            <TimeAgo formatter={timeAgoFormatter} date={lastChange} />
-          )
-          : 'No changes yet'
-        }
-      </Typography>
     </div>
   );
 };
