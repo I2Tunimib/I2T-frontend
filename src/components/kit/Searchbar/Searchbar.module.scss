@@ -7,7 +7,7 @@
 
   transition: min-width 200ms cubic-bezier(0.08,0.52,0.52,1);
 
-  &:focus {
+  &.Focus {
     min-width: 400px;
   }
 }

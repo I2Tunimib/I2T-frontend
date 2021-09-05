@@ -1,5 +1,6 @@
 import { FC, HTMLAttributes, useState } from 'react';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
+import ErrorOutlineRoundedIcon from '@material-ui/icons/ErrorOutlineRounded';
 import LoopRoundedIcon from '@material-ui/icons/LoopRounded';
 import CloudDoneOutlinedIcon from '@material-ui/icons/CloudDoneOutlined';
 import {
@@ -49,7 +50,7 @@ const TooltipContent: FC<TooltipContentProps> = ({
         }
       )}>
         {status === TooltipStatus.UNSAVED
-          ? <CloudOffIcon className={styles.TooltipIcon} />
+          ? <ErrorOutlineRoundedIcon className={styles.TooltipIcon} />
           : <CloudDoneOutlinedIcon className={styles.TooltipIcon} />
         }
         <Typography variant="subtitle2">
@@ -113,7 +114,7 @@ const SaveIndicator: FC<SaveIndicatorProps> = ({
                       )} />
                   )
                   : (
-                    <CloudOffIcon
+                    <ErrorOutlineRoundedIcon
                       key="unsaved"
                       className={clsx(
                         styles.Icon,

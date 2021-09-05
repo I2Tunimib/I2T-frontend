@@ -141,6 +141,7 @@ const SubToolbar = () => {
         </ActionGroup>
         <Searchbar
           defaultTag="all"
+          placeholder="Search table, metadata..."
           tagRegex={tagRegex}
           permittedTags={permittedTags}
           onTagChange={handleTagChange}

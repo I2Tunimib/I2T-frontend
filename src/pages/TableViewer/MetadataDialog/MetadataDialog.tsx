@@ -63,7 +63,6 @@ const MetadataDialog = () => {
   };
 
   const handleDeleteRow = (id: string) => {
-    console.log(id);
   };
 
   return (

@@ -2,6 +2,7 @@ import { RouteContainer } from '@components/layout';
 import { RouteOption } from '@components/layout/RouteContainer';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { Homepage } from '@pages/Homepage';
+import RefactorHomepage from '@pages/RefactorHomepage';
 import { TableViewer } from '@pages/TableViewer';
 import { selectGetConfigRequest } from '@store/slices/config/config.selectors';
 import { getConfig } from '@store/slices/config/config.thunk';
@@ -15,6 +16,11 @@ const routes: RouteOption[] = [
     path: '/',
     exact: true,
     Component: Homepage
+  },
+  {
+    path: '/refactor-home',
+    exact: true,
+    Component: RefactorHomepage
   },
   {
     path: '/table/:name',

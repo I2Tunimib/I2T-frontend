@@ -1,7 +1,7 @@
 import { Typography } from '@material-ui/core';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { ComponentType, FC } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch } from 'react-router-dom';
 import styles from './RouteContainer.module.scss';
 
 interface RouteContainerProps {
@@ -48,6 +48,7 @@ const RouteContainer: FC<RouteContainerProps> = ({
         <Switch>
           {routes.map(({ path, Component, exact }) => (
             <Route key={path} path={path} exact={exact} component={Component} />))}
+          <Redirect from="*" to="/" />
         </Switch>
       </div>
     )

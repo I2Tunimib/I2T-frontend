@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import {
   FC, HTMLAttributes,
   useRef, useEffect,
@@ -11,9 +12,13 @@ import styles from './Searchbar.module.scss';
 
 interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
   /**
+   * Enable tag handling. Defaults to true.
+   */
+  enableTags?: boolean;
+  /**
    * Callback function on tag change.
    */
-  onTagChange: (tag: string) => void;
+  onTagChange?: (tag: string) => void;
   /**
    * Default tag if no tag is present.
    */
@@ -31,6 +36,10 @@ interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
    * Control focus status of input search.
    */
   focused?: boolean;
+  /**
+   * Expand on focus. Defaults to true.
+   */
+  expand?: boolean;
 }
 
 /**
@@ -41,10 +50,13 @@ interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
 const Searchbar: FC<SearchbarProps> = ({
   onTagChange,
   onChange,
+  enableTags = true,
   defaultTag,
   tagRegex,
   permittedTags,
   focused,
+  expand = true,
+  placeholder,
   className,
   ...props
 }) => {
@@ -63,7 +75,7 @@ const Searchbar: FC<SearchbarProps> = ({
   }, [inputState.value]);
 
   useEffect(() => {
-    if (tag) {
+    if (enableTags && tag && onTagChange) {
       onTagChange(tag);
     }
   }, [tag]);
@@ -82,10 +94,14 @@ const Searchbar: FC<SearchbarProps> = ({
 
   const handleOnChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setInputState((state) => ({ ...state, value: event.target.value }));
-    if (onChange && !event.target.value.startsWith(':')) {
+    if (enableTags) {
+      if (onChange && !event.target.value.startsWith(':')) {
+        onChange(event);
+      }
+    } else if (onChange) {
       onChange(event);
     }
-  }, [onChange, inputState.value]);
+  }, [enableTags, onChange, inputState.value]);
 
   const handleOnFocus = useCallback(() => {
     setInputState((state) => ({ ...state, focused: true }));
@@ -96,10 +112,12 @@ const Searchbar: FC<SearchbarProps> = ({
   }, []);
 
   const handleOnKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Backspace' && inputState.value === '' && tag) {
-      setTag(defaultTag ?? '');
+    if (enableTags) {
+      if (event.key === 'Backspace' && inputState.value === '' && tag) {
+        setTag(defaultTag ?? '');
+      }
     }
-  }, [inputState.value, tag]);
+  }, [enableTags, inputState.value, tag]);
 
   return (
     <SearchbarBase
@@ -113,10 +131,15 @@ const Searchbar: FC<SearchbarProps> = ({
         onChange={handleOnChange}
         onFocus={handleOnFocus}
         onBlur={handleOnBlur}
-        placeholder="Search table, metadata..."
+        placeholder={placeholder}
         autoComplete="off"
         spellCheck="false"
-        className={styles.Input}
+        className={clsx(
+          styles.Input,
+          {
+            [styles.Focus]: expand && inputState.focused
+          }
+        )}
       />
     </SearchbarBase>
   );
