@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import InputModal from "../../../../SharedComponents/InputModal/InputModal";
 import { SetStateAction } from "react";
 import { Overlay, Tooltip } from "react-bootstrap";
+import {ReactComponent as BottomArrow} from '../../../../Assets/Icons/arrow-bottom.svg';
 
 const Cell = (props: cellPropsInterface) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -173,9 +174,8 @@ const Cell = (props: cellPropsInterface) => {
             <div className='cell'>
                 <div
                     onContextMenu={(e) => { displayContextMenu(e) }} ref={(r) => { handleRef(r) }}
-                    onClick={() => { dispatchRemoveContext() }}
+                    // onClick={() => { dispatchRemoveContext() }}
                     className='data-cell'>
-                    <div>
                         {// cellValue.metadata.length > 0 &&
                             <div 
                             className={`meta-dot ` + dotColor} 
@@ -191,9 +191,10 @@ const Cell = (props: cellPropsInterface) => {
                                 {cellValue &&
                                     cellValue.label}
                             </p>
-
+                            <BottomArrow
+                            onClick={(e) => {displayContextMenu(e)}}
+                            />
                         </div>
-                    </div>
                     {
                         col.extendedMeta &&
                         <div className='id-links-container'>
@@ -234,7 +235,7 @@ const Cell = (props: cellPropsInterface) => {
             }
             <Overlay target={target.current} show={tooltipShow} placement="top">
                 {(props) => (
-                    <Tooltip id="overlay-example" {...props}>
+                    <Tooltip id="overlay-example" {...props} className={dotColor}>
                         {dotColor === 'green' &&
                             <>
                                 {t('table.cells.meta-tooltip.is-true')}

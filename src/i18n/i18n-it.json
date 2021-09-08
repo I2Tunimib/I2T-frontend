@@ -63,7 +63,8 @@
       },
       "extension": {
         "no-data": "Si è verificato un errore. Controlla di aver inserito i dati richiesti correttamente",
-        "data-empty": "Il sistema non ha riportato nessun dato per l'estensione"
+        "data-empty": "Il sistema non ha riportato nessun dato per l'estensione",
+        "no-match": "Nessuna delle celle delle colonne selezionata è stata matchata con un'entità. Per matchare velocemente le celle di una colonna puoi utilizzare la funzione Finalizza Matching"
       }
     }
   },

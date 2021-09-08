@@ -1,4 +1,4 @@
-import { Modal } from "react-bootstrap";
+import { Modal, Overlay, Tooltip } from "react-bootstrap";
 import React from "react";
 import SecondaryButton from "../SecondaryButton/SecondaryButton";
 import MainButton from "../MainButton/MainButton";
@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 //import undoIcon from '../../Assets/icon-set/undo-circular-arrow.png';
 import { RootState } from "../../Redux/store";
 import { ReactComponent as UndoIcon } from '../../Assets/icon-set/undo-circular-arrow.svg';
+import { useTranslation } from "react-i18next";
 
 
 
@@ -30,13 +31,16 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
         secondaryButtonAction,
         showState,
         onClose } = props;
-    console.log(metaData);
     const [show, setShow] = React.useState(true);
     const Config = useSelector((state: RootState) => state.Config)
     const [columns, setColumns] = React.useState<{ name: string, label: string }[]>([]);
     const colName = col.name;
+    const { t } = useTranslation();
     const Data = useSelector((state: RootState) => state.Data);
     const [link, setLink] = React.useState<string | null>();
+    const [tooltipShow, setTooltipShow] = React.useState<boolean[]>([]);
+    const [tooltipColor, setTooltipColor] = React.useState('orange');
+    const [elRefs, setElRefs] = React.useState<any[]>([]);
     // console.log(metaData);
     React.useEffect(() => {
         let myCols: any[] = []
@@ -96,6 +100,21 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
             )
         },
     }
+    React.useEffect(() => {
+        const newRefs = [];
+        const tooltipShowState = [];
+        for (let i = 0; i <= metaData.length; i++) {
+            newRefs.push(React.createRef());
+            tooltipShowState.push(false);
+        }
+        setElRefs(newRefs);
+        setTooltipShow(tooltipShowState);
+        // add or remove refs
+        //setElRefs(elRefs => (
+        //  Array(metaData.length).map((_, i) => elRefs[i] || React.createRef())
+        // ));
+        
+    }, [metaData.length]);
 
     const [myMetaData, setMyMetaData] = React.useState<any[]>([]);
 
@@ -166,8 +185,26 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
     const undo = () => {
         setMyMetaData(metaData);
     }
+    
+    const setTooltipTrueByIndex = (index: number) => {
+        const newState = tooltipShow.map((el, i ) => {
+            if (i === index) {
+                return true;
+            } else {
+                return false;
+            }
+        })
+        setTooltipShow(newState);
+    }
 
+    const setTooltipFalse = () => {
+        const newState = tooltipShow.map((el) => {
+            return false;
+        })
+        setTooltipShow(newState);
+    }
 
+    console.log(elRefs);
     return (
         <>
             <div>
@@ -191,10 +228,18 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                                                     case 'match':
                                                         return myMetaData[dataIndex][col.name].toString() === 'true' ?
                                                             <div className='flex-center'>
-                                                                <div className='green'></div>
+                                                                <div className={'meta-dot green ' + rowIndex}
+                                                                    ref={elRefs[rowIndex]}
+                                                                    onMouseEnter={(e) => { setTooltipTrueByIndex(rowIndex); setTooltipColor('green') }}
+                                                                    onMouseLeave={() => { setTooltipFalse() }}
+                                                                ></div>
                                                             </div> :
                                                             <div className='flex-center'>
-                                                                <div className='orange'></div>
+                                                                <div className={'meta-dot orange ' + rowIndex}
+                                                                    ref={elRefs[rowIndex]}
+                                                                    onMouseEnter={(e) => { setTooltipTrueByIndex(rowIndex); setTooltipColor('orange') }}
+                                                                    onMouseLeave={() => { setTooltipFalse() }}
+                                                                ></div>
                                                             </div>
                                                             ;
                                                     case 'action':
@@ -269,6 +314,29 @@ export const MetaTableModal = (props: metaTableModalPropsInterface) => {
                     </Modal.Footer>
                 </Modal>
             </div>
+            {
+                elRefs.map((ref, index) => {
+                    return (
+                        <Overlay target={ref.current} show={tooltipShow[index]} placement="top" key={index}>
+                            {(props) => (
+                                <Tooltip id="overlay-example" {...props} className={tooltipColor}>
+                                    {tooltipColor === 'green' &&
+                                        <>
+                                            {t('table.cells.meta-tooltip.is-true')}
+                                        </>
+                                    }
+                                    {tooltipColor === 'orange' &&
+                                        <>
+                                            {t('table.cells.meta-tooltip.is-not-true')}
+                                        </>
+                                    }
+
+                                </Tooltip>
+                            )}
+                        </Overlay>
+                    )
+                })
+            }
         </>
     )
 }

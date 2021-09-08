@@ -253,7 +253,23 @@ const ExtendTable = () => {
         })()
     }
 
+    const checkIfMetaMatched = () => {
+        let metaAreMatched = false;
+        for (const col of Columns) {
+            if (col.selected) {
+                for (const row of Data) {
 
+                    for (const meta of row[col.name].metadata) {
+                        if (meta.match) {
+                            metaAreMatched = true;
+                        }
+                    }
+
+                }
+            }
+        }
+        return metaAreMatched;
+    }
 
     return (
         <>
@@ -262,7 +278,7 @@ const ExtendTable = () => {
                 <>
                     <MainButton
                         label={t('commands-bar.extension.button-label')}
-                        cta={() => { setExtendDialogIsOpen(true) }}
+                        cta={() => { checkIfMetaMatched() ? setExtendDialogIsOpen(true) : dispatchError(t('shared.error.extension.no-match')) }}
                     />
                 </>
             }

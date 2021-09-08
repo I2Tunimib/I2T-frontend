@@ -63,7 +63,8 @@
       },
       "extension": {
         "no-data": "An error has occurred. Check that you have entered the required data correctly",
-        "data-empty": "The system did not report any data for the extension"
+        "data-empty": "The system did not report any data for the extension",
+        "no-match": "No entities are matched to the cells of any selected columns. To quickly match all cells of a columns you can use Finalize Matching feature."
       }
     }
   },

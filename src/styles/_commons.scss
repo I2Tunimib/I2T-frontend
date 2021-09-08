@@ -179,26 +179,22 @@
   }
 }
 
-.green {
-  background-color: green;
+.meta-dot {
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
+  cursor: pointer;
+  &.green {
+    background-color: green;
+  }
+  &.orange {
+    background-color: orange;
+  }
+  &.red {
+    background-color: red;
+  }
 }
 
-.orange {
-  background-color: orange;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-}
-
-.red {
-  background-color: red;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-}
 
 .flex-center {
   width: 100%;
@@ -243,6 +239,26 @@
   }
   .tooltip-inner {
     background-color: $brand-color-one-base !important;
+  }
+  &.green{
+    .arrow {
+      &:before {
+        border-top-color: green !important;
+      }
+    }
+    .tooltip-inner {
+      background-color: green !important;
+    }
+  }
+  &.red{
+    .arrow {
+      &:before {
+        border-top-color: red !important;
+      }
+    }
+    .tooltip-inner {
+      background-color: red !important;
+    }
   }
 }
 
