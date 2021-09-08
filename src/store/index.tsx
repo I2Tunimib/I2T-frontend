@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import { enablePatches } from 'immer';
 import tableReducer from './slices/table/table.slice';
 import configReducer from './slices/config/config.slice';
+import tablesSlice from './slices/tables/tables.slice';
 
 enablePatches();
 
 export const store = configureStore({
   reducer: {
     config: configReducer,
+    tables: tablesSlice,
     table: tableReducer
   }
 });

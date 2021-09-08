@@ -8,6 +8,7 @@ import ExpandableListBody from './ExpandableListBody';
 import ExpandableListItem from './ExpandableListItem';
 import Searchbar from './Searchbar';
 import ButtonShortcut from './ButtonShortcut';
+import DroppableArea from './DroppableArea';
 
 export {
   ExpandableList,
@@ -19,5 +20,6 @@ export {
   SimpleTable,
   ToolbarActions,
   Searchbar,
-  ButtonShortcut
+  ButtonShortcut,
+  DroppableArea
 };

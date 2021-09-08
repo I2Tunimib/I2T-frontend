@@ -1,5 +1,6 @@
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
+import { TableInstance } from '@store/slices/tables/interfaces/tables';
 
 /**
  * Table slice state.
@@ -7,10 +8,15 @@ import { UndoEnhancedState } from '@store/enhancers/undo';
  */
 export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   entities: {
+    currentTable: CurrentTableState;
     columns: ColumnState;
     rows: RowState;
   },
   ui: TableUIState;
+}
+
+export interface CurrentTableState extends Partial<TableInstance>{
+  content?: string | undefined;
 }
 
 /**
@@ -147,3 +153,5 @@ export interface DeleteColumnPayload {
 export interface DeleteRowPayload {
   rowId: ID;
 }
+
+export interface UpdateCurrentTablePayload extends Partial<CurrentTableState> { }

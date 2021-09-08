@@ -1,15 +1,21 @@
-import Toolbar from '@components/layout/Toolbar';
-import LoadData from '../LoadData';
+import { FC } from 'react';
+import Sidebar from '../Sidebar';
+import Toolbar from '../Toolbar';
+import Content from '../Content';
 import styles from './Homepage.module.scss';
 
-const Homepage = () => (
-  <>
-    <Toolbar />
-    <div className={styles.Container}>
-      <LoadData />
-    </div>
-  </>
+interface HomepageProps { }
 
-);
+const Homepage: FC<HomepageProps> = () => {
+  return (
+    <div className={styles.OuterContainer}>
+      <Toolbar />
+      <div className={styles.InnerContainer}>
+        <Sidebar />
+        <Content />
+      </div>
+    </div>
+  );
+};
 
 export default Homepage;

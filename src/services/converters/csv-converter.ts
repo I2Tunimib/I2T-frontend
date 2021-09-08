@@ -1,19 +1,17 @@
 import { ColumnState, ColumnStatus, RowState } from '@store/slices/table/interfaces/table';
+import parse from 'csv-parse/lib/sync';
 
 export enum CsvSeparator {
   COMMA = ',',
-  TAB = '\t'
+  TAB = '\t',
+  SEMICOLUMN = ';'
 }
 
-export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSeparator.COMMA) => {
-  // deconstruct header from rows
-  const [headerRaw, ...rowsRaw] = content.split('\r\n');
+export const convertFromCSV = (content: string, separator: CsvSeparator = CsvSeparator.COMMA) => {
+  // parse and deconstruct header from rows
+  const [headerRow, ...bodyRows]: string[][] = parse(content, { delimiter: separator, escape: '"' });
 
-  // get header labels as array
-  const headerValues = headerRaw.split(separator) as string[];
-  const rowsValues = rowsRaw.map((row: string) => row.split(separator)) as string[][];
-
-  const columns = headerValues.reduce((acc, label, index) => ({
+  const columns = headerRow.reduce((acc, label, index) => ({
     byId: {
       ...acc.byId,
       [`${label}`]: {
@@ -27,12 +25,12 @@ export const convertFromCSV = (content: any, separator: CsvSeparator = CsvSepara
     allIds: [...acc.allIds, `${label}`]
   }), { byId: {}, allIds: [] as string[] } as ColumnState);
 
-  const rows = rowsValues.reduce((allRows, rowValues, rowIndex) => ({
+  const rows = bodyRows.reduce((allRows, rowValues, rowIndex) => ({
     byId: {
       ...allRows.byId,
       [`r${rowIndex}`]: {
         id: `r${rowIndex}`,
-        cells: headerValues.reduce((allRowCells, label, colIndex) => ({
+        cells: headerRow.reduce((allRowCells, label, colIndex) => ({
           ...allRowCells,
           [label]: {
             label: rowValues[colIndex] || '',

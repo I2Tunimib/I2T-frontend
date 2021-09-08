@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { convertFromCSV } from '@services/converters/csv-converter';
+import { convertFromCSV, CsvSeparator } from '@services/converters/csv-converter';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
 import { Payload } from '@store/interfaces/store';
@@ -16,6 +16,7 @@ import {
   UpdateCellEditablePayload,
   UpdateCellLabelPayload,
   UpdateCellMetadataPayload,
+  UpdateCurrentTablePayload,
   UpdateSelectedCellsPayload,
   UpdateSelectedColumnPayload,
   UpdateSelectedRowPayload
@@ -35,10 +36,11 @@ import {
   toggleColumnSelection,
   toggleRowSelection
 } from './utils/table.selection-utils';
-import { removeObject, getIdsFromCell } from './utils/table.utils';
+import { removeObject, getIdsFromCell, loadTable } from './utils/table.utils';
 
 const initialState: TableState = {
   entities: {
+    currentTable: { name: '' },
     columns: { byId: {}, allIds: [] },
     rows: { byId: {}, allIds: [] }
   },
@@ -66,6 +68,17 @@ export const tableSlice = createSliceWithRequests({
   name: 'table',
   initialState,
   reducers: {
+    loadNewTable: (state, action: PayloadAction<void>) => {
+      const { columns, rows } = loadTable(state);
+      state.entities.columns = columns;
+      state.entities.rows = rows;
+    },
+    /**
+     * Update current table metadata.
+     */
+    updateCurrentTable: (state, action: PayloadAction<Payload<UpdateCurrentTablePayload>>) => {
+      state.entities.currentTable = action.payload;
+    },
     /**
      *  Set selected cell as expanded.
      */
@@ -238,11 +251,10 @@ export const tableSlice = createSliceWithRequests({
     builder
       // set table on request fulfilled
       .addCase(getTable.fulfilled, (state, { payload }: PayloadAction<Payload<SetDataPayload>>) => {
-        const { data, format } = payload;
-        if (format === 'csv') {
-          const entities = convertFromCSV(data);
-          state.entities = entities;
-        }
+        const { data } = payload;
+        const { columns, rows } = loadTable(state, data);
+        state.entities.columns = columns;
+        state.entities.rows = rows;
         return state;
       })
       /**
@@ -296,6 +308,8 @@ export const tableSlice = createSliceWithRequests({
 });
 
 export const {
+  loadNewTable,
+  updateCurrentTable,
   updateSelectedCellExpanded,
   updateCellEditable,
   updateCellLabel,

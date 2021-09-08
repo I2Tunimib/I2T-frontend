@@ -117,7 +117,7 @@ const ReconciliateDialog = () => {
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <ButtonLoading onClick={handleConfirm} loading={loading}>
+        <ButtonLoading onClick={handleConfirm} loading={!!loading}>
           Confirm
         </ButtonLoading>
       </DialogActions>

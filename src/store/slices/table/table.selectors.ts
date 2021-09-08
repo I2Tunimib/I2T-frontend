@@ -42,6 +42,11 @@ export const selectLastChangeDate = createSelector(
   (draft) => draft.lastChange
 );
 
+export const selectCurrentTable = createSelector(
+  selectEntitiesState,
+  (entities) => entities.currentTable
+);
+
 /**
  * Get selected columns ids as object.
  */

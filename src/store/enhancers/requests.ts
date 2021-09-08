@@ -18,7 +18,12 @@ export interface RequestEnhancedState {
  * A request entry which has a status and error.
  */
 export interface Request {
-  status: string;
+  status: 'pending' | 'done';
+  error: any;
+}
+
+interface RequestStatusSelector {
+  loading: undefined | boolean;
   error: any;
 }
 
@@ -75,12 +80,16 @@ const handlePendingAction = <T>(state: any, action: any) => {
 
 const handleFulfilledAction = <T>(state: any, action: any) => {
   const requestId = action.type.split('/')[1];
-  const { [requestId]: omit, ...rest } = state._requests.byId;
-  state._requests.byId = rest;
-  state._requests = {
-    byId: rest,
-    allIds: state._requests.allIds.filter((id: string) => id !== requestId)
+  state._requests.byId[requestId] = {
+    status: 'done',
+    error: null
   };
+  // const { [requestId]: omit, ...rest } = state._requests.byId;
+  // state._requests.byId = rest;
+  // state._requests = {
+  //   byId: rest,
+  //   allIds: state._requests.allIds.filter((id: string) => id !== requestId)
+  // };
 };
 
 const handleRejectedAction = <T>(state: any, action: any) => {
@@ -139,13 +148,16 @@ export const getRequestStatus = (
     byId: { [key: string]: Request }
   },
   requestId: string
-) => {
+): RequestStatusSelector => {
   const request = requests.byId[requestId];
   if (!request) {
-    return { loading: false, error: null };
+    return { loading: undefined, error: null };
   }
-  if (request.error) {
-    return { loading: false, error: request.error };
+  if (request.status === 'done') {
+    if (request.error) {
+      return { loading: false, error: request.error };
+    }
+    return { loading: false, error: null };
   }
   return { loading: true, error: request.error };
 };

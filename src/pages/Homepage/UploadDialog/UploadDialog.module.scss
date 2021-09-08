@@ -1,0 +1,31 @@
+.DialogTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  & > svg {
+    width: 30px;
+    height: 30px;
+    color: #357a38;
+  }
+}
+
+.Container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.Form {
+  display: flex;
+  flex-direction: column;
+
+  .FormRow {
+    display: flex;
+    gap: 20px;
+  }
+
+  .TextField {
+    flex: 1 1 auto;
+  }
+}

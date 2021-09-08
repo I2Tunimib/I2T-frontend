@@ -1,0 +1,15 @@
+.Container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 24px;
+  border-bottom: 1px solid #ededed;
+  & > h4 {
+    margin-right: 160px;
+  }
+}
+
+.Searchbar {
+  width: 100%;
+  max-width: 600px;
+}

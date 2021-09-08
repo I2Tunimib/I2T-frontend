@@ -48,6 +48,7 @@ const RouteContainer: FC<RouteContainerProps> = ({
         <Switch>
           {routes.map(({ path, Component, exact }) => (
             <Route key={path} path={path} exact={exact} component={Component} />))}
+          <Redirect from="/" to="/raw" />
           <Redirect from="*" to="/" />
         </Switch>
       </div>

@@ -1,3 +1,11 @@
-.Container {
-  padding: 30px;
+.OuterContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .InnerContainer {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+  }
 }

@@ -13,14 +13,9 @@ import React, { useEffect } from 'react';
  */
 const routes: RouteOption[] = [
   {
-    path: '/',
+    path: '/:tables',
     exact: true,
     Component: Homepage
-  },
-  {
-    path: '/refactor-home',
-    exact: true,
-    Component: RefactorHomepage
   },
   {
     path: '/table/:name',
@@ -38,7 +33,7 @@ const App = () => {
   }, []);
 
   return (
-    <RouteContainer loadChildren={!loading} routes={routes} />
+    <RouteContainer loadChildren={loading === false} routes={routes} />
   );
 };
 

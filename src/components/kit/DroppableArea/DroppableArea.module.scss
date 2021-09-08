@@ -1,0 +1,38 @@
+.DroppableContainer {
+  position: relative;
+  height: 100%;
+
+  &.Dragging {
+    box-shadow: 0 0 0 2px #3f51b5;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      opacity: 0.3;
+      background-color: #E8F0FE;
+    }
+  }
+}
+
+.enter {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.enterActive {
+  transform: translateY(0);
+  opacity: 1;
+  transition: 200ms cubic-bezier(0.08,0.52,0.52,1);
+}
+.exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+.exitActive {
+  transform: translateY(100%);
+  opacity: 0;
+  transition: 200ms cubic-bezier(0.08,0.52,0.52,1);
+}

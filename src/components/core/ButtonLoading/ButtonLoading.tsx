@@ -19,11 +19,13 @@ interface ButtonLoadingProps extends ButtonProps {
 const ButtonLoading: FC<ButtonLoadingProps> = ({
   loading,
   children,
-  onClick
+  onClick,
+  ...props
 }) => (
   <Button
     onClick={(event) => (onClick ? onClick(event) : undefined)}
     color="primary"
+    {...props}
   >
     {loading ? <CircularProgress className={styles.Progress} /> : children}
   </Button>

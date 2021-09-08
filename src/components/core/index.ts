@@ -7,6 +7,7 @@ import ActionGroup from './ActionGroup';
 import IconButtonTooltip from './IconButtonTooltip';
 import MenuItemIconLabel from './MenuItemIconLabel';
 import MenuDivider from './MenuDivider';
+import EmptyList from './EmptyList';
 
 export {
   Button,
@@ -17,5 +18,6 @@ export {
   MenuItemIconLabel,
   MenuDivider,
   ActionGroup,
-  IconButtonTooltip
+  IconButtonTooltip,
+  EmptyList
 };
