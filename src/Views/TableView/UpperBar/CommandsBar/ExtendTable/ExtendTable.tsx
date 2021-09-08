@@ -49,7 +49,7 @@ const ExtendTable = () => {
                 selectedAndReconciliated.push(col);
             }
         }
-        if (selectedAndReconciliated.length === 1) {
+        if (selectedAndReconciliated.length >= 1) {
             setIsExtensible(true);
             //setSelectedCol(selectedAndReconciliated[0]);
         } else {
