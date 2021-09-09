@@ -222,8 +222,8 @@ const ExtendTable = () => {
                                 name: `${reallyNewColBaseName}${prop}`,
                                 selected: false,
                                 type: cellTypeEnum.data,
-                                reconciliated: true,
-                                reconciliator: extendConfig.name,
+                                reconciliated: extendConfig.name === 'weather' ? false : true,
+                                reconciliator: extendConfig.name === 'weather' ? '' : extendConfig.name,
                                 new: true,
                                 metadata: [],
                             }
