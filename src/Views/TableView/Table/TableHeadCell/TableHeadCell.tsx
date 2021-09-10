@@ -21,6 +21,9 @@ import { metaResponseInterface } from "../../../../Interfaces/meta-response.inte
 import { useTranslation } from "react-i18next";
 import MetaTableModal from "../../../../SharedComponents/MetaTableModal/MetaTableModal";
 import { Overlay, Tooltip } from "react-bootstrap";
+import {ReactComponent as BottomArrow} from '../../../../Assets/Icons/arrow-bottom.svg';
+
+
 const TableHeadCell = (props: { col: colInterface }) => {
     const { t } = useTranslation();
 
@@ -266,6 +269,9 @@ const TableHeadCell = (props: { col: colInterface }) => {
                                 <p>
                                     {col.label}
                                 </p>
+                                <BottomArrow
+                                    onClick={(e) => { displayContextMenu(e, col) }}
+                                />
                             </div>
 
                             {col.reconciliated &&

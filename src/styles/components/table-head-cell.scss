@@ -43,6 +43,20 @@
         background-color: orange;
       }
     }
+    svg {
+      width: 1rem;
+      margin-left: 0.5rem;
+      position: relative;
+      bottom: 0.4rem;
+      cursor: pointer;
+      fill: $brand-color-two-base;
+      opacity: 0;
+    }
+    &:hover{
+      svg {
+          opacity: 1;
+      }
+  }
   }
 
   .accessor-cell {

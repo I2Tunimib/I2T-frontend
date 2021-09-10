@@ -46,8 +46,8 @@
         "title-text": "Modifica label cella"
       },
       "meta-tooltip": {
-        "is-true": "La cella è etichettata ed è presente un match true",
-        "is-not-true": "La cella è etichettata ma non è presente un match true",
+        "is-true": "La cella è annotata ed è presente un match true",
+        "is-not-true": "La cella è annotata ma non è presente un match true",
         "no-label": "Non è stato possibile riconciliare la cella"
       }
     }

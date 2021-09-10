@@ -112,9 +112,9 @@ const Cell = (props: cellPropsInterface) => {
         if (cellValue) {
             if (keyName !== 'index') {
                 if (cellValue.metadata.length > 0) {
-                    setContextCellItems([modContext, riconciliateCellContext, viewMetaTableContext]);
+                    setContextCellItems([modContext, riconciliateCellContext, viewMetaTableContext, deleteRowContext]);
                 } else {
-                    setContextCellItems([modContext, riconciliateCellContext]);
+                    setContextCellItems([modContext, riconciliateCellContext, deleteRowContext]);
                 }
             } else {
                 setContextCellItems([deleteRowContext]);

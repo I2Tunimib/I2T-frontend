@@ -46,8 +46,8 @@
         "title-text": "Edit cell label"
       },
       "meta-tooltip": {
-        "is-true": "The cell is labeled and there is a true match",
-        "is-not-true": "The cell is labeled but there is no true match",
+        "is-true": "The cell is annotated and there is a true match",
+        "is-not-true": "The cell is annotated but there is no true match",
         "no-label": "The cell could not be reconciled"
       }
     }

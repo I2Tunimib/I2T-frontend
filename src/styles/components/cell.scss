@@ -49,6 +49,7 @@
                 }
             }
         }
+
         .label-cell {
             text-align: left;
             align-items: center;
@@ -59,9 +60,15 @@
                 margin-left: 1rem;
                 cursor: pointer;
                 fill: $brand-color-two-base;
+                opacity: 0;
             }
             p {
                 margin-bottom:0 !important;
+            }
+        }
+        &:hover{
+            svg {
+                opacity: 1;
             }
         }
     }
