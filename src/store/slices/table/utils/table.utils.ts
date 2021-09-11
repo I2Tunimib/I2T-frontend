@@ -56,15 +56,15 @@ const loadRawTable = (
   throw Error('Format not supported');
 };
 
-export const loadTable = (state: Draft<TableState>, data?: string) => {
-  const { currentTable } = state.entities;
-  if (currentTable.type === 'raw') {
-    const tableData = currentTable.content || data;
-    try {
-      return loadRawTable(tableData, currentTable.format);
-    } catch (err) {
-      return EMPTY_TABLE;
-    }
-  }
-  return EMPTY_TABLE;
-};
+// export const loadTable = (state: Draft<TableState>, data?: string) => {
+//   const { currentTable } = state.entities;
+//   if (currentTable.type === 'raw') {
+//     const tableData = currentTable.content || data;
+//     try {
+//       return loadRawTable(tableData, currentTable.format);
+//     } catch (err) {
+//       return EMPTY_TABLE;
+//     }
+//   }
+//   return EMPTY_TABLE;
+// };

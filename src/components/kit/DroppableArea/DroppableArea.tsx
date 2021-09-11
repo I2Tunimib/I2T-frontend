@@ -8,7 +8,7 @@ interface DroppableAreaProps {
   permittedFileExtensions: string[];
   uploadText?: string;
   maxFiles?: number;
-  onDrop: (files: FileRead) => void;
+  onDrop: (files: File[]) => void;
 }
 
 export interface FileRead {
@@ -46,20 +46,6 @@ const DroppableArea: FC<DroppableAreaProps> = ({
     event.stopPropagation();
   };
 
-  const readFile = (file: File) => {
-    const fileReader = new FileReader();
-    // fileReader.onloadend = handleFileRead;
-    fileReader.readAsText(file);
-    fileReader.onload = (e: any) => {
-      onDrop({
-        file,
-        content: e.target.result
-      });
-      setDrag(false);
-      setDragCounter(0);
-    };
-  };
-
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -75,7 +61,9 @@ const DroppableArea: FC<DroppableAreaProps> = ({
     });
 
     if (permittedFiles.length > 0) {
-      readFile(permittedFiles.slice(0, maxFiles)[0]);
+      onDrop(permittedFiles);
+      setDrag(false);
+      setDragCounter(0);
     }
   };
 

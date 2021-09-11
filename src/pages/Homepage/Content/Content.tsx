@@ -5,18 +5,20 @@ import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { getTables } from '@store/slices/tables/tables.thunk';
-import { selectTables } from '@store/slices/tables/tables.selectors';
+import { selectIsUploadDialogOpen, selectTables } from '@store/slices/tables/tables.selectors';
 import TimeAgo from 'react-timeago';
 import { orderTables, updateUI } from '@store/slices/tables/tables.slice';
 import { DroppableArea } from '@components/kit';
 import { Link, useParams } from 'react-router-dom';
-import { FileRead } from '@components/kit/DroppableArea';
-import { updateCurrentTable } from '@store/slices/table/table.slice';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
+import { loadUpTable } from '@store/slices/table/table.thunk';
+import { TableType } from '@store/slices/table/interfaces/table';
 import UploadDialog from '../UploadDialog';
 import styles from './Content.module.scss';
 
-interface Contentprops { }
+interface Contentprops {
+  onFileChange: (files: File[]) => void;
+}
 
 const PERMITTED_FILE_EXTENSIONS = ['csv', 'json'];
 
@@ -25,19 +27,12 @@ interface OrderState {
   property: 'name' | 'lastModifiedDate'
 }
 
-interface UploadedFileState {
-  file: File;
-  fileName: string;
-  fileExtension: string;
-  content: string;
-}
-
-const Content: FC<Contentprops> = () => {
-  const [uploadedFile, setUploadedFile] = useState<UploadedFileState | undefined>(undefined);
+const Content: FC<Contentprops> = ({
+  onFileChange
+}) => {
   const [currentOrder, setCurrentOrder] = useState<OrderState | undefined>(undefined);
-  const { tables: tablesType } = useParams<{ tables: string }>();
+  const { tables: tablesType } = useParams<{ tables: TableType }>();
   const dispatch = useAppDispatch();
-
   const tables = useAppSelector(selectTables);
 
   useEffect(() => {
@@ -62,34 +57,19 @@ const Content: FC<Contentprops> = () => {
     }
   };
 
-  const processFile = (result: FileRead) => {
-    if (result) {
-      const splittedName = result.file.name.split('.');
-      const { fileName, fileExtension } = splittedName.reduce((acc, split, index) => ({
-        fileName: index !== splittedName.length - 1 ? acc.fileName + split : acc.fileName,
-        fileExtension: index === splittedName.length - 1 ? split : ''
-      }), { fileName: '', fileExtension: '' });
-
-      setUploadedFile({
-        file: result.file,
-        fileName,
-        fileExtension,
-        content: result.content
-      });
-      return;
-    }
-    setUploadedFile(undefined);
-  };
-
-  const handleOnDrop = (result: FileRead) => {
-    processFile(result);
-    dispatch(updateUI({
-      uploadDialogOpen: true
-    }));
+  const handleOnDrop = (files: File[]) => {
+    onFileChange(files);
   };
 
   const setCurrentTable = (table: TableInstance) => {
-    dispatch(updateCurrentTable(table));
+    const { name, type, ...meta } = table;
+    dispatch(loadUpTable({
+      table: {
+        name: table.name,
+        type: table.type,
+        meta
+      }
+    }));
   };
 
   return (
@@ -161,7 +141,6 @@ const Content: FC<Contentprops> = () => {
           </div>
         </DroppableArea>
       </div>
-      <UploadDialog file={uploadedFile} />
     </>
   );
 };

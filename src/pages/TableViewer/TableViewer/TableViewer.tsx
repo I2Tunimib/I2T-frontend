@@ -1,11 +1,9 @@
-import { useParams } from 'react-router-dom';
 import {
   useMemo, useCallback,
   MouseEvent, useEffect,
   useState
 } from 'react';
 import {
-  loadNewTable,
   redo,
   undo, updateCellLabel, updateCellSelection,
   updateColumnSelection,
@@ -13,14 +11,14 @@ import {
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { LinearProgress } from '@material-ui/core';
-import { getTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/slices/table/interfaces/table';
 import { HotKeys } from 'react-hotkeys';
 import {
-  selectDataTableFormat, selectGetTableRequestStatus,
+  selectDataTableFormat,
   selectSelectedColumnIds, selectSelectedRowIds,
   selectSelectedCellIds, selectCellMetadataIds,
-  selectIsDenseView, selectSearchStatus, selectCurrentTable
+  selectIsDenseView, selectSearchStatus,
+  selectCurrentTable, selectLoadTableStatus
 } from '@store/slices/table/table.selectors';
 import { useQuery } from '@hooks/router';
 import { Table } from '../Table';
@@ -53,48 +51,14 @@ const TableViewer = () => {
   const dispatch = useAppDispatch();
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
-  const currentTable = useAppSelector(selectCurrentTable);
-  // const { name } = useParams<{ name: string }>();
-  const query = useQuery();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
-  const { loading } = useAppSelector(selectGetTableRequestStatus);
+  const { loading } = useAppSelector(selectLoadTableStatus);
   const searchFilter = useAppSelector(selectSearchStatus);
   const selectedColumns = useAppSelector(selectSelectedColumnIds);
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
   const selectedCellMetadata = useAppSelector(selectCellMetadataIds);
   const isDenseView = useAppSelector(selectIsDenseView);
-
-  // useEffect(() => {
-  //   if (name) {
-  //     // if it is a draft it is open from a raw table / local
-  //     if (query.get('draft')) {
-  //       if (query.get('local')) {
-  //         // local table, don't query to retrieve a table
-  //         console.log(content);
-  //       } else {
-  //         dispatch(getTable({ dataSource: 'tables', name }));
-  //       }
-  //     } else {
-  //       // if it is not a draft user selected an already saved table
-  //     }
-  //   }
-  // }, [name]);
-
-  useEffect(() => {
-    if (currentTable.name) {
-      if (currentTable.content) {
-        // load local table
-        dispatch(loadNewTable());
-      } else {
-        if (currentTable.type === 'raw') {
-          dispatch(getTable({ dataSource: 'tables', name: currentTable.name }));
-        } else if (currentTable.type === 'annotated') {
-          // get annotated table from server
-        }
-      }
-    }
-  }, [currentTable]);
 
   /**
  * Keyboard shortcut handlers

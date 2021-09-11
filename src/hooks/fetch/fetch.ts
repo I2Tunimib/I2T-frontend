@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AxiosRequestConfig } from 'axios';
 import { useAppDispatch } from '@hooks/store';
 import apiClient from '@services/api/config/config';
-import { isObject } from '@services/utils/is-object';
+import { isObject } from '@services/utils/objects-utils';
 
 export interface IFetchParams extends AxiosRequestConfig { }
 

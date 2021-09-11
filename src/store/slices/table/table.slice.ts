@@ -9,6 +9,7 @@ import {
   DeleteColumnPayload,
   DeleteRowPayload,
   DeleteSelectedPayload,
+  LoadLocalTablePayload,
   ReconciliationFulfilledPayload,
   SetDataPayload,
   TableState,
@@ -21,7 +22,7 @@ import {
   UpdateSelectedColumnPayload,
   UpdateSelectedRowPayload
 } from './interfaces/table';
-import { getTable, reconcile } from './table.thunk';
+import { loadUpTable, reconcile } from './table.thunk';
 import {
   deleteOneColumn, deleteOneRow,
   deleteSelectedColumns, deleteSelectedRows
@@ -36,7 +37,7 @@ import {
   toggleColumnSelection,
   toggleRowSelection
 } from './utils/table.selection-utils';
-import { removeObject, getIdsFromCell, loadTable } from './utils/table.utils';
+import { removeObject, getIdsFromCell } from './utils/table.utils';
 
 const initialState: TableState = {
   entities: {
@@ -68,11 +69,6 @@ export const tableSlice = createSliceWithRequests({
   name: 'table',
   initialState,
   reducers: {
-    loadNewTable: (state, action: PayloadAction<void>) => {
-      const { columns, rows } = loadTable(state);
-      state.entities.columns = columns;
-      state.entities.rows = rows;
-    },
     /**
      * Update current table metadata.
      */
@@ -249,14 +245,18 @@ export const tableSlice = createSliceWithRequests({
   },
   extraRules: (builder) => (
     builder
-      // set table on request fulfilled
-      .addCase(getTable.fulfilled, (state, { payload }: PayloadAction<Payload<SetDataPayload>>) => {
-        const { data } = payload;
-        const { columns, rows } = loadTable(state, data);
-        state.entities.columns = columns;
-        state.entities.rows = rows;
-        return state;
-      })
+      .addCase(
+        loadUpTable.fulfilled,
+        (state, { payload }: PayloadAction<LoadLocalTablePayload | undefined>) => {
+          if (payload) {
+            const { selectedCellMetadataId, ...entities } = payload;
+            state.entities = entities;
+            if (selectedCellMetadataId) {
+              state.ui.selectedCellMetadataId = selectedCellMetadataId;
+            }
+          }
+        }
+      )
       /**
        * Set metadata on request fulfilled.
        * --UNDOABLE ACTION--
@@ -308,7 +308,6 @@ export const tableSlice = createSliceWithRequests({
 });
 
 export const {
-  loadNewTable,
   updateCurrentTable,
   updateSelectedCellExpanded,
   updateCellEditable,

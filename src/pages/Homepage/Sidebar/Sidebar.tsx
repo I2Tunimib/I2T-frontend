@@ -1,5 +1,5 @@
 import { Button, Typography } from '@material-ui/core';
-import { FC } from 'react';
+import { ChangeEvent, FC } from 'react';
 import StorageRoundedIcon from '@material-ui/icons/StorageRounded';
 import PostAddRoundedIcon from '@material-ui/icons/PostAddRounded';
 import AddRoundedIcon from '@material-ui/icons/AddRounded';
@@ -8,19 +8,48 @@ import { useAppDispatch } from '@hooks/store';
 import { updateUI } from '@store/slices/tables/tables.slice';
 import styles from './Sidebar.module.scss';
 
-interface SidebarProps {}
+interface SidebarProps {
+  onFileChange: (files: File[]) => void;
+}
 
-const Sidebar: FC<SidebarProps> = () => {
+const PERMITTED_FILE_EXTENSIONS = ['csv', 'json'];
+
+const Sidebar: FC<SidebarProps> = ({
+  onFileChange
+}) => {
   const dispatch = useAppDispatch();
+
+  const handleInputFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { files } = event.target;
+    if (files) {
+      const permittedFiles: File[] = [];
+      Object.keys(files).forEach((key) => {
+        const [fileExtension, ...rest] = files[key as any].name.split('.').reverse();
+        if (PERMITTED_FILE_EXTENSIONS.find((extension) => extension === fileExtension)) {
+          permittedFiles.push(files[key as any]);
+        }
+      });
+      if (permittedFiles.length > 0) {
+        onFileChange(permittedFiles);
+      }
+    }
+  };
 
   return (
     <div className={styles.Container}>
       <Button
+        component="label"
         className={styles.UploadButton}
         startIcon={<AddRoundedIcon />}
         color="primary"
         variant="contained">
         Upload table
+        <input
+          onChange={handleInputFileChange}
+          type="file"
+          multiple
+          hidden
+        />
       </Button>
       <NavLink
         to="/raw"

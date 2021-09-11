@@ -28,4 +28,13 @@
   .TextField {
     flex: 1 1 auto;
   }
+
+  .FormRowSmallGap {
+    display: flex;
+    align-items: center;
+  }
+
+  .Icon {
+    color: rgba(0, 0, 0, 0.54);
+  }
 }

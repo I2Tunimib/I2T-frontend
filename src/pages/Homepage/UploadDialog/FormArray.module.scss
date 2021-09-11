@@ -1,0 +1,30 @@
+.Container {
+  display: flex;
+  flex-direction: column;
+
+  .FormArrayItem {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    &:not(:first-child) {
+      padding: 10px 0;
+    }
+
+    &:first-child {
+      padding-bottom: 10px;
+    }
+
+    .FormRow {
+      display: flex;
+      gap: 20px;
+
+      .BigTextField {
+        width: 70%;
+      }
+      .FillRemaining {
+        flex-grow: 1;
+      }
+    }
+  }
+}

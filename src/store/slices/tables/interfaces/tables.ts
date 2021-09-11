@@ -1,6 +1,6 @@
 import { CsvSeparator } from '@services/converters/csv-converter';
 import { RequestEnhancedState } from '@store/enhancers/requests';
-import { ID } from '@store/slices/table/interfaces/table';
+import { FileFormat, ID, TableType } from '@store/slices/table/interfaces/table';
 
 export interface TablesState extends RequestEnhancedState {
   entities: {
@@ -24,8 +24,8 @@ interface BaseState<T> {
 export interface TableInstance {
   name: string;
   lastModifiedDate: string;
-  format: string;
-  type: string;
+  format: FileFormat;
+  type: TableType;
   separator?: CsvSeparator;
 }
 

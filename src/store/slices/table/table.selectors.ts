@@ -4,7 +4,7 @@ import { floor } from '@services/utils/math';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
 import { selectServicesConfig } from '../config/config.selectors';
-import { TableEndpoints } from './table.thunk';
+import { TableThunkActions } from './table.thunk';
 import { getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getIdsFromCell } from './utils/table.utils';
 
@@ -19,13 +19,13 @@ const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
 
 // LOADING SELECTORS
+export const selectLoadTableStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, TableThunkActions.LOAD_UP_TABLE)
+);
 export const selectReconcileRequestStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableEndpoints.RECONCILE)
-);
-export const selectGetTableRequestStatus = createSelector(
-  selectRequests,
-  (requests) => getRequestStatus(requests, TableEndpoints.GET_TABLE)
+  (requests) => getRequestStatus(requests, TableThunkActions.RECONCILE)
 );
 
 // UNDO SELECTORS

@@ -5,12 +5,26 @@ import {
   useCallback,
   useState,
   ChangeEvent,
-  KeyboardEvent
+  KeyboardEvent,
+  ReactNode,
+  FocusEvent
 } from 'react';
 import SearchbarBase from '../SearchbarBase';
 import styles from './Searchbar.module.scss';
 
 interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
+  /**
+   * Enable autocomplete overlay.
+   */
+  enableAutocomplete?: boolean;
+  /**
+   * Autocomplete loading status
+   */
+  autocompleteLoading?: boolean;
+  /**
+   * Autocomplete component to display;
+   */
+  autocompleteComponent?: ReactNode;
   /**
    * Enable tag handling. Defaults to true.
    */
@@ -58,6 +72,8 @@ const Searchbar: FC<SearchbarProps> = ({
   expand = true,
   placeholder,
   className,
+  enableAutocomplete = false,
+  autocompleteComponent,
   ...props
 }) => {
   const [inputState, setInputState] = useState<{ focused: boolean; value: string }>({ focused: false, value: '' });
@@ -107,8 +123,10 @@ const Searchbar: FC<SearchbarProps> = ({
     setInputState((state) => ({ ...state, focused: true }));
   }, []);
 
-  const handleOnBlur = useCallback(() => {
-    setInputState((state) => ({ ...state, focused: false }));
+  const handleOnBlur = useCallback((event: FocusEvent<HTMLInputElement>) => {
+    if (!event.relatedTarget) {
+      setInputState((state) => ({ ...state, focused: false }));
+    }
   }, []);
 
   const handleOnKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
@@ -121,6 +139,9 @@ const Searchbar: FC<SearchbarProps> = ({
 
   return (
     <SearchbarBase
+      autocompleteComponent={autocompleteComponent}
+      enableAutocomplete={enableAutocomplete}
+      inputState={inputState}
       tag={tag}
       onClick={onClickBaseHandler}
       className={className}>

@@ -1,3 +1,4 @@
+import { CsvSeparator } from '@services/converters/csv-converter';
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
@@ -15,9 +16,7 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   ui: TableUIState;
 }
 
-export interface CurrentTableState extends Partial<TableInstance>{
-  content?: string | undefined;
-}
+export interface CurrentTableState extends Partial<TableInstance>{}
 
 /**
  * Table UI state.
@@ -155,3 +154,38 @@ export interface DeleteRowPayload {
 }
 
 export interface UpdateCurrentTablePayload extends Partial<CurrentTableState> { }
+
+export interface LoadLocalTablePayload {
+  currentTable: CurrentTableState;
+  columns: ColumnState;
+  rows: RowState;
+  selectedCellMetadataId?: Record<ID, ID>;
+}
+
+export enum TableType {
+  RAW = 'raw',
+  ANNOTATED = 'annotated',
+  CHALLENGE = 'challenge',
+  DATA = 'data',
+  CEA = 'cea',
+  CTA = 'cta',
+  CPA = 'cpa'
+}
+
+export enum FileFormat {
+  CSV = 'csv',
+  JSON = 'json'
+}
+
+export interface MetaFile {
+  format: FileFormat;
+  separator?: CsvSeparator;
+  lastModifiedData?: string;
+}
+
+export interface TableFile {
+  name: string;
+  type: TableType;
+  original?: File | string;
+  meta: MetaFile
+}

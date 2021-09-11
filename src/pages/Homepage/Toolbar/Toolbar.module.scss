@@ -13,3 +13,29 @@
   width: 100%;
   max-width: 600px;
 }
+
+.AutocompleteList {
+  display: flex;
+  flex-direction: column;
+
+  .AutocompleteItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 10px;
+    text-decoration: none;
+    color: inherit;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid #ededed;
+    }
+
+    &:hover {
+      background-color: #FEF2F6;
+    }
+
+    .Name {
+      margin-right: auto;
+    }
+  }
+}
