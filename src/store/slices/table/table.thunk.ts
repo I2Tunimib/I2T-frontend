@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import tableAPI from '@services/api/table';
 import { convertFromCSV, CsvSeparator } from '@services/converters/csv-converter';
-import { TableFile, TableType } from './interfaces/table';
+import { ID, TableFile, TableType } from './interfaces/table';
 import { loadTable } from './utils/table.load-utils';
 
 const ACTION_PREFIX = 'table';
@@ -9,6 +9,7 @@ const ACTION_PREFIX = 'table';
 export enum TableThunkActions {
   LOAD_UP_TABLE = 'loadUpTable',
   GET_TABLE_NAMES = 'getTableNames',
+  UPLOAD_TABLE = 'uploadTable',
   RECONCILE = 'reconcile'
 }
 

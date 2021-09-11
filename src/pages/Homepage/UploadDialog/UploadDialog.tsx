@@ -13,7 +13,7 @@ import { detectDelimiter } from '@services/utils/detect-delimiter';
 import { FileFormat, TableType } from '@store/slices/table/interfaces/table';
 import { updateCurrentTable } from '@store/slices/table/table.slice';
 import { loadUpTable } from '@store/slices/table/table.thunk';
-import { selectIsUploadDialogOpen } from '@store/slices/tables/tables.selectors';
+import { selectIsUploadDialogOpen, selectIsUploadProgressDialogOpen } from '@store/slices/tables/tables.selectors';
 import { updateUI } from '@store/slices/tables/tables.slice';
 import {
   FC, useCallback,
@@ -21,6 +21,8 @@ import {
 } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
+import { uploadTable } from '@store/slices/tables/tables.thunk';
+import { nanoid } from 'nanoid';
 import FormArray from './FormArray';
 import {
   ActionType, ChallengeTableType,
@@ -31,6 +33,7 @@ import styles from './UploadDialog.module.scss';
 interface UploadDialogProps {
   open: boolean;
   files: File[];
+  onNewUploadRequest: (request: any, id: string) => void;
 }
 
 /**
@@ -73,7 +76,8 @@ const FormTooltip = withStyles((theme) => ({
 
 const UploadDialog: FC<UploadDialogProps> = ({
   open,
-  files
+  files,
+  onNewUploadRequest
 }) => {
   const {
     handleSubmit,
@@ -88,10 +92,10 @@ const UploadDialog: FC<UploadDialogProps> = ({
     },
     shouldUnregister: true
   });
-
-  const dispatch = useAppDispatch();
   const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([]);
+  const dispatch = useAppDispatch();
   const history = useHistory();
+  const isDialogProgressOpen = useAppSelector(selectIsUploadProgressDialogOpen);
   const watchChallengeTable = watch('challengeTable', false);
 
   const processFiles = async (rawFiles: File[]) => {
@@ -139,7 +143,6 @@ const UploadDialog: FC<UploadDialogProps> = ({
   };
 
   const onSubmit = (data: FormState) => {
-    console.log(data);
     const { action, challengeTable, files: selectedFiles } = data;
 
     if (challengeTable) {
@@ -168,7 +171,26 @@ const UploadDialog: FC<UploadDialogProps> = ({
           // error
         }
       } else {
+        console.log(data);
         // upload tables
+        data.files.forEach(({ original, ...meta }, index) => {
+          const formData = new FormData();
+          formData.append('file', original);
+          formData.append('meta', JSON.stringify(meta));
+          const requestId = nanoid();
+          const request = dispatch(uploadTable({
+            formData,
+            requestId,
+            fileName: meta.fileName
+          }));
+          onNewUploadRequest(request, requestId);
+        });
+        dispatch(updateUI({
+          uploadDialogOpen: false
+        }));
+        dispatch(updateUI({
+          uploadProgressDialogOpen: true
+        }));
       }
     }
   };

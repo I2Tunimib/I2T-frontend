@@ -11,7 +11,6 @@ import {
   DeleteSelectedPayload,
   LoadLocalTablePayload,
   ReconciliationFulfilledPayload,
-  SetDataPayload,
   TableState,
   TableUIState,
   UpdateCellEditablePayload,

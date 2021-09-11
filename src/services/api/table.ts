@@ -1,5 +1,6 @@
 import { CsvSeparator } from '@services/converters/csv-converter';
 import { FileFormat, TableType } from '@store/slices/table/interfaces/table';
+import { CancelToken } from 'axios';
 import apiClient from './config/config';
 
 interface GetTableResponse {
@@ -15,6 +16,19 @@ const tableAPI = {
   getTables: (type: string) => apiClient.get(`/tables?type=${type}`),
   searchTables: (query: string) => apiClient.get(`/tables?search=${query}`),
   getTable: (name: string) => apiClient.get<GetTableResponse>(`/tables/${name}`),
+  uploadTable: (
+    formData: FormData,
+    cancelToken: CancelToken,
+    onProgress: (progress: number) => void,
+  ) => apiClient.post('/tables/upload', formData, {
+    headers: {
+      'content-type': 'multipart/form-data'
+    },
+    cancelToken,
+    onUploadProgress: (progressEvent) => {
+      onProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+    }
+  }),
   reconcile: (baseUrl: string, data: any) => apiClient.post(baseUrl, data)
 };
 

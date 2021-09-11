@@ -14,6 +14,7 @@ export const convertFromCSV = async (
   return new Promise<{ columns: ColumnState, rows: RowState }>((resolve, reject) => {
     parse(content, {
       delimiter: separator || '',
+      worker: true,
       complete: (result) => {
         const [headerRow, ...bodyRows] = result.data as string[][];
         const columns = headerRow.reduce((acc, label, index) => ({

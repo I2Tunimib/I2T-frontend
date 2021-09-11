@@ -8,17 +8,28 @@ export interface TablesState extends RequestEnhancedState {
     annotated: TablesInstancesState;
   },
   ui: TablesUIState;
+  _uploadRequests: UploadFilesState;
 }
 
 export interface TablesUIState {
   selectedSource: 'raw' | 'annotated';
-  uploadDialogOpen: boolean;
   selectedTable: string;
+  uploadDialogOpen: boolean;
+  uploadProgressDialogOpen: boolean;
 }
+
+export interface UploadFilesState extends BaseState<RequestUpload> {}
 
 interface BaseState<T> {
   byId: Record<ID, T>;
   allIds: string[];
+}
+
+export interface RequestUpload {
+  id: ID;
+  fileName: string;
+  progress: number;
+  status: 'pending' | 'done';
 }
 
 export interface TableInstance {
@@ -34,4 +45,10 @@ export interface TablesInstancesState extends BaseState<TableInstance> { }
 export interface OrderTablesPayload {
   order: 'asc' | 'desc';
   property: 'name' | 'lastModifiedDate';
+}
+
+export interface UpdateFileUploadPayload {
+  requestId: ID;
+  fileName: string;
+  progress: number;
 }

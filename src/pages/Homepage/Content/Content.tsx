@@ -1,19 +1,30 @@
-import { Button, IconButton, Typography } from '@material-ui/core';
-import { FC, useEffect, useState } from 'react';
+import {
+  Button, IconButton,
+  Menu, MenuItem,
+  Typography
+} from '@material-ui/core';
+import {
+  FC, useEffect,
+  useState, MouseEvent, useCallback
+} from 'react';
 import MoreVertRoundedIcon from '@material-ui/icons/MoreVertRounded';
 import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { getTables } from '@store/slices/tables/tables.thunk';
-import { selectIsUploadDialogOpen, selectTables } from '@store/slices/tables/tables.selectors';
+import { selectTables } from '@store/slices/tables/tables.selectors';
 import TimeAgo from 'react-timeago';
-import { orderTables, updateUI } from '@store/slices/tables/tables.slice';
+import { orderTables } from '@store/slices/tables/tables.slice';
 import { DroppableArea } from '@components/kit';
 import { Link, useParams } from 'react-router-dom';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
 import { loadUpTable } from '@store/slices/table/table.thunk';
 import { TableType } from '@store/slices/table/interfaces/table';
-import UploadDialog from '../UploadDialog';
+import FileCopyOutlinedIcon from '@material-ui/icons/FileCopyOutlined';
+import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
+import MenuBase from '@components/core/MenuBase';
+import { MenuItemIconLabel } from '@components/core';
+import MenuList from '@material-ui/core/MenuList';
 import styles from './Content.module.scss';
 
 interface Contentprops {
@@ -26,11 +37,18 @@ interface OrderState {
   order: 'asc' | 'desc',
   property: 'name' | 'lastModifiedDate'
 }
+interface MenuState {
+  anchorEl: any | null;
+  table: TableInstance | null;
+}
+
+const initialMenuState = { anchorEl: null, table: null };
 
 const Content: FC<Contentprops> = ({
   onFileChange
 }) => {
   const [currentOrder, setCurrentOrder] = useState<OrderState | undefined>(undefined);
+  const [menuState, setMenuState] = useState<MenuState>(initialMenuState);
   const { tables: tablesType } = useParams<{ tables: TableType }>();
   const dispatch = useAppDispatch();
   const tables = useAppSelector(selectTables);
@@ -70,6 +88,45 @@ const Content: FC<Contentprops> = ({
         meta
       }
     }));
+  };
+
+  const handleClose = () => {
+    setMenuState(initialMenuState);
+  };
+
+  const handleTableMore = (event: MouseEvent<HTMLButtonElement>, table: TableInstance) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setMenuState({
+      anchorEl: event.currentTarget,
+      table
+    });
+  };
+
+  const generateGetBoundingClientRect = useCallback((x: number, y: number) => {
+    return () => ({
+      width: 0,
+      height: 0,
+      top: y,
+      right: x,
+      bottom: y,
+      left: x
+    });
+  }, []);
+
+  const handleContextMenu = (event: MouseEvent<HTMLAnchorElement>, table: TableInstance) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const { clientX, clientY } = event;
+    const virtualElement = {
+      clientWidth: clientX,
+      clientHeight: clientY,
+      getBoundingClientRect: generateGetBoundingClientRect(clientX, clientY)
+    };
+    setMenuState({
+      anchorEl: virtualElement,
+      table
+    });
   };
 
   return (
@@ -123,6 +180,7 @@ const Content: FC<Contentprops> = ({
                     ? `/table/${table.name}?draft=true`
                     : `/table/${table.name}`
                 }
+                onContextMenu={(e) => handleContextMenu(e, table)}
                 onClick={() => setCurrentTable(table)}
                 className={styles.TableListItem}
                 key={table.name}
@@ -133,7 +191,10 @@ const Content: FC<Contentprops> = ({
                 <Typography component="div" variant="body2" color="textSecondary">
                   <TimeAgo title="" date={table.lastModifiedDate} />
                 </Typography>
-                <IconButton className={styles.IconButton} size="small">
+                <IconButton
+                  onClick={(e) => handleTableMore(e, table)}
+                  className={styles.IconButton}
+                  size="small">
                   <MoreVertRoundedIcon />
                 </IconButton>
               </Link>
@@ -141,6 +202,15 @@ const Content: FC<Contentprops> = ({
           </div>
         </DroppableArea>
       </div>
+      <MenuBase
+        anchorElement={menuState.anchorEl}
+        open={!!menuState.anchorEl}
+        handleClose={handleClose}>
+        <MenuList>
+          <MenuItemIconLabel Icon={FileCopyOutlinedIcon}>Make a copy</MenuItemIconLabel>
+          <MenuItemIconLabel Icon={DeleteOutlineRoundedIcon}>Delete table</MenuItemIconLabel>
+        </MenuList>
+      </MenuBase>
     </>
   );
 };

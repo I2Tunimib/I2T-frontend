@@ -8,6 +8,7 @@ import IconButtonTooltip from './IconButtonTooltip';
 import MenuItemIconLabel from './MenuItemIconLabel';
 import MenuDivider from './MenuDivider';
 import EmptyList from './EmptyList';
+import CircularProgressWithLabel from './CircularProgressWithLabel';
 
 export {
   Button,
@@ -19,5 +20,6 @@ export {
   MenuDivider,
   ActionGroup,
   IconButtonTooltip,
-  EmptyList
+  EmptyList,
+  CircularProgressWithLabel
 };
