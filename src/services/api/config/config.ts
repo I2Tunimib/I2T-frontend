@@ -1,3 +1,4 @@
+import { AxiosRequestConfig } from 'axios';
 import { setup } from 'axios-cache-adapter';
 
 /**
@@ -8,6 +9,9 @@ const apiClient = setup({
   baseURL: process.env.REACT_APP_BACKEND_API_URL,
   cache: {
     maxAge: 15 * 60 * 1000,
+    exclude: {
+      filter: ({ headers }: AxiosRequestConfig) => headers.Accept === 'application/octet-stream'
+    },
     invalidate: async (config, request) => {
       if (config.store && request.clearCacheEntry) {
         await (config.store as any).removeItem((config as any).uuid);

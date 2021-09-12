@@ -62,9 +62,9 @@ const DroppableArea: FC<DroppableAreaProps> = ({
 
     if (permittedFiles.length > 0) {
       onDrop(permittedFiles);
-      setDrag(false);
-      setDragCounter(0);
     }
+    setDrag(false);
+    setDragCounter(0);
   };
 
   return (

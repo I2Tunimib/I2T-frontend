@@ -169,7 +169,6 @@ const UploadDialog: FC<UploadDialogProps> = ({
           // error
         }
       } else {
-        console.log(data);
         // upload tables
         uploadFiles(data.files);
         dispatch(updateUI({
@@ -197,21 +196,6 @@ const UploadDialog: FC<UploadDialogProps> = ({
             Upload or directly view your table.
           </DialogContentText>
           <div className={styles.Container}>
-            <div className={styles.FormRowSmallGap}>
-              <FormControlLabel
-                disabled={processedFiles.length < 2}
-                control={(
-                  <Checkbox
-                    color="primary"
-                    {...register('challengeTable')}
-                  />
-                )}
-                label="Challenge table"
-              />
-              <FormTooltip placement="right" title="A challenge table requires at least two files.">
-                <InfoOutlinedIcon className={styles.Icon} />
-              </FormTooltip>
-            </div>
             <Controller
               control={control}
               name="action"
@@ -229,8 +213,8 @@ const UploadDialog: FC<UploadDialogProps> = ({
                     <MenuItem
                       disabled={
                         option.value === ActionType.LOAD
-                          && processedFiles.length > 1
-                          && !watchChallengeTable}
+                        && processedFiles.length > 1
+                        && !watchChallengeTable}
                       key={option.label}
                       value={option.value}>
                       {option.label}
@@ -239,6 +223,21 @@ const UploadDialog: FC<UploadDialogProps> = ({
                 </TextField>
               )}
             />
+            <div className={styles.FormRowSmallGap}>
+              <FormControlLabel
+                disabled={processedFiles.length < 2}
+                control={(
+                  <Checkbox
+                    color="primary"
+                    {...register('challengeTable')}
+                  />
+                )}
+                label="Challenge table"
+              />
+              <FormTooltip placement="right" title="A challenge table requires at least two files.">
+                <InfoOutlinedIcon className={styles.Icon} />
+              </FormTooltip>
+            </div>
             <Divider />
             <FormArray {...{
               files: processedFiles,

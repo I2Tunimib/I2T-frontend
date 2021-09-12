@@ -15,7 +15,11 @@ const tableAPI = {
   getTableNames: (dataSource: string) => apiClient.get(`/${dataSource}`),
   getTables: (type: string) => apiClient.get(`/tables?type=${type}`),
   searchTables: (query: string) => apiClient.get(`/tables?search=${query}`),
-  getTable: (name: string) => apiClient.get<GetTableResponse>(`/tables/${name}`),
+  getTable: (name: string, acceptHeader?: string) => apiClient.get<GetTableResponse>(`/tables/${name}`, {
+    headers: {
+      Accept: acceptHeader
+    }
+  }),
   uploadTable: (
     formData: FormData,
     cancelToken: CancelToken,

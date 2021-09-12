@@ -11,7 +11,10 @@ import MoreVertRoundedIcon from '@material-ui/icons/MoreVertRounded';
 import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { copyTable, getTables, removeTable } from '@store/slices/tables/tables.thunk';
+import {
+  copyTable, getTable,
+  getTables, removeTable
+} from '@store/slices/tables/tables.thunk';
 import { selectTables } from '@store/slices/tables/tables.selectors';
 import TimeAgo from 'react-timeago';
 import { orderTables } from '@store/slices/tables/tables.slice';
@@ -22,10 +25,12 @@ import { loadUpTable } from '@store/slices/table/table.thunk';
 import { TableType } from '@store/slices/table/interfaces/table';
 import FileCopyOutlinedIcon from '@material-ui/icons/FileCopyOutlined';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
+import GetAppRoundedIcon from '@material-ui/icons/GetAppRounded';
 import MenuBase from '@components/core/MenuBase';
 import { ConfirmationDialog, MenuItemIconLabel } from '@components/core';
 import MenuList from '@material-ui/core/MenuList';
 import { ActionButton } from '@components/core/ConfirmationDialog';
+import fileDownload from 'js-file-download';
 import styles from './Content.module.scss';
 
 interface Contentprops {
@@ -178,6 +183,18 @@ const Content: FC<Contentprops> = ({
     setMenuState(initialMenuState);
   };
 
+  const onDownloadTable = () => {
+    if (menuState.table) {
+      dispatch(getTable(menuState.table.name))
+        .unwrap()
+        .then((data) => {
+          const fileName = `${menuState.table?.name}.${menuState.table?.format}`;
+          fileDownload(((data as unknown) as string), fileName);
+        });
+    }
+    setMenuState(initialMenuState);
+  };
+
   return (
     <>
       <div className={styles.Container}>
@@ -265,6 +282,11 @@ const Content: FC<Contentprops> = ({
             onClick={onRemoveTable}
             Icon={DeleteOutlineRoundedIcon}>
             Delete table
+          </MenuItemIconLabel>
+          <MenuItemIconLabel
+            onClick={onDownloadTable}
+            Icon={GetAppRoundedIcon}>
+            Download table
           </MenuItemIconLabel>
         </MenuList>
       </MenuBase>

@@ -7,11 +7,12 @@ import { updateFileUpload } from './tables.slice';
 const ACTION_PREFIX = 'tables';
 
 export enum TablesThunkActions {
+  GET_TABLE = 'getTable',
   GET_TABLES = 'getTables',
-  SEARCH_TABLES = 'searchTables',
   UPLOAD_TABLE = 'uploadTable',
   COPY_TABLE = 'copyTable',
-  REMOVE_TABLE = 'removeTable'
+  REMOVE_TABLE = 'removeTable',
+  SEARCH_TABLES = 'searchTables'
 }
 
 export const getTables = createAsyncThunk(
@@ -64,6 +65,14 @@ export const removeTable = createAsyncThunk(
   `${ACTION_PREFIX}/removeTable`,
   async (name: string) => {
     const response = await tableAPI.removeTable(name);
+    return response.data;
+  }
+);
+
+export const getTable = createAsyncThunk(
+  `${ACTION_PREFIX}/getTable`,
+  async (name: string) => {
+    const response = await tableAPI.getTable(name, 'application/octet-stream');
     return response.data;
   }
 );

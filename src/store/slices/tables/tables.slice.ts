@@ -10,7 +10,7 @@ import {
   copyTable, getTables,
   removeTable, uploadTable
 } from './tables.thunk';
-import { orderTablesArray, orderTablesByDate } from './utils/tables.utils';
+import { orderTablesArray } from './utils/tables.utils';
 
 // Define the initial state using that type
 const initialState: TablesState = {
