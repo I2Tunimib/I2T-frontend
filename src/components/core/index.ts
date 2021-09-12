@@ -9,6 +9,7 @@ import MenuItemIconLabel from './MenuItemIconLabel';
 import MenuDivider from './MenuDivider';
 import EmptyList from './EmptyList';
 import CircularProgressWithLabel from './CircularProgressWithLabel';
+import ConfirmationDialog from './ConfirmationDialog';
 
 export {
   Button,
@@ -21,5 +22,6 @@ export {
   ActionGroup,
   IconButtonTooltip,
   EmptyList,
-  CircularProgressWithLabel
+  CircularProgressWithLabel,
+  ConfirmationDialog
 };

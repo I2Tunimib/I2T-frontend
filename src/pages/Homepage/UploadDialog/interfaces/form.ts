@@ -1,3 +1,26 @@
+import { CsvSeparator } from '@services/converters/csv-converter';
+import { FileFormat } from '@store/slices/table/interfaces/table';
+
+/**
+ * Form state.
+ */
+export interface FormState {
+  challengeTable: boolean;
+  action: ActionType;
+  files: FormFile[];
+}
+
+/**
+ * Form file field.
+ */
+export interface FormFile {
+  fileName: string;
+  fileExtension: FileFormat;
+  separator: CsvSeparator;
+  original: File;
+  type: NormalTableType | ChallengeTableType;
+}
+
 /**
  * Form select option.
  */

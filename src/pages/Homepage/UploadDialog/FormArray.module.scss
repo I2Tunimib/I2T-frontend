@@ -28,3 +28,16 @@
     }
   }
 }
+
+.FormSkeletonContainer {
+  display: flex;
+  flex-direction: column;
+
+  .FormSkeletonRow {
+    display: flex;
+    gap: 20px;
+    & > :first-child {
+      flex-grow: 1;
+    }
+  }
+}

@@ -100,7 +100,7 @@ export const loadTable = async (
   }
 
   if (Array.isArray(table)) {
-    throw Error('Multiple tables cannot be loaded into a single one');
+    throw Error('Multiple tables cannot be loaded into a table viewer');
   }
 
   if (!table.original) {

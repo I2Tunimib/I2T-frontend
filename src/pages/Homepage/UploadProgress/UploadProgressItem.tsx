@@ -1,11 +1,8 @@
 import { CircularProgressWithLabel } from '@components/core';
 import { IconButton, Typography } from '@material-ui/core';
-import { RootState } from '@store';
-import { selectUploadFileStatus } from '@store/slices/tables/tables.selectors';
 import CheckCircleOutlineRoundedIcon from '@material-ui/icons/CheckCircleOutlineRounded';
 import CloseRoundedIcon from '@material-ui/icons/CloseRounded';
 import { FC, useState } from 'react';
-import { connect } from 'react-redux';
 import { RequestUpload } from '@store/slices/tables/interfaces/tables';
 import styles from './UploadProgressItem.module.scss';
 
@@ -21,7 +18,6 @@ const UploadProgressItem: FC<UploadProgressItemProps> = ({
     progress,
     status
   },
-  // progress = 0,
   onCancelRequest
 }) => {
   const [hovered, setHovered] = useState<boolean>(false);
@@ -57,11 +53,4 @@ const UploadProgressItem: FC<UploadProgressItemProps> = ({
   );
 };
 
-// const mapStateToProps = (state: RootState, props: UploadProgressItemProps) => {
-//   return {
-//     progress: selectUploadFileStatus(state, props)
-//   };
-// };
-
-// export default connect(mapStateToProps)(UploadProgressItem);
 export default UploadProgressItem;

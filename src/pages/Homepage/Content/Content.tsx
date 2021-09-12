@@ -11,7 +11,7 @@ import MoreVertRoundedIcon from '@material-ui/icons/MoreVertRounded';
 import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { getTables } from '@store/slices/tables/tables.thunk';
+import { copyTable, getTables, removeTable } from '@store/slices/tables/tables.thunk';
 import { selectTables } from '@store/slices/tables/tables.selectors';
 import TimeAgo from 'react-timeago';
 import { orderTables } from '@store/slices/tables/tables.slice';
@@ -23,8 +23,9 @@ import { TableType } from '@store/slices/table/interfaces/table';
 import FileCopyOutlinedIcon from '@material-ui/icons/FileCopyOutlined';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import MenuBase from '@components/core/MenuBase';
-import { MenuItemIconLabel } from '@components/core';
+import { ConfirmationDialog, MenuItemIconLabel } from '@components/core';
 import MenuList from '@material-ui/core/MenuList';
+import { ActionButton } from '@components/core/ConfirmationDialog';
 import styles from './Content.module.scss';
 
 interface Contentprops {
@@ -41,14 +42,30 @@ interface MenuState {
   anchorEl: any | null;
   table: TableInstance | null;
 }
-
 const initialMenuState = { anchorEl: null, table: null };
+
+interface ConfirmationDialogState {
+  open: boolean;
+  content: string;
+  actions: ActionButton[];
+  title?: string;
+}
+
+const initialConfirmationDialogState = {
+  open: false,
+  content: '',
+  actions: []
+};
 
 const Content: FC<Contentprops> = ({
   onFileChange
 }) => {
   const [currentOrder, setCurrentOrder] = useState<OrderState | undefined>(undefined);
   const [menuState, setMenuState] = useState<MenuState>(initialMenuState);
+  const [
+    confirmationDialogState,
+    setConfirmationDialogState
+  ] = useState<ConfirmationDialogState>(initialConfirmationDialogState);
   const { tables: tablesType } = useParams<{ tables: TableType }>();
   const dispatch = useAppDispatch();
   const tables = useAppSelector(selectTables);
@@ -129,6 +146,38 @@ const Content: FC<Contentprops> = ({
     });
   };
 
+  const onCopyTable = () => {
+    if (menuState.table) {
+      dispatch(copyTable(menuState.table.name));
+    }
+    setMenuState(initialMenuState);
+  };
+
+  const handleCloseConfirmationDialog = () => {
+    setConfirmationDialogState((state) => ({ ...state, open: false }));
+  };
+  const handleRemoveTable = () => {
+    if (menuState.table) {
+      dispatch(removeTable(menuState.table.name));
+    }
+    handleCloseConfirmationDialog();
+  };
+
+  const onRemoveTable = () => {
+    if (menuState.table) {
+      setConfirmationDialogState({
+        open: true,
+        title: 'Delete this table?',
+        content: `By confirming you are going to delete permanently '${menuState.table.name}'.`,
+        actions: [
+          { label: 'Cancel', callback: handleCloseConfirmationDialog },
+          { label: 'Confirm', callback: handleRemoveTable, buttonProps: { color: 'secondary' } }
+        ]
+      });
+    }
+    setMenuState(initialMenuState);
+  };
+
   return (
     <>
       <div className={styles.Container}>
@@ -207,10 +256,19 @@ const Content: FC<Contentprops> = ({
         open={!!menuState.anchorEl}
         handleClose={handleClose}>
         <MenuList>
-          <MenuItemIconLabel Icon={FileCopyOutlinedIcon}>Make a copy</MenuItemIconLabel>
-          <MenuItemIconLabel Icon={DeleteOutlineRoundedIcon}>Delete table</MenuItemIconLabel>
+          <MenuItemIconLabel
+            onClick={onCopyTable}
+            Icon={FileCopyOutlinedIcon}>
+            Make a copy
+          </MenuItemIconLabel>
+          <MenuItemIconLabel
+            onClick={onRemoveTable}
+            Icon={DeleteOutlineRoundedIcon}>
+            Delete table
+          </MenuItemIconLabel>
         </MenuList>
       </MenuBase>
+      <ConfirmationDialog onClose={handleCloseConfirmationDialog} {...confirmationDialogState} />
     </>
   );
 };

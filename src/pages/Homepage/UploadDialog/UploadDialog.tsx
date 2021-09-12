@@ -1,5 +1,5 @@
 import { ButtonLoading } from '@components/core';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { useAppDispatch } from '@hooks/store';
 import {
   Button, Checkbox, Dialog, DialogActions,
   DialogContent, DialogContentText,
@@ -8,16 +8,13 @@ import {
 } from '@material-ui/core';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import DescriptionTwoToneIcon from '@material-ui/icons/DescriptionTwoTone';
-import { CsvSeparator } from '@services/converters/csv-converter';
 import { detectDelimiter } from '@services/utils/detect-delimiter';
 import { FileFormat, TableType } from '@store/slices/table/interfaces/table';
-import { updateCurrentTable } from '@store/slices/table/table.slice';
 import { loadUpTable } from '@store/slices/table/table.thunk';
-import { selectIsUploadDialogOpen, selectIsUploadProgressDialogOpen } from '@store/slices/tables/tables.selectors';
 import { updateUI } from '@store/slices/tables/tables.slice';
 import {
-  FC, useCallback,
-  useState, useEffect, useRef
+  FC, useState,
+  useEffect
 } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
@@ -25,8 +22,9 @@ import { uploadTable } from '@store/slices/tables/tables.thunk';
 import { nanoid } from 'nanoid';
 import FormArray from './FormArray';
 import {
-  ActionType, ChallengeTableType,
-  NormalTableType, SelectOption
+  ActionType,
+  FormFile,
+  FormState, SelectOption
 } from './interfaces/form';
 import styles from './UploadDialog.module.scss';
 
@@ -49,20 +47,6 @@ const selectActionTypeOptions: SelectOption<ActionType>[] = [
   { label: 'Upload to server', value: ActionType.UPLOAD },
   { label: 'Load in table viewer', value: ActionType.LOAD }
 ];
-
-interface FormFile {
-  fileName: string;
-  fileExtension: FileFormat;
-  separator: CsvSeparator;
-  original: File;
-  type: NormalTableType | ChallengeTableType;
-}
-
-export interface FormState {
-  challengeTable: boolean;
-  action: ActionType;
-  files: FormFile[];
-}
 
 const FormTooltip = withStyles((theme) => ({
   tooltip: {
@@ -95,7 +79,6 @@ const UploadDialog: FC<UploadDialogProps> = ({
   const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([]);
   const dispatch = useAppDispatch();
   const history = useHistory();
-  const isDialogProgressOpen = useAppSelector(selectIsUploadProgressDialogOpen);
   const watchChallengeTable = watch('challengeTable', false);
 
   const processFiles = async (rawFiles: File[]) => {
@@ -125,7 +108,7 @@ const UploadDialog: FC<UploadDialogProps> = ({
     }));
   };
 
-  const getFileTables = ({ files: formFiles, challengeTable }: FormState) => {
+  const getFileToDispatch = ({ files: formFiles, challengeTable }: FormState) => {
     const filesToDispatch = formFiles.map((formFile) => ({
       name: formFile.fileName,
       original: formFile.original,
@@ -142,6 +125,21 @@ const UploadDialog: FC<UploadDialogProps> = ({
     };
   };
 
+  const uploadFiles = (formFiles: FormFile[]) => {
+    formFiles.forEach(({ original, ...meta }, index) => {
+      const formData = new FormData();
+      formData.append('file', original);
+      formData.append('meta', JSON.stringify(meta));
+      const requestId = nanoid();
+      const request = dispatch(uploadTable({
+        formData,
+        requestId,
+        fileName: meta.fileName
+      }));
+      onNewUploadRequest(request, requestId);
+    });
+  };
+
   const onSubmit = (data: FormState) => {
     const { action, challengeTable, files: selectedFiles } = data;
 
@@ -149,7 +147,7 @@ const UploadDialog: FC<UploadDialogProps> = ({
       if (selectedFiles.length > 1) {
         if (action === ActionType.LOAD) {
           // load challenge table in table viewer
-          dispatch(loadUpTable(getFileTables(data)));
+          dispatch(loadUpTable(getFileToDispatch(data)));
           dispatch(updateUI({
             uploadDialogOpen: false
           }));
@@ -162,7 +160,7 @@ const UploadDialog: FC<UploadDialogProps> = ({
       if (action === ActionType.LOAD) {
         if (selectedFiles.length === 1) {
           // load table locally
-          dispatch(loadUpTable(getFileTables(data)));
+          dispatch(loadUpTable(getFileToDispatch(data)));
           dispatch(updateUI({
             uploadDialogOpen: false
           }));
@@ -173,18 +171,7 @@ const UploadDialog: FC<UploadDialogProps> = ({
       } else {
         console.log(data);
         // upload tables
-        data.files.forEach(({ original, ...meta }, index) => {
-          const formData = new FormData();
-          formData.append('file', original);
-          formData.append('meta', JSON.stringify(meta));
-          const requestId = nanoid();
-          const request = dispatch(uploadTable({
-            formData,
-            requestId,
-            fileName: meta.fileName
-          }));
-          onNewUploadRequest(request, requestId);
-        });
+        uploadFiles(data.files);
         dispatch(updateUI({
           uploadDialogOpen: false
         }));

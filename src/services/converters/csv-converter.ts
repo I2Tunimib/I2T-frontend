@@ -14,6 +14,7 @@ export const convertFromCSV = async (
   return new Promise<{ columns: ColumnState, rows: RowState }>((resolve, reject) => {
     parse(content, {
       delimiter: separator || '',
+      // parse in web worker so UI doesn't freeze
       worker: true,
       complete: (result) => {
         const [headerRow, ...bodyRows] = result.data as string[][];
@@ -59,50 +60,4 @@ export const convertFromCSV = async (
       }
     });
   });
-
-  // parse and deconstruct header from rows
-  // const res = parse(content, { delimiter: separator });
-
-  // const [headerRow, ...bodyRows] = res.data as string[][];
-
-  // const columns = headerRow.reduce((acc, label, index) => ({
-  //   byId: {
-  //     ...acc.byId,
-  //     [`${label}`]: {
-  //       id: `${label}`,
-  //       label,
-  //       status: ColumnStatus.EMPTY,
-  //       reconciliators: [],
-  //       extension: ''
-  //     }
-  //   },
-  //   allIds: [...acc.allIds, `${label}`]
-  // }), { byId: {}, allIds: [] as string[] } as ColumnState);
-
-  // const rows = bodyRows.reduce((allRows, rowValues, rowIndex) => ({
-  //   byId: {
-  //     ...allRows.byId,
-  //     [`r${rowIndex}`]: {
-  //       id: `r${rowIndex}`,
-  //       cells: headerRow.reduce((allRowCells, label, colIndex) => ({
-  //         ...allRowCells,
-  //         [label]: {
-  //           label: rowValues[colIndex] || '',
-  //           metadata: {
-  //             reconciliator: '',
-  //             values: []
-  //           },
-  //           editable: false,
-  //           expandend: false
-  //         }
-  //       }), {})
-  //     }
-  //   },
-  //   allIds: [...allRows.allIds, `r${rowIndex}`]
-  // }), { byId: {}, allIds: [] as string[] } as RowState);
-
-  // return {
-  //   columns,
-  //   rows
-  // };
 };

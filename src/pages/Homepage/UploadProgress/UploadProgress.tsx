@@ -22,6 +22,9 @@ interface UploadProgressProps extends HTMLAttributes<HTMLDivElement> {
   onCancelRequest: (id: string) => void;
 }
 
+/**
+ * Show upload progress for active requests.
+ */
 const UploadProgress: FC<UploadProgressProps> = ({
   className,
   ...props
@@ -33,6 +36,7 @@ const UploadProgress: FC<UploadProgressProps> = ({
   const numberOfUploadingFiles = useAppSelector(selectNumberOfActiveUploadRequests);
 
   useEffect(() => {
+    // when no more requets close the dialog
     if (!firstRender && requests.length === 0) {
       dispatch(updateUI({ uploadProgressDialogOpen: false }));
     }

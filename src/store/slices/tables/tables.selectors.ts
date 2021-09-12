@@ -1,7 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
-import { ID } from '../table/interfaces/table';
 import { TablesThunkActions } from './tables.thunk';
 
 const selectTableEntities = (state: RootState) => state.tables.entities;
@@ -9,9 +8,6 @@ const selectUIState = (state: RootState) => state.tables.ui;
 const selectSelectedSource = (state: RootState) => state.tables.ui.selectedSource;
 const selectRequests = (state: RootState) => state.tables._requests;
 const selectUploadRequestsState = (state: RootState) => state.tables._uploadRequests;
-const selectUploadRequestState = (state: RootState, props: { id: ID }) => (
-  state.tables._uploadRequests.byId[props.id]
-);
 
 export const selectSearchTablesStatus = createSelector(
   selectRequests,
@@ -32,11 +28,6 @@ export const selectNumberOfAllUploadRequests = createSelector(
 export const selectNumberOfActiveUploadRequests = createSelector(
   selectUploadRequestsState,
   (requests) => requests.allIds.filter((id) => requests.byId[id].status === 'pending').length
-);
-
-export const selectUploadFileStatus = createSelector(
-  selectUploadRequestState,
-  (request) => (request ? request.progress : 0)
 );
 
 export const selectTables = createSelector(

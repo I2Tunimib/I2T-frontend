@@ -1,18 +1,21 @@
 import {
-  Divider, InputAdornment,
+  InputAdornment,
   MenuItem, TextField, Typography
 } from '@material-ui/core';
 import {
-  Control, Controller, FieldArrayWithId, FieldValues,
-  useFieldArray, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch, useWatch
+  Control, Controller, FieldArrayWithId,
+  useFieldArray, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch
 } from 'react-hook-form';
-import { FC, useEffect, useCallback } from 'react';
+import { FC, useEffect } from 'react';
 import { CsvSeparator } from '@services/converters/csv-converter';
-import { TableType } from '@store/slices/table/interfaces/table';
 import { enumKeys } from '@services/utils/objects-utils';
-import { FormState, ProcessedFile } from './UploadDialog';
+import { Skeleton } from '@material-ui/lab';
+import { ProcessedFile } from './UploadDialog';
 import styles from './FormArray.module.scss';
-import { ChallengeTableType, NormalTableType, SelectOption } from './interfaces/form';
+import {
+  ChallengeTableType, FormState,
+  NormalTableType, SelectOption
+} from './interfaces/form';
 
 interface FormArrayProps {
   files: ProcessedFile[];
@@ -49,6 +52,9 @@ const selectChallengeTableTypesOptions: SelectOption<ChallengeTableType>[] = [
   { label: 'CTA', value: ChallengeTableType.CTA }
 ];
 
+/**
+ * Form fields for each file.
+ */
 const FileInputForm: FC<FileInputFormProps> = ({
   item,
   index,
@@ -143,21 +149,30 @@ const FileInputForm: FC<FileInputFormProps> = ({
   );
 };
 
+const SkeletonForm = () => {
+  return (
+    <div className={styles.FormSkeletonContainer}>
+      {[1, 2, 3].map((item) => (
+        <div key={item} className={styles.FormSkeletonRow}>
+          <Skeleton height={60} />
+          <Skeleton height={60} width={60} />
+        </div>
+      ))}
+
+    </div>
+  );
+};
+
 const FormArray: FC<FormArrayProps> = ({
   files,
   control,
   register,
   watch,
-  setValue,
-  getValues
+  setValue
 }) => {
   const {
     fields,
-    append,
-    remove,
-    prepend,
-    replace,
-    update
+    append
   } = useFieldArray({
     control,
     name: 'files',
@@ -195,19 +210,28 @@ const FormArray: FC<FormArrayProps> = ({
 
   return (
     <div className={styles.Container}>
-      {fields.map((item, index) => (
-        <div key={index} className={styles.FormArrayItem}>
-          <Typography variant="subtitle2">{`Table ${index + 1}`}</Typography>
-          <FileInputForm {...{
-            item,
-            index,
-            control,
-            watchChallengeTable,
-            register
-          }}
-          />
-        </div>
-      ))}
+      {files.length > 0
+        ? (
+          <>
+            {fields.map((item, index) => (
+              <div key={index} className={styles.FormArrayItem}>
+                <Typography variant="subtitle2">{`Table ${index + 1}`}</Typography>
+                <FileInputForm {...{
+                  item,
+                  index,
+                  control,
+                  watchChallengeTable,
+                  register
+                }}
+                />
+              </div>
+            ))}
+          </>
+        )
+        : (
+          <SkeletonForm />
+        )
+      }
     </div>
   );
 };

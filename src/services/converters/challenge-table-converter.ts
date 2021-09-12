@@ -13,6 +13,7 @@ const parseFiles = async (files: TableFile[]): Promise<Record<TableType, string[
   const resolvedPromises: any[] = await Promise.all([...files].map(({ original: file, type }) => (
     new Promise((resolve, reject) => (
       parse(file || '', {
+        // parse in web worker so UI doesn't freeze
         worker: true,
         complete: (result) => {
           resolve({

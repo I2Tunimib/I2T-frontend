@@ -29,6 +29,8 @@ const tableAPI = {
       onProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
     }
   }),
+  copyTable: (name: string) => apiClient.post('/tables/copy', { name }),
+  removeTable: (name: string) => apiClient.delete(`tables/${name}`),
   reconcile: (baseUrl: string, data: any) => apiClient.post(baseUrl, data)
 };
 

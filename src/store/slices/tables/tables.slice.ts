@@ -1,11 +1,15 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 import { createSliceWithRequests } from '@store/enhancers/requests';
+import { TableType } from '../table/interfaces/table';
 import { removeObject } from '../table/utils/table.utils';
 import {
   OrderTablesPayload, TableInstance,
   TablesState, TablesUIState, UpdateFileUploadPayload
 } from './interfaces/tables';
-import { getTables, uploadTable } from './tables.thunk';
+import {
+  copyTable, getTables,
+  removeTable, uploadTable
+} from './tables.thunk';
 import { orderTablesArray, orderTablesByDate } from './utils/tables.utils';
 
 // Define the initial state using that type
@@ -28,6 +32,9 @@ export const tablesSlice = createSliceWithRequests({
   name: 'tables',
   initialState,
   reducers: {
+    /**
+     * Order tables by name or date.
+     */
     orderTables: (state, action: PayloadAction<OrderTablesPayload>) => {
       const { order, property } = action.payload;
       const { selectedSource } = state.ui;
@@ -43,6 +50,9 @@ export const tablesSlice = createSliceWithRequests({
       }
       state.ui = { ...state.ui, ...action.payload };
     },
+    /**
+     * Update upload requests.
+     */
     updateFileUpload: (state, action: PayloadAction<UpdateFileUploadPayload>) => {
       const { requestId, fileName, progress } = action.payload;
       if (!state._uploadRequests.byId[requestId]) {
@@ -70,11 +80,13 @@ export const tablesSlice = createSliceWithRequests({
         });
       })
       .addCase(uploadTable.fulfilled, (state, action) => {
-        const table = action.payload;
-        const { selectedSource } = state.ui;
-        if (!state.entities[selectedSource].byId[table.name]) {
-          state.entities[selectedSource].byId[table.name] = table;
-          state.entities[selectedSource].allIds.unshift(table.name);
+        const table = action.payload as TableInstance;
+        const { type } = table;
+        if (type === TableType.RAW || type === TableType.ANNOTATED) {
+          if (!state.entities[type].byId[table.name]) {
+            state.entities[type].byId[table.name] = table;
+            state.entities[type].allIds.unshift(table.name);
+          }
         }
       })
       .addCase(uploadTable.rejected, (state, action) => {
@@ -83,6 +95,27 @@ export const tablesSlice = createSliceWithRequests({
           state._uploadRequests.byId = removeObject(state._uploadRequests.byId, meta.arg.requestId);
           state._uploadRequests.allIds = state._uploadRequests.allIds
             .filter((id) => id !== meta.arg.requestId);
+        }
+      })
+      .addCase(copyTable.fulfilled, (state, action) => {
+        const table = action.payload;
+        const { type } = table as TableInstance;
+        if (type === TableType.RAW || type === TableType.ANNOTATED) {
+          if (!state.entities[type].byId[table.name]) {
+            state.entities[type].byId[table.name] = table;
+            state.entities[type].allIds.unshift(table.name);
+          }
+        }
+      })
+      .addCase(removeTable.fulfilled, (state, action) => {
+        const table = action.payload as TableInstance;
+        const { type } = table;
+        if (type === TableType.RAW || type === TableType.ANNOTATED) {
+          if (state.entities[type].byId[table.name]) {
+            state.entities[type].byId = removeObject(state.entities[type].byId, table.name);
+            state.entities[type].allIds = state.entities[type].allIds
+              .filter((id) => id !== table.name);
+          }
         }
       })
   )
