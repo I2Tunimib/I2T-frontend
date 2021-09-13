@@ -153,9 +153,9 @@ const SkeletonForm = () => {
   return (
     <div className={styles.FormSkeletonContainer}>
       {[1, 2, 3].map((item) => (
-        <div className={styles.FormSkeletonItem}>
+        <div key={item} className={styles.FormSkeletonItem}>
           <Skeleton height={20} width={40} />
-          <div key={item} className={styles.FormSkeletonRow}>
+          <div className={styles.FormSkeletonRow}>
             <Skeleton height={60} />
             <Skeleton height={60} width={60} />
           </div>

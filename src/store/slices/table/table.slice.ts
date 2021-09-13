@@ -68,6 +68,9 @@ export const tableSlice = createSliceWithRequests({
   name: 'table',
   initialState,
   reducers: {
+    restoreInitialState: (state, action: PayloadAction<void>) => {
+      return { ...initialState };
+    },
     /**
      * Update current table metadata.
      */
@@ -307,6 +310,7 @@ export const tableSlice = createSliceWithRequests({
 });
 
 export const {
+  restoreInitialState,
   updateCurrentTable,
   updateSelectedCellExpanded,
   updateCellEditable,

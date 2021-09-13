@@ -2,6 +2,7 @@ import { FC, useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { selectIsUploadDialogOpen, selectIsUploadProgressDialogOpen, selectUploadRequests } from '@store/slices/tables/tables.selectors';
 import { updateUI } from '@store/slices/tables/tables.slice';
+import { restoreInitialState } from '@store/slices/table/table.slice';
 import Sidebar from '../Sidebar';
 import Toolbar from '../Toolbar';
 import Content from '../Content';
@@ -22,6 +23,10 @@ const Homepage: FC<HomepageProps> = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const isUploadDialogOpen = useAppSelector(selectIsUploadDialogOpen);
   const isUploadProgressDialogOpen = useAppSelector(selectIsUploadProgressDialogOpen);
+
+  useEffect(() => {
+    dispatch(restoreInitialState());
+  }, []);
 
   const onFileChange = (files: File[]) => {
     setSelectedFiles(files);
