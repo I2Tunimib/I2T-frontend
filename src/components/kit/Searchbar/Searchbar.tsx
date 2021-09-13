@@ -123,11 +123,9 @@ const Searchbar: FC<SearchbarProps> = ({
     setInputState((state) => ({ ...state, focused: true }));
   }, []);
 
-  const handleOnBlur = useCallback((event: FocusEvent<HTMLInputElement>) => {
-    if (!event.relatedTarget) {
-      setInputState((state) => ({ ...state, focused: false }));
-    }
-  }, []);
+  const handleOnClickAway = useCallback(() => {
+    setInputState((state) => ({ ...state, focused: false }));
+  }, [setInputState]);
 
   const handleOnKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
     if (enableTags) {
@@ -144,6 +142,7 @@ const Searchbar: FC<SearchbarProps> = ({
       inputState={inputState}
       tag={tag}
       onClick={onClickBaseHandler}
+      onClickAway={handleOnClickAway}
       className={className}>
       <input
         ref={inputRef}
@@ -151,7 +150,6 @@ const Searchbar: FC<SearchbarProps> = ({
         onKeyDown={handleOnKeyDown}
         onChange={handleOnChange}
         onFocus={handleOnFocus}
-        onBlur={handleOnBlur}
         placeholder={placeholder}
         autoComplete="off"
         spellCheck="false"

@@ -1,4 +1,7 @@
-import { Row, useGlobalFilter, useTable } from 'react-table';
+import {
+  Row, useGlobalFilter,
+  usePagination, useTable
+} from 'react-table';
 import {
   FC, useCallback,
   useEffect
@@ -92,6 +95,17 @@ const Table: FC<TableProps> = ({
     getTableBodyProps,
     headerGroups,
     rows,
+    page,
+    // The rest of these things are super handy, too ;)
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize },
     prepareRow,
     setGlobalFilter
   } = useTable({
@@ -99,9 +113,11 @@ const Table: FC<TableProps> = ({
     data,
     getRowId,
     globalFilter: customGlobalFilter,
+    initialState: { pageSize: 30 },
     autoResetGlobalFilter: false
   },
   useGlobalFilter,
+  usePagination,
   (hooks) => {
     // push a column for the index
     hooks.visibleColumns.push((cols) => [
@@ -119,6 +135,19 @@ const Table: FC<TableProps> = ({
       ...cols
     ]);
   });
+
+  const paginatorProps = {
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    pageIndex,
+    pageSize,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize
+  };
 
   useEffect(() => {
     if (searchFilter) {
@@ -153,7 +182,7 @@ const Table: FC<TableProps> = ({
         {/* Apply the table body props */}
         <tbody {...getTableBodyProps()}>
           {// Loop over the table rows
-            rows.map((row) => {
+            page.map((row) => {
               // Prepare the row for display
               prepareRow(row);
               return (
@@ -174,7 +203,7 @@ const Table: FC<TableProps> = ({
             })}
         </tbody>
       </TableRoot>
-      <TableFooter rows={rows} />
+      <TableFooter rows={rows} paginatorProps={paginatorProps} />
     </>
   );
 };

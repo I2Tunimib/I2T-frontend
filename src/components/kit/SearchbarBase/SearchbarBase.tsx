@@ -1,6 +1,7 @@
 import { FC, HTMLAttributes, ReactNode } from 'react';
 import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
 import clsx from 'clsx';
+import { ClickAwayListener } from '@material-ui/core';
 import styles from './SearchbarBase.module.scss';
 import ButtonShortcut from '../ButtonShortcut';
 
@@ -12,6 +13,7 @@ interface SearchbarBaseProps extends HTMLAttributes<HTMLButtonElement> {
   enableAutocomplete: boolean;
   autocompleteComponent: ReactNode;
   inputState: { focused: boolean; value: string };
+  onClickAway: () => void;
 }
 
 /**
@@ -23,36 +25,39 @@ const SearchbarBase: FC<SearchbarBaseProps> = ({
   autocompleteComponent,
   tag,
   onClick,
+  onClickAway,
   className,
   children
 }) => {
   return (
-    <div className={clsx(
-      styles.AutocompleteOverlay,
-      className,
-      {
-        [styles.Searching]: enableAutocomplete && value !== '' && focused
-      }
-    )}>
-      <button
-        onClick={onClick}
-        className={clsx(
-          styles.Container,
-          {
-            [styles.Focused]: focused,
-            [styles.Searching]: enableAutocomplete && value !== '' && focused
-          }
-        )}>
-        <SearchRoundedIcon />
-        {tag && <ButtonShortcut text={tag} />}
-        {children}
-      </button>
-      {enableAutocomplete && value !== '' && focused ? (
-        <div className={styles.AutocompleteContentWrapper}>
-          {autocompleteComponent}
-        </div>
-      ) : null}
-    </div>
+    <ClickAwayListener onClickAway={onClickAway}>
+      <div className={clsx(
+        styles.AutocompleteOverlay,
+        className,
+        {
+          [styles.Searching]: enableAutocomplete && value !== '' && focused
+        }
+      )}>
+        <button
+          onClick={onClick}
+          className={clsx(
+            styles.Container,
+            {
+              [styles.Focused]: focused,
+              [styles.Searching]: enableAutocomplete && value !== '' && focused
+            }
+          )}>
+          <SearchRoundedIcon />
+          {tag && <ButtonShortcut text={tag} />}
+          {children}
+        </button>
+        {enableAutocomplete && value !== '' && focused ? (
+          <div className={styles.AutocompleteContentWrapper}>
+            {autocompleteComponent}
+          </div>
+        ) : null}
+      </div>
+    </ClickAwayListener>
   );
 };
 
