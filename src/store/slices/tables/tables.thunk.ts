@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import tableAPI from '@services/api/table';
+import { ID } from '@store/interfaces/store';
 import axios from 'axios';
-import { ID } from '../table/interfaces/table';
 import { updateFileUpload } from './tables.slice';
 
 const ACTION_PREFIX = 'tables';
@@ -34,12 +34,12 @@ export const searchTables = createAsyncThunk(
 interface UploadTableThunkPayload {
   formData: FormData;
   requestId: ID;
-  fileName: string;
+  name: string;
 }
 
 export const uploadTable = createAsyncThunk(
   `${ACTION_PREFIX}/uploadTable`,
-  async ({ formData, requestId, fileName }: UploadTableThunkPayload, { dispatch, signal }) => {
+  async ({ formData, requestId, name }: UploadTableThunkPayload, { dispatch, signal }) => {
     // create token to possibily cancel the request
     const source = axios.CancelToken.source();
     // on abort signal, cancel the request
@@ -47,7 +47,7 @@ export const uploadTable = createAsyncThunk(
       source.cancel();
     });
     const response = await tableAPI.uploadTable(formData, source.token, (progress) => {
-      dispatch(updateFileUpload({ requestId, fileName, progress }));
+      dispatch(updateFileUpload({ requestId, name, progress }));
     });
     return response.data;
   }
@@ -63,9 +63,9 @@ export const copyTable = createAsyncThunk(
 
 export const removeTable = createAsyncThunk(
   `${ACTION_PREFIX}/removeTable`,
-  async (name: string) => {
-    const response = await tableAPI.removeTable(name);
-    return response.data;
+  async (id: ID) => {
+    await tableAPI.removeTable(id);
+    return id;
   }
 );
 

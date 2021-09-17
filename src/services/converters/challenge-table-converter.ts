@@ -1,6 +1,6 @@
+import { ID } from '@store/interfaces/store';
 import {
   ColumnState, ColumnStatus,
-  ID,
   RowState,
   TableFile, TableType
 } from '@store/slices/table/interfaces/table';
@@ -46,7 +46,7 @@ const getColumnStatus = (rows: RowState, colId: ID) => {
   rows.allIds.forEach((rowId) => {
     const cell = rows.byId[rowId].cells[colId];
     if (cell.metadata.values.length > 0) {
-      reconciliators.push(cell.metadata.reconciliator);
+      reconciliators.push(cell.metadata.reconciliator.id);
       status = ColumnStatus.PENDING;
     } else {
       allReconciliated = false;

@@ -11,16 +11,16 @@ import {
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { LinearProgress } from '@material-ui/core';
-import { ID } from '@store/slices/table/interfaces/table';
 import { HotKeys } from 'react-hotkeys';
 import {
   selectDataTableFormat,
   selectSelectedColumnIds, selectSelectedRowIds,
   selectSelectedCellIds, selectCellMetadataIds,
-  selectIsDenseView, selectSearchStatus,
-  selectCurrentTable, selectLoadTableStatus
+  selectIsDenseView, selectSearchStatus, selectGetTableStatus
 } from '@store/slices/table/table.selectors';
-import { useQuery } from '@hooks/router';
+import { useParams } from 'react-router-dom';
+import { getTable } from '@store/slices/table/table.thunk';
+import { ID } from '@store/interfaces/store';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
@@ -49,16 +49,23 @@ const keyMap = {
 
 const TableViewer = () => {
   const dispatch = useAppDispatch();
+  const { id: tableId } = useParams<{ id: ID }>();
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
   const { columns, rows } = useAppSelector(selectDataTableFormat);
-  const { loading } = useAppSelector(selectLoadTableStatus);
+  const { loading } = useAppSelector(selectGetTableStatus);
   const searchFilter = useAppSelector(selectSearchStatus);
   const selectedColumns = useAppSelector(selectSelectedColumnIds);
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
   const selectedCellMetadata = useAppSelector(selectCellMetadataIds);
   const isDenseView = useAppSelector(selectIsDenseView);
+
+  useEffect(() => {
+    if (tableId) {
+      dispatch(getTable(tableId));
+    }
+  }, [tableId]);
 
   /**
  * Keyboard shortcut handlers

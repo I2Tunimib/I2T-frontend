@@ -11,7 +11,8 @@ import {
   Ref,
   ReactElement,
   useState,
-  useEffect
+  useEffect,
+  useMemo
 } from 'react';
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
@@ -21,8 +22,11 @@ import { updateCellMetadata, updateUI } from '@store/slices/table/table.slice';
 import {
   selectMetadataDialogStatus,
   selectCellMetadataTableFormat,
-  selectMetdataCellId
+  selectMetdataCellId,
+  selectSelectedCellIds
 } from '@store/slices/table/table.selectors';
+import Table from '@components/kit/Table/Table';
+import { Row } from 'react-table';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -33,12 +37,16 @@ const MetadataDialog = () => {
   const dispatch = useAppDispatch();
   const [selectedMetadata, setSelectedMetadata] = useState<string>('');
   const open = useAppSelector(selectMetadataDialogStatus);
-  const { columns, rows, selectedCellId } = useAppSelector(selectCellMetadataTableFormat);
-  const selectedMetadataId = useAppSelector(selectMetdataCellId);
+  const { columns, data } = useAppSelector(selectCellMetadataTableFormat);
+  // const { columns, rows, selectedCellId } = useAppSelector(selectCellMetadataTableFormat);
+  const selectedCells = useAppSelector(selectSelectedCellIds);
 
-  useEffect(() => {
-    setSelectedMetadata(selectedMetadataId);
-  }, [selectedMetadataId]);
+  // useEffect(() => {
+  //   setSelectedMetadata(selectedMetadataId);
+  // }, [selectedMetadataId]);
+
+  const columnsTable = useMemo(() => columns, [columns]);
+  const dataTable = useMemo(() => data, [data]);
 
   const handleClose = () => {
     dispatch(updateUI({
@@ -48,18 +56,19 @@ const MetadataDialog = () => {
 
   const handleCancel = () => {
     // set to inital state if canceled
-    setSelectedMetadata(selectedMetadataId);
+    // setSelectedMetadata(selectedMetadataId);
     handleClose();
   };
 
   const handleConfirm = () => {
+    const cellId = Object.keys(selectedCells)[0];
     // update global state if confirmed
-    dispatch(updateCellMetadata({ metadataId: selectedMetadata, cellId: selectedCellId }));
+    dispatch(updateCellMetadata({ metadataId: selectedMetadata, cellId }));
     handleClose();
   };
 
-  const handleSelectRow = (id: string) => {
-    setSelectedMetadata(id);
+  const handleSelectedRowChange = (row: any) => {
+    setSelectedMetadata(row.id.label);
   };
 
   const handleDeleteRow = (id: string) => {
@@ -78,7 +87,12 @@ const MetadataDialog = () => {
         <DialogContentText>
           Choose to which entity the cell is reconciliated to:
         </DialogContentText>
-        {columns.length === 0 && rows.length === 0
+        <Table
+          columns={columnsTable}
+          data={dataTable}
+          onSelectedRowChange={handleSelectedRowChange}
+        />
+        {/* {columns.length === 0 && rows.length === 0
           ? 'The cell doesn\'t have metadata'
           : (
             <SimpleTable
@@ -94,7 +108,7 @@ const MetadataDialog = () => {
               }}
             />
           )
-        }
+        } */}
 
       </DialogContent>
       <DialogActions>

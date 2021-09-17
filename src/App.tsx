@@ -2,7 +2,6 @@ import { RouteContainer } from '@components/layout';
 import { RouteOption } from '@components/layout/RouteContainer';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { Homepage } from '@pages/Homepage';
-import RefactorHomepage from '@pages/RefactorHomepage';
 import { TableViewer } from '@pages/TableViewer';
 import { selectGetConfigRequest } from '@store/slices/config/config.selectors';
 import { getConfig } from '@store/slices/config/config.thunk';
@@ -18,7 +17,7 @@ const routes: RouteOption[] = [
     Component: Homepage
   },
   {
-    path: '/table/:name',
+    path: '/table/:id',
     exact: false,
     Component: TableViewer
   }

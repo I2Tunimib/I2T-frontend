@@ -1,6 +1,7 @@
 import { Draft } from '@reduxjs/toolkit';
 import { isEmptyObject } from '@services/utils/objects-utils';
-import { ID, TableState } from '../interfaces/table';
+import { ID } from '@store/interfaces/store';
+import { TableState } from '../interfaces/table';
 import { addObject, removeObject, getIdsFromCell } from './table.utils';
 
 /**

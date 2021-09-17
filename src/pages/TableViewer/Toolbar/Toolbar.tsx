@@ -3,15 +3,20 @@ import {
   makeStyles, withStyles
 } from '@material-ui/core';
 import { InlineInput } from '@components/kit';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useHistory, useParams } from 'react-router-dom';
 import {
   ChangeEvent, FocusEvent,
-  MouseEvent, useState
+  MouseEvent, useState,
+  useEffect
 } from 'react';
 import ArrowBackIosRoundedIcon from '@material-ui/icons/ArrowBackIosRounded';
 import SaveRoundedIcon from '@material-ui/icons/SaveRounded';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
 import clsx from 'clsx';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { selectCurrentTable, selectLastSaved, selectSaveTableStatus } from '@store/slices/table/table.selectors';
+import { updateCurrentTable } from '@store/slices/table/table.slice';
+import { saveTable } from '@store/slices/table/table.thunk';
 import SubToolbar from '../SubToolbar/SubToolbar';
 import styles from './Toolbar.module.scss';
 import FileMenu from '../Menus/FileMenu';
@@ -29,13 +34,23 @@ const initialMenuState: MenuState = {
  * Toolbar element.
  */
 const Toolbar = () => {
-  // get table name from query params
-  const { name } = useParams<{ name: string }>();
   // keep track of table name
-  const [tableName, setTableName] = useState<string>('Table name');
+  const [tableName, setTableName] = useState<string>('');
 
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
+
+  const history = useHistory();
+  const { loading } = useAppSelector(selectSaveTableStatus);
+  const { name, lastModifiedDate } = useAppSelector(selectCurrentTable);
+  const lastSaved = useAppSelector(selectLastSaved);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (name) {
+      setTableName(name);
+    }
+  }, [name]);
 
   const onChangeTableName = (event: ChangeEvent<HTMLInputElement>) => {
     // keep track of name
@@ -44,7 +59,7 @@ const Toolbar = () => {
 
   const onBlurTableName = (event: FocusEvent<HTMLInputElement>) => {
     const newValue = event.target.value === '' ? 'Table name' : event.target.value;
-    setTableName(newValue);
+    dispatch(updateCurrentTable({ name: newValue }));
   };
 
   const onInputClick = (event: MouseEvent<HTMLInputElement>) => {
@@ -70,6 +85,14 @@ const Toolbar = () => {
     setAnchorEl(null);
   };
 
+  const handleSave = () => {
+    dispatch(saveTable())
+      .unwrap()
+      .then((res) => {
+        history.push(res.id);
+      });
+  };
+
   return (
     <>
       <div className={styles.Container}>
@@ -87,7 +110,11 @@ const Toolbar = () => {
                 [styles.DefaultName]: tableName === 'Table name'
               })}
             />
-            <SaveIndicator className={styles.SaveIcon} />
+            <SaveIndicator
+              value={lastModifiedDate}
+              lastSaved={lastSaved}
+              loading={!!loading}
+              className={styles.SaveIcon} />
           </div>
           <div className={clsx(styles.RowMenu, styles.ActionsContainer)}>
             <Button
@@ -112,9 +139,11 @@ const Toolbar = () => {
           </div>
         </div>
         <Button
+          onClick={handleSave}
           variant="contained"
           color="primary"
           size="medium"
+          disabled={lastModifiedDate ? new Date(lastSaved) >= new Date(lastModifiedDate) : true}
           startIcon={<SaveRoundedIcon />}
           className={clsx(
             styles.SaveButton

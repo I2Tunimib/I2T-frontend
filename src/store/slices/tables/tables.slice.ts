@@ -19,9 +19,8 @@ const initialState: TablesState = {
     annotated: { byId: {}, allIds: [] }
   },
   ui: {
-    selectedSource: 'raw',
     uploadDialogOpen: false,
-    selectedTable: '',
+    importDialogOpen: false,
     uploadProgressDialogOpen: false
   },
   _uploadRequests: { byId: {}, allIds: [] },
@@ -36,9 +35,11 @@ export const tablesSlice = createSliceWithRequests({
      * Order tables by name or date.
      */
     orderTables: (state, action: PayloadAction<OrderTablesPayload>) => {
-      const { order, property } = action.payload;
       const { selectedSource } = state.ui;
-      orderTablesArray(state, selectedSource, property, order);
+      if (selectedSource) {
+        const { order, property } = action.payload;
+        orderTablesArray(state, selectedSource, property, order);
+      }
     },
     /**
      * Merges parameters of the UI to the current state.
@@ -54,13 +55,13 @@ export const tablesSlice = createSliceWithRequests({
      * Update upload requests.
      */
     updateFileUpload: (state, action: PayloadAction<UpdateFileUploadPayload>) => {
-      const { requestId, fileName, progress } = action.payload;
+      const { requestId, name, progress } = action.payload;
       if (!state._uploadRequests.byId[requestId]) {
         state._uploadRequests.allIds.push(requestId);
       }
       state._uploadRequests.byId[requestId] = {
         id: requestId,
-        fileName,
+        name,
         progress,
         status: progress < 100 ? 'pending' : 'done'
       };
@@ -72,12 +73,14 @@ export const tablesSlice = createSliceWithRequests({
         const tables = action.payload;
         const { selectedSource } = state.ui;
 
-        tables.forEach((table: TableInstance) => {
-          if (!state.entities[selectedSource].byId[table.name]) {
-            state.entities[selectedSource].byId[table.name] = table;
-            state.entities[selectedSource].allIds.push(table.name);
-          }
-        });
+        if (selectedSource) {
+          tables.forEach((table: TableInstance) => {
+            if (!state.entities[selectedSource].byId[table.id]) {
+              state.entities[selectedSource].byId[table.id] = table;
+              state.entities[selectedSource].allIds.push(table.id);
+            }
+          });
+        }
       })
       .addCase(uploadTable.fulfilled, (state, action) => {
         const table = action.payload as TableInstance;
@@ -107,14 +110,14 @@ export const tablesSlice = createSliceWithRequests({
           }
         }
       })
-      .addCase(removeTable.fulfilled, (state, action) => {
-        const table = action.payload as TableInstance;
-        const { type } = table;
+      .addCase(removeTable.fulfilled, (state, action: PayloadAction<string>) => {
+        const id = action.payload;
+        const { selectedSource: type } = state.ui;
         if (type === TableType.RAW || type === TableType.ANNOTATED) {
-          if (state.entities[type].byId[table.name]) {
-            state.entities[type].byId = removeObject(state.entities[type].byId, table.name);
+          if (state.entities[type].byId[id]) {
+            state.entities[type].byId = removeObject(state.entities[type].byId, id);
             state.entities[type].allIds = state.entities[type].allIds
-              .filter((id) => id !== table.name);
+              .filter((tableId) => tableId !== id);
           }
         }
       })

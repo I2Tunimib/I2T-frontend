@@ -1,17 +1,20 @@
 import { PayloadAction } from '@reduxjs/toolkit';
+import { GetTableResponse } from '@services/api/table';
 import { convertFromCSV, CsvSeparator } from '@services/converters/csv-converter';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
 import { Payload } from '@store/interfaces/store';
+import { TableInstance } from '../tables/interfaces/tables';
 import {
   AutoMatchingPayload,
   ColumnStatus,
   DeleteColumnPayload,
   DeleteRowPayload,
   DeleteSelectedPayload,
-  LoadLocalTablePayload,
+  FileFormat,
   ReconciliationFulfilledPayload,
   TableState,
+  TableType,
   TableUIState,
   UpdateCellEditablePayload,
   UpdateCellLabelPayload,
@@ -21,7 +24,7 @@ import {
   UpdateSelectedColumnPayload,
   UpdateSelectedRowPayload
 } from './interfaces/table';
-import { loadUpTable, reconcile } from './table.thunk';
+import { getTable, reconcile, saveTable } from './table.thunk';
 import {
   deleteOneColumn, deleteOneRow,
   deleteSelectedColumns, deleteSelectedRows
@@ -40,11 +43,12 @@ import { removeObject, getIdsFromCell } from './utils/table.utils';
 
 const initialState: TableState = {
   entities: {
-    currentTable: { name: '' },
+    tableInstance: { name: '' },
     columns: { byId: {}, allIds: [] },
     rows: { byId: {}, allIds: [] }
   },
   ui: {
+    lastSaved: '',
     search: { filter: 'all', value: '' },
     denseView: false,
     openReconciliateDialog: false,
@@ -59,8 +63,7 @@ const initialState: TableState = {
     patches: [],
     inversePatches: [],
     undoPointer: -1,
-    redoPointer: -1,
-    lastChange: undefined
+    redoPointer: -1
   }
 };
 
@@ -72,10 +75,14 @@ export const tableSlice = createSliceWithRequests({
       return { ...initialState };
     },
     /**
-     * Update current table metadata.
+     * Update current table.
      */
     updateCurrentTable: (state, action: PayloadAction<Payload<UpdateCurrentTablePayload>>) => {
-      state.entities.currentTable = action.payload;
+      state.entities.tableInstance = {
+        ...state.entities.tableInstance,
+        ...action.payload
+      };
+      state.entities.tableInstance.lastModifiedDate = new Date().toISOString();
     },
     /**
      *  Set selected cell as expanded.
@@ -103,12 +110,14 @@ export const tableSlice = createSliceWithRequests({
     updateCellLabel: (state, action: PayloadAction<Payload<UpdateCellLabelPayload>>) => {
       const { cellId, value, undoable = true } = action.payload;
       const [rowId, colId] = getIdsFromCell(cellId);
+
       if (state.entities.rows.byId[rowId].cells[colId].label !== value) {
         return produceWithPatch(state, undoable, (draft) => {
           draft.entities.rows.byId[rowId].cells[colId].label = value;
         }, (draft) => {
           // do not include in undo history
           draft.entities.rows.byId[rowId].cells[colId].editable = false;
+          draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
       }
       // if value is the same just stop editing cell
@@ -121,8 +130,9 @@ export const tableSlice = createSliceWithRequests({
     updateCellMetadata: (state, action: PayloadAction<Payload<UpdateCellMetadataPayload>>) => {
       const { metadataId, cellId, undoable = true } = action.payload;
       const [rowId, colId] = getIdsFromCell(cellId);
+
       return produceWithPatch(state, undoable, (draft) => {
-        draft.ui.selectedCellMetadataId[cellId] = metadataId;
+        // draft.ui.selectedCellMetadataId[cellId] = metadataId;
         draft.entities.rows.byId[rowId].cells[colId].metadata.values.forEach((metaItem) => {
           if (metaItem.id === metadataId) {
             metaItem.match = true;
@@ -133,6 +143,9 @@ export const tableSlice = createSliceWithRequests({
         if (isColumnReconciliated(draft, colId)) {
           draft.entities.columns.byId[colId].status = ColumnStatus.RECONCILIATED;
         }
+      }, (draft) => {
+        // do not include in undo history
+        draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
       });
     },
     /**
@@ -142,6 +155,7 @@ export const tableSlice = createSliceWithRequests({
      */
     autoMatching: (state, action: PayloadAction<Payload<AutoMatchingPayload>>) => {
       const { threshold, undoable = true } = action.payload;
+
       return produceWithPatch(state, undoable, (draft) => {
         const { rows } = draft.entities;
         const { selectedCellIds, selectedCellMetadataId } = draft.ui;
@@ -153,6 +167,9 @@ export const tableSlice = createSliceWithRequests({
             draft.entities.columns.byId[colId].status = ColumnStatus.RECONCILIATED;
           }
         });
+      }, (draft) => {
+        // do not include in undo history
+        draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
       });
     },
     /**
@@ -209,9 +226,11 @@ export const tableSlice = createSliceWithRequests({
           }
         }
       }, (draft) => {
+        // do not include in undo history
         draft.ui.selectedColumnsIds = {};
         draft.ui.selectedRowsIds = {};
         draft.ui.selectedCellIds = {};
+        draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
       });
     },
     deleteColumn: (state, action: PayloadAction<Payload<DeleteColumnPayload>>) => {
@@ -236,29 +255,42 @@ export const tableSlice = createSliceWithRequests({
      * Perform an undo by applying undo patches (past patches).
      */
     undo: (state, action: PayloadAction<void>) => {
-      return applyUndoPatches(state);
+      return applyUndoPatches(state, (draft) => {
+        draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+      });
     },
     /**
      * Perform a redo by applying redo patches (future patches).
      */
     redo: (state, action: PayloadAction<void>) => {
-      return applyRedoPatches(state);
+      return applyRedoPatches(state, (draft) => {
+        draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+      });
     }
   },
   extraRules: (builder) => (
     builder
-      .addCase(
-        loadUpTable.fulfilled,
-        (state, { payload }: PayloadAction<LoadLocalTablePayload | undefined>) => {
-          if (payload) {
-            const { selectedCellMetadataId, ...entities } = payload;
-            state.entities = entities;
-            if (selectedCellMetadataId) {
-              state.ui.selectedCellMetadataId = selectedCellMetadataId;
-            }
-          }
+      .addCase(getTable.fulfilled, (state, action: PayloadAction<GetTableResponse>) => {
+        const { table, columns, rows } = action.payload;
+        let tableInstance = {} as TableInstance;
+        if (table.type === TableType.RAW) {
+          tableInstance.name = 'Table name';
+          tableInstance.format = FileFormat.JSON;
+          tableInstance.type = TableType.ANNOTATED;
+          tableInstance.lastModifiedDate = new Date().toISOString();
+        } else {
+          tableInstance = { ...table };
+          state.ui.lastSaved = tableInstance.lastModifiedDate;
         }
-      )
+        state.entities = {
+          tableInstance,
+          columns,
+          rows
+        };
+      })
+      .addCase(saveTable.fulfilled, (state, action: PayloadAction<TableInstance>) => {
+        state.ui.lastSaved = action.payload.lastModifiedDate;
+      })
       /**
        * Set metadata on request fulfilled.
        * --UNDOABLE ACTION--
@@ -270,7 +302,7 @@ export const tableSlice = createSliceWithRequests({
 
         return produceWithPatch(state, undoable, (draft) => {
           const updatedColumns = new Set<string>();
-          const reconciliators = {} as any;
+          const reconciliators = {} as Record<any, string[]>;
           // add metadata to cells
           data.forEach((item) => {
             draft.ui.selectedCellMetadataId = removeObject(
@@ -284,9 +316,12 @@ export const tableSlice = createSliceWithRequests({
             }
             reconciliators[colId] = [
               ...reconciliators[colId],
-              reconciliator
+              reconciliator.id
             ];
-            draft.entities.rows.byId[rowId].cells[colId].metadata.reconciliator = reconciliator;
+            draft.entities.rows.byId[rowId].cells[colId].metadata.reconciliator = {
+              id: reconciliator.id,
+              name: reconciliator.name
+            };
             // check if there are matching metadata for a given cell
             item.metadata.forEach((metadataItem) => {
               if (metadataItem.match) {
@@ -304,6 +339,8 @@ export const tableSlice = createSliceWithRequests({
               draft.entities.columns.byId[colId].status = ColumnStatus.PENDING;
             }
           });
+        }, (draft) => {
+          draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
       })
   )

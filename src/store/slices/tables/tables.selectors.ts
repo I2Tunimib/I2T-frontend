@@ -33,8 +33,8 @@ export const selectNumberOfActiveUploadRequests = createSelector(
 export const selectTables = createSelector(
   selectTableEntities,
   selectSelectedSource,
-  (tablesEntities, source) => tablesEntities[source].allIds
-    .map((id) => tablesEntities[source].byId[id])
+  (tablesEntities, source) => (source ? tablesEntities[source].allIds
+    .map((id) => tablesEntities[source].byId[id]) : [])
 );
 
 export const selectIsUploadDialogOpen = createSelector(
@@ -47,7 +47,7 @@ export const selectIsUploadProgressDialogOpen = createSelector(
   (ui) => ui.uploadProgressDialogOpen
 );
 
-export const selectSelectedTable = createSelector(
+export const selectIsImportDialogOpen = createSelector(
   selectUIState,
-  (ui) => ui.selectedTable
+  (ui) => ui.importDialogOpen
 );

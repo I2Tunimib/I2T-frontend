@@ -6,7 +6,6 @@ import { searchTables } from '@store/slices/tables/tables.thunk';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
 import { useDebouncedCallback } from 'use-debounce';
 import { Link } from 'react-router-dom';
-import { loadUpTable } from '@store/slices/table/table.thunk';
 import styles from './Toolbar.module.scss';
 
 interface ToolbarProps { }
@@ -28,17 +27,6 @@ const Toolbar: FC<ToolbarProps> = () => {
     }
   }, 300);
 
-  const setCurrentTable = (table: TableInstance) => {
-    const { name, type, ...meta } = table;
-    dispatch(loadUpTable({
-      table: {
-        name: table.name,
-        type: table.type,
-        meta
-      }
-    }));
-  };
-
   return (
     <div className={styles.Container}>
       <Typography component="h4" variant="h4">I2T4E</Typography>
@@ -55,13 +43,8 @@ const Toolbar: FC<ToolbarProps> = () => {
               <>
                 {currentTables.length > 0 ? currentTables.map((table, index) => (
                   <Link
-                    key={table.name}
-                    to={
-                      table.type === 'raw'
-                        ? `/table/${table.name}?draft=true`
-                        : `/table/${table.name}`
-                    }
-                    onClick={() => setCurrentTable(table)}
+                    key={table.id}
+                    to={`/table/${table.id}`}
                     className={styles.AutocompleteItem}>
                     <Typography className={styles.Name}>{table.name}</Typography>
                     <ButtonShortcut text={table.type} />
@@ -78,7 +61,7 @@ const Toolbar: FC<ToolbarProps> = () => {
         className={styles.Searchbar}
         enableTags={false}
         expand={false}
-        placeholder="Search tables..."
+        placeholder="Search for a table name"
       />
     </div>
   );

@@ -1,6 +1,8 @@
 import { CsvSeparator } from '@services/converters/csv-converter';
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
+import { ID, BaseState } from '@store/interfaces/store';
+import { Reconciliator } from '@store/slices/config/interfaces/config';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
 
 /**
@@ -9,7 +11,7 @@ import { TableInstance } from '@store/slices/tables/interfaces/tables';
  */
 export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   entities: {
-    currentTable: CurrentTableState;
+    tableInstance: CurrentTableState;
     columns: ColumnState;
     rows: RowState;
   },
@@ -30,15 +32,7 @@ export interface TableUIState {
   selectedRowsIds: Record<ID, boolean>;
   selectedCellIds: Record<ID, boolean>;
   selectedCellMetadataId: Record<ID, string>;
-}
-
-export type ID = string;
-/**
- * Base state for entities.
- */
-interface BaseState<T> {
-  byId: Record<ID, T>;
-  allIds: string[];
+  lastSaved: string;
 }
 
 export interface ColumnState extends BaseState<Column> {}
@@ -77,7 +71,10 @@ export interface Cell {
   expanded: boolean;
 }
 export interface Metadata {
-  reconciliator: string;
+  reconciliator: {
+    id: ID;
+    name: string;
+  };
   values: MetadataInstance[];
 }
 /**
@@ -122,7 +119,7 @@ export interface ReconciliationFulfilledPayload {
     id: ID,
     metadata: MetadataInstance[]
   }[],
-  reconciliator: string;
+  reconciliator: Reconciliator & { id: ID };
 }
 
 export interface UpdateCellMetadataPayload {
@@ -143,23 +140,15 @@ export interface AutoMatchingPayload {
   threshold: number;
 }
 
+export interface UpdateCurrentTablePayload extends Partial<TableInstance> {}
+
 export interface DeleteSelectedPayload {}
 
 export interface DeleteColumnPayload {
   colId: ID;
 }
-
 export interface DeleteRowPayload {
   rowId: ID;
-}
-
-export interface UpdateCurrentTablePayload extends Partial<CurrentTableState> { }
-
-export interface LoadLocalTablePayload {
-  currentTable: CurrentTableState;
-  columns: ColumnState;
-  rows: RowState;
-  selectedCellMetadataId?: Record<ID, ID>;
 }
 
 export enum TableType {

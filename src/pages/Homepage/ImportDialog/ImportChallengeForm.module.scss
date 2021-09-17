@@ -1,0 +1,38 @@
+.FormRow {
+  display: flex;
+  gap: 20px;
+
+  .BigTextField {
+    width: 70%;
+  }
+  .FillRemaining {
+    flex-grow: 1;
+  }
+}
+
+.ButtonSelect {
+  align-self: flex-start;
+}
+
+.Container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .Row {
+    display: flex;
+    gap: 20px;
+  
+    .BigTextField {
+      width: 70%;
+    }
+    .FillRemaining {
+      flex-grow: 1;
+    }
+  }
+
+  .Buttons {
+    display: flex;
+    justify-content: flex-end;
+  }
+}

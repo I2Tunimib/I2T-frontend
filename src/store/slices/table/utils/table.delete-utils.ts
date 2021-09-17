@@ -1,7 +1,7 @@
 import { Draft, original } from '@reduxjs/toolkit';
+import { ID } from '@store/interfaces/store';
 import {
-  ColumnState, RowState,
-  ID, TableState, ColumnStatus
+  ColumnState, RowState, TableState, ColumnStatus
 } from '../interfaces/table';
 import { hasColumnMetadata, isColumnReconciliated, isReconciliatorPresent } from './table.reconciliation-utils';
 import { removeObject } from './table.utils';
@@ -44,7 +44,7 @@ export const deleteSelectedRows = (state: Draft<TableState>) => {
   Object.keys(selectedRowsIds).forEach((rowId) => {
     state.entities.columns.allIds.forEach((colId) => {
       const { reconciliator } = state.entities.rows.byId[rowId].cells[colId].metadata;
-      reconciliatorsToBeDiscarded.add(reconciliator);
+      reconciliatorsToBeDiscarded.add(reconciliator.id);
     });
     state.entities.rows.byId = removeObject(state.entities.rows.byId, rowId);
   });

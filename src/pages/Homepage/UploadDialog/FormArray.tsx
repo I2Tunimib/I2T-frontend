@@ -21,15 +21,11 @@ interface FormArrayProps {
   files: ProcessedFile[];
   control: Control<FormState, object>;
   register: UseFormRegister<FormState>;
-  watch: UseFormWatch<FormState>;
-  setValue: UseFormSetValue<FormState>;
-  getValues: UseFormGetValues<FormState>;
 }
 
 interface FileInputFormProps {
   item: FieldArrayWithId<FormState>;
   index: number;
-  watchChallengeTable: boolean;
   control: Control<FormState, object>;
   register: UseFormRegister<FormState>;
 }
@@ -59,7 +55,6 @@ const FileInputForm: FC<FileInputFormProps> = ({
   item,
   index,
   control,
-  watchChallengeTable,
   register
 }) => {
   return (
@@ -69,18 +64,18 @@ const FileInputForm: FC<FileInputFormProps> = ({
           className={styles.BigTextField}
           label="File name"
           size="small"
-          defaultValue={item.fileName}
+          defaultValue={item.name}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                {`.${item.fileExtension}`}
+                {`.${item.format}`}
               </InputAdornment>
             )
           }}
           variant="outlined"
-          {...register(`files.${index}.fileName`)} />
+          {...register(`files.${index}.name`)} />
 
-        {item.fileExtension === 'csv'
+        {item.format === 'csv'
           ? (
             <Controller
               control={control}
@@ -106,45 +101,24 @@ const FileInputForm: FC<FileInputFormProps> = ({
           )
           : null}
       </div>
-      {watchChallengeTable ? (
-        <Controller
-          control={control}
-          name={`files.${index}.type`}
-          render={({ field }) => (
-            <TextField
-              fullWidth
-              label="Type of table"
-              size="small"
-              variant="outlined"
-              select
-              {...field}
-            >
-              {selectChallengeTableTypesOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-      ) : (
-        <Controller
-          control={control}
-          name={`files.${index}.type`}
-          render={({ field }) => (
-            <TextField
-              fullWidth
-              label="Type of table"
-              size="small"
-              variant="outlined"
-              select
-              {...field}
-            >
-              {selectNormalTableTypesOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-      )}
+      <Controller
+        control={control}
+        name={`files.${index}.type`}
+        render={({ field }) => (
+          <TextField
+            fullWidth
+            label="Type of table"
+            size="small"
+            variant="outlined"
+            select
+            {...field}
+          >
+            {selectNormalTableTypesOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+            ))}
+          </TextField>
+        )}
+      />
     </>
   );
 };
@@ -169,9 +143,7 @@ const SkeletonForm = () => {
 const FormArray: FC<FormArrayProps> = ({
   files,
   control,
-  register,
-  watch,
-  setValue
+  register
 }) => {
   const {
     fields,
@@ -182,34 +154,11 @@ const FormArray: FC<FormArrayProps> = ({
     shouldUnregister: true
   });
 
-  const watchChallengeTable = watch('challengeTable');
-
   useEffect(() => {
     files.forEach((file) => {
       append({ ...file, type: NormalTableType.RAW });
     });
   }, [files]);
-
-  const getTableChallengeType = (file: File) => {
-    for (const key of enumKeys(ChallengeTableType)) {
-      if (file.name.toLowerCase().includes(ChallengeTableType[key])) {
-        return ChallengeTableType[key];
-      }
-    }
-    return ChallengeTableType.DATA;
-  };
-
-  useEffect(() => {
-    if (watchChallengeTable === true) {
-      fields.forEach((field, index) => {
-        setValue(`files.${index}.type`, getTableChallengeType(field.original));
-      });
-    } else if (watchChallengeTable === false) {
-      fields.forEach((field, index) => {
-        setValue(`files.${index}.type`, NormalTableType.RAW);
-      });
-    }
-  }, [watchChallengeTable]);
 
   return (
     <div className={styles.Container}>
@@ -223,7 +172,6 @@ const FormArray: FC<FormArrayProps> = ({
                   item,
                   index,
                   control,
-                  watchChallengeTable,
                   register
                 }}
                 />

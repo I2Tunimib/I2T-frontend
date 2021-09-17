@@ -5,8 +5,6 @@ import { FileFormat } from '@store/slices/table/interfaces/table';
  * Form state.
  */
 export interface FormState {
-  challengeTable: boolean;
-  action: ActionType;
   files: FormFile[];
 }
 
@@ -14,11 +12,11 @@ export interface FormState {
  * Form file field.
  */
 export interface FormFile {
-  fileName: string;
-  fileExtension: FileFormat;
+  name: string;
+  format: FileFormat;
   separator: CsvSeparator;
   original: File;
-  type: NormalTableType | ChallengeTableType;
+  type: NormalTableType;
 }
 
 /**

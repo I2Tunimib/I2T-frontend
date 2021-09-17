@@ -1,30 +1,28 @@
-import { CsvSeparator } from '@services/converters/csv-converter';
-import { FileFormat, TableType } from '@store/slices/table/interfaces/table';
+import { ID } from '@store/interfaces/store';
+import { ColumnState, RowState } from '@store/slices/table/interfaces/table';
+import { TableInstance } from '@store/slices/tables/interfaces/tables';
 import { CancelToken } from 'axios';
 import apiClient from './config/config';
 
-interface GetTableResponse {
-  data: string;
-  name: string;
-  format: FileFormat;
-  type: TableType;
-  separator?: CsvSeparator;
+export interface GetTableResponse {
+  table: TableInstance;
+  columns: ColumnState;
+  rows: RowState;
 }
 
 const tableAPI = {
-  getTableNames: (dataSource: string) => apiClient.get(`/${dataSource}`),
-  getTables: (type: string) => apiClient.get(`/tables?type=${type}`),
-  searchTables: (query: string) => apiClient.get(`/tables?search=${query}`),
-  getTable: (name: string, acceptHeader?: string) => apiClient.get<GetTableResponse>(`/tables/${name}`, {
+  getTable: (id: ID, acceptHeader?: string) => apiClient.get<GetTableResponse>(`/tables/${id}`, {
     headers: {
       Accept: acceptHeader
     }
   }),
+  getTables: (type: string) => apiClient.get(`/tables?type=${type}`),
+  searchTables: (query: string) => apiClient.get(`/tables?search=${query}`),
   uploadTable: (
     formData: FormData,
     cancelToken: CancelToken,
     onProgress: (progress: number) => void,
-  ) => apiClient.post('/tables/upload', formData, {
+  ) => apiClient.post('/tables', formData, {
     headers: {
       'content-type': 'multipart/form-data'
     },
@@ -33,9 +31,11 @@ const tableAPI = {
       onProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
     }
   }),
+  saveTable: (data: any) => apiClient.post<TableInstance>('/tables/save', data),
+  importTable: (formData: FormData) => apiClient.post('/tables/import', formData),
   copyTable: (name: string) => apiClient.post('/tables/copy', { name }),
-  removeTable: (name: string) => apiClient.delete(`tables/${name}`),
-  reconcile: (baseUrl: string, data: any) => apiClient.post(baseUrl, data)
+  removeTable: (id: ID) => apiClient.delete(`tables/${id}`),
+  reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data)
 };
 
 export default tableAPI;

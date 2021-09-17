@@ -3,7 +3,9 @@ import { createSelector } from '@reduxjs/toolkit';
 import { floor } from '@services/utils/math';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
-import { selectServicesConfig } from '../config/config.selectors';
+import { Row } from 'react-table';
+import { selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
+// import { selectServicesConfig } from '../config/config.selectors';
 import { TableThunkActions } from './table.thunk';
 import { getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getIdsFromCell } from './utils/table.utils';
@@ -19,13 +21,17 @@ const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
 
 // LOADING SELECTORS
-export const selectLoadTableStatus = createSelector(
+export const selectGetTableStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.LOAD_UP_TABLE)
+  (requests) => getRequestStatus(requests, TableThunkActions.GET_TABLE)
 );
 export const selectReconcileRequestStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.RECONCILE)
+);
+export const selectSaveTableStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, TableThunkActions.SAVE_TABLE)
 );
 
 // UNDO SELECTORS
@@ -37,14 +43,13 @@ export const selectCanRedo = createSelector(
   selectDraftState,
   (draft) => draft.redoPointer > -1
 );
-export const selectLastChangeDate = createSelector(
-  selectDraftState,
-  (draft) => draft.lastChange
-);
 
+/**
+ * Select current table.
+ */
 export const selectCurrentTable = createSelector(
   selectEntitiesState,
-  (entities) => entities.currentTable
+  (entities) => entities.tableInstance
 );
 
 /**
@@ -147,6 +152,11 @@ export const selectMetdataCellId = createSelector(
 
 // SELECTORS FOR UI STATUS
 
+export const selectLastSaved = createSelector(
+  selectUIState,
+  (ui) => ui.lastSaved
+);
+
 export const selectIsDenseView = createSelector(
   selectUIState,
   (ui) => ui.denseView
@@ -205,8 +215,8 @@ export const selectIsAutoMatchingEnabled = createSelector(
  */
 export const selectDataTableFormat = createSelector(
   selectEntitiesState,
-  selectServicesConfig,
-  (entities, config) => {
+  selectReconciliatorsAsObject,
+  (entities, reconciliators) => {
     const columns = entities.columns.allIds.map((colId) => ({
       Header: entities.columns.byId[colId].label,
       accessor: colId,
@@ -214,11 +224,11 @@ export const selectDataTableFormat = createSelector(
       reconciliators: entities.columns.byId[colId].reconciliators,
       extension: entities.columns.byId[colId].extension
     }));
+
     const rows = entities.rows.allIds.map((rowId) => (
       Object.keys(entities.rows.byId[rowId].cells).reduce((acc, colId) => {
-        const currentService = config.reconciliators
-          .find((service: any) => service.name
-            === entities.rows.byId[rowId].cells[colId].metadata.reconciliator);
+        const cellReconciliator = entities.rows.byId[rowId].cells[colId].metadata.reconciliator;
+        const currentService = reconciliators[cellReconciliator?.id];
         return {
           ...acc,
           [colId]: {
@@ -283,41 +293,77 @@ export const selectAutoMatchingCells = createSelector(
   }
 );
 
+const toString = (value: any) => {
+  if (typeof value === 'number') {
+    return value.toFixed(2);
+  }
+  if (typeof value === 'boolean') {
+    return `${value}`;
+  }
+  return value;
+};
+
 /**
  * Get metadata formatted to display as table.
  */
 export const selectCellMetadataTableFormat = createSelector(
   selectCellIdIfOneSelected,
-  selectServicesConfig,
+  selectReconciliators,
   selectRowsState,
-  (cellId, config, rows): {
-    columns: SimpleColumn[], rows: SimpleRow[], selectedCellId: string
-  } => {
-    if (!cellId) {
-      return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
-    }
-    const [rowId, colId] = getIdsFromCell(cellId);
-
-    const currentService = config.reconciliators
-      .find((service: any) => service.name
-        === rows.byId[rowId].cells[colId].metadata.reconciliator);
-
-    const { metadata } = rows.byId[rowId].cells[colId];
-
-    if (metadata.values.length > 0) {
-      const formattedCols: SimpleColumn[] = currentService.metaToViz.map((label: string) => ({
-        id: label
-      }));
-      const formattedRows = rows.byId[rowId].cells[colId].metadata.values
-        .map((metadataItem) => ({
-          id: metadataItem.id,
-          resourceUrl: `${currentService.entityPageUrl}/${metadataItem.id}`,
-          cells: formattedCols.map((col) => (col.id === 'type'
-            ? metadataItem.type[0].name
-            : metadataItem[col.id] as string))
+  (cellId, reconciliators, rows) => {
+    if (cellId) {
+      const [rowId, colId] = getIdsFromCell(cellId);
+      const { reconciliator, values } = rows.byId[rowId].cells[colId].metadata;
+      const service = reconciliators.byId[reconciliator?.id];
+      if (service) {
+        const columns = service.metaToViz.map((tableColId) => ({
+          Header: tableColId,
+          accessor: tableColId
         }));
-      return { columns: formattedCols, rows: formattedRows, selectedCellId: cellId };
+        const data = values.map((metadata) => {
+          return {
+            ...service.metaToViz.reduce((acc, tableColId) => {
+              acc[tableColId] = {
+                label: toString(metadata[tableColId]),
+                isLink: tableColId === 'name',
+                link: tableColId === 'name' && service.entityPageUrl
+                  ? `${service.entityPageUrl}/${metadata.id}`
+                  : undefined
+              };
+              return acc;
+            }, {} as { [key: string]: any } & Row),
+            isSelected: metadata.match
+          };
+        });
+        return { columns, data };
+      }
     }
-    return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
+    return { columns: [], data: [] };
+    // if (!cellId) {
+    //   return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
+    // }
+    // const [rowId, colId] = getIdsFromCell(cellId);
+
+    // const currentService = config.reconciliators
+    //   .find((service: any) => service.name
+    //     === rows.byId[rowId].cells[colId].metadata.reconciliator);
+
+    // const { metadata } = rows.byId[rowId].cells[colId];
+
+    // if (metadata.values.length > 0) {
+    //   const formattedCols: SimpleColumn[] = currentService.metaToViz.map((label: string) => ({
+    //     id: label
+    //   }));
+    //   const formattedRows = rows.byId[rowId].cells[colId].metadata.values
+    //     .map((metadataItem) => ({
+    //       id: metadataItem.id,
+    //       resourceUrl: `${currentService.entityPageUrl}/${metadataItem.id}`,
+    //       cells: formattedCols.map((col) => (col.id === 'type'
+    //         ? metadataItem.type[0].name
+    //         : metadataItem[col.id] as string))
+    //     }));
+    //   return { columns: formattedCols, rows: formattedRows, selectedCellId: cellId };
+    // }
+    // return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
   }
 );

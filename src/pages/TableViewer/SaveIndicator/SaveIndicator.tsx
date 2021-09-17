@@ -1,4 +1,7 @@
-import { FC, HTMLAttributes, useState } from 'react';
+import {
+  FC, HTMLAttributes,
+  useState, useEffect
+} from 'react';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
 import ErrorOutlineRoundedIcon from '@material-ui/icons/ErrorOutlineRounded';
 import LoopRoundedIcon from '@material-ui/icons/LoopRounded';
@@ -11,12 +14,15 @@ import {
 } from '@material-ui/core';
 import clsx from 'clsx';
 import { useAppSelector } from '@hooks/store';
-import { selectLastChangeDate } from '@store/slices/table/table.selectors';
 import TimeAgo from 'react-timeago';
 import styles from './SaveIndicator.module.scss';
 import timeAgoFormatter from './time-formatter';
 
-interface SaveIndicatorProps extends HTMLAttributes<HTMLDivElement> { }
+interface SaveIndicatorProps extends HTMLAttributes<HTMLDivElement> {
+  value: string | undefined;
+  lastSaved: string | undefined;
+  loading: boolean;
+}
 enum TooltipStatus {
   ERROR,
   PENDING,
@@ -81,61 +87,79 @@ const TooltipContent: FC<TooltipContentProps> = ({
 };
 
 const SaveIndicator: FC<SaveIndicatorProps> = ({
+  value,
+  lastSaved,
+  loading,
   className
 }) => {
-  const [status, setStatus] = useState<TooltipStatus>(TooltipStatus.UNSAVED);
-  const lastChange = useAppSelector(selectLastChangeDate);
-  // substitute with selector for http request
-  const loading = false;
+  const [status, setStatus] = useState<TooltipStatus | null>();
+
+  useEffect(() => {
+    if (!lastSaved) {
+      setStatus(TooltipStatus.UNSAVED);
+    }
+    if (value && lastSaved) {
+      const dateA = new Date(value);
+      const dateB = new Date(lastSaved);
+
+      if (dateB < dateA) {
+        setStatus(TooltipStatus.UNSAVED);
+      } else {
+        setStatus(TooltipStatus.SAVED);
+      }
+    }
+  }, [value, lastSaved]);
 
   return (
-    <div className={styles.Container}>
-      <LightTooltip
-        title={(
-          <TooltipContent status={status} />
-        )}>
-        <Button
-          startIcon={
-            loading
-              ? (
-                <LoopRoundedIcon className={clsx(
-                  styles.Icon,
-                  styles.Loading
-                )} />
-              )
-              : [
-                status === TooltipStatus.SAVED
-                  ? (
-                    <CloudDoneOutlinedIcon
-                      key="saved"
-                      className={clsx(
-                        styles.Icon,
-                        styles.SavedChanges
-                      )} />
-                  )
-                  : (
-                    <ErrorOutlineRoundedIcon
-                      key="unsaved"
-                      className={clsx(
-                        styles.Icon,
-                        styles.UnsavedChanges
-                      )} />
-                  )
-              ]
-          }
-          size="small"
-          className={clsx(className, styles.Button)}>
-          <Typography className={styles.LastChange} color="textSecondary" variant="body2">
-            {lastChange
-              ? (
-                <TimeAgo title="" formatter={timeAgoFormatter} date={lastChange} />
-              )
-              : 'No changes yet'
+    status ? (
+      <div className={styles.Container}>
+        <LightTooltip
+          title={(
+            <TooltipContent status={status} />
+          )}>
+          <Button
+            startIcon={
+              loading
+                ? (
+                  <LoopRoundedIcon className={clsx(
+                    styles.Icon,
+                    styles.Loading
+                  )} />
+                )
+                : [
+                  status === TooltipStatus.SAVED
+                    ? (
+                      <CloudDoneOutlinedIcon
+                        key="saved"
+                        className={clsx(
+                          styles.Icon,
+                          styles.SavedChanges
+                        )} />
+                    )
+                    : (
+                      <ErrorOutlineRoundedIcon
+                        key="unsaved"
+                        className={clsx(
+                          styles.Icon,
+                          styles.UnsavedChanges
+                        )} />
+                    )
+                ]
             }
-          </Typography>
-        </Button>
-      </LightTooltip>
-    </div>
+            size="small"
+            className={clsx(className, styles.Button)}>
+            <Typography className={styles.LastChange} color="textSecondary" variant="body2">
+              {value
+                ? (
+                  <TimeAgo title="" formatter={timeAgoFormatter} date={value} />
+                )
+                : 'No changes yet'
+              }
+            </Typography>
+          </Button>
+        </LightTooltip>
+      </div>
+    ) : null
   );
 };
 

@@ -20,7 +20,7 @@ import {
 } from 'react';
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
-import { selectServicesConfig } from '@store/slices/config/config.selectors';
+// import { selectServicesConfig } from '@store/slices/config/config.selectors';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
 import { ButtonLoading } from '@components/core';
@@ -29,6 +29,9 @@ import {
   selectReconcileRequestStatus
 } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
+import { selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
+import { Reconciliator } from '@store/slices/config/interfaces/config';
+import { ID } from '@store/interfaces/store';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -37,41 +40,44 @@ const Transition = forwardRef((
 
 const ReconciliateDialog = () => {
   // keep track of selected service
-  const [currentService, setCurrentService] = useState<any>();
+  const [currentService, setCurrentService] = useState<string>();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const dispatch = useAppDispatch();
   // keep track of open state
   const open = useAppSelector(selectReconcileDialogStatus);
-  const { reconciliators } = useAppSelector(selectServicesConfig);
+  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading } = useAppSelector(selectReconcileRequestStatus);
 
   useEffect(() => {
     // set initial value of select
     if (reconciliators) {
-      setCurrentService(reconciliators[0]);
+      setCurrentService(reconciliators[0].id);
     }
   }, [reconciliators]);
 
   const handleConfirm = () => {
-    dispatch(reconcile({
-      baseUrl: currentService.relativeUrl,
-      data: selectedCells,
-      reconciliator: currentService.name
-    }))
-      .unwrap()
-      .then((result) => {
-        dispatch(updateUI({
-          openReconciliateDialog: false
-        }));
-      })
-      .catch((e) => {
-        enqueueSnackbar(e.message, {
-          variant: 'error',
-          autoHideDuration: 3000
+    const reconciliator = reconciliators.find((recon) => recon.id === currentService);
+    if (reconciliator) {
+      dispatch(reconcile({
+        baseUrl: reconciliator.relativeUrl,
+        data: selectedCells,
+        reconciliator
+      }))
+        .unwrap()
+        .then((result) => {
+          dispatch(updateUI({
+            openReconciliateDialog: false
+          }));
+        })
+        .catch((e) => {
+          enqueueSnackbar(e.message, {
+            variant: 'error',
+            autoHideDuration: 3000
+          });
         });
-      });
+    }
   };
 
   const handleClose = () => {
@@ -82,8 +88,10 @@ const ReconciliateDialog = () => {
     }
   };
 
-  const handleChange = (event: ChangeEvent<{ value: unknown }>) => {
-    setCurrentService(event.target.value);
+  const handleChange = (event: ChangeEvent<any>) => {
+    if (event.target.value) {
+      setCurrentService(event.target.value);
+    }
   };
 
   return (
@@ -106,8 +114,10 @@ const ReconciliateDialog = () => {
               onChange={(e) => handleChange(e)}
               variant="outlined"
             >
-              {reconciliators && reconciliators.map((service: any) => (
-                <MenuItem key={service.name} value={service}>{service.name}</MenuItem>
+              {reconciliators && reconciliators.map((reconciliator) => (
+                <MenuItem key={reconciliator.id} value={reconciliator.id}>
+                  {reconciliator.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>

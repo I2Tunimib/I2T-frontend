@@ -14,7 +14,7 @@ interface UploadProgressItemProps {
 const UploadProgressItem: FC<UploadProgressItemProps> = ({
   request: {
     id,
-    fileName,
+    name,
     progress,
     status
   },
@@ -27,7 +27,7 @@ const UploadProgressItem: FC<UploadProgressItemProps> = ({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={styles.ItemContainer}>
-      <Typography>{fileName}</Typography>
+      <Typography>{name}</Typography>
       {status === 'pending'
         ? (
           <>

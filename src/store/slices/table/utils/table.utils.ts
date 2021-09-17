@@ -1,6 +1,6 @@
 import { Draft } from '@reduxjs/toolkit';
 import { convertFromCSV, CsvSeparator } from '@services/converters/csv-converter';
-import { ID, TableState } from '../interfaces/table';
+import { ID } from '@store/interfaces/store';
 
 /**
  * Add a property to another object given old and new object.

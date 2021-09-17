@@ -1,6 +1,7 @@
 import { CsvSeparator } from '@services/converters/csv-converter';
 import { RequestEnhancedState } from '@store/enhancers/requests';
-import { FileFormat, ID, TableType } from '@store/slices/table/interfaces/table';
+import { ID } from '@store/interfaces/store';
+import { FileFormat, TableType } from '@store/slices/table/interfaces/table';
 
 export interface TablesState extends RequestEnhancedState {
   entities: {
@@ -12,9 +13,9 @@ export interface TablesState extends RequestEnhancedState {
 }
 
 export interface TablesUIState {
-  selectedSource: 'raw' | 'annotated';
-  selectedTable: string;
+  selectedSource?: 'raw' | 'annotated';
   uploadDialogOpen: boolean;
+  importDialogOpen: boolean;
   uploadProgressDialogOpen: boolean;
 }
 
@@ -27,16 +28,17 @@ interface BaseState<T> {
 
 export interface RequestUpload {
   id: ID;
-  fileName: string;
+  name: string;
   progress: number;
   status: 'pending' | 'done';
 }
 
 export interface TableInstance {
+  id: ID;
   name: string;
-  lastModifiedDate: string;
   format: FileFormat;
   type: TableType;
+  lastModifiedDate: string;
   separator?: CsvSeparator;
 }
 
@@ -49,6 +51,6 @@ export interface OrderTablesPayload {
 
 export interface UpdateFileUploadPayload {
   requestId: ID;
-  fileName: string;
+  name: string;
   progress: number;
 }

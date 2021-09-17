@@ -1,6 +1,7 @@
 import { Draft } from '@reduxjs/toolkit';
+import { ID } from '@store/interfaces/store';
 import {
-  Cell, ID,
+  Cell,
   MetadataInstance, TableState
 } from '../interfaces/table';
 
@@ -56,7 +57,7 @@ export const isReconciliatorPresent = (
   return rowIds.some((rowId) => {
     const cell = rows.byId[rowId].cells[colId];
     return cell.metadata.values.length > 0
-      && cell.metadata.reconciliator === reconciliator;
+      && cell.metadata.reconciliator.id === reconciliator;
   });
 };
 

@@ -17,11 +17,10 @@ import {
 } from '@store/slices/tables/tables.thunk';
 import { selectTables } from '@store/slices/tables/tables.selectors';
 import TimeAgo from 'react-timeago';
-import { orderTables } from '@store/slices/tables/tables.slice';
+import { orderTables, updateUI } from '@store/slices/tables/tables.slice';
 import { DroppableArea } from '@components/kit';
 import { Link, useParams } from 'react-router-dom';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
-import { loadUpTable } from '@store/slices/table/table.thunk';
 import { TableType } from '@store/slices/table/interfaces/table';
 import FileCopyOutlinedIcon from '@material-ui/icons/FileCopyOutlined';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
@@ -71,13 +70,18 @@ const Content: FC<Contentprops> = ({
     confirmationDialogState,
     setConfirmationDialogState
   ] = useState<ConfirmationDialogState>(initialConfirmationDialogState);
-  const { tables: tablesType } = useParams<{ tables: TableType }>();
+  const { tables: tablesType } = useParams<{ tables: 'raw' | 'annotated' }>();
   const dispatch = useAppDispatch();
   const tables = useAppSelector(selectTables);
 
   useEffect(() => {
+    dispatch(updateUI({ selectedSource: tablesType }));
     dispatch(getTables(tablesType));
   }, [tablesType]);
+
+  useEffect(() => {
+    console.log(tables);
+  }, [tables]);
 
   useEffect(() => {
     if (currentOrder) {
@@ -99,17 +103,6 @@ const Content: FC<Contentprops> = ({
 
   const handleOnDrop = (files: File[]) => {
     onFileChange(files);
-  };
-
-  const setCurrentTable = (table: TableInstance) => {
-    const { name, type, ...meta } = table;
-    dispatch(loadUpTable({
-      table: {
-        name: table.name,
-        type: table.type,
-        meta
-      }
-    }));
   };
 
   const handleClose = () => {
@@ -163,7 +156,7 @@ const Content: FC<Contentprops> = ({
   };
   const handleRemoveTable = () => {
     if (menuState.table) {
-      dispatch(removeTable(menuState.table.name));
+      dispatch(removeTable(menuState.table.id));
     }
     handleCloseConfirmationDialog();
   };
@@ -241,16 +234,10 @@ const Content: FC<Contentprops> = ({
           <div className={styles.List}>
             {tables.map((table) => (
               <Link
-                to={
-                  table.type === 'raw'
-                    ? `/table/${table.name}?draft=true`
-                    : `/table/${table.name}`
-                }
+                to={`/table/${table.id}`}
                 onContextMenu={(e) => handleContextMenu(e, table)}
-                onClick={() => setCurrentTable(table)}
                 className={styles.TableListItem}
-                key={table.name}
-              >
+                key={table.id}>
                 <Typography component="div" variant="body1">
                   {table.name}
                 </Typography>
