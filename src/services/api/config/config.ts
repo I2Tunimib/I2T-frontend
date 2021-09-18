@@ -10,7 +10,7 @@ const apiClient = setup({
   cache: {
     maxAge: 15 * 60 * 1000,
     exclude: {
-      filter: ({ headers }: AxiosRequestConfig) => headers.Accept === 'application/octet-stream'
+      paths: [/^\/tables\/.*$/]
     },
     invalidate: async (config, request) => {
       if (config.store && request.clearCacheEntry) {

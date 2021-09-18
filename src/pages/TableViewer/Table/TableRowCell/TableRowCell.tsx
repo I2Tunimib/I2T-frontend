@@ -33,7 +33,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
   column: { id: columnId },
   row: { id: rowId, ...restRow },
   selected,
-  matching,
   value,
   dense,
   handleSelectedRowChange,
@@ -116,7 +115,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
             <NormalCell
               label={cellValue}
               value={value}
-              matching={matching}
               dense={dense}
             />
           )}

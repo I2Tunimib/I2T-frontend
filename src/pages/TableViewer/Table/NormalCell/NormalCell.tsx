@@ -1,5 +1,5 @@
 import { FC, useCallback } from 'react';
-import { Metadata } from '@store/slices/table/interfaces/table';
+import { Metadata, MetadataInstance } from '@store/slices/table/interfaces/table';
 import clsx from 'clsx';
 import StatusBadge from '@components/core/StatusBadge';
 import ExpandableList from '@components/kit/ExpandableList/ExpandableList';
@@ -12,17 +12,16 @@ import styles from './NormalCell.module.scss';
 interface NormalCellProps {
   label: string;
   value: any;
-  matching: boolean;
   dense: boolean;
 }
 
 const NormalCell: FC<NormalCellProps> = ({
   label,
   value,
-  matching,
   dense
 }) => {
   const getBadgeStatus = (metadata: Metadata) => {
+    const matching = value.metadata.values.some((meta: MetadataInstance) => meta.match);
     if (matching) {
       return 'Success';
     }

@@ -15,7 +15,7 @@ import { HotKeys } from 'react-hotkeys';
 import {
   selectDataTableFormat,
   selectSelectedColumnIds, selectSelectedRowIds,
-  selectSelectedCellIds, selectCellMetadataIds,
+  selectSelectedCellIds,
   selectIsDenseView, selectSearchStatus, selectGetTableStatus
 } from '@store/slices/table/table.selectors';
 import { useParams } from 'react-router-dom';
@@ -58,7 +58,6 @@ const TableViewer = () => {
   const selectedColumns = useAppSelector(selectSelectedColumnIds);
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
-  const selectedCellMetadata = useAppSelector(selectCellMetadataIds);
   const isDenseView = useAppSelector(selectIsDenseView);
 
   useEffect(() => {
@@ -196,16 +195,11 @@ const TableViewer = () => {
     column, row, value, ...props
   }: TableCell) => {
     const selected = !!selectedCells[`${row.id}$${column.id}`] || !!selectedRows[row.id];
-    let matching = false;
-    if (column.id !== 'index') {
-      matching = !!selectedCellMetadata[`${row.id}$${column.id}`];
-    }
     return {
       column,
       row,
       value,
       selected,
-      matching,
       handleSelectedRowChange,
       handleSelectedCellChange,
       handleCellRightClick,
@@ -213,8 +207,7 @@ const TableViewer = () => {
     };
   }, [
     selectedCells,
-    selectedRows,
-    selectedCellMetadata
+    selectedRows
   ]);
 
   const getGlobalProps = useCallback(() => ({

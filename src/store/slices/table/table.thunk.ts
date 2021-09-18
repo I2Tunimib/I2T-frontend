@@ -1,10 +1,8 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
 import tableAPI from '@services/api/table';
-import { convertFromCSV, CsvSeparator } from '@services/converters/csv-converter';
-import { RootState } from '@store';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
 import { Reconciliator } from '../config/interfaces/config';
-import { TableFile, TableType } from './interfaces/table';
+import convertToW3CTable from './utils/table.export-utils';
 
 const ACTION_PREFIX = 'table';
 
@@ -12,9 +10,6 @@ export enum TableThunkActions {
   SAVE_TABLE = 'saveTable',
   GET_TABLE = 'getTable',
   IMPORT = 'import',
-  LOAD_UP_TABLE = 'loadUpTable',
-  GET_TABLE_NAMES = 'getTableNames',
-  UPLOAD_TABLE = 'uploadTable',
   RECONCILE = 'reconcile'
 }
 
@@ -40,6 +35,23 @@ export const importTable = createAsyncThunk(
   async (data: FormData) => {
     const response = await tableAPI.importTable(data);
     return response.data;
+  }
+);
+
+export const exportTable = createAsyncThunk(
+  `${ACTION_PREFIX}/export`,
+  async (keepMatching: boolean, { getState }) => {
+    const { table, config } = getState() as any;
+    const { columns, rows, tableInstance } = table.entities;
+    const { reconciliators } = config.entities;
+    const response = await convertToW3CTable({
+      columns,
+      rows,
+      tableInstance,
+      reconciliators,
+      keepMatching
+    });
+    return response;
   }
 );
 

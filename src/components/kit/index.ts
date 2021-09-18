@@ -1,6 +1,5 @@
 import Uploader from './Uploader';
 import InlineInput from './InlineInput';
-import SimpleTable from './SimpleTable';
 import ToolbarActions from './ToolbarActions';
 import ExpandableList from './ExpandableList';
 import ExpandableListHeader from './ExpandableListHeader';
@@ -9,6 +8,7 @@ import ExpandableListItem from './ExpandableListItem';
 import Searchbar from './Searchbar';
 import ButtonShortcut from './ButtonShortcut';
 import DroppableArea from './DroppableArea';
+import Table from './Table';
 
 export {
   ExpandableList,
@@ -17,9 +17,9 @@ export {
   ExpandableListItem,
   Uploader,
   InlineInput,
-  SimpleTable,
   ToolbarActions,
   Searchbar,
   ButtonShortcut,
-  DroppableArea
+  DroppableArea,
+  Table
 };

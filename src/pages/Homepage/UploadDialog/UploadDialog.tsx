@@ -80,22 +80,6 @@ const UploadDialog: FC<UploadDialogProps> = ({
     }));
   };
 
-  // const getFileToDispatch = ({ files: formFiles }: FormState) => {
-  //   const filesToDispatch = formFiles.map((formFile) => ({
-  //     name: formFile.fileName,
-  //     original: formFile.original,
-  //     type: (formFile.type as unknown) as TableType,
-  //     meta: {
-  //       format: formFile.fileExtension,
-  //       separator: formFile.separator
-  //     }
-  //   }));
-
-  //   return {
-  //     table: filesToDispatch.length > 1 ? filesToDispatch : filesToDispatch[0]
-  //   };
-  // };
-
   const uploadFiles = (formFiles: FormFile[]) => {
     formFiles.forEach(({ original, ...meta }, index) => {
       const formData = new FormData();
@@ -116,42 +100,13 @@ const UploadDialog: FC<UploadDialogProps> = ({
 
     // upload tables
     uploadFiles(selectedFiles);
+
     dispatch(updateUI({
       uploadDialogOpen: false
     }));
     dispatch(updateUI({
       uploadProgressDialogOpen: true
     }));
-
-    // if (challengeTable) {
-    //   if (selectedFiles.length > 1) {
-    //     if (action === ActionType.LOAD) {
-    //       // load challenge table in table viewer
-    //       dispatch(loadUpTable(getFileToDispatch(data)));
-    //       dispatch(updateUI({
-    //         uploadDialogOpen: false
-    //       }));
-    //       history.push(`/table/${selectedFiles[0].fileName}?draft=true`);
-    //     } else {
-    //       // upload challenge table
-    //     }
-    //   }
-    // } else {
-    //   if (action === ActionType.LOAD) {
-    //     if (selectedFiles.length === 1) {
-    //       // load table locally
-    //       dispatch(loadUpTable(getFileToDispatch(data)));
-    //       dispatch(updateUI({
-    //         uploadDialogOpen: false
-    //       }));
-    //       history.push(`/table/${selectedFiles[0].fileName}?draft=true`);
-    //     } else {
-    //       // error
-    //     }
-    //   } else {
-
-    //   }
-    // }
   };
 
   return (

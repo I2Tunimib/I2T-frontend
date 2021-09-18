@@ -1,5 +1,4 @@
 import { createSliceWithRequests } from '@store/enhancers/requests';
-import { nanoid } from 'nanoid';
 import { getConfig } from './config.thunk';
 import { IConfigState } from './interfaces/config';
 
@@ -18,25 +17,15 @@ export const configSlice = createSliceWithRequests({
   reducers: {},
   extraRules: (builder) => (
     builder.addCase(getConfig.fulfilled, (state, action) => {
-      console.log(action.payload);
       const { reconciliators, extenders } = action.payload;
 
       reconciliators.forEach((reconciliator) => {
-        const id = nanoid();
-        state.entities.reconciliators.byId[id] = {
-          id,
-          ...reconciliator
-        };
-        state.entities.reconciliators.allIds.push(id);
+        state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
+        state.entities.reconciliators.allIds.push(reconciliator.id);
       });
 
       extenders.forEach((extender) => {
-        const id = nanoid();
-        state.entities.extenders.byId[id] = {
-          id,
-          ...extender
-        };
-        state.entities.extenders.allIds.push(id);
+        state.entities.extenders.byId[extender.id] = extender;
       });
     })
   )

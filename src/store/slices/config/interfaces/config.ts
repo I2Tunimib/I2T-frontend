@@ -9,16 +9,19 @@ export interface IConfigState extends RequestEnhancedState {
   }
 }
 
-export interface ReconciliatorsState extends BaseState<Reconciliator & { id: ID }> {}
-export interface ExtendersState extends BaseState<Extender & { id: ID }> {}
+export interface ReconciliatorsState extends BaseState<Reconciliator> {}
+export interface ExtendersState extends BaseState<Extender> {}
 
 export interface Reconciliator {
+  id: ID;
   name: string;
+  prefix: string;
   relativeUrl: string;
   metaToViz: string[];
-  entityPageUrl?: string;
+  entityPageUrl: string;
 }
 
 export interface Extender extends Record<string, any> {
+  id: ID;
   // ...
 }

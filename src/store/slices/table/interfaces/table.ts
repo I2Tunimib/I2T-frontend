@@ -28,10 +28,10 @@ export interface TableUIState {
   denseView: boolean;
   openReconciliateDialog: boolean;
   openMetadataDialog: boolean;
+  openExportDialog: boolean;
   selectedColumnsIds: Record<ID, boolean>;
   selectedRowsIds: Record<ID, boolean>;
   selectedCellIds: Record<ID, boolean>;
-  selectedCellMetadataId: Record<ID, string>;
   lastSaved: string;
 }
 

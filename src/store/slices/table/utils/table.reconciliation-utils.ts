@@ -9,8 +9,8 @@ import {
  * Set matching metadata to cell based on threshold.
  */
 export const setMatchingMetadata = (
-  { metadata }: Cell, cellId: ID,
-  threshold: number, selectedCellMetadataId: Record<ID, ID>
+  { metadata }: Cell,
+  threshold: number
 ) => {
   let maxIndex = { index: -1, max: -1 };
   metadata.values.forEach((item, i) => {
@@ -18,10 +18,8 @@ export const setMatchingMetadata = (
       maxIndex = { index: i, max: item.score };
     }
   });
-
   if (maxIndex.index !== -1) {
     metadata.values[maxIndex.index].match = true;
-    selectedCellMetadataId[cellId] = metadata.values[maxIndex.index].id;
   }
 };
 

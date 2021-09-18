@@ -1,6 +1,5 @@
 import {
   Button, IconButton,
-  Menu, MenuItem,
   Typography
 } from '@material-ui/core';
 import {
@@ -21,7 +20,6 @@ import { orderTables, updateUI } from '@store/slices/tables/tables.slice';
 import { DroppableArea } from '@components/kit';
 import { Link, useParams } from 'react-router-dom';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
-import { TableType } from '@store/slices/table/interfaces/table';
 import FileCopyOutlinedIcon from '@material-ui/icons/FileCopyOutlined';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import GetAppRoundedIcon from '@material-ui/icons/GetAppRounded';
@@ -78,10 +76,6 @@ const Content: FC<Contentprops> = ({
     dispatch(updateUI({ selectedSource: tablesType }));
     dispatch(getTables(tablesType));
   }, [tablesType]);
-
-  useEffect(() => {
-    console.log(tables);
-  }, [tables]);
 
   useEffect(() => {
     if (currentOrder) {

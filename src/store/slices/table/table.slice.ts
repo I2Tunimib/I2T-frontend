@@ -24,11 +24,15 @@ import {
   UpdateSelectedColumnPayload,
   UpdateSelectedRowPayload
 } from './interfaces/table';
-import { getTable, reconcile, saveTable } from './table.thunk';
+import {
+  exportTable, getTable,
+  reconcile, saveTable
+} from './table.thunk';
 import {
   deleteOneColumn, deleteOneRow,
   deleteSelectedColumns, deleteSelectedRows
 } from './utils/table.delete-utils';
+import { StandardTable } from './utils/table.export-utils';
 import { isColumnReconciliated, setMatchingMetadata, hasColumnMetadata } from './utils/table.reconciliation-utils';
 import {
   areOnlyRowsSelected,
@@ -39,7 +43,7 @@ import {
   toggleColumnSelection,
   toggleRowSelection
 } from './utils/table.selection-utils';
-import { removeObject, getIdsFromCell } from './utils/table.utils';
+import { getIdsFromCell } from './utils/table.utils';
 
 const initialState: TableState = {
   entities: {
@@ -53,10 +57,10 @@ const initialState: TableState = {
     denseView: false,
     openReconciliateDialog: false,
     openMetadataDialog: false,
+    openExportDialog: false,
     selectedColumnsIds: {},
     selectedRowsIds: {},
-    selectedCellIds: {},
-    selectedCellMetadataId: {}
+    selectedCellIds: {}
   },
   _requests: { byId: {}, allIds: [] },
   _draft: {
@@ -135,7 +139,7 @@ export const tableSlice = createSliceWithRequests({
         // draft.ui.selectedCellMetadataId[cellId] = metadataId;
         draft.entities.rows.byId[rowId].cells[colId].metadata.values.forEach((metaItem) => {
           if (metaItem.id === metadataId) {
-            metaItem.match = true;
+            metaItem.match = !metaItem.match;
           } else {
             metaItem.match = false;
           }
@@ -158,11 +162,11 @@ export const tableSlice = createSliceWithRequests({
 
       return produceWithPatch(state, undoable, (draft) => {
         const { rows } = draft.entities;
-        const { selectedCellIds, selectedCellMetadataId } = draft.ui;
+        const { selectedCellIds } = draft.ui;
         Object.keys(selectedCellIds).forEach((cellId) => {
           const [rowId, colId] = getIdsFromCell(cellId);
           const cell = rows.byId[rowId].cells[colId];
-          setMatchingMetadata(cell, cellId, threshold, selectedCellMetadataId);
+          setMatchingMetadata(cell, threshold);
           if (isColumnReconciliated(draft, colId)) {
             draft.entities.columns.byId[colId].status = ColumnStatus.RECONCILIATED;
           }
@@ -305,9 +309,6 @@ export const tableSlice = createSliceWithRequests({
           const reconciliators = {} as Record<any, string[]>;
           // add metadata to cells
           data.forEach((item) => {
-            draft.ui.selectedCellMetadataId = removeObject(
-              draft.ui.selectedCellMetadataId, item.id
-            );
             const [rowId, colId] = getIdsFromCell(item.id);
             updatedColumns.add(colId);
             // keep track of reconciliators for each column
@@ -322,12 +323,6 @@ export const tableSlice = createSliceWithRequests({
               id: reconciliator.id,
               name: reconciliator.name
             };
-            // check if there are matching metadata for a given cell
-            item.metadata.forEach((metadataItem) => {
-              if (metadataItem.match) {
-                draft.ui.selectedCellMetadataId[item.id] = metadataItem.id;
-              }
-            });
             draft.entities.rows.byId[rowId].cells[colId].metadata.values = item.metadata;
           });
           updatedColumns.forEach((colId) => {

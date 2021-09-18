@@ -1,11 +1,9 @@
-import { SimpleColumn, SimpleRow } from '@components/kit/SimpleTable';
 import { createSelector } from '@reduxjs/toolkit';
 import { floor } from '@services/utils/math';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
 import { Row } from 'react-table';
 import { selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
-// import { selectServicesConfig } from '../config/config.selectors';
 import { TableThunkActions } from './table.thunk';
 import { getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getIdsFromCell } from './utils/table.utils';
@@ -16,7 +14,6 @@ const selectEntitiesState = (state: RootState) => state.table.entities;
 const selectColumnsState = (state: RootState) => state.table.entities.columns;
 const selectRowsState = (state: RootState) => state.table.entities.rows;
 const selectUIState = (state: RootState) => state.table.ui;
-const selecteSelectedCellMetadataId = (state: RootState) => state.table.ui.selectedCellMetadataId;
 const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
 
@@ -134,21 +131,6 @@ export const selectCellIdIfOneSelected = createSelector(
     return cellIds[0];
   }
 );
-/**
- * Get cell metadata ids as object.
- */
-export const selectCellMetadataIds = createSelector(
-  selectUIState,
-  (ui) => ui.selectedCellMetadataId
-);
-/**
- * Get selected metadata for current selected cell.
- */
-export const selectMetdataCellId = createSelector(
-  selectCellIdIfOneSelected,
-  selecteSelectedCellMetadataId,
-  (cellId, metadataCell) => (cellId ? metadataCell[cellId] : '')
-);
 
 // SELECTORS FOR UI STATUS
 
@@ -175,6 +157,10 @@ export const selectReconcileDialogStatus = createSelector(
 export const selectMetadataDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openMetadataDialog
+);
+export const selectExportDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openExportDialog
 );
 
 export const selectSearchStatus = createSelector(
@@ -320,6 +306,7 @@ export const selectCellMetadataTableFormat = createSelector(
           Header: tableColId,
           accessor: tableColId
         }));
+
         const data = values.map((metadata) => {
           return {
             ...service.metaToViz.reduce((acc, tableColId) => {
@@ -339,31 +326,5 @@ export const selectCellMetadataTableFormat = createSelector(
       }
     }
     return { columns: [], data: [] };
-    // if (!cellId) {
-    //   return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
-    // }
-    // const [rowId, colId] = getIdsFromCell(cellId);
-
-    // const currentService = config.reconciliators
-    //   .find((service: any) => service.name
-    //     === rows.byId[rowId].cells[colId].metadata.reconciliator);
-
-    // const { metadata } = rows.byId[rowId].cells[colId];
-
-    // if (metadata.values.length > 0) {
-    //   const formattedCols: SimpleColumn[] = currentService.metaToViz.map((label: string) => ({
-    //     id: label
-    //   }));
-    //   const formattedRows = rows.byId[rowId].cells[colId].metadata.values
-    //     .map((metadataItem) => ({
-    //       id: metadataItem.id,
-    //       resourceUrl: `${currentService.entityPageUrl}/${metadataItem.id}`,
-    //       cells: formattedCols.map((col) => (col.id === 'type'
-    //         ? metadataItem.type[0].name
-    //         : metadataItem[col.id] as string))
-    //     }));
-    //   return { columns: formattedCols, rows: formattedRows, selectedCellId: cellId };
-    // }
-    // return { columns: [] as SimpleColumn[], rows: [] as SimpleRow[], selectedCellId: '' };
   }
 );

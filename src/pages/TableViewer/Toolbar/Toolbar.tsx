@@ -12,16 +12,18 @@ import {
 import ArrowBackIosRoundedIcon from '@material-ui/icons/ArrowBackIosRounded';
 import SaveRoundedIcon from '@material-ui/icons/SaveRounded';
 import CloudOffIcon from '@material-ui/icons/CloudOff';
+import SystemUpdateAltRoundedIcon from '@material-ui/icons/SystemUpdateAltRounded';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { selectCurrentTable, selectLastSaved, selectSaveTableStatus } from '@store/slices/table/table.selectors';
-import { updateCurrentTable } from '@store/slices/table/table.slice';
+import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { saveTable } from '@store/slices/table/table.thunk';
 import SubToolbar from '../SubToolbar/SubToolbar';
 import styles from './Toolbar.module.scss';
 import FileMenu from '../Menus/FileMenu';
 import EditMenu from '../Menus/EditMenu';
 import SaveIndicator from '../SaveIndicator';
+import ExportDialog from '../ExportDialog';
 
 interface MenuState extends Record<string, boolean> { }
 
@@ -139,15 +141,21 @@ const Toolbar = () => {
           </div>
         </div>
         <Button
+          onClick={() => dispatch(updateUI({ openExportDialog: true }))}
+          variant="contained"
+          size="medium"
+          className={styles.SaveButton}
+          startIcon={<SystemUpdateAltRoundedIcon />}
+        >
+          Export
+        </Button>
+        <Button
           onClick={handleSave}
           variant="contained"
           color="primary"
           size="medium"
           disabled={lastModifiedDate ? new Date(lastSaved) >= new Date(lastModifiedDate) : true}
           startIcon={<SaveRoundedIcon />}
-          className={clsx(
-            styles.SaveButton
-          )}
         >
           Save
         </Button>
@@ -163,7 +171,7 @@ const Toolbar = () => {
         anchorElement={anchorEl}
         handleClose={handleMenuClose}
       />
-
+      <ExportDialog />
     </>
   );
 };

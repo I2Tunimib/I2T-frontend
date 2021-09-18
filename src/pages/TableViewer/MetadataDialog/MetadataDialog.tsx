@@ -11,22 +11,19 @@ import {
   Ref,
   ReactElement,
   useState,
-  useEffect,
   useMemo
 } from 'react';
 import Slide from '@material-ui/core/Slide';
 import { TransitionProps } from '@material-ui/core/transitions';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { SimpleTable } from '@components/kit';
 import { updateCellMetadata, updateUI } from '@store/slices/table/table.slice';
 import {
   selectMetadataDialogStatus,
   selectCellMetadataTableFormat,
-  selectMetdataCellId,
+  // selectMetdataCellId,
   selectSelectedCellIds
 } from '@store/slices/table/table.selectors';
 import Table from '@components/kit/Table/Table';
-import { Row } from 'react-table';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -36,14 +33,9 @@ const Transition = forwardRef((
 const MetadataDialog = () => {
   const dispatch = useAppDispatch();
   const [selectedMetadata, setSelectedMetadata] = useState<string>('');
-  const open = useAppSelector(selectMetadataDialogStatus);
   const { columns, data } = useAppSelector(selectCellMetadataTableFormat);
-  // const { columns, rows, selectedCellId } = useAppSelector(selectCellMetadataTableFormat);
+  const open = useAppSelector(selectMetadataDialogStatus);
   const selectedCells = useAppSelector(selectSelectedCellIds);
-
-  // useEffect(() => {
-  //   setSelectedMetadata(selectedMetadataId);
-  // }, [selectedMetadataId]);
 
   const columnsTable = useMemo(() => columns, [columns]);
   const dataTable = useMemo(() => data, [data]);
@@ -92,24 +84,6 @@ const MetadataDialog = () => {
           data={dataTable}
           onSelectedRowChange={handleSelectedRowChange}
         />
-        {/* {columns.length === 0 && rows.length === 0
-          ? 'The cell doesn\'t have metadata'
-          : (
-            <SimpleTable
-              deletableRows
-              selectableRows
-              selectedValue={selectedMetadata}
-              handleSelectRow={handleSelectRow}
-              handleDeleteRow={handleDeleteRow}
-              columns={columns}
-              rows={rows}
-              link={{
-                propertyToLink: 'name'
-              }}
-            />
-          )
-        } */}
-
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancel}>
