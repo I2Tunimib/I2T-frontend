@@ -258,11 +258,16 @@ const ExtendTable = () => {
         for (const col of Columns) {
             if (col.selected) {
                 for (const row of Data) {
-                    for (const meta of row[col.name].metadata) {
-                        if (meta.match) {
-                            metaAreMatched = true;
+                    try {
+                        for (const meta of row[col.name].metadata) {
+                            if (meta.match) {
+                                metaAreMatched = true;
+                            }
                         }
+                    } catch {
+
                     }
+
 
                 }
             }
