@@ -1,7 +1,8 @@
-import { FC } from 'react';
+import clsx from 'clsx';
+import { FC, HTMLAttributes } from 'react';
 import styles from './ButtonShortcut.module.scss';
 
-interface ButtonShortcutProps {
+interface ButtonShortcutProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Text to display in the button.
    */
@@ -12,10 +13,11 @@ interface ButtonShortcutProps {
  * Small button symbol.
  */
 const ButtonShortcut: FC<ButtonShortcutProps> = ({
-  text = 'CTRL'
+  text = 'CTRL',
+  className
 }) => {
   return (
-    <div className={styles.Container}>
+    <div className={clsx(styles.Container, className)}>
       {text}
     </div>
   );

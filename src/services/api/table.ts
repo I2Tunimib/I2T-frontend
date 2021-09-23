@@ -10,6 +10,17 @@ export interface GetTableResponse {
   rows: RowState;
 }
 
+export interface ChallengeTableDataset {
+  name: string;
+  tables: {
+    fileName: string;
+    format: string;
+    ctime: Date;
+    size: number;
+  }[],
+  annotations: string[];
+}
+
 const tableAPI = {
   getTable: (id: ID, acceptHeader?: string) => apiClient.get<GetTableResponse>(`/tables/${id}`, {
     headers: {
@@ -33,7 +44,8 @@ const tableAPI = {
   }),
   saveTable: (data: any) => apiClient.post<TableInstance>('/tables/save', data),
   importTable: (formData: FormData) => apiClient.post('/tables/import', formData),
-  getChallengeDatasets: () => apiClient.get('/tables/challenge/datasets'),
+  getChallengeDatasets: () => apiClient.get<ChallengeTableDataset[]>('/tables/challenge/datasets'),
+  getChallengeTable: (datasetName: string, tableName: string) => apiClient.get(`/tables/challenge/datasets/${datasetName}/tables/${tableName}`),
   copyTable: (name: string) => apiClient.post('/tables/copy', { name }),
   removeTable: (id: ID) => apiClient.delete(`tables/${id}`),
   reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data)

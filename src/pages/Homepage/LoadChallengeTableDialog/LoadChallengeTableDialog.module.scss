@@ -1,0 +1,23 @@
+.FormContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.MenuItemContent {
+  width: 100%;
+  display: flex;
+  align-items: center;
+
+  & > * {
+    flex: 1;
+  }
+}
+
+.MuiMenu-paper {
+  transition-duration: 0s !important;
+}
+
+.MuiPaper-root {
+  transition: none !important;
+}

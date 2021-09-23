@@ -120,10 +120,8 @@ const Sidebar: FC<SidebarProps> = ({
           files={importFiles}
           getPermittedFiles={getPermittedFiles} />
       ) : null}
-      {isChallengeDialogOpen ? (
-        <LoadChallengeTableDialog
-          open={isChallengeDialogOpen} />
-      ) : null}
+      <LoadChallengeTableDialog
+        open={isChallengeDialogOpen} />
     </>
   );
 };

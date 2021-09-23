@@ -9,6 +9,7 @@ const ACTION_PREFIX = 'table';
 export enum TableThunkActions {
   SAVE_TABLE = 'saveTable',
   GET_TABLE = 'getTable',
+  GET_CHALLENGE_TABLE = 'getChallengeTable',
   RECONCILE = 'reconcile'
 }
 
@@ -16,6 +17,14 @@ export const getTable = createAsyncThunk(
   `${ACTION_PREFIX}/getTable`,
   async (id: ID) => {
     const response = await tableAPI.getTable(id);
+    return response.data;
+  }
+);
+
+export const getChallengeTable = createAsyncThunk(
+  `${ACTION_PREFIX}/getChallengeTable`,
+  async ({ datasetName, tableName }: { datasetName: string, tableName: string }) => {
+    const response = await tableAPI.getChallengeTable(datasetName, tableName);
     return response.data;
   }
 );
