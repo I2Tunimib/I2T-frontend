@@ -7,9 +7,9 @@ import {
   useFieldArray, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch
 } from 'react-hook-form';
 import { FC, useEffect } from 'react';
-import { CsvSeparator } from '@services/converters/csv-converter';
 import { enumKeys } from '@services/utils/objects-utils';
 import { Skeleton } from '@material-ui/lab';
+import { CsvSeparator } from '@store/slices/table/interfaces/table';
 import { ProcessedFile } from './UploadDialog';
 import styles from './FormArray.module.scss';
 import {
@@ -33,7 +33,7 @@ interface FileInputFormProps {
 const selectSeparatorOptions: SelectOption<CsvSeparator>[] = [
   { label: 'Tab', value: CsvSeparator.TAB },
   { label: ',', value: CsvSeparator.COMMA },
-  { label: ';', value: CsvSeparator.SEMICOLUMN }
+  { label: ';', value: CsvSeparator.SEMICOLON }
 ];
 
 const selectNormalTableTypesOptions: SelectOption<NormalTableType>[] = [

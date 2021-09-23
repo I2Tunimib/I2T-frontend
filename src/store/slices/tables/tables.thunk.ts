@@ -9,6 +9,7 @@ const ACTION_PREFIX = 'tables';
 export enum TablesThunkActions {
   GET_TABLE = 'getTable',
   GET_TABLES = 'getTables',
+  GET_CHALLENGE_DATASETS = 'getChallengeDatasets',
   UPLOAD_TABLE = 'uploadTable',
   COPY_TABLE = 'copyTable',
   REMOVE_TABLE = 'removeTable',
@@ -53,6 +54,15 @@ export const uploadTable = createAsyncThunk(
   }
 );
 
+export const importTable = createAsyncThunk(
+  `${ACTION_PREFIX}/import`,
+  async (formData: FormData, { dispatch, signal }) => {
+    const response = await tableAPI.importTable(formData);
+
+    return response.data;
+  }
+);
+
 export const copyTable = createAsyncThunk(
   `${ACTION_PREFIX}/copyTable`,
   async (name: string) => {
@@ -73,6 +83,14 @@ export const getTable = createAsyncThunk(
   `${ACTION_PREFIX}/getTable`,
   async (name: string) => {
     const response = await tableAPI.getTable(name, 'application/octet-stream');
+    return response.data;
+  }
+);
+
+export const getChallengeDatasets = createAsyncThunk(
+  `${ACTION_PREFIX}/getChallengeDatasets`,
+  async () => {
+    const response = await tableAPI.getChallengeDatasets();
     return response.data;
   }
 );

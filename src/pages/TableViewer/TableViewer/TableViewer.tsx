@@ -16,11 +16,13 @@ import {
   selectDataTableFormat,
   selectSelectedColumnIds, selectSelectedRowIds,
   selectSelectedCellIds,
-  selectIsDenseView, selectSearchStatus, selectGetTableStatus
+  selectIsDenseView, selectSearchStatus, selectGetTableStatus, selectIsUnsaved
 } from '@store/slices/table/table.selectors';
-import { useParams } from 'react-router-dom';
-import { getTable } from '@store/slices/table/table.thunk';
+import { useHistory, useParams } from 'react-router-dom';
+import { getTable, saveTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/interfaces/store';
+import { RouteLeaveGuard } from '@components/kit';
+import { selectReconciliatorsAsObject } from '@store/slices/config/config.selectors';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
@@ -52,13 +54,16 @@ const TableViewer = () => {
   const { id: tableId } = useParams<{ id: ID }>();
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
+  const history = useHistory();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableStatus);
+  const unsavedChanges = useAppSelector(selectIsUnsaved);
   const searchFilter = useAppSelector(selectSearchStatus);
   const selectedColumns = useAppSelector(selectSelectedColumnIds);
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
   const isDenseView = useAppSelector(selectIsDenseView);
+  const allReconciliators = useAppSelector(selectReconciliatorsAsObject);
 
   useEffect(() => {
     if (tableId) {
@@ -72,6 +77,13 @@ const TableViewer = () => {
   const saveWork = useCallback((event: KeyboardEvent | undefined) => {
     if (event) {
       event.preventDefault();
+      if (unsavedChanges) {
+        dispatch(saveTable())
+          .unwrap()
+          .then((res) => {
+            history.push(res.id);
+          });
+      }
     }
     // Saving
   }, []);
@@ -178,9 +190,19 @@ const TableViewer = () => {
   const getHeaderProps = useCallback(({
     id, reconciliators, status, ...props
   }: TableColumn) => {
+    let reconciliatorsNames: string[] = [];
+    if (reconciliators) {
+      reconciliatorsNames = Object.keys(reconciliators)
+        .reduce((acc, key) => {
+          if (reconciliators[key].reconciliated > 0) {
+            acc.push(allReconciliators[key].name);
+          }
+          return acc;
+        }, [] as string[]);
+    }
     return {
       id,
-      reconciliators,
+      reconciliatorsNames,
       status,
       selected: !!selectedColumns[id],
       handleCellRightClick,
@@ -251,6 +273,16 @@ const TableViewer = () => {
           handleClose={handleMenuClose}
         />
       </div>
+      <RouteLeaveGuard
+        when={unsavedChanges}
+        navigate={(path) => history.push(path)}
+        shouldBlockNavigation={(location) => {
+          if (unsavedChanges) {
+            return true;
+          }
+          return false;
+        }}
+      />
     </HotKeys>
   );
 };

@@ -1,4 +1,3 @@
-import { CsvSeparator } from '@services/converters/csv-converter';
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
 import { ID, BaseState } from '@store/interfaces/store';
@@ -44,6 +43,12 @@ export enum ColumnStatus {
   EMPTY='empty'
 }
 
+export enum CsvSeparator {
+  TAB='\t',
+  COMMA=',',
+  SEMICOLON=';'
+}
+
 /**
  * A column instance.
  */
@@ -51,7 +56,7 @@ export interface Column {
   id: ID;
   label: string;
   status: ColumnStatus;
-  reconciliators: string[];
+  reconciliators: Record<ID, { total: number, reconciliated: number }>;
   extension: string;
 }
 /**
@@ -65,6 +70,7 @@ export interface Row {
  * A cell instance.
  */
 export interface Cell {
+  id: ID;
   label: string;
   metadata: Metadata;
   editable: boolean;
@@ -73,7 +79,6 @@ export interface Cell {
 export interface Metadata {
   reconciliator: {
     id: ID;
-    name: string;
   };
   values: MetadataInstance[];
 }
@@ -85,7 +90,7 @@ export interface MetadataInstance extends Record<string, unknown> {
   name: string;
   match: boolean;
   score: number;
-  type: {
+  type?: {
     id: string;
     name: string;
   }[]
@@ -122,7 +127,20 @@ export interface ReconciliationFulfilledPayload {
   reconciliator: Reconciliator & { id: ID };
 }
 
+export interface AddCellMetadataPayload {
+  cellId: ID;
+  value: {
+    id: string;
+    name: string;
+  }
+}
+
 export interface UpdateCellMetadataPayload {
+  metadataId: ID,
+  cellId: ID
+}
+
+export interface DeleteCellMetadataPayload {
   metadataId: ID,
   cellId: ID
 }

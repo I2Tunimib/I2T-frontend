@@ -4,41 +4,90 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
+  Divider,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography
 } from '@material-ui/core';
 import {
   forwardRef,
   Ref,
   ReactElement,
   useState,
-  useMemo
+  useEffect,
+  useMemo,
+  ChangeEvent
 } from 'react';
 import Slide from '@material-ui/core/Slide';
+import CachedRoundedIcon from '@material-ui/icons/CachedRounded';
 import { TransitionProps } from '@material-ui/core/transitions';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { updateCellMetadata, updateUI } from '@store/slices/table/table.slice';
+import {
+  addCellMetadata, deleteCellMetadata,
+  updateCellMetadata, updateUI
+} from '@store/slices/table/table.slice';
 import {
   selectMetadataDialogStatus,
   selectCellMetadataTableFormat,
-  // selectMetdataCellId,
-  selectSelectedCellIds
+  selectCurrentCell,
+  selectReconcileRequestStatus
 } from '@store/slices/table/table.selectors';
 import Table from '@components/kit/Table/Table';
+import { selectReconciliatorsAsArray, selectReconciliatorsAsObject } from '@store/slices/config/config.selectors';
+import { reconcile } from '@store/slices/table/table.thunk';
+import { Skeleton } from '@material-ui/lab';
+import { IconButtonTooltip } from '@components/core';
+import { useForm } from 'react-hook-form';
+import { ButtonShortcut } from '@components/kit';
+import styles from './MetadataDialog.module.scss';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
   ref: Ref<unknown>,
 ) => (<Slide direction="down" ref={ref} {...props} />));
 
+const LoadingSkeleton = () => {
+  return (
+    <div className={styles.SkeletonContainer}>
+      <Skeleton height={60} />
+      <Skeleton height={60} />
+      <Skeleton height={60} />
+      <Skeleton height={60} />
+    </div>
+  );
+};
+
+interface FormState {
+  id: string;
+  name: string;
+}
+
 const MetadataDialog = () => {
   const dispatch = useAppDispatch();
+  const [currentReconciliator, setCurrentReconciliator] = useState<string>('');
   const [selectedMetadata, setSelectedMetadata] = useState<string>('');
+  const { handleSubmit, reset, register } = useForm<FormState>();
   const { columns, data } = useAppSelector(selectCellMetadataTableFormat);
+  const { loading } = useAppSelector(selectReconcileRequestStatus);
   const open = useAppSelector(selectMetadataDialogStatus);
-  const selectedCells = useAppSelector(selectSelectedCellIds);
+  const cell = useAppSelector(selectCurrentCell);
+  const reconciliators = useAppSelector(selectReconciliatorsAsObject);
 
   const columnsTable = useMemo(() => columns, [columns]);
   const dataTable = useMemo(() => data, [data]);
+
+  useEffect(() => {
+    if (cell) {
+      if (cell.metadata.reconciliator.id) {
+        setCurrentReconciliator(reconciliators[cell.metadata.reconciliator.id].name);
+      }
+    }
+  }, [cell, reconciliators]);
 
   const handleClose = () => {
     dispatch(updateUI({
@@ -48,22 +97,38 @@ const MetadataDialog = () => {
 
   const handleCancel = () => {
     // set to inital state if canceled
-    // setSelectedMetadata(selectedMetadataId);
     handleClose();
   };
 
   const handleConfirm = () => {
-    const cellId = Object.keys(selectedCells)[0];
     // update global state if confirmed
-    dispatch(updateCellMetadata({ metadataId: selectedMetadata, cellId }));
-    handleClose();
+    if (cell) {
+      dispatch(updateCellMetadata({ metadataId: selectedMetadata, cellId: cell.id }));
+      handleClose();
+    }
   };
 
   const handleSelectedRowChange = (row: any) => {
     setSelectedMetadata(row.id.label);
   };
 
-  const handleDeleteRow = (id: string) => {
+  const handleDeleteRow = ({ original }: any) => {
+    if (cell) {
+      dispatch(deleteCellMetadata({
+        cellId: cell.id,
+        metadataId: original.id.label
+      }));
+    }
+  };
+
+  const onSubmitNewMetadata = (formState: FormState) => {
+    if (cell) {
+      dispatch(addCellMetadata({
+        cellId: cell.id,
+        value: { ...formState }
+      }));
+      reset();
+    }
   };
 
   return (
@@ -71,19 +136,43 @@ const MetadataDialog = () => {
       maxWidth="md"
       open={open}
       TransitionComponent={Transition}
-      keepMounted
       onClose={handleCancel}
     >
       <DialogTitle>Metadata</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          Choose to which entity the cell is reconciliated to:
-        </DialogContentText>
-        <Table
-          columns={columnsTable}
-          data={dataTable}
-          onSelectedRowChange={handleSelectedRowChange}
-        />
+      <DialogContent className={styles.DialogContent}>
+        {dataTable.length > 0 && (
+          <DialogContentText>
+            {`Current reconciliator: ${currentReconciliator}`}
+          </DialogContentText>
+        )}
+        <div className={styles.Container}>
+          <div className={styles.Content}>
+            {loading ? (
+              <LoadingSkeleton />
+            ) : (
+              <>
+                {(dataTable.length > 0 && columnsTable.length > 0) ? (
+                  <>
+                    <form className={styles.AddRow} onSubmit={handleSubmit(onSubmitNewMetadata)}>
+                      <TextField size="small" label="id" variant="outlined" {...register('id')} />
+                      <TextField size="small" label="name" variant="outlined" {...register('name')} />
+                      <Button type="submit" color="primary" variant="outlined">Add metadata</Button>
+                    </form>
+                    <Table
+                      columns={columnsTable}
+                      data={dataTable}
+                      tableHeaderClass={styles.TableHeader}
+                      onSelectedRowChange={handleSelectedRowChange}
+                      onDeleteRow={handleDeleteRow}
+                    />
+                  </>
+                ) : (
+                  <Typography color="textSecondary">This cell does not have any metadata</Typography>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancel}>

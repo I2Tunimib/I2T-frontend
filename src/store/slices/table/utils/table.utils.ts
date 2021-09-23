@@ -1,4 +1,7 @@
 import { ID } from '@store/interfaces/store';
+import { RootState, store } from '@store';
+import { Draft } from '@reduxjs/toolkit';
+import { Cell, TableState } from '../interfaces/table';
 
 /**
  * Add a property to another object given old and new object.
@@ -31,3 +34,25 @@ export const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
  * Get rowId and colId from cellId.
  */
 export const getIdsFromCell = (cellId: ID) => cellId.split('$') as [ID, ID];
+
+const getTableState = () => store.getState().table;
+export const getColumn = (
+  state: Draft<TableState>,
+  colId: ID
+) => state.entities.columns.byId[colId];
+export const getRow = (
+  state: Draft<TableState>,
+  rowId: ID
+) => state.entities.rows.byId[rowId];
+export const getRowCells = (
+  state: Draft<TableState>,
+  rowId: ID
+) => getRow(state, rowId).cells;
+
+export const getCell = (
+  state: Draft<TableState>,
+  rowId: ID,
+  colId: ID
+): Cell => {
+  return getRowCells(state, rowId)[colId];
+};

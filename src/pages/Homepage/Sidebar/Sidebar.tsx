@@ -6,9 +6,10 @@ import AddRoundedIcon from '@material-ui/icons/AddRounded';
 import { NavLink } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { updateUI } from '@store/slices/tables/tables.slice';
-import { selectIsImportDialogOpen } from '@store/slices/tables/tables.selectors';
+import { selectIsChallengeDialogOpen, selectIsImportDialogOpen } from '@store/slices/tables/tables.selectors';
 import styles from './Sidebar.module.scss';
 import ImportDialog from '../ImportDialog';
+import LoadChallengeTableDialog from '../LoadChallengeTableDialog';
 
 interface SidebarProps {
   onFileChange: (files: File[]) => void;
@@ -22,6 +23,7 @@ const Sidebar: FC<SidebarProps> = ({
   const [importFiles, setImportFiles] = useState<File[] | null>(null);
   const dispatch = useAppDispatch();
   const isImportDialogOpen = useAppSelector(selectIsImportDialogOpen);
+  const isChallengeDialogOpen = useAppSelector(selectIsChallengeDialogOpen);
 
   const getPermittedFiles = (fileList: FileList | null) => {
     const permittedFiles: File[] = [];
@@ -87,6 +89,14 @@ const Sidebar: FC<SidebarProps> = ({
             hidden
           />
         </Button>
+        <Button
+          onClick={() => dispatch(updateUI({ challengeDialogOpen: true }))}
+          className={styles.UploadButton}
+          startIcon={<AddRoundedIcon />}
+          color="primary"
+          variant="contained">
+          Challenge table
+        </Button>
         <NavLink
           to="/raw"
           onClick={() => dispatch(updateUI({ selectedSource: 'raw' }))}
@@ -109,6 +119,10 @@ const Sidebar: FC<SidebarProps> = ({
           open={isImportDialogOpen}
           files={importFiles}
           getPermittedFiles={getPermittedFiles} />
+      ) : null}
+      {isChallengeDialogOpen ? (
+        <LoadChallengeTableDialog
+          open={isChallengeDialogOpen} />
       ) : null}
     </>
   );

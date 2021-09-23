@@ -16,6 +16,10 @@ const selectRowsState = (state: RootState) => state.table.entities.rows;
 const selectUIState = (state: RootState) => state.table.ui;
 const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
+const selectReconciliatorById = (state: RootState, { value }: any) => {
+  const reconId = value.metadata.reconciliator.id;
+  return reconId ? state.config.entities.reconciliators.byId[reconId] : undefined;
+};
 
 // LOADING SELECTORS
 export const selectGetTableStatus = createSelector(
@@ -47,6 +51,11 @@ export const selectCanRedo = createSelector(
 export const selectCurrentTable = createSelector(
   selectEntitiesState,
   (entities) => entities.tableInstance
+);
+
+export const selectReconciliatorCell = createSelector(
+  selectReconciliatorById,
+  (reconciliator) => (reconciliator ? reconciliator.name : '')
 );
 
 /**
@@ -132,11 +141,34 @@ export const selectCellIdIfOneSelected = createSelector(
   }
 );
 
+export const selectCurrentCell = createSelector(
+  selectCellIdIfOneSelected,
+  selectRowsState,
+  (cellId, rows) => {
+    if (cellId) {
+      const [rowId, colId] = getIdsFromCell(cellId);
+      return rows.byId[rowId].cells[colId];
+    }
+    return undefined;
+  }
+);
+
 // SELECTORS FOR UI STATUS
 
 export const selectLastSaved = createSelector(
   selectUIState,
   (ui) => ui.lastSaved
+);
+
+export const selectIsUnsaved = createSelector(
+  selectLastSaved,
+  selectCurrentTable,
+  (lastSaved, { lastModifiedDate }) => {
+    if (!lastSaved || !lastModifiedDate) {
+      return true;
+    }
+    return new Date(lastSaved) < new Date(lastModifiedDate);
+  }
 );
 
 export const selectIsDenseView = createSelector(

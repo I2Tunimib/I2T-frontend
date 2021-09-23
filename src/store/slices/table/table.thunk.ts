@@ -9,7 +9,6 @@ const ACTION_PREFIX = 'table';
 export enum TableThunkActions {
   SAVE_TABLE = 'saveTable',
   GET_TABLE = 'getTable',
-  IMPORT = 'import',
   RECONCILE = 'reconcile'
 }
 
@@ -26,14 +25,6 @@ export const saveTable = createAsyncThunk(
   async (payload: void, { getState }) => {
     const { table } = getState() as any;
     const response = await tableAPI.saveTable(table.entities);
-    return response.data;
-  }
-);
-
-export const importTable = createAsyncThunk(
-  `${ACTION_PREFIX}/import`,
-  async (data: FormData) => {
-    const response = await tableAPI.importTable(data);
     return response.data;
   }
 );

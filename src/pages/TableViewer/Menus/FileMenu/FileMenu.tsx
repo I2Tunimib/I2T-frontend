@@ -18,10 +18,8 @@ const FileMenu: FC<FileMenuProps> = (props) => {
   return (
     <MenuBase {...props}>
       <MenuList autoFocus className={classes.list}>
-        <MenuItemIconLabel divider shortcutLabel="Ctrl+O">Load new table</MenuItemIconLabel>
         <MenuItemIconLabel Icon={SaveRoundedIcon} shortcutLabel="Ctrl+S">Save</MenuItemIconLabel>
-        <MenuItemIconLabel divider>Save as...</MenuItemIconLabel>
-        <MenuItemIconLabel>Export as...</MenuItemIconLabel>
+        <MenuItemIconLabel>Export...</MenuItemIconLabel>
       </MenuList>
     </MenuBase>
   );

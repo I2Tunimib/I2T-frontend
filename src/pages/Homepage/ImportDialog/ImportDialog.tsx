@@ -4,9 +4,8 @@ import {
   Dialog, DialogContent, DialogContentText,
   DialogTitle, Typography
 } from '@material-ui/core';
-import { CsvSeparator } from '@services/converters/csv-converter';
 import { detectDelimiter } from '@services/utils/detect-delimiter';
-import { FileFormat } from '@store/slices/table/interfaces/table';
+import { CsvSeparator, FileFormat } from '@store/slices/table/interfaces/table';
 import { selectIsImportDialogOpen } from '@store/slices/tables/tables.selectors';
 import { updateUI } from '@store/slices/tables/tables.slice';
 import { FC, useEffect, useState } from 'react';
@@ -23,8 +22,8 @@ interface ImportDialogProps {
 
 export interface ProcessedFile {
   original: File;
-  fileName: string;
-  fileExtension: FileFormat;
+  name: string;
+  format: FileFormat;
   separator?: CsvSeparator;
 }
 
@@ -46,13 +45,13 @@ const ImportDialog: FC<ImportDialogProps> = ({
   const processFiles = async (rawFiles: File[]) => {
     return Promise.all(rawFiles.map(async (file) => {
       const splittedName = file.name.split('.');
-      const fileExtension = splittedName[splittedName.length - 1] as FileFormat;
-      const fileName = splittedName.slice(0, splittedName.length - 1).join('');
-      const separator = fileExtension === 'csv' ? await detectDelimiter(file) : undefined;
+      const format = splittedName[splittedName.length - 1] as FileFormat;
+      const name = splittedName.slice(0, splittedName.length - 1).join('');
+      const separator = format === 'csv' ? await detectDelimiter(file) : undefined;
       return {
         original: file,
-        fileName,
-        fileExtension,
+        name,
+        format,
         separator
       };
     }));

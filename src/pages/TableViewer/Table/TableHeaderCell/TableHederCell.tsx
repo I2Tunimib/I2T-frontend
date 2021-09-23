@@ -13,7 +13,7 @@ const TableHeaderCell = ({
   index,
   selected,
   status,
-  reconciliators,
+  reconciliatorsNames,
   children,
   handleCellRightClick,
   handleSelectedColumnChange
@@ -44,7 +44,7 @@ const TableHeaderCell = ({
           ? (
             <Chip
               icon={<ErrorOutlineRoundedIcon />}
-              label="Metadata are present"
+              label="Partial annotation"
               variant="outlined"
               size="small"
               color="primary"
@@ -53,13 +53,13 @@ const TableHeaderCell = ({
           : [
             status === 'reconciliated'
               ? (
-                index !== 0 && reconciliators.length > 0
+                index !== 0 && reconciliatorsNames.length > 0
                 && (
-                  reconciliators.length > 1
+                  reconciliatorsNames.length > 1
                     ? (
                       <Chip
                         icon={<LinkRoundedIcon />}
-                        label="Mixed reconciliators"
+                        label="Multiple reconciliators"
                         variant="outlined"
                         size="small"
                         color="primary"
@@ -68,7 +68,7 @@ const TableHeaderCell = ({
                     : (
                       <Chip
                         icon={<LinkRoundedIcon />}
-                        label={reconciliators[0]}
+                        label={reconciliatorsNames[0]}
                         variant="outlined"
                         size="small"
                         color="primary"

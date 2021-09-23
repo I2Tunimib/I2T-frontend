@@ -1,0 +1,53 @@
+.DialogContent {
+  padding: 0px 24px !important;
+
+  .Container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  
+    .Header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: sticky;
+      top: 0px;
+      padding: 8px 0px;
+      background-color: #FFF;
+      z-index: 10;
+  
+      .Field {
+        align-self: flex-start;
+        min-width: 400px !important;
+      }
+    }
+
+    .Content {
+      display: flex;
+      flex-direction: column;
+      padding-top: 20px;
+
+      .TableHeader {
+        position: sticky;
+        top: 72px;
+        background-color: #FFF;
+        z-index: 10;
+      }
+
+      .AddRow {
+        display: flex;
+        gap: 20px;
+        padding: 10px 0px;
+        & > :last-child {
+          align-self: center;
+        }
+      }
+    }
+  }
+}
+
+
+.SkeletonContainer {
+  display: flex;
+  flex-direction: column;
+}

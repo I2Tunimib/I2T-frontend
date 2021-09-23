@@ -2,8 +2,7 @@ import {
   Button, InputAdornment,
   MenuItem, TextField, Typography
 } from '@material-ui/core';
-import { CsvSeparator } from '@services/converters/csv-converter';
-import { FileFormat } from '@store/slices/table/interfaces/table';
+import { CsvSeparator, FileFormat } from '@store/slices/table/interfaces/table';
 import {
   ChangeEvent, FC,
   useEffect, useState
@@ -14,6 +13,9 @@ import {
 } from 'react-hook-form';
 import { enumKeys } from '@services/utils/objects-utils';
 import { detectDelimiter } from '@services/utils/detect-delimiter';
+import { useAppDispatch } from '@hooks/store';
+import { importTable } from '@store/slices/tables/tables.thunk';
+import { useHistory } from 'react-router-dom';
 import { ChallengeTableType, SelectOption } from '../UploadDialog/interfaces/form';
 import { ProcessedFile } from './ImportDialog';
 import styles from './ImportChallengeForm.module.scss';
@@ -40,8 +42,8 @@ interface FormState {
 }
 
 interface FormFile {
-  fileName: string;
-  fileExtension: FileFormat;
+  name: string;
+  format: FileFormat;
   separator?: CsvSeparator;
   original: File;
 }
@@ -49,7 +51,7 @@ interface FormFile {
 const selectSeparatorOptions: SelectOption<CsvSeparator>[] = [
   { label: 'Tab', value: CsvSeparator.TAB },
   { label: ',', value: CsvSeparator.COMMA },
-  { label: ';', value: CsvSeparator.SEMICOLUMN }
+  { label: ';', value: CsvSeparator.SEMICOLON }
 ];
 
 const FileInputForm: FC<FileInputFormProps> = ({
@@ -62,13 +64,13 @@ const FileInputForm: FC<FileInputFormProps> = ({
 }) => {
   const processFile = async (rawFile: File) => {
     const splittedName = rawFile.name.split('.');
-    const fileExtension = splittedName[splittedName.length - 1] as FileFormat;
+    const format = splittedName[splittedName.length - 1] as FileFormat;
     const fileName = splittedName.slice(0, splittedName.length - 1).join('');
-    const separator = fileExtension === 'csv' ? await detectDelimiter(rawFile) : undefined;
+    const separator = format === 'csv' ? await detectDelimiter(rawFile) : undefined;
     return {
       original: rawFile,
-      fileName,
-      fileExtension,
+      name: fileName,
+      format,
       separator
     };
   };
@@ -91,18 +93,18 @@ const FileInputForm: FC<FileInputFormProps> = ({
             className={styles.BigTextField}
             label="File name"
             size="small"
-            defaultValue={file.fileName}
+            defaultValue={file.name}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  {`.${file.fileExtension}`}
+                  {`.${file.format}`}
                 </InputAdornment>
               )
             }}
             variant="outlined"
-            {...register(`${name}.fileName`)} />
+            {...register(`${name}.name`)} />
 
-          {file.fileExtension === 'csv'
+          {file.format === 'csv'
             ? (
               <Controller
                 control={control}
@@ -162,6 +164,8 @@ const ImportChallengeForm: FC<ImportChallengeFormProps> = ({
   } = useForm<FormState>({
     shouldUnregister: true
   });
+  const history = useHistory();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (files.length > 0) {
@@ -194,8 +198,22 @@ const ImportChallengeForm: FC<ImportChallengeFormProps> = ({
     setValue(type as keyof FormState, file);
   };
 
-  const onSubmit = (data: FormState) => {
-    console.log(data);
+  const onSubmit = (form: FormState) => {
+    const formData = new FormData();
+    Object.keys(form).forEach((key) => {
+      const k = key as keyof FormState;
+      const { original, ...rest } = form[k];
+      formData.append(key, original);
+      formData.append(`${key}Meta`, JSON.stringify({ ...rest }));
+    });
+    const meta = {
+      name: form.data.name,
+      type: 'challenge'
+    };
+    formData.append('meta', JSON.stringify(meta));
+    dispatch(importTable(formData))
+      .unwrap()
+      .then((res) => history.push(`/table/${res.id}`));
   };
 
   return (

@@ -9,6 +9,7 @@ import Searchbar from './Searchbar';
 import ButtonShortcut from './ButtonShortcut';
 import DroppableArea from './DroppableArea';
 import Table from './Table';
+import RouteLeaveGuard from './RouteLeaveGuard';
 
 export {
   ExpandableList,
@@ -21,5 +22,6 @@ export {
   Searchbar,
   ButtonShortcut,
   DroppableArea,
-  Table
+  Table,
+  RouteLeaveGuard
 };

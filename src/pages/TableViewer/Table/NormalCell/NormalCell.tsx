@@ -7,17 +7,23 @@ import ExpandableListHeader from '@components/kit/ExpandableListHeader';
 import ExpandableListItem from '@components/kit/ExpandableListItem';
 import ExpandableListBody from '@components/kit/ExpandableListBody';
 import { Link } from '@material-ui/core';
+import CheckRoundedIcon from '@material-ui/icons/CheckRounded';
+import { selectReconciliatorCell } from '@store/slices/table/table.selectors';
+import { RootState } from '@store';
+import { connect } from 'react-redux';
 import styles from './NormalCell.module.scss';
 
 interface NormalCellProps {
   label: string;
   value: any;
   dense: boolean;
+  reconciliator: string;
 }
 
 const NormalCell: FC<NormalCellProps> = ({
   label,
   value,
+  reconciliator,
   dense
 }) => {
   const getBadgeStatus = (metadata: Metadata) => {
@@ -25,7 +31,7 @@ const NormalCell: FC<NormalCellProps> = ({
     if (matching) {
       return 'Success';
     }
-    if (metadata.reconciliator && metadata.values.length > 0) {
+    if (metadata.reconciliator.id && metadata.values.length > 0) {
       return 'Warn';
     }
     return 'Error';
@@ -48,7 +54,7 @@ const NormalCell: FC<NormalCellProps> = ({
           [styles.Dense]: dense
         }
       )}>
-        {!!value.metadata.reconciliator && (
+        {value.metadata.reconciliator.id && (
           <StatusBadge
             className={styles.Badge}
             status={getBadgeStatus(value.metadata)}
@@ -58,22 +64,20 @@ const NormalCell: FC<NormalCellProps> = ({
       </div>
       {value.expanded && (
         <ExpandableList
-          listTitle={`Metadata - ${value.metadata.reconciliator} `}
+          listTitle={`Metadata ${reconciliator ? `- ${reconciliator}` : ''} `}
           messageIfNoContent="Cell doesn't have any metadata"
           className={styles.ExpandableList}>
           <ExpandableListHeader>
             {getItems(0, 3).map((item, index) => (
               <ExpandableListItem key={`${item.name}-${index}`}>
-                <Link
-                  className={clsx(
-                    {
-                      [styles.LinkMatched]: item.match
-                    }
-                  )}
-                  href={`${value.metadata.resourceUrl}/${item.id}`}
-                  target="_blank">
-                  {item.name}
-                </Link>
+                <div className={styles.Item}>
+                  <Link
+                    href={`${value.metadata.resourceUrl}/${item.id}`}
+                    target="_blank">
+                    {item.name}
+                  </Link>
+                  {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
+                </div>
               </ExpandableListItem>
             ))}
           </ExpandableListHeader>
@@ -99,4 +103,10 @@ const NormalCell: FC<NormalCellProps> = ({
   );
 };
 
-export default NormalCell;
+const mapStateToProps = (state: RootState, props: any) => {
+  return {
+    reconciliator: selectReconciliatorCell(state, props)
+  };
+};
+
+export default connect(mapStateToProps)(NormalCell);

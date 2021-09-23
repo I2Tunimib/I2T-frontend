@@ -1,7 +1,6 @@
-import { CsvSeparator } from '@services/converters/csv-converter';
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
-import { FileFormat, TableType } from '@store/slices/table/interfaces/table';
+import { CsvSeparator, FileFormat, TableType } from '@store/slices/table/interfaces/table';
 
 export interface TablesState extends RequestEnhancedState {
   entities: {
@@ -14,6 +13,7 @@ export interface TablesState extends RequestEnhancedState {
 
 export interface TablesUIState {
   selectedSource?: 'raw' | 'annotated';
+  challengeDialogOpen: boolean;
   uploadDialogOpen: boolean;
   importDialogOpen: boolean;
   uploadProgressDialogOpen: boolean;

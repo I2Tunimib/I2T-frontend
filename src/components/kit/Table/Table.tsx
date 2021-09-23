@@ -1,6 +1,5 @@
-import { Radio } from '@material-ui/core';
+import { IconButton, Radio } from '@material-ui/core';
 import {
-  ChangeEvent,
   FC, forwardRef,
   useEffect,
   useRef
@@ -9,6 +8,7 @@ import {
   Column, Row,
   useRowSelect, useTable
 } from 'react-table';
+import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 import clsx from 'clsx';
 import TableCell from './TableCell';
 import styles from './Table.module.scss';
@@ -17,6 +17,8 @@ interface TableProps {
   columns: Column[];
   data: Row[];
   onSelectedRowChange: (row: any) => void;
+  onDeleteRow: (row: any) => void;
+  tableHeaderClass?: any;
 }
 
 const defaultColumn = {
@@ -60,7 +62,9 @@ const RadioCell = forwardRef(
 const Table: FC<TableProps> = ({
   columns,
   data,
-  onSelectedRowChange
+  tableHeaderClass,
+  onSelectedRowChange,
+  onDeleteRow
 }) => {
   const {
     getTableProps,
@@ -95,6 +99,14 @@ const Table: FC<TableProps> = ({
     (hooks) => {
       hooks.visibleColumns.push((cols) => [
         ...cols,
+        {
+          id: 'delete',
+          Cell: ({ row }) => (
+            <IconButton size="small" onClick={() => onDeleteRow(row)}>
+              <DeleteOutlineRoundedIcon />
+            </IconButton>
+          )
+        },
         {
           id: 'selection',
           Cell: ({ row }) => (
@@ -133,7 +145,7 @@ const Table: FC<TableProps> = ({
 
   return (
     <table {...getTableProps()} className={styles.TableRoot}>
-      <thead>
+      <thead className={clsx(styles.TableHeader, tableHeaderClass)}>
         {headerGroups.map((headerGroup) => (
           <tr {...headerGroup.getHeaderGroupProps()} className={styles.TableRow}>
             {headerGroup.headers.map((column) => (

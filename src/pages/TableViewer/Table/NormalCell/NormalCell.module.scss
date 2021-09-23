@@ -9,6 +9,10 @@
     width: 100%;
     height: 100%;
     padding: 18px 10px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     
     &.Dense {
       padding: 6px 4px;
@@ -27,6 +31,21 @@
     flex-shrink: 0;
     border-right: 1px solid #ededed;
     border-left: 1px solid #ededed;
+
+    .Item {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      & > :first-child {
+        margin-right: auto;
+      }
+
+      .Icon {
+        width: 20px;
+        height: 20px;
+        color: #4AC99B;
+      }
+    }
   }
 
   .LinkMatched {

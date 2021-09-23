@@ -1,4 +1,4 @@
-import { CsvSeparator } from '@services/converters/csv-converter';
+import { CsvSeparator } from '@store/slices/table/interfaces/table';
 import { parse } from 'papaparse';
 
 export const detectDelimiter = async (

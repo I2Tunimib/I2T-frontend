@@ -19,6 +19,7 @@ const initialState: TablesState = {
     annotated: { byId: {}, allIds: [] }
   },
   ui: {
+    challengeDialogOpen: false,
     uploadDialogOpen: false,
     importDialogOpen: false,
     uploadProgressDialogOpen: false
@@ -86,9 +87,9 @@ export const tablesSlice = createSliceWithRequests({
         const table = action.payload as TableInstance;
         const { type } = table;
         if (type === TableType.RAW || type === TableType.ANNOTATED) {
-          if (!state.entities[type].byId[table.name]) {
-            state.entities[type].byId[table.name] = table;
-            state.entities[type].allIds.unshift(table.name);
+          if (!state.entities[type].byId[table.id]) {
+            state.entities[type].byId[table.id] = table;
+            state.entities[type].allIds.unshift(table.id);
           }
         }
       })

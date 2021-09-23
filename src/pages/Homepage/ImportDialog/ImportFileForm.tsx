@@ -3,10 +3,12 @@ import {
   Button, InputAdornment,
   MenuItem, TextField
 } from '@material-ui/core';
-import { CsvSeparator } from '@services/converters/csv-converter';
-import { importTable } from '@store/slices/table/table.thunk';
+import { CsvSeparator, FileFormat } from '@store/slices/table/interfaces/table';
+import { importTable, uploadTable } from '@store/slices/tables/tables.thunk';
+import { nanoid } from 'nanoid';
 import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useHistory } from 'react-router-dom';
 import { ChallengeTableType, NormalTableType, SelectOption } from '../UploadDialog/interfaces/form';
 import { ProcessedFile } from './ImportDialog';
 import styles from './ImportFileForm.module.scss';
@@ -16,8 +18,9 @@ interface ImportFileFormProps {
 }
 
 interface FormState {
-  fileName: string;
+  name: string;
   type: NormalTableType;
+  format: FileFormat;
   original: File;
   separator?: string;
 }
@@ -25,7 +28,7 @@ interface FormState {
 const selectSeparatorOptions: SelectOption<CsvSeparator>[] = [
   { label: 'Tab', value: CsvSeparator.TAB },
   { label: ',', value: CsvSeparator.COMMA },
-  { label: ';', value: CsvSeparator.SEMICOLUMN }
+  { label: ';', value: CsvSeparator.SEMICOLON }
 ];
 
 const selectNormalTableTypesOptions: SelectOption<NormalTableType>[] = [
@@ -40,6 +43,7 @@ const ImportFileForm: FC<ImportFileFormProps> = ({
     handleSubmit,
     control,
     register,
+    getValues,
     setValue
   } = useForm<FormState>({
     defaultValues: {
@@ -48,18 +52,22 @@ const ImportFileForm: FC<ImportFileFormProps> = ({
     },
     shouldUnregister: true
   });
+  const history = useHistory();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     setValue('original', file.original);
+    setValue('format', file.format);
   }, [file]);
 
-  const onSubmit = (data: FormState) => {
-    const { original, ...meta } = data;
+  const onSubmit = ({ original, ...meta }: FormState) => {
     const formData = new FormData();
     formData.append('file', original);
     formData.append('meta', JSON.stringify(meta));
-    dispatch(importTable(formData));
+    const requestId = nanoid();
+    dispatch(importTable(formData))
+      .unwrap()
+      .then((res) => history.push(`/table/${res.id}`));
   };
 
   return (
@@ -72,14 +80,14 @@ const ImportFileForm: FC<ImportFileFormProps> = ({
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                {`.${file.fileExtension}`}
+                {`.${file.format}`}
               </InputAdornment>
             )
           }}
           variant="outlined"
-          {...register('fileName')} />
+          {...register('name')} />
 
-        {file.fileExtension === 'csv'
+        {file.format === 'csv'
           ? (
             <Controller
               control={control}

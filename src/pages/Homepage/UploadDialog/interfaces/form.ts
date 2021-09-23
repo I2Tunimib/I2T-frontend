@@ -1,5 +1,4 @@
-import { CsvSeparator } from '@services/converters/csv-converter';
-import { FileFormat } from '@store/slices/table/interfaces/table';
+import { CsvSeparator, FileFormat } from '@store/slices/table/interfaces/table';
 
 /**
  * Form state.

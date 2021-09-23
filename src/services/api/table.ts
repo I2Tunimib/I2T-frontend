@@ -33,6 +33,7 @@ const tableAPI = {
   }),
   saveTable: (data: any) => apiClient.post<TableInstance>('/tables/save', data),
   importTable: (formData: FormData) => apiClient.post('/tables/import', formData),
+  getChallengeDatasets: () => apiClient.get('/tables/challenge/datasets'),
   copyTable: (name: string) => apiClient.post('/tables/copy', { name }),
   removeTable: (id: ID) => apiClient.delete(`tables/${id}`),
   reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data)
