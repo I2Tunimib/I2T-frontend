@@ -1,22 +1,26 @@
 /* eslint-disable react/destructuring-assignment */
-import { Checkbox, Chip } from '@material-ui/core';
+import { Badge, Checkbox, Chip } from '@material-ui/core';
 import LinkRoundedIcon from '@material-ui/icons/LinkRounded';
 import ErrorOutlineRoundedIcon from '@material-ui/icons/ErrorOutlineRounded';
 import clsx from 'clsx';
+import { ButtonShortcut } from '@components/kit';
+import { ColumnStatus } from '@store/slices/table/interfaces/table';
+import { RootState } from '@store';
+import { connect } from 'react-redux';
+import { selectColumnReconciliators } from '@store/slices/table/table.selectors';
 import styles from './TableHeaderCell.module.scss';
+import TableHeaderCellExpanded from './TableHeaderCellExpanded';
 
 /**
  * Table head cell.
  */
 const TableHeaderCell = ({
   id,
-  index,
   selected,
-  status,
-  reconciliatorsNames,
   children,
   handleCellRightClick,
-  handleSelectedColumnChange
+  reconciliators,
+  data
 }: any) => {
   return (
     <th
@@ -24,65 +28,61 @@ const TableHeaderCell = ({
       className={clsx([
         styles.TableHeaderCell,
         {
-          [styles.TableHeaderIndex]: index === 0
+          [styles.Selected]: selected,
+          [styles.TableHeaderIndex]: id === 'index'
         }
-      ])}
-    >
+      ])}>
       <div className={styles.TableHeaderContent}>
-        {index !== 0
-          && (
-            <Checkbox
-              checked={selected}
-              onChange={() => handleSelectedColumnChange(id)}
-              inputProps={{ 'aria-label': 'primary checkbox' }}
-            />
-          )}
-
-        {children}
-        {status
-          && status === 'pending'
-          ? (
-            <Chip
-              icon={<ErrorOutlineRoundedIcon />}
-              label="Partial annotation"
-              variant="outlined"
-              size="small"
-              color="primary"
-            />
-          )
-          : [
-            status === 'reconciliated'
-              ? (
-                index !== 0 && reconciliatorsNames.length > 0
-                && (
-                  reconciliatorsNames.length > 1
-                    ? (
-                      <Chip
-                        icon={<LinkRoundedIcon />}
-                        label="Multiple reconciliators"
-                        variant="outlined"
-                        size="small"
-                        color="primary"
-                      />
-                    )
-                    : (
-                      <Chip
-                        icon={<LinkRoundedIcon />}
-                        label={reconciliatorsNames[0]}
-                        variant="outlined"
-                        size="small"
-                        color="primary"
-                      />
-                    )
-
+        {id !== 'index' ? (
+          <div className={styles.Row}>
+            <div className={styles.Column}>
+              <div className={styles.Row}>
+                {data.role && <ButtonShortcut text={data.role} />}
+                <div className={styles.Label}>
+                  {children}
+                </div>
+              </div>
+              {data.status === ColumnStatus.RECONCILIATED ? (
+                <div className={styles.Row}>
+                  <Chip
+                    icon={<LinkRoundedIcon />}
+                    label={reconciliators.join(' | ')}
+                    variant="outlined"
+                    size="small"
+                    color="primary"
+                  />
+                </div>
+              ) : [
+                data.status === ColumnStatus.PENDING ? (
+                  <Chip
+                    icon={<ErrorOutlineRoundedIcon />}
+                    label="Partial annotation"
+                    variant="outlined"
+                    size="small"
+                    color="primary"
+                  />
+                ) : (
+                  null
                 )
-              )
-              : null
-          ]
-        }
+              ]}
+            </div>
+            {data.expanded && <TableHeaderCellExpanded {...data} />}
+          </div>
+        ) : (
+          <>
+            {children}
+          </>
+        )}
       </div>
     </th>
   );
 };
 
-export default TableHeaderCell;
+const mapStateToProps = (state: RootState, props: any) => {
+  return {
+    reconciliators: selectColumnReconciliators(state, props)
+  };
+};
+
+export default connect(mapStateToProps)(TableHeaderCell);
+// export default TableHeaderCell;

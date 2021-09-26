@@ -56,8 +56,12 @@ export interface Column {
   id: ID;
   label: string;
   status: ColumnStatus;
-  reconciliators: Record<ID, { total: number, reconciliated: number }>;
+  context: Record<ID, Context>;
+  metadata: ColumnMetadata[];
   extension: string;
+  expanded: boolean;
+  kind?: string;
+  role?: string;
 }
 /**
  * A row instance.
@@ -72,28 +76,31 @@ export interface Row {
 export interface Cell {
   id: ID;
   label: string;
-  metadata: Metadata;
+  metadata: BaseMetadata[];
   editable: boolean;
   expanded: boolean;
 }
-export interface Metadata {
-  reconciliator: {
-    id: ID;
-  };
-  values: MetadataInstance[];
+
+export interface Context {
+  uri: string;
+  total: number;
+  reconciliated: number;
 }
-/**
- * A metadata instance.
- */
-export interface MetadataInstance extends Record<string, unknown> {
+
+export interface BaseMetadata {
   id: ID;
   name: string;
-  match: boolean;
-  score: number;
-  type?: {
-    id: string;
-    name: string;
-  }[]
+  match?: boolean;
+  score?: number;
+  type?: BaseMetadata[];
+}
+
+export interface ColumnMetadata extends BaseMetadata {
+  property?: PropertyMetadata[];
+}
+
+export interface PropertyMetadata extends BaseMetadata {
+  obj?: ID;
 }
 
 /**
@@ -122,7 +129,7 @@ export interface UpdateSelectedColumnPayload {
 export interface ReconciliationFulfilledPayload {
   data: {
     id: ID,
-    metadata: MetadataInstance[]
+    metadata: BaseMetadata[]
   }[],
   reconciliator: Reconciliator & { id: ID };
 }

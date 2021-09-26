@@ -188,26 +188,28 @@ const TableViewer = () => {
    * Properties to pass to each header.
    */
   const getHeaderProps = useCallback(({
-    id, reconciliators, status, ...props
+    id,
+    data,
+    ...colTableProps
   }: TableColumn) => {
-    let reconciliatorsNames: string[] = [];
-    if (reconciliators) {
-      reconciliatorsNames = Object.keys(reconciliators)
-        .reduce((acc, key) => {
-          if (reconciliators[key].reconciliated > 0) {
-            acc.push(allReconciliators[key].name);
-          }
-          return acc;
-        }, [] as string[]);
-    }
     return {
       id,
-      reconciliatorsNames,
-      status,
       selected: !!selectedColumns[id],
-      handleCellRightClick,
-      handleSelectedColumnChange
+      data,
+      handleCellRightClick
     };
+  }, [selectedColumns, allReconciliators]);
+
+  const getFirstHeaderProps = useCallback(({ columns: selColumn }: any) => {
+    if (selColumn) {
+      const subColumnId = selColumn[0].id;
+      return {
+        subColumnId,
+        selected: !!selectedColumns[subColumnId],
+        handleSelectedColumnChange
+      };
+    }
+    return {};
   }, [selectedColumns]);
 
   /**
@@ -250,6 +252,7 @@ const TableViewer = () => {
             columns={columnsTable}
             searchFilter={searchFilterTable}
             getGlobalProps={getGlobalProps}
+            getFirstHeaderProps={getFirstHeaderProps}
             getHeaderProps={getHeaderProps}
             getCellProps={getCellProps}
           />
@@ -272,6 +275,7 @@ const TableViewer = () => {
           anchorElement={anchorEl}
           handleClose={handleMenuClose}
         />
+        <canvas className={styles.Canvas} />
       </div>
       <RouteLeaveGuard
         when={unsavedChanges}

@@ -1,7 +1,7 @@
 .Container {
   width: 300px;
   max-height: 400px;
-  overflow-y: scroll;
+  overflow-y: auto;
   background-color: inherit;
   &::-webkit-scrollbar-thumb {
     background: rgba(0,0,0,.26);

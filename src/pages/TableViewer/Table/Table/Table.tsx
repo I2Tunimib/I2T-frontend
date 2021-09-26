@@ -6,13 +6,14 @@ import {
   FC, useCallback,
   useEffect
 } from 'react';
-import { MetadataInstance } from '@store/slices/table/interfaces/table';
+import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
 import TableRowCell from '../TableRowCell';
 import TableRow from '../TableRow';
 import TableFooter from '../TableFooter';
+import SelectableHeader from '../SelectableHeader';
 
 interface TableProps {
   columns: any[];
@@ -20,6 +21,7 @@ interface TableProps {
   searchFilter?: TableGlobalFilter;
   dense?: boolean;
   getGlobalProps: () => any;
+  getFirstHeaderProps: (col: any) => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
 }
@@ -38,6 +40,7 @@ const Table: FC<TableProps> = ({
   searchFilter,
   dense = false,
   getGlobalProps = defaultPropGetter,
+  getFirstHeaderProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
 }) => {
@@ -68,7 +71,7 @@ const Table: FC<TableProps> = ({
   ) => {
     return rows.filter((row) => colIds
       .some((colId) => row.values[colId].metadata.values
-        .some((item: MetadataInstance) => item.name
+        .some((item: BaseMetadata) => item.name
           .toLowerCase()
           .startsWith(filterValue.toLowerCase()))));
   }, []);
@@ -93,7 +96,7 @@ const Table: FC<TableProps> = ({
   const {
     getTableProps,
     getTableBodyProps,
-    headerGroups,
+    headerGroups: [firstHeader, secondHeader],
     rows,
     page,
     // The rest of these things are super handy, too ;)
@@ -155,12 +158,56 @@ const Table: FC<TableProps> = ({
     }
   }, [searchFilter]);
 
+  const RenderFirstRowHeader = useCallback(() => {
+    return (
+      <>
+        {firstHeader && (
+          <TableRow {...firstHeader.getHeaderGroupProps([getGlobalProps()])}>
+            {firstHeader.headers.map((column, index) => (
+              <SelectableHeader {...column.getHeaderProps(
+                [getFirstHeaderProps(column), getGlobalProps(), { index }]
+              )}>
+                {// Render the header
+                  column.render('Header')
+                }
+              </SelectableHeader>
+            ))}
+          </TableRow>
+        )}
+      </>
+    );
+  }, [firstHeader, getGlobalProps, getFirstHeaderProps]);
+
+  const RenderSecondRowHeader = useCallback(() => {
+    return (
+      <>
+        {secondHeader && (
+          <TableRow {...secondHeader.getHeaderGroupProps([getGlobalProps()])}>
+            {// Loop over the headers in each row
+              secondHeader.headers.map((column, index) => (
+                // Apply the header cell props
+                <TableHeaderCell {...column.getHeaderProps(
+                  [getHeaderProps(column), getGlobalProps(), { index }]
+                )}>
+                  {// Render the header
+                    column.render('Header')
+                  }
+                </TableHeaderCell>
+              ))}
+          </TableRow>
+        )}
+      </>
+    );
+  }, [secondHeader, getGlobalProps, getHeaderProps]);
+
   return (
     // apply the table props
     <>
       <TableRoot {...getTableProps([getGlobalProps()])}>
         <TableHead>
-          {// Loop over the header rows
+          {RenderFirstRowHeader()}
+          {RenderSecondRowHeader()}
+          {/* {// Loop over the header rows
             headerGroups.map((headerGroup) => (
               // Apply the header row props
               <TableRow {...headerGroup.getHeaderGroupProps([getGlobalProps()])}>
@@ -169,15 +216,14 @@ const Table: FC<TableProps> = ({
                     // Apply the header cell props
                     <TableHeaderCell {...column.getHeaderProps(
                       [getHeaderProps(column), getGlobalProps(), { index }]
-                    )}
-                    >
+                    )}>
                       {// Render the header
                         column.render('Header')
                       }
                     </TableHeaderCell>
                   ))}
               </TableRow>
-            ))}
+            ))} */}
         </TableHead>
         {/* Apply the table body props */}
         <tbody {...getTableBodyProps()}>

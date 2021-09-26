@@ -1,6 +1,6 @@
 import { ButtonLoading } from '@components/core';
 import { ButtonShortcut } from '@components/kit';
-import { useAppDispatch } from '@hooks/store';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   Dialog, DialogTitle,
   Typography, DialogContentText,
@@ -16,6 +16,8 @@ import { useForm } from 'react-hook-form';
 import TimeAgo from 'react-timeago';
 import formatBytes from '@services/utils/format-bytes';
 import { getChallengeTable } from '@store/slices/table/table.thunk';
+import { useHistory } from 'react-router-dom';
+import { selectGetChallengeTableStatus } from '@store/slices/table/table.selectors';
 import styles from './LoadChallengeTableDialog.module.scss';
 
 interface LoadChallengeTableDialogProps {
@@ -39,6 +41,8 @@ const LoadChallengeTableDialog: FC<LoadChallengeTableDialogProps> = ({
   const [datasets, setDatasets] = useState<ChallengeTableDataset[]>([]);
   const [currentTablesIndex, setCurrentTablesIndex] = useState<number>(0);
   const { handleSubmit, watch, register } = useForm<FormState>();
+  const { loading } = useAppSelector(selectGetChallengeTableStatus);
+  const history = useHistory();
   const dispatch = useAppDispatch();
   const classes = useClasses();
 
@@ -71,7 +75,11 @@ const LoadChallengeTableDialog: FC<LoadChallengeTableDialogProps> = ({
     dispatch(getChallengeTable({
       datasetName: dataset,
       tableName: table
-    }));
+    }))
+      .unwrap()
+      .then((res) => {
+        history.push(`/table/${res.id}`);
+      });
   };
 
   return (
@@ -142,7 +150,7 @@ const LoadChallengeTableDialog: FC<LoadChallengeTableDialogProps> = ({
           <Button onClick={handleClose}>
             Cancel
           </Button>
-          <ButtonLoading type="submit" loading={false}>
+          <ButtonLoading type="submit" loading={!!loading}>
             Confirm
           </ButtonLoading>
         </DialogActions>

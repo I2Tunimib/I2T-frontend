@@ -1,4 +1,4 @@
-import { Metadata } from '@store/slices/table/interfaces/table';
+import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import { ReactNode } from 'react';
 import { Cell, ColumnInstance, Row } from 'react-table';
 
@@ -25,7 +25,7 @@ export interface TableCell extends Cell {
   value: {
     rowId: string;
     label: string;
-    metadata: Metadata[];
+    metadata: BaseMetadata[];
     editable: boolean;
   }
 }

@@ -4,7 +4,10 @@ import {
   ColumnState, RowState, TableState, ColumnStatus
 } from '../interfaces/table';
 import {
-  decrementReconciliated, decrementTotal,
+  decrementContextReconciliated,
+  decrementContextTotal,
+  getCellContext,
+  getColumnStatus,
   isCellReconciliated, isColumnPartialAnnotated, isColumnReconciliated
 } from './table.reconciliation-utils';
 import { getCell, getColumn, removeObject } from './table.utils';
@@ -48,18 +51,14 @@ export const deleteSelectedRows = (state: Draft<TableState>) => {
       const { cells } = rows.byId[rowId];
       const column = getColumn(state, colId);
       const cell = getCell(state, rowId, colId);
-      const { reconciliator } = cell.metadata;
+      const cellContext = getCellContext(cell);
       // if cell has metadata
-      if (reconciliator.id) {
+      if (cellContext) {
         // decrement total
-        column.reconciliators[reconciliator.id] = {
-          ...decrementTotal(column.reconciliators[reconciliator.id])
-        };
+        column.context[cellContext] = decrementContextTotal(column.context[cellContext]);
         // if the cell is also reconciliated, decrement reconciliated
         if (isCellReconciliated(cell)) {
-          column.reconciliators[reconciliator.id] = {
-            ...decrementReconciliated(column.reconciliators[reconciliator.id])
-          };
+          column.context[cellContext] = decrementContextReconciliated(column.context[cellContext]);
         }
       }
     });
@@ -72,13 +71,7 @@ export const deleteSelectedRows = (state: Draft<TableState>) => {
   state.entities.columns.allIds.forEach((colId) => {
     const column = getColumn(state, colId);
     // update column status
-    if (isColumnReconciliated(state, colId)) {
-      column.status = ColumnStatus.RECONCILIATED;
-    } else if (isColumnPartialAnnotated(state, colId)) {
-      column.status = ColumnStatus.PENDING;
-    } else {
-      column.status = ColumnStatus.EMPTY;
-    }
+    column.status = getColumnStatus(state, colId);
   });
 };
 

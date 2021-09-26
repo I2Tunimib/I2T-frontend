@@ -2,11 +2,14 @@ import { createSelector } from '@reduxjs/toolkit';
 import { floor } from '@services/utils/math';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
+import { ID } from '@store/interfaces/store';
 import { Row } from 'react-table';
+import { Context } from 'vm';
 import { selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
+import { BaseMetadata } from './interfaces/table';
 import { TableThunkActions } from './table.thunk';
-import { getMinMaxScore } from './utils/table.reconciliation-utils';
-import { getIdsFromCell } from './utils/table.utils';
+import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
+import { getCell, getIdsFromCell } from './utils/table.utils';
 
 // Input selectors
 const selectTableState = (state: RootState) => state.table;
@@ -17,14 +20,23 @@ const selectUIState = (state: RootState) => state.table.ui;
 const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
 const selectReconciliatorById = (state: RootState, { value }: any) => {
-  const reconId = value.metadata.reconciliator.id;
-  return reconId ? state.config.entities.reconciliators.byId[reconId] : undefined;
+  // return reconId ? state.config.entities.reconciliators.byId[reconId] : undefined;
+  return undefined;
+};
+const selectColumnContexts = (state: RootState, { data }: any) => {
+  return data
+    ? Object.keys(data.context).filter((context: ID) => data.context[context].reconciliated > 0)
+    : [];
 };
 
 // LOADING SELECTORS
 export const selectGetTableStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.GET_TABLE)
+);
+export const selectGetChallengeTableStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, TableThunkActions.GET_CHALLENGE_TABLE)
 );
 export const selectReconcileRequestStatus = createSelector(
   selectRequests,
@@ -53,9 +65,15 @@ export const selectCurrentTable = createSelector(
   (entities) => entities.tableInstance
 );
 
+export const selectColumnReconciliators = createSelector(
+  selectColumnContexts,
+  selectReconciliatorsAsObject,
+  (contexts, reconciliators) => contexts.map((context: ID) => reconciliators[context].name)
+);
+
 export const selectReconciliatorCell = createSelector(
   selectReconciliatorById,
-  (reconciliator) => (reconciliator ? reconciliator.name : '')
+  (reconciliator) => '' // (reconciliator ? reconciliator.name : '')
 );
 
 /**
@@ -222,7 +240,7 @@ export const selectCanDelete = createSelector(
 export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
   (selectedCells) => selectedCells.length > 0
-    && !selectedCells.some((cell) => cell.metadata.values.length === 0)
+    && !selectedCells.some((cell) => cell.metadata.length === 0)
 );
 
 // DATA TRANSFORMATION SELECTORS
@@ -235,29 +253,33 @@ export const selectDataTableFormat = createSelector(
   selectEntitiesState,
   selectReconciliatorsAsObject,
   (entities, reconciliators) => {
-    const columns = entities.columns.allIds.map((colId) => ({
-      Header: entities.columns.byId[colId].label,
-      accessor: colId,
-      status: entities.columns.byId[colId].status,
-      reconciliators: entities.columns.byId[colId].reconciliators,
-      extension: entities.columns.byId[colId].extension
-    }));
+    const columns = entities.columns.allIds.map((colId) => {
+      const { label, id, ...rest } = entities.columns.byId[colId];
+      return {
+        Header: 'halo',
+        accessor: `${colId}-check`,
+        columns: [{
+          Header: label,
+          accessor: colId,
+          id,
+          data: { ...rest }
+        }]
+      };
+    });
 
     const rows = entities.rows.allIds.map((rowId) => (
       Object.keys(entities.rows.byId[rowId].cells).reduce((acc, colId) => {
-        const cellReconciliator = entities.rows.byId[rowId].cells[colId].metadata.reconciliator;
-        const currentService = reconciliators[cellReconciliator?.id];
+        const cell = entities.rows.byId[rowId].cells[colId];
+        const cellContext = getCellContext(cell);
+        const currentService = reconciliators[cellContext];
         return {
           ...acc,
           [colId]: {
-            ...entities.rows.byId[rowId].cells[colId],
-            metadata: {
-              ...entities.rows.byId[rowId].cells[colId].metadata,
-              values: [
-                ...entities.rows.byId[rowId].cells[colId].metadata.values
-              ],
-              resourceUrl: currentService ? currentService.entityPageUrl : ''
-            },
+            ...cell,
+            metadata: cell.metadata.map((item) => ({
+              ...item,
+              url: `${currentService.uri}/${item.id.split(':')[1]}`
+            })),
             rowId
           }
         };
@@ -296,7 +318,7 @@ export const selectAutoMatchingCells = createSelector(
       minScoreAcc: minScore,
       maxScoreAcc: maxScore
     } = selectedCells.reduce(({ minScoreAcc, maxScoreAcc }, cell) => {
-      const { min, max } = getMinMaxScore(cell.metadata.values);
+      const { min, max } = getMinMaxScore(cell.metadata);
       return {
         minScoreAcc: minScoreAcc < min ? minScoreAcc : min,
         maxScoreAcc: maxScoreAcc > max ? maxScoreAcc : max
@@ -331,32 +353,31 @@ export const selectCellMetadataTableFormat = createSelector(
   (cellId, reconciliators, rows) => {
     if (cellId) {
       const [rowId, colId] = getIdsFromCell(cellId);
-      const { reconciliator, values } = rows.byId[rowId].cells[colId].metadata;
-      const service = reconciliators.byId[reconciliator?.id];
+      const cell = rows.byId[rowId].cells[colId];
+      const cellContext = getCellContext(cell);
+      const service = reconciliators.byId[cellContext];
       if (service) {
         const columns = service.metaToViz.map((tableColId) => ({
           Header: tableColId,
           accessor: tableColId
         }));
 
-        const data = values.map((metadata) => {
+        const data = cell.metadata.map((item) => {
           return {
             ...service.metaToViz.reduce((acc, tableColId) => {
               acc[tableColId] = {
-                label: toString(metadata[tableColId]),
+                label: toString(item[tableColId as keyof BaseMetadata]),
                 isLink: tableColId === 'name',
-                link: tableColId === 'name' && service.entityPageUrl
-                  ? `${service.entityPageUrl}/${metadata.id}`
-                  : undefined
+                link: tableColId === 'name' && `${service.uri}/${item.id.split(':')[1]}`
               };
               return acc;
             }, {} as { [key: string]: any } & Row),
-            isSelected: metadata.match
+            isSelected: item.match
           };
         });
         return { columns, data };
       }
     }
-    return { columns: [], data: [] };
+    return { columns: [] as any, data: [] as any };
   }
 );

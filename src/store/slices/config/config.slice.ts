@@ -20,8 +20,8 @@ export const configSlice = createSliceWithRequests({
       const { reconciliators, extenders } = action.payload;
 
       reconciliators.forEach((reconciliator) => {
-        state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
-        state.entities.reconciliators.allIds.push(reconciliator.id);
+        state.entities.reconciliators.byId[reconciliator.prefix] = reconciliator;
+        state.entities.reconciliators.allIds.push(reconciliator.prefix);
       });
 
       extenders.forEach((extender) => {

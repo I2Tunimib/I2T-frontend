@@ -36,10 +36,11 @@ import {
 } from './utils/table.delete-utils';
 import { StandardTable } from './utils/table.export-utils';
 import {
-  isColumnReconciliated, setMatchingMetadata,
-  hasColumnMetadata, isCellReconciliated,
-  decrementAllReconciliator, incrementAllReconciliator,
-  isColumnPartialAnnotated, decrementReconciliated, incrementReconciliated, decrementTotal
+  isCellReconciliated,
+  getCellContext, getColumnStatus, createContext,
+  incrementContextCounters, decrementContextCounters, decrementContextTotal,
+  decrementContextReconciliated,
+  incrementContextReconciliated
 } from './utils/table.reconciliation-utils';
 import {
   areOnlyRowsSelected,
@@ -100,10 +101,17 @@ export const tableSlice = createSliceWithRequests({
      */
     updateSelectedCellExpanded: (state, action: PayloadAction<Payload>) => {
       const { undoable = false } = action.payload;
+      const touchedColumns = new Set<string>();
+
       Object.keys(state.ui.selectedCellIds).forEach((cellId) => {
         const [rowId, colId] = getIdsFromCell(cellId);
+        touchedColumns.add(colId);
         state.entities.rows.byId[rowId].cells[colId].expanded = !state.entities.rows
           .byId[rowId].cells[colId].expanded;
+      });
+
+      touchedColumns.forEach((col) => {
+        state.entities.columns.byId[col].expanded = !state.entities.columns.byId[col].expanded;
       });
     },
     /**
@@ -144,7 +152,7 @@ export const tableSlice = createSliceWithRequests({
           match: false,
           score: 0
         };
-        draft.entities.rows.byId[rowId].cells[colId].metadata.values.unshift(newMeta);
+        draft.entities.rows.byId[rowId].cells[colId].metadata.unshift(newMeta);
       }, (draft) => {
         // do not include in undo history
         draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -158,13 +166,14 @@ export const tableSlice = createSliceWithRequests({
       const { metadataId, cellId, undoable = true } = action.payload;
       const [rowId, colId] = getIdsFromCell(cellId);
       const { metadata } = getCell(state, rowId, colId);
-      if (metadata.values.length > 0) {
+      if (metadata.length > 0) {
         return produceWithPatch(state, undoable, (draft) => {
           const column = getColumn(draft, colId);
           const cell = getCell(draft, rowId, colId);
-          const { reconciliator } = cell.metadata;
+          const cellContext = getCellContext(cell);
           const wasReconciliated = isCellReconciliated(cell);
-          cell.metadata.values.forEach((metaItem) => {
+
+          cell.metadata.forEach((metaItem) => {
             if (metaItem.id === metadataId) {
               metaItem.match = !metaItem.match;
             } else {
@@ -172,19 +181,15 @@ export const tableSlice = createSliceWithRequests({
             }
           });
           if (wasReconciliated && !isCellReconciliated(cell)) {
-            column.reconciliators[reconciliator.id] = {
-              ...decrementReconciliated(column.reconciliators[reconciliator.id])
-            };
+            column.context[cellContext] = decrementContextReconciliated(
+              column.context[cellContext]
+            );
           } else if (!wasReconciliated && isCellReconciliated(cell)) {
-            column.reconciliators[reconciliator.id] = {
-              ...incrementReconciliated(column.reconciliators[reconciliator.id])
-            };
+            column.context[cellContext] = incrementContextReconciliated(
+              column.context[cellContext]
+            );
           }
-          if (isColumnReconciliated(draft, colId)) {
-            column.status = ColumnStatus.RECONCILIATED;
-          } else {
-            column.status = ColumnStatus.PENDING;
-          }
+          column.status = getColumnStatus(draft, colId);
         }, (draft) => {
           // do not include in undo history
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -202,33 +207,28 @@ export const tableSlice = createSliceWithRequests({
       return produceWithPatch(state, undoable, (draft) => {
         const column = getColumn(draft, colId);
         const cell = getCell(draft, rowId, colId);
-        const { reconciliator, values } = cell.metadata;
+        const cellContext = getCellContext(cell);
         let wasMatch = false;
-        cell.metadata.values = values.filter((item) => {
+
+        cell.metadata = cell.metadata.filter((item) => {
           if (item.id === metadataId) {
-            wasMatch = item.match;
+            wasMatch = !!item.match;
           }
           return item.id !== metadataId;
         });
-        if (cell.metadata.values.length === 0) {
-          cell.metadata.reconciliator = { id: '' };
-          column.status = ColumnStatus.EMPTY;
-
+        if (cell.metadata.length === 0) {
+          column.context[cellContext] = decrementContextTotal(column.context[cellContext]);
           if (wasMatch) {
-            column.reconciliators[reconciliator.id] = {
-              ...decrementAllReconciliator(cell, column.reconciliators[reconciliator.id])
-            };
-          } else {
-            column.reconciliators[reconciliator.id] = {
-              ...decrementTotal(column.reconciliators[reconciliator.id])
-            };
+            column.context[cellContext] = decrementContextReconciliated(
+              column.context[cellContext]
+            );
           }
         } else if (wasMatch) {
-          column.reconciliators[reconciliator.id] = {
-            ...decrementReconciliated(column.reconciliators[reconciliator.id])
-          };
-          column.status = ColumnStatus.PENDING;
+          column.context[cellContext] = decrementContextReconciliated(
+            column.context[cellContext]
+          );
         }
+        column.status = getColumnStatus(draft, colId);
       }, (draft) => {
         // do not include in undo history
         draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -243,46 +243,47 @@ export const tableSlice = createSliceWithRequests({
       const { threshold, undoable = true } = action.payload;
 
       return produceWithPatch(state, undoable, (draft) => {
-        const { rows } = draft.entities;
         const { selectedCellIds } = draft.ui;
+        const updatedColumns = new Set<string>();
         Object.keys(selectedCellIds).forEach((cellId) => {
           const [rowId, colId] = getIdsFromCell(cellId);
           const column = getColumn(draft, colId);
           const cell = getCell(draft, rowId, colId);
-          const { reconciliator } = cell.metadata;
+          const cellContext = getCellContext(cell);
+          // keep track of all columns uniquely with a set
+          updatedColumns.add(colId);
 
           let maxIndex = { index: -1, max: -1 };
-          cell.metadata.values.forEach((item, i) => {
+          cell.metadata.forEach(({ score = 0, match }, i) => {
             // find matching element
-            if (item.score > threshold && item.score > maxIndex.max) {
-              maxIndex = { index: i, max: item.score };
+            if (score > threshold && score > maxIndex.max) {
+              maxIndex = { index: i, max: score };
             } else {
-              if (item.match) {
+              if (match) {
                 // assign match
-                cell.metadata.values[i].match = false;
+                cell.metadata[i].match = false;
                 // decrement number of reconciliated cells
-                column.reconciliators[reconciliator.id] = {
-                  ...decrementReconciliated(column.reconciliators[reconciliator.id])
-                };
+                column.context[cellContext] = decrementContextReconciliated(
+                  column.context[cellContext]
+                );
               }
             }
           });
           if (maxIndex.index !== -1) {
-            if (!cell.metadata.values[maxIndex.index].match) {
+            if (!cell.metadata[maxIndex.index].match) {
               // assign match
-              cell.metadata.values[maxIndex.index].match = true;
+              cell.metadata[maxIndex.index].match = true;
               // increment number of reconciliated cells
-              column.reconciliators[reconciliator.id] = {
-                ...incrementReconciliated(column.reconciliators[reconciliator.id])
-              };
+              column.context[cellContext] = incrementContextReconciliated(
+                column.context[cellContext]
+              );
             }
           }
-
-          if (isColumnReconciliated(draft, colId)) {
-            column.status = ColumnStatus.RECONCILIATED;
-          } else {
-            column.status = ColumnStatus.PENDING;
-          }
+        });
+        // update columns status for 'touched' columns
+        updatedColumns.forEach((colId) => {
+          const column = getColumn(draft, colId);
+          column.status = getColumnStatus(draft, colId);
         });
       }, (draft) => {
         // do not include in undo history
@@ -416,35 +417,38 @@ export const tableSlice = createSliceWithRequests({
         state, action: PayloadAction<Payload<ReconciliationFulfilledPayload>>
       ) => {
         const { data, reconciliator, undoable = true } = action.payload;
+        const { prefix, uri } = reconciliator;
 
         return produceWithPatch(state, undoable, (draft) => {
-          data.forEach(({ id, metadata }) => {
-            const [rowId, colId] = getIdsFromCell(id);
+          data.forEach(({ id: cellId, metadata }) => {
+            const [rowId, colId] = getIdsFromCell(cellId);
             // get column
             const column = getColumn(draft, colId);
             // get cell and previous reconciliator
             const cell = getCell(draft, rowId, colId);
-            const prevRecon = cell.metadata.reconciliator.id;
+            const previousContext = getCellContext(cell);
 
-            if (prevRecon) {
+            if (previousContext) {
               // decrement previous
-              column.reconciliators[prevRecon] = {
-                ...decrementAllReconciliator(cell, column.reconciliators[prevRecon])
-              };
+              column.context[previousContext] = decrementContextCounters(
+                column.context[previousContext],
+                cell
+              );
             }
             // assign new reconciliator and metadata
-            cell.metadata.reconciliator.id = reconciliator.id;
-            cell.metadata.values = metadata;
+            // cell.metadata.reconciliator.id = reconciliator.id;
+            cell.metadata = metadata.map(({ id, ...rest }) => ({
+              id: `${prefix}:${id}`,
+              ...rest
+            }));
             // increment current
-            column.reconciliators[reconciliator.id] = {
-              ...incrementAllReconciliator(cell, column.reconciliators[reconciliator.id])
-            };
-
-            if (isColumnReconciliated(draft, colId)) {
-              column.status = ColumnStatus.RECONCILIATED;
-            } else if (isColumnPartialAnnotated(draft, colId)) {
-              column.status = ColumnStatus.PENDING;
+            if (!column.context[prefix] || isEmptyObject(column.context[prefix])) {
+              // create context if doesn't exist
+              column.context[prefix] = createContext({ uri });
             }
+            column.context[prefix] = incrementContextCounters(column.context[prefix], cell);
+            // update column status after changes
+            column.status = getColumnStatus(draft, colId);
           });
         }, (draft) => {
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();

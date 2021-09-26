@@ -1,70 +1,19 @@
 import { current, Draft } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
 import {
+  BaseMetadata,
   Cell,
-  MetadataInstance, TableState
+  ColumnStatus,
+  Context,
+  TableState
 } from '../interfaces/table';
-import { getColumn } from './table.utils';
-
-/**
- * Set matching metadata to cell based on threshold.
- */
-export const setMatchingMetadata = (
-  { metadata }: Cell,
-  threshold: number
-) => {
-  let maxIndex = { index: -1, max: -1 };
-  metadata.values.forEach((item, i) => {
-    if (item.score > threshold && item.score > maxIndex.max) {
-      maxIndex = { index: i, max: item.score };
-    }
-  });
-  if (maxIndex.index !== -1) {
-    metadata.values[maxIndex.index].match = true;
-  }
-};
-
-/**
- * Check if a column is reconciliated.
- */
-// export const isColumnReconciliated = (state: Draft<TableState>, colId: ID) => {
-//   const { allIds: rowIds } = state.entities.rows;
-//   const { rows } = state.entities;
-//   return rowIds.every((rowId) => {
-//     const cell = rows.byId[rowId].cells[colId];
-//     return cell.metadata.values.length > 0
-//       && cell.metadata.values.some((metadataItem) => metadataItem.match);
-//   // && cell.metadata.reconciliator === rows.byId[rowIds[0]].cells[colId].metadata.reconciliator;
-//   });
-// };
-
-export const hasColumnMetadata = (state: Draft<TableState>, colId: ID) => {
-  const { allIds: rowIds } = state.entities.rows;
-  const { rows } = state.entities;
-  return rowIds.some((rowId) => {
-    const cell = rows.byId[rowId].cells[colId];
-    return cell.metadata.values.length > 0
-      && cell.metadata.reconciliator === rows.byId[rowIds[0]].cells[colId].metadata.reconciliator;
-  });
-};
-
-export const isReconciliatorPresent = (
-  state: Draft<TableState>, colId: ID, reconciliator: string
-) => {
-  const { allIds: rowIds } = state.entities.rows;
-  const { rows } = state.entities;
-  return rowIds.some((rowId) => {
-    const cell = rows.byId[rowId].cells[colId];
-    return cell.metadata.values.length > 0
-      && cell.metadata.reconciliator.id === reconciliator;
-  });
-};
+import { getColumn, getContextPrefix } from './table.utils';
 
 export const isColumnReconciliated = (state: Draft<TableState>, colId: string) => {
-  const { reconciliators } = getColumn(state, colId);
+  const { context } = getColumn(state, colId);
   const totalRows = state.entities.rows.allIds.length;
-  const totalReconciliated = Object.keys(reconciliators)
-    .reduce((acc, key) => acc + reconciliators[key].reconciliated, 0);
+  const totalReconciliated = Object.keys(context)
+    .reduce((acc, key) => acc + context[key].reconciliated, 0);
   if (totalReconciliated === totalRows) {
     return true;
   }
@@ -72,104 +21,101 @@ export const isColumnReconciliated = (state: Draft<TableState>, colId: string) =
 };
 
 export const isColumnPartialAnnotated = (state: Draft<TableState>, colId: string) => {
-  const { reconciliators } = getColumn(state, colId);
-  return Object.keys(reconciliators).some((key) => reconciliators[key].total > 0);
+  const { context } = getColumn(state, colId);
+  return Object.keys(context).some((key) => context[key].total > 0);
 };
 
 export const isCellReconciliated = ({ metadata }: Cell) => {
-  return metadata.values.some((item) => item.match);
+  return metadata.some((item) => item.match);
 };
 
-export const decrementAllReconciliator = (
-  cell: Cell,
-  reconciliator: { total: number, reconciliated: number}
-) => {
-  if (!reconciliator) {
-    return {
-      total: 0,
-      reconciliated: 0
-    };
+export const getCellContext = (cell: Cell) => {
+  if (cell.metadata.length > 0) {
+    return getContextPrefix(cell.metadata[0]);
   }
-  const { total, reconciliated } = reconciliator;
-  reconciliator.total = total - 1;
-  if (isCellReconciliated(cell)) {
-    reconciliator.reconciliated = reconciliated - 1;
-  }
-  return reconciliator;
+  return '';
 };
 
-export const decrementReconciliated = (
-  reconciliator: { total: number, reconciliated: number}
-) => {
-  if (!reconciliator) {
-    return {
-      total: 0,
-      reconciliated: 0
-    };
-  }
-  const { reconciliated } = reconciliator;
-  reconciliator.reconciliated = reconciliated - 1;
-  return reconciliator;
+export const createContext = ({ uri = '', total = 0, reconciliated = 0 }: Partial<Context>) => {
+  return {
+    uri,
+    total,
+    reconciliated
+  };
 };
 
-export const decrementTotal = (
-  reconciliator: { total: number, reconciliated: number}
-) => {
-  if (!reconciliator) {
-    return {
-      total: 0,
-      reconciliated: 0
-    };
+export const getColumnStatus = (state: Draft<TableState>, colId: ID) => {
+  if (isColumnReconciliated(state, colId)) {
+    return ColumnStatus.RECONCILIATED;
   }
-  const { total } = reconciliator;
-  reconciliator.total = total - 1;
-  return reconciliator;
+  if (isColumnPartialAnnotated(state, colId)) {
+    return ColumnStatus.PENDING;
+  }
+  return ColumnStatus.EMPTY;
 };
 
-export const incrementReconciliated = (
-  reconciliator: { total: number, reconciliated: number}
+export const decrementContextReconciliated = (
+  context: Context
 ) => {
-  if (!reconciliator) {
-    reconciliator = {
-      total: 0,
-      reconciliated: 0
-    };
-  }
-  const { reconciliated } = reconciliator;
-  reconciliator.reconciliated = reconciliated + 1;
-  return reconciliator;
+  const { reconciliated, ...rest } = context;
+  return {
+    ...rest,
+    reconciliated: reconciliated - 1
+  };
 };
 
-export const incrementTotal = (
-  reconciliator: { total: number, reconciliated: number}
+export const incrementContextReconciliated = (
+  context: Context
 ) => {
-  if (!reconciliator) {
-    reconciliator = {
-      total: 0,
-      reconciliated: 0
-    };
-  }
-  const { total } = reconciliator;
-  reconciliator.total = total + 1;
-  return reconciliator;
+  const { reconciliated, ...rest } = context;
+  return {
+    ...rest,
+    reconciliated: reconciliated + 1
+  };
 };
 
-export const incrementAllReconciliator = (
-  cell: Cell,
-  reconciliator: { total: number, reconciliated: number}
+export const decrementContextTotal = (
+  context: Context
 ) => {
-  if (!reconciliator) {
-    reconciliator = {
-      total: 0,
-      reconciliated: 0
-    };
-  }
-  const { total, reconciliated } = reconciliator;
-  reconciliator.total = total + 1;
-  if (isCellReconciliated(cell)) {
-    reconciliator.reconciliated = reconciliated + 1;
-  }
-  return reconciliator;
+  const { total, ...rest } = context;
+  return {
+    ...rest,
+    total: total - 1
+  };
+};
+
+export const incrementContextTotal = (
+  context: Context
+) => {
+  const { total, ...rest } = context;
+  return {
+    ...rest,
+    total: total + 1
+  };
+};
+
+export const incrementContextCounters = (
+  context: Context,
+  cell: Cell
+) => {
+  const { total, reconciliated, ...rest } = context;
+  return {
+    ...rest,
+    total: total + 1,
+    reconciliated: isCellReconciliated(cell) ? reconciliated + 1 : reconciliated
+  };
+};
+
+export const decrementContextCounters = (
+  context: Context,
+  cell: Cell
+) => {
+  const { total, reconciliated, ...rest } = context;
+  return {
+    ...rest,
+    total: total - 1,
+    reconciliated: isCellReconciliated(cell) ? reconciliated - 1 : reconciliated
+  };
 };
 
 /** */
@@ -177,8 +123,8 @@ export const incrementAllReconciliator = (
 /**
  * Get min and max scores between metadataItems of a cell.
  */
-export const getMinMaxScore = (metadataArray: MetadataInstance[]) => {
-  const scores = metadataArray.map((metadataItem) => metadataItem.score);
+export const getMinMaxScore = (metadata: BaseMetadata[]) => {
+  const scores = metadata.map(({ score = 0 }) => score);
   const max = Math.max(...scores);
   const min = Math.min(...scores);
   return { min, max };

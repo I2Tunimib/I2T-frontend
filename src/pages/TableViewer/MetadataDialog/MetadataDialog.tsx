@@ -44,6 +44,7 @@ import { Skeleton } from '@material-ui/lab';
 import { IconButtonTooltip } from '@components/core';
 import { useForm } from 'react-hook-form';
 import { ButtonShortcut } from '@components/kit';
+import { getCellContext } from '@store/slices/table/utils/table.reconciliation-utils';
 import styles from './MetadataDialog.module.scss';
 
 const Transition = forwardRef((
@@ -83,8 +84,9 @@ const MetadataDialog = () => {
 
   useEffect(() => {
     if (cell) {
-      if (cell.metadata.reconciliator.id) {
-        setCurrentReconciliator(reconciliators[cell.metadata.reconciliator.id].name);
+      const cellContext = getCellContext(cell);
+      if (cellContext) {
+        setCurrentReconciliator(reconciliators[cellContext].name);
       }
     }
   }, [cell, reconciliators]);

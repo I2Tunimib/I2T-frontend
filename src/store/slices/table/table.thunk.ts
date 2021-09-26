@@ -62,7 +62,7 @@ export const reconcile = createAsyncThunk(
       baseUrl,
       data,
       reconciliator
-    }: { baseUrl: string, data: any, reconciliator: Reconciliator & { id: ID } }
+    }: { baseUrl: string, data: any, reconciliator: Reconciliator }
   ) => {
     const response = await tableAPI.reconcile(baseUrl, data);
     return {

@@ -4,7 +4,9 @@
   vertical-align: middle;
   cursor: default;
   background-color: inherit;
-  max-width: 50px;
+  border-right: 1px solid #ededed;
+  border-bottom: 1px solid #ededed;
+  
 
   &.Selected {
     // background: rgba(33, 148, 255, 0.12);
@@ -13,9 +15,9 @@
   }
 
   // add border to index column
-  &:first-child {
-    border-right: 1px solid #ededed;
-  }
+  // &:first-child {
+  //   border-right: 1px solid #ededed;
+  // }
   
   // apply style to cell if column is selected
   &.SelectedColumn {

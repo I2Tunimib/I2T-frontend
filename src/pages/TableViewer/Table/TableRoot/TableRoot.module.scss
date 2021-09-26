@@ -1,4 +1,7 @@
 .TableRoot {
   width: 100%;
+  height: 1px;
   border-collapse: collapse;
+  border-spacing: 0;
+  // table-layout: fixed;
 }

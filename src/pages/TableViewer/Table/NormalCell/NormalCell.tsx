@@ -1,5 +1,4 @@
 import { FC, useCallback } from 'react';
-import { Metadata, MetadataInstance } from '@store/slices/table/interfaces/table';
 import clsx from 'clsx';
 import StatusBadge from '@components/core/StatusBadge';
 import ExpandableList from '@components/kit/ExpandableList/ExpandableList';
@@ -11,6 +10,7 @@ import CheckRoundedIcon from '@material-ui/icons/CheckRounded';
 import { selectReconciliatorCell } from '@store/slices/table/table.selectors';
 import { RootState } from '@store';
 import { connect } from 'react-redux';
+import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import styles from './NormalCell.module.scss';
 
 interface NormalCellProps {
@@ -26,12 +26,12 @@ const NormalCell: FC<NormalCellProps> = ({
   reconciliator,
   dense
 }) => {
-  const getBadgeStatus = (metadata: Metadata) => {
-    const matching = value.metadata.values.some((meta: MetadataInstance) => meta.match);
+  const getBadgeStatus = (metadata: BaseMetadata[]) => {
+    const matching = value.metadata.some((meta: BaseMetadata) => meta.match);
     if (matching) {
       return 'Success';
     }
-    if (metadata.reconciliator.id && metadata.values.length > 0) {
+    if (metadata.length > 0) {
       return 'Warn';
     }
     return 'Error';
@@ -39,10 +39,10 @@ const NormalCell: FC<NormalCellProps> = ({
 
   const getItems = useCallback((start: number, finish: number): any[] => {
     let end = finish;
-    if (finish > value.metadata.values.length) {
-      end = value.metadata.values.length;
+    if (finish > value.metadata.length) {
+      end = value.metadata.length;
     }
-    return value.metadata.values.slice(start, end);
+    return value.metadata.slice(start, end);
   }, [value.metadata]);
 
   return (
@@ -54,13 +54,12 @@ const NormalCell: FC<NormalCellProps> = ({
           [styles.Dense]: dense
         }
       )}>
-        {value.metadata.reconciliator.id && (
+        {value.metadata.length > 0 && (
           <StatusBadge
-            className={styles.Badge}
             status={getBadgeStatus(value.metadata)}
           />
         )}
-        {label}
+        <div className={styles.TextLabel}>{label}</div>
       </div>
       {value.expanded && (
         <ExpandableList
@@ -72,7 +71,7 @@ const NormalCell: FC<NormalCellProps> = ({
               <ExpandableListItem key={`${item.name}-${index}`}>
                 <div className={styles.Item}>
                   <Link
-                    href={`${value.metadata.resourceUrl}/${item.id}`}
+                    href={item.url}
                     target="_blank">
                     {item.name}
                   </Link>
@@ -82,15 +81,10 @@ const NormalCell: FC<NormalCellProps> = ({
             ))}
           </ExpandableListHeader>
           <ExpandableListBody>
-            {getItems(3, value.metadata.values.length).map((item, index) => (
+            {getItems(3, value.metadata.length).map((item, index) => (
               <ExpandableListItem key={`${item.name}-${index}`}>
                 <Link
-                  className={clsx(
-                    {
-                      [styles.LinkMatched]: item.match
-                    }
-                  )}
-                  href={`${value.metadata.resourceUrl}/${item.id}`}
+                  href={item.url}
                   target="_blank">
                   {item.name}
                 </Link>

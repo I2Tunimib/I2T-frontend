@@ -53,12 +53,12 @@ const ReconciliateDialog = () => {
   useEffect(() => {
     // set initial value of select
     if (reconciliators) {
-      setCurrentService(reconciliators[0].id);
+      setCurrentService(reconciliators[0].prefix);
     }
   }, [reconciliators]);
 
   const handleConfirm = () => {
-    const reconciliator = reconciliators.find((recon) => recon.id === currentService);
+    const reconciliator = reconciliators.find((recon) => recon.prefix === currentService);
     if (reconciliator) {
       dispatch(reconcile({
         baseUrl: reconciliator.relativeUrl,
@@ -70,13 +70,13 @@ const ReconciliateDialog = () => {
           dispatch(updateUI({
             openReconciliateDialog: false
           }));
-        })
-        .catch((e) => {
-          enqueueSnackbar(e.message, {
-            variant: 'error',
-            autoHideDuration: 3000
-          });
         });
+      // .catch((e) => {
+      //   enqueueSnackbar(e.message, {
+      //     variant: 'error',
+      //     autoHideDuration: 3000
+      //   });
+      // });
     }
   };
 
@@ -115,7 +115,7 @@ const ReconciliateDialog = () => {
               variant="outlined"
             >
               {reconciliators && reconciliators.map((reconciliator) => (
-                <MenuItem key={reconciliator.id} value={reconciliator.id}>
+                <MenuItem key={reconciliator.prefix} value={reconciliator.prefix}>
                   {reconciliator.name}
                 </MenuItem>
               ))}

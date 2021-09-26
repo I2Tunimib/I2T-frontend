@@ -1,7 +1,10 @@
 import { ID } from '@store/interfaces/store';
-import { RootState, store } from '@store';
+import { store } from '@store';
 import { Draft } from '@reduxjs/toolkit';
-import { Cell, TableState } from '../interfaces/table';
+import {
+  BaseMetadata, Cell,
+  ColumnMetadata, TableState
+} from '../interfaces/table';
 
 /**
  * Add a property to another object given old and new object.
@@ -34,6 +37,7 @@ export const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
  * Get rowId and colId from cellId.
  */
 export const getIdsFromCell = (cellId: ID) => cellId.split('$') as [ID, ID];
+export const getContextPrefix = (metadata: BaseMetadata | ColumnMetadata) => metadata.id.split(':')[0];
 
 const getTableState = () => store.getState().table;
 export const getColumn = (

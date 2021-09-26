@@ -16,9 +16,9 @@ export interface Reconciliator {
   id: ID;
   name: string;
   prefix: string;
+  uri: string;
   relativeUrl: string;
   metaToViz: string[];
-  entityPageUrl: string;
 }
 
 export interface Extender extends Record<string, any> {
