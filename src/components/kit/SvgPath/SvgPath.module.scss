@@ -1,0 +1,11 @@
+.Path {
+  transition: all 200ms ease-out;
+  &:hover {
+    stroke-width: 2px;
+    text {
+      transform-origin: 50% 50%;
+      transform-box: fill-box;
+      transform: scale(1.1);
+    }
+  }
+}

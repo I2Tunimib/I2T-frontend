@@ -4,9 +4,11 @@ import {
 } from 'react-table';
 import {
   FC, useCallback,
-  useEffect
+  useEffect,
+  useRef
 } from 'react';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
+import clsx from 'clsx';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
@@ -14,10 +16,14 @@ import TableRowCell from '../TableRowCell';
 import TableRow from '../TableRow';
 import TableFooter from '../TableFooter';
 import SelectableHeader from '../SelectableHeader';
+import Canvas from '../Canvas';
+import styles from './Table.module.scss';
+import SvgContainer from '../SvgContainer';
 
 interface TableProps {
   columns: any[];
   data: any[];
+  headerExpanded: boolean;
   searchFilter?: TableGlobalFilter;
   dense?: boolean;
   getGlobalProps: () => any;
@@ -38,12 +44,15 @@ const Table: FC<TableProps> = ({
   columns,
   data,
   searchFilter,
+  headerExpanded,
   dense = false,
   getGlobalProps = defaultPropGetter,
   getFirstHeaderProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
 }) => {
+  const columnRefs = useRef<Record<any, HTMLElement>>({});
+
   /**
    * Custom function id.
    */
@@ -164,9 +173,15 @@ const Table: FC<TableProps> = ({
         {firstHeader && (
           <TableRow {...firstHeader.getHeaderGroupProps([getGlobalProps()])}>
             {firstHeader.headers.map((column, index) => (
-              <SelectableHeader {...column.getHeaderProps(
-                [getFirstHeaderProps(column), getGlobalProps(), { index }]
-              )}>
+              <SelectableHeader
+                ref={(el: any) => {
+                  if (column.columns) {
+                    columnRefs.current[column.columns[0].id] = el;
+                  }
+                }}
+                {...column.getHeaderProps(
+                  [getFirstHeaderProps(column), getGlobalProps(), { index }]
+                )}>
                 {// Render the header
                   column.render('Header')
                 }
@@ -203,7 +218,14 @@ const Table: FC<TableProps> = ({
   return (
     // apply the table props
     <>
-      <TableRoot {...getTableProps([getGlobalProps()])}>
+      <TableRoot
+        className={clsx(
+          styles.Table,
+          {
+            [styles.HeaderExpanded]: headerExpanded
+          }
+        )}
+        {...getTableProps([getGlobalProps()])}>
         <TableHead>
           {RenderFirstRowHeader()}
           {RenderSecondRowHeader()}
@@ -250,6 +272,14 @@ const Table: FC<TableProps> = ({
         </tbody>
       </TableRoot>
       <TableFooter rows={rows} paginatorProps={paginatorProps} />
+      <SvgContainer
+        headerExpanded={headerExpanded}
+        columnRefs={columnRefs}
+        columns={columns}
+        className={styles.SvgContainer} />
+      {/*
+      <Canvas headerExpanded={headerExpanded} columnRefs={columnRefs} className={styles.Canvas} />
+      */}
     </>
   );
 };

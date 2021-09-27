@@ -8,6 +8,7 @@ import PlaylistAddCheckRoundedIcon from '@material-ui/icons/PlaylistAddCheckRoun
 import ViewStreamRoundedIcon from '@material-ui/icons/ViewStreamRounded';
 import ReorderRoundedIcon from '@material-ui/icons/ReorderRounded';
 import ArrowRightAltRoundedIcon from '@material-ui/icons/ArrowRightAltRounded';
+import UnfoldMoreRoundedIcon from '@material-ui/icons/UnfoldMoreRounded';
 import clsx from 'clsx';
 import {
   deleteSelected,
@@ -22,7 +23,7 @@ import {
 import {
   selectIsCellSelected, selectIsOnlyOneCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
-  selectCanRedo, selectCanDelete, selectIsDenseView, selectSearchStatus
+  selectCanRedo, selectCanDelete, selectIsDenseView, selectSearchStatus, selectIsHeaderExpanded
 } from '@store/slices/table/table.selectors';
 import { useDebouncedCallback } from 'use-debounce';
 import styles from './SubToolbar.module.scss';
@@ -47,6 +48,7 @@ const SubToolbar = () => {
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
   const isDenseView = useAppSelector(selectIsDenseView);
   const isACellSelected = useAppSelector(selectIsCellSelected);
+  const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
@@ -120,6 +122,11 @@ const SubToolbar = () => {
             Icon={ArrowRightAltRoundedIcon}
             disabled={!isACellSelected}
             onClick={() => dispatch(updateSelectedCellExpanded({}))}
+          />
+          <IconButtonTooltip
+            tooltipText="Expand header"
+            Icon={UnfoldMoreRoundedIcon}
+            onClick={() => dispatch(updateUI({ headerExpanded: !isHeaderExpanded }))}
           />
         </ActionGroup>
         <ActionGroup>

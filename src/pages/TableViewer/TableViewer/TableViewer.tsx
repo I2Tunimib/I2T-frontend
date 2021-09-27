@@ -16,13 +16,15 @@ import {
   selectDataTableFormat,
   selectSelectedColumnIds, selectSelectedRowIds,
   selectSelectedCellIds,
-  selectIsDenseView, selectSearchStatus, selectGetTableStatus, selectIsUnsaved
+  selectIsDenseView, selectSearchStatus,
+  selectGetTableStatus, selectIsUnsaved, selectIsHeaderExpanded
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { getTable, saveTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/interfaces/store';
 import { RouteLeaveGuard } from '@components/kit';
 import { selectReconciliatorsAsObject } from '@store/slices/config/config.selectors';
+import clsx from 'clsx';
 import { Table } from '../Table';
 import Toolbar from '../Toolbar';
 import styles from './TableViewer.module.scss';
@@ -63,6 +65,7 @@ const TableViewer = () => {
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
   const isDenseView = useAppSelector(selectIsDenseView);
+  const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const allReconciliators = useAppSelector(selectReconciliatorsAsObject);
 
   useEffect(() => {
@@ -245,12 +248,18 @@ const TableViewer = () => {
   return (
     <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
       <Toolbar />
-      <div className={styles.TableContainer}>
+      <div className={clsx(
+        styles.TableContainer,
+        {
+          [styles.HeaderExpanded]: isHeaderExpanded
+        }
+      )}>
         {!loading ? (
           <Table
             data={rowsTable}
             columns={columnsTable}
             searchFilter={searchFilterTable}
+            headerExpanded={isHeaderExpanded}
             getGlobalProps={getGlobalProps}
             getFirstHeaderProps={getFirstHeaderProps}
             getHeaderProps={getHeaderProps}
@@ -275,7 +284,6 @@ const TableViewer = () => {
           anchorElement={anchorEl}
           handleClose={handleMenuClose}
         />
-        <canvas className={styles.Canvas} />
       </div>
       <RouteLeaveGuard
         when={unsavedChanges}

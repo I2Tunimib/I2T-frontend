@@ -218,6 +218,11 @@ export const selectSearchStatus = createSelector(
   (ui) => ui.search
 );
 
+export const selectIsHeaderExpanded = createSelector(
+  selectUIState,
+  (ui) => ui.headerExpanded
+);
+
 // SELECTORS TO CHECK IF AN ACTION IS ENABLED
 
 /**

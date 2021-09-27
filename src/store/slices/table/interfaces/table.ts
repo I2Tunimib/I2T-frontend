@@ -28,6 +28,7 @@ export interface TableUIState {
   openReconciliateDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
+  headerExpanded: boolean;
   selectedColumnsIds: Record<ID, boolean>;
   selectedRowsIds: Record<ID, boolean>;
   selectedCellIds: Record<ID, boolean>;

@@ -1,6 +1,6 @@
 import { Checkbox } from '@material-ui/core';
 import { ID } from '@store/interfaces/store';
-import { FC } from 'react';
+import { FC, forwardRef } from 'react';
 import styles from './SelectableHeader.module.scss';
 
 interface SelectableHeaderProps {
@@ -8,14 +8,15 @@ interface SelectableHeaderProps {
   handleSelectedColumnChange: (id: ID) => void;
 }
 
-const SelectableHeader: FC<any> = ({
+// eslint-disable-next-line no-undef
+const SelectableHeader: FC<any> = forwardRef<HTMLTableHeaderCellElement>(({
   index,
   subColumnId,
   selected,
   handleSelectedColumnChange
-}) => {
+}: any, ref) => {
   return (
-    <th className={styles.Container}>
+    <th ref={ref} className={styles.Container}>
       {index !== 0 && (
         <Checkbox
           size="small"
@@ -26,6 +27,6 @@ const SelectableHeader: FC<any> = ({
       )}
     </th>
   );
-};
+});
 
 export default SelectableHeader;
