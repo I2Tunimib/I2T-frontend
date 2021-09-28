@@ -261,14 +261,10 @@ export const selectDataTableFormat = createSelector(
     const columns = entities.columns.allIds.map((colId) => {
       const { label, id, ...rest } = entities.columns.byId[colId];
       return {
-        Header: 'halo',
-        accessor: `${colId}-check`,
-        columns: [{
-          Header: label,
-          accessor: colId,
-          id,
-          data: { ...rest }
-        }]
+        Header: label,
+        accessor: colId,
+        id,
+        data: { ...rest }
       };
     });
 

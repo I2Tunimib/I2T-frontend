@@ -167,6 +167,17 @@ export const deselectColumnWithCells = (state: Draft<TableState>, colId: ID) => 
 };
 
 /**
+ * Select one column.
+ * When a column is selected without multi select, deselect all other things
+ * and select only that column.
+ */
+export const selectOneColumn = (state: Draft<TableState>, colId: ID) => {
+  state.ui.selectedColumnsIds = {};
+  state.ui.selectedRowsIds = {};
+  selectColumnWithCells(state, colId);
+};
+
+/**
  * Select one row.
  * When selecting a single row everything else should be deselected.
  */

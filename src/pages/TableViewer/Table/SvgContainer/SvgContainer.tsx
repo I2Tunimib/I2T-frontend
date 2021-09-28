@@ -47,8 +47,8 @@ const SvgContainer: FC<SvgContainerProps> = ({
 
   useEffect(() => {
     const cols = columns.reduce((acc, column) => {
-      const id = column.columns[0].Header;
-      const { metadata, context } = column.columns[0].data;
+      const id = column.Header;
+      const { metadata, context } = column.data;
       const { property } = metadata[0] || [];
       if (property && property.length > 0) {
         acc[id] = {

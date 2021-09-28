@@ -8,22 +8,27 @@ import { ColumnStatus } from '@store/slices/table/interfaces/table';
 import { RootState } from '@store';
 import { connect } from 'react-redux';
 import { selectColumnReconciliators } from '@store/slices/table/table.selectors';
+import { forwardRef } from 'react';
 import styles from './TableHeaderCell.module.scss';
 import TableHeaderCellExpanded from './TableHeaderCellExpanded';
 
 /**
  * Table head cell.
  */
-const TableHeaderCell = ({
+// eslint-disable-next-line no-undef
+const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   id,
   selected,
   children,
   handleCellRightClick,
+  handleSelectedColumnChange,
   reconciliators,
   data
-}: any) => {
+}: any, ref) => {
   return (
     <th
+      ref={ref}
+      onClick={(e) => handleSelectedColumnChange(e, id)}
       onContextMenu={(e) => handleCellRightClick(e, 'column', id)}
       className={clsx([
         styles.TableHeaderCell,
@@ -76,7 +81,7 @@ const TableHeaderCell = ({
       </div>
     </th>
   );
-};
+});
 
 const mapStateToProps = (state: RootState, props: any) => {
   return {
@@ -84,5 +89,4 @@ const mapStateToProps = (state: RootState, props: any) => {
   };
 };
 
-export default connect(mapStateToProps)(TableHeaderCell);
-// export default TableHeaderCell;
+export default connect(mapStateToProps, null, null, { forwardRef: true })(TableHeaderCell);

@@ -27,7 +27,6 @@ interface TableProps {
   searchFilter?: TableGlobalFilter;
   dense?: boolean;
   getGlobalProps: () => any;
-  getFirstHeaderProps: (col: any) => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
 }
@@ -47,7 +46,6 @@ const Table: FC<TableProps> = ({
   headerExpanded,
   dense = false,
   getGlobalProps = defaultPropGetter,
-  getFirstHeaderProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
 }) => {
@@ -105,7 +103,7 @@ const Table: FC<TableProps> = ({
   const {
     getTableProps,
     getTableBodyProps,
-    headerGroups: [firstHeader, secondHeader],
+    headerGroups,
     rows,
     page,
     // The rest of these things are super handy, too ;)
@@ -167,53 +165,53 @@ const Table: FC<TableProps> = ({
     }
   }, [searchFilter]);
 
-  const RenderFirstRowHeader = useCallback(() => {
-    return (
-      <>
-        {firstHeader && (
-          <TableRow {...firstHeader.getHeaderGroupProps([getGlobalProps()])}>
-            {firstHeader.headers.map((column, index) => (
-              <SelectableHeader
-                ref={(el: any) => {
-                  if (column.columns) {
-                    columnRefs.current[column.columns[0].id] = el;
-                  }
-                }}
-                {...column.getHeaderProps(
-                  [getFirstHeaderProps(column), getGlobalProps(), { index }]
-                )}>
-                {// Render the header
-                  column.render('Header')
-                }
-              </SelectableHeader>
-            ))}
-          </TableRow>
-        )}
-      </>
-    );
-  }, [firstHeader, getGlobalProps, getFirstHeaderProps]);
+  // const RenderFirstRowHeader = useCallback(() => {
+  //   return (
+  //     <>
+  //       {firstHeader && (
+  //         <TableRow {...firstHeader.getHeaderGroupProps([getGlobalProps()])}>
+  //           {firstHeader.headers.map((column, index) => (
+  //             <SelectableHeader
+  //               ref={(el: any) => {
+  //                 if (column.columns) {
+  //                   columnRefs.current[column.columns[0].id] = el;
+  //                 }
+  //               }}
+  //               {...column.getHeaderProps(
+  //                 [getFirstHeaderProps(column), getGlobalProps(), { index }]
+  //               )}>
+  //               {// Render the header
+  //                 column.render('Header')
+  //               }
+  //             </SelectableHeader>
+  //           ))}
+  //         </TableRow>
+  //       )}
+  //     </>
+  //   );
+  // }, [firstHeader, getGlobalProps, getFirstHeaderProps]);
 
-  const RenderSecondRowHeader = useCallback(() => {
-    return (
-      <>
-        {secondHeader && (
-          <TableRow {...secondHeader.getHeaderGroupProps([getGlobalProps()])}>
-            {// Loop over the headers in each row
-              secondHeader.headers.map((column, index) => (
-                // Apply the header cell props
-                <TableHeaderCell {...column.getHeaderProps(
-                  [getHeaderProps(column), getGlobalProps(), { index }]
-                )}>
-                  {// Render the header
-                    column.render('Header')
-                  }
-                </TableHeaderCell>
-              ))}
-          </TableRow>
-        )}
-      </>
-    );
-  }, [secondHeader, getGlobalProps, getHeaderProps]);
+  // const RenderSecondRowHeader = useCallback(() => {
+  //   return (
+  //     <>
+  //       {secondHeader && (
+  //         <TableRow {...secondHeader.getHeaderGroupProps([getGlobalProps()])}>
+  //           {// Loop over the headers in each row
+  //             secondHeader.headers.map((column, index) => (
+  //               // Apply the header cell props
+  //               <TableHeaderCell {...column.getHeaderProps(
+  //                 [getHeaderProps(column), getGlobalProps(), { index }]
+  //               )}>
+  //                 {// Render the header
+  //                   column.render('Header')
+  //                 }
+  //               </TableHeaderCell>
+  //             ))}
+  //         </TableRow>
+  //       )}
+  //     </>
+  //   );
+  // }, [secondHeader, getGlobalProps, getHeaderProps]);
 
   return (
     // apply the table props
@@ -227,25 +225,24 @@ const Table: FC<TableProps> = ({
         )}
         {...getTableProps([getGlobalProps()])}>
         <TableHead>
-          {RenderFirstRowHeader()}
-          {RenderSecondRowHeader()}
-          {/* {// Loop over the header rows
+          {// Loop over the header rows
             headerGroups.map((headerGroup) => (
               // Apply the header row props
               <TableRow {...headerGroup.getHeaderGroupProps([getGlobalProps()])}>
                 {// Loop over the headers in each row
                   headerGroup.headers.map((column, index) => (
                     // Apply the header cell props
-                    <TableHeaderCell {...column.getHeaderProps(
-                      [getHeaderProps(column), getGlobalProps(), { index }]
-                    )}>
+                    <TableHeaderCell
+                      ref={(el: any) => { columnRefs.current[column.id] = el; }}
+                      {...column.getHeaderProps([
+                        getHeaderProps(column), getGlobalProps(), { index }])}>
                       {// Render the header
                         column.render('Header')
                       }
                     </TableHeaderCell>
                   ))}
               </TableRow>
-            ))} */}
+            ))}
         </TableHead>
         {/* Apply the table body props */}
         <tbody {...getTableBodyProps()}>

@@ -46,6 +46,7 @@ import {
   areOnlyRowsSelected,
   areRowsColumnsSelected,
   selectOneCell,
+  selectOneColumn,
   selectOneRow,
   toggleCellSelection,
   toggleColumnSelection,
@@ -296,7 +297,11 @@ export const tableSlice = createSliceWithRequests({
      */
     updateColumnSelection: (state, action: PayloadAction<UpdateSelectedColumnPayload>) => {
       const { id: colId, multi } = action.payload;
-      toggleColumnSelection(state, colId);
+      if (multi) {
+        toggleColumnSelection(state, colId);
+      } else {
+        selectOneColumn(state, colId);
+      }
     },
     /**
      * Handle changes to selected cells.

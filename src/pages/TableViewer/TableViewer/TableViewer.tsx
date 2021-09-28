@@ -125,8 +125,12 @@ const TableViewer = () => {
   /**
    * Handle selection of a column.
    */
-  const handleSelectedColumnChange = useCallback((id: ID) => {
-    dispatch(updateColumnSelection({ id }));
+  const handleSelectedColumnChange = useCallback((event: MouseEvent, id: ID) => {
+    if (event.ctrlKey) {
+      dispatch(updateColumnSelection({ id, multi: true }));
+    } else {
+      dispatch(updateColumnSelection({ id }));
+    }
   }, []);
 
   /**
@@ -199,21 +203,10 @@ const TableViewer = () => {
       id,
       selected: !!selectedColumns[id],
       data,
-      handleCellRightClick
+      handleCellRightClick,
+      handleSelectedColumnChange
     };
   }, [selectedColumns, allReconciliators]);
-
-  const getFirstHeaderProps = useCallback(({ columns: selColumn }: any) => {
-    if (selColumn) {
-      const subColumnId = selColumn[0].id;
-      return {
-        subColumnId,
-        selected: !!selectedColumns[subColumnId],
-        handleSelectedColumnChange
-      };
-    }
-    return {};
-  }, [selectedColumns]);
 
   /**
    * Properties to pass to each cell.
@@ -261,7 +254,7 @@ const TableViewer = () => {
             searchFilter={searchFilterTable}
             headerExpanded={isHeaderExpanded}
             getGlobalProps={getGlobalProps}
-            getFirstHeaderProps={getFirstHeaderProps}
+            // getFirstHeaderProps={getFirstHeaderProps}
             getHeaderProps={getHeaderProps}
             getCellProps={getCellProps}
           />
