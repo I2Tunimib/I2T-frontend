@@ -48,7 +48,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
 
   return metadata.length > 0 ? (
     <div className={styles.Container}>
-      {metadata[0].type && (
+      {(metadata[0].type && Array.isArray(metadata[0].type)) && (
         <div className={styles.PropertyContainer}>
           <Typography variant="subtitle2">Type</Typography>
           {metadata[0].type.map((type) => RenderType(type))}

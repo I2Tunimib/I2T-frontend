@@ -104,16 +104,15 @@ export const tableSlice = createSliceWithRequests({
      */
     updateSelectedCellExpanded: (state, action: PayloadAction<Payload>) => {
       const { undoable = false } = action.payload;
-      const touchedColumns = new Set<string>();
+      const { selectedColumnsIds } = state.ui;
 
       Object.keys(state.ui.selectedCellIds).forEach((cellId) => {
         const [rowId, colId] = getIdsFromCell(cellId);
-        touchedColumns.add(colId);
         state.entities.rows.byId[rowId].cells[colId].expanded = !state.entities.rows
           .byId[rowId].cells[colId].expanded;
       });
 
-      touchedColumns.forEach((col) => {
+      Object.keys(selectedColumnsIds).forEach((col) => {
         state.entities.columns.byId[col].expanded = !state.entities.columns.byId[col].expanded;
       });
     },

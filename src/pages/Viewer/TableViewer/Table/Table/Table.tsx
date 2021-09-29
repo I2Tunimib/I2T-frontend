@@ -105,6 +105,7 @@ const Table: FC<TableProps> = ({
     getTableBodyProps,
     headerGroups,
     rows,
+    columns: tableColumns,
     page,
     // The rest of these things are super handy, too ;)
     canPreviousPage,
@@ -227,7 +228,7 @@ const Table: FC<TableProps> = ({
             })}
         </tbody>
       </TableRoot>
-      <TableFooter rows={rows} paginatorProps={paginatorProps} />
+      <TableFooter rows={rows} columns={tableColumns} paginatorProps={paginatorProps} />
     </>
   );
 };

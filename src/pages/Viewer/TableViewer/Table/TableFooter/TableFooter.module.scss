@@ -14,7 +14,8 @@
   z-index: 10;
   box-sizing: border-box;
 
-  & > :first-child  {
+  & > :nth-child(2)  {
+    margin-left: 10px;
     margin-right: auto;
   }
 }

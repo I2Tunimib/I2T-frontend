@@ -7,6 +7,7 @@ interface TableFooterProps {
    * Rows of the table.
    */
   rows: any[];
+  columns: any[];
   paginatorProps: PaginatorProps;
 }
 
@@ -15,9 +16,13 @@ interface TableFooterProps {
  */
 const TableFooter = ({
   rows,
+  columns,
   paginatorProps
 }: TableFooterProps) => (
   <div className={styles.TableFooter}>
+    <Typography color="textSecondary" variant="body2">
+      {`Total columns: ${columns.length}`}
+    </Typography>
     <Typography color="textSecondary" variant="body2">
       {`Total rows: ${rows.length}`}
     </Typography>
