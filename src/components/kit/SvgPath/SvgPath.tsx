@@ -1,10 +1,11 @@
 import usePath from '@hooks/SvgPath/usePath';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ArrowHead } from '../SvgComponents';
 import styles from './SvgPath.module.scss';
 
 interface SvgPathProps {
   id: string;
+  shouldRedraw: () => boolean;
   startElement: HTMLElement;
   endElement: HTMLElement;
   svgElement: SVGSVGElement | null;
@@ -15,6 +16,7 @@ interface SvgPathProps {
 
 const SvgPath = ({
   id,
+  shouldRedraw,
   startElement,
   endElement,
   svgElement,
@@ -22,11 +24,17 @@ const SvgPath = ({
   link,
   color = 'black'
 }: SvgPathProps) => {
-  const { state } = usePath(
+  const { state, redraw } = usePath(
     startElement,
     endElement,
     { svgElement }
   );
+
+  useEffect(() => {
+    if (shouldRedraw()) {
+      redraw();
+    }
+  }, [shouldRedraw]);
 
   const getId = useCallback(() => {
     return id.split(' ').join('');

@@ -1,9 +1,11 @@
 import { ArrowHead } from '@components/kit/SvgComponents';
 import SvgPath from '@components/kit/SvgPath/SvgPath';
 import useWindowDimension from '@hooks/resize/useWindowResize';
+import { useAppSelector } from '@hooks/store';
 import usePath from '@hooks/SvgPath/usePath';
 import { isEmptyObject } from '@services/utils/objects-utils';
 import { ID } from '@store/interfaces/store';
+import { selectOnExpandAction } from '@store/slices/action/action.selectors';
 import { Context, PropertyMetadata } from '@store/slices/table/interfaces/table';
 import {
   useRef,
@@ -44,6 +46,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
 }) => {
   const [state, setState] = useState<SvgContainerState>(DEFAULT_STATE);
   const svgRef = useRef<SVGSVGElement>(null);
+  const action = useAppSelector(selectOnExpandAction);
 
   useEffect(() => {
     const cols = columns.reduce((acc, column) => {
@@ -76,6 +79,13 @@ const SvgContainer: FC<SvgContainerProps> = ({
     return `${context[prefix].uri}${resourceId}`;
   }, []);
 
+  const shouldRedraw = useCallback(() => {
+    if (action.startsWith('table/updateSelectedCellExpanded')) {
+      return true;
+    }
+    return false;
+  }, [action]);
+
   return (
     <svg ref={svgRef} {...props}>
       {state.showContent && columnRefs && !isEmptyObject(columnRefs.current) && (
@@ -86,6 +96,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
                 {property.obj && (
                   <SvgPath
                     key={`${col}-${property.obj}`}
+                    shouldRedraw={shouldRedraw}
                     id={`${col}-${property.obj}`}
                     label={property.name}
                     color={COLORS[index]}
