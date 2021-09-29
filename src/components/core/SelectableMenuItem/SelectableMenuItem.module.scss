@@ -1,0 +1,19 @@
+.Container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  & > :first-child {
+    margin-right: auto;
+  }
+
+  .Icon {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    color: #B8B8B8;
+  }
+}

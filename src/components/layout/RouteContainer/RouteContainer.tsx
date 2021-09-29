@@ -11,28 +11,6 @@ interface RouteContainerProps {
    * the setup is finished (e.g.: getting config from server)
    */
   loadChildren?: boolean;
-  /**
-   * Routes configuration.
-   */
-  routes: RouteOption[];
-}
-
-/**
- * A single route configuration.
- */
-export interface RouteOption {
-  /**
-   * Path to render the route.
-   */
-  path: string;
-  /**
-   * If the path should be matched exactly.
-   */
-  exact: boolean;
-  /**
-   * The component to render at given path.
-   */
-  Component: ComponentType;
 }
 
 /**
@@ -40,16 +18,13 @@ export interface RouteOption {
  */
 const RouteContainer: FC<RouteContainerProps> = ({
   loadChildren = true,
-  routes
+  children
 }) => (
   loadChildren
     ? (
       <div className={styles.Container}>
         <Switch>
-          {routes.map(({ path, Component, exact }) => (
-            <Route key={path} path={path} exact={exact} component={Component} />))}
-          <Redirect from="/" to="/raw" />
-          <Redirect from="*" to="/" />
+          {children}
         </Switch>
       </div>
     )

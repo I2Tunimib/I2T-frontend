@@ -47,11 +47,6 @@ export const selectIsUploadProgressDialogOpen = createSelector(
   (ui) => ui.uploadProgressDialogOpen
 );
 
-export const selectIsImportDialogOpen = createSelector(
-  selectUIState,
-  (ui) => ui.importDialogOpen
-);
-
 export const selectIsChallengeDialogOpen = createSelector(
   selectUIState,
   (ui) => ui.challengeDialogOpen

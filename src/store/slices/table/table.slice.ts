@@ -27,7 +27,7 @@ import {
   UpdateSelectedRowPayload
 } from './interfaces/table';
 import {
-  exportTable, getTable,
+  getTable,
   reconcile, saveTable
 } from './table.thunk';
 import {
@@ -68,6 +68,7 @@ const initialState: TableState = {
     openReconciliateDialog: false,
     openMetadataDialog: false,
     openExportDialog: false,
+    view: 'table',
     selectedColumnsIds: {},
     selectedRowsIds: {},
     selectedCellIds: {}
@@ -145,16 +146,21 @@ export const tableSlice = createSliceWithRequests({
       state.entities.rows.byId[rowId].cells[colId].editable = false;
     },
     addCellMetadata: (state, action: PayloadAction<Payload<AddCellMetadataPayload>>) => {
-      const { cellId, value, undoable = true } = action.payload;
+      const {
+        cellId, prefix,
+        value, undoable = true
+      } = action.payload;
       const [rowId, colId] = getIdsFromCell(cellId);
 
       return produceWithPatch(state, undoable, (draft) => {
+        const { id, name } = value;
         const newMeta = {
-          ...value,
+          id: `${prefix}:${id}`,
+          name,
           match: false,
           score: 0
         };
-        draft.entities.rows.byId[rowId].cells[colId].metadata.unshift(newMeta);
+        draft.entities.rows.byId[rowId].cells[colId].metadata.push(newMeta);
       }, (draft) => {
         // do not include in undo history
         draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -398,7 +404,7 @@ export const tableSlice = createSliceWithRequests({
         const { table, columns, rows } = action.payload;
         let tableInstance = {} as TableInstance;
         if (table.type === TableType.RAW) {
-          tableInstance.name = 'Table name';
+          tableInstance.name = 'Unnamed table';
           tableInstance.format = FileFormat.JSON;
           tableInstance.type = TableType.ANNOTATED;
           tableInstance.lastModifiedDate = new Date().toISOString();

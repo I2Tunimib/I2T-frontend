@@ -121,7 +121,7 @@ const UploadDialog: FC<UploadDialogProps> = ({
       <form className={styles.Form} onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           <DialogContentText>
-            Upload raw or annotated tables to the server.
+            Upload raw (csv, json) or annotated tables (W3C format) to the server.
           </DialogContentText>
           <FormArray {...{
             files: processedFiles,

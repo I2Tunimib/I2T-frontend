@@ -6,9 +6,8 @@ import AddRoundedIcon from '@material-ui/icons/AddRounded';
 import { NavLink } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { updateUI } from '@store/slices/tables/tables.slice';
-import { selectIsChallengeDialogOpen, selectIsImportDialogOpen } from '@store/slices/tables/tables.selectors';
+import { selectIsChallengeDialogOpen } from '@store/slices/tables/tables.selectors';
 import styles from './Sidebar.module.scss';
-import ImportDialog from '../ImportDialog';
 import LoadChallengeTableDialog from '../LoadChallengeTableDialog';
 
 interface SidebarProps {
@@ -20,9 +19,7 @@ const PERMITTED_FILE_EXTENSIONS = ['csv', 'json'];
 const Sidebar: FC<SidebarProps> = ({
   onFileChange
 }) => {
-  const [importFiles, setImportFiles] = useState<File[] | null>(null);
   const dispatch = useAppDispatch();
-  const isImportDialogOpen = useAppSelector(selectIsImportDialogOpen);
   const isChallengeDialogOpen = useAppSelector(selectIsChallengeDialogOpen);
 
   const getPermittedFiles = (fileList: FileList | null) => {
@@ -47,18 +44,6 @@ const Sidebar: FC<SidebarProps> = ({
     event.target.value = '';
   };
 
-  const handleImportFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { files } = event.target;
-    const permittedFiles = getPermittedFiles(files);
-    if (permittedFiles.length > 0) {
-      setImportFiles(permittedFiles);
-      dispatch(updateUI({
-        importDialogOpen: true
-      }));
-    }
-    event.target.value = '';
-  };
-
   return (
     <>
       <div className={styles.Container}>
@@ -73,19 +58,6 @@ const Sidebar: FC<SidebarProps> = ({
             onChange={handleUploadFileChange}
             type="file"
             multiple
-            hidden
-          />
-        </Button>
-        <Button
-          component="label"
-          className={styles.UploadButton}
-          startIcon={<AddRoundedIcon />}
-          color="primary"
-          variant="contained">
-          Import table
-          <input
-            onChange={handleImportFileChange}
-            type="file"
             hidden
           />
         </Button>
@@ -114,12 +86,6 @@ const Sidebar: FC<SidebarProps> = ({
           <Typography variant="body1">Annotated tables</Typography>
         </NavLink>
       </div>
-      {isImportDialogOpen ? (
-        <ImportDialog
-          open={isImportDialogOpen}
-          files={importFiles}
-          getPermittedFiles={getPermittedFiles} />
-      ) : null}
       <LoadChallengeTableDialog
         open={isChallengeDialogOpen} />
     </>

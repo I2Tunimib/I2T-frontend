@@ -1,27 +1,13 @@
 import { RouteContainer } from '@components/layout';
-import { RouteOption } from '@components/layout/RouteContainer';
+// import { RouteOption } from '@components/layout/RouteContainer';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { Homepage } from '@pages/Homepage';
-import { TableViewer } from '@pages/TableViewer';
+import TableViewer from '@pages/Viewer/TableViewer';
+import Viewer from '@pages/Viewer';
 import { selectGetConfigRequest } from '@store/slices/config/config.selectors';
 import { getConfig } from '@store/slices/config/config.thunk';
 import React, { useEffect } from 'react';
-
-/**
- * Define routes
- */
-const routes: RouteOption[] = [
-  {
-    path: '/:tables',
-    exact: true,
-    Component: Homepage
-  },
-  {
-    path: '/table/:id',
-    exact: false,
-    Component: TableViewer
-  }
-];
+import { Redirect, Route } from 'react-router-dom';
 
 const App = () => {
   const dispatch = useAppDispatch();
@@ -32,7 +18,12 @@ const App = () => {
   }, []);
 
   return (
-    <RouteContainer loadChildren={loading === false} routes={routes} />
+    <RouteContainer loadChildren={loading === false}>
+      <Route exact path="/:tables" component={Homepage} />
+      <Route path="/table/:id" component={Viewer} />
+      <Redirect from="/" to="/raw" />
+      <Redirect from="*" to="/" />
+    </RouteContainer>
   );
 };
 

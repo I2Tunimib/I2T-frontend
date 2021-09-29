@@ -29,6 +29,7 @@ export interface TableUIState {
   openMetadataDialog: boolean;
   openExportDialog: boolean;
   headerExpanded: boolean;
+  view: 'table' | 'graph' | 'raw';
   selectedColumnsIds: Record<ID, boolean>;
   selectedRowsIds: Record<ID, boolean>;
   selectedCellIds: Record<ID, boolean>;
@@ -137,6 +138,7 @@ export interface ReconciliationFulfilledPayload {
 
 export interface AddCellMetadataPayload {
   cellId: ID;
+  prefix: string;
   value: {
     id: string;
     name: string;

@@ -21,7 +21,6 @@ const initialState: TablesState = {
   ui: {
     challengeDialogOpen: false,
     uploadDialogOpen: false,
-    importDialogOpen: false,
     uploadProgressDialogOpen: false
   },
   _uploadRequests: { byId: {}, allIds: [] },

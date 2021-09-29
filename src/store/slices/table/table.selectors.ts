@@ -189,6 +189,11 @@ export const selectIsUnsaved = createSelector(
   }
 );
 
+export const selectCurrentView = createSelector(
+  selectUIState,
+  (ui) => ui.view
+);
+
 export const selectIsDenseView = createSelector(
   selectUIState,
   (ui) => ui.denseView

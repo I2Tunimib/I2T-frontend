@@ -10,7 +10,8 @@ export enum TableThunkActions {
   SAVE_TABLE = 'saveTable',
   GET_TABLE = 'getTable',
   GET_CHALLENGE_TABLE = 'getChallengeTable',
-  RECONCILE = 'reconcile'
+  RECONCILE = 'reconcile',
+  CONVER_W3C = 'convertToW3C'
 }
 
 export const getTable = createAsyncThunk(
@@ -38,8 +39,8 @@ export const saveTable = createAsyncThunk(
   }
 );
 
-export const exportTable = createAsyncThunk(
-  `${ACTION_PREFIX}/export`,
+export const convertToW3C = createAsyncThunk(
+  `${ACTION_PREFIX}/convertToW3C`,
   async (keepMatching: boolean, { getState }) => {
     const { table, config } = getState() as any;
     const { columns, rows, tableInstance } = table.entities;

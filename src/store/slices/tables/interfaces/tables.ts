@@ -15,7 +15,6 @@ export interface TablesUIState {
   selectedSource?: 'raw' | 'annotated';
   challengeDialogOpen: boolean;
   uploadDialogOpen: boolean;
-  importDialogOpen: boolean;
   uploadProgressDialogOpen: boolean;
 }
 
