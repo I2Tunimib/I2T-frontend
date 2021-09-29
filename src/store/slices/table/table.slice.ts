@@ -3,7 +3,7 @@ import { GetTableResponse } from '@services/api/table';
 import { isEmptyObject } from '@services/utils/objects-utils';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
-import { Payload } from '@store/interfaces/store';
+import { ID, Payload } from '@store/interfaces/store';
 import { TableInstance } from '../tables/interfaces/tables';
 import {
   AddCellMetadataPayload,
@@ -251,7 +251,7 @@ export const tableSlice = createSliceWithRequests({
 
       return produceWithPatch(state, undoable, (draft) => {
         const { selectedCellIds } = draft.ui;
-        const updatedColumns = new Set<string>();
+        const updatedColumns = new Set<ID>();
         Object.keys(selectedCellIds).forEach((cellId) => {
           const [rowId, colId] = getIdsFromCell(cellId);
           const column = getColumn(draft, colId);

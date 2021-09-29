@@ -20,6 +20,7 @@
         "@typescript-eslint"
     ],
     "rules": {
+        "camelcase": "off",
         "no-restricted-syntax": "off",
         "no-lonely-if": "off",
         "react/no-array-index-key": "off",

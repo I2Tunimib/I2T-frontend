@@ -1,7 +1,7 @@
 /**
  * Alias type to explicitly indicate an ID.
  */
-export type ID = string;
+export type ID = string | number;
 
 /**
  * Base payload.
@@ -34,5 +34,5 @@ export type Payload<T = any> = T & {
  */
 export interface BaseState<T> {
   byId: Record<ID, T>;
-  allIds: string[];
+  allIds: ID[];
 }
