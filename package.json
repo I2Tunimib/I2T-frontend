@@ -19,6 +19,7 @@
     "history": "^5.0.1",
     "immer": "^9.0.5",
     "js-file-download": "^0.4.12",
+    "js-yaml-loader": "^1.2.2",
     "lodash": "^4.17.21",
     "luxon": "^2.0.2",
     "nanoid": "^3.1.25",

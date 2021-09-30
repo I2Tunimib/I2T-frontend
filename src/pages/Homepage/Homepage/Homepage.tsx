@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { selectIsUploadDialogOpen, selectIsUploadProgressDialogOpen, selectUploadRequests } from '@store/slices/tables/tables.selectors';
 import { updateUI } from '@store/slices/tables/tables.slice';
 import { restoreInitialState } from '@store/slices/table/table.slice';
+import { ID } from '@store/interfaces/store';
 import Sidebar from '../Sidebar';
 import Toolbar from '../Toolbar';
 import Content from '../Content';
@@ -13,7 +14,7 @@ import UploadProgress from '../UploadProgress/UploadProgress';
 interface HomepageProps { }
 
 interface UploadRequestState {
-  id: string;
+  id: ID;
   request: any;
 }
 
@@ -35,11 +36,11 @@ const Homepage: FC<HomepageProps> = () => {
     }));
   };
 
-  const onNewUploadRequest = (request: any, id: string) => {
+  const onNewUploadRequest = (request: any, id: ID) => {
     setUploadRequests((requests) => [...requests, { id, request }]);
   };
 
-  const onCancelUploadRequest = (id: string) => {
+  const onCancelUploadRequest = (id: ID) => {
     const reqIndex = uploadRequests.findIndex((req) => req.id === id);
     const requestToCancel = uploadRequests[reqIndex];
     requestToCancel.request.abort();

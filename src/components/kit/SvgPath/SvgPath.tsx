@@ -1,10 +1,11 @@
 import usePath from '@hooks/SvgPath/usePath';
+import { ID } from '@store/interfaces/store';
 import { useCallback, useEffect } from 'react';
 import { ArrowHead } from '../SvgComponents';
 import styles from './SvgPath.module.scss';
 
 interface SvgPathProps {
-  id: string;
+  id: ID;
   shouldRedraw: () => boolean;
   startElement: HTMLElement;
   endElement: HTMLElement;

@@ -1,0 +1,135 @@
+#reconciliator services
+reconciliators:
+  - name: ASIA (Wikifier)
+    prefix: asiaWk
+    #Cambia nome url myServerUrl (es)
+    relativeUrl: /asia/wikifier 
+    uri: 
+    metaToViz: 
+      #possibilità di cambiare i nomi alle label dell'header
+      - id
+      - name
+      - score
+      - match
+  - name: ASIA (Geonames)
+    prefix: geo
+    relativeUrl: /asia/geonames
+    uri: http://sws.geonames.org
+    metaToViz: 
+      - id
+      - name
+      - score
+      - match
+  - name: ASIA (Keywords Matcher)
+    prefix: asiaKM
+    relativeUrl: /asia/keywordsmatcher 
+    uri:
+    metaToViz: 
+      - id
+      - name
+      - score
+      - match
+  - name: Wikidata
+    prefix: "wkd"
+    relativeUrl: /wikidata
+    uri: https://www.wikidata.org/wiki
+    metaToViz: 
+      - id
+      - name
+      - score
+      - match
+  - name: LamAPI
+    prefix: lmp
+    relativeUrl: /lamapi
+    uri:
+    metaToViz: 
+      - id
+      - name
+      - score
+      - match
+
+#Extension service
+
+#tipi dei parametri
+
+extenders:
+  - id: wnfp58G33OytB9KQr6BS0
+    name: weather
+    relativeUrl: asia/extend/weather
+    requiredParams:
+      - name: ids
+        inputMode: selectCol 
+        # sing not plur
+        selectColMode: ids
+        required: true
+        default: null
+      - name: dates 
+        inputMode: selectCol
+        selectColMode: labels
+        required: true
+        default: null
+      - name: weatherParameters
+        inputMode: enumeration
+        required: true
+        deafault: null
+        #vincolo numero minimo di paramteri
+        values: 
+          - label: wind speed
+            value: ws
+            responseValue: avgValue
+              #- minValue
+              #- maxValue
+              #- avgValue
+          - label: 2 metre temperature
+            value: 2t
+            responseValue: avgValue
+              #- minValue
+              #- maxValue
+              #- avgValue
+          - label: 2 metre dewpoint temperature
+            value: 2d
+            responseValue: avgValue
+              #- minValue
+              #- maxValue
+              #- avgValue
+          - label: sunshine duration
+            value: sund
+            responseValue: cumulValue
+              #- cumulValue
+      - name: offsets #verificare se obbl. anche se può essere minore, se esiste un limite
+        inputMode: number
+        required: true
+        minValue: 0
+    responseParamsForItem:
+      reorderingParam: 
+        col1: geonamesId
+        col2: date
+      date: date
+      offset: offset
+  - id: 4DIX1FKTWc6avs7XPBAbe
+    name: ASIA (geonames)
+    relativeUrl: asia/extend/geonames
+    requiredParams:
+      - name: ids
+        inputMode: selectCol 
+        selectColMode: ids
+        required: true
+        isMatchingParam: true
+      - name: properties
+        inputMode: enumeration
+        required: true 
+        default: null
+        isMatchingParam: false
+        #vincolo numero minimo di paramteri
+        values: 
+          - label: First-order administrative division (Regions or States)
+            value: parentADM1
+          - label: Second-order administrative division (Provinces)
+            value: parentADM2
+          - label: Third-order administrative division (Communes)
+            value: parentADM3
+          - label: Fourth-order administrative division
+            value: parentADM4
+      
+
+  

@@ -4,11 +4,12 @@ import CheckCircleOutlineRoundedIcon from '@material-ui/icons/CheckCircleOutline
 import CloseRoundedIcon from '@material-ui/icons/CloseRounded';
 import { FC, useState } from 'react';
 import { RequestUpload } from '@store/slices/tables/interfaces/tables';
+import { ID } from '@store/interfaces/store';
 import styles from './UploadProgressItem.module.scss';
 
 interface UploadProgressItemProps {
   request: RequestUpload;
-  onCancelRequest: (id: string) => void;
+  onCancelRequest: (id: ID) => void;
 }
 
 const UploadProgressItem: FC<UploadProgressItemProps> = ({

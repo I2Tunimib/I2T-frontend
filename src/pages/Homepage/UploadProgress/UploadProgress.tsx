@@ -15,11 +15,12 @@ import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { updateUI } from '@store/slices/tables/tables.slice';
 import { selectNumberOfActiveUploadRequests, selectUploadRequests } from '@store/slices/tables/tables.selectors';
 import { useFirstRender } from '@hooks/first-render/useFirstRender';
+import { ID } from '@store/interfaces/store';
 import styles from './UploadProgress.module.scss';
 import UploadProgressItem from './UploadProgressItem';
 
 interface UploadProgressProps extends HTMLAttributes<HTMLDivElement> {
-  onCancelRequest: (id: string) => void;
+  onCancelRequest: (id: ID) => void;
 }
 
 /**
