@@ -15,8 +15,6 @@ import TableRoot from '../TableRoot';
 import TableRowCell from '../TableRowCell';
 import TableRow from '../TableRow';
 import TableFooter from '../TableFooter';
-import SelectableHeader from '../SelectableHeader';
-import Canvas from '../Canvas';
 import styles from './Table.module.scss';
 import SvgContainer from '../SvgContainer';
 

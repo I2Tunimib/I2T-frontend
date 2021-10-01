@@ -76,6 +76,21 @@ export const selectReconciliatorCell = createSelector(
   (reconciliator) => '' // (reconciliator ? reconciliator.name : '')
 );
 
+export const selectExpandedCellsIds = createSelector(
+  selectUIState,
+  (ui) => ui.expandedCellsIds
+);
+
+export const selectExpandedColumnsIds = createSelector(
+  selectUIState,
+  (ui) => ui.expandedColumnsIds
+);
+
+export const selectEditableCellsIds = createSelector(
+  selectUIState,
+  (ui) => ui.editableCellsIds
+);
+
 /**
  * Get selected columns ids as object.
  */

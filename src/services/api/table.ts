@@ -1,13 +1,13 @@
 import { ID } from '@store/interfaces/store';
-import { ColumnState, RowState } from '@store/slices/table/interfaces/table';
+import { Column, Row } from '@store/slices/table/interfaces/table';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
 import { CancelToken } from 'axios';
 import apiClient from './config/config';
 
 export interface GetTableResponse {
   table: TableInstance;
-  columns: ColumnState;
-  rows: RowState;
+  columns: Record<ID, Column>;
+  rows: Record<ID, Row>;
 }
 
 export interface ChallengeTableDataset {

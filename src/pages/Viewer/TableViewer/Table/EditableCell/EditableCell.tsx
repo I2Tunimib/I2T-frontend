@@ -1,6 +1,6 @@
 import {
-  ChangeEvent, FocusEvent,
-  forwardRef, KeyboardEvent
+  ChangeEvent, FC, FocusEvent,
+  useEffect, KeyboardEvent, useRef
 } from 'react';
 import clsx from 'clsx';
 import styles from './EditableCell.module.scss';
@@ -13,13 +13,21 @@ interface EditableCellProps {
   onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
 }
 
-const EditableCell = forwardRef<HTMLInputElement, EditableCellProps>(({
+const EditableCell:FC<EditableCellProps> = ({
   value,
   dense,
   onChange,
   onBlur,
   onKeyDown
-}: any, ref) => {
+}: any) => {
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (ref && ref.current) {
+      ref.current.select();
+    }
+  }, [ref]);
+
   return (
     <input
       ref={ref}
@@ -37,6 +45,6 @@ const EditableCell = forwardRef<HTMLInputElement, EditableCellProps>(({
       onKeyDown={onKeyDown}
     />
   );
-});
+};
 
 export default EditableCell;

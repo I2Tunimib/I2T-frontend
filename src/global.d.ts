@@ -1,4 +1,13 @@
+interface Config {
+  APP: AppConfig;
+}
+
+interface AppConfig {
+  DEMO: boolean;
+  MODE: 'standard' | 'challenge';
+}
+
 declare module '*.yaml' {
-  const content: string;
+  const content: Config;
   export default content;
 }

@@ -29,6 +29,7 @@ const getKind = (kind: string) => {
 const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   id,
   selected,
+  expanded,
   children,
   handleCellRightClick,
   handleSelectedColumnChange,
@@ -82,7 +83,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                 )
               ]}
             </div>
-            {data.expanded && <TableHeaderCellExpanded {...data} />}
+            {expanded && <TableHeaderCellExpanded {...data} />}
           </div>
         ) : (
           <>

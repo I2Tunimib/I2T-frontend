@@ -10,6 +10,7 @@ import ButtonShortcut from './ButtonShortcut';
 import DroppableArea from './DroppableArea';
 import Table from './Table';
 import RouteLeaveGuard from './RouteLeaveGuard';
+import TableListView from './TableListView';
 
 export {
   ExpandableList,
@@ -23,5 +24,6 @@ export {
   ButtonShortcut,
   DroppableArea,
   Table,
-  RouteLeaveGuard
+  RouteLeaveGuard,
+  TableListView
 };

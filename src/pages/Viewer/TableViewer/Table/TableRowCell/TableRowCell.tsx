@@ -17,6 +17,8 @@ interface TableRowCellProps extends TableCell {
   column: TableColumn;
   row: TableRow;
   selected: boolean;
+  expanded: boolean;
+  editable: boolean;
   matching: boolean;
   dense: boolean;
   handleSelectedRowChange: (event: MouseEvent<any>, id: string) => void;
@@ -33,6 +35,8 @@ const TableRowCell: FC<TableRowCellProps> = ({
   column: { id: columnId },
   row: { id: rowId, ...restRow },
   selected,
+  expanded,
+  editable,
   value,
   dense,
   handleSelectedRowChange,
@@ -40,7 +44,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
   handleSelectedCellChange,
   updateTableData
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [cellValue, setCellValue] = useState<string>(columnId === 'index' ? '' : value.label);
 
   // If value is changed externally, sync it up with local state
@@ -48,10 +51,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
     if (value) {
       if (value.label !== cellValue) {
         setCellValue(value.label);
-      }
-      if (value.editable) {
-        inputRef?.current?.focus();
-        inputRef?.current?.select();
       }
     }
   }, [value]);
@@ -102,18 +101,18 @@ const TableRowCell: FC<TableRowCellProps> = ({
     >
       {columnId === 'index' ? children : (
         <>
-          {value.editable ? (
+          {editable ? (
             <EditableCell
               value={cellValue}
               onChange={onChange}
               onKeyDown={onKeyDown}
               onBlur={onBlur}
-              ref={inputRef}
               dense={dense}
             />
           ) : (
             <NormalCell
               label={cellValue}
+              expanded={expanded}
               value={value}
               dense={dense}
             />

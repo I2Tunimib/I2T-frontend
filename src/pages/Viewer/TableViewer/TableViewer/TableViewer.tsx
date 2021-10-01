@@ -17,7 +17,9 @@ import {
   selectSelectedColumnIds, selectSelectedRowIds,
   selectSelectedCellIds,
   selectIsDenseView, selectSearchStatus,
-  selectGetTableStatus, selectIsUnsaved, selectIsHeaderExpanded
+  selectGetTableStatus, selectIsUnsaved,
+  selectIsHeaderExpanded, selectExpandedCellsIds,
+  selectExpandedColumnsIds, selectEditableCellsIds
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { getTable, saveTable } from '@store/slices/table/table.thunk';
@@ -64,6 +66,9 @@ const TableViewer = () => {
   const selectedColumns = useAppSelector(selectSelectedColumnIds);
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
+  const expandedCellsIds = useAppSelector(selectExpandedCellsIds);
+  const expandedColumnsIds = useAppSelector(selectExpandedColumnsIds);
+  const editableCellsIds = useAppSelector(selectEditableCellsIds);
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const allReconciliators = useAppSelector(selectReconciliatorsAsObject);
@@ -196,11 +201,16 @@ const TableViewer = () => {
     return {
       id,
       selected: !!selectedColumns[id],
+      expanded: !!expandedColumnsIds[id],
       data,
       handleCellRightClick,
       handleSelectedColumnChange
     };
-  }, [selectedColumns, allReconciliators]);
+  }, [
+    selectedColumns,
+    allReconciliators,
+    expandedColumnsIds
+  ]);
 
   /**
    * Properties to pass to each cell.
@@ -208,12 +218,17 @@ const TableViewer = () => {
   const getCellProps = useCallback(({
     column, row, value, ...props
   }: TableCell) => {
-    const selected = !!selectedCells[`${row.id}$${column.id}`] || !!selectedRows[row.id];
+    const cellId = `${row.id}$${column.id}`;
+    const selected = !!selectedCells[cellId] || !!selectedRows[row.id];
+    const expanded = !!expandedCellsIds[cellId];
+    const editable = !!editableCellsIds[cellId];
     return {
       column,
       row,
       value,
       selected,
+      expanded,
+      editable,
       handleSelectedRowChange,
       handleSelectedCellChange,
       handleCellRightClick,
@@ -221,7 +236,9 @@ const TableViewer = () => {
     };
   }, [
     selectedCells,
-    selectedRows
+    selectedRows,
+    expandedCellsIds,
+    editableCellsIds
   ]);
 
   const getGlobalProps = useCallback(() => ({

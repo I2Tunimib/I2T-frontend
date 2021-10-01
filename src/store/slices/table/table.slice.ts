@@ -52,7 +52,11 @@ import {
   toggleColumnSelection,
   toggleRowSelection
 } from './utils/table.selection-utils';
-import { getCell, getColumn, getIdsFromCell } from './utils/table.utils';
+import {
+  getCell, getColumn,
+  getIdsFromCell, removeObject,
+  toggleObject
+} from './utils/table.utils';
 
 const initialState: TableState = {
   entities: {
@@ -71,7 +75,10 @@ const initialState: TableState = {
     view: 'table',
     selectedColumnsIds: {},
     selectedRowsIds: {},
-    selectedCellIds: {}
+    selectedCellIds: {},
+    expandedColumnsIds: {},
+    expandedCellsIds: {},
+    editableCellsIds: {}
   },
   _requests: { byId: {}, allIds: [] },
   _draft: {
@@ -104,16 +111,14 @@ export const tableSlice = createSliceWithRequests({
      */
     updateSelectedCellExpanded: (state, action: PayloadAction<Payload>) => {
       const { undoable = false } = action.payload;
-      const { selectedColumnsIds } = state.ui;
+      const { selectedColumnsIds, expandedCellsIds, expandedColumnsIds } = state.ui;
 
       Object.keys(state.ui.selectedCellIds).forEach((cellId) => {
-        const [rowId, colId] = getIdsFromCell(cellId);
-        state.entities.rows.byId[rowId].cells[colId].expanded = !state.entities.rows
-          .byId[rowId].cells[colId].expanded;
+        state.ui.expandedCellsIds = toggleObject(state.ui.expandedCellsIds, cellId, true);
       });
 
-      Object.keys(selectedColumnsIds).forEach((col) => {
-        state.entities.columns.byId[col].expanded = !state.entities.columns.byId[col].expanded;
+      Object.keys(selectedColumnsIds).forEach((colId) => {
+        state.ui.expandedColumnsIds = toggleObject(state.ui.expandedColumnsIds, colId, true);
       });
     },
     /**
@@ -121,8 +126,7 @@ export const tableSlice = createSliceWithRequests({
      */
     updateCellEditable: (state, action: PayloadAction<Payload<UpdateCellEditablePayload>>) => {
       const { cellId } = action.payload;
-      const [rowId, colId] = getIdsFromCell(cellId);
-      state.entities.rows.byId[rowId].cells[colId].editable = true;
+      state.ui.editableCellsIds = toggleObject(state.ui.editableCellsIds, cellId, true);
     },
     /**
      * Handle update of cell label.
@@ -137,12 +141,12 @@ export const tableSlice = createSliceWithRequests({
           draft.entities.rows.byId[rowId].cells[colId].label = value;
         }, (draft) => {
           // do not include in undo history
-          draft.entities.rows.byId[rowId].cells[colId].editable = false;
+          draft.ui.editableCellsIds = removeObject(draft.ui.editableCellsIds, cellId);
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
       }
       // if value is the same just stop editing cell
-      state.entities.rows.byId[rowId].cells[colId].editable = false;
+      state.ui.editableCellsIds = removeObject(state.ui.editableCellsIds, cellId);
     },
     addCellMetadata: (state, action: PayloadAction<Payload<AddCellMetadataPayload>>) => {
       const {
@@ -413,8 +417,14 @@ export const tableSlice = createSliceWithRequests({
         }
         state.entities = {
           tableInstance,
-          columns,
-          rows
+          columns: {
+            byId: columns,
+            allIds: Object.keys(columns)
+          },
+          rows: {
+            byId: rows,
+            allIds: Object.keys(rows)
+          }
         };
       })
       .addCase(saveTable.fulfilled, (state, action: PayloadAction<TableInstance>) => {

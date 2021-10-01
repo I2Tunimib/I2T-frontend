@@ -33,6 +33,9 @@ export interface TableUIState {
   selectedColumnsIds: Record<ID, boolean>;
   selectedRowsIds: Record<ID, boolean>;
   selectedCellIds: Record<ID, boolean>;
+  expandedColumnsIds: Record<ID, boolean>;
+  expandedCellsIds: Record<ID, boolean>;
+  editableCellsIds: Record<ID, boolean>;
   lastSaved: string;
 }
 
@@ -60,8 +63,6 @@ export interface Column {
   status: ColumnStatus;
   context: Record<ID, Context>;
   metadata: ColumnMetadata[];
-  extension: string;
-  expanded: boolean;
   kind?: string;
   role?: string;
 }
@@ -79,8 +80,6 @@ export interface Cell {
   id: ID;
   label: string;
   metadata: BaseMetadata[];
-  editable: boolean;
-  expanded: boolean;
 }
 
 export interface Context {

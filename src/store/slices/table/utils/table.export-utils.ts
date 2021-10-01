@@ -98,8 +98,6 @@ const convertToW3CTable = ({
     const firstRow = columns.allIds.reduce((acc, colId, index) => {
       const {
         id,
-        expanded,
-        extension,
         status,
         context,
         ...propsToKeep
@@ -122,8 +120,6 @@ const convertToW3CTable = ({
       return Object.keys(cells).reduce((acc, colId) => {
         const {
           id,
-          editable,
-          expanded,
           metadata,
           ...propsToKeep
         } = cells[colId];

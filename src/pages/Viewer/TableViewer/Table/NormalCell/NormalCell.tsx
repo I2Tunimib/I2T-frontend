@@ -17,6 +17,7 @@ interface NormalCellProps {
   label: string;
   value: any;
   dense: boolean;
+  expanded: boolean;
   reconciliator: string;
 }
 
@@ -24,7 +25,8 @@ const NormalCell: FC<NormalCellProps> = ({
   label,
   value,
   reconciliator,
-  dense
+  dense,
+  expanded
 }) => {
   const getBadgeStatus = (metadata: BaseMetadata[]) => {
     const matching = value.metadata.some((meta: BaseMetadata) => meta.match);
@@ -61,7 +63,7 @@ const NormalCell: FC<NormalCellProps> = ({
         )}
         <div className={styles.TextLabel}>{label}</div>
       </div>
-      {value.expanded && (
+      {expanded && (
         <ExpandableList
           listTitle={`Entity ${reconciliator ? `- ${reconciliator}` : ''} `}
           messageIfNoContent="Cell doesn't have any metadata"

@@ -26,7 +26,7 @@ export const removeObject = <T, K extends keyof T>(object: T, property: K): Omit
  * Toggle object by ID.
  */
 export const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
-  if (oldObject[id]) {
+  if (id in oldObject) {
     return removeObject(oldObject, id);
   }
   const newObject = { [id]: value };
