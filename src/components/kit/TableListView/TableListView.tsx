@@ -5,7 +5,7 @@ import {
 } from 'react';
 import {
   Row, usePagination,
-  useRowSelect, useTable
+  useRowSelect, useSortBy, useTable
 } from 'react-table';
 import { ButtonPlay } from '@root/components/core';
 import clsx from 'clsx';
@@ -86,6 +86,7 @@ const TableListView: FC<TableListViewProps> = ({
   const [hoveredRow, setHoveredRow] = useState<string>('');
   const tableInstance = useTable(
     { columns, data, initialState: { pageSize: 50 } },
+    useSortBy,
     usePagination,
     useRowSelect,
     (hooks) => {
@@ -186,7 +187,7 @@ const TableListView: FC<TableListViewProps> = ({
                       [styles.Selection]: column.id === 'selection'
                     }
                   )}
-                  {...column.getHeaderProps()}>
+                  {...column.getHeaderProps(column.getSortByToggleProps())}>
                   <Typography variant="body1" color="textSecondary">
                     {column.render('Header')}
                   </Typography>

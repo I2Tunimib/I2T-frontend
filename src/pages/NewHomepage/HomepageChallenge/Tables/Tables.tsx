@@ -34,7 +34,7 @@ const makeData = (tables: TableInstance[]) => {
       name: tableInstance.name,
       nCols: tableInstance.nCols,
       nRows: tableInstance.nRows,
-      status: tableInstance.status
+      status: Math.random() < 0.5 ? tableInstance.status : 'DONE'
     };
   });
 
