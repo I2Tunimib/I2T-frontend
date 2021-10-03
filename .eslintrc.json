@@ -20,6 +20,7 @@
         "@typescript-eslint"
     ],
     "rules": {
+        "no-nested-ternary": "off",
         "camelcase": "off",
         "no-restricted-syntax": "off",
         "no-lonely-if": "off",

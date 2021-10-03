@@ -1,8 +1,9 @@
 import { Tag } from '@components/core';
 import { TableListView } from '@components/kit';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { LinearProgress } from '@mui/material';
 import { ID } from '@store/interfaces/store';
-import { selectCurrentDatasetTables } from '@store/slices/datasets/datasets.selectors';
+import { selectCurrentDatasetTables, selectGetTablesDatasetStatus } from '@store/slices/datasets/datasets.selectors';
 import { setCurrentDataset } from '@store/slices/datasets/datasets.slice';
 import { getAllDatasetTables } from '@store/slices/datasets/datasets.thunk';
 import { TableInstance } from '@store/slices/datasets/interfaces/datasets';
@@ -77,6 +78,7 @@ const Tables: FC<TablesProps> = ({
   const { datasetId } = useParams<{ datasetId: ID }>();
   const dispatch = useAppDispatch();
   const tables = useAppSelector(selectCurrentDatasetTables);
+  const { loading } = useAppSelector(selectGetTablesDatasetStatus);
 
   useEffect(() => {
     if (tables.length > 0) {
@@ -107,12 +109,18 @@ const Tables: FC<TablesProps> = ({
   const tableRows = useMemo(() => tableState.data, [tableState.data]);
 
   return (
-    <TableListView
-      columns={tableColumns}
-      data={tableRows}
-      rowPropGetter={rowPropGetter}
-      onChangeRowSelected={handleRowSelection}
-    />
+    <>
+      {loading ? (
+        <LinearProgress />
+      ) : (
+        <TableListView
+          columns={tableColumns}
+          data={tableRows}
+          rowPropGetter={rowPropGetter}
+          onChangeRowSelected={handleRowSelection}
+        />
+      )}
+    </>
   );
 };
 

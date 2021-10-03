@@ -23,7 +23,6 @@ import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 // import { selectServicesConfig } from '@store/slices/config/config.selectors';
 import { reconcile } from '@store/slices/table/table.thunk';
-import { useSnackbar } from 'notistack';
 import { ButtonLoading } from '@components/core';
 import {
   selectReconcileDialogStatus, selectReconciliationCells,
@@ -42,8 +41,6 @@ const Transition = forwardRef((
 const ReconciliateDialog = () => {
   // keep track of selected service
   const [currentService, setCurrentService] = useState<string>();
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-
   const dispatch = useAppDispatch();
   // keep track of open state
   const open = useAppSelector(selectReconcileDialogStatus);

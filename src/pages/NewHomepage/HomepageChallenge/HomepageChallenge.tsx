@@ -1,7 +1,7 @@
 import {
   Avatar, Breadcrumbs,
   Button,
-  Chip, Grow, Typography
+  Chip, Grow, IconButton, Typography
 } from '@mui/material';
 import { MainLayout } from '@root/components/layout';
 import { useAppDispatch, useAppSelector } from '@root/hooks/store';
@@ -16,6 +16,7 @@ import {
   Route, Switch,
   useHistory, useRouteMatch
 } from 'react-router-dom';
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import { getAllDatasets } from '@store/slices/datasets/datasets.thunk';
 import { selectCurrentDataset, selectGetAllDatasetsStatus } from '@store/slices/datasets/datasets.selectors';
 import { Status } from '@components/kit';
@@ -30,7 +31,7 @@ import Tables from './Tables';
 const calcPercentage = (status: CompletionStatus) => {
   const total = Object.keys(status)
     .reduce((acc, key) => status[key as keyof CompletionStatus] + acc, 0);
-  return (status.DONE / total) * 100 + 60;
+  return (status.DONE / total) * 100 + 70;
 };
 
 interface SelectedRowsState {
@@ -41,8 +42,9 @@ interface SelectedRowsState {
 const HomepageChallenge: FC<any> = () => {
   const [selectedRows, setSelectedRows] = useState<SelectedRowsState | null>(null);
   const dispatch = useAppDispatch();
-  const currentDataset = useAppSelector(selectCurrentDataset);
   const { path, url } = useRouteMatch();
+  const history = useHistory();
+  const currentDataset = useAppSelector(selectCurrentDataset);
   const { loading: loadingDatasets } = useAppSelector(selectGetAllDatasetsStatus);
 
   useEffect(() => {
@@ -53,17 +55,22 @@ const HomepageChallenge: FC<any> = () => {
     setSelectedRows(state);
   };
 
-  useEffect(() => {
-    console.log(selectedRows);
-  }, [selectedRows]);
-
   return (
     <MainLayout
       ToolbarContent={<ToolbarContent />}
       SidebarContent={<SidebarContent />}>
       <div className={styles.Header}>
         <div className={styles.Column}>
-          <div className={styles.Row}>
+          <div className={clsx(
+            styles.Row,
+            [styles.Title],
+            {
+              [styles.Back]: !!currentDataset
+            }
+          )}>
+            <IconButton onClick={() => history.push('/datasets')}>
+              <ArrowBackIosNewRoundedIcon />
+            </IconButton>
             <Typography style={{ color: '#132F4C' }} variant="h4">
               Datasets
             </Typography>

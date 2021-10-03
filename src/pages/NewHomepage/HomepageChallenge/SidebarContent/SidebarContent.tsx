@@ -23,10 +23,11 @@ const SidebarContent: FC<any> = () => {
           </IconButton>
         ) : (
           <Button
+            size="small"
             component="label"
             startIcon={<AddRoundedIcon />}
             color="primary"
-            variant="contained">
+            variant="text">
             New Dataset
             <input
               type="file"

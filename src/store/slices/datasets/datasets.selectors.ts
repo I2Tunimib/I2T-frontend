@@ -20,6 +20,11 @@ export const selectGetAllDatasetsStatus = createSelector(
   (requests) => getRequestStatus(requests, DatasetThunkActions.GET_ALL_DATASETS)
 );
 
+export const selectGetTablesDatasetStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, DatasetThunkActions.GET_ALL_DATASET_TABLES)
+);
+
 export const selectCurrentDataset = createSelector(
   selectCurrentDatasetId,
   selectDatasetsEntities,

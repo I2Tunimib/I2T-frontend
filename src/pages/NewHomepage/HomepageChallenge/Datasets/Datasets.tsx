@@ -96,7 +96,6 @@ const Datasets: FC<DatasetsProps> = ({
   const rowPropGetter = ({ original }: Row<any>) => ({
     onDoubleClick: () => {
       history.push(`${url}/${original.id}/tables`);
-      // dispatch(setCurrentDataset(original.id));
     }
   });
 

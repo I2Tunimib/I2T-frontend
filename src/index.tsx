@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom';
 import './index.scss';
 import { store } from '@store';
 import { Provider } from 'react-redux';
-import { SnackbarProvider } from 'notistack';
 import {
   createTheme, ThemeProvider,
   Theme, StyledEngineProvider
@@ -14,7 +13,7 @@ import reportWebVitals from './reportWebVitals';
 
 declare module '@mui/styles/defaultTheme' {
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface DefaultTheme extends Theme {}
+  interface DefaultTheme extends Theme { }
 }
 
 const theme = createTheme();
@@ -25,9 +24,7 @@ ReactDOM.render(
       <BrowserRouter>
         <StyledEngineProvider injectFirst>
           <ThemeProvider theme={theme}>
-            <SnackbarProvider>
-              <App />
-            </SnackbarProvider>
+            <App />
           </ThemeProvider>
         </StyledEngineProvider>
       </BrowserRouter>

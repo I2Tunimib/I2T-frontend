@@ -9,7 +9,12 @@ import {
 } from 'react-table';
 import { ButtonPlay } from '@root/components/core';
 import clsx from 'clsx';
-import { Pagination, Checkbox, Typography } from '@mui/material';
+import {
+  Pagination, Checkbox,
+  Typography, Button
+} from '@mui/material';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import styles from './TableListView.module.scss';
 
 interface TableListViewProps {
@@ -178,19 +183,30 @@ const TableListView: FC<TableListViewProps> = ({
       <table className={styles.Root} {...getTableProps()}>
         <thead className={styles.THead}>
           {headerGroups.map((headerGroup) => (
-            <tr className={styles.Tr} {...headerGroup.getHeaderGroupProps()}>
+            <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => (
                 <th
                   className={clsx(
                     styles.Th,
                     {
-                      [styles.Selection]: column.id === 'selection'
+                      [styles.Fixed]: column.id !== 'selection' && column.id !== 'icon'
                     }
                   )}
                   {...column.getHeaderProps(column.getSortByToggleProps())}>
-                  <Typography variant="body1" color="textSecondary">
-                    {column.render('Header')}
-                  </Typography>
+                  {column.id === 'selection'
+                    ? column.render('Header')
+                    : (
+                      <Button
+                        color="inherit"
+                        className={styles.HeaderButton}
+                        endIcon={column.isSorted
+                          ? column.isSortedDesc
+                            ? <ArrowDownwardRoundedIcon color="action" />
+                            : <ArrowUpwardRoundedIcon color="action" />
+                          : null}>
+                        {column.render('Header')}
+                      </Button>
+                    )}
                 </th>
               ))}
             </tr>
@@ -201,7 +217,6 @@ const TableListView: FC<TableListViewProps> = ({
             prepareRow(row);
             return (
               <tr
-                className={styles.Tr}
                 {...row.getRowProps([rowPropGetter(row)])}>
                 {row.cells.map((cell) => {
                   return (

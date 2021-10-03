@@ -1,5 +1,7 @@
 .Root {
-  border-collapse: collapse;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .THead {
@@ -9,28 +11,27 @@
   background-color: #FFF;
 }
 
-.Tr {
-  &:only-child {
-    border-bottom: 1px solid #ededed;
-  }
-  &:not(:last-child) {
-    border-bottom: 1px solid #ededed;
-  }
-}
-
 .Th {
   padding: 10px 0px;
   text-align: left;
+  width: 1%;
+  border-bottom: 1px solid #ededed;
 
-  &.Selection {
-    width: 50px;
+  &.Fixed {
+    width: 100px;
+  }
+
+  .HeaderButton {
+    margin-left: -10px;
+    text-transform: capitalize;
   }
 }
 
 .Td {
-  // padding: 10px;
   text-align: left;
   vertical-align: middle;
+  border-bottom: 1px solid #ededed;
+  white-space: nowrap;
 }
 
 .StartButton {
@@ -47,6 +48,7 @@
 
 .FooterContainer {
   position: sticky;
+  margin-top: auto;
   bottom: 0;
   left: 0;
   width: 100%;
