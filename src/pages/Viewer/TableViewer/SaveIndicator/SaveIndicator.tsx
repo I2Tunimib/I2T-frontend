@@ -2,16 +2,15 @@ import {
   FC, HTMLAttributes,
   useState, useEffect
 } from 'react';
-import CloudOffIcon from '@material-ui/icons/CloudOff';
-import ErrorOutlineRoundedIcon from '@material-ui/icons/ErrorOutlineRounded';
-import LoopRoundedIcon from '@material-ui/icons/LoopRounded';
-import CloudDoneOutlinedIcon from '@material-ui/icons/CloudDoneOutlined';
+import CloudOffIcon from '@mui/icons-material/CloudOff';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import LoopRoundedIcon from '@mui/icons-material/LoopRounded';
+import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import {
-  Button,
-  IconButton, Theme,
-  Tooltip, Typography,
-  withStyles
-} from '@material-ui/core';
+  Button, IconButton,
+  Theme, Tooltip, Typography
+} from '@mui/material';
+import withStyles from '@mui/styles/withStyles';
 import clsx from 'clsx';
 import { useAppSelector } from '@hooks/store';
 import TimeAgo from 'react-timeago';

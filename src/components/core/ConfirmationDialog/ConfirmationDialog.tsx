@@ -3,7 +3,7 @@ import {
   DialogActions, DialogContent,
   DialogContentText, DialogProps,
   DialogTitle
-} from '@material-ui/core';
+} from '@mui/material';
 import { FC } from 'react';
 
 export interface ConfirmationDialogProps extends DialogProps {

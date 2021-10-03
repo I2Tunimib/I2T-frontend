@@ -1,5 +1,5 @@
-import { MenuItem, MenuItemProps, Typography } from '@material-ui/core';
-import CheckRoundedIcon from '@material-ui/icons/CheckRounded';
+import { MenuItem, MenuItemProps, Typography } from '@mui/material';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { FC } from 'react';
 import styles from './SelectableMenuItem.module.scss';
 

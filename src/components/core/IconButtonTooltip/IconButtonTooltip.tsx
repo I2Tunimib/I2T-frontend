@@ -1,8 +1,8 @@
 import {
   IconButton, IconButtonProps,
   SvgIconTypeMap, Tooltip
-} from '@material-ui/core';
-import { OverridableComponent } from '@material-ui/core/OverridableComponent';
+} from '@mui/material';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
 import { FC } from 'react';
 
 interface IconButtonTooltipProps extends IconButtonProps {

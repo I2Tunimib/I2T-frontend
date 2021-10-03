@@ -1,8 +1,9 @@
 import {
-  ClickAwayListener,
-  makeStyles, Paper, Popper, PopperPlacementType
-} from '@material-ui/core';
-import { FC } from 'react';
+  ClickAwayListener, Paper,
+  Popper, PopperPlacementType
+} from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import { FC, useEffect } from 'react';
 import styles from './MenuBase.module.scss';
 
 export interface MenuBaseProps {
@@ -30,23 +31,27 @@ const MenuBase: FC<MenuBaseProps> = ({
   handleClose
 }) => {
   const menuClasses = useMenuStyles();
+
   return (
-    <Popper
-      id={id}
-      open={open}
-      anchorEl={anchorElement}
-      transition
-      placement={placement}
-      className={styles.MenuContainer}
-    >
-      {() => (
-        <ClickAwayListener onClickAway={handleClose}>
-          <Paper elevation={3} className={menuClasses.paper}>
-            {children}
-          </Paper>
-        </ClickAwayListener>
+    <>
+      {anchorElement && (
+        <Popper
+          id={id}
+          open={open}
+          anchorEl={anchorElement}
+          placement={placement}
+          className={styles.MenuContainer}
+        >
+          {() => (
+            <ClickAwayListener onClickAway={handleClose}>
+              <Paper elevation={3} className={menuClasses.paper}>
+                {children}
+              </Paper>
+            </ClickAwayListener>
+          )}
+        </Popper>
       )}
-    </Popper>
+    </>
   );
 };
 

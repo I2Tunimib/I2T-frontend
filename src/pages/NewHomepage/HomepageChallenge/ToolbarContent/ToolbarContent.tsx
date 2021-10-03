@@ -1,4 +1,4 @@
-import { Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
 import { Searchbar } from '@root/components/kit';
 import { FC } from 'react';
 import styles from './ToolbarContent.module.scss';

@@ -1,6 +1,6 @@
 import { ChangeEvent, FC, useState } from 'react';
 import { ButtonShortcut, Searchbar } from '@components/kit';
-import { Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
 import { useAppDispatch } from '@hooks/store';
 import { searchTables } from '@store/slices/tables/tables.thunk';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';

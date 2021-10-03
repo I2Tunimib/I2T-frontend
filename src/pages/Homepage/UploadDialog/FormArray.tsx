@@ -1,14 +1,14 @@
 import {
   InputAdornment,
-  MenuItem, TextField, Typography
-} from '@material-ui/core';
+  MenuItem, TextField,
+  Typography, Skeleton
+} from '@mui/material';
 import {
   Control, Controller, FieldArrayWithId,
   useFieldArray, UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch
 } from 'react-hook-form';
 import { FC, useEffect } from 'react';
 import { enumKeys } from '@services/utils/objects-utils';
-import { Skeleton } from '@material-ui/lab';
 import { CsvSeparator } from '@store/slices/table/interfaces/table';
 import { ProcessedFile } from './UploadDialog';
 import styles from './FormArray.module.scss';

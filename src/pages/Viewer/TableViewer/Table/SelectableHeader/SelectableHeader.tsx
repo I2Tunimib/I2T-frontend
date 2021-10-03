@@ -1,4 +1,4 @@
-import { Checkbox } from '@material-ui/core';
+import { Checkbox } from '@mui/material';
 import { ID } from '@store/interfaces/store';
 import { FC, forwardRef } from 'react';
 import styles from './SelectableHeader.module.scss';

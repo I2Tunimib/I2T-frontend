@@ -4,8 +4,8 @@ import {
   Button, Dialog, DialogActions,
   DialogContent, DialogContentText,
   DialogTitle, Typography
-} from '@material-ui/core';
-import DescriptionTwoToneIcon from '@material-ui/icons/DescriptionTwoTone';
+} from '@mui/material';
+import DescriptionTwoToneIcon from '@mui/icons-material/DescriptionTwoTone';
 import { detectDelimiter } from '@services/utils/detect-delimiter';
 import { FileFormat } from '@store/slices/table/interfaces/table';
 import { updateUI } from '@store/slices/tables/tables.slice';
@@ -114,7 +114,7 @@ const UploadDialog: FC<UploadDialogProps> = ({
       open={open}
       onClose={handleClose}
     >
-      <DialogTitle disableTypography className={styles.DialogTitle}>
+      <DialogTitle className={styles.DialogTitle}>
         <DescriptionTwoToneIcon />
         <Typography variant="h6">Upload tables</Typography>
       </DialogTitle>

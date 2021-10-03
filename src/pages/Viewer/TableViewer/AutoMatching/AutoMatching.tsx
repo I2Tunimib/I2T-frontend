@@ -3,12 +3,12 @@ import {
   Avatar,
   Button, Chip, PopperPlacementType,
   Slider, Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import {
   FC, useState,
   useEffect, useMemo
 } from 'react';
-import DoneIcon from '@material-ui/icons/Done';
+import DoneIcon from '@mui/icons-material/Done';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { autoMatching } from '@store/slices/table/table.slice';
 import { Cell } from '@store/slices/table/interfaces/table';

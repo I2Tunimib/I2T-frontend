@@ -8,8 +8,9 @@ import {
   DialogTitle,
   FormControl,
   MenuItem,
-  Select
-} from '@material-ui/core';
+  Select,
+  SelectChangeEvent
+} from '@mui/material';
 import {
   forwardRef,
   Ref,
@@ -18,8 +19,8 @@ import {
   useState,
   useEffect
 } from 'react';
-import Slide from '@material-ui/core/Slide';
-import { TransitionProps } from '@material-ui/core/transitions';
+import Slide from '@mui/material/Slide';
+import { TransitionProps } from '@mui/material/transitions';
 // import { selectServicesConfig } from '@store/slices/config/config.selectors';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
@@ -88,7 +89,7 @@ const ReconciliateDialog = () => {
     }
   };
 
-  const handleChange = (event: ChangeEvent<any>) => {
+  const handleChange = (event: SelectChangeEvent<string>) => {
     if (event.target.value) {
       setCurrentService(event.target.value);
     }

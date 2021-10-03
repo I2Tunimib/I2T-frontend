@@ -1,10 +1,11 @@
 import { MenuBase, MenuDivider, MenuItemIconLabel } from '@components/core';
 import { MenuBaseProps } from '@components/core/MenuBase';
-import { makeStyles, MenuList } from '@material-ui/core';
-import EditRoundedIcon from '@material-ui/icons/EditRounded';
-import LinkRoundedIcon from '@material-ui/icons/LinkRounded';
-import SettingsEthernetRoundedIcon from '@material-ui/icons/SettingsEthernetRounded';
-import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
+import { MenuList } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
+import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { FC, useCallback } from 'react';
 import { useAppDispatch } from '@hooks/store';
 import {

@@ -8,7 +8,7 @@ import {
   DialogContentText,
   DialogTitle,
   FormControlLabel
-} from '@material-ui/core';
+} from '@mui/material';
 import { selectCurrentTable, selectExportDialogStatus } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
 import { convertToW3C } from '@store/slices/table/table.thunk';

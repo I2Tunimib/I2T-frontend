@@ -1,8 +1,8 @@
-import { Chip, Link, Typography } from '@material-ui/core';
+import { Chip, Link, Typography } from '@mui/material';
 import { ID } from '@store/interfaces/store';
 import { ColumnMetadata, Context } from '@store/slices/table/interfaces/table';
 import { FC, useCallback } from 'react';
-import ArrowRightAltRoundedIcon from '@material-ui/icons/ArrowRightAltRounded';
+import ArrowRightAltRoundedIcon from '@mui/icons-material/ArrowRightAltRounded';
 import styles from './TableHeaderCellExpanded.module.scss';
 
 interface TableHeaderCellExpandedProps {

@@ -1,6 +1,6 @@
 import { FC } from 'react';
-import BackupTwoToneIcon from '@material-ui/icons/BackupTwoTone';
-import { Paper } from '@material-ui/core';
+import BackupTwoToneIcon from '@mui/icons-material/BackupTwoTone';
+import { Paper } from '@mui/material';
 import styles from './DroppableAreaBottomMessage.module.scss';
 
 interface DroppableAreaBottomMessageProps {

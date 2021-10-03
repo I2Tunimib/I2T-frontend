@@ -1,5 +1,5 @@
 import { FC, HTMLAttributes } from 'react';
-import PlayArrowRoundedIcon from '@material-ui/icons/PlayArrowRounded';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import clsx from 'clsx';
 import styles from './ButtonPlay.module.scss';
 

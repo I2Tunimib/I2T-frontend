@@ -1,8 +1,9 @@
 import { Tag } from '@components/core';
 import {
   Box, CircularProgress,
-  CircularProgressProps, makeStyles, Typography
-} from '@material-ui/core';
+  CircularProgressProps, Typography
+} from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
 import clsx from 'clsx';
 import { FC, useEffect, useState } from 'react';
 import styles from './Status.module.scss';

@@ -1,12 +1,12 @@
 import {
   Collapse, IconButton,
   Paper, Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import clsx from 'clsx';
-import PublishRoundedIcon from '@material-ui/icons/PublishRounded';
-import CloseRoundedIcon from '@material-ui/icons/CloseRounded';
-import ExpandMoreRoundedIcon from '@material-ui/icons/ExpandMoreRounded';
-import ExpandLessRoundedIcon from '@material-ui/icons/ExpandLessRounded';
+import PublishRoundedIcon from '@mui/icons-material/PublishRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded';
 import {
   FC, HTMLAttributes,
   useState, useEffect

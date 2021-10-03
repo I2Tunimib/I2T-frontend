@@ -1,8 +1,9 @@
 import { MenuBase, MenuItemIconLabel } from '@components/core';
 import { MenuBaseProps } from '@components/core/MenuBase';
-import { makeStyles, MenuList } from '@material-ui/core';
-import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
-import RedoRoundedIcon from '@material-ui/icons/RedoRounded';
+import { MenuList } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
+import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
 import { FC } from 'react';
 import { useAppSelector } from '@hooks/store';
 import { selectCanRedo, selectCanUndo } from '@store/slices/table/table.selectors';

@@ -1,7 +1,7 @@
 import { FC, HTMLAttributes, ReactNode } from 'react';
-import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import clsx from 'clsx';
-import { ClickAwayListener } from '@material-ui/core';
+import { ClickAwayListener } from '@mui/material';
 import styles from './SearchbarBase.module.scss';
 import ButtonShortcut from '../ButtonShortcut';
 

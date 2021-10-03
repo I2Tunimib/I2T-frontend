@@ -1,8 +1,8 @@
-import { Button, Typography } from '@material-ui/core';
+import { Button, Typography } from '@mui/material';
 import { ChangeEvent, FC, useState } from 'react';
-import StorageRoundedIcon from '@material-ui/icons/StorageRounded';
-import PostAddRoundedIcon from '@material-ui/icons/PostAddRounded';
-import AddRoundedIcon from '@material-ui/icons/AddRounded';
+import StorageRoundedIcon from '@mui/icons-material/StorageRounded';
+import PostAddRoundedIcon from '@mui/icons-material/PostAddRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { NavLink } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { updateUI } from '@store/slices/tables/tables.slice';

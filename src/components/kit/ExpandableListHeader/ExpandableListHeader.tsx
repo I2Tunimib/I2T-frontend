@@ -1,4 +1,4 @@
-import { Button } from '@material-ui/core';
+import { Button } from '@mui/material';
 import { FC, ReactElement, useContext } from 'react';
 import ExpandableListItem from '../ExpandableListItem';
 import styles from './ExpandableListHeader.module.scss';

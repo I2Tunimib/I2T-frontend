@@ -1,8 +1,9 @@
 import { MenuBase, MenuItemIconLabel } from '@components/core';
 import { MenuBaseProps } from '@components/core/MenuBase';
 import { useAppDispatch } from '@hooks/store';
-import { makeStyles, MenuList } from '@material-ui/core';
-import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
+import { MenuList } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { deleteSelected } from '@store/slices/table/table.slice';
 import { useCallback, FC } from 'react';
 

@@ -1,4 +1,4 @@
-import { Typography } from '@material-ui/core';
+import { Typography } from '@mui/material';
 import Paginator, { PaginatorProps } from './Paginator';
 import styles from './TableFooter.module.scss';
 

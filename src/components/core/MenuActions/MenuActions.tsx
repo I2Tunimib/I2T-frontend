@@ -1,7 +1,5 @@
-import {
-  makeStyles, MenuItem,
-  MenuList, PopperPlacementType
-} from '@material-ui/core';
+import { MenuItem, MenuList, PopperPlacementType } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
 import { FC, ReactNode } from 'react';
 import MenuBase from '../MenuBase';
 import styles from './MenuActions.module.scss';

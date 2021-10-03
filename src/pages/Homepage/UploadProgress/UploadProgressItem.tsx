@@ -1,7 +1,7 @@
 import { CircularProgressWithLabel } from '@components/core';
-import { IconButton, Typography } from '@material-ui/core';
-import CheckCircleOutlineRoundedIcon from '@material-ui/icons/CheckCircleOutlineRounded';
-import CloseRoundedIcon from '@material-ui/icons/CloseRounded';
+import { IconButton, Typography } from '@mui/material';
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { FC, useState } from 'react';
 import { RequestUpload } from '@store/slices/tables/interfaces/tables';
 import { ID } from '@store/interfaces/store';

@@ -1,4 +1,4 @@
-import { SvgIconComponent } from '@material-ui/icons';
+import { SvgIconComponent } from '@mui/icons-material';
 import { FC, HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import ButtonBase from '../ButtonBase/ButtonBase';

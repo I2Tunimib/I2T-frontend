@@ -1,5 +1,5 @@
-import { Typography } from '@material-ui/core';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import { Typography } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { ComponentType, FC } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import styles from './RouteContainer.module.scss';

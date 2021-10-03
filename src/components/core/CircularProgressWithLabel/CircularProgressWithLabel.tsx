@@ -2,7 +2,7 @@ import {
   CircularProgressProps,
   Box, CircularProgress,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { FC } from 'react';
 
 interface CircularProgressWithLabelProps extends CircularProgressProps {

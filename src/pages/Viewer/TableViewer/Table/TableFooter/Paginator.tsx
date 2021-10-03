@@ -1,7 +1,7 @@
-import { IconButton, Typography } from '@material-ui/core';
+import { IconButton, Typography } from '@mui/material';
 import { FC } from 'react';
-import ArrowBackIosRoundedIcon from '@material-ui/icons/ArrowBackIosRounded';
-import ArrowForwardIosRoundedIcon from '@material-ui/icons/ArrowForwardIosRounded';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import styles from './Paginator.module.scss';
 
 export interface PaginatorProps {

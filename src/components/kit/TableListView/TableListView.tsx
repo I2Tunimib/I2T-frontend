@@ -1,4 +1,3 @@
-import { Checkbox, Typography } from '@material-ui/core';
 import {
   FC, forwardRef,
   ReactNode,
@@ -10,7 +9,7 @@ import {
 } from 'react-table';
 import { ButtonPlay } from '@root/components/core';
 import clsx from 'clsx';
-import { Pagination } from '@material-ui/lab';
+import { Pagination, Checkbox, Typography } from '@mui/material';
 import styles from './TableListView.module.scss';
 
 interface TableListViewProps {

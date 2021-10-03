@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
-import { Badge, Checkbox, Chip } from '@material-ui/core';
-import LinkRoundedIcon from '@material-ui/icons/LinkRounded';
-import ErrorOutlineRoundedIcon from '@material-ui/icons/ErrorOutlineRounded';
+import { Badge, Checkbox, Chip } from '@mui/material';
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import clsx from 'clsx';
 import { ButtonShortcut } from '@components/kit';
 import { ColumnStatus } from '@store/slices/table/interfaces/table';

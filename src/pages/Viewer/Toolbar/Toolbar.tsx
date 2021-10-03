@@ -1,7 +1,6 @@
-import {
-  Button, IconButton,
-  makeStyles, withStyles
-} from '@material-ui/core';
+import { Button, IconButton } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import withStyles from '@mui/styles/withStyles';
 import { InlineInput } from '@components/kit';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import {
@@ -9,10 +8,10 @@ import {
   MouseEvent, useState,
   useEffect
 } from 'react';
-import ArrowBackIosRoundedIcon from '@material-ui/icons/ArrowBackIosRounded';
-import SaveRoundedIcon from '@material-ui/icons/SaveRounded';
-import CloudOffIcon from '@material-ui/icons/CloudOff';
-import SystemUpdateAltRoundedIcon from '@material-ui/icons/SystemUpdateAltRounded';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
+import CloudOffIcon from '@mui/icons-material/CloudOff';
+import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { selectCurrentTable, selectLastSaved, selectSaveTableStatus } from '@store/slices/table/table.selectors';
@@ -99,7 +98,7 @@ const Toolbar = () => {
   return (
     <>
       <div className={styles.Container}>
-        <IconButton component={Link} to="/">
+        <IconButton component={Link} to="/" size="large">
           <ArrowBackIosRoundedIcon />
         </IconButton>
         <div className={styles.ColumnMenu}>

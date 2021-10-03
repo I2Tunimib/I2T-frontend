@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '@root/hooks/store';
 import { selectDatasets } from '@root/store/slices/datasets/datasets.selectors';
 import { setCurrentDataset } from '@store/slices/datasets/datasets.slice';
 import { DatasetInstance } from '@store/slices/datasets/interfaces/datasets';
-import FolderRoundedIcon from '@material-ui/icons/FolderRounded';
+import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
 import {
   FC, useEffect,
   useMemo, useState

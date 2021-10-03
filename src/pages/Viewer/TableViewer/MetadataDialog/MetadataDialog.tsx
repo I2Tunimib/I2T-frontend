@@ -12,8 +12,9 @@ import {
   MenuItem,
   Select,
   TextField,
-  Typography
-} from '@material-ui/core';
+  Typography,
+  Skeleton
+} from '@mui/material';
 import {
   forwardRef,
   Ref,
@@ -23,9 +24,9 @@ import {
   useMemo,
   ChangeEvent
 } from 'react';
-import Slide from '@material-ui/core/Slide';
-import CachedRoundedIcon from '@material-ui/icons/CachedRounded';
-import { TransitionProps } from '@material-ui/core/transitions';
+import Slide from '@mui/material/Slide';
+import CachedRoundedIcon from '@mui/icons-material/CachedRounded';
+import { TransitionProps } from '@mui/material/transitions';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   addCellMetadata, deleteCellMetadata,
@@ -40,7 +41,6 @@ import {
 import Table from '@components/kit/Table/Table';
 import { selectReconciliatorsAsArray, selectReconciliatorsAsObject } from '@store/slices/config/config.selectors';
 import { reconcile } from '@store/slices/table/table.thunk';
-import { Skeleton } from '@material-ui/lab';
 import { IconButtonTooltip } from '@components/core';
 import { useForm } from 'react-hook-form';
 import { ButtonShortcut } from '@components/kit';

@@ -10,7 +10,7 @@ import {
   updateRowSelection
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { LinearProgress } from '@material-ui/core';
+import { LinearProgress } from '@mui/material';
 import { HotKeys } from 'react-hotkeys';
 import {
   selectDataTableFormat,
@@ -176,8 +176,8 @@ const TableViewer = () => {
     // create a virtual anchor element for the menu
     const { clientX, clientY } = e;
     const virtualElement = {
-      clientWidth: clientX,
-      clientHeight: clientY,
+      // clientWidth: clientX,
+      // clientHeight: clientY,
       getBoundingClientRect: generateGetBoundingClientRect(clientX, clientY)
     };
     setAnchorEl(virtualElement);

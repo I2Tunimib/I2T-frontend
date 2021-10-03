@@ -1,4 +1,4 @@
-import { Collapse } from '@material-ui/core';
+import { Collapse } from '@mui/material';
 import { FC, ReactElement, useContext } from 'react';
 import ExpandableListContext from '../ExpandableList/ExpandableListContext';
 import ExpandableListItem from '../ExpandableListItem';

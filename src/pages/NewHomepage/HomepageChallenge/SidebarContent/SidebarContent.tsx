@@ -1,8 +1,8 @@
 import { SidebarGroup, SidebarItem } from '@root/components/layout/Sidebar';
 import { FC } from 'react';
-import StorageRoundedIcon from '@material-ui/icons/StorageRounded';
-import AddRoundedIcon from '@material-ui/icons/AddRounded';
-import { Button, IconButton, useMediaQuery } from '@material-ui/core';
+import StorageRoundedIcon from '@mui/icons-material/StorageRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import { Button, IconButton, useMediaQuery } from '@mui/material';
 
 const SidebarContent: FC<any> = () => {
   const matches = useMediaQuery('(max-width:1230px)');

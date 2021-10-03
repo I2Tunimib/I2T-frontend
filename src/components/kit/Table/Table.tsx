@@ -1,4 +1,4 @@
-import { IconButton, Radio } from '@material-ui/core';
+import { IconButton, Radio } from '@mui/material';
 import {
   FC, forwardRef,
   useEffect,
@@ -8,7 +8,7 @@ import {
   Column, Row,
   useRowSelect, useTable
 } from 'react-table';
-import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import clsx from 'clsx';
 import TableCell from './TableCell';
 import styles from './Table.module.scss';

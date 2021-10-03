@@ -1,6 +1,6 @@
 import { FC } from 'react';
-import FindInPageOutlinedIcon from '@material-ui/icons/FindInPageOutlined';
-import { Typography } from '@material-ui/core';
+import FindInPageOutlinedIcon from '@mui/icons-material/FindInPageOutlined';
+import { Typography } from '@mui/material';
 import styles from './EmptyList.module.scss';
 
 interface EmptyListProps {

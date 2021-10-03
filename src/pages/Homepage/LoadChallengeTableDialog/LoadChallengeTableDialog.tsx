@@ -2,12 +2,18 @@ import { ButtonLoading } from '@components/core';
 import { ButtonShortcut } from '@components/kit';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
-  Dialog, DialogTitle,
-  Typography, DialogContentText,
-  DialogContent, TextField,
-  MenuItem, DialogActions,
-  Button, withStyles, makeStyles
-} from '@material-ui/core';
+  Dialog,
+  DialogTitle,
+  Typography,
+  DialogContentText,
+  DialogContent,
+  TextField,
+  MenuItem,
+  DialogActions,
+  Button
+} from '@mui/material';
+import withStyles from '@mui/styles/withStyles';
+import makeStyles from '@mui/styles/makeStyles';
 import { ChallengeTableDataset } from '@services/api/table';
 import { updateUI } from '@store/slices/tables/tables.slice';
 import { getChallengeDatasets } from '@store/slices/tables/tables.thunk';
@@ -86,7 +92,7 @@ const LoadChallengeTableDialog: FC<LoadChallengeTableDialogProps> = ({
     <Dialog
       open={open}
       onClose={handleClose}>
-      <DialogTitle disableTypography>
+      <DialogTitle>
         <Typography variant="h6">Load challenge table</Typography>
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>

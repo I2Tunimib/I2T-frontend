@@ -1,8 +1,8 @@
-import { IconButton, Typography, useMediaQuery } from '@material-ui/core';
+import { IconButton, Typography, useMediaQuery } from '@mui/material';
 import clsx from 'clsx';
 import { FC, HTMLAttributes, ReactNode } from 'react';
 import { NavLink, NavLinkProps } from 'react-router-dom';
-import VerticalAlignBottomRoundedIcon from '@material-ui/icons/VerticalAlignBottomRounded';
+import VerticalAlignBottomRoundedIcon from '@mui/icons-material/VerticalAlignBottomRounded';
 import styles from './Sidebar.module.scss';
 
 interface SidebarProps extends HTMLAttributes<HTMLDivElement> { }

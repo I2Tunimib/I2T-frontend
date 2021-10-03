@@ -2,13 +2,13 @@ import {
   Avatar, Breadcrumbs,
   Button,
   Chip, Grow, Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import { MainLayout } from '@root/components/layout';
 import { useAppDispatch, useAppSelector } from '@root/hooks/store';
 import {
   FC, useEffect, useState
 } from 'react';
-import NavigateNextRoundedIcon from '@material-ui/icons/NavigateNextRounded';
+import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { Cell, Row } from 'react-table';
 import { ButtonPlay, Tag } from '@root/components/core';
 import {

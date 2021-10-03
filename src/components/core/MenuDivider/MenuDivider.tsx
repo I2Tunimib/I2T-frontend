@@ -1,4 +1,4 @@
-import { Divider } from '@material-ui/core';
+import { Divider } from '@mui/material';
 import { FC } from 'react';
 import styles from './MenuDivider.module.scss';
 

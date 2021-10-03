@@ -1,14 +1,14 @@
 import {
   Button, IconButton,
   Typography
-} from '@material-ui/core';
+} from '@mui/material';
 import {
   FC, useEffect,
   useState, MouseEvent, useCallback
 } from 'react';
-import MoreVertRoundedIcon from '@material-ui/icons/MoreVertRounded';
-import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
-import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   copyTable, getTable,
@@ -20,12 +20,12 @@ import { orderTables, updateUI } from '@store/slices/tables/tables.slice';
 import { DroppableArea } from '@components/kit';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
-import FileCopyOutlinedIcon from '@material-ui/icons/FileCopyOutlined';
-import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
-import GetAppRoundedIcon from '@material-ui/icons/GetAppRounded';
+import FileCopyOutlinedIcon from '@mui/icons-material/FileCopyOutlined';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import GetAppRoundedIcon from '@mui/icons-material/GetAppRounded';
 import MenuBase from '@components/core/MenuBase';
 import { ConfirmationDialog, MenuItemIconLabel } from '@components/core';
-import MenuList from '@material-ui/core/MenuList';
+import MenuList from '@mui/material/MenuList';
 import { ActionButton } from '@components/core/ConfirmationDialog';
 import fileDownload from 'js-file-download';
 import styles from './Content.module.scss';

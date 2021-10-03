@@ -6,7 +6,7 @@ import { selectCurrentView, selectGetTableStatus } from '@store/slices/table/tab
 import { getTable } from '@store/slices/table/table.thunk';
 import { FC, useCallback, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { LinearProgress } from '@material-ui/core';
+import { LinearProgress } from '@mui/material';
 import Toolbar from '../Toolbar';
 import W3CViewer from '../W3CViewer';
 

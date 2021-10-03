@@ -1,7 +1,8 @@
 import { MenuBase, MenuItemIconLabel } from '@components/core';
 import { MenuBaseProps } from '@components/core/MenuBase';
-import { makeStyles, MenuItem, MenuList } from '@material-ui/core';
-import SaveRoundedIcon from '@material-ui/icons/SaveRounded';
+import { MenuItem, MenuList } from '@mui/material';
+import makeStyles from '@mui/styles/makeStyles';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import { FC } from 'react';
 
 interface FileMenuProps extends MenuBaseProps {}

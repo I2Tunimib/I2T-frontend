@@ -2,8 +2,8 @@ import {
   MenuItem, MenuItemProps,
   SvgIconProps,
   SvgIconTypeMap, Typography
-} from '@material-ui/core';
-import { OverridableComponent } from '@material-ui/core/OverridableComponent';
+} from '@mui/material';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
 import { FC, ReactElement } from 'react';
 import DividerMenu from '../MenuDivider';
 import styles from './MenuItemIconLabel.module.scss';

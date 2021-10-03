@@ -1,8 +1,8 @@
 import { Button } from '@components/core';
-import { Chip } from '@material-ui/core';
+import { Chip } from '@mui/material';
 import { ChangeEvent, FC, useRef } from 'react';
-import PublishRoundedIcon from '@material-ui/icons/PublishRounded';
-import DescriptionRoundedIcon from '@material-ui/icons/DescriptionRounded';
+import PublishRoundedIcon from '@mui/icons-material/PublishRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import styles from './Uploader.module.scss';
 
 interface UploaderProps {

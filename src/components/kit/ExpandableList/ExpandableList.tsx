@@ -1,10 +1,10 @@
-import { IconButton, Typography } from '@material-ui/core';
+import { IconButton, Typography } from '@mui/material';
 import clsx from 'clsx';
 import {
   useCallback, FC,
   useState, MouseEvent, HTMLAttributes, ReactElement, useMemo, Children, ReactChild
 } from 'react';
-import KeyboardArrowDownRoundedIcon from '@material-ui/icons/KeyboardArrowDownRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import ExpandableListBody from '../ExpandableListBody';
 import ExpandableListHeader from '../ExpandableListHeader';
 import ExpandableListContext from './ExpandableListContext';
