@@ -9,10 +9,15 @@ import {
   ReactNode,
   FocusEvent
 } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 import SearchbarBase from '../SearchbarBase';
 import styles from './Searchbar.module.scss';
 
 interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
+  /**
+   * If the change of value event should be debounced
+   */
+  debounceChange?: boolean;
   /**
    * Enable autocomplete overlay.
    */
@@ -64,6 +69,7 @@ interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
 const Searchbar: FC<SearchbarProps> = ({
   onTagChange,
   onChange,
+  debounceChange = false,
   enableTags = true,
   defaultTag,
   tagRegex,
@@ -79,6 +85,12 @@ const Searchbar: FC<SearchbarProps> = ({
   const [inputState, setInputState] = useState<{ focused: boolean; value: string }>({ focused: false, value: '' });
   const [tag, setTag] = useState<string>(defaultTag ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const debouncedOnChange = useDebouncedCallback((event: any) => {
+    if (onChange) {
+      onChange(event);
+    }
+  }, 300);
 
   useEffect(() => {
     if (inputState.value && tagRegex && permittedTags) {
@@ -112,10 +124,18 @@ const Searchbar: FC<SearchbarProps> = ({
     setInputState((state) => ({ ...state, value: event.target.value }));
     if (enableTags) {
       if (onChange && !event.target.value.startsWith(':')) {
-        onChange(event);
+        if (debounceChange) {
+          debouncedOnChange(event);
+        } else {
+          onChange(event);
+        }
       }
     } else if (onChange) {
-      onChange(event);
+      if (debounceChange) {
+        debouncedOnChange(event);
+      } else {
+        onChange(event);
+      }
     }
   }, [enableTags, onChange, inputState.value]);
 

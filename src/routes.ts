@@ -3,6 +3,7 @@ import {
   LazyExoticComponent
 } from 'react';
 import { RedirectProps, RouteProps } from 'react-router-dom';
+import config from './config.yaml';
 
 export type LazyExoticComponentWithPreload = LazyExoticComponent<any>
   & { preload?: () => Promise<{ default: ComponentType<any> }> };
@@ -39,32 +40,34 @@ const APP_ROUTES: AppRoutes = {
   // routes if application is set to challenge
   challenge: {
     routes: [
-      { path: '', exact: false, component: lazyWithPreload(() => import('@pages/HomepageDataset')) }
+      { path: '/datasets', exact: false, component: lazyWithPreload(() => import('@pages/NewHomepage/HomepageChallenge/HomepageChallenge')) }
     ],
     redirect: [],
     preload: 'all'
   },
   // common routes between application modes
-  common: {
+  shared: {
     routes: [],
     redirect: [
-      { from: '*', to: '/' }
+      { from: '*', to: '/datasets' }
     ],
     preload: 'all'
   }
 };
 
+const { MODE } = config.APP;
+
 /**
  * Get all routes based on mode + common
  */
-export const getRoutes = (appMode: 'standard' | 'challenge') => {
-  return APP_ROUTES[appMode].routes.concat(APP_ROUTES.common.routes);
+export const getRoutes = () => {
+  return APP_ROUTES[MODE].routes.concat(APP_ROUTES.shared.routes);
 };
 /**
  * Get all redirects based on mode + common
  */
-export const getRedirects = (appMode: 'standard' | 'challenge') => {
-  return APP_ROUTES[appMode].redirect.concat(APP_ROUTES.common.redirect);
+export const getRedirects = () => {
+  return APP_ROUTES[MODE].redirect.concat(APP_ROUTES.shared.redirect);
 };
 
 export default APP_ROUTES;

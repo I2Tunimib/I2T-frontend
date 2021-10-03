@@ -1,0 +1,53 @@
+.Container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 250px;
+  padding: 12px;
+  border-right: 1px solid #ededed;
+
+  .Group {
+    display: flex;
+    flex-direction: column;
+
+    &.Padded {
+      padding: 0px 12px;
+    }
+  }
+
+  .Item {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13.5px;
+    padding: 10px 10px 10px 36px;
+    border-radius: 6px;
+
+    &.Active {
+      background-color: rgb(240, 247, 255);
+      color: rgb(0, 127, 255);
+
+      &:hover {
+        background-color: rgba(0, 127, 255, 0.12);
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 1230px) {
+  .Container {
+    width: 40px;
+
+    .Group {
+      align-items: center;
+      &.Padded {
+        padding: 0px;
+      }
+    }
+
+    .Item {
+      padding: 8px;
+    }
+  }
+}

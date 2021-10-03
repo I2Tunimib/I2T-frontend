@@ -17,7 +17,7 @@ export const usePrefetch = ({
   useEffect(() => {
     if (preloadConf) {
       setTimeout(() => {
-        getRoutes(MODE).forEach((route) => {
+        getRoutes().forEach((route) => {
           try {
             const Component = route.component as LazyExoticComponentWithPreload;
             if (Component && Component.preload) {

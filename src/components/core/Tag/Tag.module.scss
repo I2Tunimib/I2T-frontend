@@ -1,0 +1,49 @@
+.Container {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 3px 2px;
+  gap: 5px;
+  font-size: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+
+  .Circle {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  &.Medium {
+    font-size: 12px;
+
+    .Circle {
+      width: 8px;
+      height: 8px;
+    }
+  }
+
+  &.Done {
+    background-color: #D8F0E7;
+    color: #4AC99B;
+    .Circle {
+      background-color: #4AC99B;
+    }
+  }
+
+  &.Doing {
+    background-color: #FFF8E0;
+    color: #FFC700;
+    .Circle {
+      background-color: #FFC700;
+    }
+  }
+
+  &.Todo {
+    background-color: #FEEBE4;
+    color: #F45725;
+    .Circle {
+      background-color: #F45725;
+    }
+  }
+}

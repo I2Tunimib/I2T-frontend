@@ -1,0 +1,24 @@
+.Container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+
+  .Column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .Red {
+    color: #F45725;
+  }
+
+  .Yellow {
+    color: #FFC808;
+  }
+
+  .Green {
+    color: #4AC99B;
+  }
+}

@@ -69,7 +69,7 @@ const SvgPath = ({
                   markerStart: `url(#${getId()}-arrow)`
                 }
               )}
-              fill="transparent"
+              fill="none"
               stroke={color}
               d={state.computedPath} />
           </g>

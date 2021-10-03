@@ -6,7 +6,6 @@ import { selectGetConfigRequest } from '@store/slices/config/config.selectors';
 import { getConfig } from '@store/slices/config/config.thunk';
 import React, { Suspense, useEffect } from 'react';
 import { Redirect, Route } from 'react-router-dom';
-import config from './config.yaml';
 import usePrefetch from './hooks/prefetch/usePrefetch';
 import { getRoutes, getRedirects } from './routes';
 
@@ -15,7 +14,6 @@ const App = () => {
   usePrefetch();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(selectGetConfigRequest);
-  const { MODE } = config.APP;
 
   useEffect(() => {
     dispatch(getConfig());
@@ -24,10 +22,10 @@ const App = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <RouteContainer loadChildren={loading === false}>
-        {getRoutes(MODE).map((routeProps, index) => (
+        {getRoutes().map((routeProps, index) => (
           <Route key={index} {...routeProps} />
         ))}
-        {getRedirects(MODE).map((redirectProps, index) => (
+        {getRedirects().map((redirectProps, index) => (
           <Redirect key={index} {...redirectProps} />
         ))}
       </RouteContainer>

@@ -11,6 +11,7 @@ import DroppableArea from './DroppableArea';
 import Table from './Table';
 import RouteLeaveGuard from './RouteLeaveGuard';
 import TableListView from './TableListView';
+import Status from './Status';
 
 export {
   ExpandableList,
@@ -25,5 +26,6 @@ export {
   DroppableArea,
   Table,
   RouteLeaveGuard,
-  TableListView
+  TableListView,
+  Status
 };

@@ -1,17 +1,20 @@
+import { FC, HTMLAttributes } from 'react';
 import styles from './Toolbar.module.scss';
+
+interface ToolbarProps extends HTMLAttributes<HTMLDivElement>{}
 
 /**
  * A toolbar component.
  */
-const Toolbar = () => (
-  <div className={styles.Header}>
-    <div className={styles.HeaderLeft}>
-      <div>
-        <h1>I2T4E</h1>
-        <h5>Interactive Interpretation of Tables for Extension</h5>
-      </div>
+const Toolbar: FC<ToolbarProps> = ({
+  children,
+  ...props
+}) => {
+  return (
+    <div className={styles.Container} {...props}>
+      {children}
     </div>
-  </div>
-);
+  );
+};
 
 export default Toolbar;

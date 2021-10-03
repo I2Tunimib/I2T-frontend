@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import datasetAPI from '@services/api/datasets';
 import { ID } from '@store/interfaces/store';
+import { setCurrentDataset } from './datasets.slice';
 
 const ACTION_PREFIX = 'dataset';
 
@@ -28,8 +29,12 @@ export const getOneDataset = createAsyncThunk(
 
 export const getAllDatasetTables = createAsyncThunk(
   `${ACTION_PREFIX}/${DatasetThunkActions.GET_ALL_DATASET_TABLES}`,
-  async ({ datasetId }: { datasetId: ID }) => {
+  async ({ datasetId }: { datasetId: ID }, { dispatch }) => {
     const response = await datasetAPI.getAllDatasetTables(datasetId);
-    return response.data;
+    dispatch(setCurrentDataset(datasetId));
+    return {
+      data: response.data,
+      datasetId
+    };
   }
 );

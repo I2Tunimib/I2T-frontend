@@ -11,6 +11,8 @@ import EmptyList from './EmptyList';
 import CircularProgressWithLabel from './CircularProgressWithLabel';
 import ConfirmationDialog from './ConfirmationDialog';
 import SelectableMenuItem from './SelectableMenuItem';
+import Tag from './Tag';
+import ButtonPlay from './ButtonPlay';
 
 export {
   Button,
@@ -25,5 +27,7 @@ export {
   EmptyList,
   CircularProgressWithLabel,
   ConfirmationDialog,
-  SelectableMenuItem
+  SelectableMenuItem,
+  Tag,
+  ButtonPlay
 };

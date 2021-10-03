@@ -1,6 +1,6 @@
 APP:
   DEMO: false
-  MODE: 'standard' # options: 'standard' | 'challenge'
+  MODE: 'challenge' # options: 'standard' | 'challenge'
 
 API:
   # define a global endpoint

@@ -1,0 +1,55 @@
+.Header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16px 24px 16px 10px;
+  border-bottom: 1px solid #ededed;
+  height: 110px;
+  box-sizing: border-box;
+
+  .Row {
+    display: flex;
+    align-items: center;
+  }
+  .Column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-right: auto;
+  }
+
+  .Link {
+    text-decoration: none;
+  }
+
+  .SubHeader {
+    height: 33px;
+  }
+
+  .NSelected {
+    margin-left: 15px;
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    color: rgb(0, 127, 255);
+    background-color: rgb(240, 247, 255);
+  }
+}
+
+.TableContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow-y: auto;
+  // fixes scroll
+  height: 1px;
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.26);
+  }
+  &::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+}

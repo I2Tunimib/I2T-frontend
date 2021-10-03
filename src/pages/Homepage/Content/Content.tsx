@@ -18,7 +18,7 @@ import { selectTables } from '@store/slices/tables/tables.selectors';
 import TimeAgo from 'react-timeago';
 import { orderTables, updateUI } from '@store/slices/tables/tables.slice';
 import { DroppableArea } from '@components/kit';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useHistory, useParams } from 'react-router-dom';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
 import FileCopyOutlinedIcon from '@material-ui/icons/FileCopyOutlined';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
@@ -59,6 +59,8 @@ const initialConfirmationDialogState = {
   actions: []
 };
 
+const permittedParams = ['raw', 'annotated'];
+
 const Content: FC<Contentprops> = ({
   onFileChange
 }) => {
@@ -71,10 +73,15 @@ const Content: FC<Contentprops> = ({
   const { tables: tablesType } = useParams<{ tables: 'raw' | 'annotated' }>();
   const dispatch = useAppDispatch();
   const tables = useAppSelector(selectTables);
+  const history = useHistory();
 
   useEffect(() => {
-    dispatch(updateUI({ selectedSource: tablesType }));
-    dispatch(getTables(tablesType));
+    if (permittedParams.includes(tablesType)) {
+      dispatch(updateUI({ selectedSource: tablesType }));
+      dispatch(getTables(tablesType));
+    } else {
+      history.push('/raw');
+    }
   }, [tablesType]);
 
   useEffect(() => {

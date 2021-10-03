@@ -6,6 +6,7 @@ import { BaseState, ID } from '@store/interfaces/store';
  */
 export interface DatasetsState extends RequestEnhancedState {
   entities: {
+    currentDatasetId: string;
     datasets: DatasetsInstancesState;
     tables: TablesInstancesState;
   },
@@ -38,10 +39,11 @@ export interface DatasetInstance {
   name: string;
   status: Status;
   nTables: number;
-  avgRows: number;
-  avgCols: number;
-  stdRows: number;
-  stdCols: number;
+  nAvgRows: number;
+  nAvgCols: number;
+  stdDevRows: number;
+  stdDevCols: number;
+  tables: ID[];
 }
 
 /**
@@ -50,12 +52,18 @@ export interface DatasetInstance {
 export interface TableInstance {
   id: ID;
   name: string;
-  status: Status;
+  status: StatusTable;
   nRows: number;
   nCols: number;
 }
 
-export enum Status {
+export interface Status {
+  TODO: number;
+  DOING: number;
+  DONE: number;
+}
+
+export enum StatusTable {
   TODO,
   DOING,
   DONE
