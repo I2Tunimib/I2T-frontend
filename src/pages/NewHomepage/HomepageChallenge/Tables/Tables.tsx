@@ -4,7 +4,6 @@ import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { LinearProgress } from '@mui/material';
 import { ID } from '@store/interfaces/store';
 import { selectCurrentDatasetTables, selectGetTablesDatasetStatus } from '@store/slices/datasets/datasets.selectors';
-import { setCurrentDataset } from '@store/slices/datasets/datasets.slice';
 import { getAllDatasetTables } from '@store/slices/datasets/datasets.thunk';
 import { TableInstance } from '@store/slices/datasets/interfaces/datasets';
 import {
@@ -51,13 +50,11 @@ const makeData = (tables: TableInstance[]) => {
                 <div>
                   {value === 'TODO' ? (
                     <Tag status="todo">TODO</Tag>
-                  ) : [
-                    value === 'DOING' ? (
-                      <Tag status="doing">DOING</Tag>
-                    ) : (
-                      <Tag status="done">DONE</Tag>
-                    )
-                  ]}
+                  ) : value === 'DOING' ? (
+                    <Tag status="doing">DOING</Tag>
+                  ) : (
+                    <Tag status="done">DONE</Tag>
+                  )}
                 </div>
               </>
             )
@@ -87,7 +84,6 @@ const Tables: FC<TablesProps> = ({
   }, [tables]);
 
   useEffect(() => {
-    // dispatch(setCurrentDataset(datasetId));
     dispatch(getAllDatasetTables({ datasetId }));
   }, [datasetId]);
 

@@ -1,7 +1,7 @@
 import {
   Avatar, Breadcrumbs,
   Button,
-  Chip, Grid, Grow, IconButton, Stack, Typography
+  Chip, Grid, Grow, IconButton, Stack, Typography, useMediaQuery
 } from '@mui/material';
 import { MainLayout } from '@root/components/layout';
 import { useAppDispatch, useAppSelector } from '@root/hooks/store';
@@ -46,12 +46,21 @@ const HomepageChallenge: FC<any> = () => {
   const dispatch = useAppDispatch();
   const { path, url } = useRouteMatch();
   const history = useHistory();
+  const matches = useMediaQuery('(max-width:1230px)');
   const currentDataset = useAppSelector(selectCurrentDataset);
   const { loading: loadingDatasets } = useAppSelector(selectGetAllDatasetsStatus);
 
   useEffect(() => {
     dispatch(getAllDatasets());
   }, []);
+
+  useEffect(() => {
+    if (matches) {
+      setSidebarCollapsed(true);
+    } else {
+      setSidebarCollapsed(false);
+    }
+  }, [matches]);
 
   const handleSelectedRowsChange = (state: { kind: 'dataset' | 'table', rows: any[] } | null) => {
     setSelectedRows(state);
@@ -124,18 +133,8 @@ const HomepageChallenge: FC<any> = () => {
           <Stack gap="10px" alignItems="center">
             <Typography variant="body2" fontWeight="500">Dataset completion</Typography>
             <Battery size="medium" value={calcPercentage(currentDataset.status)} />
-            {/* <Stack direction="column">
-            <Typography variant="body2">{`Todo tables: ${currentDataset.status.TODO}`}</Typography>
-          <Typography variant="body2">{`Doing tables: ${currentDataset.status.DOING}`}</Typography>
-            <Typography variant="body2">{`Done tables: ${currentDataset.status.DONE}`}</Typography>
-            </Stack> */}
           </Stack>
         )}
-        {/* {currentDataset && (
-          <Status
-            value={calcPercentage(currentDataset.status)}
-            status={currentDataset.status} />
-        )} */}
       </div>
       <div className={styles.TableContainer}>
         <Switch>

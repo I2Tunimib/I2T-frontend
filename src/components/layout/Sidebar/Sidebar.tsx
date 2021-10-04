@@ -29,7 +29,6 @@ export const SidebarGroup: FC<SidebarGroupProps> = ({
   collapsed,
   ...props
 }) => {
-  console.log(collapsed);
   return (
     <div
       className={clsx(

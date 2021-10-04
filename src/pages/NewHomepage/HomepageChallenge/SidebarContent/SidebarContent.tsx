@@ -11,8 +11,6 @@ import {
 const SidebarContent: FC<any> = ({
   collapsed
 }) => {
-  const matches = useMediaQuery('(max-width:1230px)');
-
   return (
     <>
       <SidebarGroup padded>
