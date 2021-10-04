@@ -11,6 +11,22 @@
   background-color: #FFF;
 }
 
+.Tr {
+  &:hover {
+    .PlayButton {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+.PlayButton {
+  text-transform: none;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 200ms ease-out;
+}
+
 .Th {
   padding: 10px 0px;
   text-align: left;

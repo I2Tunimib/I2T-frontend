@@ -13,6 +13,7 @@ import ConfirmationDialog from './ConfirmationDialog';
 import SelectableMenuItem from './SelectableMenuItem';
 import Tag from './Tag';
 import ButtonPlay from './ButtonPlay';
+import Battery from './Battery';
 
 export {
   Button,
@@ -29,5 +30,6 @@ export {
   ConfirmationDialog,
   SelectableMenuItem,
   Tag,
-  ButtonPlay
+  ButtonPlay,
+  Battery
 };

@@ -1,7 +1,7 @@
 import {
   Avatar, Breadcrumbs,
   Button,
-  Chip, Grow, IconButton, Typography
+  Chip, Grid, Grow, IconButton, Stack, Typography
 } from '@mui/material';
 import { MainLayout } from '@root/components/layout';
 import { useAppDispatch, useAppSelector } from '@root/hooks/store';
@@ -10,7 +10,8 @@ import {
 } from 'react';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { Cell, Row } from 'react-table';
-import { ButtonPlay, Tag } from '@root/components/core';
+import { Battery, ButtonPlay, Tag } from '@root/components/core';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import {
   Link,
   Route, Switch,
@@ -28,10 +29,10 @@ import styles from './HomepageChallenge.module.scss';
 import Datasets from './Datasets/Datasets';
 import Tables from './Tables';
 
-const calcPercentage = (status: CompletionStatus) => {
+export const calcPercentage = (status: CompletionStatus) => {
   const total = Object.keys(status)
     .reduce((acc, key) => status[key as keyof CompletionStatus] + acc, 0);
-  return (status.DONE / total) * 100 + 70;
+  return (status.DONE / total) * 100 + (Math.random() * 101);
 };
 
 interface SelectedRowsState {
@@ -40,6 +41,7 @@ interface SelectedRowsState {
 }
 
 const HomepageChallenge: FC<any> = () => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedRows, setSelectedRows] = useState<SelectedRowsState | null>(null);
   const dispatch = useAppDispatch();
   const { path, url } = useRouteMatch();
@@ -58,7 +60,9 @@ const HomepageChallenge: FC<any> = () => {
   return (
     <MainLayout
       ToolbarContent={<ToolbarContent />}
-      SidebarContent={<SidebarContent />}>
+      SidebarContent={<SidebarContent />}
+      sidebarCollapsed={sidebarCollapsed}
+      sibebarCollapseChange={() => setSidebarCollapsed((old) => !old)}>
       <div className={styles.Header}>
         <div className={styles.Column}>
           <div className={clsx(
@@ -74,6 +78,13 @@ const HomepageChallenge: FC<any> = () => {
             <Typography style={{ color: '#132F4C' }} variant="h4">
               Datasets
             </Typography>
+            {currentDataset && (
+              <Stack marginLeft="10px" alignItems="center" direction="row" spacing={1}>
+                <Chip label={`Tables: ${currentDataset.nTables}`} size="small" />
+                <Chip label={`Avg cols: ${currentDataset.nAvgCols}`} size="small" />
+                <Chip label={`Avg rows: ${currentDataset.nAvgRows}`} size="small" />
+              </Stack>
+            )}
           </div>
           <div className={clsx(styles.Row, styles.SubHeader)}>
             <Breadcrumbs separator={<NavigateNextRoundedIcon fontSize="small" />}>
@@ -99,13 +110,32 @@ const HomepageChallenge: FC<any> = () => {
                 {`${selectedRows.rows.length} selected`}
               </div>
             )}
+            <Button
+              className={styles.ButtonAnnotation}
+              disabled={!selectedRows || selectedRows.rows.length === 0}
+              variant="contained"
+              size="small"
+              endIcon={<PlayArrowRoundedIcon />}>
+              Start annotation
+            </Button>
           </div>
         </div>
         {currentDataset && (
+          <Stack gap="10px" alignItems="center">
+            <Typography variant="body2" fontWeight="500">Dataset completion</Typography>
+            <Battery size="medium" value={calcPercentage(currentDataset.status)} />
+            {/* <Stack direction="column">
+            <Typography variant="body2">{`Todo tables: ${currentDataset.status.TODO}`}</Typography>
+          <Typography variant="body2">{`Doing tables: ${currentDataset.status.DOING}`}</Typography>
+            <Typography variant="body2">{`Done tables: ${currentDataset.status.DONE}`}</Typography>
+            </Stack> */}
+          </Stack>
+        )}
+        {/* {currentDataset && (
           <Status
             value={calcPercentage(currentDataset.status)}
             status={currentDataset.status} />
-        )}
+        )} */}
       </div>
       <div className={styles.TableContainer}>
         <Switch>

@@ -11,10 +11,11 @@ import { ButtonPlay } from '@root/components/core';
 import clsx from 'clsx';
 import {
   Pagination, Checkbox,
-  Typography, Button
+  Typography, Button, IconButton
 } from '@mui/material';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import { PlayArrowRounded } from '@mui/icons-material';
 import styles from './TableListView.module.scss';
 
 interface TableListViewProps {
@@ -112,20 +113,14 @@ const TableListView: FC<TableListViewProps> = ({
         },
         ...cols,
         {
-          id: 'start',
+          id: 'action',
           Header: '',
           Cell: ({ row, hoveredRowId }: any) => {
             return (
               <>
-                <ButtonPlay
-                  loading={false}
-                  className={clsx(
-                    styles.StartButton
-                    // {
-                    //   [styles.Hidden]: hoveredRowId !== row.id,
-                    //   [styles.Visible]: hoveredRowId === row.id
-                    // }
-                  )} />
+                <Button size="small" endIcon={<PlayArrowRounded />} className={styles.PlayButton}>
+                  Start annotation
+                </Button>
               </>
             );
           }
@@ -193,7 +188,7 @@ const TableListView: FC<TableListViewProps> = ({
                     }
                   )}
                   {...column.getHeaderProps(column.getSortByToggleProps())}>
-                  {column.id === 'selection'
+                  {column.id === 'selection' || column.id === 'action'
                     ? column.render('Header')
                     : (
                       <Button
@@ -217,6 +212,7 @@ const TableListView: FC<TableListViewProps> = ({
             prepareRow(row);
             return (
               <tr
+                className={styles.Tr}
                 {...row.getRowProps([rowPropGetter(row)])}>
                 {row.cells.map((cell) => {
                   return (

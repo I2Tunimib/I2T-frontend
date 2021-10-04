@@ -16,7 +16,13 @@ declare module '@mui/styles/defaultTheme' {
   interface DefaultTheme extends Theme { }
 }
 
-const theme = createTheme();
+const theme = createTheme({
+  palette: {
+    text: {
+      primary: 'rgb(19, 47, 76)'
+    }
+  }
+});
 
 ReactDOM.render(
   <React.StrictMode>

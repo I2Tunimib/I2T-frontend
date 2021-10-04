@@ -24,26 +24,26 @@
   }
 
   &.Done {
-    background-color: #D8F0E7;
-    color: #4AC99B;
+    background-color: rgb(106, 231, 156);
+    color: rgb(32, 38, 45);
     .Circle {
-      background-color: #4AC99B;
+      background-color: rgb(32, 38, 45);
     }
   }
 
   &.Doing {
-    background-color: #FFF8E0;
-    color: #FFC700;
+    background-color: rgb(255, 217, 128);
+    color: rgb(32, 38, 45);
     .Circle {
-      background-color: #FFC700;
+      background-color: rgb(32, 38, 45);
     }
   }
 
   &.Todo {
-    background-color: #FEEBE4;
-    color: #F45725;
+    background-color: #e1e6ed;
+    color: rgb(32, 38, 45);
     .Circle {
-      background-color: #F45725;
+      background-color: rgb(32, 38, 45);
     }
   }
 }

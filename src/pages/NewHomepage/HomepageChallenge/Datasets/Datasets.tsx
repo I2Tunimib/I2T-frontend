@@ -1,4 +1,4 @@
-import { Tag } from '@root/components/core';
+import { Battery, Tag } from '@root/components/core';
 import { TableListView } from '@root/components/kit';
 import { useAppDispatch, useAppSelector } from '@root/hooks/store';
 import { selectDatasets } from '@root/store/slices/datasets/datasets.selectors';
@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 import { Cell, Row } from 'react-table';
+import { calcPercentage } from '../HomepageChallenge';
 
 interface DatasetsProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;
@@ -36,7 +37,7 @@ const makeData = (datasets: DatasetInstance[]) => {
       nAvgCols: datasetInstance.nAvgCols,
       stdDevRows: datasetInstance.stdDevRows,
       stdDevCols: datasetInstance.stdDevCols,
-      status: datasetInstance.status
+      status: calcPercentage(datasetInstance.status)
     };
   });
 
@@ -49,11 +50,7 @@ const makeData = (datasets: DatasetInstance[]) => {
           ...(key === 'status' && {
             Cell: ({ row, value }: Cell<any>) => (
               <>
-                <div>
-                  {(value.TODO > 0 || value.DOING > 0) ? (
-                    <Tag status="todo">TODO</Tag>
-                  ) : 'DONE'}
-                </div>
+                <Battery value={value} />
               </>
             )
           })
