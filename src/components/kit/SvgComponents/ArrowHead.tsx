@@ -15,10 +15,6 @@ const ArrowHead: FC<ArrowHeadProps> = ({
   orient = 'auto',
   ...props
 }) => {
-  const getD = useCallback(() => {
-    return `M0,0 V${size * 2} L${size},${size} Z`;
-  }, [size]);
-
   return (
     <>
       {direction === 'start' ? (

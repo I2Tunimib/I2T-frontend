@@ -1,0 +1,18 @@
+.Arrow {
+  text {
+    transition: all 150ms ease-out;
+    transform-origin: 50% 50%;
+    transform-box: fill-box;
+  }
+  path {
+    transition: stroke-width 150ms ease-out;
+  }
+  &:hover {
+    text {      
+      transform: scale(1.1);
+    }
+    path {
+      stroke-width: 1.5px;
+    }
+  }
+}
