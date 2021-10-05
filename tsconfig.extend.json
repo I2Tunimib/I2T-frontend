@@ -9,8 +9,7 @@
             "@store/*" : ["./store/*"],
             "@store" : ["./store"],
             "@styles/*" : ["./styles/*"],
-            "@hooks/*": ["./hooks/*"],
-            "@root/*": ["./*"]
+            "@hooks/*": ["./hooks/*"]
          }
     }
 }

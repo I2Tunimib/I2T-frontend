@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { Searchbar } from '@root/components/kit';
+import { Searchbar } from '@components/kit';
 import { FC } from 'react';
 import styles from './ToolbarContent.module.scss';
 

@@ -1,7 +1,7 @@
-import { Battery, Tag } from '@root/components/core';
-import { TableListView } from '@root/components/kit';
-import { useAppDispatch, useAppSelector } from '@root/hooks/store';
-import { selectDatasets } from '@root/store/slices/datasets/datasets.selectors';
+import { Battery, Tag } from '@components/core';
+import { TableListView } from '@components/kit';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { selectDatasets } from '@store/slices/datasets/datasets.selectors';
 import { setCurrentDataset } from '@store/slices/datasets/datasets.slice';
 import { DatasetInstance } from '@store/slices/datasets/interfaces/datasets';
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded';

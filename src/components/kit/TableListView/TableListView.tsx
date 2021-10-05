@@ -7,7 +7,7 @@ import {
   Row, usePagination,
   useRowSelect, useSortBy, useTable
 } from 'react-table';
-import { ButtonPlay } from '@root/components/core';
+import { ButtonPlay } from '@components/core';
 import clsx from 'clsx';
 import {
   Pagination, Checkbox,

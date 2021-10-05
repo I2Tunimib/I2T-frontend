@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import APP_ROUTES, { getRoutes, LazyExoticComponentWithPreload } from '@root/routes';
-import config from '@root/config.yaml';
+import APP_ROUTES, { getRoutes, LazyExoticComponentWithPreload } from '../../routes';
+import config from '../../config.yaml';
 
 interface UsePrefetchProps {
   delay: number;

@@ -1,6 +1,6 @@
 import { ID } from '@store/interfaces/store';
 import { DatasetInstance, TableInstance } from '@store/slices/datasets/interfaces/datasets';
-import config from '@root/config.yaml';
+import config from '../../config.yaml';
 import apiClient from './config/config';
 
 export type Dataset = Omit<DatasetInstance, 'tables'>;

@@ -1,4 +1,4 @@
-import { SidebarGroup, SidebarItem } from '@root/components/layout/Sidebar';
+import { SidebarGroup, SidebarItem } from '@components/layout/Sidebar';
 import { FC } from 'react';
 import StorageRoundedIcon from '@mui/icons-material/StorageRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';

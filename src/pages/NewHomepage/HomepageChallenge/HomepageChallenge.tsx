@@ -3,14 +3,14 @@ import {
   Button,
   Chip, Grid, Grow, IconButton, Stack, Typography, useMediaQuery
 } from '@mui/material';
-import { MainLayout } from '@root/components/layout';
-import { useAppDispatch, useAppSelector } from '@root/hooks/store';
+import { MainLayout } from '@components/layout';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   FC, useEffect, useState
 } from 'react';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { Cell, Row } from 'react-table';
-import { Battery, ButtonPlay, Tag } from '@root/components/core';
+import { Battery, ButtonPlay, Tag } from '@components/core';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import {
   Link,

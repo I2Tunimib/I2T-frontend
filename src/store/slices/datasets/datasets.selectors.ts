@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '@root/store';
+import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
 import { DatasetThunkActions } from './datasets.thunk';
