@@ -46,7 +46,7 @@ const calcPath = (
       controlPoint(cx, cy),
       drawTo(x1 - 10, y1)
     );
-    return { computedPath: path.d, direction: 'start' };
+    return { computedPath: path.draw(), direction: 'start' };
   }
 
   const path = new Path({ x: x1, y: y1 });
@@ -54,7 +54,7 @@ const calcPath = (
     controlPoint(cx, cy),
     drawTo(x2 - 10, y2 - 5)
   );
-  return { computedPath: path.d, direction: 'end' };
+  return { computedPath: path.draw(), direction: 'end' };
 };
 
 const DEFAULT_BB: DOMRect = {

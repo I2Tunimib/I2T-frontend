@@ -12,6 +12,7 @@ import Table from './Table';
 import RouteLeaveGuard from './RouteLeaveGuard';
 import TableListView from './TableListView';
 import Status from './Status';
+import SvgPathCoordinator from './SvgPathCoordinator';
 
 export {
   ExpandableList,
@@ -27,5 +28,6 @@ export {
   Table,
   RouteLeaveGuard,
   TableListView,
-  Status
+  Status,
+  SvgPathCoordinator
 };

@@ -21,7 +21,7 @@ const Filling = styled.div<BatteryProps>`
   left: 0;
   height: 100%;
   background-color: ${(props) => (props.value < 40
-    ? '#e1e6ed'
+    ? '#d3dce9'
     : props.value < 70
       ? 'rgb(255, 217, 128)'
       : 'rgb(106, 231, 156)')};
