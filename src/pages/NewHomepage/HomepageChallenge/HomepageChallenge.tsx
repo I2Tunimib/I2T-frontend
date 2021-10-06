@@ -74,45 +74,39 @@ const HomepageChallenge: FC<any> = () => {
       <div className={styles.Header}>
         <div className={styles.Column}>
           <div className={clsx(
-            styles.Row,
-            [styles.Title],
-            {
-              [styles.Back]: !!currentDataset
-            }
+            styles.Row
           )}>
-            <IconButton onClick={() => history.push('/datasets')}>
-              <ArrowBackIosNewRoundedIcon />
-            </IconButton>
-            <Typography style={{ color: '#132F4C' }} variant="h4">
-              Datasets
-            </Typography>
+            <Breadcrumbs separator={<NavigateNextRoundedIcon fontSize="small" />}>
+              <Typography
+                component={Link}
+                to="/datasets"
+                sx={{
+                  textDecoration: 'none'
+                }}
+                style={{ color: '#132F4C' }}
+                variant="h5">
+                Datasets
+              </Typography>
+              {currentDataset && (
+                <Typography
+                  sx={{
+                    textDecoration: 'none'
+                  }}
+                  style={{ color: '#132F4C' }}
+                  variant="h5">
+                  {currentDataset.name}
+                </Typography>
+              )}
+            </Breadcrumbs>
+          </div>
+          <div className={clsx(styles.Row, styles.SubHeader)}>
             {currentDataset && (
-              <Stack marginLeft="10px" alignItems="center" direction="row" spacing={1}>
+              <Stack alignItems="center" direction="row" spacing={1} marginRight="10px">
                 <Chip label={`Tables: ${currentDataset.nTables}`} size="small" />
                 <Chip label={`Avg cols: ${currentDataset.nAvgCols}`} size="small" />
                 <Chip label={`Avg rows: ${currentDataset.nAvgRows}`} size="small" />
               </Stack>
             )}
-          </div>
-          <div className={clsx(styles.Row, styles.SubHeader)}>
-            <Breadcrumbs separator={<NavigateNextRoundedIcon fontSize="small" />}>
-              <Typography
-                className={styles.Link}
-                component={Link}
-                to="/datasets"
-                color="textSecondary">
-                All datasets
-              </Typography>
-              {currentDataset && (
-                <Typography
-                  component={Link}
-                  to={url}
-                  className={styles.Link}
-                  color="textSecondary">
-                  {currentDataset.name}
-                </Typography>
-              )}
-            </Breadcrumbs>
             {selectedRows && (
               <div className={styles.NSelected}>
                 {`${selectedRows.rows.length} selected`}

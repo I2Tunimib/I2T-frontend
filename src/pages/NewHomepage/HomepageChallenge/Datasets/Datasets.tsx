@@ -51,7 +51,7 @@ const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions>
       nAvgCols: datasetInstance.nAvgCols,
       stdDevRows: datasetInstance.stdDevRows,
       stdDevCols: datasetInstance.stdDevCols,
-      status: {
+      completion: {
         raw: datasetInstance.status,
         percentage: calcPercentage(datasetInstance.status)
       }
@@ -67,7 +67,7 @@ const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions>
           Header: key,
           accessor: key,
           ...((sortFunctions && sortFunctions[key]) && { sortType: sortFunctions[key] }),
-          ...(key === 'status' && {
+          ...(key === 'completion' && {
             Cell: ({ row, value }: Cell<any>) => (
               <Tooltip
                 arrow

@@ -116,34 +116,6 @@ const TableListView: FC<TableListViewProps> = ({
           )
         },
         ...cols
-        // {
-        //   id: 'action',
-        //   Header: '',
-        //   Cell: ({ row, matches: mediaMatch }: any) => {
-        //     return (
-        //       <Stack direction="row" gap="5px" className={styles.PlayButton}>
-        //         {mediaMatch ? (
-        //           <>
-        //             <IconButton color="primary" size="small">
-        //               <PlayArrowRounded />
-        //             </IconButton>
-        //             <IconButton color="primary" size="small">
-        //               <ReadMoreRoundedIcon />
-        //             </IconButton>
-        //           </>
-        //         ) : (
-        //           <>
-        //             <Button size="small" endIcon={<PlayArrowRounded />}>
-        //               Annotate
-        //             </Button>
-        //             <Button size="small" endIcon={<ReadMoreRoundedIcon />}>
-        //               Explore
-        //             </Button>
-        //           </>
-        //         )}
-        //       </Stack>
-        //     );
-        //   }
       ]);
 
       if (Actions) {
