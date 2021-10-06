@@ -1,17 +1,23 @@
 import { Tag } from '@components/core';
+import deferMounting from '@components/HOC';
 import { TableListView } from '@components/kit';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { LinearProgress } from '@mui/material';
+import { PlayArrowRounded, ReadMoreRounded } from '@mui/icons-material';
+import {
+  Button, IconButton,
+  LinearProgress, Stack
+} from '@mui/material';
 import { ID } from '@store/interfaces/store';
 import { selectCurrentDatasetTables, selectGetTablesDatasetStatus } from '@store/slices/datasets/datasets.selectors';
 import { getAllDatasetTables } from '@store/slices/datasets/datasets.thunk';
 import { TableInstance } from '@store/slices/datasets/interfaces/datasets';
 import {
-  FC, useEffect,
+  FC, useCallback, useEffect,
   useMemo, useState
 } from 'react';
 import { useParams } from 'react-router-dom';
-import { Cell, Row } from 'react-table';
+import { Cell } from 'react-table';
+import styles from './Tables.module.scss';
 
 interface TablesProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;
@@ -68,6 +74,8 @@ const makeData = (tables: TableInstance[]) => {
   return { columns, data };
 };
 
+const DeferredTable = deferMounting(TableListView);
+
 const Tables: FC<TablesProps> = ({
   onSelectionChange
 }) => {
@@ -95,11 +103,35 @@ const Tables: FC<TablesProps> = ({
     }
   };
 
-  const rowPropGetter = ({ original }: Row<any>) => ({
-    onDoubleClick: () => {
-
-    }
-  });
+  const Actions = useCallback(({ mediaMatch, row }) => {
+    return (
+      <Stack direction="row" gap="5px" className={styles.Actions}>
+        {mediaMatch ? (
+          <>
+            <IconButton color="primary" size="small">
+              <PlayArrowRounded />
+            </IconButton>
+            <IconButton
+              color="primary"
+              size="small">
+              <ReadMoreRounded />
+            </IconButton>
+          </>
+        ) : (
+          <>
+            <Button size="small" endIcon={<PlayArrowRounded />}>
+              Annotate
+            </Button>
+            <Button
+              size="small"
+              endIcon={<ReadMoreRounded />}>
+              Explore
+            </Button>
+          </>
+        )}
+      </Stack>
+    );
+  }, []);
 
   const tableColumns = useMemo(() => tableState.columns, [tableState.columns]);
   const tableRows = useMemo(() => tableState.data, [tableState.data]);
@@ -109,10 +141,10 @@ const Tables: FC<TablesProps> = ({
       {loading ? (
         <LinearProgress />
       ) : (
-        <TableListView
+        <DeferredTable
           columns={tableColumns}
           data={tableRows}
-          rowPropGetter={rowPropGetter}
+          Actions={Actions}
           onChangeRowSelected={handleRowSelection}
         />
       )}

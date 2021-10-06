@@ -34,7 +34,7 @@ export const selectCurrentDataset = createSelector(
 export const selectCurrentDatasetTables = createSelector(
   selectDatasetsState,
   ({ currentDatasetId, datasets, tables }) => {
-    if (currentDatasetId) {
+    if (currentDatasetId !== '') {
       return datasets.byId[currentDatasetId].tables.map((tableId) => tables.byId[tableId]);
     }
     return [];

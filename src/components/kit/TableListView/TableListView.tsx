@@ -11,8 +11,9 @@ import { ButtonPlay } from '@components/core';
 import clsx from 'clsx';
 import {
   Pagination, Checkbox,
-  Typography, Button, IconButton
+  Typography, Button, IconButton, useMediaQuery, Stack
 } from '@mui/material';
+import ReadMoreRoundedIcon from '@mui/icons-material/ReadMoreRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import { PlayArrowRounded } from '@mui/icons-material';
@@ -21,6 +22,7 @@ import styles from './TableListView.module.scss';
 interface TableListViewProps {
   columns: any[];
   data: any[];
+  Actions?: (props: any) => ReactNode;
   Icon?: ReactNode;
   onChangeRowSelected: (selectedRows: any[]) => void;
   rowPropGetter?: (row: Row) => any;
@@ -86,10 +88,12 @@ const TableListView: FC<TableListViewProps> = ({
   columns,
   data,
   Icon,
+  Actions,
   rowPropGetter = defaultPropGetter,
   onChangeRowSelected
 }) => {
-  const [hoveredRow, setHoveredRow] = useState<string>('');
+  const match = useMediaQuery('(max-width:1230px)');
+
   const tableInstance = useTable(
     { columns, data, initialState: { pageSize: 50 } },
     useSortBy,
@@ -111,21 +115,53 @@ const TableListView: FC<TableListViewProps> = ({
             </div>
           )
         },
-        ...cols,
-        {
-          id: 'action',
-          Header: '',
-          Cell: ({ row, hoveredRowId }: any) => {
-            return (
-              <>
-                <Button size="small" endIcon={<PlayArrowRounded />} className={styles.PlayButton}>
-                  Start annotation
-                </Button>
-              </>
-            );
-          }
-        }
+        ...cols
+        // {
+        //   id: 'action',
+        //   Header: '',
+        //   Cell: ({ row, matches: mediaMatch }: any) => {
+        //     return (
+        //       <Stack direction="row" gap="5px" className={styles.PlayButton}>
+        //         {mediaMatch ? (
+        //           <>
+        //             <IconButton color="primary" size="small">
+        //               <PlayArrowRounded />
+        //             </IconButton>
+        //             <IconButton color="primary" size="small">
+        //               <ReadMoreRoundedIcon />
+        //             </IconButton>
+        //           </>
+        //         ) : (
+        //           <>
+        //             <Button size="small" endIcon={<PlayArrowRounded />}>
+        //               Annotate
+        //             </Button>
+        //             <Button size="small" endIcon={<ReadMoreRoundedIcon />}>
+        //               Explore
+        //             </Button>
+        //           </>
+        //         )}
+        //       </Stack>
+        //     );
+        //   }
       ]);
+
+      if (Actions) {
+        hooks.visibleColumns.push((cols) => {
+          return [
+            ...cols,
+            {
+              id: 'action',
+              Header: '',
+              Cell: (props) => (
+                <div className={styles.Actions}>
+                  {Actions(props)}
+                </div>
+              )
+            }
+          ];
+        });
+      }
 
       if (Icon) {
         hooks.visibleColumns.push(([first, ...rest]) => {
@@ -217,7 +253,7 @@ const TableListView: FC<TableListViewProps> = ({
                 {row.cells.map((cell) => {
                   return (
                     <td className={styles.Td} {...cell.getCellProps()}>
-                      {cell.render('Cell', { hoveredRowId: hoveredRow })}
+                      {cell.render('Cell', { mediaMatch: match })}
                     </td>
                   );
                 })}

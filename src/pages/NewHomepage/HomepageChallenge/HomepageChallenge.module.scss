@@ -67,6 +67,7 @@
   flex-direction: column;
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   // fixes scroll
   height: 1px;
 

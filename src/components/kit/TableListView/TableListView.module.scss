@@ -13,18 +13,21 @@
 
 .Tr {
   &:hover {
-    .PlayButton {
+    .Actions {
       opacity: 1;
       transform: translateX(0);
     }
   }
 }
 
-.PlayButton {
-  text-transform: none;
+.Actions {
   opacity: 0;
   transform: translateX(20px);
   transition: all 200ms ease-out;
+
+  Button {
+    text-transform: none;
+  }
 }
 
 .Th {

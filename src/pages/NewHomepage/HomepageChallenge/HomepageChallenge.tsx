@@ -1,7 +1,7 @@
 import {
-  Avatar, Breadcrumbs,
-  Button,
-  Chip, Grid, Grow, IconButton, Stack, Typography, useMediaQuery
+  Breadcrumbs, Button,
+  Chip, IconButton, Stack,
+  Typography, useMediaQuery
 } from '@mui/material';
 import { MainLayout } from '@components/layout';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -9,8 +9,7 @@ import {
   FC, useEffect, useState
 } from 'react';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
-import { Cell, Row } from 'react-table';
-import { Battery, ButtonPlay, Tag } from '@components/core';
+import { Battery } from '@components/core';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import {
   Link,
@@ -20,7 +19,6 @@ import {
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import { getAllDatasets } from '@store/slices/datasets/datasets.thunk';
 import { selectCurrentDataset, selectGetAllDatasetsStatus } from '@store/slices/datasets/datasets.selectors';
-import { Status } from '@components/kit';
 import { Status as CompletionStatus } from '@store/slices/datasets/interfaces/datasets';
 import clsx from 'clsx';
 import SidebarContent from './SidebarContent/SidebarContent';
@@ -32,7 +30,8 @@ import Tables from './Tables';
 export const calcPercentage = (status: CompletionStatus) => {
   const total = Object.keys(status)
     .reduce((acc, key) => status[key as keyof CompletionStatus] + acc, 0);
-  return (status.DONE / total) * 100 + (Math.random() * 101);
+  const value = (status.DONE / total) * 100 + (Math.random() * 101);
+  return value > 100 ? 100 : value;
 };
 
 interface SelectedRowsState {
@@ -46,7 +45,7 @@ const HomepageChallenge: FC<any> = () => {
   const dispatch = useAppDispatch();
   const { path, url } = useRouteMatch();
   const history = useHistory();
-  const matches = useMediaQuery('(max-width:1230px)');
+  const matches = useMediaQuery('(max-width:1365px)');
   const currentDataset = useAppSelector(selectCurrentDataset);
   const { loading: loadingDatasets } = useAppSelector(selectGetAllDatasetsStatus);
 

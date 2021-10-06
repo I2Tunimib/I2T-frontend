@@ -30,8 +30,8 @@ export const getOneDataset = createAsyncThunk(
 export const getAllDatasetTables = createAsyncThunk(
   `${ACTION_PREFIX}/${DatasetThunkActions.GET_ALL_DATASET_TABLES}`,
   async ({ datasetId }: { datasetId: ID }, { dispatch }) => {
-    const response = await datasetAPI.getAllDatasetTables(datasetId);
     dispatch(setCurrentDataset(datasetId));
+    const response = await datasetAPI.getAllDatasetTables(datasetId);
     return {
       data: response.data,
       datasetId

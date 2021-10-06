@@ -14,6 +14,7 @@ import SelectableMenuItem from './SelectableMenuItem';
 import Tag from './Tag';
 import ButtonPlay from './ButtonPlay';
 import Battery from './Battery';
+import DotLoading from './DotLoading';
 
 export {
   Button,
@@ -31,5 +32,6 @@ export {
   SelectableMenuItem,
   Tag,
   ButtonPlay,
-  Battery
+  Battery,
+  DotLoading
 };
