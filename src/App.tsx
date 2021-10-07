@@ -1,4 +1,5 @@
 import { RouteContainer } from '@components/layout';
+import useInit from '@hooks/init/useInit';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import Homepage from '@pages/Homepage';
 import Viewer from '@pages/Viewer';
@@ -6,18 +7,22 @@ import { selectGetConfigRequest } from '@store/slices/config/config.selectors';
 import { getConfig } from '@store/slices/config/config.thunk';
 import React, { Suspense, useEffect } from 'react';
 import { Redirect, Route } from 'react-router-dom';
-import usePrefetch from './hooks/prefetch/usePrefetch';
+// import usePrefetch from './hooks/prefetch/usePrefetch';
 import { getRoutes, getRedirects } from './routes';
+import config from './config.yaml';
+
+const { MODE } = config.APP;
 
 const App = () => {
-  // preload routes based on configuration
-  usePrefetch();
-  const dispatch = useAppDispatch();
-  const { loading } = useAppSelector(selectGetConfigRequest);
+  // initialize app
+  const loading = useInit({ mode: MODE });
+  // usePrefetch();
+  // const dispatch = useAppDispatch();
+  // const { loading } = useAppSelector(selectGetConfigRequest);
 
-  useEffect(() => {
-    dispatch(getConfig());
-  }, []);
+  // useEffect(() => {
+  //   dispatch(getConfig());
+  // }, []);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
