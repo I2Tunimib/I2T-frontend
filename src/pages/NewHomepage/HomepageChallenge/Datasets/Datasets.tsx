@@ -111,7 +111,7 @@ const Datasets: FC<DatasetsProps> = ({
     dispatch(setCurrentDataset(''));
   }, []);
 
-  const sortStatus = useCallback((
+  const sortCompletion = useCallback((
     rowA: any, rowB: any,
     columnId: string,
     desc: boolean
@@ -123,7 +123,7 @@ const Datasets: FC<DatasetsProps> = ({
     if (datasets.length > 0) {
       setTableState(makeData(datasets, {
         sortFunctions: {
-          status: sortStatus
+          completion: sortCompletion
         }
       }));
     }
