@@ -291,15 +291,16 @@ export const selectDataTableFormat = createSelector(
     const rows = entities.rows.allIds.map((rowId) => (
       Object.keys(entities.rows.byId[rowId].cells).reduce((acc, colId) => {
         const cell = entities.rows.byId[rowId].cells[colId];
-        const cellContext = getCellContext(cell);
-        const currentService = reconciliators[cellContext];
+        const { context } = entities.columns.byId[colId];
+        const cellContextPrefix = getCellContext(cell);
+        const cellContext = context[cellContextPrefix];
         return {
           ...acc,
           [colId]: {
             ...cell,
             metadata: cell.metadata.map((item) => ({
               ...item,
-              url: `${currentService.uri}/${item.id.split(':')[1]}`
+              url: `${cellContext.uri}${item.id.split(':')[1]}`
             })),
             rowId
           }

@@ -25,7 +25,6 @@ import { useHistory, useParams } from 'react-router-dom';
 import { getTable, saveTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/interfaces/store';
 import { RouteLeaveGuard } from '@components/kit';
-import { selectReconciliatorsAsObject } from '@store/slices/config/config.selectors';
 import clsx from 'clsx';
 import { Table } from '../Table';
 // import Toolbar from '../../Viewer/Toolbar';
@@ -71,7 +70,6 @@ const TableViewer = () => {
   const editableCellsIds = useAppSelector(selectEditableCellsIds);
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
-  const allReconciliators = useAppSelector(selectReconciliatorsAsObject);
 
   /**
  * Keyboard shortcut handlers
@@ -208,7 +206,6 @@ const TableViewer = () => {
     };
   }, [
     selectedColumns,
-    allReconciliators,
     expandedColumnsIds
   ]);
 
