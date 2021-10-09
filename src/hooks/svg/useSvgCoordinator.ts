@@ -14,6 +14,8 @@ export interface UseSvgCoordinatorProps {
 
 export interface CoordinatorPath {
   id: string;
+  startElementLabel: string;
+  endElementLabel: string;
   startElement: HTMLElement;
   endElement: HTMLElement;
   label?: string;

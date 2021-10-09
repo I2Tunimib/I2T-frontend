@@ -16,6 +16,8 @@ interface SvgContainerProps extends HTMLAttributes<SVGSVGElement> {
   columns: any[];
   columnRefs: MutableRefObject<Record<string, HTMLElement>>;
   headerExpanded: boolean;
+  onPathMouseEnter?: (path: any) => void;
+  onPathMouseLeave?: () => void;
 }
 
 interface SvgContainerState {
@@ -37,6 +39,8 @@ const SvgContainer: FC<SvgContainerProps> = ({
   columns,
   columnRefs,
   headerExpanded,
+  onPathMouseEnter,
+  onPathMouseLeave,
   ...props
 }) => {
   const [state, setState] = useState<SvgContainerState>(DEFAULT_STATE);
@@ -53,6 +57,8 @@ const SvgContainer: FC<SvgContainerProps> = ({
           const groupPaths = property.map((prop: any) => {
             return {
               id: prop.id,
+              startElementLabel: id,
+              endElementLabel: prop.obj,
               startElement: columnRefs.current[id],
               endElement: columnRefs.current[prop.obj],
               label: prop.name,
@@ -92,6 +98,8 @@ const SvgContainer: FC<SvgContainerProps> = ({
         <SvgPathCoordinator
           paths={paths}
           shouldRedraw={shouldRedraw}
+          onPathMouseEnter={onPathMouseEnter}
+          onPathMouseLeave={onPathMouseLeave}
           {...props} />
       )}
     </>

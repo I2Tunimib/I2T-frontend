@@ -5,7 +5,8 @@ import {
 import {
   FC, useCallback,
   useEffect,
-  useRef
+  useRef,
+  useState
 } from 'react';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import clsx from 'clsx';
@@ -34,6 +35,11 @@ interface TableGlobalFilter {
   value: string;
 }
 
+interface HighlightState {
+  color: string;
+  columns: string[];
+}
+
 // default prop getter for when it is not provided
 const defaultPropGetter = () => ({});
 
@@ -48,6 +54,7 @@ const Table: FC<TableProps> = ({
   getCellProps = defaultPropGetter
 }) => {
   const columnRefs = useRef<Record<any, HTMLElement>>({});
+  const [highlightState, setHighlightState] = useState<HighlightState | null>(null);
 
   /**
    * Custom function id.
@@ -164,15 +171,28 @@ const Table: FC<TableProps> = ({
     }
   }, [searchFilter]);
 
+  const handlePathMouseEnter = useCallback((path: any) => {
+    const { startElementLabel, endElementLabel, color } = path;
+    setHighlightState({
+      color,
+      columns: [startElementLabel, endElementLabel]
+    });
+  }, []);
+
+  const handlePathMouseLeave = useCallback(() => {
+    setHighlightState(null);
+  }, []);
+
   return (
-    // apply the table props
     <>
       {headerExpanded && (
         <SvgContainer
           headerExpanded={headerExpanded}
           columnRefs={columnRefs}
           columns={columns}
-          className={styles.SvgContainer} />
+          className={styles.SvgContainer}
+          onPathMouseEnter={handlePathMouseEnter}
+          onPathMouseLeave={handlePathMouseLeave} />
       )}
       <TableRoot
         className={clsx(
@@ -193,7 +213,7 @@ const Table: FC<TableProps> = ({
                     <TableHeaderCell
                       ref={(el: any) => { columnRefs.current[column.id] = el; }}
                       {...column.getHeaderProps([
-                        getHeaderProps(column), getGlobalProps(), { index }])}>
+                        getHeaderProps(column), getGlobalProps(), { index, highlightState }])}>
                       {// Render the header
                         column.render('Header')
                       }
@@ -215,7 +235,8 @@ const Table: FC<TableProps> = ({
                     row.cells.map((cell) => (
                       // Apply the cell prop
                       <TableRowCell {...cell.getCellProps([
-                        getCellProps(cell), getGlobalProps()
+                        getCellProps(cell), getGlobalProps(),
+                        { highlightState }
                       ]) as any}>
                         {// Render the cell contents
                           cell.render('Cell', { value: 'prova' })}

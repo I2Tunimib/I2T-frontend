@@ -8,6 +8,7 @@ import {
   useState, MouseEvent, useRef,
   FocusEvent, useEffect
 } from 'react';
+import styled from '@emotion/styled';
 import EditableCell from '../EditableCell';
 import { TableCell, TableColumn, TableRow } from '../interfaces/table';
 import NormalCell from '../NormalCell';
@@ -21,11 +22,43 @@ interface TableRowCellProps extends TableCell {
   editable: boolean;
   matching: boolean;
   dense: boolean;
+  highlightState: any;
   handleSelectedRowChange: (event: MouseEvent<any>, id: string) => void;
   handleSelectedCellChange: (event: MouseEvent<any>, id: string) => void;
   handleCellRightClick: (event: MouseEvent<any>, type: string, id: string) => void;
   updateTableData: (cellId: ID, value: string) => any;
 }
+
+const Td = styled.td<{
+  selected: boolean;
+  columnId: string;
+  highlightState: any;
+}>(
+  {
+    position: 'relative',
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    cursor: 'default',
+    backgroundColor: 'inherit',
+    borderRight: '1px solid #ededed',
+    borderBottom: '1px solid #ededed'
+  },
+  ({ selected, highlightState, columnId }) => {
+    if (highlightState && highlightState.columns.includes(columnId)) {
+      return {
+        backgroundColor: `${highlightState.color}0d`
+      };
+    }
+    if (selected) {
+      return {
+        backgroundColor: '#FEF2F6'
+      };
+    }
+    return {
+      backgroundColor: 'inherit'
+    };
+  }
+);
 
 /**
  * Table row cell.
@@ -39,6 +72,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
   editable,
   value,
   dense,
+  highlightState,
   handleSelectedRowChange,
   handleCellRightClick,
   handleSelectedCellChange,
@@ -88,16 +122,13 @@ const TableRowCell: FC<TableRowCellProps> = ({
   };
 
   return (
-    <td
+    <Td
+      columnId={columnId}
+      selected={selected}
+      highlightState={highlightState}
       role="gridcell"
       onClick={(event) => handleSelectCell(event)}
       onContextMenu={(event) => handleOnContextMenu(event)}
-      className={clsx(
-        styles.TableRowCell,
-        {
-          [styles.Selected]: selected
-        }
-      )}
     >
       {columnId === 'index' ? children : (
         <>
@@ -119,7 +150,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
           )}
         </>
       )}
-    </td>
+    </Td>
   );
 };
 

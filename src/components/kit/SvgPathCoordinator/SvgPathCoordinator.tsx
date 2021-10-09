@@ -8,11 +8,15 @@ import SvgArrow from '../SvgArrow';
 export interface SvgPathCoordinatorProps
   extends UseSvgCoordinatorProps, HTMLAttributes<SVGSVGElement> {
   shouldRedraw?: () => boolean;
+  onPathMouseEnter?: (id: string) => void;
+  onPathMouseLeave?: () => void;
 }
 
 const SvgPathCoordinator: FC<SvgPathCoordinatorProps> = ({
   paths,
   shouldRedraw,
+  onPathMouseEnter,
+  onPathMouseLeave,
   ...props
 }) => {
   const {
@@ -47,6 +51,8 @@ const SvgPathCoordinator: FC<SvgPathCoordinatorProps> = ({
           color={path.color}
           label={path.label}
           link={path.link}
+          onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
+          onMouseLeave={onPathMouseLeave}
         />
       ))}
     </svg>

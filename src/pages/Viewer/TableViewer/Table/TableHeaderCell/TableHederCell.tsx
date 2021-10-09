@@ -34,6 +34,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   handleCellRightClick,
   handleSelectedColumnChange,
   reconciliators,
+  highlightState,
   data
 }: any, ref) => {
   return (
@@ -41,6 +42,9 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
       ref={ref}
       onClick={(e) => handleSelectedColumnChange(e, id)}
       onContextMenu={(e) => handleCellRightClick(e, 'column', id)}
+      style={{
+        backgroundColor: highlightState && highlightState.columns.includes(id) ? `${highlightState.color}10` : 'inherit'
+      }}
       className={clsx([
         styles.TableHeaderCell,
         {

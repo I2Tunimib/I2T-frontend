@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, HTMLAttributes } from 'react';
 import { ArrowHead } from '../SvgComponents';
 import styles from './SvgArrow.module.scss';
 
@@ -10,6 +10,8 @@ interface SvgArrowProps {
   color?: string;
   label?: string;
   link?: string;
+  onMouseEnter?: (id: string) => void;
+  onMouseLeave?: () => void;
 }
 
 const SvgArrow: FC<SvgArrowProps> = ({
@@ -19,7 +21,9 @@ const SvgArrow: FC<SvgArrowProps> = ({
   direction,
   color = 'black',
   label,
-  link
+  link,
+  onMouseEnter,
+  onMouseLeave
 }) => {
   return (
     <>
@@ -29,7 +33,10 @@ const SvgArrow: FC<SvgArrowProps> = ({
           color={color}
           direction={direction} />
       </defs>
-      <g className={styles.Arrow}>
+      <g
+        className={styles.Arrow}
+        onMouseEnter={() => onMouseEnter && onMouseEnter(id)}
+        onMouseLeave={onMouseLeave}>
         <a href={link} target="_blank" rel="noreferrer">
           {label && (
             <text key={`label-${id}`} dy="-5%">
