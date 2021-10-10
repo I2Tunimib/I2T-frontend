@@ -1,4 +1,8 @@
 .table-head-cell {
+
+  p{
+    margin: 0.2rem !important;
+  }
   .header-cell {
     display: flex;
     flex-direction: column;
@@ -67,4 +71,5 @@
   .spacer {
     height: 1.8rem;
   }
+
 }

@@ -13,7 +13,7 @@ const Table = () => {
     const Columns = useSelector((state: RootState) => state.Columns);
     //const Data = useSelector((state: RootState) => state.Data);
     const FilteredData = useSelector((state: RootState) => state.FilteredData)
-    const [rowsPerPage, setRowsPerPage] = React.useState(10);
+    const [rowsPerPage, setRowsPerPage] = React.useState(20);
     const [pageIndex, setPageIndex] = React.useState(0);
     // const [lastDeletedCol, setLastDeletedCol] = React.useState(null);
     // const [lastSortedCol, setLastSortedCol] = React.useState(null);
@@ -31,9 +31,9 @@ const Table = () => {
                 <UpperBar />
             )
         },
-        // tableBodyHeight: /*(window.innerHeight - 150).toString() + "px"*/ "75vh",
-        // fixedHeader: true,
-        rowsPerPageOptions: [10, 20, 50],
+        tableBodyHeight: (window.innerHeight - 250).toString() + "px",
+        fixedHeader: true,
+        rowsPerPageOptions: [20, 50, 100],
         onChangeRowsPerPage: (numberOfRows: number) => {
             setRowsPerPage(numberOfRows);
         },
@@ -46,6 +46,7 @@ const Table = () => {
         selectableRows: "none",
         fixedSelectColumn: true,
         sort: false,
+        rowsPerPage: 20,
     }
 
     const getMuiTheme = () => createTheme({
