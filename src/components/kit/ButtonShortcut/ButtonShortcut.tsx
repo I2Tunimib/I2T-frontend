@@ -9,7 +9,7 @@ interface ButtonShortcutProps extends HTMLAttributes<HTMLDivElement> {
   text?: string;
   size?: 's' | 'xs';
   variant?: 'flat' | 'raised';
-  color?: 'standard' | 'green' | 'blue';
+  color?: 'standard' | 'green' | 'darkgreen' | 'blue';
 }
 
 /**
@@ -29,6 +29,7 @@ const ButtonShortcut: FC<ButtonShortcutProps> = ({
         [styles.xs]: size === 'xs',
         [styles.Raised]: variant === 'raised',
         [styles.Green]: color === 'green',
+        [styles.DarkGreen]: color === 'darkgreen',
         [styles.Blue]: color === 'blue'
       },
       className

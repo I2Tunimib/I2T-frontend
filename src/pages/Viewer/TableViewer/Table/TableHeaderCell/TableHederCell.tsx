@@ -57,11 +57,12 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
           <div className={styles.Row}>
             <div className={styles.Column}>
               <div className={styles.Row}>
-                {data.role && <ButtonShortcut text={data.role} />}
                 <div className={styles.Label}>
                   {children}
                 </div>
                 {data.kind && getKind(data.kind)}
+                {data.role
+                && <ButtonShortcut text={data.role} variant="flat" color="darkgreen" size="xs" />}
               </div>
               {data.status === ColumnStatus.RECONCILIATED ? (
                 <Stack
