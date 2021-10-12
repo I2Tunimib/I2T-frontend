@@ -81,7 +81,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST_URL }}
           username: ${{ secrets.REMOTE_HOST_USERNAME }}
           key: ${{ secrets.SSH_PRIV_KEY }}
-          source: "docker-compose.prod.yml"
+          source: docker-compose.prod.yml
           target: "/datahdd/asia/I2T-backend/deploy"
 
       # - name: Setup SSH
