@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { selectCurrentTable, selectLastSaved, selectSaveTableStatus } from '@store/slices/table/table.selectors';
 import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { saveTable } from '@store/slices/table/table.thunk';
+import { useGoBack } from '@hooks/router';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
@@ -43,6 +44,7 @@ const Toolbar = () => {
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
 
   const history = useHistory();
+  const { goBack } = useGoBack('/');
   const { loading } = useAppSelector(selectSaveTableStatus);
   const { name, lastModifiedDate } = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
@@ -98,7 +100,7 @@ const Toolbar = () => {
   return (
     <>
       <div className={styles.Container}>
-        <IconButton component={Link} to="/" size="large">
+        <IconButton onClick={() => goBack()} size="large">
           <ArrowBackIosRoundedIcon />
         </IconButton>
         <div className={styles.ColumnMenu}>

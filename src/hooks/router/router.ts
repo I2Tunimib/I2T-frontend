@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 export const useQuery = () => {
   const location = useLocation();
@@ -13,4 +13,20 @@ export const useQuery = () => {
   }, [querySearchParams]);
 
   return paramsToObject();
+};
+
+export const useGoBack = (defaultUrl: string) => {
+  const history = useHistory();
+
+  const goBack = useCallback(() => {
+    if (history.action === 'POP') {
+      history.push(defaultUrl);
+    } else {
+      history.go(-1);
+    }
+  }, [history]);
+
+  return {
+    goBack
+  };
 };

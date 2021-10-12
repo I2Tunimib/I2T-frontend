@@ -235,7 +235,7 @@ const Content: FC<Contentprops> = ({
           <div className={styles.List}>
             {tables.map((table) => (
               <Link
-                to={`/table/${table.id}`}
+                to={`/table/${table.id}?view=table`}
                 onContextMenu={(e) => handleContextMenu(e, table)}
                 className={styles.TableListItem}
                 key={table.id}>
