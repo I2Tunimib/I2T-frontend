@@ -85,7 +85,7 @@ const TableViewer = () => {
           });
       }
     }
-  // Saving
+    // Saving
   }, []);
   const undoOperation = useCallback(() => {
     dispatch(undo());
@@ -123,10 +123,12 @@ const TableViewer = () => {
    * Handle selection of a column.
    */
   const handleSelectedColumnChange = useCallback((event: MouseEvent, id: ID) => {
-    if (event.ctrlKey) {
-      dispatch(updateColumnSelection({ id, multi: true }));
-    } else {
-      dispatch(updateColumnSelection({ id }));
+    if (id !== 'index') {
+      if (event.ctrlKey) {
+        dispatch(updateColumnSelection({ id, multi: true }));
+      } else {
+        dispatch(updateColumnSelection({ id }));
+      }
     }
   }, []);
 
@@ -156,29 +158,31 @@ const TableViewer = () => {
    */
   const handleCellRightClick = useCallback((e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | 'row' | null, id: string) => {
     e.preventDefault();
-    if (type === 'cell') {
-      dispatch(updateCellSelection({ id }));
-    } else if (type === 'row') {
-      dispatch(updateRowSelection({ id }));
-    } else {
-      dispatch(updateColumnSelection({ id }));
+    if (id !== 'index') {
+      if (type === 'cell') {
+        dispatch(updateCellSelection({ id }));
+      } else if (type === 'row') {
+        dispatch(updateRowSelection({ id }));
+      } else {
+        dispatch(updateColumnSelection({ id }));
+      }
+
+      const status = Object.keys(menuState.status).reduce((acc, key) => ({
+        ...acc,
+        [key]: key === type
+      }), {});
+      const data = { id };
+      setMenuState({ status, data });
+
+      // create a virtual anchor element for the menu
+      const { clientX, clientY } = e;
+      const virtualElement = {
+        // clientWidth: clientX,
+        // clientHeight: clientY,
+        getBoundingClientRect: generateGetBoundingClientRect(clientX, clientY)
+      };
+      setAnchorEl(virtualElement);
     }
-
-    const status = Object.keys(menuState.status).reduce((acc, key) => ({
-      ...acc,
-      [key]: key === type
-    }), {});
-    const data = { id };
-    setMenuState({ status, data });
-
-    // create a virtual anchor element for the menu
-    const { clientX, clientY } = e;
-    const virtualElement = {
-      // clientWidth: clientX,
-      // clientHeight: clientY,
-      getBoundingClientRect: generateGetBoundingClientRect(clientX, clientY)
-    };
-    setAnchorEl(virtualElement);
   }, []);
 
   /**
