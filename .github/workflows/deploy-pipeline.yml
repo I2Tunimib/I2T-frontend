@@ -74,22 +74,31 @@ jobs:
           echo LAMAPI_TOKEN=${{ secrets.LAMAPI_TOKEN }} >> backend/.env
           echo WIKIDATA=${{ secrets.WIKIDATA }} >> backend/.env
           echo RELEASE_TAG=${{ github.event.release.tag_name }} >> backend/.env
-
-      - name: Setup SSH
-        run: |
-          mkdir --parents $HOME/.ssh
-          if [ -z "$SSH_AGENT_PID" ]; then
-            eval $(ssh-agent)
-            echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
-            echo "SSH_AGENT_PID=SSH_AGENT_PID" >> $GITHUB_ENV          
-          fi
-          if [ -n "${{ secrets.SSH_PUB_KEY }}" ]; then echo "${{ secrets.SSH_PUB_KEY }}" >> "$HOME/.ssh/known_hosts"; fi
-          if [ -n "${{ secrets.SSH_PRIV_KEY }}" ]; then echo "${{ secrets.SSH_PRIV_KEY }}" | ssh-add - ; fi
       
-      - name: Copy docker-compose and .env to remote host
-        run: |
-          cd backend
-          scp docker-compose.prod.yml .env ${{ secrets.REMOTE_HOST_USERNAME }}@${{ secrets.REMOTE_HOST_URL }}:/datahdd/asia/I2T-backend/deploy
+      - name: copy file via ssh key
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST_URL }}
+          username: ${{ secrets.REMOTE_HOST_USERNAME }}
+          key: ${{ secrets.SSH_PRIV_KEY }}
+          source: "docker-compose.prod.yml,.env"
+          target: "/datahdd/asia/I2T-backend/deploy"
+
+      # - name: Setup SSH
+      #   run: |
+      #     mkdir --parents $HOME/.ssh
+      #     if [ -z "$SSH_AGENT_PID" ]; then
+      #       eval $(ssh-agent)
+      #       echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+      #       echo "SSH_AGENT_PID=SSH_AGENT_PID" >> $GITHUB_ENV          
+      #     fi
+      #     if [ -n "${{ secrets.SSH_PUB_KEY }}" ]; then echo "${{ secrets.SSH_PUB_KEY }}" >> "$HOME/.ssh/known_hosts"; fi
+      #     if [ -n "${{ secrets.SSH_PRIV_KEY }}" ]; then echo "${{ secrets.SSH_PRIV_KEY }}" | ssh-add - ; fi
+      
+      # - name: Copy docker-compose and .env to remote host
+      #   run: |
+      #     cd backend
+      #     scp docker-compose.prod.yml .env ${{ secrets.REMOTE_HOST_USERNAME }}@${{ secrets.REMOTE_HOST_URL }}:/datahdd/asia/I2T-backend/deploy
 
       - name: Deploy through ssh
         uses: appleboy/ssh-action@master
