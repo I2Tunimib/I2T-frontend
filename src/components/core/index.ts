@@ -15,6 +15,7 @@ import Tag from './Tag';
 import ButtonPlay from './ButtonPlay';
 import Battery from './Battery';
 import DotLoading from './DotLoading';
+import Loader from './Loader';
 
 export {
   Button,
@@ -33,5 +34,6 @@ export {
   Tag,
   ButtonPlay,
   Battery,
-  DotLoading
+  DotLoading,
+  Loader
 };

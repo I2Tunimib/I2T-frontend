@@ -1,14 +1,10 @@
 import { RouteContainer } from '@components/layout';
 import useInit from '@hooks/init/useInit';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import Homepage from '@pages/Homepage';
-import Viewer from '@pages/Viewer';
-import { selectGetConfigRequest } from '@store/slices/config/config.selectors';
-import { getConfig } from '@store/slices/config/config.thunk';
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 // import usePrefetch from './hooks/prefetch/usePrefetch';
-import { getRoutes, getRedirects } from './routes';
+import { Loader } from '@components/core';
+import { getRedirects, getRoutes } from './routes';
 import config from './config.yaml';
 
 const { MODE } = config.APP;
@@ -25,14 +21,16 @@ const App = () => {
   // }, []);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<Loader />}>
       <RouteContainer loadChildren={loading === false}>
-        {getRoutes().map((routeProps, index) => (
-          <Route key={index} {...routeProps} />
-        ))}
-        {getRedirects().map((redirectProps, index) => (
-          <Redirect key={index} {...redirectProps} />
-        ))}
+        {getRoutes()
+          .map((routeProps, index) => (
+            <Route key={index} {...routeProps} />
+          ))}
+        {getRedirects()
+          .map((redirectProps, index) => (
+            <Redirect key={index} {...redirectProps} />
+          ))}
       </RouteContainer>
     </Suspense>
   );
