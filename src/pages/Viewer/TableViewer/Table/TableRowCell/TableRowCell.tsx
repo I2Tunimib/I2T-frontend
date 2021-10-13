@@ -51,7 +51,7 @@ const Td = styled.td<{
     }
     if (selected) {
       return {
-        backgroundColor: '#FEF2F6'
+        backgroundColor: 'rgb(240, 247, 255, 0.6)'
       };
     }
     return {

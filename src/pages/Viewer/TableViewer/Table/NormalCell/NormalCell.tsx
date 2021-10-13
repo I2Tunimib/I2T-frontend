@@ -5,12 +5,15 @@ import ExpandableList from '@components/kit/ExpandableList/ExpandableList';
 import ExpandableListHeader from '@components/kit/ExpandableListHeader';
 import ExpandableListItem from '@components/kit/ExpandableListItem';
 import ExpandableListBody from '@components/kit/ExpandableListBody';
-import { Link } from '@mui/material';
+import { IconButton, Link } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRounded';
 import { selectReconciliatorCell } from '@store/slices/table/table.selectors';
 import { RootState } from '@store';
 import { connect } from 'react-redux';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
+import { useAppDispatch } from '@hooks/store';
+import { updateUI } from '@store/slices/table/table.slice';
 import styles from './NormalCell.module.scss';
 
 interface NormalCellProps {
@@ -28,6 +31,8 @@ const NormalCell: FC<NormalCellProps> = ({
   dense,
   expanded
 }) => {
+  const dispatch = useAppDispatch();
+
   const getBadgeStatus = (metadata: BaseMetadata[]) => {
     const matching = value.metadata.some((meta: BaseMetadata) => meta.match);
     if (matching) {
@@ -38,6 +43,20 @@ const NormalCell: FC<NormalCellProps> = ({
     }
     return 'Error';
   };
+
+  const getLabel = useCallback(() => {
+    const match = value.metadata.find((meta: BaseMetadata) => meta.match);
+    if (match) {
+      return (
+        <Link
+          href={match.url}
+          target="_blank">
+          {label}
+        </Link>
+      );
+    }
+    return label;
+  }, [value, label]);
 
   const getItems = useCallback((start: number, finish: number): any[] => {
     let end = finish;
@@ -61,23 +80,36 @@ const NormalCell: FC<NormalCellProps> = ({
             status={getBadgeStatus(value.metadata)}
           />
         )}
-        <div className={styles.TextLabel}>{label}</div>
+        <div className={styles.TextLabel}>
+          {getLabel()}
+        </div>
+        <IconButton
+          onClick={() => dispatch(updateUI({
+            openMetadataDialog: true
+          }))}
+          size="small"
+          className={styles.ActionButton}>
+          <SettingsEthernetRoundedIcon fontSize="small" />
+        </IconButton>
       </div>
       {expanded && (
         <ExpandableList
-          listTitle={`Entity ${reconciliator ? `- ${reconciliator}` : ''} `}
           messageIfNoContent="Cell doesn't have any metadata"
           className={styles.ExpandableList}>
           <ExpandableListHeader>
             {getItems(0, 3).map((item, index) => (
               <ExpandableListItem key={`${item.name}-${index}`}>
                 <div className={styles.Item}>
-                  <Link
-                    href={item.url}
-                    target="_blank">
-                    {item.name}
-                  </Link>
                   {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
+                  <Link
+                    sx={{
+                      marginLeft: '20px'
+                    }}
+                    href={item.url}
+                    target="_blank"
+                    className={styles.MetaLink}>
+                    {`${item.id} (${item.name})`}
+                  </Link>
                 </div>
               </ExpandableListItem>
             ))}
@@ -85,11 +117,18 @@ const NormalCell: FC<NormalCellProps> = ({
           <ExpandableListBody>
             {getItems(3, value.metadata.length).map((item, index) => (
               <ExpandableListItem key={`${item.name}-${index}`}>
-                <Link
-                  href={item.url}
-                  target="_blank">
-                  {item.name}
-                </Link>
+                <div className={styles.Item}>
+                  {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
+                  <Link
+                    sx={{
+                      marginLeft: '20px'
+                    }}
+                    href={item.url}
+                    target="_blank"
+                    className={styles.MetaLink}>
+                    {`${item.id} (${item.name})`}
+                  </Link>
+                </div>
               </ExpandableListItem>
             ))}
           </ExpandableListBody>

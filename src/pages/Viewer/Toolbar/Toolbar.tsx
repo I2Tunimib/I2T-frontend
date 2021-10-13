@@ -100,7 +100,7 @@ const Toolbar = () => {
   return (
     <>
       <div className={styles.Container}>
-        <IconButton onClick={() => goBack()} size="large">
+        <IconButton component={Link} to="/" size="large">
           <ArrowBackIosRoundedIcon />
         </IconButton>
         <div className={styles.ColumnMenu}>

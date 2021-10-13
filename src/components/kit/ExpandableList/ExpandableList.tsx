@@ -14,7 +14,7 @@ interface ExpandableListProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * List title.
    */
-  listTitle: string;
+  listTitle?: string;
   /**
    * Message shown if list has no content.
    */
@@ -63,7 +63,7 @@ const ExpandableList: FC<ExpandableListProps> = ({
 
   return (
     <div className={clsx(styles.Container, className)} {...props}>
-      <Typography className={styles.ListTitle} variant="subtitle2">{listTitle}</Typography>
+      {listTitle && <Typography className={styles.ListTitle} variant="subtitle2">{listTitle}</Typography>}
       {(header as ReactElement).props.children.length > 0 ? (
         <>
           {header}
