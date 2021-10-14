@@ -1,5 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
-import { Badge, Checkbox, Chip } from '@mui/material';
+import { Chip, Stack } from '@mui/material';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import clsx from 'clsx';
@@ -64,24 +64,28 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                 {data.kind && getKind(data.kind)}
               </div>
               {data.status === ColumnStatus.RECONCILIATED ? (
-                <div className={styles.Row}>
-                  <Chip
-                    icon={<LinkRoundedIcon />}
-                    label={reconciliators.join(' | ')}
-                    variant="outlined"
-                    size="small"
-                    color="primary"
-                  />
-                </div>
+                <Stack
+                  sx={{
+                    fontSize: '12px'
+                  }}
+                  direction="row"
+                  gap="5px"
+                  alignItems="center">
+                  <LinkRoundedIcon />
+                  {reconciliators.join(' | ')}
+                </Stack>
               ) : [
                 data.status === ColumnStatus.PENDING ? (
-                  <Chip
-                    icon={<ErrorOutlineRoundedIcon />}
-                    label="Partial annotation"
-                    variant="outlined"
-                    size="small"
-                    color="primary"
-                  />
+                  <Stack
+                    sx={{
+                      fontSize: '12px'
+                    }}
+                    direction="row"
+                    gap="5px"
+                    alignItems="center">
+                    <LinkRoundedIcon />
+                    Partial annotation
+                  </Stack>
                 ) : (
                   null
                 )
