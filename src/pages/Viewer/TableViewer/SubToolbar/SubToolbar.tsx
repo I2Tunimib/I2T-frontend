@@ -133,20 +133,20 @@ const SubToolbar = () => {
             disabled={!canRedo}
             onClick={() => dispatch(redo())}
           />
-          {/* <IconButtonTooltip */}
-          {/*  tooltipText="Delete selected" */}
-          {/*  Icon={DeleteOutlineRoundedIcon} */}
-          {/*  disabled={!canDelete} */}
-          {/*  onClick={handleDelete} */}
-          {/* /> */}
+          <IconButtonTooltip
+            tooltipText="Delete selected"
+            Icon={DeleteOutlineRoundedIcon}
+            disabled={!canDelete}
+            onClick={handleDelete}
+          />
         </ActionGroup>
         <ActionGroup>
-          {/* <IconButtonTooltip */}
-          {/*  tooltipText="Manage metadata" */}
-          {/*  Icon={SettingsEthernetRoundedIcon} */}
-          {/*  disabled={!isMetadataButtonEnabled} */}
-          {/*  onClick={() => dispatch(updateUI({ openMetadataDialog: true }))} */}
-          {/* /> */}
+          <IconButtonTooltip
+            tooltipText="Manage metadata"
+            Icon={SettingsEthernetRoundedIcon}
+            disabled={!isMetadataButtonEnabled}
+            onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
+          />
           {API.ENDPOINTS.SAVE
           && (
           <IconButtonTooltip
@@ -176,6 +176,16 @@ const SubToolbar = () => {
             onClick={() => dispatch(updateUI({ denseView: !isDenseView }))}
           />
         </ActionGroup>
+        <ActionGroup>
+          <Button
+            color="primary"
+            disabled={!isCellSelected}
+            onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
+            variant="contained">
+            Reconcile
+          </Button>
+          <Button disabled variant="contained">Extend</Button>
+        </ActionGroup>
         <Searchbar
           defaultTag="all"
           placeholder="Search table, metadata..."
@@ -187,6 +197,7 @@ const SubToolbar = () => {
         />
       </ToolbarActions>
       <MetadataDialog />
+      <ReconciliateDialog />
       <AutoMatching
         open={isAutoMatching}
         anchorElement={autoMatchingAnchor}

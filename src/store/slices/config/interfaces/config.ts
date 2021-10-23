@@ -46,6 +46,7 @@ export interface Endpoint {
 export interface ApiConfig {
   GLOBAL: string;
   ENDPOINTS: {
+    GET_SERVICES_CONFIG: Endpoint;
     GET_DATASET: Endpoint;
     GET_DATASET_INFO: Endpoint;
     GET_TABLES_BY_DATASET: Endpoint;

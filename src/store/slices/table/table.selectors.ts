@@ -384,33 +384,82 @@ const toString = (value: any) => {
   return value;
 };
 
+// /**
+//  * Get metadata formatted to display as table.
+//  */
+// export const selectCellMetadataTableFormat = createSelector(
+//   selectCellIdIfOneSelected,
+//   selectColumnsState,
+//   selectRowsState,
+//   (cellId, cols, rows) => {
+//     if (cellId) {
+//       const [rowId, colId] = getIdsFromCell(cellId);
+//       const cell = rows.byId[rowId].cells[colId];
+
+//       if (cell.metadata[0]) {
+//         const col = cols.byId[colId];
+//         const columns = Object.keys(cell.metadata[0]).map((tableColId) => ({
+//           Header: tableColId,
+//           accessor: tableColId
+//         }));
+//         let matchIndex = null;
+
+//         const data = cell.metadata.map((item, index) => {
+//           const [prefix, id] = item.id.split(':');
+//           if (item.match) {
+//             matchIndex = index;
+//           }
+//           return {
+//             ...Object.keys(cell.metadata[0]).reduce((acc, tableColId) => {
+//               acc[tableColId] = tableColId === 'name' ? {
+//                 label: toString(item[tableColId as keyof BaseMetadata]),
+//                 isLink: tableColId === 'name',
+//                 link: tableColId === 'name' && `${col.context[prefix].uri}/${id}`
+//               } : toString(item[tableColId as keyof BaseMetadata]);
+//               return acc;
+//             }, {} as { [key: string]: any } & Row),
+//             isSelected: item.match
+//           };
+//         });
+//         if (matchIndex !== null) {
+//           const item = data[matchIndex];
+//           data.splice(matchIndex, 1);
+//           data.splice(0, 0, item);
+//         }
+//         return { columns, data };
+//       }
+//       return { columns: [] as any[], data: [] as any[] };
+//     }
+//     return { columns: [] as any[], data: [] as any[] };
+//   }
+// );
+
 /**
  * Get metadata formatted to display as table.
  */
 export const selectCellMetadataTableFormat = createSelector(
   selectCellIdIfOneSelected,
+  selectReconciliators,
   selectColumnsState,
   selectRowsState,
-  (cellId, cols, rows) => {
+  (cellId, reconciliators, cols, rows): { columns: any[], data: any[] } => {
     if (cellId) {
       const [rowId, colId] = getIdsFromCell(cellId);
       const cell = rows.byId[rowId].cells[colId];
-
-      if (cell.metadata[0]) {
-        const col = cols.byId[colId];
-        const columns = Object.keys(cell.metadata[0]).map((tableColId) => ({
+      const cellContext = getCellContext(cell);
+      const service = reconciliators.byId[cellContext];
+      if (service) {
+        const columns = service.metaToViz.map((tableColId) => ({
           Header: tableColId,
           accessor: tableColId
         }));
-        let matchIndex = null;
 
-        const data = cell.metadata.map((item, index) => {
+        const col = cols.byId[colId];
+
+        const data = cell.metadata.map((item) => {
           const [prefix, id] = item.id.split(':');
-          if (item.match) {
-            matchIndex = index;
-          }
           return {
-            ...Object.keys(cell.metadata[0]).reduce((acc, tableColId) => {
+            ...service.metaToViz.reduce((acc, tableColId) => {
               acc[tableColId] = tableColId === 'name' ? {
                 label: toString(item[tableColId as keyof BaseMetadata]),
                 isLink: tableColId === 'name',
@@ -421,15 +470,9 @@ export const selectCellMetadataTableFormat = createSelector(
             isSelected: item.match
           };
         });
-        if (matchIndex !== null) {
-          const item = data[matchIndex];
-          data.splice(matchIndex, 1);
-          data.splice(0, 0, item);
-        }
         return { columns, data };
       }
-      return { columns: [] as any[], data: [] as any[] };
     }
-    return { columns: [] as any[], data: [] as any[] };
+    return { columns: [], data: [] };
   }
 );

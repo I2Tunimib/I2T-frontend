@@ -5,6 +5,7 @@ import { selectDatasets } from '@store/slices/datasets/datasets.selectors';
 import { setCurrentDataset } from '@store/slices/datasets/datasets.slice';
 import { DatasetInstance } from '@store/slices/datasets/interfaces/datasets';
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
+import TimeAgo from 'react-timeago';
 import {
   FC, useEffect,
   useMemo, useState,
@@ -42,22 +43,26 @@ interface MakeDataOptions {
   sortFunctions: Record<string, any>
 }
 
+const dateRegex = new RegExp('^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(.[0-9]+)?(Z)?$');
+
 const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions> = {}) => {
-  const data = datasets.map((datasetInstance) => {
+  const data = datasets.map(({ tables, ...rest }) => {
     return {
-      id: datasetInstance.id,
-      name: datasetInstance.name,
-      nTables: datasetInstance.nTables,
-      nAvgRows: datasetInstance.nAvgRows,
-      nAvgCols: datasetInstance.nAvgCols,
-      stdDevRows: datasetInstance.stdDevRows,
-      stdDevCols: datasetInstance.stdDevCols,
-      completion: {
-        raw: datasetInstance.status,
-        percentage: calcPercentage(datasetInstance.status)
-      }
+      ...rest
+      // id: datasetInstance.id,
+      // name: datasetInstance.name,
+      // nTables: datasetInstance.nTables,
+      // nAvgRows: datasetInstance.nAvgRows,
+      // nAvgCols: datasetInstance.nAvgCols,
+      // stdDevRows: datasetInstance.stdDevRows,
+      // stdDevCols: datasetInstance.stdDevCols,
+      // completion: {
+      //   raw: datasetInstance.status,
+      //   percentage: calcPercentage(datasetInstance.status)
+      // }
     };
   });
+  console.log(data);
 
   const { sortFunctions } = options;
 
@@ -68,27 +73,35 @@ const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions>
           Header: key,
           accessor: key,
           ...((sortFunctions && sortFunctions[key]) && { sortType: sortFunctions[key] }),
-          ...(key === 'completion' && {
-            Cell: ({ row, value }: Cell<any>) => (
-              <Tooltip
-                arrow
-                title={(
-                  <Stack>
-                    {Object.keys(value.raw).map((status, index) => (
-                      <span key={index}>
-                        {`${status}: ${value.raw[status]}`}
-                      </span>
-                    ))}
+          Cell: ({ row, value }: Cell<any>) => {
+            if (key === 'completion') {
+              return (
+                <Tooltip
+                  arrow
+                  title={(
+                    <Stack>
+                      {Object.keys(value.raw).map((status, index) => (
+                        <span key={index}>
+                          {`${status}: ${value.raw[status]}`}
+                        </span>
+                      ))}
+                    </Stack>
+                  )}
+                  placement="left">
+                  <Stack direction="row" gap="18px">
+                    <Battery value={value.percentage} />
+                    {value.raw.PENDING > 0 && <DotLoading />}
                   </Stack>
-                )}
-                placement="left">
-                <Stack direction="row" gap="18px">
-                  <Battery value={value.percentage} />
-                  {value.raw.PENDING > 0 && <DotLoading />}
-                </Stack>
-              </Tooltip>
-            )
-          })
+                </Tooltip>
+              );
+            }
+            if (dateRegex.test(value)) {
+              return (
+                <TimeAgo title="" date={value} />
+              );
+            }
+            return value;
+          }
         }
       ];
     }

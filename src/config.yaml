@@ -4,27 +4,32 @@ API:
 
   # App endpoints
   ENDPOINTS:
+    GET_SERVICES_CONFIG:
+      # endpoint path
+      path: '${REACT_APP_BACKEND_URL}/config'
+      # the 'path' will be appended to the global endpoint if true
+      useGlobal: false
     # Get all datasets (mandatory)
     GET_DATASET:
       # endpoint path
-      path: '/dataset'
+      path: '${REACT_APP_BACKEND_URL}/dataset'
       # the 'path' will be appended to the global endpoint if true
-      useGlobal: true
+      useGlobal: false
 
     # Get details of a dataset (optional)
     GET_DATASET_INFO:
-      path: '/dataset/:datasetId'
-      useGlobal: true
+      path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId'
+      useGlobal: false
 
     # Get all tables of a dataset (mandatory)
     GET_TABLES_BY_DATASET:
-      path: '/dataset/:datasetId/table'
-      useGlobal: true
+      path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId/table'
+      useGlobal: false
 
     # Get a table (mandatory)
     GET_TABLE:
-      path: '/dataset/:datasetId/table/:tableId'
-      useGlobal: true
+      path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId/table/:tableId'
+      useGlobal: false
 
     # Global search of datasets and tables (optional)
     GLOBAL_SEARCH:
@@ -38,8 +43,8 @@ API:
 
     # Save changes made to a table (optional)
     SAVE:
-      - path: '/path/to/save'
-        useGlobal: true
+      - path: '${REACT_APP_BACKEND_URL}/tables/save'
+        useGlobal: false
 
     # Multiple endpoints for multiple annotation processes (optional)
     PROCESS_START:

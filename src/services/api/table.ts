@@ -48,6 +48,7 @@ const tableAPI = {
       data
     );
   },
+  reconcile: (baseUrl: string, data: any) => apiClient.post(`${process.env.REACT_APP_BACKEND_URL}/reconciliators${baseUrl}`, data),
   // getTable: (id: ID, acceptHeader?: string) => apiClient.get<GetTableResponse>(`/tables/${id}`, {
   //   headers: {
   //     Accept: acceptHeader
@@ -73,8 +74,7 @@ const tableAPI = {
   getChallengeDatasets: () => apiClient.get<ChallengeTableDataset[]>('/tables/challenge/datasets'),
   getChallengeTable: (datasetName: string, tableName: string) => apiClient.get(`/tables/challenge/datasets/${datasetName}/tables/${tableName}`),
   copyTable: (name: string) => apiClient.post('/tables/copy', { name }),
-  removeTable: (id: ID) => apiClient.delete(`tables/${id}`),
-  reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data)
+  removeTable: (id: ID) => apiClient.delete(`tables/${id}`)
 };
 
 export default tableAPI;

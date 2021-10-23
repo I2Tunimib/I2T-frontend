@@ -5,7 +5,6 @@ import { getConfig } from '@store/slices/config/config.thunk';
 import { useEffect } from 'react';
 
 interface UseInitProps {
-  mode: 'standard' | 'challenge';
   prefetchDelay?: number;
 }
 
@@ -13,27 +12,18 @@ interface UseInitProps {
  * Hook to initialize application based on configuration.
  */
 const useInit = ({
-  mode,
   prefetchDelay
-}: UseInitProps) => {
+}: UseInitProps = {}) => {
   // preload routes based on configuration
   usePrefetch();
   const dispatch = useAppDispatch();
-
-  let initializing: boolean | undefined = false;
-
-  if (mode === 'standard') {
-    const { loading } = useAppSelector(selectGetConfigRequest);
-    initializing = loading;
-  }
+  const { loading } = useAppSelector(selectGetConfigRequest);
 
   useEffect(() => {
-    if (mode === 'standard') {
-      dispatch(getConfig());
-    }
-  }, [mode]);
+    dispatch(getConfig());
+  }, []);
 
-  return initializing;
+  return loading;
 };
 
 export default useInit;

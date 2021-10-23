@@ -35,13 +35,14 @@ const defaultTableState = {
 };
 
 const makeData = (tables: TableInstance[]) => {
-  const data = tables.map((tableInstance) => {
+  const data = tables.map(({ idDataset, ...rest }: any) => {
     return {
-      id: tableInstance.id,
-      name: tableInstance.name,
-      nCols: tableInstance.nCols,
-      nRows: tableInstance.nRows,
-      status: tableInstance.status
+      ...rest
+      // id: tableInstance.id,
+      // name: tableInstance.name,
+      // nCols: tableInstance.nCols,
+      // nRows: tableInstance.nRows,
+      // status: tableInstance.status
     };
   });
 

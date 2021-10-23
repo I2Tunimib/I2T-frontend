@@ -36,6 +36,22 @@ interface FooterProps {
   previousPage: () => void;
 }
 
+const transformCamelCase = (value: any) => {
+  if (typeof value === 'string') {
+    const a = value.split(/([A-Z][a-z]+)/)
+      .map((splitted) => (splitted ? splitted.toLowerCase() : ''))
+      .filter((splitted) => splitted)
+      .join(' ');
+
+    console.log(a);
+    return value.split(/([A-Z][a-z]+)/)
+      .map((splitted) => (splitted ? splitted.toLowerCase() : ''))
+      .filter((splitted) => splitted)
+      .join(' ');
+  }
+  return value;
+};
+
 const Footer: FC<FooterProps> = ({
   pageIndex,
   pageCount,

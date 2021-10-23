@@ -11,7 +11,7 @@ const MODE = 'challenge';
 
 const App = () => {
   // initialize app
-  const loading = useInit({ mode: MODE });
+  const loading = useInit();
   // usePrefetch();
   // const dispatch = useAppDispatch();
   // const { loading } = useAppSelector(selectGetConfigRequest);

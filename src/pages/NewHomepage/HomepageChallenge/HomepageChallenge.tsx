@@ -151,7 +151,7 @@ const HomepageChallenge: FC<any> = () => {
             </Button> */}
           </div>
         </div>
-        {currentDataset && (
+        {/* {currentDataset && (
           <Stack
             alignItems="center"
             direction="row"
@@ -170,7 +170,7 @@ const HomepageChallenge: FC<any> = () => {
             </Stack>
           </Stack>
         )
-        }
+        } */}
         {!currentDataset && API.ENDPOINTS.UPLOAD_DATASET
                 && (
                 <Button
