@@ -1,7 +1,11 @@
 .Container {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
   align-items: center;
   padding: 8px 24px;
-  border-bottom: 1px solid #ededed;
+  //border-bottom: 1px solid #ededed;
+  background: var(--brand-color-one-base);
+  color: var(--brand-color-one-contrast-text);
+  box-shadow: rgb(0 0 0 / 20%) 0px 2px 4px -1px, rgb(0 0 0 / 14%) 0px 4px 5px 0px, rgb(0 0 0 / 12%) 0px 1px 10px 0px;
 }

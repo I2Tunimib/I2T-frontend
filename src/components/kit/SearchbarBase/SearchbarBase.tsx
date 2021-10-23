@@ -47,8 +47,8 @@ const SearchbarBase: FC<SearchbarBaseProps> = ({
               [styles.Searching]: enableAutocomplete && value !== '' && focused
             }
           )}>
-          <SearchRoundedIcon />
-          {tag && <ButtonShortcut text={tag} />}
+          <SearchRoundedIcon className={styles.Icon} />
+          {tag && <ButtonShortcut text={tag} variant="flat" color="white" />}
           {children}
         </button>
         {enableAutocomplete && value !== '' && focused ? (

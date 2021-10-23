@@ -24,11 +24,11 @@ const ViewMenu: FC<ViewMenuProps> = ({
 }) => {
   const classes = useMenuStyles();
   const history = useHistory();
-  const { id } = useParams<{ id: string }>();
+  const { datasetId, tableId } = useParams<{ datasetId: string; tableId: string; }>();
   const { view } = useQuery();
 
   const setView = (newView: 'table' | 'graph' | 'raw') => {
-    history.push(`/table/${id}?view=${newView}`);
+    history.push(`/datasets/${datasetId}/table/${tableId}?view=${newView}`);
     handleClose();
   };
 

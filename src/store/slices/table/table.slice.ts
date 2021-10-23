@@ -8,6 +8,7 @@ import { TableInstance } from '../tables/interfaces/tables';
 import {
   AddCellMetadataPayload,
   AutoMatchingPayload,
+  BBox,
   ColumnStatus,
   DeleteCellMetadataPayload,
   DeleteColumnPayload,
@@ -54,7 +55,7 @@ import {
 } from './utils/table.selection-utils';
 import {
   getCell, getColumn,
-  getIdsFromCell, removeObject,
+  getIdsFromCell, getRowCells, removeObject,
   toggleObject
 } from './utils/table.utils';
 
@@ -78,7 +79,8 @@ const initialState: TableState = {
     selectedCellIds: {},
     expandedColumnsIds: {},
     expandedCellsIds: {},
-    editableCellsIds: {}
+    editableCellsIds: {},
+    tutorialBBoxes: {}
   },
   _requests: { byId: {}, allIds: [] },
   _draft: {
@@ -343,6 +345,10 @@ export const tableSlice = createSliceWithRequests({
       const { undoable, ...rest } = action.payload;
       state.ui = { ...state.ui, ...rest };
     },
+    addTutorialBox: (state, action: PayloadAction<{ id: string; bbox: BBox }>) => {
+      const { id, bbox } = action.payload;
+      state.ui.tutorialBBoxes[id] = bbox;
+    },
     /**
      * Delete selected columns and/or rows.
      * --UNDOABLE ACTION--
@@ -492,6 +498,7 @@ export const {
   updateRowSelection,
   updateCellSelection,
   updateUI,
+  addTutorialBox,
   deleteColumn,
   deleteRow,
   deleteSelected,

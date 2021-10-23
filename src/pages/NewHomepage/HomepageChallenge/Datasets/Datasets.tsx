@@ -20,8 +20,9 @@ import {
 } from '@mui/material';
 import { PlayArrowRounded, ReadMoreRounded } from '@mui/icons-material';
 import deferMounting from '@components/HOC';
+import globalStyles from '@styles/globals.module.scss';
+import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { calcPercentage } from '../HomepageChallenge';
-import styles from './Datasets.module.scss';
 
 interface DatasetsProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;
@@ -42,7 +43,7 @@ interface MakeDataOptions {
 }
 
 const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions> = {}) => {
-  const data = Array(20).fill(datasets[0]).map((datasetInstance) => {
+  const data = datasets.map((datasetInstance) => {
     return {
       id: datasetInstance.id,
       name: datasetInstance.name,
@@ -83,7 +84,7 @@ const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions>
                 placement="left">
                 <Stack direction="row" gap="18px">
                   <Battery value={value.percentage} />
-                  {Math.random() > 0.5 ? <DotLoading /> : null}
+                  {value.raw.PENDING > 0 && <DotLoading />}
                 </Stack>
               </Tooltip>
             )
@@ -106,6 +107,7 @@ const Datasets: FC<DatasetsProps> = ({
   const { path, url } = useRouteMatch();
   const datasets = useAppSelector(selectDatasets);
   const dispatch = useAppDispatch();
+  const { API } = useAppSelector(selectAppConfig);
 
   useEffect(() => {
     dispatch(setCurrentDataset(''));
@@ -139,33 +141,25 @@ const Datasets: FC<DatasetsProps> = ({
 
   const Actions = useCallback(({ mediaMatch, row }) => {
     return (
-      <Stack direction="row" gap="5px" className={styles.Actions}>
+      <Stack direction="row" gap="8px" className={globalStyles.Actions}>
         {mediaMatch ? (
-          <>
-            <IconButton color="primary" size="small">
-              <PlayArrowRounded />
-            </IconButton>
-            <IconButton
-              color="primary"
-              size="small"
-              component={Link}
-              to={`${url}/${row.original.id}/tables`}>
-              <ReadMoreRounded />
-            </IconButton>
-          </>
+          <IconButton
+            color="primary"
+            size="small"
+            component={Link}
+            to={`${url}/${row.original.id}/tables`}>
+            <ReadMoreRounded />
+          </IconButton>
         ) : (
-          <>
-            <Button size="small" endIcon={<PlayArrowRounded />}>
-              Annotate
-            </Button>
-            <Button
-              size="small"
-              component={Link}
-              to={`${url}/${row.original.id}/tables`}
-              endIcon={<ReadMoreRounded />}>
-              Explore
-            </Button>
-          </>
+          <Button
+            size="small"
+            component={Link}
+            to={`${url}/${row.original.id}/tables`}
+            endIcon={<ReadMoreRounded />}
+            classes={{ endIcon: globalStyles.IconButton }}
+          >
+            Explore
+          </Button>
         )}
       </Stack>
     );

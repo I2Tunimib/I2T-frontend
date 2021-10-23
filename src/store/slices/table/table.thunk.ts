@@ -11,13 +11,34 @@ export enum TableThunkActions {
   GET_TABLE = 'getTable',
   GET_CHALLENGE_TABLE = 'getChallengeTable',
   RECONCILE = 'reconcile',
-  CONVER_W3C = 'convertToW3C'
+  CONVER_W3C = 'convertToW3C',
+  EXPORT_TABLE = 'exportTable'
 }
+
+// export const getTable = createAsyncThunk(
+//   `${ACTION_PREFIX}/getTable`,
+//   async (id: ID) => {
+//     const response = await tableAPI.getTable(id);
+//     return response.data;
+//   }
+// );
 
 export const getTable = createAsyncThunk(
   `${ACTION_PREFIX}/getTable`,
-  async (id: ID) => {
-    const response = await tableAPI.getTable(id);
+  async (params: Record<string, string | number>) => {
+    const response = await tableAPI.getTable(params);
+    return response.data;
+  }
+);
+
+export const exportTable = createAsyncThunk(
+  `${ACTION_PREFIX}/exportTable`,
+  async ({
+    datasetId,
+    tableId,
+    format
+  }: {datasetId: string; tableId: string; format: string; }) => {
+    const response = await tableAPI.exportTable(datasetId, tableId, format);
     return response.data;
   }
 );

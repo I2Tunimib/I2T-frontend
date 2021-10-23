@@ -11,6 +11,7 @@ import ArrowRightAltRoundedIcon from '@mui/icons-material/ArrowRightAltRounded';
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
 import clsx from 'clsx';
 import {
+  addTutorialBox,
   deleteSelected,
   redo, undo, updateSelectedCellExpanded, updateUI
 } from '@store/slices/table/table.slice';
@@ -18,7 +19,9 @@ import { Searchbar, ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
 import {
   ChangeEvent, MouseEvent,
-  useState, useCallback, FormEvent
+  useState, useCallback, FormEvent,
+  useRef,
+  useEffect
 } from 'react';
 import {
   selectIsCellSelected, selectIsOnlyOneCellSelected,
@@ -26,6 +29,7 @@ import {
   selectCanRedo, selectCanDelete, selectIsDenseView, selectSearchStatus, selectIsHeaderExpanded
 } from '@store/slices/table/table.selectors';
 import { useDebouncedCallback } from 'use-debounce';
+import { selectAppConfig } from '@store/slices/config/config.selectors';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
@@ -53,6 +57,37 @@ const SubToolbar = () => {
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
   const searchFilter = useAppSelector(selectSearchStatus);
+  const { API } = useAppSelector(selectAppConfig);
+
+  const ref = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (ref && ref.current) {
+      const {
+        top,
+        left,
+        right,
+        bottom,
+        height,
+        width,
+        x,
+        y
+      } = ref.current.getBoundingClientRect();
+      dispatch(addTutorialBox({
+        id: 'prova',
+        bbox: {
+          top,
+          left,
+          right,
+          bottom,
+          height,
+          width,
+          x,
+          y
+        }
+      }));
+    }
+  }, [ref]);
 
   const debouncedSearchChange = useDebouncedCallback((event: any) => {
     if (event.target) {
@@ -86,6 +121,7 @@ const SubToolbar = () => {
       <ToolbarActions>
         <ActionGroup>
           <IconButtonTooltip
+            ref={ref}
             tooltipText="Undo"
             Icon={UndoRoundedIcon}
             disabled={!canUndo}
@@ -97,26 +133,30 @@ const SubToolbar = () => {
             disabled={!canRedo}
             onClick={() => dispatch(redo())}
           />
-          <IconButtonTooltip
-            tooltipText="Delete selected"
-            Icon={DeleteOutlineRoundedIcon}
-            disabled={!canDelete}
-            onClick={handleDelete}
-          />
+          {/* <IconButtonTooltip */}
+          {/*  tooltipText="Delete selected" */}
+          {/*  Icon={DeleteOutlineRoundedIcon} */}
+          {/*  disabled={!canDelete} */}
+          {/*  onClick={handleDelete} */}
+          {/* /> */}
         </ActionGroup>
         <ActionGroup>
-          <IconButtonTooltip
-            tooltipText="Manage metadata"
-            Icon={SettingsEthernetRoundedIcon}
-            disabled={!isMetadataButtonEnabled}
-            onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
-          />
+          {/* <IconButtonTooltip */}
+          {/*  tooltipText="Manage metadata" */}
+          {/*  Icon={SettingsEthernetRoundedIcon} */}
+          {/*  disabled={!isMetadataButtonEnabled} */}
+          {/*  onClick={() => dispatch(updateUI({ openMetadataDialog: true }))} */}
+          {/* /> */}
+          {API.ENDPOINTS.SAVE
+          && (
           <IconButtonTooltip
             tooltipText="Auto matching"
             Icon={PlaylistAddCheckRoundedIcon}
             disabled={!isAutoMatchingEnabled}
             onClick={handleClickAutoMatching}
           />
+          )
+          }
           <IconButtonTooltip
             tooltipText="Expand cell"
             Icon={ArrowRightAltRoundedIcon}
@@ -136,16 +176,6 @@ const SubToolbar = () => {
             onClick={() => dispatch(updateUI({ denseView: !isDenseView }))}
           />
         </ActionGroup>
-        <ActionGroup>
-          <Button
-            color="primary"
-            disabled={!isCellSelected}
-            onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
-            variant="contained">
-            Reconcile
-          </Button>
-          <Button disabled variant="contained">Extend</Button>
-        </ActionGroup>
         <Searchbar
           defaultTag="all"
           placeholder="Search table, metadata..."
@@ -156,7 +186,6 @@ const SubToolbar = () => {
           className={styles.Search}
         />
       </ToolbarActions>
-      <ReconciliateDialog />
       <MetadataDialog />
       <AutoMatching
         open={isAutoMatching}

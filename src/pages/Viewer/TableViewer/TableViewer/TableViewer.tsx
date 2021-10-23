@@ -19,13 +19,14 @@ import {
   selectIsDenseView, selectSearchStatus,
   selectGetTableStatus, selectIsUnsaved,
   selectIsHeaderExpanded, selectExpandedCellsIds,
-  selectExpandedColumnsIds, selectEditableCellsIds
+  selectExpandedColumnsIds, selectEditableCellsIds, selectTutorialBBoxes
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { getTable, saveTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/interfaces/store';
 import { RouteLeaveGuard } from '@components/kit';
 import clsx from 'clsx';
+import Tutorial from '@components/kit/Tutorial/Tutorial';
 import { Table } from '../Table';
 // import Toolbar from '../../Viewer/Toolbar';
 import styles from './TableViewer.module.scss';
@@ -70,6 +71,7 @@ const TableViewer = () => {
   const editableCellsIds = useAppSelector(selectEditableCellsIds);
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
+  const tutorialBBoxes = useAppSelector(selectTutorialBBoxes);
 
   /**
  * Keyboard shortcut handlers
@@ -297,6 +299,7 @@ const TableViewer = () => {
           return false;
         }}
       />
+      {/* <Tutorial positions={tutorialBBoxes} activePosition="prova" /> */}
     </HotKeys>
   );
 };

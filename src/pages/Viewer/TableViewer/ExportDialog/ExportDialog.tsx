@@ -7,38 +7,66 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControlLabel
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent
 } from '@mui/material';
+import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { selectCurrentTable, selectExportDialogStatus } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
-import { convertToW3C } from '@store/slices/table/table.thunk';
+import { convertToW3C, exportTable } from '@store/slices/table/table.thunk';
 import fileDownload from 'js-file-download';
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-interface ExportDialogProps {}
+interface ExportDialogProps { }
 
 const ExportDialog: FC<ExportDialogProps> = () => {
-  const [keepMatching, setKeepMatching] = useState<boolean>(false);
+  // const [keepMatching, setKeepMatching] = useState<boolean>(false);
+  const [format, setFormat] = useState<string>('');
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectExportDialogStatus);
-  const { name } = useAppSelector(selectCurrentTable);
+  const { datasetId, tableId } = useParams<{ datasetId: string, tableId: string }>();
+  const { name: tableName } = useAppSelector(selectCurrentTable);
+  const { API } = useAppSelector(selectAppConfig);
 
   const handleClose = () => {
     dispatch(updateUI({ openExportDialog: false }));
   };
 
+  useEffect(() => {
+    if (API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0) {
+      setFormat(API.ENDPOINTS.EXPORT[0].name || '');
+    }
+  }, [API]);
+
+  const handleChange = (event: SelectChangeEvent<string>) => {
+    setFormat(event.target.value);
+  };
+
   const handleConfirm = () => {
-    dispatch(convertToW3C(keepMatching))
+    dispatch(exportTable({ datasetId, tableId, format }))
       .unwrap()
       .then((data) => {
-        fileDownload(JSON.stringify(data, null, 2), `${name}.json`);
+        fileDownload(JSON.stringify(data, null, 2), `${tableName}.json`);
       });
     dispatch(updateUI({ openExportDialog: false }));
   };
+  // const handleConfirm = () => {
+  //   dispatch(convertToW3C(keepMatching))
+  //     .unwrap()
+  //     .then((data) => {
+  //       fileDownload(JSON.stringify(data, null, 2), `${name}.json`);
+  //     });
+  //   dispatch(updateUI({ openExportDialog: false }));
+  // };
 
-  const handleChange = () => {
-    setKeepMatching((state) => !state);
-  };
+  // const handleChange = () => {
+  //   setKeepMatching((state) => !state);
+  // };
 
   return (
     <Dialog
@@ -48,18 +76,32 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       <DialogTitle>Export table</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Export the annotated table in the W3C standard format.
+          Choose an export format from those available:
         </DialogContentText>
-        <FormControlLabel
+        <FormControl fullWidth sx={{ marginTop: '20px' }}>
+          <InputLabel id="export-label">Export format</InputLabel>
+          <Select
+            labelId="export-label"
+            id="export-select"
+            value={format}
+            label="Export format"
+            onChange={handleChange}
+          >
+            {API.ENDPOINTS.EXPORT.map(({ name, path }) => (
+              <MenuItem key={path} value={name}>{name}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        {/* <FormControlLabel
           control={<Checkbox checked={keepMatching} onChange={handleChange} />}
           label="Keep only matching metadata"
-        />
+        /> */}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <Button onClick={handleConfirm} color="primary">
+        <Button color="primary" onClick={handleConfirm}>
           Confirm
         </Button>
       </DialogActions>

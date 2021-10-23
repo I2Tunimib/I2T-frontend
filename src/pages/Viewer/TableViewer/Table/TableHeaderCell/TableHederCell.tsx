@@ -9,15 +9,16 @@ import { RootState } from '@store';
 import { connect } from 'react-redux';
 import { selectColumnReconciliators } from '@store/slices/table/table.selectors';
 import { forwardRef } from 'react';
+import { capitalize } from '@services/utils/text-utils';
 import styles from './TableHeaderCell.module.scss';
 import TableHeaderCellExpanded from './TableHeaderCellExpanded';
 
 const getKind = (kind: string) => {
   if (kind === 'entity') {
-    return <ButtonShortcut text="Entity" size="xs" variant="flat" color="green" />;
+    return <ButtonShortcut text="Named Entity" size="xs" variant="flat" color="blue" />;
   }
   if (kind === 'literal') {
-    return <ButtonShortcut text="Literal" size="xs" variant="flat" color="blue" />;
+    return <ButtonShortcut text="Literal" size="xs" variant="flat" color="green" />;
   }
   return null;
 };
@@ -41,9 +42,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
     <th
       ref={ref}
       onClick={(e) => handleSelectedColumnChange(e, id)}
-      onContextMenu={(e) => handleCellRightClick(e, 'column', id)}
+      // onContextMenu={(e) => handleCellRightClick(e, 'column', id)}
       style={{
-        backgroundColor: highlightState && highlightState.columns.includes(id) ? `${highlightState.color}10` : 'inherit'
+        borderTopColor: highlightState && highlightState.columns.includes(id) ? `${highlightState.color}` : '',
+        backgroundColor: highlightState && highlightState.columns.includes(id) ? `${highlightState.color}10` : ''
       }}
       className={clsx([
         styles.TableHeaderCell,
@@ -62,7 +64,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                 </div>
                 {data.kind && getKind(data.kind)}
                 {data.role
-                && <ButtonShortcut text={data.role} variant="flat" color="darkgreen" size="xs" />}
+                && <ButtonShortcut className={styles.SubjectLabel} text={capitalize(data.role)} variant="flat" color="darkblue" size="xs" />}
               </div>
               {data.status === ColumnStatus.RECONCILIATED ? (
                 <Stack
@@ -73,7 +75,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                   gap="5px"
                   alignItems="center">
                   <LinkRoundedIcon />
-                  {reconciliators.join(' | ')}
+                  {reconciliators ? reconciliators.join(' | ') : data.reconciliator}
                 </Stack>
               ) : [
                 data.status === ColumnStatus.PENDING ? (
@@ -87,9 +89,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                     <LinkRoundedIcon />
                     Partial annotation
                   </Stack>
-                ) : (
-                  null
-                )
+                ) : null
               ]}
             </div>
             {expanded && <TableHeaderCellExpanded {...data} />}

@@ -1,9 +1,13 @@
 import { createSliceWithRequests } from '@store/enhancers/requests';
+import merge from 'lodash/merge';
 import { getConfig } from './config.thunk';
 import { IConfigState } from './interfaces/config';
+import config from '../../../config.yaml';
+import configOverrides from '../../../config-overrides.yaml';
 
 // Define the initial state using that type
 const initialState: IConfigState = {
+  app: merge(config, configOverrides),
   entities: {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] }

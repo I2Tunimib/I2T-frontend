@@ -8,6 +8,7 @@ import { TableInstance } from './interfaces/datasets';
 const selectDatasetsState = (state: RootState) => state.datasets.entities;
 const selectDatasetsEntities = (state: RootState) => state.datasets.entities.datasets;
 const selectCurrentDatasetId = (state: RootState) => state.datasets.entities.currentDatasetId;
+const selectDatasetsUI = (state: RootState) => state.datasets.ui;
 const selectRequests = (state: RootState) => state.datasets._requests;
 
 export const selectDatasets = createSelector(
@@ -17,12 +18,17 @@ export const selectDatasets = createSelector(
 
 export const selectGetAllDatasetsStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, DatasetThunkActions.GET_ALL_DATASETS)
+  (requests) => getRequestStatus(requests, DatasetThunkActions.GET_DATASET)
 );
 
 export const selectGetTablesDatasetStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, DatasetThunkActions.GET_ALL_DATASET_TABLES)
+  (requests) => getRequestStatus(requests, DatasetThunkActions.GET_TABLES_BY_DATASET)
+);
+
+export const selectUploadDatasetStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, DatasetThunkActions.UPLOAD_DATASET)
 );
 
 export const selectCurrentDataset = createSelector(
@@ -41,29 +47,7 @@ export const selectCurrentDatasetTables = createSelector(
   }
 );
 
-// export const selectDatasetsTableFormat = createSelector(
-//   selectDatasetsState,
-//   (entities) => {
-//     if (entities.datasets.allIds.length === 0) {
-//       return { columns: [], data: [] };
-//     }
-//     const data = entities.datasets.allIds.map((id) => {
-//       const dataset = entities.datasets.byId[id];
-//       return {
-//         name: dataset.name,
-//         nTables: dataset.nTables,
-//         nAvgRows: dataset.avgRows,
-//         nAvgCols: dataset.avgCols,
-//         stdDevRows: dataset.stdRows,
-//         stdDevCols: dataset.stdCols,
-//         status: dataset.status
-//       };
-//     });
-//     const columns = Object.keys(data[0]).map((key) => ({
-//       Header: key,
-//       accessor: key
-//     }));
-
-//     return { columns, data };
-//   }
-// );
+export const selectIsUploadDialogOpen = createSelector(
+  selectDatasetsUI,
+  (ui) => ui.uploadDialogOpen
+);

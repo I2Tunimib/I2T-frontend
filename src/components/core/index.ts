@@ -16,6 +16,7 @@ import ButtonPlay from './ButtonPlay';
 import Battery from './Battery';
 import DotLoading from './DotLoading';
 import Loader from './Loader';
+import SplitButton from './SplitButton';
 
 export {
   Button,
@@ -35,5 +36,6 @@ export {
   ButtonPlay,
   Battery,
   DotLoading,
-  Loader
+  Loader,
+  SplitButton
 };

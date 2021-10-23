@@ -37,6 +37,18 @@ export interface TableUIState {
   expandedCellsIds: Record<ID, boolean>;
   editableCellsIds: Record<ID, boolean>;
   lastSaved: string;
+  tutorialBBoxes: Record<string, BBox>;
+}
+
+export interface BBox {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+  bottom: number;
+  left: number;
+  right: number;
+  top: number;
 }
 
 export interface ColumnState extends BaseState<Column> {}

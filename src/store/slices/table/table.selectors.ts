@@ -5,7 +5,7 @@ import { getRequestStatus } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
 import { Row } from 'react-table';
 import { Context } from 'vm';
-import { selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
+import { selectAppConfig, selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
 import { BaseMetadata } from './interfaces/table';
 import { TableThunkActions } from './table.thunk';
 import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
@@ -68,7 +68,13 @@ export const selectCurrentTable = createSelector(
 export const selectColumnReconciliators = createSelector(
   selectColumnContexts,
   selectReconciliatorsAsObject,
-  (contexts, reconciliators) => contexts.map((context: ID) => reconciliators[context].name)
+  selectAppConfig,
+  (contexts, reconciliators, config) => {
+    return undefined;
+    // return config.APP.MODE === 'standard'
+    //   ? contexts.map((context: ID) => reconciliators[context].name)
+    //   : undefined;
+  }
 );
 
 export const selectReconciliatorCell = createSelector(
@@ -243,18 +249,31 @@ export const selectIsHeaderExpanded = createSelector(
   (ui) => ui.headerExpanded
 );
 
+export const selectTutorialBBoxes = createSelector(
+  selectUIState,
+  (ui) => ui.tutorialBBoxes
+);
+
 // SELECTORS TO CHECK IF AN ACTION IS ENABLED
 
 /**
  * Check if delete action is enabled.
  * If only rows and/or columns are selected returns true, false otherwise.
  */
+// export const selectCanDelete = createSelector(
+//   selectSelectedColumnIds,
+//   selectSelectedRowIds,
+//   selectSelectedCellsIdsAsArray,
+//   (colIds, rowIds, cellIds) => cellIds.length > 0 && cellIds.every((cellId) => (
+//     getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
+//   ))
+// );
 export const selectCanDelete = createSelector(
   selectSelectedColumnIds,
   selectSelectedRowIds,
   selectSelectedCellsIdsAsArray,
   (colIds, rowIds, cellIds) => cellIds.length > 0 && cellIds.every((cellId) => (
-    getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
+    getIdsFromCell(cellId)[1] in colIds && !(getIdsFromCell(cellId)[0] in rowIds)
   ))
 );
 
@@ -298,10 +317,10 @@ export const selectDataTableFormat = createSelector(
           ...acc,
           [colId]: {
             ...cell,
-            metadata: cell.metadata.map((item) => ({
+            metadata: Array.isArray(cell.metadata) ? cell.metadata.map((item) => ({
               ...item,
               url: `${cellContext.uri}${item.id.split(':')[1]}`
-            })),
+            })) : [],
             rowId
           }
         };
@@ -370,36 +389,47 @@ const toString = (value: any) => {
  */
 export const selectCellMetadataTableFormat = createSelector(
   selectCellIdIfOneSelected,
-  selectReconciliators,
+  selectColumnsState,
   selectRowsState,
-  (cellId, reconciliators, rows) => {
+  (cellId, cols, rows) => {
     if (cellId) {
       const [rowId, colId] = getIdsFromCell(cellId);
       const cell = rows.byId[rowId].cells[colId];
-      const cellContext = getCellContext(cell);
-      const service = reconciliators.byId[cellContext];
-      if (service) {
-        const columns = service.metaToViz.map((tableColId) => ({
+
+      if (cell.metadata[0]) {
+        const col = cols.byId[colId];
+        const columns = Object.keys(cell.metadata[0]).map((tableColId) => ({
           Header: tableColId,
           accessor: tableColId
         }));
+        let matchIndex = null;
 
-        const data = cell.metadata.map((item) => {
+        const data = cell.metadata.map((item, index) => {
+          const [prefix, id] = item.id.split(':');
+          if (item.match) {
+            matchIndex = index;
+          }
           return {
-            ...service.metaToViz.reduce((acc, tableColId) => {
-              acc[tableColId] = {
+            ...Object.keys(cell.metadata[0]).reduce((acc, tableColId) => {
+              acc[tableColId] = tableColId === 'name' ? {
                 label: toString(item[tableColId as keyof BaseMetadata]),
                 isLink: tableColId === 'name',
-                link: tableColId === 'name' && `${service.uri}/${item.id.split(':')[1]}`
-              };
+                link: tableColId === 'name' && `${col.context[prefix].uri}/${id}`
+              } : toString(item[tableColId as keyof BaseMetadata]);
               return acc;
             }, {} as { [key: string]: any } & Row),
             isSelected: item.match
           };
         });
+        if (matchIndex !== null) {
+          const item = data[matchIndex];
+          data.splice(matchIndex, 1);
+          data.splice(0, 0, item);
+        }
         return { columns, data };
       }
+      return { columns: [] as any[], data: [] as any[] };
     }
-    return { columns: [] as any, data: [] as any };
+    return { columns: [] as any[], data: [] as any[] };
   }
 );

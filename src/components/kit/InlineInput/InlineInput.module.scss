@@ -20,7 +20,7 @@
     white-space: pre;
     border: 2px solid;
   }
-  
+
   .Input {
     position: absolute;
     top: 0;
@@ -31,12 +31,18 @@
     outline: none;
     border: 2px solid transparent;
 
-    &:hover {
-      border-color: #ededed;
+    &:not(.Disabled) {
+      &:hover {
+        border-color: #ededed;
+      }
+
+      &:focus {
+        border-color: var(--brand-color-two-base);
+      }
     }
 
-    &:focus {
-      border-color: var(--brand-color-two-base);
+    &.Disabled {
+      background: none;
     }
   }
 }

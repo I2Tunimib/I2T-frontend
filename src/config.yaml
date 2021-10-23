@@ -1,0 +1,58 @@
+API:
+  # Define a global base url
+  GLOBAL: "${REACT_APP_GLOBAL_URL}"
+
+  # App endpoints
+  ENDPOINTS:
+    # Get all datasets (mandatory)
+    GET_DATASET:
+      # endpoint path
+      path: '/dataset'
+      # the 'path' will be appended to the global endpoint if true
+      useGlobal: true
+
+    # Get details of a dataset (optional)
+    GET_DATASET_INFO:
+      path: '/dataset/:datasetId'
+      useGlobal: true
+
+    # Get all tables of a dataset (mandatory)
+    GET_TABLES_BY_DATASET:
+      path: '/dataset/:datasetId/table'
+      useGlobal: true
+
+    # Get a table (mandatory)
+    GET_TABLE:
+      path: '/dataset/:datasetId/table/:tableId'
+      useGlobal: true
+
+    # Global search of datasets and tables (optional)
+    GLOBAL_SEARCH:
+      - path: '/search?query=:query'
+        useGlobal: true
+
+    # Upload a dataset (zip / rar) (optional)
+    UPLOAD_DATASET:
+      - path: '/upload'
+        useGlobal: true
+
+    # Save changes made to a table (optional)
+    SAVE:
+      - path: '/path/to/save'
+        useGlobal: true
+
+    # Multiple endpoints for multiple annotation processes (optional)
+    PROCESS_START:
+      - path: '/path/process/start1'
+        name: "Endpoint 1"
+        useGlobal: true
+      - path: '/path/process/start2'
+        name: "Endpoint 2"
+        useGlobal: true
+
+    # Export a table in a specified format (optional)
+    EXPORT:
+      - path: '/export/CEA'
+        name: 'SemTab21 CEA'
+      - path: '/export/RDF-XML'
+        name: 'RDF XML'

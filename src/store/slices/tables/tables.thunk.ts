@@ -82,8 +82,8 @@ export const removeTable = createAsyncThunk(
 export const getTable = createAsyncThunk(
   `${ACTION_PREFIX}/getTable`,
   async (name: string) => {
-    const response = await tableAPI.getTable(name, 'application/octet-stream');
-    return response.data;
+    // const response = await tableAPI.getTable(name, 'application/octet-stream');
+    // return response.data;
   }
 );
 

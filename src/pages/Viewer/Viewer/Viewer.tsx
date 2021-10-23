@@ -7,6 +7,7 @@ import { getTable } from '@store/slices/table/table.thunk';
 import { FC, useCallback, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { LinearProgress } from '@mui/material';
+import { restoreInitialState } from '@store/slices/table/table.slice';
 import Toolbar from '../Toolbar';
 import W3CViewer from '../W3CViewer';
 
@@ -14,23 +15,36 @@ const ALLOWED_QUERY = ['table', 'graph', 'raw'];
 
 const Viewer: FC<unknown> = () => {
   const history = useHistory();
-  const { id } = useParams<{ id: string }>();
+  // const { id } = useParams<{ id: string }>();
+  const { tableId, datasetId } = useParams<{ tableId: string; datasetId: string }>();
   const { view } = useQuery();
   const { loading } = useAppSelector(selectGetTableStatus);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    // redirect for parameters not allowed
-    if (!view && ALLOWED_QUERY.indexOf(view) === -1) {
-      history.push(`/table/${id}?view=table`);
+    if (tableId && datasetId) {
+      // redirect for parameters not allowed
+      if (!view && ALLOWED_QUERY.indexOf(view) === -1) {
+        history.push(`/datasets/${datasetId}/tables/${tableId}?view=table`);
+      }
     }
-  }, [view]);
+  }, [view, tableId, datasetId]);
+
+  // useEffect(() => {
+  //   if (id) {
+  //     console.log(id);
+  //     // dispatch(getTable(id));
+  //   }
+  // }, [id]);
 
   useEffect(() => {
-    if (id) {
-      dispatch(getTable(id));
+    if (tableId && datasetId) {
+      dispatch(restoreInitialState());
+      dispatch(getTable({ tableId, datasetId }))
+        .unwrap()
+        .catch((err) => history.push('/404'));
     }
-  }, [id]);
+  }, [tableId, datasetId]);
 
   const Switch = useCallback(() => {
     if (view) {

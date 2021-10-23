@@ -9,15 +9,16 @@ import {
 } from '@mui/material';
 import { ID } from '@store/interfaces/store';
 import { selectCurrentDatasetTables, selectGetTablesDatasetStatus } from '@store/slices/datasets/datasets.selectors';
-import { getAllDatasetTables } from '@store/slices/datasets/datasets.thunk';
+import { getTablesByDataset } from '@store/slices/datasets/datasets.thunk';
 import { TableInstance } from '@store/slices/datasets/interfaces/datasets';
 import {
   FC, useCallback, useEffect,
   useMemo, useState
 } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useHistory, useParams } from 'react-router-dom';
 import { Cell } from 'react-table';
-import styles from './Tables.module.scss';
+import globalStyles from '@styles/globals.module.scss';
+import { selectAppConfig } from '@store/slices/config/config.selectors';
 
 interface TablesProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;
@@ -40,7 +41,7 @@ const makeData = (tables: TableInstance[]) => {
       name: tableInstance.name,
       nCols: tableInstance.nCols,
       nRows: tableInstance.nRows,
-      status: Math.random() < 0.5 ? tableInstance.status : 'DONE'
+      status: tableInstance.status
     };
   });
 
@@ -84,6 +85,8 @@ const Tables: FC<TablesProps> = ({
   const dispatch = useAppDispatch();
   const tables = useAppSelector(selectCurrentDatasetTables);
   const { loading } = useAppSelector(selectGetTablesDatasetStatus);
+  const history = useHistory();
+  const { API } = useAppSelector(selectAppConfig);
 
   useEffect(() => {
     if (tables.length > 0) {
@@ -92,7 +95,7 @@ const Tables: FC<TablesProps> = ({
   }, [tables]);
 
   useEffect(() => {
-    dispatch(getAllDatasetTables({ datasetId }));
+    dispatch(getTablesByDataset({ datasetId }));
   }, [datasetId]);
 
   const handleRowSelection = (rows: any[]) => {
@@ -105,33 +108,28 @@ const Tables: FC<TablesProps> = ({
 
   const Actions = useCallback(({ mediaMatch, row }) => {
     return (
-      <Stack direction="row" gap="5px" className={styles.Actions}>
+      <Stack direction="row" gap="5px" className={globalStyles.Actions}>
         {mediaMatch ? (
-          <>
-            <IconButton color="primary" size="small">
-              <PlayArrowRounded />
-            </IconButton>
-            <IconButton
-              color="primary"
-              size="small">
-              <ReadMoreRounded />
-            </IconButton>
-          </>
+          <IconButton
+            color="primary"
+            size="small"
+            component={Link}
+            to={`/datasets/${datasetId}/tables/${row.original.id}?view=table`}>
+            <ReadMoreRounded />
+          </IconButton>
         ) : (
-          <>
-            <Button size="small" endIcon={<PlayArrowRounded />}>
-              Annotate
-            </Button>
-            <Button
-              size="small"
-              endIcon={<ReadMoreRounded />}>
-              Explore
-            </Button>
-          </>
+          <Button
+            size="small"
+            component={Link}
+            to={`/datasets/${datasetId}/tables/${row.original.id}?view=table`}
+            endIcon={<ReadMoreRounded />}
+            classes={{ endIcon: globalStyles.IconButton }}>
+            Explore
+          </Button>
         )}
       </Stack>
     );
-  }, []);
+  }, [datasetId]);
 
   const tableColumns = useMemo(() => tableState.columns, [tableState.columns]);
   const tableRows = useMemo(() => tableState.data, [tableState.data]);

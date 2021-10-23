@@ -5,9 +5,9 @@ import { Redirect, Route } from 'react-router-dom';
 // import usePrefetch from './hooks/prefetch/usePrefetch';
 import { Loader } from '@components/core';
 import { getRedirects, getRoutes } from './routes';
-import config from './config.yaml';
 
-const { MODE } = config.APP;
+// const { MODE } = config.APP;
+const MODE = 'challenge';
 
 const App = () => {
   // initialize app

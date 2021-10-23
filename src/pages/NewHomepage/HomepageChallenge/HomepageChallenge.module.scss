@@ -30,6 +30,7 @@
     display: flex;
     align-items: center;
   }
+
   .Column {
     display: flex;
     flex-direction: column;
@@ -49,10 +50,10 @@
   .NSelected {
     margin-right: 15px;
     font-size: 12px;
-    padding: 10px;
-    border-radius: 10px;
-    color: rgb(0, 127, 255);
-    background-color: rgb(240, 247, 255);
+    padding: 6px 8px;
+    border-radius: 4px;
+    color: var(--brand-color-two-contrast-text);
+    background-color: var(--brand-color-two-transparent);
   }
 
   .ButtonAnnotation {
@@ -71,10 +72,26 @@
   height: 1px;
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,.26);
+    background: rgba(0, 0, 0, .26);
   }
+
   &::-webkit-scrollbar {
     height: 4px;
     width: 4px;
   }
+}
+
+.BreadcrumbsItem {
+  font-weight: 500;
+}
+
+.BreadcrumbsLink {
+  text-decoration: none;
+  font-weight: 400;
+  transition: color .3s;
+  color: var(--brown-light);
+  &:hover {
+    color: var(--brand-color-one-hover);
+  }
+
 }

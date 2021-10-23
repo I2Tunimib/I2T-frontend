@@ -9,6 +9,7 @@ export const selectConfig = (state: RootState) => state.config.entities;
 export const selectReconciliators = (state: RootState) => state.config.entities.reconciliators;
 // select requests
 export const selectRequests = (state: RootState) => state.config._requests;
+export const selectStoreConfig = (state: RootState) => state.config;
 
 /**
  * Selector which return the configuration for all services
@@ -17,6 +18,16 @@ export const selectRequests = (state: RootState) => state.config._requests;
 //   selectConfig,
 //   (config) => config.servicesConfig
 // );
+
+export const selectAppConfig = createSelector(
+  selectStoreConfig,
+  (storeConfig) => storeConfig.app
+);
+
+export const selectAppConfigExportFormats = createSelector(
+  selectStoreConfig,
+  (storeConfig) => storeConfig.app.API.ENDPOINTS.EXPORT
+);
 
 export const selectReconciliatorsAsObject = createSelector(
   selectReconciliators,

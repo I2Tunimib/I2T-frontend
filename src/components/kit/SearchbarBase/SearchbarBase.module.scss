@@ -1,11 +1,7 @@
 .AutocompleteOverlay {
   position: relative;
-  border-radius: 16px;
   z-index: 10;
 
-  &.Searching {
-    box-shadow: 0 1.125rem 1.875rem rgb(51 51 51 / 52%);
-  }
 
   .Container {
     position: relative;
@@ -18,15 +14,25 @@
     background-color: #f0f1f3;
     border: none;
     outline: 0;
-    border-radius: 16px;
-    transition: box-shadow 200ms cubic-bezier(0.08,0.52,0.52,1);
+    border-radius: 20px/50%;
+    color: var(--brown);
     box-sizing: border-box;
-  
-    &:hover {
-      background-color: #FFF;
-      box-shadow: 0 0 0 2px #3f51b5;
+    transition: border-radius .1s;
+
+    input {
+      color: var(--brown);
     }
-  
+
+    ::placeholder,
+    ::-ms-input-placeholder {
+      color: rgba(var(--brown), .8);
+    }
+
+    .Icon {
+      transition: transform .2s, color .2s;
+      color: var(--brand-color-one-base);
+    }
+
     .Shortcut {
       display: flex;
       position: absolute;
@@ -35,18 +41,24 @@
       transform: translateY(-50%);
     }
 
+    &:hover,
     &.Focused {
-      background-color: #FFF;
-      box-shadow: 0 0 0 2px #3f51b5;
+      background-color: #f2f3f5;
+
+      .Icon {
+        transform: scale(1.15);
+        color: var(--brand-color-one-base)
+      }
     }
 
     &.Searching {
-      border-bottom-left-radius: 0px;
-      border-bottom-right-radius: 0px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
     }
   }
 
   .AutocompleteContentWrapper {
+    color: var(--black);
     position: absolute;
     top: calc(100% + 2px);
     left: 0;
@@ -54,7 +66,23 @@
     flex-direction: column;
     width: 100%;
     background-color: #FFF;
-    box-shadow: 0 0 0 2px #3f51b5;
+    // padding: 16px 8px;
+    box-shadow: rgb(0 0 0 / 20%) 0px 2px 4px -1px, rgb(0 0 0 / 14%) 0px 4px 5px 0px, rgb(0 0 0 / 12%) 0px 1px 10px 0px;
     box-sizing: border-box;
+    opacity: 0;
+    animation: enter .1s forwards;
+  }
+
+
+}
+
+@keyframes enter {
+  from {
+    top: calc(100% - 6px);
+    opacity: 0;
+  }
+  to {
+    top: calc(100% + 2px);
+    opacity: 1;
   }
 }

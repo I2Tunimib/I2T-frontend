@@ -51,7 +51,7 @@ const Td = styled.td<{
     }
     if (selected) {
       return {
-        backgroundColor: 'rgb(240, 247, 255, 0.6)'
+        backgroundColor: 'var(--brand-color-one-transparent)'
       };
     }
     return {
@@ -113,14 +113,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
     }
   };
 
-  const handleOnContextMenu = (event: MouseEvent<HTMLElement>) => {
-    if (columnId === 'index') {
-      handleCellRightClick(event, 'row', rowId);
-    } else {
-      handleCellRightClick(event, 'cell', `${rowId}$${columnId}`);
-    }
-  };
-
   return (
     <Td
       columnId={columnId}
@@ -128,7 +120,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
       highlightState={highlightState}
       role="gridcell"
       onClick={(event) => handleSelectCell(event)}
-      onContextMenu={(event) => handleOnContextMenu(event)}
     >
       {columnId === 'index' ? children : (
         <>

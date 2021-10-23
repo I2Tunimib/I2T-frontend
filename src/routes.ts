@@ -3,7 +3,7 @@ import {
   LazyExoticComponent
 } from 'react';
 import { RedirectProps, RouteProps } from 'react-router-dom';
-import config from './config.yaml';
+import { store } from './store';
 
 export type LazyExoticComponentWithPreload = LazyExoticComponent<any>
   & { preload?: () => Promise<{ default: ComponentType<any> }> };
@@ -40,6 +40,7 @@ const APP_ROUTES: AppRoutes = {
   // routes if application is set to challenge
   challenge: {
     routes: [
+      { path: '/datasets/:datasetId/tables/:tableId', exact: false, component: lazyWithPreload(() => import('@pages/Viewer')) },
       { path: '/datasets', exact: false, component: lazyWithPreload(() => import('@pages/NewHomepage/HomepageChallenge/HomepageChallenge')) }
     ],
     redirect: [],
@@ -47,7 +48,9 @@ const APP_ROUTES: AppRoutes = {
   },
   // common routes between application modes
   shared: {
-    routes: [],
+    routes: [
+      { path: '/404', exact: false, component: lazyWithPreload(() => import('@pages/NotFound/NotFound')) }
+    ],
     redirect: [
       { from: '*', to: '/datasets' }
     ],
@@ -55,7 +58,8 @@ const APP_ROUTES: AppRoutes = {
   }
 };
 
-const { MODE } = config.APP;
+// const { MODE = 'CHALLENGE' } = store.getState().config.app.APP;
+const MODE = 'challenge';
 
 /**
  * Get all routes based on mode + common

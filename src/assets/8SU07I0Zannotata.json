@@ -1,0 +1,912 @@
+[
+  {
+    "th0": {
+      "label": "Point of interest",
+      "context": [
+        {
+          "prefix": "wkd:",
+          "uri": "https://www.wikidata.org/wiki/"
+        }
+      ],
+      "kind": "entity",
+      "role": "subject",
+      "metadata": [
+        {
+          "id": "",
+          "name": "",
+          "type": [
+            {
+              "id": "wkd:Q33506",
+              "match": true,
+              "name": "museum",
+              "score": 100
+            }
+          ],
+          "property": [
+            {
+              "id": "wkd:P276",
+              "obj": "Place",
+              "match": true,
+              "name": "location",
+              "score": 100
+            },
+            {
+              "id": "wkd:P571",
+              "obj": "Foundation date",
+              "match": true,
+              "name": "inception",
+              "score": 100
+            },
+            {
+              "id": "wkd:P127",
+              "obj": "Owner",
+              "match": true,
+              "name": "owned by",
+              "score": 100
+            }
+          ]
+        }
+      ]
+    },
+    "th1": {
+      "label": "Place",
+      "kind": "entity",
+      "context": [
+        {
+          "prefix": "wkd:",
+          "uri": "https://www.wikidata.org/wiki/"
+        }
+      ],
+      "metadata": [
+        {
+          "id": "",
+          "name": "",
+          "type": [
+            {
+              "id": "wkd:Q2221906",
+              "match": true,
+              "name": "geographic location",
+              "score": 100
+            }
+          ]
+        }
+      ]
+    },
+    "th2": {
+      "label": "Foundation date",
+      "kind": "literal",
+      "context": [
+        {
+          "prefix": "wkd:",
+          "uri": "https://www.wikidata.org/wiki/"
+        }
+      ],
+      "metadata": [
+        {
+          "id": "",
+          "name": "",
+          "type": [
+            {
+              "id": "Q205892",
+              "match": true,
+              "name": "calendar date",
+              "score": 100,
+              "format": [
+                {
+                  "id": "wkd:Q50101",
+                  "match": true,
+                  "name": "ISO 8601",
+                  "score": 100
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "th3": {
+      "label": "Owner",
+      "kind": "entity",
+      "context": [
+        {
+          "prefix": "wkd:",
+          "uri": "https://www.wikidata.org/wiki/"
+        }
+      ],
+      "metadata": [
+        {
+          "id": "",
+          "name": "",
+          "type": [
+            {
+              "id": "Q43229",
+              "match": true,
+              "name": "organization",
+              "score": 100
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "John F. Kennedy Presidential Library and Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q2007919",
+          "match": true,
+          "name": "John F. Kennedy Presidential Library and Museum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Columbia Point",
+      "metadata": [
+        {
+          "id": "wkd:Q1112511",
+          "match": true,
+          "name": "Columbia Point",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1979-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "National Archives and Records Administration",
+      "metadata": [
+        {
+          "id": "wkd:Q518155",
+          "match": true,
+          "name": "National Archives and Records Administration",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Petrie Museum of Egyptian Archaeology",
+      "metadata": [
+        {
+          "id": "wkd:Q2002512",
+          "match": true,
+          "name": "Petrie Museum of Egyptian Archaeology",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "London",
+      "metadata": [
+        {
+          "id": "wkd:Q84",
+          "match": true,
+          "name": "London",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1892-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "University College London",
+      "metadata": [
+        {
+          "id": "wkd:Q193196",
+          "match": true,
+          "name": "University College London",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Helsinki City Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q2031357",
+          "match": true,
+          "name": "Helsinki City Museum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Kruununhaka",
+      "metadata": [
+        {
+          "id": "wkd:Q1772186",
+          "match": true,
+          "name": "Kruununhaka",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1911-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Helsinki",
+      "metadata": [
+        {
+          "id": "wkd:Q1757",
+          "match": true,
+          "name": "Helsinki",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Castle Caputh",
+      "metadata": [
+        {
+          "id": "wkd:Q2240519",
+          "match": true,
+          "name": "Castle Caputh",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Caputh",
+      "metadata": [
+        {
+          "id": "wkd:Q464344",
+          "match": true,
+          "name": "Caputh",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1662-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Prussian Palaces and Gardens Foundation Berlin-Brandenburg",
+      "metadata": [
+        {
+          "id": "wkd:Q531772",
+          "match": true,
+          "name": "Prussian Palaces and Gardens Foundation Berlin-Brandenburg",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Nyköping Castle",
+      "metadata": [
+        {
+          "id": "wkd:Q1779071",
+          "match": true,
+          "name": "Nyköping Castle",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Nyköping",
+      "metadata": [
+        {
+          "id": "wkd:Q54356",
+          "match": true,
+          "name": "Nyköping",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1200-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "National Property Board",
+      "metadata": [
+        {
+          "id": "wkd:Q909090",
+          "match": true,
+          "name": "National Property Board",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "World of Coca-Cola",
+      "metadata": [
+        {
+          "id": "wkd:Q2201410",
+          "match": true,
+          "name": "World of Coca-Cola",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Atlanta",
+      "metadata": [
+        {
+          "id": "wkd:Q23556",
+          "match": true,
+          "name": "Atlanta",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1990-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "The Coca-Cola Company",
+      "metadata": [
+        {
+          "id": "wkd:Q3295867",
+          "match": true,
+          "name": "The Coca-Cola Company",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Zeeuws Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q2153365",
+          "match": true,
+          "name": "Zeeuws Museum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Middelburg",
+      "metadata": [
+        {
+          "id": "wkd:Q52101",
+          "match": true,
+          "name": "Middelburg",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1972-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Rijksmuseum",
+      "metadata": [
+        {
+          "id": "wkd:Q190804",
+          "match": true,
+          "name": "Rijksmuseum",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Horniman Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q1628487",
+          "match": true,
+          "name": "Horniman Museum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Forest Hill",
+      "metadata": [
+        {
+          "id": "wkd:Q1626233",
+          "match": true,
+          "name": "Forest Hill",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1901-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Department for Digital, Culture, Media and Sport",
+      "metadata": [
+        {
+          "id": "wkd:Q910019",
+          "match": true,
+          "name": "Department for Digital, Culture, Media and Sport",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Nobel Prize Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q1968711",
+          "match": true,
+          "name": "Nobel Prize Museum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Gamla stan",
+      "metadata": [
+        {
+          "id": "wkd:Q579854",
+          "match": true,
+          "name": "Gamla stan",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "2001-04-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Nobel Foundation",
+      "metadata": [
+        {
+          "id": "wkd:Q1781959",
+          "match": true,
+          "name": "Nobel Foundation",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Museo di Palazzo Venezia",
+      "metadata": [
+        {
+          "id": "wkd:Q1954305",
+          "match": true,
+          "name": "Museo di Palazzo Venezia",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Palazzo Venezia",
+      "metadata": [
+        {
+          "id": "wkd:Q1123879",
+          "match": true,
+          "name": "Palazzo Venezia",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1916-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Ministry of Cultural Heritage and Activities and Tourism",
+      "metadata": [
+        {
+          "id": "wkd:Q1347047",
+          "match": true,
+          "name": "Ministry of Cultural Heritage and Activities and Tourism",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Palanga Amber Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q826824",
+          "match": true,
+          "name": "Palanga Amber Museum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Palanga",
+      "metadata": [
+        {
+          "id": "wkd:Q2047414",
+          "match": true,
+          "name": "Palanga",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1963-08-03",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Lithuanian Art Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q1865041",
+          "match": true,
+          "name": "Lithuanian Art Museum",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Stockholm Palace",
+      "metadata": [
+        {
+          "id": "wkd:Q750444",
+          "match": true,
+          "name": "Stockholm Palace",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Gamla stan",
+      "metadata": [
+        {
+          "id": "wkd:Q579854",
+          "match": true,
+          "name": "Gamla stan",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1760-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "National Property Board",
+      "metadata": [
+        {
+          "id": "wkd:Q909090",
+          "match": true,
+          "name": "National Property Board",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Hamburg Dungeon",
+      "metadata": [
+        {
+          "id": "wkd:Q882600",
+          "match": true,
+          "name": "Hamburg Dungeon",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "HafenCity",
+      "metadata": [
+        {
+          "id": "wkd:Q1561",
+          "match": true,
+          "name": "HafenCity",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "2000-05-03",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Merlin Entertainments",
+      "metadata": [
+        {
+          "id": "wkd:Q573278",
+          "match": true,
+          "name": "Merlin Entertainments",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Wahnfried",
+      "metadata": [
+        {
+          "id": "wkd:Q686109",
+          "match": true,
+          "name": "Wahnfried",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Bayreuth",
+      "metadata": [
+        {
+          "id": "wkd:Q3923",
+          "match": true,
+          "name": "Bayreuth",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1976-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Wagner family",
+      "metadata": [
+        {
+          "id": "wkd:Q563340",
+          "match": true,
+          "name": "Wagner family",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Stockholm Observatory",
+      "metadata": [
+        {
+          "id": "wkd:Q681497",
+          "match": true,
+          "name": "Stockholm Observatory",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Vasastaden",
+      "metadata": [
+        {
+          "id": "wkd:Q3646335",
+          "match": true,
+          "name": "Vasastaden",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1752-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Royal Swedish Academy of Sciences",
+      "metadata": [
+        {
+          "id": "wkd:Q191583",
+          "match": true,
+          "name": "Royal Swedish Academy of Sciences",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Sabarmati Ashram",
+      "metadata": [
+        {
+          "id": "wkd:Q1410702",
+          "match": true,
+          "name": "Sabarmati Ashram",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Ahmedabad",
+      "metadata": [
+        {
+          "id": "wkd:Q1070",
+          "match": true,
+          "name": "Ahmedabad",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1915-06-25",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Mohandas Karamchand Gandhi",
+      "metadata": [
+        {
+          "id": "wkd:Q1001",
+          "match": true,
+          "name": "Mohandas Karamchand Gandhi",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Helsinki University Observatory",
+      "metadata": [
+        {
+          "id": "wkd:Q1154923",
+          "match": true,
+          "name": "Helsinki University Observatory",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Tähtitorninvuori",
+      "metadata": [
+        {
+          "id": "wkd:Q656092",
+          "match": true,
+          "name": "Tähtitorninvuori",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1834-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "University of Helsinki",
+      "metadata": [
+        {
+          "id": "wkd:Q28695",
+          "match": true,
+          "name": "University of Helsinki",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Tropenmuseum",
+      "metadata": [
+        {
+          "id": "wkd:Q1131589",
+          "match": true,
+          "name": "Tropenmuseum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Villa Welgelegen",
+      "metadata": [
+        {
+          "id": "wkd:Q1802996",
+          "match": true,
+          "name": "Villa Welgelegen",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1864-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "National Museum of World Cultures",
+      "metadata": [
+        {
+          "id": "wkd:Q17153751",
+          "match": true,
+          "name": "National Museum of World Cultures",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Creation Museum",
+      "metadata": [
+        {
+          "id": "wkd:Q1139337",
+          "match": true,
+          "name": "Creation Museum",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Petersburg",
+      "metadata": [
+        {
+          "id": "wkd:Q7178159",
+          "match": true,
+          "name": "Petersburg",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "2007-05-28",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Answers in Genesis",
+      "metadata": [
+        {
+          "id": "wkd:Q570460",
+          "match": true,
+          "name": "Answers in Genesis",
+          "score": 100
+        }
+      ]
+    }
+  },
+  {
+    "Point of interest": {
+      "label": "Royal Palace of Amsterdam",
+      "metadata": [
+        {
+          "id": "wkd:Q1056152",
+          "match": true,
+          "name": "Royal Palace of Amsterdam",
+          "score": 100
+        }
+      ]
+    },
+    "Place": {
+      "label": "Amsterdam-Centrum",
+      "metadata": [
+        {
+          "id": "wkd:Q478282",
+          "match": true,
+          "name": "Amsterdam-Centrum",
+          "score": 100
+        }
+      ]
+    },
+    "Foundation date": {
+      "label": "1665-01-01",
+      "metadata": []
+    },
+    "Owner": {
+      "label": "Kingdom of the Netherlands",
+      "metadata": [
+        {
+          "id": "wkd:Q29999",
+          "match": true,
+          "name": "Kingdom of the Netherlands",
+          "score": 100
+        }
+      ]
+    }
+  }
+]

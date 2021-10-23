@@ -25,17 +25,27 @@
   }
 
   &.Blue {
-    background: linear-gradient(-225deg, rgba(112, 182, 246, 0.24), rgba(112, 182, 246, 0.12));
-    color: #70b6f6;
+    background: rgb(206, 228, 248);
+    color: #34638f;
   }
-
+  &.DarkBlue {
+    background: rgb(149, 191, 234);
+    color: #1c374f;
+  }
   &.Green {
-    background: linear-gradient(-225deg, rgba(74, 201, 155, 0.24), rgba(80, 211, 162, 0.12));
-    color: #42b68c;
+    background:#d8ece5;
+    color: #3d715e;
   }
 
   &.DarkGreen {
-    background: linear-gradient(-225deg, rgba(5, 128, 85, 0.24), rgba(45, 126, 96, 0.12));
-    color: #0e9969;
+    background: rgba(5, 128, 85, 0.24);
+    color: #066e50;
+  }
+
+  &.White {
+    padding: 0 2px;
+    background: white;
+    color: var(--brown-dark);
+    border: 1px solid rgb(229, 232, 236);
   }
 }

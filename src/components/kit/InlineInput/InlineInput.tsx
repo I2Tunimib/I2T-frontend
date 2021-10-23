@@ -12,6 +12,7 @@ interface InlineInputProps extends HTMLAttributes<HTMLInputElement> {
    * Value of the input
    */
   value: string;
+    disabled: boolean;
 }
 
 /**
@@ -23,14 +24,19 @@ const InlineInput: FC<InlineInputProps> = ({
   className,
   onClick,
   onBlur,
-  onChange
+  onChange,
+  disabled = false
 }) => (
   <div className={styles.Container}>
     <span className={styles.Text}>
       {value}
     </span>
     <input
-      className={clsx(styles.Input, className)}
+      className={clsx(
+        styles.Input,
+        { [styles.Disabled]: disabled },
+        className
+      )}
       value={value}
       onClick={onClick}
       onChange={onChange}
@@ -38,6 +44,7 @@ const InlineInput: FC<InlineInputProps> = ({
       autoComplete="off"
       autoCorrect="off"
       spellCheck="false"
+      disabled={disabled}
     />
   </div>
 );

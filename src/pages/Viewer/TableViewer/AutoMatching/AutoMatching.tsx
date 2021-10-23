@@ -106,6 +106,7 @@ const AutoMatching: FC<AutoMatchingProps> = ({
           value={threshold}
           min={minScore}
           max={maxScore}
+          step={0.01}
           onChange={handleChange}
         />
         <Button onClick={handleConfirm} color="primary" className={styles.ConfirmButton}>Confirm</Button>

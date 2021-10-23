@@ -1,4 +1,4 @@
-import { Button, IconButton } from '@mui/material';
+import { Button, IconButton, Stack } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import withStyles from '@mui/styles/withStyles';
 import { InlineInput } from '@components/kit';
@@ -14,10 +14,15 @@ import CloudOffIcon from '@mui/icons-material/CloudOff';
 import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { selectCurrentTable, selectLastSaved, selectSaveTableStatus } from '@store/slices/table/table.selectors';
+import {
+  selectCurrentTable,
+  selectLastSaved,
+  selectSaveTableStatus
+} from '@store/slices/table/table.selectors';
 import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { saveTable } from '@store/slices/table/table.thunk';
 import { useGoBack } from '@hooks/router';
+import { selectAppConfig } from '@store/slices/config/config.selectors';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
@@ -25,7 +30,8 @@ import FileMenu from '../Menus/FileMenu';
 import EditMenu from '../Menus/EditMenu';
 import ViewMenu from '../Menus/ViewMenu';
 
-interface MenuState extends Record<string, boolean> { }
+interface MenuState extends Record<string, boolean> {
+}
 
 const initialMenuState: MenuState = {
   file: false,
@@ -44,10 +50,14 @@ const Toolbar = () => {
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
 
   const history = useHistory();
-  const { goBack } = useGoBack('/');
+  const { datasetId } = useParams<{ datasetId: string; tableId: string; }>();
   const { loading } = useAppSelector(selectSaveTableStatus);
-  const { name, lastModifiedDate } = useAppSelector(selectCurrentTable);
+  const {
+    name,
+    lastModifiedDate
+  } = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
+  const { API } = useAppSelector(selectAppConfig);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -71,15 +81,17 @@ const Toolbar = () => {
   };
 
   const handleMenuOpen = (event: MouseEvent<HTMLButtonElement>, id: string) => {
-    setMenuState((state) => Object.keys(state).reduce((acc, key) => ({
-      ...acc,
-      [key]: key === id
-    }), {}));
+    setMenuState((state) => Object.keys(state)
+      .reduce((acc, key) => ({
+        ...acc,
+        [key]: key === id
+      }), {}));
     setAnchorEl(event.currentTarget);
   };
 
   const handleMenuEnter = (event: MouseEvent<HTMLButtonElement>, id: string) => {
-    if (Object.keys(menuState).some((key) => menuState[key])) {
+    if (Object.keys(menuState)
+      .some((key) => menuState[key])) {
       handleMenuOpen(event, id);
     }
   };
@@ -100,7 +112,7 @@ const Toolbar = () => {
   return (
     <>
       <div className={styles.Container}>
-        <IconButton component={Link} to="/" size="large">
+        <IconButton component={Link} to={`/datasets/${datasetId}/tables`} size="large">
           <ArrowBackIosRoundedIcon />
         </IconButton>
         <div className={styles.ColumnMenu}>
@@ -113,61 +125,75 @@ const Toolbar = () => {
               className={clsx({
                 [styles.DefaultName]: tableName === 'Unnamed table'
               })}
+              disabled={!API.ENDPOINTS.SAVE}
             />
+            {API.ENDPOINTS.SAVE
+            && (
             <SaveIndicator
               value={lastModifiedDate}
               lastSaved={lastSaved}
               loading={!!loading}
               className={styles.SaveIcon} />
+            )
+            }
           </div>
-          <div className={clsx(styles.RowMenu, styles.ActionsContainer)}>
-            <Button
-              onMouseEnter={(e) => handleMenuEnter(e, 'file')}
-              onClick={(e) => handleMenuOpen(e, 'file')}
-              className={styles.SmallButton}
-              size="small">
-              File
-            </Button>
-            <Button
-              onMouseEnter={(e) => handleMenuEnter(e, 'edit')}
-              onClick={(e) => handleMenuOpen(e, 'edit')}
-              className={styles.SmallButton}
-              size="small">
-              Edit
-            </Button>
-            <Button
-              onMouseEnter={(e) => handleMenuEnter(e, 'view')}
-              onClick={(e) => handleMenuOpen(e, 'view')}
-              className={styles.SmallButton}
-              size="small">
-              View
-            </Button>
-            <Button
-              className={styles.SmallButton}
-              size="small">
-              Help
-            </Button>
-          </div>
+          {/* <div className={clsx(styles.RowMenu, styles.ActionsContainer)}> */}
+          {/*  <Button */}
+          {/*    onMouseEnter={(e) => handleMenuEnter(e, 'file')} */}
+          {/*    onClick={(e) => handleMenuOpen(e, 'file')} */}
+          {/*    className={styles.SmallButton} */}
+          {/*    size="small"> */}
+          {/*    File */}
+          {/*  </Button> */}
+          {/*  <Button */}
+          {/*    onMouseEnter={(e) => handleMenuEnter(e, 'edit')} */}
+          {/*    onClick={(e) => handleMenuOpen(e, 'edit')} */}
+          {/*    className={styles.SmallButton} */}
+          {/*    size="small"> */}
+          {/*    Edit */}
+          {/*  </Button> */}
+          {/*  <Button */}
+          {/*    onMouseEnter={(e) => handleMenuEnter(e, 'view')} */}
+          {/*    onClick={(e) => handleMenuOpen(e, 'view')} */}
+          {/*    className={styles.SmallButton} */}
+          {/*    size="small"> */}
+          {/*    View */}
+          {/*  </Button> */}
+          {/*  <Button */}
+          {/*    className={styles.SmallButton} */}
+          {/*    size="small"> */}
+          {/*    Help */}
+          {/*  </Button> */}
+          {/* </div> */}
         </div>
-        <Button
-          onClick={() => dispatch(updateUI({ openExportDialog: true }))}
-          variant="contained"
-          size="medium"
-          className={styles.SaveButton}
-          startIcon={<SystemUpdateAltRoundedIcon />}
-        >
-          Export
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          color="primary"
-          size="medium"
-          disabled={lastModifiedDate ? new Date(lastSaved) >= new Date(lastModifiedDate) : true}
-          startIcon={<SaveRoundedIcon />}
-        >
-          Save
-        </Button>
+        <Stack direction="row" gap="20px" className={styles.TopButtons}>
+          {API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0 && (
+            <>
+              <Button
+                onClick={() => dispatch(updateUI({ openExportDialog: true }))}
+                variant="contained"
+                size="medium"
+                startIcon={<SystemUpdateAltRoundedIcon />}
+              >
+                Export
+              </Button>
+
+              <ExportDialog />
+            </>
+          )}
+          {API.ENDPOINTS.SAVE && (
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="primary"
+            size="medium"
+            disabled={lastModifiedDate ? new Date(lastSaved) >= new Date(lastModifiedDate) : true}
+            startIcon={<SaveRoundedIcon />}
+          >
+            Save
+          </Button>
+          )}
+        </Stack>
       </div>
       <FileMenu
         open={menuState.file}
@@ -184,7 +210,7 @@ const Toolbar = () => {
         anchorElement={anchorEl}
         handleClose={handleMenuClose}
       />
-      <ExportDialog />
+
     </>
   );
 };

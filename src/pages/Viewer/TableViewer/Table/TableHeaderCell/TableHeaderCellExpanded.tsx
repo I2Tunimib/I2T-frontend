@@ -50,13 +50,13 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
     <div className={styles.Container}>
       {(metadata[0].type && Array.isArray(metadata[0].type)) && (
         <div className={styles.PropertyContainer}>
-          <Typography variant="subtitle2">Type</Typography>
+          <Typography variant="subtitle2" component="div" className={styles.Label}>Type</Typography>
           {metadata[0].type.map((type) => RenderType(type))}
         </div>
       )}
       {metadata[0].property && (
         <div className={styles.PropertyContainer}>
-          <Typography variant="subtitle2">Property</Typography>
+          <Typography variant="subtitle2" component="div" className={styles.Label}>Property</Typography>
           {metadata[0].property.map((property) => RenderProperty(property))}
         </div>
       )}

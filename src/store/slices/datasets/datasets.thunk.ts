@@ -6,35 +6,64 @@ import { setCurrentDataset } from './datasets.slice';
 const ACTION_PREFIX = 'dataset';
 
 export enum DatasetThunkActions {
-  GET_ALL_DATASETS = 'getAll',
-  GET_ONE_DATASET = 'getTable',
-  GET_ALL_DATASET_TABLES = 'getAllDatasetTables'
+  GET_DATASET = 'getDataset',
+  GET_DATASET_INFO = 'getDatasetInfo',
+  GET_TABLES_BY_DATASET = 'getTablesByDataset',
+  ANNOTATE = 'annotate',
+  GLOBAL_SEARCH = 'globalSearch',
+  UPLOAD_DATASET = 'uploadDataset'
 }
 
-export const getAllDatasets = createAsyncThunk(
-  `${ACTION_PREFIX}/${DatasetThunkActions.GET_ALL_DATASETS}`,
+export const getDataset = createAsyncThunk(
+  `${ACTION_PREFIX}/${DatasetThunkActions.GET_DATASET}`,
   async () => {
-    const response = await datasetAPI.getAllDatasets();
+    const response = await datasetAPI.getDataset();
     return response.data;
   }
 );
 
-export const getOneDataset = createAsyncThunk(
-  `${ACTION_PREFIX}/${DatasetThunkActions.GET_ONE_DATASET}`,
+export const getDatasetInfo = createAsyncThunk(
+  `${ACTION_PREFIX}/${DatasetThunkActions.GET_DATASET_INFO}`,
   async ({ datasetId }: { datasetId: ID }) => {
-    const response = await datasetAPI.getOneDataset(datasetId);
+    const response = await datasetAPI.getDatasetInfo({ datasetId });
     return response.data;
   }
 );
 
-export const getAllDatasetTables = createAsyncThunk(
-  `${ACTION_PREFIX}/${DatasetThunkActions.GET_ALL_DATASET_TABLES}`,
+export const getTablesByDataset = createAsyncThunk(
+  `${ACTION_PREFIX}/${DatasetThunkActions.GET_TABLES_BY_DATASET}`,
   async ({ datasetId }: { datasetId: ID }, { dispatch }) => {
     dispatch(setCurrentDataset(datasetId));
-    const response = await datasetAPI.getAllDatasetTables(datasetId);
+    const response = await datasetAPI.getTablesByDataset({ datasetId });
     return {
       data: response.data,
       datasetId
     };
+  }
+);
+
+export const annotate = createAsyncThunk(
+  `${ACTION_PREFIX}/${DatasetThunkActions.ANNOTATE}`,
+  async ({ name, ...data }: { name: string, idDataset: any[], idTable: any[] }, { dispatch }) => {
+    const response = await datasetAPI.annotate(name, data);
+    return {
+      data: response.data
+    };
+  }
+);
+
+export const globalSearch = createAsyncThunk(
+  `${ACTION_PREFIX}/${DatasetThunkActions.GLOBAL_SEARCH}`,
+  async ({ query }: { query: string }) => {
+    const response = await datasetAPI.globalSearch(query);
+    return response.data;
+  }
+);
+
+export const uploadDataset = createAsyncThunk(
+  `${ACTION_PREFIX}/${DatasetThunkActions.UPLOAD_DATASET}`,
+  async ({ formData }: { formData: FormData }) => {
+    const response = await datasetAPI.uploadDataset(formData);
+    return response.data;
   }
 );

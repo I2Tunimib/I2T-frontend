@@ -1,21 +1,32 @@
 :root {
-  //brand color one 
-  --brand-color-one-base: #ff711f;
-  --brand-color-one-hover: #ff8742;
-  --brand-color-one-disabled: #F4A77B;
-  --brand-color-one-light: #ffe0ce;
+  //brand color one
+  --brand-color-one-base: #1b7ba7;
+  --brand-color-one-light: #4f9ecb;
+  --brand-color-one-dark: #0f6588;
+  --brand-color-one-hover: var(--brand-color-one-light);
+  --brand-color-one-disabled: rgba(27, 123, 167, 0.3);
+  --brand-color-one-contrast-text: #ffffff;
+  --brand-color-one-transparent: #edf5f9;
+   --brand-color-one-transparent-dark: #e3eff4;
 
   // brand color two
-  --brand-color-two-dark: #0b2e47;
-  --brand-color-two-base: #124E78;
-  --brand-color-two-hover: #1867A0;
-  --brand-color-two-disabled: #4EA6E4;
+  --brand-color-two-base: #547560;
+  --brand-color-two-light: #74937e;
+  --brand-color-two-dark: #3f5446;
+  --brand-color-two-hover: var(--brand-color-two-light);
+  --brand-color-two-disabled: rgba(63, 84, 70, 0.3);
+  --brand-color-two-contrast-text: #151816;
+  --brand-color-two-transparent: #deeae2;
 
   // neutral color
-  --neutral-color-light: #EAEAEA;
-  --neutral-color-base: #959595;
-  --neutral-color-dark: #5d5d5d;
+  --neutral-color-light: #eaeff1;
+  --neutral-color-base: #9da0a1;
+  --neutral-color-dark: #4b4c4d;
 
   --white: #FFFFFF;
-  --black: #1F1F1F;
+  --black: #283236;
+
+  --brown: #5E514B;
+  --brown-light: #877e7a;
+  --brown-dark: #3a3331;
 }

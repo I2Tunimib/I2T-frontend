@@ -1,3 +1,7 @@
+$loader-color1: var(--brand-color-one-dark);
+$loader-color2:var(--brand-color-two-base);
+$loader-color3:  var(--brown);
+
 .LoaderWrapper {
   width: 100vw;
   height: 100vh;
@@ -11,8 +15,8 @@
   height: 150px;
   width: 150px;
   border: 3px solid transparent;
-  border-top-color: #3498db;
-  border-bottom-color: #3498db;
+  border-top-color: $loader-color1;
+  border-bottom-color: $loader-color1;
   border-radius: 50%;
   z-index: 2;
   animation: spin 2s linear infinite;
@@ -27,7 +31,7 @@
     right: 2%;
     border: 3px solid transparent;
     z-index: 2;
-    border-top-color: #db213a;
+    border-top-color: $loader-color2;
     border-radius: 50%;
     -webkit-animation: spin 3s linear infinite;
     -moz-animation: spin 3s linear infinite;
@@ -44,7 +48,7 @@
     left: 5%;
     right: 5%;
     border: 3px solid transparent;
-    border-top-color: #dec52d;
+    border-top-color: $loader-color3;
     z-index: 2;
     border-radius: 50%;
     -webkit-animation: spin 1.5s linear infinite;

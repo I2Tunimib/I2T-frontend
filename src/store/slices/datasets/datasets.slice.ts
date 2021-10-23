@@ -2,8 +2,11 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { Dataset, Table } from '@services/api/datasets';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
-import { getAllDatasets, getAllDatasetTables } from './datasets.thunk';
-import { DatasetsInstancesState, DatasetsState, TablesInstancesState } from './interfaces/datasets';
+import { getDataset, getTablesByDataset } from './datasets.thunk';
+import {
+  DatasetsInstancesState, DatasetsState,
+  DatasetsUIState, TablesInstancesState
+} from './interfaces/datasets';
 
 const initialState: DatasetsState = {
   entities: {
@@ -25,11 +28,15 @@ export const datasetsSlice = createSliceWithRequests({
   reducers: {
     setCurrentDataset: (state, action: PayloadAction<string>) => {
       state.entities.currentDatasetId = action.payload;
+    },
+    updateUI: (state, action: PayloadAction<Partial<DatasetsUIState>>) => {
+      const { ...rest } = action.payload;
+      state.ui = { ...state.ui, ...rest };
     }
   },
   extraRules: (builder) => (
     builder
-      .addCase(getAllDatasets.fulfilled, (state, action: PayloadAction<Dataset[]>) => {
+      .addCase(getDataset.fulfilled, (state, action: PayloadAction<Dataset[]>) => {
         state.entities.datasets = action.payload
           .reduce<DatasetsInstancesState>((acc, { id, ...rest }) => {
             acc.byId[id] = {
@@ -41,7 +48,7 @@ export const datasetsSlice = createSliceWithRequests({
             return acc;
           }, { byId: {}, allIds: [] });
       })
-      .addCase(getAllDatasetTables.fulfilled,
+      .addCase(getTablesByDataset.fulfilled,
         (state, action: PayloadAction<{data: Table[], datasetId: ID}>) => {
           const { data, datasetId } = action.payload;
           // new tables from get
@@ -70,7 +77,8 @@ export const datasetsSlice = createSliceWithRequests({
 });
 
 export const {
-  setCurrentDataset
+  setCurrentDataset,
+  updateUI
 } = datasetsSlice.actions;
 
 export default datasetsSlice.reducer;
