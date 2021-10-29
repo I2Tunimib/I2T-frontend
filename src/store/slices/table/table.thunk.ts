@@ -1,7 +1,7 @@
 import tableAPI from '@services/api/table';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
-import { Reconciliator } from '../config/interfaces/config';
+import { Extender, Reconciliator } from '../config/interfaces/config';
 import convertToW3CTable from './utils/table.export-utils';
 
 const ACTION_PREFIX = 'table';
@@ -11,6 +11,7 @@ export enum TableThunkActions {
   GET_TABLE = 'getTable',
   GET_CHALLENGE_TABLE = 'getChallengeTable',
   RECONCILE = 'reconcile',
+  EXTEND = 'extend',
   CONVER_W3C = 'convertToW3C',
   EXPORT_TABLE = 'exportTable'
 }
@@ -34,11 +35,13 @@ export const getTable = createAsyncThunk(
 export const exportTable = createAsyncThunk(
   `${ACTION_PREFIX}/exportTable`,
   async ({
-    datasetId,
-    tableId,
-    format
-  }: {datasetId: string; tableId: string; format: string; }) => {
-    const response = await tableAPI.exportTable(datasetId, tableId, format);
+    format,
+    params
+  }: {
+    format: string;
+    params: Record<string, string | number>
+  }) => {
+    const response = await tableAPI.exportTable(format, params);
     return response.data;
   }
 );
@@ -53,9 +56,9 @@ export const getChallengeTable = createAsyncThunk(
 
 export const saveTable = createAsyncThunk(
   `${ACTION_PREFIX}/saveTable`,
-  async (payload: void, { getState }) => {
+  async (params: Record<string, string | number> = {}, { getState }) => {
     const { table } = getState() as any;
-    const response = await tableAPI.saveTable(table.entities);
+    const response = await tableAPI.saveTable(table.entities, params);
     return response.data;
   }
 );
@@ -90,6 +93,23 @@ export const reconcile = createAsyncThunk(
     return {
       data: response.data,
       reconciliator
+    };
+  }
+);
+
+export const extend = createAsyncThunk(
+  `${ACTION_PREFIX}/extend`,
+  async (
+    {
+      baseUrl,
+      data,
+      extender
+    }: { baseUrl: string, data: any, extender: Extender }
+  ) => {
+    const response = await tableAPI.extend(baseUrl, data);
+    return {
+      data: response.data,
+      extender
     };
   }
 );

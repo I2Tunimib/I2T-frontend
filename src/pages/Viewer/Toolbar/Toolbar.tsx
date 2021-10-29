@@ -50,7 +50,7 @@ const Toolbar = () => {
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
 
   const history = useHistory();
-  const { datasetId } = useParams<{ datasetId: string; tableId: string; }>();
+  const { datasetId, tableId } = useParams<{ datasetId: string; tableId: string; }>();
   const { loading } = useAppSelector(selectSaveTableStatus);
   const {
     name,
@@ -102,7 +102,10 @@ const Toolbar = () => {
   };
 
   const handleSave = () => {
-    dispatch(saveTable())
+    dispatch(saveTable({
+      datasetId,
+      tableId
+    }))
       .unwrap()
       .then((res) => {
         history.push(res.id);

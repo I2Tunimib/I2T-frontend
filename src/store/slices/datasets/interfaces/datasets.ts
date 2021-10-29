@@ -51,6 +51,7 @@ export interface DatasetInstance {
  */
 export interface TableInstance {
   id: ID;
+  idDataset: ID;
   name: string;
   status: StatusTable;
   nRows: number;

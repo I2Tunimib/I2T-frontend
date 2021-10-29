@@ -33,17 +33,17 @@ API:
 
     # Global search of datasets and tables (optional)
     GLOBAL_SEARCH:
-      - path: '/search?query=:query'
-        useGlobal: true
+      - path: '${REACT_APP_BACKEND_URL}/dataset/search?query=:query'
+        useGlobal: false
 
     # Upload a dataset (zip / rar) (optional)
     UPLOAD_DATASET:
-      - path: '/upload'
-        useGlobal: true
+      - path: '${REACT_APP_BACKEND_URL}/dataset'
+        useGlobal: false
 
     # Save changes made to a table (optional)
     SAVE:
-      - path: '${REACT_APP_BACKEND_URL}/tables/save'
+      - path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId/table/:tableId'
         useGlobal: false
 
     # Multiple endpoints for multiple annotation processes (optional)
@@ -57,7 +57,6 @@ API:
 
     # Export a table in a specified format (optional)
     EXPORT:
-      - path: '/export/CEA'
-        name: 'SemTab21 CEA'
-      - path: '/export/RDF-XML'
-        name: 'RDF XML'
+      - path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId/table/:tableId/export?format=w3c'
+        name: 'W3C'
+        useGlobal: false

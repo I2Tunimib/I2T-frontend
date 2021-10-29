@@ -17,9 +17,22 @@
     width: 38px;
   }
 
+  // &.Selected {
+  //   background-color: var(--brand-color-one-transparent-dark);
+  //   border-top: 2px solid var(--brand-color-one-base)
+  // }
   &.Selected {
     background-color: var(--brand-color-one-transparent-dark);
-    border-top: 2px solid var(--brand-color-one-base)
+
+    &::after {
+      position: absolute;
+      content: '';
+      top: -2px;
+      left: -1px;
+      width: calc(100% + 1px);
+      height: 2px;
+      background-color: var(--brand-color-one-base);
+    }
   }
 
   .TableHeaderContent {

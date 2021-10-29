@@ -26,7 +26,8 @@ import {
 import {
   selectIsCellSelected, selectIsOnlyOneCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
-  selectCanRedo, selectCanDelete, selectIsDenseView, selectSearchStatus, selectIsHeaderExpanded
+  selectCanRedo, selectCanDelete, selectIsDenseView,
+  selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled
 } from '@store/slices/table/table.selectors';
 import { useDebouncedCallback } from 'use-debounce';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
@@ -34,6 +35,7 @@ import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
 import AutoMatching from '../AutoMatching';
+import ExtensionDialog from '../ExtensionDialog';
 
 const tagRegex = /:([A-Za-z]+):/;
 
@@ -49,6 +51,7 @@ const SubToolbar = () => {
   const [tag, setTag] = useState<string>('all');
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
+  const isExtendButtonEnabled = useAppSelector(selectIsExtendButtonEnabled);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
   const isDenseView = useAppSelector(selectIsDenseView);
   const isACellSelected = useAppSelector(selectIsCellSelected);
@@ -184,7 +187,12 @@ const SubToolbar = () => {
             variant="contained">
             Reconcile
           </Button>
-          <Button disabled variant="contained">Extend</Button>
+          <Button
+            disabled={!isExtendButtonEnabled}
+            onClick={() => dispatch(updateUI({ openExtensionDialog: true }))}
+            variant="contained">
+            Extend
+          </Button>
         </ActionGroup>
         <Searchbar
           defaultTag="all"
@@ -198,6 +206,7 @@ const SubToolbar = () => {
       </ToolbarActions>
       <MetadataDialog />
       <ReconciliateDialog />
+      <ExtensionDialog />
       <AutoMatching
         open={isAutoMatching}
         anchorElement={autoMatchingAnchor}

@@ -23,6 +23,7 @@ import { PlayArrowRounded, ReadMoreRounded } from '@mui/icons-material';
 import deferMounting from '@components/HOC';
 import globalStyles from '@styles/globals.module.scss';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
+import { dateRegex } from '@services/utils/regexs';
 import { calcPercentage } from '../HomepageChallenge';
 
 interface DatasetsProps {
@@ -43,8 +44,6 @@ interface MakeDataOptions {
   sortFunctions: Record<string, any>
 }
 
-const dateRegex = new RegExp('^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(.[0-9]+)?(Z)?$');
-
 const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions> = {}) => {
   const data = datasets.map(({ tables, ...rest }) => {
     return {
@@ -62,7 +61,6 @@ const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions>
       // }
     };
   });
-  console.log(data);
 
   const { sortFunctions } = options;
 

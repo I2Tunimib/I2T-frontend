@@ -1,7 +1,7 @@
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
 import { ID, BaseState } from '@store/interfaces/store';
-import { Reconciliator } from '@store/slices/config/interfaces/config';
+import { Extender, Reconciliator } from '@store/slices/config/interfaces/config';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
 
 /**
@@ -26,6 +26,7 @@ export interface TableUIState {
   search: { filter: string; value: string };
   denseView: boolean;
   openReconciliateDialog: boolean;
+  openExtensionDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
   headerExpanded: boolean;
@@ -145,6 +146,17 @@ export interface ReconciliationFulfilledPayload {
     metadata: BaseMetadata[]
   }[],
   reconciliator: Reconciliator & { id: ID };
+}
+
+export interface ExtendFulfilledPayload {
+  data: {
+    items: Record<string, Record<string, any[]>>,
+    meta: {
+      props: any[],
+      context: Record<string, Context>
+    }
+  },
+  extender: Extender;
 }
 
 export interface AddCellMetadataPayload {

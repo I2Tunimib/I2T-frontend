@@ -17,8 +17,10 @@ import {
 } from 'react';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import { Cell } from 'react-table';
+import TimeAgo from 'react-timeago';
 import globalStyles from '@styles/globals.module.scss';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
+import { dateRegex } from '@services/utils/regexs';
 
 interface TablesProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;
@@ -52,9 +54,9 @@ const makeData = (tables: TableInstance[]) => {
         ...acc, {
           Header: key,
           accessor: key,
-          ...(key === 'status' && {
-            Cell: ({ row, value }: Cell<any>) => (
-              <>
+          Cell: ({ row, value }: Cell<any>) => {
+            if (key === 'status') {
+              return (
                 <div>
                   {value === 'TODO' ? (
                     <Tag status="todo">TODO</Tag>
@@ -64,9 +66,15 @@ const makeData = (tables: TableInstance[]) => {
                     <Tag status="done">DONE</Tag>
                   )}
                 </div>
-              </>
-            )
-          })
+              );
+            }
+            if (dateRegex.test(value)) {
+              return (
+                <TimeAgo title="" date={value} />
+              );
+            }
+            return value;
+          }
         }
       ];
     }

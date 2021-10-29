@@ -30,6 +30,7 @@ export const configSlice = createSliceWithRequests({
 
       extenders.forEach((extender) => {
         state.entities.extenders.byId[extender.id] = extender;
+        state.entities.extenders.allIds.push(extender.id);
       });
     })
   )

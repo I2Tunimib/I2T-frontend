@@ -5,10 +5,8 @@ import apiClient from './config/config';
 export type Dataset = Omit<DatasetInstance, 'tables'>;
 export type Table = TableInstance;
 export type GlobalSearchResult = {
-  id: string; // entity id
-  name: string; // name
-  type: 'table' | 'dataset', // if table or dataset
-  datasetId?: string; // if table we need to know the datasetId
+    datasets: DatasetInstance[];
+    tables: TableInstance[];
 }
 
 const datasetAPI = {
@@ -16,23 +14,19 @@ const datasetAPI = {
     return apiClient.get<Dataset[]>(apiEndpoint({
       endpoint: 'GET_DATASET',
       paramsValue: { ...params }
-    }));
+    }), { clearCacheEntry: true });
   },
   getDatasetInfo: (params: Record<string, string | number> = {}) => {
-    return apiClient.get<Dataset>(
-      apiEndpoint({
-        endpoint: 'GET_DATASET_INFO',
-        paramsValue: { ...params }
-      })
-    );
+    return apiClient.get<Dataset>(apiEndpoint({
+      endpoint: 'GET_DATASET_INFO',
+      paramsValue: { ...params }
+    }), { clearCacheEntry: true });
   },
   getTablesByDataset: (params: Record<string, string | number> = {}) => {
-    return apiClient.get<Table[]>(
-      apiEndpoint({
-        endpoint: 'GET_TABLES_BY_DATASET',
-        paramsValue: { ...params }
-      })
-    );
+    return apiClient.get<Table[]>(apiEndpoint({
+      endpoint: 'GET_TABLES_BY_DATASET',
+      paramsValue: { ...params }
+    }), { clearCacheEntry: true });
   },
   annotate: (name: string, data: { idDataset: any[]; idTable: any[] }) => {
     return apiClient.post<Table[]>(
@@ -44,7 +38,7 @@ const datasetAPI = {
     );
   },
   globalSearch: (query: string) => {
-    return apiClient.get<GlobalSearchResult[]>(
+    return apiClient.get<GlobalSearchResult>(
       apiEndpoint({
         endpoint: 'GLOBAL_SEARCH',
         paramsValue: { query }

@@ -7,17 +7,11 @@ import { ConfigEndpoints } from './config.thunk';
 export const selectConfig = (state: RootState) => state.config.entities;
 // select reconciliators
 export const selectReconciliators = (state: RootState) => state.config.entities.reconciliators;
+// select extenders
+export const selectExtenders = (state: RootState) => state.config.entities.extenders;
 // select requests
 export const selectRequests = (state: RootState) => state.config._requests;
 export const selectStoreConfig = (state: RootState) => state.config;
-
-/**
- * Selector which return the configuration for all services
- */
-// export const selectServicesConfig = createSelector(
-//   selectConfig,
-//   (config) => config.servicesConfig
-// );
 
 export const selectAppConfig = createSelector(
   selectStoreConfig,
@@ -37,6 +31,16 @@ export const selectReconciliatorsAsObject = createSelector(
 export const selectReconciliatorsAsArray = createSelector(
   selectReconciliators,
   (reconciliators) => reconciliators.allIds.map((id) => reconciliators.byId[id])
+);
+
+export const selectExtendersAsObject = createSelector(
+  selectExtenders,
+  (extenders) => extenders.byId
+);
+
+export const selectExtendersAsArray = createSelector(
+  selectExtenders,
+  (extenders) => extenders.allIds.map((id) => extenders.byId[id])
 );
 
 // Loading selectors

@@ -24,6 +24,8 @@ export interface Reconciliator {
 
 export interface Extender extends Record<string, any> {
   id: ID;
+  name: string;
+  relativeUrl: string;
   // ...
 }
 

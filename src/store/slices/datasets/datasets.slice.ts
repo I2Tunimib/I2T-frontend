@@ -2,7 +2,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { Dataset, Table } from '@services/api/datasets';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
-import { getDataset, getTablesByDataset } from './datasets.thunk';
+import { getDataset, getTablesByDataset, uploadDataset } from './datasets.thunk';
 import {
   DatasetsInstancesState, DatasetsState,
   DatasetsUIState, TablesInstancesState
@@ -72,6 +72,16 @@ export const datasetsSlice = createSliceWithRequests({
             ...state.entities.tables.allIds,
             ...tablesState.allIds
           ];
+        })
+      .addCase(uploadDataset.fulfilled,
+        (state, action: PayloadAction<{datasets: any[] }>) => {
+          const { datasets } = action.payload;
+
+          state.entities.datasets = datasets.reduce((acc, item) => {
+            acc.byId[item.id] = { ...item, tables: [] };
+            acc.allIds.push(item.id);
+            return acc;
+          }, state.entities.datasets);
         })
   )
 });

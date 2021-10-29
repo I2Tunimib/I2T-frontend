@@ -59,6 +59,7 @@ const TableViewer = () => {
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
   const history = useHistory();
+  const { datasetId, tableId } = useParams<{ datasetId: string, tableId: string }>();
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableStatus);
   const unsavedChanges = useAppSelector(selectIsUnsaved);
@@ -80,7 +81,9 @@ const TableViewer = () => {
     if (event) {
       event.preventDefault();
       if (unsavedChanges) {
-        dispatch(saveTable())
+        dispatch(saveTable({
+          datasetId, tableId
+        }))
           .unwrap()
           .then((res) => {
             history.push(res.id);

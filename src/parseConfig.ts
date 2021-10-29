@@ -62,9 +62,8 @@ export const buildPath = (
     const allQueryParams = getAllQueryParams(path);
     finalPath = allQueryParams.reduce((acc, param) => {
       return acc.replace(`:${param}`, paramsValue[param].toString());
-    }, path);
+    }, finalPath);
   }
-
   // get env variables (if there are), and substitute with value
   const vars = getAllEnvVar(finalPath);
 
@@ -85,15 +84,17 @@ export const buildPath = (
   return finalPath;
 };
 
+export type ApiEndpointProps<P extends Record<string, any> = {}> = {
+  endpoint: keyof ApiConfig['ENDPOINTS'],
+  subEndpoint?: string,
+  paramsValue?: P
+}
+
 export const apiEndpoint = ({
   endpoint,
   subEndpoint,
   paramsValue
-}: {
-  endpoint: keyof ApiConfig['ENDPOINTS'],
-  subEndpoint?: string,
-  paramsValue?: Record<string, string | number>
-}) => {
+}: ApiEndpointProps) => {
   const config = store.getState().config.app as Config;
 
   const { API: { ENDPOINTS } } = config;

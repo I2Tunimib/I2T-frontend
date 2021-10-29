@@ -31,24 +31,29 @@ const tableAPI = {
       })
     );
   },
-  exportTable: (datasetId: string, tableId: string, subEndpoint = '') => {
-    return apiClient.post<any>(
+  exportTable: (
+    format: string,
+    params: Record<string, string | number> = {}
+  ) => {
+    return apiClient.get<any>(
       apiEndpoint({
         endpoint: 'EXPORT',
-        subEndpoint
-      }),
-      { datasetId, tableId }
+        subEndpoint: format,
+        paramsValue: params
+      })
     );
   },
-  saveTable: (data: any) => {
-    return apiClient.post<any>(
+  saveTable: (data: any, params: Record<string, string | number> = {}) => {
+    return apiClient.put<any>(
       apiEndpoint({
-        endpoint: 'SAVE'
+        endpoint: 'SAVE',
+        paramsValue: { ...params }
       }),
       data
     );
   },
   reconcile: (baseUrl: string, data: any) => apiClient.post(`${process.env.REACT_APP_BACKEND_URL}/reconciliators${baseUrl}`, data),
+  extend: (baseUrl: string, data: any) => apiClient.post(`${process.env.REACT_APP_BACKEND_URL}/extenders${baseUrl}`, data),
   // getTable: (id: ID, acceptHeader?: string) => apiClient.get<GetTableResponse>(`/tables/${id}`, {
   //   headers: {
   //     Accept: acceptHeader

@@ -14,6 +14,7 @@ import {
   DeleteColumnPayload,
   DeleteRowPayload,
   DeleteSelectedPayload,
+  ExtendFulfilledPayload,
   FileFormat,
   ReconciliationFulfilledPayload,
   TableState,
@@ -28,6 +29,7 @@ import {
   UpdateSelectedRowPayload
 } from './interfaces/table';
 import {
+  extend,
   getTable,
   reconcile, saveTable
 } from './table.thunk';
@@ -71,6 +73,7 @@ const initialState: TableState = {
     denseView: false,
     headerExpanded: false,
     openReconciliateDialog: false,
+    openExtensionDialog: false,
     openMetadataDialog: false,
     openExportDialog: false,
     view: 'table',
@@ -412,15 +415,15 @@ export const tableSlice = createSliceWithRequests({
       .addCase(getTable.fulfilled, (state, action: PayloadAction<GetTableResponse>) => {
         const { table, columns, rows } = action.payload;
         let tableInstance = {} as TableInstance;
-        if (table.type === TableType.RAW) {
-          tableInstance.name = 'Unnamed table';
-          tableInstance.format = FileFormat.JSON;
-          tableInstance.type = TableType.ANNOTATED;
-          tableInstance.lastModifiedDate = new Date().toISOString();
-        } else {
-          tableInstance = { ...table };
-          state.ui.lastSaved = tableInstance.lastModifiedDate;
-        }
+        // if (table.type === TableType.RAW) {
+        //   tableInstance.name = 'Unnamed table';
+        //   tableInstance.format = FileFormat.JSON;
+        //   tableInstance.type = TableType.ANNOTATED;
+        //   tableInstance.lastModifiedDate = new Date().toISOString();
+        // } else {
+        tableInstance = { ...table };
+        state.ui.lastSaved = tableInstance.lastModifiedDate;
+        // }
         state.entities = {
           tableInstance,
           columns: {
@@ -476,6 +479,60 @@ export const tableSlice = createSliceWithRequests({
             column.context[prefix] = incrementContextCounters(column.context[prefix], cell);
             // update column status after changes
             column.status = getColumnStatus(draft, colId);
+          });
+        }, (draft) => {
+          draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+        });
+      })
+      .addCase(extend.fulfilled, (
+        state, action: PayloadAction<Payload<ExtendFulfilledPayload>>
+      ) => {
+        const { data, extender, undoable = true } = action.payload;
+        const { items, meta } = data;
+        const { props, context } = meta;
+
+        const colId = Object.keys(state.ui.selectedColumnsIds)[0];
+
+        return produceWithPatch(state, undoable, (draft) => {
+          // add columns
+          props.forEach((metaItem) => {
+            draft.entities.columns.byId[`${colId}_${metaItem.name}`] = {
+              id: `${colId}_${metaItem.name}`,
+              context,
+              label: `${colId}_${metaItem.name}`,
+              status: ColumnStatus.EMPTY,
+              metadata: []
+            };
+            draft.entities.columns.byId[`${colId}_${metaItem.name}`].status = getColumnStatus(draft, `${colId}_${metaItem.name}`);
+
+            if (!draft.entities.columns.allIds.includes(`${colId}_${metaItem.name}`)) {
+              const index = draft.entities.columns.allIds.findIndex((id) => id === colId);
+              draft.entities.columns.allIds.splice(index + 1, 0, `${colId}_${metaItem.name}`);
+            }
+          });
+
+          // add columns cells
+          draft.entities.rows.allIds.forEach((rowId) => {
+            props.forEach(({ id: propKey }) => {
+              const cellId = `${rowId}$${colId}_${propKey}`;
+              if (items[rowId] && items[rowId][propKey]) {
+                draft.entities.rows.byId[rowId].cells[`${colId}_${propKey}`] = {
+                  id: cellId,
+                  label: items[rowId][propKey].length > 0 ? items[rowId][propKey][0].name : 'null',
+                  metadata: items[rowId][propKey].map(({ ...rest }) => ({
+                    score: 100,
+                    match: true,
+                    ...rest
+                  }))
+                };
+              } else {
+                draft.entities.rows.byId[rowId].cells[`${colId}_${propKey}`] = {
+                  id: cellId,
+                  label: 'null',
+                  metadata: []
+                };
+              }
+            });
           });
         }, (draft) => {
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();

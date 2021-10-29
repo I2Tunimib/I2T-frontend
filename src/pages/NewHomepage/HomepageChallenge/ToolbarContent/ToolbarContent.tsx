@@ -7,14 +7,8 @@ import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { globalSearch } from '@store/slices/datasets/datasets.thunk';
 import logo from '@assets/tui.png';
+import { GlobalSearchResult } from '@services/api/datasets';
 import styles from './ToolbarContent.module.scss';
-
-type SearchResult = {
-    id: string; // entity id
-    name: string; // name
-    type: 'table' | 'dataset', // if table or dataset
-    datasetId?: string; // if table we need to know the datasetId
-}
 
 const SearchResultItem = styled(Link)({
   display: 'flex',
@@ -31,7 +25,9 @@ const SearchResultItem = styled(Link)({
 });
 
 const ToolbarContent: FC<any> = () => {
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [
+    { datasets, tables },
+    setSearchResults] = useState<GlobalSearchResult>({ datasets: [], tables: [] });
 
   const { API } = useAppSelector(selectAppConfig);
   const dispatch = useAppDispatch();
@@ -42,15 +38,28 @@ const ToolbarContent: FC<any> = () => {
       .then((res) => setSearchResults(res));
   };
 
-  const autocompleteComponent = searchResults.length > 0 ? (
-    searchResults.map((res, index) => (
-      <SearchResultItem
-        key={index}
-        to={res.type === 'dataset' ? `/datasets/${res.id}/tables` : `/datasets/${res.datasetId}/tables/${res.id}`}>
-        <span>{res.name}</span>
-        <Chip size="small" label={res.type} />
-      </SearchResultItem>
-    ))
+  const autocompleteComponent = tables.length > 0 || datasets.length > 0 ? (
+    <>
+      {datasets.map((item) => (
+        <SearchResultItem
+          key={item.id}
+          to={`/datasets/${item.id}/tables`}>
+          <span>{item.name}</span>
+          <Chip size="small" label="dataset" />
+        </SearchResultItem>
+      ))}
+      {
+        tables.map((item) => (
+          <SearchResultItem
+            key={item.id}
+            to={`/datasets/${item.idDataset}/tables/${item.id}`}>
+            <span>{item.name}</span>
+            <Chip size="small" label="table" />
+          </SearchResultItem>
+        ))
+      }
+
+    </>
   ) : <div className={styles.SearchNoResult}>No results found</div>;
 
   return (

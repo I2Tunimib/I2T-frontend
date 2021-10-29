@@ -48,7 +48,10 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   };
 
   const handleConfirm = () => {
-    dispatch(exportTable({ datasetId, tableId, format }))
+    dispatch(exportTable({
+      format,
+      params: { tableId, datasetId }
+    }))
       .unwrap()
       .then((data) => {
         fileDownload(JSON.stringify(data, null, 2), `${tableName}.json`);

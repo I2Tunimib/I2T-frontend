@@ -5,7 +5,7 @@ import ExpandableList from '@components/kit/ExpandableList/ExpandableList';
 import ExpandableListHeader from '@components/kit/ExpandableListHeader';
 import ExpandableListItem from '@components/kit/ExpandableListItem';
 import ExpandableListBody from '@components/kit/ExpandableListBody';
-import { IconButton, Link } from '@mui/material';
+import { IconButton, Link, Typography } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRounded';
 import { selectReconciliatorCell } from '@store/slices/table/table.selectors';
@@ -54,6 +54,9 @@ const NormalCell: FC<NormalCellProps> = ({
           {label}
         </Link>
       );
+    }
+    if (label === 'null') {
+      return <Typography component="span" color="textSecondary" lineHeight="0">{label}</Typography>;
     }
     return label;
   }, [value, label]);

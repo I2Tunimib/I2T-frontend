@@ -6,7 +6,7 @@ import { ID } from '@store/interfaces/store';
 import { Row } from 'react-table';
 import { Context } from 'vm';
 import { selectAppConfig, selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
-import { BaseMetadata } from './interfaces/table';
+import { BaseMetadata, ColumnStatus } from './interfaces/table';
 import { TableThunkActions } from './table.thunk';
 import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getCell, getIdsFromCell } from './utils/table.utils';
@@ -70,10 +70,7 @@ export const selectColumnReconciliators = createSelector(
   selectReconciliatorsAsObject,
   selectAppConfig,
   (contexts, reconciliators, config) => {
-    return undefined;
-    // return config.APP.MODE === 'standard'
-    //   ? contexts.map((context: ID) => reconciliators[context].name)
-    //   : undefined;
+    return contexts.map((context: ID) => reconciliators[context].name);
   }
 );
 
@@ -228,6 +225,13 @@ export const selectReconcileDialogStatus = createSelector(
   (ui) => ui.openReconciliateDialog
 );
 /**
+ * Get extension dialog status.
+ */
+export const selectExtensionDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openExtensionDialog
+);
+/**
  * Get metadata dialog status.
  */
 export const selectMetadataDialogStatus = createSelector(
@@ -260,14 +264,6 @@ export const selectTutorialBBoxes = createSelector(
  * Check if delete action is enabled.
  * If only rows and/or columns are selected returns true, false otherwise.
  */
-// export const selectCanDelete = createSelector(
-//   selectSelectedColumnIds,
-//   selectSelectedRowIds,
-//   selectSelectedCellsIdsAsArray,
-//   (colIds, rowIds, cellIds) => cellIds.length > 0 && cellIds.every((cellId) => (
-//     getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
-//   ))
-// );
 export const selectCanDelete = createSelector(
   selectSelectedColumnIds,
   selectSelectedRowIds,
@@ -285,6 +281,28 @@ export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
   (selectedCells) => selectedCells.length > 0
     && !selectedCells.some((cell) => cell.metadata.length === 0)
+);
+
+export const selectIsExtendButtonEnabled = createSelector(
+  selectSelectedColumnIds,
+  selectColumnsState,
+  (colIds, columnEntities) => {
+    const ids = Object.keys(colIds);
+
+    if (ids.length !== 1) {
+      return false;
+    }
+    const selectedColumnId = ids[0];
+    const { context, status } = columnEntities.byId[selectedColumnId];
+
+    const nReconciliators = Object.keys(context)
+      .reduce((acc, key) => (context[key].reconciliated > 0 ? acc + 1 : acc), 0);
+
+    if (status === ColumnStatus.RECONCILIATED) {
+      return true;
+    }
+    return false;
+  }
 );
 
 // DATA TRANSFORMATION SELECTORS
@@ -474,5 +492,27 @@ export const selectCellMetadataTableFormat = createSelector(
       }
     }
     return { columns: [], data: [] };
+  }
+);
+
+export const selectColumnForExtension = createSelector(
+  selectIsExtendButtonEnabled,
+  selectSelectedColumnIds,
+  selectRowsState,
+  (isExtensionEnabled, selectedColumns, rowEntities) => {
+    if (isExtensionEnabled) {
+      const colId = Object.keys(selectedColumns)[0];
+
+      return rowEntities.allIds.reduce((acc, rowId) => {
+        const cell = rowEntities.byId[rowId].cells[colId];
+        const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+        if (trueMeta) {
+          // eslint-disable-next-line prefer-destructuring
+          acc[rowId] = trueMeta.id;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+    }
+    return [];
   }
 );
