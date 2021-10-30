@@ -23,7 +23,7 @@ import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { updateUI } from '@store/slices/datasets/datasets.slice';
 import SidebarContent from './SidebarContent/SidebarContent';
 import ToolbarContent from './ToolbarContent';
-import styles from './HomepageChallenge.module.scss';
+import styles from './Homepage.module.scss';
 import Datasets from './Datasets/Datasets';
 import Tables from './Tables';
 import UploadDataset from './UploadDataset/UploadDataset';

@@ -29,7 +29,7 @@ const APP_ROUTES: AppRoutes = {
   // routes if application is set to challenge
   standard: {
     routes: [
-      { path: '/:tables', exact: true, component: lazyWithPreload(() => import('@pages/Homepage')) },
+      { path: '/:tables', exact: true, component: lazyWithPreload(() => import('@pages/Homepage/Homepage')) },
       { path: '/table/:id', exact: false, component: lazyWithPreload(() => import('@pages/Viewer')) }
     ],
     redirect: [
@@ -41,7 +41,7 @@ const APP_ROUTES: AppRoutes = {
   challenge: {
     routes: [
       { path: '/datasets/:datasetId/tables/:tableId', exact: false, component: lazyWithPreload(() => import('@pages/Viewer')) },
-      { path: '/datasets', exact: false, component: lazyWithPreload(() => import('@pages/NewHomepage/HomepageChallenge/HomepageChallenge')) }
+      { path: '/datasets', exact: false, component: lazyWithPreload(() => import('@pages/Homepage/Homepage')) }
     ],
     redirect: [],
     preload: 'all'

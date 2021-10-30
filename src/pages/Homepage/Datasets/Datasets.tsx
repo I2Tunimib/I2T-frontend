@@ -24,7 +24,7 @@ import deferMounting from '@components/HOC';
 import globalStyles from '@styles/globals.module.scss';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { dateRegex } from '@services/utils/regexs';
-import { calcPercentage } from '../HomepageChallenge';
+import { calcPercentage } from '../Homepage';
 
 interface DatasetsProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;
