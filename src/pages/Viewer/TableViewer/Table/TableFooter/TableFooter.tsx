@@ -1,4 +1,7 @@
-import { Pagination, Typography } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { Button, Pagination, Typography } from '@mui/material';
+import { selectIsViewOnly } from '@store/slices/table/table.selectors';
+import { updateUI } from '@store/slices/table/table.slice';
 import styles from './TableFooter.module.scss';
 
 interface TableFooterProps {
@@ -32,6 +35,8 @@ const TableFooter = ({
   paginatorProps
 }: TableFooterProps) => {
   const { gotoPage, pageCount, pageIndex } = paginatorProps;
+  const isViewOnly = useAppSelector(selectIsViewOnly);
+  const dispatch = useAppDispatch();
 
   const handleChange = (event: any, page: number) => {
     gotoPage(page - 1);
@@ -45,6 +50,9 @@ const TableFooter = ({
       <Typography color="textSecondary" variant="body2">
         {`Total rows: ${rows.length}`}
       </Typography>
+      <Button sx={{ textTransform: 'none' }} size="small" variant="outlined" onClick={() => dispatch(updateUI({ viewOnly: !isViewOnly }))}>
+        {isViewOnly ? 'Enable changes' : 'Disable changes'}
+      </Button>
       <Pagination
         onChange={handleChange}
         count={pageCount}

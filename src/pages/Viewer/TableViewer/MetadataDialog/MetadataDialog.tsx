@@ -13,6 +13,7 @@ import {
 import {
   selectCellMetadataTableFormat,
   selectCurrentCell,
+  selectIsViewOnly,
   selectMetadataDialogStatus
 } from '@store/slices/table/table.selectors';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
@@ -99,6 +100,7 @@ const MetadataDialog = () => {
   const table = useAppSelector(selectCellMetadataTableFormat);
   const open = useAppSelector(selectMetadataDialogStatus);
   const cell = useAppSelector(selectCurrentCell);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
   const { API } = useAppSelector(selectAppConfig);
 
   useEffect(() => {
@@ -196,9 +198,9 @@ const MetadataDialog = () => {
           </Typography>
           <Stack direction="row" marginLeft="auto" gap="10px">
             <Button onClick={handleClose}>
-              {API.ENDPOINTS.SAVE ? 'Cancel' : 'Close' }
+              {(API.ENDPOINTS.SAVE && !isViewOnly) ? 'Cancel' : 'Close' }
             </Button>
-            {API.ENDPOINTS.SAVE
+            {(API.ENDPOINTS.SAVE && !isViewOnly)
             && (
             <Button
               onClick={handleConfirm}
@@ -209,7 +211,7 @@ const MetadataDialog = () => {
             }
           </Stack>
         </Stack>
-        {table.data.length > 0 && API.ENDPOINTS.SAVE && (
+        {(table.data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly) && (
         <Stack
           position="relative"
           direction="row"
@@ -266,7 +268,7 @@ const MetadataDialog = () => {
           columns={columnsTable}
           data={dataTable}
           onSelectedRowChange={handleSelectedRowChange}
-          showRadio={!!API.ENDPOINTS.SAVE}
+          showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
         />
       </Stack>
     </Drawer>

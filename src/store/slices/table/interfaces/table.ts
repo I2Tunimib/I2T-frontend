@@ -25,6 +25,7 @@ export interface CurrentTableState extends Partial<TableInstance>{}
 export interface TableUIState {
   search: { filter: string; value: string };
   denseView: boolean;
+  viewOnly: boolean;
   openReconciliateDialog: boolean;
   openExtensionDialog: boolean;
   openMetadataDialog: boolean;

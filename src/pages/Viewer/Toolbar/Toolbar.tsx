@@ -16,6 +16,7 @@ import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   selectCurrentTable,
+  selectIsViewOnly,
   selectLastSaved,
   selectSaveTableStatus
 } from '@store/slices/table/table.selectors';
@@ -58,6 +59,7 @@ const Toolbar = () => {
   } = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
   const { API } = useAppSelector(selectAppConfig);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -128,10 +130,9 @@ const Toolbar = () => {
               className={clsx({
                 [styles.DefaultName]: tableName === 'Unnamed table'
               })}
-              disabled={!API.ENDPOINTS.SAVE}
+              disabled={!API.ENDPOINTS.SAVE || isViewOnly}
             />
-            {API.ENDPOINTS.SAVE
-            && (
+            {(API.ENDPOINTS.SAVE && !isViewOnly) && (
             <SaveIndicator
               value={lastModifiedDate}
               lastSaved={lastSaved}
@@ -184,7 +185,7 @@ const Toolbar = () => {
               <ExportDialog />
             </>
           )}
-          {API.ENDPOINTS.SAVE && (
+          {(API.ENDPOINTS.SAVE && !isViewOnly) && (
           <Button
             onClick={handleSave}
             variant="contained"

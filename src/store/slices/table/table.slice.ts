@@ -71,6 +71,7 @@ const initialState: TableState = {
     lastSaved: '',
     search: { filter: 'all', value: '' },
     denseView: false,
+    viewOnly: false,
     headerExpanded: false,
     openReconciliateDialog: false,
     openExtensionDialog: false,

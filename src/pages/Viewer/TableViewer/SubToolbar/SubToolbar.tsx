@@ -27,7 +27,7 @@ import {
   selectIsCellSelected, selectIsOnlyOneCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
   selectCanRedo, selectCanDelete, selectIsDenseView,
-  selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled
+  selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled, selectIsViewOnly
 } from '@store/slices/table/table.selectors';
 import { useDebouncedCallback } from 'use-debounce';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
@@ -60,6 +60,7 @@ const SubToolbar = () => {
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
   const searchFilter = useAppSelector(selectSearchStatus);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
   const { API } = useAppSelector(selectAppConfig);
 
   const ref = useRef<HTMLButtonElement>(null);
@@ -150,7 +151,7 @@ const SubToolbar = () => {
             disabled={!isMetadataButtonEnabled}
             onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
           />
-          {API.ENDPOINTS.SAVE
+          {(API.ENDPOINTS.SAVE && !isViewOnly)
           && (
           <IconButtonTooltip
             tooltipText="Auto matching"
