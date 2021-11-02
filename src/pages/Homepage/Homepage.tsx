@@ -1,5 +1,5 @@
 import {
-  Breadcrumbs, Button, Chip, Divider, LinearProgress, Stack, Typography, useMediaQuery
+  Breadcrumbs, Button, Chip, Divider, IconButton, LinearProgress, Stack, Typography, useMediaQuery
 } from '@mui/material';
 import { MainLayout } from '@components/layout';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -10,7 +10,7 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import {
   Link, Redirect, Route, Switch, useHistory, useParams, useRouteMatch
 } from 'react-router-dom';
-import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import { annotate, getDataset } from '@store/slices/datasets/datasets.thunk';
 import {
   selectCurrentDataset,
@@ -50,6 +50,7 @@ const HomepageChallenge: FC<any> = () => {
   } = useRouteMatch();
   const matches = useMediaQuery('(max-width:1365px)');
   const currentDataset = useAppSelector(selectCurrentDataset);
+  const history = useHistory();
   const { loading: loadingDatasets } = useAppSelector(selectGetAllDatasetsStatus);
   const { API } = useAppSelector(selectAppConfig);
 
@@ -110,13 +111,20 @@ const HomepageChallenge: FC<any> = () => {
           <div className={clsx(
             styles.Row
           )}>
-            <Breadcrumbs separator={<NavigateNextRoundedIcon fontSize="small" />}>
-              <Typography
-                className={styles.BreadcrumbsItem}
-                {...breadcrumbsDatasetProps}
-                variant="h6">
-                Datasets
-              </Typography>
+            <Breadcrumbs separator={<Typography fontSize="24px" color="textSecondary">/</Typography>}>
+              <Stack direction="row" alignItems="center" gap="5px">
+                {currentDataset && (
+                  <IconButton size="small" onClick={() => history.push('/datasets')}>
+                    <ArrowBackIosRoundedIcon fontSize="medium" />
+                  </IconButton>
+                )}
+                <Typography
+                  className={styles.BreadcrumbsItem}
+                  {...breadcrumbsDatasetProps}
+                  variant="h6">
+                  Datasets
+                </Typography>
+              </Stack>
               {currentDataset && (
                 <Typography
                   className={styles.BreadcrumbsItem}
