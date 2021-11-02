@@ -75,6 +75,10 @@
         text-overflow: ellipsis;
         margin-right: auto;
         margin-left: 25px;
+
+        a {
+          margin: 0
+        }
       }
 
       .Icon {

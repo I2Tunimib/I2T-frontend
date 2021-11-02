@@ -1,5 +1,5 @@
 import {
-  Box, Button, Drawer, IconButton, Link, Skeleton, Stack, TextField, Tooltip, Typography
+  Box, Button, Dialog, Drawer, IconButton, Link, Skeleton, Stack, TextField, Tooltip, Typography
 } from '@mui/material';
 import {
   forwardRef, ReactElement, Ref, useEffect, useMemo, useState
@@ -179,13 +179,8 @@ const MetadataDialog = () => {
   };
 
   return (
-    <Drawer
-      sx={{
-        '& .MuiDrawer-paper': {
-          height: '80vh'
-        }
-      }}
-      anchor="bottom"
+    <Dialog
+      maxWidth="lg"
       open={open}
       onClose={handleCancel}>
       <Stack height="100%">
@@ -271,7 +266,7 @@ const MetadataDialog = () => {
           showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
         />
       </Stack>
-    </Drawer>
+    </Dialog>
   );
 };
 

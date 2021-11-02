@@ -239,7 +239,7 @@ const Table: FC<TableProps> = ({
                         { highlightState }
                       ]) as any}>
                         {// Render the cell contents
-                          cell.render('Cell', { value: 'prova' })}
+                          cell.render('Cell')}
                       </TableRowCell>
                     ))}
                 </TableRow>

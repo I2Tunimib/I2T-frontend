@@ -13,7 +13,7 @@ export const Table = styled.table`
 
 export const TableHead = styled.thead`
   position: sticky;
-  top: 0;
+  top: 10px;
   z-index: 10;
   background-color: inherit;
 `;

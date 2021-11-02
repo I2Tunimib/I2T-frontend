@@ -14,6 +14,7 @@ import { connect } from 'react-redux';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import { useAppDispatch } from '@hooks/store';
 import { updateUI } from '@store/slices/table/table.slice';
+import EntityLabel from '@components/core/EntityLabel';
 import styles from './NormalCell.module.scss';
 
 interface NormalCellProps {
@@ -104,15 +105,16 @@ const NormalCell: FC<NormalCellProps> = ({
               <ExpandableListItem key={`${item.name}-${index}`}>
                 <div className={styles.Item}>
                   {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
-                  <Link
-                    sx={{
-                      marginLeft: '20px'
-                    }}
-                    href={item.url}
-                    target="_blank"
-                    className={styles.MetaLink}>
-                    {`${item.id} (${item.name})`}
-                  </Link>
+                  <EntityLabel className={styles.MetaLink} type="entity">
+                    <Link
+                      sx={{
+                        marginLeft: '20px'
+                      }}
+                      href={item.url}
+                      target="_blank">
+                      {`${item.id} (${item.name})`}
+                    </Link>
+                  </EntityLabel>
                 </div>
               </ExpandableListItem>
             ))}
