@@ -38,7 +38,8 @@ export interface TableInstance {
   format: FileFormat;
   type: TableType;
   lastModifiedDate: string;
-  separator?: CsvSeparator;
+  nCells: number;
+  nCellsReconciliated: number;
 }
 
 export interface TablesInstancesState extends BaseState<TableInstance> { }

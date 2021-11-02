@@ -58,6 +58,7 @@ export const saveTable = createAsyncThunk(
   `${ACTION_PREFIX}/saveTable`,
   async (params: Record<string, string | number> = {}, { getState }) => {
     const { table } = getState() as any;
+    console.log(table);
     const response = await tableAPI.saveTable(table.entities, params);
     return response.data;
   }

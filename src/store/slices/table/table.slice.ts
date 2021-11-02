@@ -43,7 +43,8 @@ import {
   getCellContext, getColumnStatus, createContext,
   incrementContextCounters, decrementContextCounters, decrementContextTotal,
   decrementContextReconciliated,
-  incrementContextReconciliated
+  incrementContextReconciliated,
+  updateNumberOfReconciliatedCells
 } from './utils/table.reconciliation-utils';
 import {
   areOnlyRowsSelected,
@@ -185,6 +186,7 @@ export const tableSlice = createSliceWithRequests({
       const { metadata } = getCell(state, rowId, colId);
       if (metadata.length > 0) {
         return produceWithPatch(state, undoable, (draft) => {
+          const { tableInstance, columns } = draft.entities;
           const column = getColumn(draft, colId);
           const cell = getCell(draft, rowId, colId);
           const cellContext = getCellContext(cell);
@@ -207,6 +209,7 @@ export const tableSlice = createSliceWithRequests({
             );
           }
           column.status = getColumnStatus(draft, colId);
+          updateNumberOfReconciliatedCells(draft);
         }, (draft) => {
           // do not include in undo history
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -246,6 +249,7 @@ export const tableSlice = createSliceWithRequests({
           );
         }
         column.status = getColumnStatus(draft, colId);
+        updateNumberOfReconciliatedCells(draft);
       }, (draft) => {
         // do not include in undo history
         draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -368,6 +372,7 @@ export const tableSlice = createSliceWithRequests({
             deleteSelectedRows(draft);
           }
         }
+        updateNumberOfReconciliatedCells(draft);
       }, (draft) => {
         // do not include in undo history
         draft.ui.selectedColumnsIds = {};

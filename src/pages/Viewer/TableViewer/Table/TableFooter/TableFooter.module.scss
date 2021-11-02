@@ -6,6 +6,7 @@
   height: 41px;
   display: flex;
   flex-direction: row;
+  gap: 10px;
   align-items: center;
   margin-top: auto;
   padding: 12px 10px;
@@ -14,12 +15,7 @@
   z-index: 10;
   box-sizing: border-box;
 
-  & > :nth-child(2)  {
-    margin-left: 10px;
-  }
-
-  & > :nth-child(3)  {
-    margin-left: 10px;
+  & > :nth-child(4)  {
     margin-right: auto;
   }
 }

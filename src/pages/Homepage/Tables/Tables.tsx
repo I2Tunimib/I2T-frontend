@@ -1,4 +1,4 @@
-import { Tag } from '@components/core';
+import { Battery, Tag } from '@components/core';
 import deferMounting from '@components/HOC';
 import { TableListView } from '@components/kit';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -37,9 +37,15 @@ const defaultTableState = {
 };
 
 const makeData = (tables: TableInstance[]) => {
-  const data = tables.map(({ idDataset, ...rest }: any) => {
+  const data = tables.map(({
+    idDataset,
+    nCells,
+    nCellsReconciliated,
+    ...rest
+  }: any) => {
     return {
-      ...rest
+      ...rest,
+      completion: (nCellsReconciliated / nCells) * 100
       // id: tableInstance.id,
       // name: tableInstance.name,
       // nCols: tableInstance.nCols,
@@ -66,6 +72,11 @@ const makeData = (tables: TableInstance[]) => {
                     <Tag status="done">DONE</Tag>
                   )}
                 </div>
+              );
+            }
+            if (key === 'completion') {
+              return (
+                <Battery value={value} />
               );
             }
             if (dateRegex.test(value)) {

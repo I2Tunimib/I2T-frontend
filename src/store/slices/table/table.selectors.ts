@@ -274,7 +274,7 @@ export const selectCanDelete = createSelector(
   selectSelectedRowIds,
   selectSelectedCellsIdsAsArray,
   (colIds, rowIds, cellIds) => cellIds.length > 0 && cellIds.every((cellId) => (
-    getIdsFromCell(cellId)[1] in colIds && !(getIdsFromCell(cellId)[0] in rowIds)
+    getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
   ))
 );
 

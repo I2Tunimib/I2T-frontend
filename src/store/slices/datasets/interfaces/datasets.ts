@@ -56,6 +56,8 @@ export interface TableInstance {
   status: StatusTable;
   nRows: number;
   nCols: number;
+  nCells: number;
+  nCellsReconciliated: number;
 }
 
 export interface Status {

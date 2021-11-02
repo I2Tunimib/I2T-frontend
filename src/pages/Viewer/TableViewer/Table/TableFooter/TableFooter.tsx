@@ -1,6 +1,7 @@
+import { Battery } from '@components/core';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { Button, Pagination, Typography } from '@mui/material';
-import { selectIsViewOnly } from '@store/slices/table/table.selectors';
+import { selectCurrentTable, selectIsViewOnly } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
 import styles from './TableFooter.module.scss';
 
@@ -36,6 +37,7 @@ const TableFooter = ({
 }: TableFooterProps) => {
   const { gotoPage, pageCount, pageIndex } = paginatorProps;
   const isViewOnly = useAppSelector(selectIsViewOnly);
+  const { nCells = 0, nCellsReconciliated = 0 } = useAppSelector(selectCurrentTable);
   const dispatch = useAppDispatch();
 
   const handleChange = (event: any, page: number) => {
@@ -50,6 +52,10 @@ const TableFooter = ({
       <Typography color="textSecondary" variant="body2">
         {`Total rows: ${rows.length}`}
       </Typography>
+      <Typography color="textSecondary" variant="body2">
+        Completion:
+      </Typography>
+      <Battery value={nCells > 0 ? (nCellsReconciliated / nCells) * 100 : 0} />
       <Button sx={{ textTransform: 'none' }} size="small" variant="outlined" onClick={() => dispatch(updateUI({ viewOnly: !isViewOnly }))}>
         {isViewOnly ? 'Enable changes' : 'Disable changes'}
       </Button>

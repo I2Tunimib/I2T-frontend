@@ -45,7 +45,11 @@ const UploadDataset = () => {
       const formData = new FormData();
       formData.append('file', datasetFile);
       formData.append('name', datasetName);
-      dispatch(uploadDataset({ formData }));
+      dispatch(uploadDataset({ formData }))
+        .unwrap()
+        .then(() => {
+          handleClose();
+        });
     }
   };
 

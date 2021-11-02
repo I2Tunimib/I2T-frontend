@@ -102,7 +102,7 @@ const NormalCell: FC<NormalCellProps> = ({
           className={styles.ExpandableList}>
           <ExpandableListHeader>
             {getItems(0, 3).map((item, index) => (
-              <ExpandableListItem key={`${item.name}-${index}`}>
+              <ExpandableListItem key={`${item.id}`}>
                 <div className={styles.Item}>
                   {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
                   <EntityLabel className={styles.MetaLink} type="entity">
@@ -121,7 +121,7 @@ const NormalCell: FC<NormalCellProps> = ({
           </ExpandableListHeader>
           <ExpandableListBody>
             {getItems(3, value.metadata.length).map((item, index) => (
-              <ExpandableListItem key={`${item.name}-${index}`}>
+              <ExpandableListItem key={`${item.id}`}>
                 <div className={styles.Item}>
                   {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
                   <Link
