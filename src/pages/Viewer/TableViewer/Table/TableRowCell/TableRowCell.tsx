@@ -113,6 +113,14 @@ const TableRowCell: FC<TableRowCellProps> = ({
     }
   };
 
+  const handleOnContextMenu = (event: MouseEvent<HTMLElement>) => {
+    if (columnId === 'index') {
+      handleCellRightClick(event, 'row', rowId);
+    } else {
+      handleCellRightClick(event, 'cell', `${rowId}$${columnId}`);
+    }
+  };
+
   return (
     <Td
       columnId={columnId}
@@ -120,6 +128,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
       highlightState={highlightState}
       role="gridcell"
       onClick={(event) => handleSelectCell(event)}
+      onContextMenu={handleOnContextMenu}
     >
       {columnId === 'index' ? children : (
         <>

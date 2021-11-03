@@ -1,4 +1,7 @@
-import { Button, IconButton, Stack } from '@mui/material';
+import {
+  Button, IconButton, Stack,
+  ToggleButton, ToggleButtonGroup, Tooltip
+} from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import withStyles from '@mui/styles/withStyles';
 import { InlineInput } from '@components/kit';
@@ -20,9 +23,13 @@ import {
   selectLastSaved,
   selectSaveTableStatus
 } from '@store/slices/table/table.selectors';
+import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded';
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
+import BubbleChartRoundedIcon from '@mui/icons-material/BubbleChartRounded';
+import FormatAlignJustifyRoundedIcon from '@mui/icons-material/FormatAlignJustifyRounded';
 import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { saveTable } from '@store/slices/table/table.thunk';
-import { useGoBack } from '@hooks/router';
+import { useGoBack, useQuery } from '@hooks/router';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
@@ -61,6 +68,12 @@ const Toolbar = () => {
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const dispatch = useAppDispatch();
+
+  const { view } = useQuery();
+
+  const setView = (event: MouseEvent<HTMLElement>, newView: string | null) => {
+    history.push(`/datasets/${datasetId}/tables/${tableId}?view=${newView}`);
+  };
 
   useEffect(() => {
     if (name) {
@@ -133,11 +146,11 @@ const Toolbar = () => {
               disabled={!API.ENDPOINTS.SAVE || isViewOnly}
             />
             {(API.ENDPOINTS.SAVE && !isViewOnly) && (
-            <SaveIndicator
-              value={lastModifiedDate}
-              lastSaved={lastSaved}
-              loading={!!loading}
-              className={styles.SaveIcon} />
+              <SaveIndicator
+                value={lastModifiedDate}
+                lastSaved={lastSaved}
+                loading={!!loading}
+                className={styles.SaveIcon} />
             )
             }
           </div>
@@ -171,6 +184,29 @@ const Toolbar = () => {
           {/* </div> */}
         </div>
         <Stack direction="row" gap="20px" className={styles.TopButtons}>
+          <ToggleButtonGroup
+            size="small"
+            value={view}
+            exclusive
+            onChange={setView}
+            aria-label="text alignment"
+          >
+            <ToggleButton value="table" aria-label="left aligned">
+              <Tooltip title="Table view">
+                <TableChartOutlinedIcon fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="raw" aria-label="centered">
+              <Tooltip title="Raw view">
+                <FormatAlignJustifyRoundedIcon fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="graph" aria-label="right aligned">
+              <Tooltip title="Graph view">
+                <BubbleChartRoundedIcon fontSize="small" />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
           {API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0 && (
             <>
               <Button
@@ -186,16 +222,16 @@ const Toolbar = () => {
             </>
           )}
           {(API.ENDPOINTS.SAVE && !isViewOnly) && (
-          <Button
-            onClick={handleSave}
-            variant="contained"
-            color="primary"
-            size="medium"
-            disabled={lastModifiedDate ? new Date(lastSaved) >= new Date(lastModifiedDate) : true}
-            startIcon={<SaveRoundedIcon />}
-          >
-            Save
-          </Button>
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
+              size="medium"
+              disabled={lastModifiedDate ? new Date(lastSaved) >= new Date(lastModifiedDate) : true}
+              startIcon={<SaveRoundedIcon />}
+            >
+              Save
+            </Button>
           )}
         </Stack>
       </div>

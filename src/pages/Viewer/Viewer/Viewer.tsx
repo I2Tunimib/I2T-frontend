@@ -8,10 +8,14 @@ import { FC, useCallback, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { LinearProgress } from '@mui/material';
 import { restoreInitialState } from '@store/slices/table/table.slice';
+import deferMounting from '@components/HOC';
 import Toolbar from '../Toolbar';
 import W3CViewer from '../W3CViewer';
 
 const ALLOWED_QUERY = ['table', 'graph', 'raw'];
+
+const DeferredTableViewer = deferMounting(TableViewer);
+const DeferredW3CViewer = deferMounting(W3CViewer);
 
 const Viewer: FC<unknown> = () => {
   const history = useHistory();
@@ -49,9 +53,9 @@ const Viewer: FC<unknown> = () => {
   const Switch = useCallback(() => {
     if (view) {
       switch (view) {
-        case 'table': return <TableViewer />;
+        case 'table': return <DeferredTableViewer />;
         case 'graph': return null;
-        case 'raw': return <W3CViewer />;
+        case 'raw': return <DeferredW3CViewer />;
         default: return null;
       }
     }

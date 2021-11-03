@@ -1,4 +1,4 @@
-import { Button, IconButton, Tooltip } from '@mui/material';
+import { Button, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
@@ -152,14 +152,14 @@ const SubToolbar = () => {
             onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
           />
           {(API.ENDPOINTS.SAVE && !isViewOnly)
-          && (
-          <IconButtonTooltip
-            tooltipText="Auto matching"
-            Icon={PlaylistAddCheckRoundedIcon}
-            disabled={!isAutoMatchingEnabled}
-            onClick={handleClickAutoMatching}
-          />
-          )
+            && (
+              <IconButtonTooltip
+                tooltipText="Auto matching"
+                Icon={PlaylistAddCheckRoundedIcon}
+                disabled={!isAutoMatchingEnabled}
+                onClick={handleClickAutoMatching}
+              />
+            )
           }
           <IconButtonTooltip
             tooltipText="Expand cell"
