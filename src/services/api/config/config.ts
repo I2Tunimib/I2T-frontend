@@ -9,9 +9,6 @@ const apiClient = setup({
   baseURL: process.env.REACT_APP_BACKEND_API_URL,
   cache: {
     maxAge: 15 * 60 * 1000,
-    exclude: {
-      paths: [/^\/tables\/.*$/]
-    },
     invalidate: async (config, request) => {
       if (config.store && request.clearCacheEntry) {
         await (config.store as any).removeItem((config as any).uuid);

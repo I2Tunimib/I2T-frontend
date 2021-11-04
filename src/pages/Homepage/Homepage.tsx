@@ -5,17 +5,21 @@ import { MainLayout } from '@components/layout';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { FC, useEffect, useState } from 'react';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
-import { Battery, SplitButton } from '@components/core';
+import { Battery, IconButtonTooltip, SplitButton } from '@components/core';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import {
   Link, Redirect, Route, Switch, useHistory, useParams, useRouteMatch
 } from 'react-router-dom';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
-import { annotate, getDataset } from '@store/slices/datasets/datasets.thunk';
+import {
+  annotate, deleteDataset,
+  deleteTable, getDataset
+} from '@store/slices/datasets/datasets.thunk';
 import {
   selectCurrentDataset,
   selectGetAllDatasetsStatus
 } from '@store/slices/datasets/datasets.selectors';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import { Status as CompletionStatus } from '@store/slices/datasets/interfaces/datasets';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import clsx from 'clsx';
@@ -55,10 +59,6 @@ const HomepageChallenge: FC<any> = () => {
   const { API } = useAppSelector(selectAppConfig);
 
   useEffect(() => {
-    dispatch(getDataset());
-  }, []);
-
-  useEffect(() => {
     if (matches) {
       setSidebarCollapsed(true);
     } else {
@@ -68,6 +68,22 @@ const HomepageChallenge: FC<any> = () => {
 
   const handleSelectedRowsChange = (state: { kind: 'dataset' | 'table', rows: any[] } | null) => {
     setSelectedRows(state);
+  };
+
+  const handleDelete = () => {
+    if (selectedRows) {
+      const { kind, rows } = selectedRows;
+
+      if (kind === 'dataset') {
+        rows.forEach(({ id }) => {
+          dispatch(deleteDataset({ datasetId: id }));
+        });
+      } else {
+        rows.forEach(({ id }) => {
+          dispatch(deleteTable({ datasetId: currentDataset.id, tableId: id }));
+        });
+      }
+    }
   };
 
   const startProcess = (option: string) => {
@@ -135,7 +151,9 @@ const HomepageChallenge: FC<any> = () => {
             </Breadcrumbs>
           </div>
           <div className={clsx(styles.Row, styles.SubHeader)}>
-
+            {API.ENDPOINTS.DELETE_DATASET && (
+              <IconButtonTooltip onClick={handleDelete} tooltipText="Delete" Icon={DeleteRoundedIcon} disabled={!selectedRows} />
+            )}
             {selectedRows && (
               <div className={styles.NSelected}>
                 <strong>{selectedRows.rows.length}</strong>

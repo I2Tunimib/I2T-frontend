@@ -24,6 +24,7 @@ import deferMounting from '@components/HOC';
 import globalStyles from '@styles/globals.module.scss';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { dateRegex } from '@services/utils/regexs';
+import { getDataset } from '@store/slices/datasets/datasets.thunk';
 import { calcPercentage } from '../Homepage';
 
 interface DatasetsProps {
@@ -64,7 +65,7 @@ const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions>
 
   const { sortFunctions } = options;
 
-  const columns = Object.keys(data[0]).reduce((acc, key) => {
+  const columns = data.length ? Object.keys(data[0]).reduce((acc, key) => {
     if (key !== 'id') {
       return [
         ...acc, {
@@ -104,7 +105,7 @@ const makeData = (datasets: DatasetInstance[], options: Partial<MakeDataOptions>
       ];
     }
     return acc;
-  }, [] as any[]);
+  }, [] as any[]) : [];
 
   return { columns, data };
 };
@@ -121,8 +122,16 @@ const Datasets: FC<DatasetsProps> = ({
   const { API } = useAppSelector(selectAppConfig);
 
   useEffect(() => {
+    dispatch(getDataset());
+  }, []);
+
+  useEffect(() => {
     dispatch(setCurrentDataset(''));
   }, []);
+
+  // useEffect(() => {
+  //   console.log(datasets);
+  // }, [datasets]);
 
   const sortCompletion = useCallback((
     rowA: any, rowB: any,
@@ -133,13 +142,11 @@ const Datasets: FC<DatasetsProps> = ({
   }, []);
 
   useEffect(() => {
-    if (datasets.length > 0) {
-      setTableState(makeData(datasets, {
-        sortFunctions: {
-          completion: sortCompletion
-        }
-      }));
-    }
+    setTableState(makeData(datasets, {
+      sortFunctions: {
+        completion: sortCompletion
+      }
+    }));
   }, [datasets]);
 
   const handleRowSelection = (rows: any[]) => {

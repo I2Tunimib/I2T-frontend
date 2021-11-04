@@ -2,7 +2,10 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { Dataset, Table } from '@services/api/datasets';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
-import { getDataset, getTablesByDataset, uploadDataset } from './datasets.thunk';
+import {
+  deleteDataset, deleteTable, getDataset,
+  getTablesByDataset, uploadDataset
+} from './datasets.thunk';
 import {
   DatasetsInstancesState, DatasetsState,
   DatasetsUIState, TablesInstancesState
@@ -82,6 +85,25 @@ export const datasetsSlice = createSliceWithRequests({
             acc.allIds.push(item.id);
             return acc;
           }, state.entities.datasets);
+        })
+      .addCase(deleteDataset.fulfilled,
+        (state, action: PayloadAction<string>) => {
+          const datasetId = action.payload;
+
+          delete state.entities.datasets.byId[datasetId];
+          state.entities.datasets.allIds = state.entities.datasets.allIds
+            .filter((id) => id !== datasetId);
+        })
+      .addCase(deleteTable.fulfilled,
+        (state, action: PayloadAction<{ datasetId: string; tableId: string }>) => {
+          const { datasetId, tableId } = action.payload;
+
+          state.entities.datasets.byId[datasetId].tables = state.entities
+            .datasets.byId[datasetId].tables.filter((id) => id !== tableId);
+
+          delete state.entities.tables.byId[tableId];
+          state.entities.tables.allIds = state.entities.tables.allIds
+            .filter((id) => id !== tableId);
         })
   )
 });

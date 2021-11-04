@@ -52,6 +52,22 @@ const datasetAPI = {
       }),
       formData
     );
+  },
+  deleteDataset: (datasetId: string) => {
+    return apiClient.delete(
+      apiEndpoint({
+        endpoint: 'DELETE_DATASET',
+        paramsValue: { datasetId }
+      })
+    );
+  },
+  deleteTable: (params: { datasetId: string; tableId: string }) => {
+    return apiClient.delete(
+      apiEndpoint({
+        endpoint: 'DELETE_TABLE',
+        paramsValue: params
+      })
+    );
   }
 };
 

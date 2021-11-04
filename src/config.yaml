@@ -31,6 +31,16 @@ API:
       path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId/table/:tableId'
       useGlobal: false
 
+    # Delete a dataset (optional)
+    DELETE_DATASET:
+      path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId'
+      useGlobal: false
+    
+    # Delete a table (optional)
+    DELETE_TABLE:
+      path: '${REACT_APP_BACKEND_URL}/dataset/:datasetId/:tableId'
+      useGlobal: false
+
     # Global search of datasets and tables (optional)
     GLOBAL_SEARCH:
       - path: '${REACT_APP_BACKEND_URL}/dataset/search?query=:query'
