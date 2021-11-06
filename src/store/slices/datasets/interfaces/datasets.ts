@@ -1,3 +1,4 @@
+import { Dataset, Meta, Table } from '@services/api/datasets';
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { BaseState, ID } from '@store/interfaces/store';
 
@@ -7,6 +8,8 @@ import { BaseState, ID } from '@store/interfaces/store';
 export interface DatasetsState extends RequestEnhancedState {
   entities: {
     currentDatasetId: string;
+    metaDatasets: Meta<Dataset>,
+    metaTables: Meta<Table>,
     datasets: DatasetsInstancesState;
     tables: TablesInstancesState;
   },

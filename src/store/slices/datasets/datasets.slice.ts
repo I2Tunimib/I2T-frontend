@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { Dataset, Table } from '@services/api/datasets';
+import { Dataset, GetCollectionResult, Table } from '@services/api/datasets';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
 import {
@@ -14,6 +14,8 @@ import {
 const initialState: DatasetsState = {
   entities: {
     currentDatasetId: '',
+    metaDatasets: {},
+    metaTables: {},
     datasets: { byId: {}, allIds: [] },
     tables: { byId: {}, allIds: [] }
   },
@@ -39,23 +41,28 @@ export const datasetsSlice = createSliceWithRequests({
   },
   extraRules: (builder) => (
     builder
-      .addCase(getDataset.fulfilled, (state, action: PayloadAction<Dataset[]>) => {
-        state.entities.datasets = action.payload
-          .reduce<DatasetsInstancesState>((acc, { id, ...rest }) => {
-            acc.byId[id] = {
-              id,
-              tables: [],
-              ...rest
-            };
-            acc.allIds.push(id);
-            return acc;
-          }, { byId: {}, allIds: [] });
-      })
+      .addCase(getDataset.fulfilled,
+        (state, action: PayloadAction<GetCollectionResult<Dataset>>) => {
+          const { meta, collection } = action.payload;
+          state.entities.metaDatasets = meta;
+          state.entities.datasets = collection
+            .reduce<DatasetsInstancesState>((acc, { id, ...rest }) => {
+              acc.byId[id] = {
+                id,
+                tables: [],
+                ...rest
+              };
+              acc.allIds.push(id);
+              return acc;
+            }, { byId: {}, allIds: [] });
+        })
       .addCase(getTablesByDataset.fulfilled,
-        (state, action: PayloadAction<{data: Table[], datasetId: ID}>) => {
+        (state, action: PayloadAction<{ data: GetCollectionResult<Table>, datasetId: ID }>) => {
           const { data, datasetId } = action.payload;
+          const { meta, collection } = data;
+          state.entities.metaTables = meta;
           // new tables from get
-          const tablesState = data.reduce<TablesInstancesState>((acc, { id, ...rest }) => {
+          const tablesState = collection.reduce<TablesInstancesState>((acc, { id, ...rest }) => {
             acc.byId[id] = {
               id,
               ...rest
@@ -77,7 +84,7 @@ export const datasetsSlice = createSliceWithRequests({
           ];
         })
       .addCase(uploadDataset.fulfilled,
-        (state, action: PayloadAction<{datasets: any[] }>) => {
+        (state, action: PayloadAction<{ datasets: any[] }>) => {
           const { datasets } = action.payload;
 
           state.entities.datasets = datasets.reduce((acc, item) => {

@@ -13,7 +13,15 @@ const selectRequests = (state: RootState) => state.datasets._requests;
 
 export const selectDatasets = createSelector(
   selectDatasetsState,
-  (entities) => entities.datasets.allIds.map((id) => entities.datasets.byId[id])
+  (entities) => {
+    return {
+      meta: entities.metaDatasets,
+      collection: entities.datasets.allIds.map((id) => {
+        const { tables, ...rest } = entities.datasets.byId[id];
+        return rest;
+      })
+    };
+  }
 );
 
 export const selectGetAllDatasetsStatus = createSelector(
@@ -39,11 +47,23 @@ export const selectCurrentDataset = createSelector(
 
 export const selectCurrentDatasetTables = createSelector(
   selectDatasetsState,
-  ({ currentDatasetId, datasets, tables }) => {
+  ({
+    currentDatasetId, datasets,
+    tables, metaTables
+  }) => {
     if (currentDatasetId !== '') {
-      return datasets.byId[currentDatasetId].tables.map((tableId) => tables.byId[tableId]);
+      return {
+        meta: metaTables,
+        collection: datasets.byId[currentDatasetId].tables.map((tableId) => {
+          const { idDataset, ...rest } = tables.byId[tableId];
+          return rest;
+        })
+      };
     }
-    return [];
+    return {
+      meta: {},
+      collection: []
+    };
   }
 );
 

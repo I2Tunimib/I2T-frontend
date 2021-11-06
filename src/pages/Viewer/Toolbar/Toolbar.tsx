@@ -120,11 +120,7 @@ const Toolbar = () => {
     dispatch(saveTable({
       datasetId,
       tableId
-    }))
-      .unwrap()
-      .then((res) => {
-        history.push(res.id);
-      });
+    }));
   };
 
   return (

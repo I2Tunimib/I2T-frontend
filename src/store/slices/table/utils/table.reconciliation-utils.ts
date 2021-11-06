@@ -119,7 +119,7 @@ export const decrementContextCounters = (
 };
 
 export const updateNumberOfReconciliatedCells = (state: Draft<TableState>) => {
-  const { tableInstance, columns } = state.entities;
+  const { tableInstance, columns, rows } = state.entities;
 
   const reconciliated = columns.allIds.reduce((acc, columnId) => {
     acc += Object.keys(columns.byId[columnId].context).reduce((accInner, key) => {
@@ -129,6 +129,7 @@ export const updateNumberOfReconciliatedCells = (state: Draft<TableState>) => {
     return acc;
   }, 0);
   tableInstance.nCellsReconciliated = reconciliated;
+  tableInstance.nCells = columns.allIds.length * rows.allIds.length;
 };
 
 /** */

@@ -59,6 +59,10 @@ const HomepageChallenge: FC<any> = () => {
   const { API } = useAppSelector(selectAppConfig);
 
   useEffect(() => {
+    dispatch(getDataset());
+  }, []);
+
+  useEffect(() => {
     if (matches) {
       setSidebarCollapsed(true);
     } else {
@@ -167,36 +171,8 @@ const HomepageChallenge: FC<any> = () => {
                 disabled={!selectedRows || selectedRows.rows.length === 0}
                 options={API.ENDPOINTS.PROCESS_START.map(({ name }) => name)} />
             )}
-            {/* <Button
-              className={styles.ButtonAnnotation}
-              disabled={!selectedRows || selectedRows.rows.length === 0}
-              variant="contained"
-              size="small"
-              endIcon={<PlayArrowRoundedIcon />}>
-              Start annotation
-            </Button> */}
           </div>
         </div>
-        {/* {currentDataset && (
-          <Stack
-            alignItems="center"
-            direction="row"
-            gap="10px"
-            divider={<Divider orientation="vertical" flexItem />}
-          >
-            <Stack justifyContent="center" direction="column" gap="10px">
-              <Chip label={`Tables: ${currentDataset.nTables}`} size="small" />
-              <Chip label={`Avg cols: ${currentDataset.nAvgCols}`} size="small" />
-              <Chip label={`Avg rows: ${currentDataset.nAvgRows}`} size="small" />
-            </Stack>
-
-            <Stack gap="10px" alignItems="center">
-              <Typography variant="body2" fontWeight="500">Dataset completion</Typography>
-              <Battery size="medium" value={calcPercentage(currentDataset.status)} />
-            </Stack>
-          </Stack>
-        )
-        } */}
         {!currentDataset && API.ENDPOINTS.UPLOAD_DATASET
                 && (
                 <Button
@@ -210,7 +186,6 @@ const HomepageChallenge: FC<any> = () => {
                 </Button>
                 )
         }
-
       </div>
       <div className={styles.TableContainer}>
         <Switch>

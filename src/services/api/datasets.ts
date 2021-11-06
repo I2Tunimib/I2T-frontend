@@ -9,9 +9,20 @@ export type GlobalSearchResult = {
     tables: TableInstance[];
 }
 
+export type MetaCollection = {
+  label: string;
+  type?: 'date' | 'percentage' | 'tag';
+}
+export type Meta<T> = Partial<Record<keyof T, MetaCollection>>;
+
+export type GetCollectionResult<T = {}> = {
+  meta: Meta<T>,
+  collection: T[]
+}
+
 const datasetAPI = {
   getDataset: (params: Record<string, string | number> = {}) => {
-    return apiClient.get<Dataset[]>(apiEndpoint({
+    return apiClient.get<GetCollectionResult<Dataset>>(apiEndpoint({
       endpoint: 'GET_DATASET',
       paramsValue: { ...params }
     }), { clearCacheEntry: true });
@@ -23,7 +34,7 @@ const datasetAPI = {
     }), { clearCacheEntry: true });
   },
   getTablesByDataset: (params: Record<string, string | number> = {}) => {
-    return apiClient.get<Table[]>(apiEndpoint({
+    return apiClient.get<GetCollectionResult<Table>>(apiEndpoint({
       endpoint: 'GET_TABLES_BY_DATASET',
       paramsValue: { ...params }
     }), { clearCacheEntry: true });

@@ -306,6 +306,7 @@ export const tableSlice = createSliceWithRequests({
           const column = getColumn(draft, colId);
           column.status = getColumnStatus(draft, colId);
         });
+        updateNumberOfReconciliatedCells(draft);
       }, (draft) => {
         // do not include in undo history
         draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -486,6 +487,7 @@ export const tableSlice = createSliceWithRequests({
             // update column status after changes
             column.status = getColumnStatus(draft, colId);
           });
+          updateNumberOfReconciliatedCells(draft);
         }, (draft) => {
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
@@ -540,6 +542,7 @@ export const tableSlice = createSliceWithRequests({
               }
             });
           });
+          updateNumberOfReconciliatedCells(draft);
         }, (draft) => {
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
