@@ -27,7 +27,8 @@ import {
   selectIsCellSelected, selectIsOnlyOneCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
   selectCanRedo, selectCanDelete, selectIsDenseView,
-  selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled, selectIsViewOnly
+  selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled,
+  selectIsViewOnly, selectMetadataDialogStatus
 } from '@store/slices/table/table.selectors';
 import { useDebouncedCallback } from 'use-debounce';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
@@ -62,6 +63,7 @@ const SubToolbar = () => {
   const searchFilter = useAppSelector(selectSearchStatus);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const { API } = useAppSelector(selectAppConfig);
+  const openMetadataDialog = useAppSelector(selectMetadataDialogStatus);
 
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -205,7 +207,7 @@ const SubToolbar = () => {
           className={styles.Search}
         />
       </ToolbarActions>
-      <MetadataDialog />
+      {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}
       <ReconciliateDialog />
       <ExtensionDialog />
       <AutoMatching

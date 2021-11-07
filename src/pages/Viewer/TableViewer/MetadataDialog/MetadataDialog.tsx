@@ -2,7 +2,8 @@ import {
   Box, Button, Dialog, Drawer, IconButton, Link, Skeleton, Stack, TextField, Tooltip, Typography
 } from '@mui/material';
 import {
-  forwardRef, ReactElement, Ref, useEffect, useMemo, useState
+  FC,
+  forwardRef, ReactElement, Ref, useCallback, useEffect, useMemo, useState
 } from 'react';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
@@ -24,30 +25,15 @@ import { getCellContext } from '@store/slices/table/utils/table.reconciliation-u
 import CustomTable from '@components/kit/CustomTable/CustomTable';
 import deferMounting from '@components/HOC';
 import styles from './MetadataDialog.module.scss';
-
-const Transition = forwardRef((
-  props: TransitionProps & { children?: ReactElement<any, any> },
-  ref: Ref<unknown>,
-) => (<Slide direction="down" ref={ref} {...props} />));
+import usePrepareTable from './usePrepareTable';
 
 const DeferredTable = deferMounting(CustomTable);
-
-const LoadingSkeleton = () => {
-  return (
-    <div className={styles.SkeletonContainer}>
-      <Skeleton height={60} />
-      <Skeleton height={60} />
-      <Skeleton height={60} />
-      <Skeleton height={60} />
-    </div>
-  );
-};
 
 const LabelCell = ({ value }: any) => {
   const { label, link } = value;
 
   return (
-    <Link onClick={(event) => event.stopPropagation()} href={link} target="_blank">{label}</Link>
+    <Link onClick={(event) => event.stopPropagation()} title={label} href={link} target="_blank">{label}</Link>
   );
 };
 
@@ -82,35 +68,31 @@ const makeData = ({ columns, data }: { columns: any[], data: any[] }) => {
   };
 };
 
-interface FormState {
-    id: string;
-    name: string;
+type MetadataDialogProps = {
+  open: boolean;
 }
 
-const MetadataDialog = () => {
-  const [tableState, setTableState] = useState<{ columns: any[]; data: any[] }>({
-    columns: [],
-    data: []
-  });
-  const dispatch = useAppDispatch();
+interface FormState {
+  id: string;
+  name: string;
+}
+
+const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
+  const {
+    setState,
+    memoizedState: {
+      columns,
+      data
+    }
+  } = usePrepareTable({ selector: selectCellMetadataTableFormat, makeData });
   const [selectedMetadata, setSelectedMetadata] = useState<string>('');
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const { handleSubmit, reset, register } = useForm<FormState>();
-  const table = useAppSelector(selectCellMetadataTableFormat);
-  const open = useAppSelector(selectMetadataDialogStatus);
   const cell = useAppSelector(selectCurrentCell);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const { API } = useAppSelector(selectAppConfig);
-
-  useEffect(() => {
-    if (table) {
-      setTableState(makeData(table));
-    }
-  }, [table]);
-
-  const columnsTable = useMemo(() => tableState.columns, [tableState.columns]);
-  const dataTable = useMemo(() => tableState.data, [tableState.data]);
+  const dispatch = useAppDispatch();
 
   const handleClose = () => {
     setShowAdd(false);
@@ -136,13 +118,40 @@ const MetadataDialog = () => {
     handleClose();
   };
 
-  const handleSelectedRowChange = (row: any) => {
+  const handleSelectedRowChange = useCallback((row: any) => {
     if (row) {
-      setSelectedMetadata(row.id);
-    } else {
-      setSelectedMetadata('');
+      setState(({ columns: colState, data: dataState }) => {
+        const newData = dataState.map((item) => {
+          if (item.id === row.id) {
+            const match = item.match === 'true' ? 'false' : 'true';
+            if (match === 'true') {
+              setSelectedMetadata(row.id);
+            } else {
+              setSelectedMetadata('');
+            }
+            return {
+              ...item,
+              match
+            };
+          }
+          return {
+            ...item,
+            match: 'false'
+          };
+        });
+
+        return {
+          columns: colState,
+          data: newData
+        };
+      });
     }
-  };
+    // if (row) {
+    //   setSelectedMetadata(row.id);
+    // } else {
+    //   setSelectedMetadata('');
+    // }
+  }, []);
 
   const handleDeleteRow = ({ original }: any) => {
     if (cell) {
@@ -206,7 +215,7 @@ const MetadataDialog = () => {
             }
           </Stack>
         </Stack>
-        {(table.data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly) && (
+        {(data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly) && (
         <Stack
           position="relative"
           direction="row"
@@ -260,8 +269,8 @@ const MetadataDialog = () => {
         )}
         <DeferredTable
           flexGrow={1}
-          columns={columnsTable}
-          data={dataTable}
+          columns={columns}
+          data={data}
           onSelectedRowChange={handleSelectedRowChange}
           showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
         />

@@ -70,6 +70,9 @@ export const TableRowCell = styled.td`
   text-align: left;
   font-size: 0.875rem;
   white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   
   .MuiRadio-root{
     padding: 0;

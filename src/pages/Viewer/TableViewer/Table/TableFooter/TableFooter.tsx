@@ -36,9 +36,7 @@ const TableFooter = ({
   paginatorProps
 }: TableFooterProps) => {
   const { gotoPage, pageCount, pageIndex } = paginatorProps;
-  const isViewOnly = useAppSelector(selectIsViewOnly);
   const { nCells = 0, nCellsReconciliated = 0 } = useAppSelector(selectCurrentTable);
-  const dispatch = useAppDispatch();
 
   const handleChange = (event: any, page: number) => {
     gotoPage(page - 1);
@@ -56,9 +54,6 @@ const TableFooter = ({
         Completion:
       </Typography>
       <Battery value={nCells > 0 ? (nCellsReconciliated / nCells) * 100 : 0} />
-      <Button sx={{ textTransform: 'none' }} size="small" variant="outlined" onClick={() => dispatch(updateUI({ viewOnly: !isViewOnly }))}>
-        {isViewOnly ? 'Enable changes' : 'Disable changes'}
-      </Button>
       <Pagination
         onChange={handleChange}
         count={pageCount}

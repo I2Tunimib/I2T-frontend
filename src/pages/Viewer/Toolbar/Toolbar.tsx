@@ -1,5 +1,6 @@
 import {
-  Button, IconButton, Stack,
+  Button, FormControlLabel, FormGroup, IconButton, Stack,
+  Switch,
   ToggleButton, ToggleButtonGroup, Tooltip
 } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
@@ -31,6 +32,9 @@ import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { saveTable } from '@store/slices/table/table.thunk';
 import { useGoBack, useQuery } from '@hooks/router';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
+import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
+import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
+import { IconButtonTooltip } from '@components/core';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
@@ -150,34 +154,6 @@ const Toolbar = () => {
             )
             }
           </div>
-          {/* <div className={clsx(styles.RowMenu, styles.ActionsContainer)}> */}
-          {/*  <Button */}
-          {/*    onMouseEnter={(e) => handleMenuEnter(e, 'file')} */}
-          {/*    onClick={(e) => handleMenuOpen(e, 'file')} */}
-          {/*    className={styles.SmallButton} */}
-          {/*    size="small"> */}
-          {/*    File */}
-          {/*  </Button> */}
-          {/*  <Button */}
-          {/*    onMouseEnter={(e) => handleMenuEnter(e, 'edit')} */}
-          {/*    onClick={(e) => handleMenuOpen(e, 'edit')} */}
-          {/*    className={styles.SmallButton} */}
-          {/*    size="small"> */}
-          {/*    Edit */}
-          {/*  </Button> */}
-          {/*  <Button */}
-          {/*    onMouseEnter={(e) => handleMenuEnter(e, 'view')} */}
-          {/*    onClick={(e) => handleMenuOpen(e, 'view')} */}
-          {/*    className={styles.SmallButton} */}
-          {/*    size="small"> */}
-          {/*    View */}
-          {/*  </Button> */}
-          {/*  <Button */}
-          {/*    className={styles.SmallButton} */}
-          {/*    size="small"> */}
-          {/*    Help */}
-          {/*  </Button> */}
-          {/* </div> */}
         </div>
         <Stack direction="row" gap="20px" className={styles.TopButtons}>
           <ToggleButtonGroup
@@ -229,9 +205,20 @@ const Toolbar = () => {
               Save
             </Button>
           )}
+          <IconButtonTooltip
+            tooltipText={isViewOnly ? 'Enable changes' : 'Disable changes'}
+            Icon={isViewOnly
+              ? ModeEditOutlineOutlinedIcon
+              : EditOffOutlinedIcon}
+            onClick={() => dispatch(updateUI({ viewOnly: !isViewOnly }))}>
+            {isViewOnly
+              ? <ModeEditOutlineOutlinedIcon />
+              : <EditOffOutlinedIcon />
+            }
+          </IconButtonTooltip>
         </Stack>
       </div>
-      <FileMenu
+      {/* <FileMenu
         open={menuState.file}
         anchorElement={anchorEl}
         handleClose={handleMenuClose}
@@ -245,7 +232,7 @@ const Toolbar = () => {
         open={menuState.view}
         anchorElement={anchorEl}
         handleClose={handleMenuClose}
-      />
+      /> */}
 
     </>
   );

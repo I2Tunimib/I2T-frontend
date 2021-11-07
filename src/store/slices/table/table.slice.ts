@@ -422,15 +422,8 @@ export const tableSlice = createSliceWithRequests({
       .addCase(getTable.fulfilled, (state, action: PayloadAction<GetTableResponse>) => {
         const { table, columns, rows } = action.payload;
         let tableInstance = {} as TableInstance;
-        // if (table.type === TableType.RAW) {
-        //   tableInstance.name = 'Unnamed table';
-        //   tableInstance.format = FileFormat.JSON;
-        //   tableInstance.type = TableType.ANNOTATED;
-        //   tableInstance.lastModifiedDate = new Date().toISOString();
-        // } else {
         tableInstance = { ...table };
         state.ui.lastSaved = tableInstance.lastModifiedDate;
-        // }
         state.entities = {
           tableInstance,
           columns: {

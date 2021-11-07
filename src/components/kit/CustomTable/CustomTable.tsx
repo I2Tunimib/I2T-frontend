@@ -131,8 +131,8 @@ function useRadioSelect<T extends Record<string, unknown>>() {
 
 const defaultHooks = [
   useSortBy,
-  usePagination,
-  useRowSelect
+  usePagination
+  // useRowSelect
 ];
 
 export default function CustomTable<T extends Record<string, unknown>>(
@@ -150,33 +150,33 @@ export default function CustomTable<T extends Record<string, unknown>>(
       data,
       initialState: {
         pageSize: 20
-      },
-      manualRowSelectedKey: 'none',
-      stateReducer: (newState, action) => {
-        if (action.type === 'toggleRowSelected') {
-          if (action.value) {
-            (newState.selectedRowIds as unknown as any) = {
-              [action.id]: true
-            };
-          } else {
-            (newState.selectedRowIds as unknown as any) = {};
-          }
-        }
-        return newState;
       }
+      // manualRowSelectedKey: 'none',
+      // stateReducer: (newState, action) => {
+      //   if (action.type === 'toggleRowSelected') {
+      //     if (action.value) {
+      //       (newState.selectedRowIds as unknown as any) = {
+      //         [action.id]: true
+      //       };
+      //     } else {
+      //       (newState.selectedRowIds as unknown as any) = {};
+      //     }
+      //   }
+      //   return newState;
+      // }
     },
     ...defaultHooks,
     (hooks) => {
-      if (showRadio) {
-        hooks.visibleColumns.push((cols) => [
-          useRadioSelect(),
-          ...cols
-        ]);
-      } else {
-        hooks.visibleColumns.push((cols) => [
-          ...cols
-        ]);
-      }
+      // if (showRadio) {
+      //   hooks.visibleColumns.push((cols) => [
+      //     useRadioSelect(),
+      //     ...cols
+      //   ]);
+      // } else {
+      //   hooks.visibleColumns.push((cols) => [
+      //     ...cols
+      //   ]);
+      // }
     }
   );
 
@@ -194,8 +194,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
     gotoPage,
     nextPage,
     previousPage,
-    toggleRowSelected,
-    selectedFlatRows,
+    // toggleRowSelected,
+    // selectedFlatRows,
     state: { pageIndex, selectedRowIds }
   } = tableInstance;
 
@@ -208,30 +208,27 @@ export default function CustomTable<T extends Record<string, unknown>>(
     previousPage
   };
 
-  useEffect(() => {
-    // treting selection as radio selection,
-    // only one row at a time
-    if (selectedFlatRows[0]) {
-      onSelectedRowChange(selectedFlatRows[0].original);
-    } else {
-      onSelectedRowChange(null);
-    }
-  }, [selectedFlatRows]);
+  // useEffect(() => {
+  //   // treting selection as radio selection,
+  //   // only one row at a time
+  //   if (selectedFlatRows[0]) {
+  //     onSelectedRowChange(selectedFlatRows[0].original);
+  //   } else {
+  //     onSelectedRowChange(null);
+  //   }
+  // }, [selectedFlatRows]);
 
-  useEffect(() => {
-    rows.forEach(({ id, original }) => {
-      if ((original as any).isSelected) {
-        toggleRowSelected(id, true);
-      }
-    });
-  }, [rows, toggleRowSelected]);
+  // useEffect(() => {
+  //   rows.forEach(({ id, original }) => {
+  //     if ((original as any).isSelected) {
+  //       toggleRowSelected(id, true);
+  //     }
+  //   });
+  // }, [rows, toggleRowSelected]);
 
-  const handleRowClick = ({ id }: Row<T>) => {
-    if (id in selectedRowIds) {
-      toggleRowSelected(id, false);
-    } else {
-      toggleRowSelected(id, true);
-    }
+  const handleRowClick = (row: Row<T>) => {
+    onSelectedRowChange(row.original);
+    // toggleRowSelected(id, false);
   };
 
   return (
