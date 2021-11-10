@@ -27,7 +27,7 @@ const Tag = styled.div({
   borderRadius: '6px',
   fontSize: '10px',
   backgroundColor: '#ffdac1',
-  color: '#ff8738',
+  color: '#000',
   marginRight: '5px',
   padding: '0 3px'
 });

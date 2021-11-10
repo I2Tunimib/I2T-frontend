@@ -28,7 +28,7 @@ import {
   selectIsAutoMatchingEnabled, selectCanUndo,
   selectCanRedo, selectCanDelete, selectIsDenseView,
   selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled,
-  selectIsViewOnly, selectMetadataDialogStatus
+  selectIsViewOnly, selectMetadataDialogStatus, selectExtensionDialogStatus
 } from '@store/slices/table/table.selectors';
 import { useDebouncedCallback } from 'use-debounce';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
@@ -64,6 +64,7 @@ const SubToolbar = () => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const { API } = useAppSelector(selectAppConfig);
   const openMetadataDialog = useAppSelector(selectMetadataDialogStatus);
+  const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
 
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -120,6 +121,9 @@ const SubToolbar = () => {
   };
   const handleCloseAutoMatching = () => {
     setIsAutoMatching(false);
+  };
+  const handleExtensionClose = () => {
+    dispatch(updateUI({ openExtensionDialog: false }));
   };
 
   return (
@@ -182,21 +186,23 @@ const SubToolbar = () => {
             onClick={() => dispatch(updateUI({ denseView: !isDenseView }))}
           />
         </ActionGroup>
-        <ActionGroup>
-          <Button
-            color="primary"
-            disabled={!isCellSelected}
-            onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
-            variant="contained">
-            Reconcile
-          </Button>
-          <Button
-            // disabled={!isExtendButtonEnabled}
-            onClick={() => dispatch(updateUI({ openExtensionDialog: true }))}
-            variant="contained">
-            Extend
-          </Button>
-        </ActionGroup>
+        {!isViewOnly && (
+          <ActionGroup>
+            <Button
+              color="primary"
+              disabled={!isCellSelected}
+              onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
+              variant="contained">
+              Reconcile
+            </Button>
+            <Button
+              disabled={!isExtendButtonEnabled}
+              onClick={() => dispatch(updateUI({ openExtensionDialog: true }))}
+              variant="contained">
+              Extend
+            </Button>
+          </ActionGroup>
+        )}
         <Searchbar
           defaultTag="all"
           placeholder="Search table, metadata..."
@@ -209,7 +215,7 @@ const SubToolbar = () => {
       </ToolbarActions>
       {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}
       <ReconciliateDialog />
-      <ExtensionDialog />
+      <ExtensionDialog open={openExtensionDialog} handleClose={handleExtensionClose} />
       <AutoMatching
         open={isAutoMatching}
         anchorElement={autoMatchingAnchor}

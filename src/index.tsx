@@ -1,5 +1,5 @@
 import { BrowserRouter } from 'react-router-dom';
-import React from 'react';
+import React, { FC } from 'react';
 import ReactDOM from 'react-dom';
 import './index.scss';
 import { store } from '@store';
@@ -7,8 +7,9 @@ import { Provider } from 'react-redux';
 import Loader from '@components/core/Loader';
 import {
   createTheme, ThemeProvider,
-  Theme, StyledEngineProvider
+  Theme, StyledEngineProvider, makeStyles
 } from '@mui/material/styles';
+import { SnackbarProvider } from 'notistack';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
@@ -70,7 +71,10 @@ ReactDOM.render(
       <BrowserRouter>
         <StyledEngineProvider injectFirst>
           <ThemeProvider theme={theme}>
-            <App />
+            <SnackbarProvider
+              maxSnack={3}>
+              <App />
+            </SnackbarProvider>
           </ThemeProvider>
         </StyledEngineProvider>
       </BrowserRouter>

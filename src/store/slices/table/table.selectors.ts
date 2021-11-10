@@ -42,6 +42,10 @@ export const selectReconcileRequestStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.RECONCILE)
 );
+export const selectExtendRequestStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, TableThunkActions.EXTEND)
+);
 export const selectSaveTableStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.SAVE_TABLE)
@@ -303,22 +307,26 @@ export const selectIsAutoMatchingEnabled = createSelector(
 );
 
 export const selectIsExtendButtonEnabled = createSelector(
-  selectSelectedColumnIds,
+  selectUIState,
   selectColumnsState,
-  (colIds, columnEntities) => {
-    const ids = Object.keys(colIds);
-
-    if (ids.length !== 1) {
+  ({ selectedColumnsIds, selectedCellIds }, columns) => {
+    const colIds = Object.keys(selectedColumnsIds);
+    const cellIds = Object.keys(selectedCellIds);
+    if (colIds.length === 0) {
       return false;
     }
-    const selectedColumnId = ids[0];
-    const { context, status } = columnEntities.byId[selectedColumnId];
+    const onlyColsSelected = !cellIds.some((cellId) => {
+      const [_, colId] = getIdsFromCell(cellId);
+      return !(colId in selectedColumnsIds);
+    });
 
-    const nReconciliators = Object.keys(context)
-      .reduce((acc, key) => (context[key].reconciliated > 0 ? acc + 1 : acc), 0);
-
-    if (status === ColumnStatus.RECONCILIATED) {
-      return true;
+    if (onlyColsSelected) {
+      return colIds.some((colId) => {
+        const { context } = columns.byId[colId];
+        const totalReconciliated = Object.keys(context)
+          .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
+        return totalReconciliated > 0;
+      });
     }
     return false;
   }

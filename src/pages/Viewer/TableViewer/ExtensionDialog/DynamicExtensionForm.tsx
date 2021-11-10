@@ -2,11 +2,13 @@ import { Button, Stack } from '@mui/material';
 import { Extender, ExtenderFormInputParams } from '@store/slices/config/interfaces/config';
 import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import LoadingButton from '@mui/lab/LoadingButton';
 import CheckboxGroup from './FormComponents/CheckboxGroup';
 import InputText from './FormComponents/InputText';
 import { Select, SelectColumns } from './FormComponents/Select';
 
 export type DynamicExtensionFormProps = {
+  loading: boolean | undefined;
   extender: Extender;
   onSubmit: (formState: Record<string, any>) => void;
 }
@@ -63,6 +65,7 @@ const prepareFormInput = (inputProps: Omit<ExtenderFormInputParams, 'id' | 'inpu
 };
 
 const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
+  loading,
   extender,
   onSubmit: onSubmitCallback
 }) => {
@@ -117,7 +120,7 @@ const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
       })}
       <Stack direction="row" justifyContent="flex-end">
         <Button>Cancel</Button>
-        <Button type="submit">Confirm</Button>
+        <LoadingButton type="submit" loading={loading}>Confirm</LoadingButton>
       </Stack>
     </Stack>
   );
