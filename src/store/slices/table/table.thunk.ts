@@ -1,8 +1,10 @@
 import tableAPI from '@services/api/table';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
-import { Extender, Reconciliator } from '../config/interfaces/config';
+import { RootState } from '@store';
+import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
 import convertToW3CTable from './utils/table.export-utils';
+import { ColumnState, RowState, TableState } from './interfaces/table';
 
 const ACTION_PREFIX = 'table';
 
@@ -58,7 +60,6 @@ export const saveTable = createAsyncThunk(
   `${ACTION_PREFIX}/saveTable`,
   async (params: Record<string, string | number> = {}, { getState }) => {
     const { table } = getState() as any;
-    console.log(table);
     const response = await tableAPI.saveTable(table.entities, params);
     return response.data;
   }
@@ -98,19 +99,96 @@ export const reconcile = createAsyncThunk(
   }
 );
 
-export const extend = createAsyncThunk(
+export type ExtendThunkInputProps = {
+  extender: Extender;
+  formValues: Record<string, any>;
+}
+export type ExtendThunkResponseProps = {
+  extender: Extender;
+  data: {
+    columns: ColumnState['byId']
+    rows: RowState['byId']
+  }
+}
+
+const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+    if (trueMeta) {
+      // eslint-disable-next-line prefer-destructuring
+      acc[rowId] = trueMeta.id;
+    }
+    return acc;
+  }, {} as Record<string, any>);
+};
+
+const getColumnValues = (colId: string, rowEntities: RowState) => {
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    acc[rowId] = cell.label;
+    return acc;
+  }, {} as Record<string, any>);
+};
+
+const getRequestFormValues = (
+  formParams: ExtenderFormInputParams[],
+  formValues: Record<string, any>,
+  table: TableState
+) => {
+  const { ui, entities } = table;
+  const { rows } = entities;
+  const selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
+
+  const requestParams = {} as Record<string, any>;
+
+  requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+    acc[key] = getColumnMetaIds(key, rows);
+    return acc;
+  }, {} as Record<string, any>);
+
+  formParams.forEach(({ id, inputType }) => {
+    if (inputType === 'selectColumns') {
+      requestParams[id] = getColumnValues(formValues[id], rows);
+    } else {
+      requestParams[id] = formValues[id];
+    }
+  });
+
+  return requestParams;
+};
+
+/**
+ * Handle api call for dynamic form extension
+ */
+export const extend = createAsyncThunk<ExtendThunkResponseProps, ExtendThunkInputProps>(
   `${ACTION_PREFIX}/extend`,
-  async (
-    {
-      baseUrl,
-      data,
-      extender
-    }: { baseUrl: string, data: any, extender: Extender }
-  ) => {
-    const response = await tableAPI.extend(baseUrl, data);
+  async (inputProps, { getState }) => {
+    const { extender, formValues } = inputProps;
+    // get root table states
+    const { table } = getState() as RootState;
+    const { relativeUrl, formParams, id } = extender;
+    const params = getRequestFormValues(formParams, formValues, table);
+    const response = await tableAPI.extend(relativeUrl, { extenderId: id, ...params });
     return {
       data: response.data,
       extender
     };
   }
 );
+// export const extend = createAsyncThunk(
+//   `${ACTION_PREFIX}/extend`,
+//   async (
+//     {
+//       baseUrl,
+//       data,
+//       extender
+//     }: { baseUrl: string, data: any, extender: Extender }
+//   ) => {
+//     const response = await tableAPI.extend(baseUrl, data);
+//     return {
+//       data: response.data,
+//       extender
+//     };
+//   }
+// );

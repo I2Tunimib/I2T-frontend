@@ -204,7 +204,7 @@ const Table: FC<TableProps> = ({
         {...getTableProps([getGlobalProps()])}>
         <TableHead>
           {// Loop over the header rows
-            headerGroups.map((headerGroup) => (
+            headerGroups.map((headerGroup, jj) => (
               // Apply the header row props
               <TableRow {...headerGroup.getHeaderGroupProps([getGlobalProps()])}>
                 {// Loop over the headers in each row

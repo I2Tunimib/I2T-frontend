@@ -191,7 +191,7 @@ const SubToolbar = () => {
             Reconcile
           </Button>
           <Button
-            disabled={!isExtendButtonEnabled}
+            // disabled={!isExtendButtonEnabled}
             onClick={() => dispatch(updateUI({ openExtensionDialog: true }))}
             variant="contained">
             Extend

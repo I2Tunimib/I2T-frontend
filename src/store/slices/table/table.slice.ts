@@ -17,6 +17,7 @@ import {
   ExtendFulfilledPayload,
   FileFormat,
   ReconciliationFulfilledPayload,
+  RowState,
   TableState,
   TableType,
   TableUIState,
@@ -30,6 +31,7 @@ import {
 } from './interfaces/table';
 import {
   extend,
+  ExtendThunkResponseProps,
   getTable,
   reconcile, saveTable
 } from './table.thunk';
@@ -163,12 +165,19 @@ export const tableSlice = createSliceWithRequests({
       const [rowId, colId] = getIdsFromCell(cellId);
 
       return produceWithPatch(state, undoable, (draft) => {
-        const { id, name } = value;
+        const { id, match, ...rest } = value;
+
+        const isMatching = match === 'true';
+
+        if (isMatching) {
+          draft.entities.rows.byId[rowId].cells[colId].metadata = draft.entities.rows
+            .byId[rowId].cells[colId].metadata.map((item) => ({ ...item, match: false }));
+        }
+
         const newMeta = {
           id: `${prefix}:${id}`,
-          name,
-          match: false,
-          score: 0
+          match: isMatching,
+          ...rest
         };
         draft.entities.rows.byId[rowId].cells[colId].metadata.push(newMeta);
       }, (draft) => {
@@ -486,55 +495,36 @@ export const tableSlice = createSliceWithRequests({
         });
       })
       .addCase(extend.fulfilled, (
-        state, action: PayloadAction<Payload<ExtendFulfilledPayload>>
+        state, action: PayloadAction<Payload<ExtendThunkResponseProps>>
       ) => {
         const { data, extender, undoable = true } = action.payload;
-        const { items, meta } = data;
-        const { props, context } = meta;
-
-        const colId = Object.keys(state.ui.selectedColumnsIds)[0];
+        const { columns, rows } = data;
 
         return produceWithPatch(state, undoable, (draft) => {
-          // add columns
-          props.forEach((metaItem) => {
-            draft.entities.columns.byId[`${colId}_${metaItem.name}`] = {
-              id: `${colId}_${metaItem.name}`,
-              context,
-              label: `${colId}_${metaItem.name}`,
-              status: ColumnStatus.EMPTY,
-              metadata: []
-            };
-            draft.entities.columns.byId[`${colId}_${metaItem.name}`].status = getColumnStatus(draft, `${colId}_${metaItem.name}`);
+          const newColIds = Object.keys(columns);
+          draft.entities.columns.byId = {
+            ...draft.entities.columns.byId,
+            ...columns
+          };
 
-            if (!draft.entities.columns.allIds.includes(`${colId}_${metaItem.name}`)) {
-              const index = draft.entities.columns.allIds.findIndex((id) => id === colId);
-              draft.entities.columns.allIds.splice(index + 1, 0, `${colId}_${metaItem.name}`);
-            }
-          });
-
-          // add columns cells
-          draft.entities.rows.allIds.forEach((rowId) => {
-            props.forEach(({ id: propKey }) => {
-              const cellId = `${rowId}$${colId}_${propKey}`;
-              if (items[rowId] && items[rowId][propKey]) {
-                draft.entities.rows.byId[rowId].cells[`${colId}_${propKey}`] = {
-                  id: cellId,
-                  label: items[rowId][propKey].length > 0 ? items[rowId][propKey][0].name : 'null',
-                  metadata: items[rowId][propKey].map(({ ...rest }) => ({
-                    score: 100,
-                    match: true,
-                    ...rest
-                  }))
-                };
+          newColIds.forEach((colId) => {
+            draft.entities.rows.allIds.forEach((rowId) => {
+              if (rows[rowId]) {
+                draft.entities.rows.byId[rowId].cells[colId] = rows[rowId].cells[colId];
               } else {
-                draft.entities.rows.byId[rowId].cells[`${colId}_${propKey}`] = {
-                  id: cellId,
+                draft.entities.rows.byId[rowId].cells[colId] = {
+                  id: `${rowId}$${colId}`,
                   label: 'null',
                   metadata: []
                 };
               }
             });
+
+            if (!draft.entities.columns.allIds.includes(colId)) {
+              draft.entities.columns.allIds.push(colId);
+            }
           });
+
           updateNumberOfReconciliatedCells(draft);
         }, (draft) => {
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();

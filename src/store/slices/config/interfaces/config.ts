@@ -24,9 +24,28 @@ export interface Reconciliator {
 
 export interface Extender extends Record<string, any> {
   id: ID;
+  serviceKey: string;
   name: string;
   relativeUrl: string;
-  // ...
+  description: string;
+  formParams: ExtenderFormInputParams[];
+}
+
+export interface ExtenderFormInputParams {
+  id: string;
+  description: string;
+  label: string;
+  inputType: 'text' | 'select' | 'selectColumns' | 'checkbox';
+  rules: string[];
+  options?: Option[];
+  infoText?: string;
+  defaultValue?: string;
+}
+
+export interface Option {
+  id: string;
+  value: string;
+  label: string;
 }
 
 export interface Config {

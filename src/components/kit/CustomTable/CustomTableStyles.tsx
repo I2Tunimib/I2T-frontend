@@ -78,3 +78,16 @@ export const TableRowCell = styled.td`
     padding: 0;
   }
 `;
+
+export const TableLoadingOverlay = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(255 255 255 / 70%);
+  z-index: 999;
+`;

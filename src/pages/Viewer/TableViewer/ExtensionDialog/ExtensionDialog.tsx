@@ -6,10 +6,12 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   FormControl,
   MenuItem,
   Select,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Typography
 } from '@mui/material';
 import {
   forwardRef,
@@ -28,6 +30,7 @@ import { Extender } from '@store/slices/config/interfaces/config';
 import styled from '@emotion/styled';
 import { extend } from '@store/slices/table/table.thunk';
 import AsiaGeoExtensionForm from './AsiaGeoExtensionForm';
+import DynamicExtensionForm from './DynamicExtensionForm';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -39,6 +42,12 @@ const Content = styled.div({
   flexDirection: 'column',
   gap: '20px'
 });
+
+const Description = styled(Typography)`
+  border-radius: 7px;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
+`;
 
 const getDataForGeoExtension = (data: Record<string, string>) => {
   return Object.keys(data).reduce((acc, key) => {
@@ -68,22 +77,22 @@ const ExtensionDialog = () => {
     }
   }, [extensionServices]);
 
-  const handleConfirm = () => {
-    if (currentService) {
-      const data = {
-        items: getDataForGeoExtension(selectedColMetaIds),
-        props: subformStatus.data
-      };
+  // const handleConfirm = () => {
+  //   if (currentService) {
+  //     const data = {
+  //       items: getDataForGeoExtension(selectedColMetaIds),
+  //       props: subformStatus.data
+  //     };
 
-      dispatch(extend({
-        baseUrl: currentService.relativeUrl,
-        data,
-        extender: currentService
-      })).unwrap().then(() => {
-        dispatch(updateUI({ openExtensionDialog: false }));
-      });
-    }
-  };
+  //     dispatch(extend({
+  //       baseUrl: currentService.relativeUrl,
+  //       data,
+  //       extender: currentService
+  //     })).unwrap().then(() => {
+  //       dispatch(updateUI({ openExtensionDialog: false }));
+  //     });
+  //   }
+  // };
 
   const handleClose = () => {
     dispatch(updateUI({ openExtensionDialog: false }));
@@ -96,12 +105,22 @@ const ExtensionDialog = () => {
     }
   };
 
-  const handleChildFormChange = ({ data, valid }: any) => {
-    setSubformStatus({
-      data,
-      valid
-    });
+  const handleSubmit = (formState: Record<string, any>) => {
+    console.log(formState);
+    if (currentService) {
+      dispatch(extend({
+        extender: currentService,
+        formValues: formState
+      }));
+    }
   };
+
+  // const handleChildFormChange = ({ data, valid }: any) => {
+  //   setSubformStatus({
+  //     data,
+  //     valid
+  //   });
+  // };
 
   return (
     <Dialog
@@ -113,38 +132,32 @@ const ExtensionDialog = () => {
     >
       <DialogTitle>Extension</DialogTitle>
       <DialogContent>
-        <DialogContentText>
+        <DialogContentText paddingBottom="10px">
           Select an extension service:
         </DialogContentText>
         <Content>
           {currentService && (
-            <FormControl className="field">
-              <Select
-                value={currentService.id}
-                onChange={(e) => handleChange(e)}
-                variant="outlined"
-              >
-                {extensionServices && extensionServices.map((extender) => (
-                  <MenuItem key={extender.id} value={extender.id}>
-                    {extender.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
-          {currentService && currentService.name === 'ASIA (geonames)' && (
-            <AsiaGeoExtensionForm onChange={handleChildFormChange} />
+            <>
+              <FormControl className="field">
+                <Select
+                  value={currentService.id}
+                  onChange={(e) => handleChange(e)}
+                  variant="outlined"
+                >
+                  {extensionServices && extensionServices.map((extender) => (
+                    <MenuItem key={extender.id} value={extender.id}>
+                      {extender.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Description>{currentService.description}</Description>
+              <Divider />
+              <DynamicExtensionForm onSubmit={handleSubmit} extender={currentService} />
+            </>
           )}
         </Content>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>
-          Cancel
-        </Button>
-        <ButtonLoading disabled={!subformStatus.valid} onClick={handleConfirm} loading={false}>
-          Confirm
-        </ButtonLoading>
-      </DialogActions>
     </Dialog>
   );
 };

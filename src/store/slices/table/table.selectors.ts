@@ -94,6 +94,20 @@ export const selectEditableCellsIds = createSelector(
   (ui) => ui.editableCellsIds
 );
 
+export const selectColumnsAsSelectOptions = createSelector(
+  selectColumnsState,
+  ({ byId, allIds }) => {
+    return allIds.map((colId) => {
+      const { id, label } = byId[colId];
+      return {
+        id,
+        label,
+        value: id
+      };
+    });
+  }
+);
+
 /**
  * Get selected columns ids as object.
  */
@@ -439,8 +453,7 @@ export const selectCellMetadataTableFormat = createSelector(
                 link: tableColId === 'name' && `${col.context[prefix].uri}/${id}`
               } : toString(item[tableColId as keyof BaseMetadata]);
               return acc;
-            }, {} as { [key: string]: any } & Row),
-            isSelected: item.match
+            }, {} as { [key: string]: any } & Row)
           };
         });
         return { columns, data };

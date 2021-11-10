@@ -1,6 +1,7 @@
 import useScroll from '@hooks/scroll/useScroll';
 import {
   Box,
+  CircularProgress,
   IconButton,
   Pagination, Paper,
   Radio,
@@ -22,11 +23,13 @@ import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import {
   Table, TableHead, TableHeaderCell,
+  TableLoadingOverlay,
   TableRow, TableRowCell
 } from './CustomTableStyles';
 
 export interface TableProperties<T extends Record<string, unknown>> extends TableOptions<T> {
   onSelectedRowChange: (row: T | null) => void;
+  loading?: boolean;
 }
 
 interface FooterProps<T extends Record<string, unknown>> {
@@ -118,17 +121,6 @@ const RadioCell = forwardRef(
   }
 );
 
-function useRadioSelect<T extends Record<string, unknown>>() {
-  return {
-    id: 'selection',
-    Cell: ({ row }: Cell<T>) => (
-      <div>
-        <RadioCell {...row.getToggleRowSelectedProps()} />
-      </div>
-    )
-  };
-}
-
 const defaultHooks = [
   useSortBy,
   usePagination
@@ -142,6 +134,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
     columns,
     data,
     onSelectedRowChange,
+    loading = false,
     showRadio = true
   } = props;
   const tableInstance = useTable<T>(
@@ -151,33 +144,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
       initialState: {
         pageSize: 20
       }
-      // manualRowSelectedKey: 'none',
-      // stateReducer: (newState, action) => {
-      //   if (action.type === 'toggleRowSelected') {
-      //     if (action.value) {
-      //       (newState.selectedRowIds as unknown as any) = {
-      //         [action.id]: true
-      //       };
-      //     } else {
-      //       (newState.selectedRowIds as unknown as any) = {};
-      //     }
-      //   }
-      //   return newState;
-      // }
     },
-    ...defaultHooks,
-    (hooks) => {
-      // if (showRadio) {
-      //   hooks.visibleColumns.push((cols) => [
-      //     useRadioSelect(),
-      //     ...cols
-      //   ]);
-      // } else {
-      //   hooks.visibleColumns.push((cols) => [
-      //     ...cols
-      //   ]);
-      // }
-    }
+    ...defaultHooks
   );
 
   const {
@@ -208,36 +176,23 @@ export default function CustomTable<T extends Record<string, unknown>>(
     previousPage
   };
 
-  // useEffect(() => {
-  //   // treting selection as radio selection,
-  //   // only one row at a time
-  //   if (selectedFlatRows[0]) {
-  //     onSelectedRowChange(selectedFlatRows[0].original);
-  //   } else {
-  //     onSelectedRowChange(null);
-  //   }
-  // }, [selectedFlatRows]);
-
-  // useEffect(() => {
-  //   rows.forEach(({ id, original }) => {
-  //     if ((original as any).isSelected) {
-  //       toggleRowSelected(id, true);
-  //     }
-  //   });
-  // }, [rows, toggleRowSelected]);
-
   const handleRowClick = (row: Row<T>) => {
     onSelectedRowChange(row.original);
-    // toggleRowSelected(id, false);
   };
 
   return (
     // apply the table props
     <Box sx={{
+      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1
     }}>
+      {loading && (
+        <TableLoadingOverlay>
+          <CircularProgress />
+        </TableLoadingOverlay>
+      )}
       <Box
         sx={{
           flexGrow: 1,

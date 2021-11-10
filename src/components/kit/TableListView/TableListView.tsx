@@ -43,7 +43,6 @@ const transformCamelCase = (value: any) => {
       .filter((splitted) => splitted)
       .join(' ');
 
-    console.log(a);
     return value.split(/([A-Z][a-z]+)/)
       .map((splitted) => (splitted ? splitted.toLowerCase() : ''))
       .filter((splitted) => splitted)

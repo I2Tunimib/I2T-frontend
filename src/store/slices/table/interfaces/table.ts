@@ -150,14 +150,8 @@ export interface ReconciliationFulfilledPayload {
 }
 
 export interface ExtendFulfilledPayload {
-  data: {
-    items: Record<string, Record<string, any[]>>,
-    meta: {
-      props: any[],
-      context: Record<string, Context>
-    }
-  },
-  extender: Extender;
+  columns: ColumnState['byId']
+  rows: RowState['byId']
 }
 
 export interface AddCellMetadataPayload {
@@ -166,6 +160,8 @@ export interface AddCellMetadataPayload {
   value: {
     id: string;
     name: string;
+    score: number;
+    match: string;
   }
 }
 

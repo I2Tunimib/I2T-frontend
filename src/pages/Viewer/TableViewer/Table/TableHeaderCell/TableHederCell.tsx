@@ -64,7 +64,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                 </div>
                 {data.kind && getKind(data.kind)}
                 {data.role
-                && <ButtonShortcut className={styles.SubjectLabel} text={capitalize(data.role)} variant="flat" color="darkblue" size="xs" />}
+                  && <ButtonShortcut className={styles.SubjectLabel} text={capitalize(data.role)} variant="flat" color="darkblue" size="xs" />}
               </div>
               {data.status === ColumnStatus.RECONCILIATED ? (
                 <Stack
@@ -77,20 +77,19 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                   <LinkRoundedIcon />
                   {reconciliators ? reconciliators.join(' | ') : data.reconciliator}
                 </Stack>
-              ) : [
-                data.status === ColumnStatus.PENDING ? (
-                  <Stack
-                    sx={{
-                      fontSize: '12px'
-                    }}
-                    direction="row"
-                    gap="5px"
-                    alignItems="center">
-                    <LinkRoundedIcon />
-                    Partial annotation
-                  </Stack>
-                ) : null
-              ]}
+              ) : data.status === ColumnStatus.PENDING ? (
+                <Stack
+                  sx={{
+                    fontSize: '12px'
+                  }}
+                  direction="row"
+                  gap="5px"
+                  alignItems="center">
+                  <LinkRoundedIcon />
+                  Partial annotation
+                </Stack>
+              ) : null
+              }
             </div>
             {expanded && <TableHeaderCellExpanded {...data} />}
           </div>
