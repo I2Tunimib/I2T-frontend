@@ -32,6 +32,7 @@ export interface TableUIState {
   openExportDialog: boolean;
   headerExpanded: boolean;
   view: 'table' | 'graph' | 'raw';
+  selectedColumnCellsIds: Record<ID, boolean>;
   selectedColumnsIds: Record<ID, boolean>;
   selectedRowsIds: Record<ID, boolean>;
   selectedCellIds: Record<ID, boolean>;

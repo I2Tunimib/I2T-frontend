@@ -44,6 +44,7 @@ export const areRowsColumnsSelected = (state: Draft<TableState>) => {
 export const selectOneCell = (state: Draft<TableState>, cellId: ID) => {
   state.ui.selectedCellIds = addObject({}, { [cellId]: true });
   state.ui.selectedColumnsIds = {};
+  state.ui.selectedColumnCellsIds = {};
   state.ui.selectedRowsIds = {};
 };
 /**
@@ -166,6 +167,36 @@ export const deselectColumnWithCells = (state: Draft<TableState>, colId: ID) => 
   });
 };
 
+export const selectColumnCell = (state: Draft<TableState>, colId: ID) => {
+  // state.ui.selectedColumnsIds = {};
+  // state.ui.selectedColumnCellsIds = {};
+  // state.ui.selectedCellIds = {};
+  state.ui.selectedColumnCellsIds[colId] = true;
+  // state.entities.rows.allIds.forEach((rowId) => {
+  //   if (rowId in state.ui.selectedRowsIds) {
+  //     deselectRow(state, rowId);
+  //   }
+  //   deselectCell(state, `${rowId}$${colId}`);
+  // });
+};
+
+export const deselectColumnCell = (state: Draft<TableState>, colId: ID) => {
+  state.ui.selectedColumnCellsIds = removeObject(state.ui.selectedColumnCellsIds, colId);
+  // state.entities.rows.allIds.forEach((rowId) => {
+  //   if (rowId in state.ui.selectedRowsIds) {
+  //     deselectRow(state, rowId);
+  //   }
+  //   deselectCell(state, `${rowId}$${colId}`);
+  // });
+};
+
+export const selectOneColumnCell = (state: Draft<TableState>, colId: ID) => {
+  state.ui.selectedColumnsIds = {};
+  state.ui.selectedColumnCellsIds = {};
+  state.ui.selectedCellIds = {};
+  state.ui.selectedColumnCellsIds[colId] = true;
+};
+
 /**
  * Select one column.
  * When a column is selected without multi select, deselect all other things
@@ -173,6 +204,7 @@ export const deselectColumnWithCells = (state: Draft<TableState>, colId: ID) => 
  */
 export const selectOneColumn = (state: Draft<TableState>, colId: ID) => {
   state.ui.selectedColumnsIds = {};
+  state.ui.selectedColumnCellsIds = {};
   state.ui.selectedRowsIds = {};
   selectColumnWithCells(state, colId);
 };
@@ -229,6 +261,13 @@ export const toggleColumnSelection = (state: Draft<TableState>, colId: ID) => {
     deselectColumnWithCells(state, colId);
   } else {
     selectColumnWithCells(state, colId);
+  }
+};
+export const toggleColumnCellsSelection = (state: Draft<TableState>, colId: ID) => {
+  if (colId in state.ui.selectedColumnCellsIds) {
+    deselectColumnCell(state, colId);
+  } else {
+    selectColumnCell(state, colId);
   }
 };
 /**

@@ -119,6 +119,10 @@ export const selectSelectedColumnIds = createSelector(
   selectUIState,
   (ui) => ui.selectedColumnsIds
 );
+export const selectSelectedColumnCellsIds = createSelector(
+  selectUIState,
+  (ui) => ui.selectedColumnCellsIds
+);
 /**
  * Get selected columns ids as array.
  */

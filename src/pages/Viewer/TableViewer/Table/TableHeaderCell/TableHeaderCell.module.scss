@@ -13,6 +13,20 @@
     left: 10px;
   }
 
+  &:hover {
+    .ColumnSelectionButton {
+      visibility: visible;
+    }
+  }
+
+  .ColumnSelectionButton {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    visibility: hidden;
+    z-index: 10;
+  }
+
   &.TableHeaderIndex {
     width: 38px;
   }

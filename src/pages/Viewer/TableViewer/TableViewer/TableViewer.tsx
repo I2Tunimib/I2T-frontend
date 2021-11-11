@@ -6,6 +6,7 @@ import {
 import {
   redo,
   undo, updateCellLabel, updateCellSelection,
+  updateColumnCellsSelection,
   updateColumnSelection,
   updateRowSelection
 } from '@store/slices/table/table.slice';
@@ -19,7 +20,8 @@ import {
   selectIsDenseView, selectSearchStatus,
   selectGetTableStatus, selectIsUnsaved,
   selectIsHeaderExpanded, selectExpandedCellsIds,
-  selectExpandedColumnsIds, selectEditableCellsIds, selectTutorialBBoxes
+  selectExpandedColumnsIds, selectEditableCellsIds,
+  selectTutorialBBoxes, selectSelectedColumnCellsIds
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { getTable, saveTable } from '@store/slices/table/table.thunk';
@@ -65,6 +67,7 @@ const TableViewer = () => {
   const unsavedChanges = useAppSelector(selectIsUnsaved);
   const searchFilter = useAppSelector(selectSearchStatus);
   const selectedColumns = useAppSelector(selectSelectedColumnIds);
+  const selectedColumnCells = useAppSelector(selectSelectedColumnCellsIds);
   const selectedRows = useAppSelector(selectSelectedRowIds);
   const selectedCells = useAppSelector(selectSelectedCellIds);
   const expandedCellsIds = useAppSelector(selectExpandedCellsIds);
@@ -133,6 +136,16 @@ const TableViewer = () => {
         dispatch(updateColumnSelection({ id, multi: true }));
       } else {
         dispatch(updateColumnSelection({ id }));
+      }
+    }
+  }, []);
+
+  const handleSelectedColumnCellChange = useCallback((event: MouseEvent, id: ID) => {
+    if (id !== 'index') {
+      if (event.ctrlKey) {
+        dispatch(updateColumnCellsSelection({ id, multi: true }));
+      } else {
+        dispatch(updateColumnCellsSelection({ id }));
       }
     }
   }, []);
@@ -207,14 +220,16 @@ const TableViewer = () => {
   }: TableColumn) => {
     return {
       id,
-      selected: !!selectedColumns[id],
+      selected: !!selectedColumns[id] || !!selectedColumnCells[id],
       expanded: !!expandedColumnsIds[id],
       data,
       handleCellRightClick,
-      handleSelectedColumnChange
+      handleSelectedColumnChange,
+      handleSelectedColumnCellChange
     };
   }, [
     selectedColumns,
+    selectedColumnCells,
     expandedColumnsIds
   ]);
 

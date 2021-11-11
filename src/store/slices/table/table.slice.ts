@@ -51,10 +51,13 @@ import {
 import {
   areOnlyRowsSelected,
   areRowsColumnsSelected,
+  selectColumnCell,
   selectOneCell,
   selectOneColumn,
+  selectOneColumnCell,
   selectOneRow,
   toggleCellSelection,
+  toggleColumnCellsSelection,
   toggleColumnSelection,
   toggleRowSelection
 } from './utils/table.selection-utils';
@@ -81,6 +84,7 @@ const initialState: TableState = {
     openMetadataDialog: false,
     openExportDialog: false,
     view: 'table',
+    selectedColumnCellsIds: {},
     selectedColumnsIds: {},
     selectedRowsIds: {},
     selectedCellIds: {},
@@ -332,6 +336,14 @@ export const tableSlice = createSliceWithRequests({
         selectOneColumn(state, colId);
       }
     },
+    updateColumnCellsSelection: (state, action: PayloadAction<UpdateSelectedColumnPayload>) => {
+      const { id: colId, multi } = action.payload;
+      if (multi) {
+        toggleColumnCellsSelection(state, colId);
+      } else {
+        selectOneColumnCell(state, colId);
+      }
+    },
     /**
      * Handle changes to selected cells.
      */
@@ -536,6 +548,7 @@ export const tableSlice = createSliceWithRequests({
 export const {
   restoreInitialState,
   updateCurrentTable,
+  updateColumnCellsSelection,
   updateSelectedCellExpanded,
   updateCellEditable,
   updateCellLabel,
