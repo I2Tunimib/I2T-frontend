@@ -510,7 +510,7 @@ export const tableSlice = createSliceWithRequests({
         state, action: PayloadAction<Payload<ExtendThunkResponseProps>>
       ) => {
         const { data, extender, undoable = true } = action.payload;
-        const { columns, rows } = data;
+        const { columns, rows, meta } = data;
 
         return produceWithPatch(state, undoable, (draft) => {
           const newColIds = Object.keys(columns);
@@ -533,7 +533,14 @@ export const tableSlice = createSliceWithRequests({
             });
 
             if (!draft.entities.columns.allIds.includes(colId)) {
-              draft.entities.columns.allIds.push(colId);
+              const index = draft.entities.columns.allIds
+                .findIndex((originalColId) => originalColId === meta[colId]);
+
+              if (index !== -1) {
+                draft.entities.columns.allIds.splice(index + 1, 0, colId);
+              } else {
+                draft.entities.columns.allIds.push(colId);
+              }
             }
           });
 

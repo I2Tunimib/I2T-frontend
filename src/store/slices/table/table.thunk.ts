@@ -107,7 +107,8 @@ export type ExtendThunkResponseProps = {
   extender: Extender;
   data: {
     columns: ColumnState['byId']
-    rows: RowState['byId']
+    rows: RowState['byId'],
+    meta: Record<string, string>
   }
 }
 
