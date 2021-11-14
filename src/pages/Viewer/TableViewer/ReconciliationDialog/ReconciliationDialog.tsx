@@ -60,7 +60,7 @@ const ReconciliateDialog = () => {
     if (reconciliator) {
       dispatch(reconcile({
         baseUrl: reconciliator.relativeUrl,
-        data: selectedCells,
+        items: selectedCells,
         reconciliator
       }))
         .unwrap()

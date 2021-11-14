@@ -87,10 +87,14 @@ export const reconcile = createAsyncThunk(
   async (
     {
       baseUrl,
-      data,
+      items,
       reconciliator
-    }: { baseUrl: string, data: any, reconciliator: Reconciliator }
+    }: { baseUrl: string, items: any, reconciliator: Reconciliator }
   ) => {
+    const data = {
+      serviceId: reconciliator.id,
+      items
+    };
     const response = await tableAPI.reconcile(baseUrl, data);
     return {
       data: response.data,
@@ -170,7 +174,7 @@ export const extend = createAsyncThunk<ExtendThunkResponseProps, ExtendThunkInpu
     const { table } = getState() as RootState;
     const { relativeUrl, formParams, id } = extender;
     const params = getRequestFormValues(formParams, formValues, table);
-    const response = await tableAPI.extend(relativeUrl, { extenderId: id, ...params });
+    const response = await tableAPI.extend(relativeUrl, { serviceId: id, ...params });
     return {
       data: response.data,
       extender

@@ -215,7 +215,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     if (reconciliator && cell) {
       dispatch(reconcile({
         baseUrl: reconciliator.relativeUrl,
-        data: [{
+        items: [{
           id: cell.id,
           label: cell.label
         }],
