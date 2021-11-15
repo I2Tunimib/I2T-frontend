@@ -34,16 +34,13 @@ export const getDefaultValues = (extender: Extender) => {
   }) => {
     if (inputType === 'text') {
       acc[id] = defaultValue || '';
-    }
-    if (inputType === 'select') {
+    } else if (inputType === 'select') {
       if (options) {
         acc[id] = defaultValue || options[0].value;
       }
-    }
-    if (inputType === 'checkbox') {
+    } else if (inputType === 'checkbox') {
       acc[id] = defaultValue || [];
-    }
-    if (inputType === 'selectColumns') {
+    } else if (inputType === 'selectColumns') {
       acc[id] = defaultValue || '';
     }
     return acc;
