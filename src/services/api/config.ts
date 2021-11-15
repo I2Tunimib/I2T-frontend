@@ -1,5 +1,5 @@
 import { Extender, Reconciliator } from '@store/slices/config/interfaces/config';
-import { apiEndpoint } from '../../parseConfig';
+import { apiEndpoint } from '../../configHelpers';
 import apiClient from './config/config';
 
 interface GetConfigResponse {

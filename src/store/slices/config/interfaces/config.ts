@@ -1,9 +1,10 @@
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { BaseState, ID } from '@store/interfaces/store';
+import { AppConfig } from 'config';
 
 // Define a type for the slice state
 export interface IConfigState extends RequestEnhancedState {
-  app: Config;
+  app: AppConfig;
   entities: {
     reconciliators: ReconciliatorsState;
     extenders: ExtendersState;
@@ -47,15 +48,10 @@ export interface Option {
   label: string;
 }
 
-export interface Config {
-  APP: AppConfig;
-  API: ApiConfig;
-}
-
-export interface AppConfig {
-  DEMO: boolean;
-  MODE: 'standard' | 'challenge';
-}
+// export interface AppConfig {
+//   DEMO: boolean;
+//   MODE: 'standard' | 'challenge';
+// }
 
 export interface Endpoint {
   path: string;

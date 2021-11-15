@@ -2,7 +2,7 @@ import { ID } from '@store/interfaces/store';
 import { Column, Row } from '@store/slices/table/interfaces/table';
 import { TableInstance } from '@store/slices/tables/interfaces/tables';
 import { CancelToken } from 'axios';
-import { apiEndpoint } from '../../parseConfig';
+import { apiEndpoint } from '../../configHelpers';
 import apiClient from './config/config';
 
 export interface GetTableResponse {
@@ -54,11 +54,6 @@ const tableAPI = {
   },
   reconcile: (baseUrl: string, data: any) => apiClient.post(`${process.env.REACT_APP_BACKEND_URL}/reconciliators${baseUrl}`, data),
   extend: (baseUrl: string, data: any) => apiClient.post(`${process.env.REACT_APP_BACKEND_URL}/extenders${baseUrl}`, data),
-  // getTable: (id: ID, acceptHeader?: string) => apiClient.get<GetTableResponse>(`/tables/${id}`, {
-  //   headers: {
-  //     Accept: acceptHeader
-  //   }
-  // }),
   getTables: (type: string) => apiClient.get(`/tables?type=${type}`),
   searchTables: (query: string) => apiClient.get(`/tables?search=${query}`),
   uploadTable: (
@@ -74,7 +69,6 @@ const tableAPI = {
       onProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
     }
   }),
-  // saveTable: (data: any) => apiClient.post<TableInstance>('/tables/save', data),
   importTable: (formData: FormData) => apiClient.post('/tables/import', formData),
   getChallengeDatasets: () => apiClient.get<ChallengeTableDataset[]>('/tables/challenge/datasets'),
   getChallengeTable: (datasetName: string, tableName: string) => apiClient.get(`/tables/challenge/datasets/${datasetName}/tables/${tableName}`),

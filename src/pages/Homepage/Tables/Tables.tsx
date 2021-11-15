@@ -15,7 +15,7 @@ import {
 } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import globalStyles from '@styles/globals.module.scss';
-import { useTableCollection } from '../../../hooks/useTableCollection';
+import { useTableCollection } from '../useTableCollection';
 
 interface TablesProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;

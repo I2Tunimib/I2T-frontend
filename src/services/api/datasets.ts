@@ -1,5 +1,5 @@
 import { DatasetInstance, TableInstance } from '@store/slices/datasets/interfaces/datasets';
-import { apiEndpoint } from '../../parseConfig';
+import { apiEndpoint } from '../../configHelpers';
 import apiClient from './config/config';
 
 export type Dataset = Omit<DatasetInstance, 'tables'>;

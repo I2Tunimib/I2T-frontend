@@ -22,7 +22,7 @@ import { ReadMoreRounded } from '@mui/icons-material';
 import deferMounting from '@components/HOC';
 import globalStyles from '@styles/globals.module.scss';
 import { getDataset } from '@store/slices/datasets/datasets.thunk';
-import { useTableCollection } from '../../../hooks/useTableCollection';
+import { useTableCollection } from '../useTableCollection';
 
 interface DatasetsProps {
   onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;

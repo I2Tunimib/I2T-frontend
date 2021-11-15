@@ -1,4 +1,4 @@
-import { Config, ApiConfig, Endpoint } from '@store/slices/config/interfaces/config';
+import { AppConfig, Endpoint } from 'config';
 import { store } from './store';
 
 export const getAllParams = (path: string) => {
@@ -8,9 +8,6 @@ export const getAllParams = (path: string) => {
     }
     return acc;
   }, [] as string[]);
-  // return Array.from(path.matchAll(/(:(.*?))\//g)).map(([_, placeholder, param]) => {
-  //   return param;
-  // });
 };
 
 export const getAllQueryParams = (path: string): string[] => {
@@ -43,9 +40,9 @@ export const getAllEnvVar = (yamlValue: string) => {
 export const buildPath = (
   endpoint: Endpoint,
   paramsValue: Record<string, string | number> = {},
-  mergedConfig: Config
+  config: AppConfig
 ) => {
-  const { GLOBAL } = mergedConfig.API;
+  const { GLOBAL } = config.API;
   const { path, useGlobal } = endpoint;
 
   let finalPath = '';
@@ -64,28 +61,16 @@ export const buildPath = (
       return acc.replace(`:${param}`, paramsValue[param].toString());
     }, finalPath);
   }
-  // get env variables (if there are), and substitute with value
-  const vars = getAllEnvVar(finalPath);
 
-  finalPath = vars.reduce((acc, [placeholder, variable]) => {
-    if (!process.env[variable]) {
-      // eslint-disable-next-line no-console
-      console.error(`.env file doesn't contain '${variable}'`);
-      return acc;
-    }
-    return acc.replace(placeholder, process.env[variable] || '');
-  }, finalPath);
-
-  if (useGlobal) {
-    const [_, globalUrlVariable] = getEnvVar(GLOBAL);
-    return `${process.env[globalUrlVariable]}${finalPath}`;
+  if (useGlobal === undefined || useGlobal) {
+    return `${GLOBAL}${finalPath}`;
   }
 
   return finalPath;
 };
 
 export type ApiEndpointProps<P extends Record<string, any> = {}> = {
-  endpoint: keyof ApiConfig['ENDPOINTS'],
+  endpoint: keyof AppConfig['API']['ENDPOINTS'],
   subEndpoint?: string,
   paramsValue?: P
 }
@@ -95,9 +80,10 @@ export const apiEndpoint = ({
   subEndpoint,
   paramsValue
 }: ApiEndpointProps) => {
-  const config = store.getState().config.app as Config;
+  const config = store.getState().config.app as AppConfig;
 
   const { API: { ENDPOINTS } } = config;
+
   const endpointObj = ENDPOINTS[endpoint];
   if (!Array.isArray(endpointObj)) {
     return buildPath(endpointObj, paramsValue, config);

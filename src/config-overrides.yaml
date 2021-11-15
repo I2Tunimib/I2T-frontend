@@ -1,5 +1,0 @@
-# API:
-#   ENDPOINTS:
-#     GET_DATASET:
-#       path: '${REACT_APP_PROVA}/dataset'
-#       useGlobal: false
