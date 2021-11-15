@@ -26,6 +26,9 @@ export type SelectProps = BaseFormControlProps & SelectInputProps & {
 
 export type SelectOptionSelector = (state: any) => Option[];
 
+/**
+ * Select component
+ */
 export const Select = forwardRef<HTMLInputElement, SelectProps>(({
   id,
   label,
@@ -69,6 +72,9 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(({
 
 export type SelectColumnProps = Omit<SelectProps, 'options'>;
 
+/**
+ * Select component where the options are the columns of the table
+ */
 export const SelectColumns = forwardRef<HTMLInputElement, SelectColumnProps>((props, ref) => {
   const { id, setValue } = props;
 

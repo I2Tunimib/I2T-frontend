@@ -20,6 +20,9 @@ export type CheckboxProps = BaseFormControlProps & {
   defaultValue?: any;
 }
 
+/**
+ * Group of checkboxes
+ */
 const CheckboxGroup = forwardRef<HTMLInputElement, CheckboxProps>(({
   id: inputId,
   description,

@@ -17,6 +17,9 @@ const InfoIcon = styled(HelpOutlineRoundedIcon)`
   color: grey;
 `;
 
+/**
+ * Description of an input with helper text
+ */
 const InputDescription: FC<InputDescriptionProps> = ({
   description,
   infoText

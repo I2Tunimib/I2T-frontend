@@ -10,6 +10,9 @@ export type CheckboxProps = BaseFormControlProps & {
   defaultValue?: string;
 }
 
+/**
+ * Input text
+ */
 const InputText = forwardRef<HTMLInputElement, CheckboxProps>(({
   id,
   infoText,
