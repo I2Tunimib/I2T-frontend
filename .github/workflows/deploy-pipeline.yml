@@ -82,7 +82,7 @@ jobs:
           username: ${{ secrets.REMOTE_HOST_USERNAME }}
           key: ${{ secrets.SSH_PRIV_KEY }}
           source: "backend/docker-compose.prod.yml,backend/.env"
-          target: "/datahdd/asia/tUI/deploy"
+          target: "/datahdd/asia/tui/deploy"
 
       - name: Deploy through ssh
         uses: appleboy/ssh-action@master
@@ -91,7 +91,7 @@ jobs:
           username: ${{ secrets.REMOTE_HOST_USERNAME }}
           key: ${{ secrets.SSH_PRIV_KEY }}
           script: |
-            cd /datahdd/asia/tUI
+            cd /datahdd/asia/tui
             ls -A
             docker-compose -f docker-compose.prod.yml down --rmi all
             shopt -s dotglob nullglob
