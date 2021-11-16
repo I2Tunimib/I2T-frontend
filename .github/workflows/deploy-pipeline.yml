@@ -2,7 +2,7 @@ name: Workflow to deploy app on remote docker engine
 on: 
   push:
     branches:
-      - realign-versions
+      - main
 jobs:
   Deploy-App:
     runs-on: ubuntu-latest
@@ -11,7 +11,6 @@ jobs:
       - name: Clone frontend repo
         uses: actions/checkout@v2 # https://github.com/actions/checkout
         with:
-          ref: realign-versions
           path: frontend/
 
       - name: Cache frontend dependencies
@@ -30,7 +29,6 @@ jobs:
         uses: actions/checkout@v2 # https://github.com/actions/checkout
         with:
           repository: I2Tunimib/I2T-backend
-          ref: dataset-structure
           path: backend/
       
       - name: Cache backend dependencies
@@ -96,5 +94,6 @@ jobs:
             docker-compose -f docker-compose.prod.yml down --rmi all
             shopt -s dotglob nullglob
             mv deploy/backend/* .
+            rm deploy/backend
             docker-compose -f docker-compose.prod.yml pull release
             docker-compose -f docker-compose.prod.yml up -d release
