@@ -2,7 +2,7 @@ name: Workflow to deploy app on remote docker engine
 on: 
   push:
     branches:
-      - main
+      - realign-versions
 jobs:
   Deploy-App:
     runs-on: ubuntu-latest
@@ -59,7 +59,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image and push it to DockerHub
+      - name: Build image and push it to Github
         run: |
           cd backend
           docker-compose -f docker-compose.prod.yml build
