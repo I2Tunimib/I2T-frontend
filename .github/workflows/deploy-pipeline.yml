@@ -75,11 +75,6 @@ jobs:
           echo WIKIDATA=${{ secrets.WIKIDATA }} >> backend/.env
           echo RELEASE_TAG=${{ github.event.release.tag_name }} >> backend/.env
       
-      - name: List files
-        run: |
-          cd backend
-          ls -A
-      
       - name: copy file via ssh key
         uses: appleboy/scp-action@master
         with:
