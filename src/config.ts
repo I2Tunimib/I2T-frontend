@@ -59,7 +59,7 @@ const CONFIG: AppConfig = {
         path: '/dataset/:datasetId'
       },
       GLOBAL_SEARCH: {
-        path: '/dataset/:datasetId/:tableId'
+        path: '/dataset/search?query=:query'
       },
       UPLOAD_DATASET: {
         path: '/dataset'
@@ -79,7 +79,8 @@ const CONFIG: AppConfig = {
       ],
       EXPORT: [
         {
-          path: '/dataset/:datasetId/table/:tableId/export?format=w3c'
+          path: '/dataset/:datasetId/table/:tableId/export?format=w3c',
+          name: 'W3C'
         }
       ]
     }
