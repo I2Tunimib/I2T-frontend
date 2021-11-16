@@ -52,8 +52,8 @@ const tableAPI = {
       data
     );
   },
-  reconcile: (baseUrl: string, data: any) => apiClient.post(`${process.env.REACT_APP_BACKEND_URL}/reconciliators${baseUrl}`, data),
-  extend: (baseUrl: string, data: any) => apiClient.post(`${process.env.REACT_APP_BACKEND_URL}/extenders${baseUrl}`, data),
+  reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data),
+  extend: (baseUrl: string, data: any) => apiClient.post(`extenders${baseUrl}`, data),
   getTables: (type: string) => apiClient.get(`/tables?type=${type}`),
   searchTables: (query: string) => apiClient.get(`/tables?search=${query}`),
   uploadTable: (
