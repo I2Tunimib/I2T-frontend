@@ -95,6 +95,6 @@ jobs:
             ls -A
             docker-compose -f docker-compose.prod.yml down --rmi all
             shopt -s dotglob nullglob
-            mv deploy/* .
+            mv deploy/backend/* .
             docker-compose -f docker-compose.prod.yml pull release
             docker-compose -f docker-compose.prod.yml up -d release
