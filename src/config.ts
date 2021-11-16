@@ -32,7 +32,7 @@ export type ApiConfig = {
 const CONFIG: AppConfig = {
   API: {
     // global endpoint prefixed to each path, unless useGlobal is set to false
-    GLOBAL: process.env.REACT_APP_BACKEND_URL || '',
+    GLOBAL: process.env.REACT_APP_BACKEND_API_URL || '',
 
     ENDPOINTS: {
       GET_SERVICES_CONFIG: {
