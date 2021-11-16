@@ -77,7 +77,6 @@ jobs:
       
       - name: List files
         run: |
-          ls -A
           cd backend
           ls -A
       
