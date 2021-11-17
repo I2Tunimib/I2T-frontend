@@ -65,11 +65,8 @@ const ToolbarContent: FC<any> = () => {
   return (
     <>
       <Stack direction="row" alignItems="center" gap="8px">
-        <img src={logo} alt={logo} className={styles.Logo} />
-
         <Typography className={styles.AppTitle} component="span" variant="h4">
-          <strong>t</strong>
-          UI
+          I2T4E
         </Typography>
       </Stack>
 
