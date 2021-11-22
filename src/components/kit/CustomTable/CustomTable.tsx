@@ -8,13 +8,14 @@ import {
   Stack, Typography
 } from '@mui/material';
 import {
-  forwardRef, PropsWithChildren,
-  useEffect, useRef
+  forwardRef, Fragment, PropsWithChildren,
+  useEffect, useRef, useState
 } from 'react';
 import {
   Cell,
   IdType,
   Row, TableOptions,
+  useExpanded,
   usePagination, useRowSelect, useSortBy, useTable
 } from 'react-table';
 import Empty from '@components/kit/Empty';
@@ -24,7 +25,7 @@ import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import {
   Table, TableHead, TableHeaderCell,
   TableLoadingOverlay,
-  TableRow, TableRowCell
+  TableRow, TableRowCell, TableSubRow
 } from './CustomTableStyles';
 
 export interface TableProperties<T extends Record<string, unknown>> extends TableOptions<T> {
@@ -123,9 +124,12 @@ const RadioCell = forwardRef(
 
 const defaultHooks = [
   useSortBy,
+  useExpanded,
   usePagination
   // useRowSelect
 ];
+
+const defaultPropGetter = () => ({ prova: 'ok' });
 
 export default function CustomTable<T extends Record<string, unknown>>(
   props: PropsWithChildren<TableProperties<T>>
@@ -143,10 +147,13 @@ export default function CustomTable<T extends Record<string, unknown>>(
       data,
       initialState: {
         pageSize: 20
-      }
+      },
+      autoResetExpanded: false
     },
     ...defaultHooks
   );
+
+  const [subRows, setSubRows] = useState<Record<string, any>>({});
 
   const {
     getTableProps,
@@ -158,6 +165,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
     canPreviousPage,
     canNextPage,
     pageOptions,
+    visibleColumns,
     pageCount,
     gotoPage,
     nextPage,
@@ -197,7 +205,6 @@ export default function CustomTable<T extends Record<string, unknown>>(
         sx={{
           flexGrow: 1,
           marginTop: '12px',
-          padding: '10px',
           ...(data.length === 0 && {
             display: 'flex',
             alignItems: 'center',
@@ -252,22 +259,46 @@ export default function CustomTable<T extends Record<string, unknown>>(
                 page.map((row) => {
                   // Prepare the row for display
                   prepareRow(row);
+                  const rowProps = row.getRowProps();
                   return (
                     // Apply the row props
-                    <TableRow
-                      onClick={() => handleRowClick(row)}
-                      {...row.getRowProps()}>
-                      {// Loop over the rows cells
-                        row.cells.map((cell) => {
-                          // Apply the cell props
-                          return (
-                            <TableRowCell {...cell.getCellProps()}>
-                              {// Render the cell contents
-                                cell.render('Cell')}
-                            </TableRowCell>
-                          );
-                        })}
-                    </TableRow>
+                    <Fragment key={rowProps.key}>
+                      <TableRow
+                        onClick={() => handleRowClick(row)}
+                        {...rowProps}>
+                        {// Loop over the rows cells
+                          row.cells.map((cell) => {
+                            // Apply the cell props
+                            return (
+                              <TableRowCell title={`${cell.value}`} {...cell.getCellProps()}>
+                                {// Render the cell contents
+                                  cell.render('Cell', { setSubRows })}
+                              </TableRowCell>
+                            );
+                          })}
+                      </TableRow>
+                      {row.isExpanded ? (
+                        <TableSubRow {...rowProps} key={`${rowProps.key}-expanded`}>
+                          <TableRowCell colSpan={visibleColumns.length}>
+                            {subRows[row.id]}
+                          </TableRowCell>
+                        </TableSubRow>
+                      ) : null}
+                    </Fragment>
+                    // <TableRow
+                    //   onClick={() => handleRowClick(row)}
+                    //   {...row.getRowProps()}>
+                    //   {// Loop over the rows cells
+                    //     row.cells.map((cell) => {
+                    //       // Apply the cell props
+                    //       return (
+                    //         <TableRowCell {...cell.getCellProps()}>
+                    //           {// Render the cell contents
+                    //             cell.render('Cell')}
+                    //         </TableRowCell>
+                    //       );
+                    //     })}
+                    // </TableRow>
                   );
                 })}
             </tbody>

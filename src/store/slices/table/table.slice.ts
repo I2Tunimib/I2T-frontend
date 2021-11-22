@@ -39,7 +39,6 @@ import {
   deleteOneColumn, deleteOneRow,
   deleteSelectedColumns, deleteSelectedRows
 } from './utils/table.delete-utils';
-import { StandardTable } from './utils/table.export-utils';
 import {
   isCellReconciliated,
   getCellContext, getColumnStatus, createContext,
@@ -169,7 +168,10 @@ export const tableSlice = createSliceWithRequests({
       const [rowId, colId] = getIdsFromCell(cellId);
 
       return produceWithPatch(state, undoable, (draft) => {
-        const { id, match, ...rest } = value;
+        const {
+          id, match,
+          name, ...rest
+        } = value;
 
         const isMatching = match === 'true';
 
@@ -181,6 +183,10 @@ export const tableSlice = createSliceWithRequests({
         const newMeta = {
           id: `${prefix}:${id}`,
           match: isMatching,
+          name: {
+            value: name,
+            uri: 'prova'
+          },
           ...rest
         };
         draft.entities.rows.byId[rowId].cells[colId].metadata.push(newMeta);

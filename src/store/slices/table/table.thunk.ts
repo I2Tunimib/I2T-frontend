@@ -3,7 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
 import { RootState } from '@store';
 import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
-import convertToW3CTable from './utils/table.export-utils';
+// import convertToW3CTable from './utils/table.export-utils';
 import { ColumnState, RowState, TableState } from './interfaces/table';
 
 const ACTION_PREFIX = 'table';
@@ -65,22 +65,22 @@ export const saveTable = createAsyncThunk(
   }
 );
 
-export const convertToW3C = createAsyncThunk(
-  `${ACTION_PREFIX}/convertToW3C`,
-  async (keepMatching: boolean, { getState }) => {
-    const { table, config } = getState() as any;
-    const { columns, rows, tableInstance } = table.entities;
-    const { reconciliators } = config.entities;
-    const response = await convertToW3CTable({
-      columns,
-      rows,
-      tableInstance,
-      reconciliators,
-      keepMatching
-    });
-    return response;
-  }
-);
+// export const convertToW3C = createAsyncThunk(
+//   `${ACTION_PREFIX}/convertToW3C`,
+//   async (keepMatching: boolean, { getState }) => {
+//     const { table, config } = getState() as any;
+//     const { columns, rows, tableInstance } = table.entities;
+//     const { reconciliators } = config.entities;
+//     const response = await convertToW3CTable({
+//       columns,
+//       rows,
+//       tableInstance,
+//       reconciliators,
+//       keepMatching
+//     });
+//     return response;
+//   }
+// );
 
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,

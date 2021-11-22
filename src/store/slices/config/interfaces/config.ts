@@ -20,7 +20,12 @@ export interface Reconciliator {
   prefix: string;
   uri: string;
   relativeUrl: string;
-  metaToViz: string[];
+  metaToView: Record<string, MetaToViewItem>;
+}
+
+export type MetaToViewItem = {
+  label?: string;
+  type?: 'link' | 'subComponent' | 'tag';
 }
 
 export interface Extender extends Record<string, any> {

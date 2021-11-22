@@ -1,4 +1,6 @@
 import { useAppSelector } from '@hooks/store';
+import { Reconciliator } from '@store/slices/config/interfaces/config';
+import { Cell, Context } from '@store/slices/table/interfaces/table';
 import { useEffect, useMemo, useState } from 'react';
 import { Column } from 'react-table';
 
@@ -7,11 +9,17 @@ export type State<T = {}> = {
   data: T[]
 }
 
-export type DataSelector<T> = (state: any) => State<T>
+export type DataSelectorReturn = {
+  columnContext: Record<string, Context>;
+  cell: Cell;
+  service: Reconciliator;
+}
+
+export type DataSelector = (state: any) => DataSelectorReturn | undefined;
 
 export type UsePrepareTableProps<T> = {
-  selector: DataSelector<T>;
-  makeData?: (state: State<T>) => State<T>;
+  selector: DataSelector;
+  makeData: (state: DataSelectorReturn) => State<T>;
 }
 
 const defaultTableState = {
@@ -25,11 +33,7 @@ function usePrepareTable<T extends {} = {}>({ selector, makeData }: UsePrepareTa
 
   useEffect(() => {
     if (data) {
-      if (makeData) {
-        setTableState(makeData(data));
-      } else {
-        setTableState(data);
-      }
+      setTableState(makeData(data));
     }
   }, [data]);
 

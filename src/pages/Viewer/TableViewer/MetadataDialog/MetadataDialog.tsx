@@ -1,5 +1,6 @@
+/* eslint-disable react/destructuring-assignment */
 import {
-  Box, Button, Dialog,
+  Box, Button, Chip, Dialog,
   FormControl, IconButton,
   InputLabel,
   Link, MenuItem, Select,
@@ -9,7 +10,7 @@ import {
 } from '@mui/material';
 import {
   FC,
-  forwardRef, ReactElement, Ref, useCallback, useEffect, useMemo, useState
+  forwardRef, MouseEvent, ReactElement, Ref, useCallback, useEffect, useMemo, useState
 } from 'react';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
@@ -32,46 +33,117 @@ import { getCellContext } from '@store/slices/table/utils/table.reconciliation-u
 import CustomTable from '@components/kit/CustomTable/CustomTable';
 import deferMounting from '@components/HOC';
 import { reconcile } from '@store/slices/table/table.thunk';
-import styles from './MetadataDialog.module.scss';
-import usePrepareTable from './usePrepareTable';
+import { Cell, Row } from 'react-table';
+import { BaseMetadata } from '@store/slices/table/interfaces/table';
+import { MetaToViewItem } from '@store/slices/config/interfaces/config';
+import usePrepareTable, { DataSelectorReturn } from './usePrepareTable';
 
 const DeferredTable = deferMounting(CustomTable);
 
-const LabelCell = ({ value }: any) => {
-  const { label, link } = value;
-
+const ResourceLink = ({ value: cellValue }: Cell<{}>) => {
+  const { value, uri } = cellValue;
   return (
-    <Link onClick={(event) => event.stopPropagation()} title={label} href={link} target="_blank">{label}</Link>
+    <Link onClick={(event) => event.stopPropagation()} title={value} href={uri} target="_blank">{value}</Link>
   );
 };
 
-const MatchCell = ({ value }: any) => {
+const MatchCell = ({ value: inputValue }: Cell<{}>) => {
+  const value = inputValue == null ? false : inputValue;
+
   return (
-    <Tag size="medium" status={value === 'true' ? 'done' : 'doing'}>
-      {value}
+    <Tag size="medium" status={value ? 'done' : 'doing'}>
+      {`${value}`}
     </Tag>
   );
 };
 
-const makeData = ({ columns, data }: { columns: any[], data: any[] }) => {
-  const cols = columns.map((col) => {
-    if (col.accessor === 'name') {
+const SubList = (value: any[] = []) => {
+  return (
+    <Stack direction="row" gap="10px">
+      {value.length > 0 ? value.map((item) => (
+        <Chip key={item.id} size="small" label={item.name} />
+      )) : <Typography variant="caption">This entity has no types</Typography>}
+    </Stack>
+  );
+};
+
+const Expander = ({ row, setSubRows, value: inputValue }: any) => {
+  const { onClick, ...rest } = row.getToggleRowExpandedProps() as any;
+
+  const value = inputValue || [];
+
+  const handleClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    setSubRows((old: any) => {
+      if (old[row.id]) {
+        const { [row.id]: discard, ...newState } = old;
+        return newState;
+      }
+
       return {
-        ...col,
-        Cell: LabelCell
+        ...old,
+        [row.id]: SubList(value)
       };
+    });
+    onClick();
+  };
+
+  return (
+    <Button onClick={handleClick} {...rest}>
+      {row.isExpanded ? `(${value.length}) 👇` : `(${value.length}) 👉`}
+    </Button>
+  );
+};
+
+const CELL_COMPONENTS_TYPES = {
+  tag: MatchCell,
+  link: ResourceLink,
+  subComponent: Expander
+};
+
+const getCellComponent = (cell: Cell<{}>, type: MetaToViewItem['type']) => {
+  const { value } = cell;
+  if (value == null) {
+    return <Typography color="textSecondary">null</Typography>;
+  }
+  if (!type) {
+    if (typeof value === 'number') {
+      return value.toFixed(2);
     }
-    if (col.accessor === 'match') {
-      return {
-        ...col,
-        Cell: MatchCell
-      };
-    }
-    return col;
+    return value;
+  }
+  return CELL_COMPONENTS_TYPES[type](cell);
+};
+
+const makeData = (rawData: DataSelectorReturn) => {
+  const { cell, service } = rawData;
+  const { metaToView } = service;
+  const { metadata } = cell;
+
+  const columns = Object.keys(metaToView).map((key) => {
+    const { label = key, type } = metaToView[key];
+    return {
+      Header: label,
+      accessor: key,
+      Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type)
+    };
+  });
+
+  const data = metadata.map((metadataItem) => {
+    return Object.keys(metaToView).reduce((acc, key) => {
+      const value = metadataItem[key as keyof BaseMetadata];
+      if (value !== undefined) {
+        acc[key] = value;
+      } else {
+        acc[key] = null;
+      }
+
+      return acc;
+    }, {} as Record<string, any>);
   });
 
   return {
-    columns: cols,
+    columns,
     data
   };
 };
@@ -149,10 +221,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const handleSelectedRowChange = useCallback((row: any) => {
     if (row) {
       setState(({ columns: colState, data: dataState }) => {
-        const newData = dataState.map((item) => {
+        const newData = dataState.map((item: any) => {
           if (item.id === row.id) {
-            const match = item.match === 'true' ? 'false' : 'true';
-            if (match === 'true') {
+            const match = !item.match;
+            if (match) {
               setSelectedMetadata(row.id);
             } else {
               setSelectedMetadata('');
@@ -164,7 +236,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           }
           return {
             ...item,
-            match: 'false'
+            match: false
           };
         });
 
@@ -237,7 +309,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       maxWidth="lg"
       open={open}
       onClose={handleCancel}>
-      <Stack height="100%">
+      <Stack height="100%" minHeight="600px">
         <Stack direction="row" gap="10px" alignItems="center" padding="12px 16px">
           <Typography variant="h4">
             Metadata

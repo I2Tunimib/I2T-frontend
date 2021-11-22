@@ -55,6 +55,7 @@ const Table: FC<TableProps> = ({
 }) => {
   const columnRefs = useRef<Record<any, HTMLElement>>({});
   const [highlightState, setHighlightState] = useState<HighlightState | null>(null);
+  const [searchHighlightState, setSearchHighlight] = useState<Record<string, boolean>>({});
 
   /**
    * Custom function id.
@@ -64,44 +65,102 @@ const Table: FC<TableProps> = ({
   }, []);
 
   /**
- * Returns row which have at least a cell with label which starts with filter value.
+ * Returns row which have at least a cell with label.
  */
   const filterAll = useCallback((
-    rows: Array<Row>, colIds: Array<string>, filterValue: string
+    rows: Array<Row>, colIds: Array<string>, regex: RegExp
   ) => {
-    return rows.filter((row) => colIds
-      .some((colId) => row.values[colId].label
-        .toLowerCase()
-        .startsWith(filterValue.toLowerCase())));
+    const filteredRows = rows.filter((row) => colIds
+      .some((colId) => regex.test(row.values[colId].label
+        .toLowerCase())));
+
+    filteredRows.forEach((row) => {
+      colIds.forEach((colId) => {
+        const match = regex.test(row.values[colId].label.toLowerCase());
+
+        if (match) {
+          setSearchHighlight((oldState) => ({
+            ...oldState,
+            [`${row.id}$${colId}`]: true
+          }));
+        }
+      });
+    });
+    return filteredRows;
   }, []);
 
   /**
-   * Returns row which have at least a cell with metadata name which starts with filter value.
+   * Returns row which have at least a cell with metadata name.
    */
-  const filterMeta = useCallback((
-    rows: Array<Row>, colIds: Array<string>, filterValue: string
+  const filterMetaName = useCallback((
+    rows: Array<Row>, colIds: Array<string>, regex: RegExp
   ) => {
-    return rows.filter((row) => colIds
+    const filteredRows = rows.filter((row) => colIds
       .some((colId) => row.values[colId].metadata
-        .some((item: BaseMetadata) => item.name
-          .toLowerCase()
-          .startsWith(filterValue.toLowerCase()))));
+        .some((item: BaseMetadata) => regex.test(item.name.value.toLowerCase()))));
+
+    filteredRows.forEach((row) => {
+      colIds.forEach((colId) => {
+        const match = row.values[colId].metadata
+          .some((item: BaseMetadata) => regex.test(item.name.value.toLowerCase()));
+
+        if (match) {
+          setSearchHighlight((oldState) => ({
+            ...oldState,
+            [`${row.id}$${colId}`]: true
+          }));
+        }
+      });
+    });
+    return filteredRows;
+  }, []);
+
+  /**
+   * Returns row which have at least a cell with metadata type.
+   */
+  const filterMetaType = useCallback((
+    rows: Array<Row>, colIds: Array<string>, regex: RegExp
+  ) => {
+    const filteredRows = rows.filter((row) => colIds
+      .some((colId) => row.values[colId].metadata
+        .some((item: any) => item.type && item.type
+          .some((type: any) => regex.test(type.name.toLowerCase())))));
+
+    filteredRows.forEach((row) => {
+      colIds.forEach((colId) => {
+        const match = row.values[colId].metadata
+          .some((item: any) => item.type && item.type
+            .some((type: any) => regex.test(type.name.toLowerCase())));
+
+        if (match) {
+          setSearchHighlight((oldState) => ({
+            ...oldState,
+            [`${row.id}$${colId}`]: true
+          }));
+        }
+      });
+    });
+    return filteredRows;
   }, []);
 
   const customGlobalFilter = useCallback((
     rows: Array<Row>, [index, ...colIds]: Array<string>, { filter, value }: TableGlobalFilter
   ) => {
+    setSearchHighlight({});
+    const regex = new RegExp(value.toLowerCase());
     // return all rows if value is empty
     if (value === '') {
       return rows;
     }
     switch (filter) {
-      case 'all':
-        return filterAll(rows, colIds, value);
-      case 'meta':
-        return filterMeta(rows, colIds, value);
+      case 'label':
+        return filterAll(rows, colIds, regex);
+      case 'metaName':
+        return filterMetaName(rows, colIds, regex);
+      case 'metaType':
+        return filterMetaType(rows, colIds, regex);
       default:
-        return filterAll(rows, colIds, value);
+        return filterAll(rows, colIds, regex);
     }
   }, []);
 
@@ -171,6 +230,10 @@ const Table: FC<TableProps> = ({
     }
   }, [searchFilter]);
 
+  useEffect(() => {
+    // console.log(searchHighlightState);
+  }, [searchHighlightState]);
+
   const handlePathMouseEnter = useCallback((path: any) => {
     const { startElementLabel, endElementLabel, color } = path;
     setHighlightState({
@@ -236,7 +299,7 @@ const Table: FC<TableProps> = ({
                       // Apply the cell prop
                       <TableRowCell {...cell.getCellProps([
                         getCellProps(cell), getGlobalProps(),
-                        { highlightState }
+                        { highlightState, searchHighlightState }
                       ]) as any}>
                         {// Render the cell contents
                           cell.render('Cell')}

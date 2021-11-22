@@ -441,37 +441,42 @@ export const selectCellMetadataTableFormat = createSelector(
   selectReconciliators,
   selectColumnsState,
   selectRowsState,
-  (cellId, reconciliators, cols, rows): { columns: any[], data: any[] } => {
+  (cellId, reconciliators, cols, rows) => {
     if (cellId) {
       const [rowId, colId] = getIdsFromCell(cellId);
       const cell = rows.byId[rowId].cells[colId];
       const cellContext = getCellContext(cell);
       const service = reconciliators.byId[cellContext];
       if (service) {
-        const columns = service.metaToViz.map((tableColId) => ({
-          Header: tableColId,
-          accessor: tableColId
-        }));
+        // const columns = service.metaToViz.map((tableColId) => ({
+        //   Header: tableColId,
+        //   accessor: tableColId
+        // }));
 
         const col = cols.byId[colId];
 
-        const data = cell.metadata.map((item) => {
-          const [prefix, id] = item.id.split(':');
-          return {
-            ...service.metaToViz.reduce((acc, tableColId) => {
-              acc[tableColId] = tableColId === 'name' ? {
-                label: toString(item[tableColId as keyof BaseMetadata]),
-                isLink: tableColId === 'name',
-                link: tableColId === 'name' && `${col.context[prefix].uri}/${id}`
-              } : toString(item[tableColId as keyof BaseMetadata]);
-              return acc;
-            }, {} as { [key: string]: any } & Row)
-          };
-        });
-        return { columns, data };
+        // const data = cell.metadata.map((item) => {
+        //   const [prefix, id] = item.id.split(':');
+        //   return {
+        //     ...service.metaToViz.reduce((acc, tableColId) => {
+        //       acc[tableColId] = tableColId === 'name' ? {
+        //         label: toString(item[tableColId as keyof BaseMetadata]),
+        //         isLink: tableColId === 'name',
+        //         link: tableColId === 'name' && `${col.context[prefix].uri}/${id}`
+        //       } : toString(item[tableColId as keyof BaseMetadata]);
+        //       return acc;
+        //     }, {} as { [key: string]: any } & Row)
+        //   };
+        // });
+        // return { cell, service };
+        return {
+          columnContext: col.context,
+          cell,
+          service
+        };
       }
     }
-    return { columns: [], data: [] };
+    return undefined;
   }
 );
 

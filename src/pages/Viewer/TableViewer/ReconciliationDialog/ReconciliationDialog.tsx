@@ -30,8 +30,6 @@ import {
 } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
 import { selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
-import { Reconciliator } from '@store/slices/config/interfaces/config';
-import { ID } from '@store/interfaces/store';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -68,13 +66,12 @@ const ReconciliateDialog = () => {
           dispatch(updateUI({
             openReconciliateDialog: false
           }));
+        })
+        .catch(() => {
+          dispatch(updateUI({
+            openReconciliateDialog: false
+          }));
         });
-      // .catch((e) => {
-      //   enqueueSnackbar(e.message, {
-      //     variant: 'error',
-      //     autoHideDuration: 3000
-      //   });
-      // });
     }
   };
 

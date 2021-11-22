@@ -13,7 +13,7 @@ export const Table = styled.table`
 
 export const TableHead = styled.thead`
   position: sticky;
-  top: 10px;
+  top: 0px;
   z-index: 10;
   background-color: inherit;
 `;
@@ -23,6 +23,10 @@ export const TableRow = styled.tr`
   &:hover {
     background-color: #f9f9f9;
   }
+`;
+
+export const TableSubRow = styled(TableRow)`
+  background-color: #F9F9F9
 `;
 
 export const TableHeaderCell = styled.th<{ sorted: boolean }>`

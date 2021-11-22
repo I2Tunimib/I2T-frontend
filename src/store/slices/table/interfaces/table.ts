@@ -105,7 +105,10 @@ export interface Context {
 
 export interface BaseMetadata {
   id: ID;
-  name: string;
+  name: {
+    value: string;
+    uri: string;
+  };
   match?: boolean;
   score?: number;
   type?: BaseMetadata[];

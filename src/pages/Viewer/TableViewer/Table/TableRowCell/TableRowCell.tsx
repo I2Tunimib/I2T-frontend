@@ -23,6 +23,7 @@ interface TableRowCellProps extends TableCell {
   matching: boolean;
   dense: boolean;
   highlightState: any;
+  searchHighlightState: any;
   handleSelectedRowChange: (event: MouseEvent<any>, id: string) => void;
   handleSelectedCellChange: (event: MouseEvent<any>, id: string) => void;
   handleCellRightClick: (event: MouseEvent<any>, type: string, id: string) => void;
@@ -33,32 +34,43 @@ const Td = styled.td<{
   selected: boolean;
   columnId: string;
   highlightState: any;
-}>(
-  {
-    position: 'relative',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    cursor: 'default',
-    backgroundColor: 'inherit',
-    borderRight: '1px solid #ededed',
-    borderBottom: '1px solid #ededed'
-  },
-  ({ selected, highlightState, columnId }) => {
-    if (highlightState && highlightState.columns.includes(columnId)) {
-      return {
-        backgroundColor: `${highlightState.color}0d`
-      };
-    }
-    if (selected) {
-      return {
-        backgroundColor: 'var(--brand-color-one-transparent)'
-      };
-    }
-    return {
-      backgroundColor: 'inherit'
-    };
-  }
-);
+  searchHighlight: boolean;
+}>(({
+  selected, highlightState,
+  searchHighlight, columnId
+}) => ({
+  position: 'relative',
+  textAlign: 'center',
+  verticalAlign: 'middle',
+  cursor: 'default',
+  backgroundColor: 'inherit',
+  borderRight: '1px solid #ededed',
+  borderBottom: '1px solid #ededed',
+  ...(highlightState && highlightState.columns.includes(columnId) && {
+    backgroundColor: `${highlightState.color}0d`
+  }),
+  ...(selected && {
+    backgroundColor: 'var(--brand-color-one-transparent)'
+  }),
+  ...(searchHighlight && !selected && {
+    backgroundColor: '#FFFCE8'
+  })
+}));
+  // ({ selected, highlightState, columnId }) => {
+  //   if (highlightState && highlightState.columns.includes(columnId)) {
+  //     return {
+  //       backgroundColor: `${highlightState.color}0d`
+  //     };
+  //   }
+  //   if (selected) {
+  //     return {
+  //       backgroundColor: 'var(--brand-color-one-transparent)'
+  //     };
+  //   }
+  //   return {
+  //     backgroundColor: 'inherit'
+  //   };
+  // }
 
 /**
  * Table row cell.
@@ -73,6 +85,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
   value,
   dense,
   highlightState,
+  searchHighlightState,
   handleSelectedRowChange,
   handleCellRightClick,
   handleSelectedCellChange,
@@ -126,6 +139,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
       columnId={columnId}
       selected={selected}
       highlightState={highlightState}
+      searchHighlight={`${rowId}$${columnId}` in searchHighlightState}
       role="gridcell"
       onClick={(event) => handleSelectCell(event)}
       onContextMenu={handleOnContextMenu}

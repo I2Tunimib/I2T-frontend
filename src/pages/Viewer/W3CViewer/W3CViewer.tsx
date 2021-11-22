@@ -1,26 +1,35 @@
 import useIsMounted from '@hooks/is-mounted/useIsMounted';
 import { useAppDispatch } from '@hooks/store';
 import { Typography } from '@mui/material';
-import { convertToW3C } from '@store/slices/table/table.thunk';
+import { exportTable } from '@store/slices/table/table.thunk';
 import { useEffect, useState } from 'react';
 import ReactJson from 'react-json-view';
+import { useParams } from 'react-router-dom';
 import styles from './W3CViewer.module.scss';
 
 const W3CViewer = () => {
   const [data, setData] = useState<any>();
   const isMounted = useIsMounted();
+  const params = useParams<{ datasetId: string, tableId: string }>();
 
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     let mounted = true;
-    dispatch(convertToW3C(false))
+    dispatch(exportTable({ format: 'W3C', params }))
       .unwrap()
       .then((res) => {
         if (mounted) {
           setData(res);
         }
       });
+    // dispatch(convertToW3C(false))
+    //   .unwrap()
+    //   .then((res) => {
+    //     if (mounted) {
+    //       setData(res);
+    //     }
+    //   });
     return () => { mounted = false; };
   }, []);
 

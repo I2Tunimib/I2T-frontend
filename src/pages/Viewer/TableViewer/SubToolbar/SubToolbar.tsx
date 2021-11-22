@@ -40,7 +40,7 @@ import ExtensionDialog from '../ExtensionDialog';
 
 const tagRegex = /:([A-Za-z]+):/;
 
-const permittedTags = ['meta'];
+const permittedTags = ['metaName', 'metaType'];
 
 /**
  * Sub toolbar for common and contextual actions
@@ -49,7 +49,7 @@ const SubToolbar = () => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [autoMatchingAnchor, setAutoMatchingAnchor] = useState<null | HTMLElement>(null);
-  const [tag, setTag] = useState<string>('all');
+  const [tag, setTag] = useState<string>('label');
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
   const isExtendButtonEnabled = useAppSelector(selectIsExtendButtonEnabled);
@@ -204,7 +204,7 @@ const SubToolbar = () => {
           </ActionGroup>
         )}
         <Searchbar
-          defaultTag="all"
+          defaultTag="label"
           placeholder="Search table, metadata..."
           tagRegex={tagRegex}
           permittedTags={permittedTags}

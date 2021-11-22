@@ -17,7 +17,7 @@ import {
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { selectCurrentTable, selectExportDialogStatus } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
-import { convertToW3C, exportTable } from '@store/slices/table/table.thunk';
+import { exportTable } from '@store/slices/table/table.thunk';
 import fileDownload from 'js-file-download';
 import { FC, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
