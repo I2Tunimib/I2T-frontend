@@ -76,11 +76,9 @@ const ReconciliateDialog = () => {
   };
 
   const handleClose = () => {
-    if (!loading) {
-      dispatch(updateUI({
-        openReconciliateDialog: false
-      }));
-    }
+    dispatch(updateUI({
+      openReconciliateDialog: false
+    }));
   };
 
   const handleChange = (event: SelectChangeEvent<string>) => {

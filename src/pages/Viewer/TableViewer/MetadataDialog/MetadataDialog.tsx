@@ -1,19 +1,16 @@
 /* eslint-disable react/destructuring-assignment */
 import {
-  Box, Button, Chip, Dialog,
+  Box, Button, Dialog,
   FormControl, IconButton,
   InputLabel,
-  Link, MenuItem, Select,
-  SelectChangeEvent, Skeleton,
+  MenuItem, Select,
+  SelectChangeEvent,
   Stack, TextField, Tooltip,
   Typography
 } from '@mui/material';
 import {
-  FC,
-  forwardRef, MouseEvent, ReactElement, Ref, useCallback, useEffect, useMemo, useState
+  FC, useCallback, useEffect, useState
 } from 'react';
-import Slide from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   addCellMetadata, deleteCellMetadata, updateCellMetadata, updateUI
@@ -22,98 +19,21 @@ import {
   selectCellMetadataTableFormat,
   selectCurrentCell,
   selectIsViewOnly,
-  selectMetadataDialogStatus,
   selectReconcileRequestStatus
 } from '@store/slices/table/table.selectors';
 import { selectAppConfig, selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
-import { Tag } from '@components/core';
 import { Controller, useForm } from 'react-hook-form';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { getCellContext } from '@store/slices/table/utils/table.reconciliation-utils';
 import CustomTable from '@components/kit/CustomTable/CustomTable';
 import deferMounting from '@components/HOC';
 import { reconcile } from '@store/slices/table/table.thunk';
-import { Cell, Row } from 'react-table';
+import { Cell } from 'react-table';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
-import { MetaToViewItem } from '@store/slices/config/interfaces/config';
 import usePrepareTable, { DataSelectorReturn } from './usePrepareTable';
+import { getCellComponent } from './componentsConfig';
 
 const DeferredTable = deferMounting(CustomTable);
-
-const ResourceLink = ({ value: cellValue }: Cell<{}>) => {
-  const { value, uri } = cellValue;
-  return (
-    <Link onClick={(event) => event.stopPropagation()} title={value} href={uri} target="_blank">{value}</Link>
-  );
-};
-
-const MatchCell = ({ value: inputValue }: Cell<{}>) => {
-  const value = inputValue == null ? false : inputValue;
-
-  return (
-    <Tag size="medium" status={value ? 'done' : 'doing'}>
-      {`${value}`}
-    </Tag>
-  );
-};
-
-const SubList = (value: any[] = []) => {
-  return (
-    <Stack direction="row" gap="10px">
-      {value.length > 0 ? value.map((item) => (
-        <Chip key={item.id} size="small" label={item.name} />
-      )) : <Typography variant="caption">This entity has no types</Typography>}
-    </Stack>
-  );
-};
-
-const Expander = ({ row, setSubRows, value: inputValue }: any) => {
-  const { onClick, ...rest } = row.getToggleRowExpandedProps() as any;
-
-  const value = inputValue || [];
-
-  const handleClick = (event: MouseEvent) => {
-    event.stopPropagation();
-    setSubRows((old: any) => {
-      if (old[row.id]) {
-        const { [row.id]: discard, ...newState } = old;
-        return newState;
-      }
-
-      return {
-        ...old,
-        [row.id]: SubList(value)
-      };
-    });
-    onClick();
-  };
-
-  return (
-    <Button onClick={handleClick} {...rest}>
-      {row.isExpanded ? `(${value.length}) 👇` : `(${value.length}) 👉`}
-    </Button>
-  );
-};
-
-const CELL_COMPONENTS_TYPES = {
-  tag: MatchCell,
-  link: ResourceLink,
-  subComponent: Expander
-};
-
-const getCellComponent = (cell: Cell<{}>, type: MetaToViewItem['type']) => {
-  const { value } = cell;
-  if (value == null) {
-    return <Typography color="textSecondary">null</Typography>;
-  }
-  if (!type) {
-    if (typeof value === 'number') {
-      return value.toFixed(2);
-    }
-    return value;
-  }
-  return CELL_COMPONENTS_TYPES[type](cell);
-};
 
 const makeData = (rawData: DataSelectorReturn) => {
   const { cell, service } = rawData;

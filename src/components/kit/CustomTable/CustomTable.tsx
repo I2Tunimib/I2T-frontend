@@ -27,6 +27,7 @@ import {
   TableLoadingOverlay,
   TableRow, TableRowCell, TableSubRow
 } from './CustomTableStyles';
+import ColumnHide from './ColumnHide';
 
 export interface TableProperties<T extends Record<string, unknown>> extends TableOptions<T> {
   onSelectedRowChange: (row: T | null) => void;
@@ -165,7 +166,9 @@ export default function CustomTable<T extends Record<string, unknown>>(
     canPreviousPage,
     canNextPage,
     pageOptions,
+    allColumns,
     visibleColumns,
+    getToggleHideAllColumnsProps,
     pageCount,
     gotoPage,
     nextPage,
@@ -189,125 +192,129 @@ export default function CustomTable<T extends Record<string, unknown>>(
   };
 
   return (
-    // apply the table props
-    <Box sx={{
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1
-    }}>
-      {loading && (
-        <TableLoadingOverlay>
-          <CircularProgress />
-        </TableLoadingOverlay>
-      )}
-      <Box
-        sx={{
-          flexGrow: 1,
-          marginTop: '12px',
-          ...(data.length === 0 && {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          })
-        }}>
-        {data.length > 0 ? (
-          <Table {...getTableProps()}>
-            <TableHead>
-              {// Loop over the header rows
-                headerGroups.map((headerGroup) => (
-                  // Apply the header row props
-                  <TableRow {...headerGroup.getHeaderGroupProps()}>
-                    {// Loop over the headers in each row
-                      headerGroup.headers.map((column) => (
-                        // Apply the header cell props
-                        <TableHeaderCell
-                          sorted={column.isSorted}
-                          {...column.getHeaderProps(column.getSortByToggleProps())}>
-                          {column.id !== 'selection' ? (
-                            <Stack
-                              direction="row"
-                              overflow="hidden"
-                              whiteSpace="nowrap"
-                              textOverflow="ellipsis"
-                              gap="10px"
-                              alignItems="center">
-                              {// Render the header
-                                column.render('Header')}
-                              <IconButton
-                                sx={{
-                                  width: '25px',
-                                  height: '25px'
-                                }}
-                                size="small">
-                                {column.isSorted
-                                  ? column.isSortedDesc
-                                    ? <ArrowDownwardRoundedIcon fontSize="small" />
-                                    : <ArrowUpwardRoundedIcon fontSize="small" />
-                                  : <ArrowUpwardRoundedIcon sx={{ color: '#d4d4d4' }} fontSize="small" />}
-                              </IconButton>
-                            </Stack>
-                          ) : column.render('Header')}
-                        </TableHeaderCell>
-                      ))}
-                  </TableRow>
-                ))}
-            </TableHead>
-            {/* Apply the table body props */}
-            <tbody {...getTableBodyProps()}>
-              {// Loop over the table rows
-                page.map((row) => {
-                  // Prepare the row for display
-                  prepareRow(row);
-                  const rowProps = row.getRowProps();
-                  return (
-                    // Apply the row props
-                    <Fragment key={rowProps.key}>
-                      <TableRow
-                        onClick={() => handleRowClick(row)}
-                        {...rowProps}>
-                        {// Loop over the rows cells
-                          row.cells.map((cell) => {
-                            // Apply the cell props
-                            return (
-                              <TableRowCell title={`${cell.value}`} {...cell.getCellProps()}>
-                                {// Render the cell contents
-                                  cell.render('Cell', { setSubRows })}
-                              </TableRowCell>
-                            );
-                          })}
-                      </TableRow>
-                      {row.isExpanded ? (
-                        <TableSubRow {...rowProps} key={`${rowProps.key}-expanded`}>
-                          <TableRowCell colSpan={visibleColumns.length}>
-                            {subRows[row.id]}
-                          </TableRowCell>
-                        </TableSubRow>
-                      ) : null}
-                    </Fragment>
-                    // <TableRow
-                    //   onClick={() => handleRowClick(row)}
-                    //   {...row.getRowProps()}>
-                    //   {// Loop over the rows cells
-                    //     row.cells.map((cell) => {
-                    //       // Apply the cell props
-                    //       return (
-                    //         <TableRowCell {...cell.getCellProps()}>
-                    //           {// Render the cell contents
-                    //             cell.render('Cell')}
-                    //         </TableRowCell>
-                    //       );
-                    //     })}
-                    // </TableRow>
-                  );
-                })}
-            </tbody>
-          </Table>
-        ) : (
-          <Empty />
-        )}
+    <>
+      <Box padding="0 16px">
+        <ColumnHide {...{ indeterminate: getToggleHideAllColumnsProps(), allColumns }} />
       </Box>
-      <Footer {...paginationProps} />
-    </Box>
+      <Box sx={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1
+      }}>
+        {loading && (
+          <TableLoadingOverlay>
+            <CircularProgress />
+          </TableLoadingOverlay>
+        )}
+        <Box
+          sx={{
+            flexGrow: 1,
+            marginTop: '12px',
+            ...(data.length === 0 && {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            })
+          }}>
+          {data.length > 0 ? (
+            <Table {...getTableProps()}>
+              <TableHead>
+                {// Loop over the header rows
+                  headerGroups.map((headerGroup) => (
+                    // Apply the header row props
+                    <TableRow {...headerGroup.getHeaderGroupProps()}>
+                      {// Loop over the headers in each row
+                        headerGroup.headers.map((column) => (
+                          // Apply the header cell props
+                          <TableHeaderCell
+                            sorted={column.isSorted}
+                            {...column.getHeaderProps(column.getSortByToggleProps())}>
+                            {column.id !== 'selection' ? (
+                              <Stack
+                                direction="row"
+                                overflow="hidden"
+                                whiteSpace="nowrap"
+                                textOverflow="ellipsis"
+                                gap="10px"
+                                alignItems="center">
+                                {// Render the header
+                                  column.render('Header')}
+                                <IconButton
+                                  sx={{
+                                    width: '25px',
+                                    height: '25px'
+                                  }}
+                                  size="small">
+                                  {column.isSorted
+                                    ? column.isSortedDesc
+                                      ? <ArrowDownwardRoundedIcon fontSize="small" />
+                                      : <ArrowUpwardRoundedIcon fontSize="small" />
+                                    : <ArrowUpwardRoundedIcon sx={{ color: '#d4d4d4' }} fontSize="small" />}
+                                </IconButton>
+                              </Stack>
+                            ) : column.render('Header')}
+                          </TableHeaderCell>
+                        ))}
+                    </TableRow>
+                  ))}
+              </TableHead>
+              {/* Apply the table body props */}
+              <tbody {...getTableBodyProps()}>
+                {// Loop over the table rows
+                  page.map((row) => {
+                    // Prepare the row for display
+                    prepareRow(row);
+                    const rowProps = row.getRowProps();
+                    return (
+                      // Apply the row props
+                      <Fragment key={rowProps.key}>
+                        <TableRow
+                          onClick={() => handleRowClick(row)}
+                          {...rowProps}>
+                          {// Loop over the rows cells
+                            row.cells.map((cell) => {
+                              // Apply the cell props
+                              return (
+                                <TableRowCell title={`${cell.value}`} {...cell.getCellProps()}>
+                                  {// Render the cell contents
+                                    cell.render('Cell', { setSubRows })}
+                                </TableRowCell>
+                              );
+                            })}
+                        </TableRow>
+                        {row.isExpanded ? (
+                          <TableSubRow {...rowProps} key={`${rowProps.key}-expanded`}>
+                            <TableRowCell colSpan={visibleColumns.length}>
+                              {subRows[row.id]}
+                            </TableRowCell>
+                          </TableSubRow>
+                        ) : null}
+                      </Fragment>
+                      // <TableRow
+                      //   onClick={() => handleRowClick(row)}
+                      //   {...row.getRowProps()}>
+                      //   {// Loop over the rows cells
+                      //     row.cells.map((cell) => {
+                      //       // Apply the cell props
+                      //       return (
+                      //         <TableRowCell {...cell.getCellProps()}>
+                      //           {// Render the cell contents
+                      //             cell.render('Cell')}
+                      //         </TableRowCell>
+                      //       );
+                      //     })}
+                      // </TableRow>
+                    );
+                  })}
+              </tbody>
+            </Table>
+          ) : (
+            <Empty />
+          )}
+        </Box>
+        <Footer {...paginationProps} />
+      </Box>
+    </>
   );
 }

@@ -12,13 +12,6 @@ const MODE = 'challenge';
 const App = () => {
   // initialize app
   const loading = useInit();
-  // usePrefetch();
-  // const dispatch = useAppDispatch();
-  // const { loading } = useAppSelector(selectGetConfigRequest);
-
-  // useEffect(() => {
-  //   dispatch(getConfig());
-  // }, []);
 
   return (
     <Suspense fallback={<Loader />}>

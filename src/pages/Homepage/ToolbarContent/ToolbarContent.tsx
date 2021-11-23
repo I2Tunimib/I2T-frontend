@@ -32,8 +32,8 @@ const ToolbarContent: FC<any> = () => {
   const { API } = useAppSelector(selectAppConfig);
   const dispatch = useAppDispatch();
 
-  const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
-    dispatch(globalSearch({ query: event.target.value }))
+  const handleOnChange = (value: string) => {
+    dispatch(globalSearch({ query: value }))
       .unwrap()
       .then((res) => setSearchResults(res));
   };
@@ -72,7 +72,7 @@ const ToolbarContent: FC<any> = () => {
 
       {API.ENDPOINTS.GLOBAL_SEARCH && (
         <Searchbar
-          onChange={handleOnChange}
+          onInputChange={handleOnChange}
           debounceChange
           enableAutocomplete
           autocompleteComponent={autocompleteComponent}

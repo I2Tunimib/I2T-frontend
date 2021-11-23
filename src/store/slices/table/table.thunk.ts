@@ -2,6 +2,7 @@ import tableAPI from '@services/api/table';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
 import { RootState } from '@store';
+import { levDistance } from '@services/utils/lev-distance';
 import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
 // import convertToW3CTable from './utils/table.export-utils';
 import { ColumnState, RowState, TableState } from './interfaces/table';
@@ -15,7 +16,8 @@ export enum TableThunkActions {
   RECONCILE = 'reconcile',
   EXTEND = 'extend',
   CONVER_W3C = 'convertToW3C',
-  EXPORT_TABLE = 'exportTable'
+  EXPORT_TABLE = 'exportTable',
+  FILTER_TABLE = 'filterTable'
 }
 
 // export const getTable = createAsyncThunk(
@@ -81,6 +83,60 @@ export const saveTable = createAsyncThunk(
 //     return response;
 //   }
 // );
+
+type GetLabelsProps = {
+  rows: RowState;
+  columns: ColumnState;
+}
+
+const LABELS_FN = {
+  label: ({
+    rows,
+    columns
+  }: GetLabelsProps) => rows.allIds.flatMap((rowId) => {
+    return columns.allIds.map((colId) => {
+      return rows.byId[rowId].cells[colId].label;
+    });
+  }),
+  metaName: ({
+    rows,
+    columns
+  }: GetLabelsProps) => rows.allIds.flatMap((rowId) => {
+    return columns.allIds.flatMap((colId) => {
+      return rows.byId[rowId].cells[colId].metadata.map((metaItem) => metaItem.name.value);
+    });
+  }),
+  metaType: ({
+    rows,
+    columns
+  }: GetLabelsProps) => rows.allIds.flatMap((rowId) => {
+    return columns.allIds.flatMap((colId) => {
+      return rows.byId[rowId].cells[colId].metadata.flatMap((metaItem) => {
+        return metaItem.type ? metaItem.type.map((type: any) => type.name) : [];
+      });
+    });
+  })
+};
+
+export const filterTable = createAsyncThunk(
+  `${ACTION_PREFIX}/filterTable`,
+  async ({ value, tag }: { value: string; tag: string }, { getState }) => {
+    const { table } = getState() as RootState;
+    const { rows, columns } = table.entities;
+
+    const allLabels = Array.from(new Set(
+      LABELS_FN[tag as keyof typeof LABELS_FN]({ rows, columns })
+    ));
+
+    return allLabels.map((label) => ({
+      distance: levDistance(value, label),
+      label
+    }))
+      .filter((item) => item.distance < 0.9)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 10);
+  }
+);
 
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,

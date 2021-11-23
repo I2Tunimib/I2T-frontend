@@ -59,6 +59,10 @@ interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
    * Expand on focus. Defaults to true.
    */
   expand?: boolean;
+
+  value?: string;
+
+  onInputChange: (value: string) => void;
 }
 
 /**
@@ -68,7 +72,8 @@ interface SearchbarProps extends HTMLAttributes<HTMLInputElement> {
  */
 const Searchbar: FC<SearchbarProps> = ({
   onTagChange,
-  onChange,
+  onInputChange,
+  value = '',
   debounceChange = false,
   enableTags = true,
   defaultTag,
@@ -86,9 +91,9 @@ const Searchbar: FC<SearchbarProps> = ({
   const [tag, setTag] = useState<string>(defaultTag ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const debouncedOnChange = useDebouncedCallback((event: any) => {
-    if (onChange) {
-      onChange(event);
+  const debouncedOnChange = useDebouncedCallback((inputValue: string) => {
+    if (onInputChange) {
+      onInputChange(inputValue);
     }
   }, 300);
 
@@ -100,6 +105,13 @@ const Searchbar: FC<SearchbarProps> = ({
         setInputState((state) => ({ ...state, value: '' }));
       }
     }
+    if (onInputChange && !inputState.value.startsWith(':')) {
+      if (debounceChange) {
+        debouncedOnChange(inputState.value);
+      } else {
+        onInputChange(inputState.value);
+      }
+    }
   }, [inputState.value]);
 
   useEffect(() => {
@@ -107,6 +119,10 @@ const Searchbar: FC<SearchbarProps> = ({
       onTagChange(tag);
     }
   }, [tag]);
+
+  useEffect(() => {
+    setInputState((state) => ({ ...state, value: value || '' }));
+  }, [value]);
 
   useEffect(() => {
     if (focused) {
@@ -123,21 +139,21 @@ const Searchbar: FC<SearchbarProps> = ({
   const handleOnChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setInputState((state) => ({ ...state, value: event.target.value }));
     if (enableTags) {
-      if (onChange && !event.target.value.startsWith(':')) {
+      if (onInputChange && !event.target.value.startsWith(':')) {
         if (debounceChange) {
-          debouncedOnChange(event);
+          debouncedOnChange(event.target.value);
         } else {
-          onChange(event);
+          onInputChange(event.target.value);
         }
       }
-    } else if (onChange) {
+    } else if (onInputChange) {
       if (debounceChange) {
-        debouncedOnChange(event);
+        debouncedOnChange(event.target.value);
       } else {
-        onChange(event);
+        onInputChange(event.target.value);
       }
     }
-  }, [enableTags, onChange, inputState.value]);
+  }, [enableTags, onInputChange, inputState.value]);
 
   const handleOnFocus = useCallback(() => {
     setInputState((state) => ({ ...state, focused: true }));

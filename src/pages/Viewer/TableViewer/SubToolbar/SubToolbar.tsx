@@ -1,4 +1,4 @@
-import { Button, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Button, Stack } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
@@ -32,6 +32,9 @@ import {
 } from '@store/slices/table/table.selectors';
 import { useDebouncedCallback } from 'use-debounce';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
+import { levDistance } from '@services/utils/lev-distance';
+import { filterTable } from '@store/slices/table/table.thunk';
+import styled from '@emotion/styled';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
@@ -42,6 +45,15 @@ const tagRegex = /:([A-Za-z]+):/;
 
 const permittedTags = ['metaName', 'metaType'];
 
+const SuggestionItem = styled.div({
+  padding: '5px 10px',
+  borderRadius: '6px',
+  '&:hover': {
+    backgroundColor: '#CEE4F8',
+    color: '#34638f'
+  }
+});
+
 /**
  * Sub toolbar for common and contextual actions
  */
@@ -49,7 +61,11 @@ const SubToolbar = () => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [autoMatchingAnchor, setAutoMatchingAnchor] = useState<null | HTMLElement>(null);
+  const [searchValue, setSearchValue] = useState<string>('');
   const [tag, setTag] = useState<string>('label');
+  const [searchSuggestions, setSearchSuggestion] = useState<
+    { distance: number, label: string }[]
+  >([]);
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
   const isExtendButtonEnabled = useAppSelector(selectIsExtendButtonEnabled);
@@ -96,16 +112,26 @@ const SubToolbar = () => {
     }
   }, [ref]);
 
-  const debouncedSearchChange = useDebouncedCallback((event: any) => {
-    if (event.target) {
-      dispatch(updateUI({
-        search: {
-          filter: tag,
-          value: event.target.value || ''
-        }
-      }));
+  const handleSearchChange = (value: string) => {
+    if (!value) {
+      setSearchSuggestion([]);
+    } else {
+      dispatch(filterTable({
+        value,
+        tag
+      }))
+        .unwrap()
+        .then((res) => {
+          setSearchSuggestion(res);
+        });
     }
-  }, 300);
+    dispatch(updateUI({
+      search: {
+        filter: tag,
+        value
+      }
+    }));
+  };
 
   const handleTagChange = (newTag: string) => {
     setTag(newTag);
@@ -206,10 +232,22 @@ const SubToolbar = () => {
         <Searchbar
           defaultTag="label"
           placeholder="Search table, metadata..."
+          enableAutocomplete
+          debounceChange
+          autocompleteComponent={(
+            <Stack padding="2px">
+              {searchSuggestions.map((suggestion, index) => (
+                <SuggestionItem role="button" key={index} onClick={() => setSearchValue(suggestion.label)}>
+                  {suggestion.label}
+                </SuggestionItem>
+              ))}
+            </Stack>
+          )}
           tagRegex={tagRegex}
           permittedTags={permittedTags}
           onTagChange={handleTagChange}
-          onChange={(e) => debouncedSearchChange(e)}
+          value={searchValue}
+          onInputChange={(value) => { setSearchValue(value); handleSearchChange(value); }}
           className={styles.Search}
         />
       </ToolbarActions>

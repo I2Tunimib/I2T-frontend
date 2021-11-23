@@ -44,14 +44,14 @@ const SearchbarBase: FC<SearchbarBaseProps> = ({
             styles.Container,
             {
               [styles.Focused]: focused,
-              [styles.Searching]: enableAutocomplete && value !== '' && focused
+              [styles.Searching]: enableAutocomplete && value !== '' && !value.startsWith(':') && focused
             }
           )}>
           <SearchRoundedIcon className={styles.Icon} />
           {tag && <ButtonShortcut text={tag} variant="flat" color="white" />}
           {children}
         </button>
-        {enableAutocomplete && value !== '' && focused ? (
+        {enableAutocomplete && value !== '' && !value.startsWith(':') && focused ? (
           <div className={styles.AutocompleteContentWrapper}>
             {autocompleteComponent}
           </div>

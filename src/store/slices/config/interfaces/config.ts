@@ -25,7 +25,7 @@ export interface Reconciliator {
 
 export type MetaToViewItem = {
   label?: string;
-  type?: 'link' | 'subComponent' | 'tag';
+  type?: 'link' | 'subList' | 'tag';
 }
 
 export interface Extender extends Record<string, any> {
