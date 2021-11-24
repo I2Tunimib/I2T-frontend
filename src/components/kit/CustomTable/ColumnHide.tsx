@@ -1,7 +1,9 @@
-import { Checkbox, FormControlLabel, Stack } from '@mui/material';
 import {
-  FC, forwardRef,
-  useEffect, useRef
+  Checkbox, FormControlLabel,
+  Stack, Typography
+} from '@mui/material';
+import {
+  FC, useRef
 } from 'react';
 
 const ColumnHide: FC<any> = ({ indeterminate: { indeterminate, ...rest }, allColumns }) => {
@@ -14,7 +16,7 @@ const ColumnHide: FC<any> = ({ indeterminate: { indeterminate, ...rest }, allCol
   return (
     <Stack direction="row" flexWrap="wrap">
       <FormControlLabel
-        label="All"
+        label={<Typography fontSize="14px">All</Typography>}
         control={(
           <Checkbox
             indeterminate={Boolean(indeterminate)}
@@ -24,7 +26,7 @@ const ColumnHide: FC<any> = ({ indeterminate: { indeterminate, ...rest }, allCol
       {allColumns.map((column: any) => (
         <FormControlLabel
           key={column.id}
-          label={column.Header}
+          label={<Typography fontSize="14px">{column.Header}</Typography>}
           control={(
             <Checkbox {...column.getToggleHiddenProps()} />
           )}

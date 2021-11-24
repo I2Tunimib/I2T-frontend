@@ -50,7 +50,7 @@ const Td = styled.td<{
   ...(selected && {
     backgroundColor: 'var(--brand-color-one-transparent)'
   }),
-  ...(searchHighlight && !selected && {
+  ...(searchHighlight && {
     backgroundColor: '#FFFCE8'
   })
 }));

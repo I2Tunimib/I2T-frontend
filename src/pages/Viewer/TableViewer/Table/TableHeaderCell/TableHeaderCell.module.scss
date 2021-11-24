@@ -36,7 +36,7 @@
   //   border-top: 2px solid var(--brand-color-one-base)
   // }
   &.Selected {
-    background-color: var(--brand-color-one-transparent-dark);
+    background-color: var(--brand-color-one-transparent);
 
     &::after {
       position: absolute;

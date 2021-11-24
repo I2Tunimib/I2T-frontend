@@ -46,8 +46,8 @@ const SuggestionItem = styled.div({
   padding: '5px 10px',
   borderRadius: '6px',
   '&:hover': {
-    backgroundColor: '#CEE4F8',
-    color: '#34638f'
+    backgroundColor: '#E4E6EB',
+    fontWeight: 500
   }
 });
 

@@ -189,8 +189,13 @@ export default function CustomTable<T extends Record<string, unknown>>(
   };
 
   return (
-    <>
-      <Box padding="0 16px">
+    <Stack position="relative" flexGrow={1}>
+      {loading && (
+        <TableLoadingOverlay>
+          <CircularProgress />
+        </TableLoadingOverlay>
+      )}
+      <Box padding="5px 16px" marginTop="12px" borderTop="1px solid #f0f0f0">
         <ColumnHide {...{ indeterminate: getToggleHideAllColumnsProps(), allColumns }} />
       </Box>
       <Box sx={{
@@ -199,15 +204,9 @@ export default function CustomTable<T extends Record<string, unknown>>(
         flexDirection: 'column',
         flexGrow: 1
       }}>
-        {loading && (
-          <TableLoadingOverlay>
-            <CircularProgress />
-          </TableLoadingOverlay>
-        )}
         <Box
           sx={{
             flexGrow: 1,
-            marginTop: '12px',
             ...(data.length === 0 && {
               display: 'flex',
               alignItems: 'center',
@@ -312,6 +311,6 @@ export default function CustomTable<T extends Record<string, unknown>>(
         </Box>
         <Footer {...paginationProps} />
       </Box>
-    </>
+    </Stack>
   );
 }
