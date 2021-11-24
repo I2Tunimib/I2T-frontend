@@ -1,5 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -9,7 +10,9 @@ import {
   FormControl,
   MenuItem,
   Select,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Stack,
+  Typography
 } from '@mui/material';
 import {
   forwardRef,
@@ -44,7 +47,7 @@ const ReconciliateDialog = () => {
   const open = useAppSelector(selectReconcileDialogStatus);
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const selectedCells = useAppSelector(selectReconciliationCells);
-  const { loading } = useAppSelector(selectReconcileRequestStatus);
+  const { loading, error } = useAppSelector(selectReconcileRequestStatus);
 
   useEffect(() => {
     // set initial value of select
@@ -63,11 +66,6 @@ const ReconciliateDialog = () => {
       }))
         .unwrap()
         .then((result) => {
-          dispatch(updateUI({
-            openReconciliateDialog: false
-          }));
-        })
-        .catch(() => {
           dispatch(updateUI({
             openReconciliateDialog: false
           }));
@@ -100,21 +98,24 @@ const ReconciliateDialog = () => {
         <DialogContentText>
           Select a service to reconcile with:
         </DialogContentText>
-        {currentService && (
-          <FormControl className="field">
-            <Select
-              value={currentService}
-              onChange={(e) => handleChange(e)}
-              variant="outlined"
-            >
-              {reconciliators && reconciliators.map((reconciliator) => (
-                <MenuItem key={reconciliator.prefix} value={reconciliator.prefix}>
-                  {reconciliator.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
+        <Stack gap="10px">
+          {currentService && (
+            <FormControl className="field">
+              <Select
+                value={currentService}
+                onChange={(e) => handleChange(e)}
+                variant="outlined"
+              >
+                {reconciliators && reconciliators.map((reconciliator) => (
+                  <MenuItem key={reconciliator.prefix} value={reconciliator.prefix}>
+                    {reconciliator.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          {error && <Typography color="error">{error.message}</Typography>}
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>

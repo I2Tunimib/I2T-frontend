@@ -42,6 +42,7 @@ export const selectReconcileRequestStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.RECONCILE)
 );
+
 export const selectExtendRequestStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.EXTEND)

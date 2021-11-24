@@ -95,7 +95,7 @@ const handleFulfilledAction = <T>(state: any, action: any) => {
 const handleRejectedAction = <T>(state: any, action: any) => {
   const requestId = action.type.split('/')[1];
   state._requests.byId[requestId] = {
-    status: 'error',
+    status: 'done',
     error: action.error
   };
 };
