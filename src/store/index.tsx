@@ -3,7 +3,6 @@ import { enablePatches } from 'immer';
 import { lastAction } from './middlewares/action.middleware';
 import tableReducer from './slices/table/table.slice';
 import configReducer from './slices/config/config.slice';
-import tablesReducer from './slices/tables/tables.slice';
 import actionReducer from './slices/action/action.slice';
 import datasetsReducer from './slices/datasets/datasets.slice';
 
@@ -13,7 +12,6 @@ export const store = configureStore({
   reducer: {
     action: actionReducer,
     config: configReducer,
-    tables: tablesReducer,
     datasets: datasetsReducer,
     table: tableReducer
   },

@@ -1,8 +1,7 @@
 import { Battery } from '@components/core';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { Button, Pagination, Typography } from '@mui/material';
-import { selectCurrentTable, selectIsViewOnly } from '@store/slices/table/table.selectors';
-import { updateUI } from '@store/slices/table/table.slice';
+import { useAppSelector } from '@hooks/store';
+import { Pagination, Typography } from '@mui/material';
+import { selectCurrentTable } from '@store/slices/table/table.selectors';
 import styles from './TableFooter.module.scss';
 
 interface TableFooterProps {

@@ -1,6 +1,6 @@
 import {
   useMemo, useCallback,
-  MouseEvent, useEffect,
+  MouseEvent,
   useState
 } from 'react';
 import {
@@ -11,7 +11,6 @@ import {
   updateRowSelection
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { LinearProgress } from '@mui/material';
 import { HotKeys } from 'react-hotkeys';
 import {
   selectDataTableFormat,
@@ -24,11 +23,10 @@ import {
   selectTutorialBBoxes, selectSelectedColumnCellsIds
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
-import { getTable, saveTable } from '@store/slices/table/table.thunk';
+import { saveTable } from '@store/slices/table/table.thunk';
 import { ID } from '@store/interfaces/store';
 import { RouteLeaveGuard } from '@components/kit';
 import clsx from 'clsx';
-import Tutorial from '@components/kit/Tutorial/Tutorial';
 import { Table } from '../Table';
 // import Toolbar from '../../Viewer/Toolbar';
 import styles from './TableViewer.module.scss';

@@ -1,8 +1,7 @@
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
 import { ID, BaseState } from '@store/interfaces/store';
-import { Extender, Reconciliator } from '@store/slices/config/interfaces/config';
-import { TableInstance } from '@store/slices/tables/interfaces/tables';
+import { Reconciliator } from '@store/slices/config/interfaces/config';
 
 /**
  * Table slice state.
@@ -18,6 +17,16 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
 }
 
 export interface CurrentTableState extends Partial<TableInstance>{}
+
+export interface TableInstance {
+  id: ID;
+  name: string;
+  format: FileFormat;
+  type: TableType;
+  lastModifiedDate: string;
+  nCells: number;
+  nCellsReconciliated: number;
+}
 
 /**
  * Table UI state.

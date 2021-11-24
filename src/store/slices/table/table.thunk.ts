@@ -1,10 +1,8 @@
 import tableAPI from '@services/api/table';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ID } from '@store/interfaces/store';
 import { RootState } from '@store';
 import { levDistance } from '@services/utils/lev-distance';
 import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
-// import convertToW3CTable from './utils/table.export-utils';
 import { ColumnState, RowState, TableState } from './interfaces/table';
 
 const ACTION_PREFIX = 'table';
@@ -66,23 +64,6 @@ export const saveTable = createAsyncThunk(
     return response.data;
   }
 );
-
-// export const convertToW3C = createAsyncThunk(
-//   `${ACTION_PREFIX}/convertToW3C`,
-//   async (keepMatching: boolean, { getState }) => {
-//     const { table, config } = getState() as any;
-//     const { columns, rows, tableInstance } = table.entities;
-//     const { reconciliators } = config.entities;
-//     const response = await convertToW3CTable({
-//       columns,
-//       rows,
-//       tableInstance,
-//       reconciliators,
-//       keepMatching
-//     });
-//     return response;
-//   }
-// );
 
 type GetLabelsProps = {
   rows: RowState;
@@ -237,19 +218,3 @@ export const extend = createAsyncThunk<ExtendThunkResponseProps, ExtendThunkInpu
     };
   }
 );
-// export const extend = createAsyncThunk(
-//   `${ACTION_PREFIX}/extend`,
-//   async (
-//     {
-//       baseUrl,
-//       data,
-//       extender
-//     }: { baseUrl: string, data: any, extender: Extender }
-//   ) => {
-//     const response = await tableAPI.extend(baseUrl, data);
-//     return {
-//       data: response.data,
-//       extender
-//     };
-//   }
-// );

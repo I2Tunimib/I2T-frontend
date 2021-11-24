@@ -3,8 +3,6 @@ import {
   Switch,
   ToggleButton, ToggleButtonGroup, Tooltip
 } from '@mui/material';
-import makeStyles from '@mui/styles/makeStyles';
-import withStyles from '@mui/styles/withStyles';
 import { InlineInput } from '@components/kit';
 import { Link, useHistory, useParams } from 'react-router-dom';
 import {
@@ -14,7 +12,6 @@ import {
 } from 'react';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
-import CloudOffIcon from '@mui/icons-material/CloudOff';
 import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -24,13 +21,12 @@ import {
   selectLastSaved,
   selectSaveTableStatus
 } from '@store/slices/table/table.selectors';
-import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import BubbleChartRoundedIcon from '@mui/icons-material/BubbleChartRounded';
 import FormatAlignJustifyRoundedIcon from '@mui/icons-material/FormatAlignJustifyRounded';
 import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { saveTable } from '@store/slices/table/table.thunk';
-import { useGoBack, useQuery } from '@hooks/router';
+import { useQuery } from '@hooks/router';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
@@ -38,9 +34,6 @@ import { IconButtonTooltip } from '@components/core';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
-import FileMenu from '../Menus/FileMenu';
-import EditMenu from '../Menus/EditMenu';
-import ViewMenu from '../Menus/ViewMenu';
 
 interface MenuState extends Record<string, boolean> {
 }

@@ -1,4 +1,4 @@
-import { current, Draft } from '@reduxjs/toolkit';
+import { Draft } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
 import {
   BaseMetadata,

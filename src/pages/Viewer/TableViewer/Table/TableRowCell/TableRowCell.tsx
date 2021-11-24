@@ -2,7 +2,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import { ID } from '@store/interfaces/store';
-import clsx from 'clsx';
 import {
   ChangeEvent, FC, KeyboardEvent,
   useState, MouseEvent, useRef,
@@ -12,7 +11,6 @@ import styled from '@emotion/styled';
 import EditableCell from '../EditableCell';
 import { TableCell, TableColumn, TableRow } from '../interfaces/table';
 import NormalCell from '../NormalCell';
-import styles from './TableRowCell.module.scss';
 
 interface TableRowCellProps extends TableCell {
   column: TableColumn;
@@ -56,21 +54,6 @@ const Td = styled.td<{
     backgroundColor: '#FFFCE8'
   })
 }));
-  // ({ selected, highlightState, columnId }) => {
-  //   if (highlightState && highlightState.columns.includes(columnId)) {
-  //     return {
-  //       backgroundColor: `${highlightState.color}0d`
-  //     };
-  //   }
-  //   if (selected) {
-  //     return {
-  //       backgroundColor: 'var(--brand-color-one-transparent)'
-  //     };
-  //   }
-  //   return {
-  //     backgroundColor: 'inherit'
-  //   };
-  // }
 
 /**
  * Table row cell.

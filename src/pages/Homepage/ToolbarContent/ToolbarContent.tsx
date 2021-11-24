@@ -1,12 +1,11 @@
 import { Chip, Stack, Typography } from '@mui/material';
 import { Searchbar } from '@components/kit';
-import { ChangeEvent, FC, useState } from 'react';
+import { FC, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { globalSearch } from '@store/slices/datasets/datasets.thunk';
-import logo from '@assets/tui.png';
 import { GlobalSearchResult } from '@services/api/datasets';
 import styles from './ToolbarContent.module.scss';
 

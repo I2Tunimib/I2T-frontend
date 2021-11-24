@@ -1,22 +1,19 @@
 import {
   FC, forwardRef,
   ReactNode,
-  useEffect, useRef, useState
+  useEffect, useRef
 } from 'react';
 import {
   Row, usePagination,
   useRowSelect, useSortBy, useTable
 } from 'react-table';
-import { ButtonPlay } from '@components/core';
 import clsx from 'clsx';
 import {
   Pagination, Checkbox,
-  Typography, Button, IconButton, useMediaQuery, Stack
+  Button, useMediaQuery
 } from '@mui/material';
-import ReadMoreRoundedIcon from '@mui/icons-material/ReadMoreRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import { PlayArrowRounded } from '@mui/icons-material';
 import styles from './TableListView.module.scss';
 
 interface TableListViewProps {

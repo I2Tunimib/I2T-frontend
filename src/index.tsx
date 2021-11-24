@@ -4,10 +4,9 @@ import ReactDOM from 'react-dom';
 import './index.scss';
 import { store } from '@store';
 import { Provider } from 'react-redux';
-import Loader from '@components/core/Loader';
 import {
   createTheme, ThemeProvider,
-  Theme, StyledEngineProvider, makeStyles
+  Theme, StyledEngineProvider
 } from '@mui/material/styles';
 import { SnackbarProvider } from 'notistack';
 import App from './App';

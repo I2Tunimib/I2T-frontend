@@ -1,6 +1,5 @@
 import useIsMounted from '@hooks/is-mounted/useIsMounted';
 import { useAppDispatch } from '@hooks/store';
-import { Typography } from '@mui/material';
 import { exportTable } from '@store/slices/table/table.thunk';
 import { useEffect, useState } from 'react';
 import ReactJson from 'react-json-view';

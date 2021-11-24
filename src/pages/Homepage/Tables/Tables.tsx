@@ -1,4 +1,3 @@
-import { Tag } from '@components/core';
 import deferMounting from '@components/HOC';
 import { TableListView } from '@components/kit';
 import { useAppDispatch, useAppSelector } from '@hooks/store';

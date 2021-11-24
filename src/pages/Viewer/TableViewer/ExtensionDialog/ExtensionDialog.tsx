@@ -1,8 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
@@ -23,7 +21,7 @@ import {
 } from 'react';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-import { selectExtendRequestStatus, selectExtensionDialogStatus } from '@store/slices/table/table.selectors';
+import { selectExtendRequestStatus } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
 import { selectExtendersAsArray } from '@store/slices/config/config.selectors';
 import { Extender } from '@store/slices/config/interfaces/config';

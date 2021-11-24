@@ -9,7 +9,6 @@ import ViewStreamRoundedIcon from '@mui/icons-material/ViewStreamRounded';
 import ReorderRoundedIcon from '@mui/icons-material/ReorderRounded';
 import ArrowRightAltRoundedIcon from '@mui/icons-material/ArrowRightAltRounded';
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
-import clsx from 'clsx';
 import {
   addTutorialBox,
   deleteSelected,
@@ -18,8 +17,8 @@ import {
 import { Searchbar, ToolbarActions } from '@components/kit';
 import { ActionGroup, IconButtonTooltip } from '@components/core';
 import {
-  ChangeEvent, MouseEvent,
-  useState, useCallback, FormEvent,
+  MouseEvent,
+  useState,
   useRef,
   useEffect
 } from 'react';
@@ -30,9 +29,7 @@ import {
   selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled,
   selectIsViewOnly, selectMetadataDialogStatus, selectExtensionDialogStatus
 } from '@store/slices/table/table.selectors';
-import { useDebouncedCallback } from 'use-debounce';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
-import { levDistance } from '@services/utils/lev-distance';
 import { filterTable } from '@store/slices/table/table.thunk';
 import styled from '@emotion/styled';
 import styles from './SubToolbar.module.scss';

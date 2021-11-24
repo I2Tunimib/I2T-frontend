@@ -1,6 +1,5 @@
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
-  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -18,21 +17,19 @@ import {
   forwardRef,
   Ref,
   ReactElement,
-  ChangeEvent,
-  useState,
-  useEffect
+  useEffect,
+  useState
 } from 'react';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-// import { selectServicesConfig } from '@store/slices/config/config.selectors';
 import { reconcile } from '@store/slices/table/table.thunk';
-import { ButtonLoading } from '@components/core';
 import {
   selectReconcileDialogStatus, selectReconciliationCells,
   selectReconcileRequestStatus
 } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
 import { selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
+import { LoadingButton } from '@mui/lab';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -121,9 +118,9 @@ const ReconciliateDialog = () => {
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <ButtonLoading onClick={handleConfirm} loading={!!loading}>
+        <LoadingButton onClick={handleConfirm} loading={!!loading}>
           Confirm
-        </ButtonLoading>
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );

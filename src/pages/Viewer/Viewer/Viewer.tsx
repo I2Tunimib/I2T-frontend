@@ -1,8 +1,7 @@
-import { useFirstRender } from '@hooks/first-render/useFirstRender';
 import { useQuery } from '@hooks/router';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import TableViewer from '@pages/Viewer/TableViewer';
-import { selectCurrentView, selectGetTableStatus } from '@store/slices/table/table.selectors';
+import { selectGetTableStatus } from '@store/slices/table/table.selectors';
 import { getTable } from '@store/slices/table/table.thunk';
 import { FC, useCallback, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
@@ -33,13 +32,6 @@ const Viewer: FC<unknown> = () => {
       }
     }
   }, [view, tableId, datasetId]);
-
-  // useEffect(() => {
-  //   if (id) {
-  //     console.log(id);
-  //     // dispatch(getTable(id));
-  //   }
-  // }, [id]);
 
   useEffect(() => {
     if (tableId && datasetId) {

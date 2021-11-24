@@ -1,14 +1,12 @@
 import {
-  Breadcrumbs, Button, Chip, Divider, IconButton, LinearProgress, Stack, Typography, useMediaQuery
+  Breadcrumbs, Button, IconButton, LinearProgress, Stack, Typography, useMediaQuery
 } from '@mui/material';
 import { MainLayout } from '@components/layout';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { FC, useEffect, useState } from 'react';
-import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
-import { Battery, IconButtonTooltip, SplitButton } from '@components/core';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import { IconButtonTooltip, SplitButton } from '@components/core';
 import {
-  Link, Redirect, Route, Switch, useHistory, useParams, useRouteMatch
+  Link, Redirect, Route, Switch, useHistory, useRouteMatch
 } from 'react-router-dom';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import {
@@ -25,7 +23,6 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import clsx from 'clsx';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { updateUI } from '@store/slices/datasets/datasets.slice';
-import SidebarContent from './SidebarContent/SidebarContent';
 import ToolbarContent from './ToolbarContent';
 import styles from './Homepage.module.scss';
 import Datasets from './Datasets/Datasets';

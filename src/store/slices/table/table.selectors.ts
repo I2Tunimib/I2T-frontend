@@ -3,13 +3,10 @@ import { floor } from '@services/utils/math';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
-import { Row } from 'react-table';
-import { Context } from 'vm';
 import { selectAppConfig, selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
-import { BaseMetadata, ColumnStatus } from './interfaces/table';
 import { TableThunkActions } from './table.thunk';
 import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
-import { getCell, getIdsFromCell } from './utils/table.utils';
+import { getIdsFromCell } from './utils/table.utils';
 
 // Input selectors
 const selectTableState = (state: RootState) => state.table;

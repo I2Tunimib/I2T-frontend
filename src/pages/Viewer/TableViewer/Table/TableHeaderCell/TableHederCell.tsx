@@ -1,7 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
-import { Chip, IconButton, Stack } from '@mui/material';
+import { IconButton, Stack } from '@mui/material';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import clsx from 'clsx';
 import { ButtonShortcut } from '@components/kit';

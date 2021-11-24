@@ -1,4 +1,3 @@
-import { AxiosRequestConfig } from 'axios';
 import { setup } from 'axios-cache-adapter';
 
 /**
@@ -16,28 +15,5 @@ const apiClient = setup({
     }
   }
 });
-
-/**
- * Setup additional interceptors if needed...
- */
-
-// apiClient.interceptors.request.use((config) => {
-//   return ({
-//     ...config,
-//     headers: {
-//       ...
-//     },
-//   })
-// },
-//   error => Promise.reject(error),
-// );
-
-// apiClient.interceptors.response.use((response) =>
-//   response,
-//   async (error) => {
-//     ...
-//     return Promise.reject(error.response.data);
-//   },
-// );
 
 export default apiClient;

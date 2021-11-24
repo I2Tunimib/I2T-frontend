@@ -1,14 +1,12 @@
-import { Draft, original } from '@reduxjs/toolkit';
+import { Draft } from '@reduxjs/toolkit';
 import { ID } from '@store/interfaces/store';
-import {
-  ColumnState, RowState, TableState, ColumnStatus
-} from '../interfaces/table';
+import { TableState } from '../interfaces/table';
 import {
   decrementContextReconciliated,
   decrementContextTotal,
   getCellContext,
   getColumnStatus,
-  isCellReconciliated, isColumnPartialAnnotated, isColumnReconciliated
+  isCellReconciliated
 } from './table.reconciliation-utils';
 import { getCell, getColumn, removeObject } from './table.utils';
 

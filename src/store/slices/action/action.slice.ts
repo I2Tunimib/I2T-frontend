@@ -1,4 +1,4 @@
-import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface ActionState {
   action: string;

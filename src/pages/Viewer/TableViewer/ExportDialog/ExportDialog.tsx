@@ -1,14 +1,12 @@
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
   FormControl,
-  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -25,7 +23,6 @@ import { useParams } from 'react-router-dom';
 interface ExportDialogProps { }
 
 const ExportDialog: FC<ExportDialogProps> = () => {
-  // const [keepMatching, setKeepMatching] = useState<boolean>(false);
   const [format, setFormat] = useState<string>('');
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectExportDialogStatus);

@@ -4,7 +4,6 @@ import { isEmptyObject } from '@services/utils/objects-utils';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
 import { ID, Payload } from '@store/interfaces/store';
-import { TableInstance } from '../tables/interfaces/tables';
 import {
   AddCellMetadataPayload,
   AutoMatchingPayload,
@@ -18,6 +17,7 @@ import {
   FileFormat,
   ReconciliationFulfilledPayload,
   RowState,
+  TableInstance,
   TableState,
   TableType,
   TableUIState,

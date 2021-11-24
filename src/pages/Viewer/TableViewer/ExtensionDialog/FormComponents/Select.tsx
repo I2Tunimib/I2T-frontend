@@ -1,5 +1,4 @@
 /* eslint-disable react/no-danger */
-import styled from '@emotion/styled';
 import {
   FormControl,
   FormHelperText,
@@ -9,7 +8,6 @@ import {
   Stack
 } from '@mui/material';
 import { forwardRef, useEffect } from 'react';
-import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { useAppSelector } from '@hooks/store';
 import { selectColumnsAsSelectOptions } from '@store/slices/table/table.selectors';
 import { SelectInputProps } from '@mui/material/Select/SelectInput';

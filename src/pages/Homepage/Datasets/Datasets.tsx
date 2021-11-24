@@ -1,19 +1,15 @@
-import { Battery, DotLoading, Tag } from '@components/core';
 import { TableListView } from '@components/kit';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { useAppDispatch } from '@hooks/store';
 import { selectDatasets } from '@store/slices/datasets/datasets.selectors';
 import { setCurrentDataset } from '@store/slices/datasets/datasets.slice';
-import { DatasetInstance } from '@store/slices/datasets/interfaces/datasets';
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
 import {
   FC, useEffect,
-  useMemo, useState,
   useCallback
 } from 'react';
 import {
   Link, useRouteMatch
 } from 'react-router-dom';
-import { Cell } from 'react-table';
 import {
   Button, IconButton,
   Stack
@@ -21,7 +17,6 @@ import {
 import { ReadMoreRounded } from '@mui/icons-material';
 import deferMounting from '@components/HOC';
 import globalStyles from '@styles/globals.module.scss';
-import { getDataset } from '@store/slices/datasets/datasets.thunk';
 import { useTableCollection } from '../useTableCollection';
 
 interface DatasetsProps {

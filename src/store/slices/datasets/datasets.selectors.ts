@@ -1,9 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
-import { ID } from '@store/interfaces/store';
 import { DatasetThunkActions } from './datasets.thunk';
-import { TableInstance } from './interfaces/datasets';
 
 const selectDatasetsState = (state: RootState) => state.datasets.entities;
 const selectDatasetsEntities = (state: RootState) => state.datasets.entities.datasets;
