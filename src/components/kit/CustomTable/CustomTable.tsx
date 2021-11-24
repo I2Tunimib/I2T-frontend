@@ -9,19 +9,16 @@ import {
 } from '@mui/material';
 import {
   forwardRef, Fragment, PropsWithChildren,
-  useEffect, useRef, useState
+  useRef, useState
 } from 'react';
 import {
-  Cell,
-  IdType,
   Row, TableOptions,
   useExpanded,
-  usePagination, useRowSelect, useSortBy, useTable
+  usePagination, useSortBy, useTable
 } from 'react-table';
 import Empty from '@components/kit/Empty';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import {
   Table, TableHead, TableHeaderCell,
   TableLoadingOverlay,

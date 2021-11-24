@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { IconButton, Stack } from '@mui/material';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import clsx from 'clsx';
 import { ButtonShortcut } from '@components/kit';
 import { ColumnStatus } from '@store/slices/table/interfaces/table';
@@ -65,7 +65,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
         {id !== 'index' ? (
           <>
             <IconButton onClick={handleSelectColumn} size="small" className={styles.ColumnSelectionButton}>
-              <KeyboardArrowDownRoundedIcon fontSize="medium" />
+              <CheckCircleOutlineRoundedIcon fontSize="medium" />
             </IconButton>
             <div className={styles.Row}>
               <div className={styles.Column}>

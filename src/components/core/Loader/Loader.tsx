@@ -6,9 +6,10 @@ interface LoaderProps {
 
 const Loader: FC<LoaderProps> = () => {
   return (
-    <div className={styles.LoaderWrapper}>
-      <div className={styles.Loader} />
-    </div>
+    <div className={styles.Loader} />
+    // <div className={styles.LoaderWrapper}>
+    //   <div className={styles.Loader} />
+    // </div>
   );
 };
 

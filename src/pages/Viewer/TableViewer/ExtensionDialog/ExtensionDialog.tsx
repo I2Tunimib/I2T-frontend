@@ -28,6 +28,7 @@ import { Extender } from '@store/slices/config/interfaces/config';
 import styled from '@emotion/styled';
 import { extend } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
+import { SquaredBox } from '@components/core';
 import DynamicExtensionForm from './DynamicExtensionForm';
 
 const Transition = forwardRef((
@@ -40,12 +41,6 @@ const Content = styled.div({
   flexDirection: 'column',
   gap: '20px'
 });
-
-const Description = styled(Typography)`
-  border-radius: 7px;
-  padding: 10px;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
-`;
 
 const DialogInnerContent = () => {
   const [currentService, setCurrentService] = useState<Extender>();
@@ -108,7 +103,7 @@ const DialogInnerContent = () => {
               ))}
             </Select>
           </FormControl>
-          <Description>{currentService.description}</Description>
+          <SquaredBox>{currentService.description}</SquaredBox>
           <Divider />
           <DynamicExtensionForm
             loading={loading}

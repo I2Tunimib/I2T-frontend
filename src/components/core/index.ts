@@ -13,6 +13,7 @@ import Battery from './Battery';
 import DotLoading from './DotLoading';
 import Loader from './Loader';
 import SplitButton from './SplitButton';
+import SquaredBox from './SquaredBox';
 
 export {
   StatusBadge,
@@ -29,5 +30,6 @@ export {
   Battery,
   DotLoading,
   Loader,
-  SplitButton
+  SplitButton,
+  SquaredBox
 };
