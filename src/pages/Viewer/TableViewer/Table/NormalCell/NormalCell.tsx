@@ -110,10 +110,10 @@ const NormalCell: FC<NormalCellProps> = ({
                       sx={{
                         marginLeft: '20px'
                       }}
-                      title={`${item.id} (${item.name})`}
+                      title={`${item.id} (${item.name.value})`}
                       href={item.url}
                       target="_blank">
-                      {`${item.id} (${item.name})`}
+                      {`${item.id} (${item.name.value})`}
                     </Link>
                   </EntityLabel>
                 </div>
@@ -130,10 +130,10 @@ const NormalCell: FC<NormalCellProps> = ({
                       marginLeft: '20px'
                     }}
                     href={item.url}
-                    title={`${item.id} (${item.name})`}
+                    title={`${item.id} (${item.name.value})`}
                     target="_blank"
                     className={styles.MetaLink}>
-                    {`${item.id} (${item.name})`}
+                    {`${item.id} (${item.name.value})`}
                   </Link>
                 </div>
               </ExpandableListItem>
