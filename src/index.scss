@@ -47,14 +47,4 @@ ol, ul {
 	list-style: none;
 }
 
-
-// override global classes of dialog
-.MuiDialog-paper {
-  width: 100%;
-}
-.MuiDialogContent-root {
-  display: flex;
-  flex-direction: column;
-}
-
 /*! purgecss end ignore */

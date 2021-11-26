@@ -54,6 +54,13 @@ const theme = createTheme({
     body1: { color: '#3a3331' }
   },
   components: {
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          width: '100%'
+        }
+      }
+    },
     MuiChip: {
       styleOverrides: {
         root: {
