@@ -39,6 +39,7 @@ export interface TableUIState {
   openExtensionDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
+  openMetadataColumnDialog: boolean;
   headerExpanded: boolean;
   view: 'table' | 'graph' | 'raw';
   selectedColumnCellsIds: Record<ID, boolean>;
@@ -199,6 +200,11 @@ export interface UpdateCellEditablePayload {
 
 export interface AutoMatchingPayload {
   threshold: number;
+}
+
+export interface UpdateColumnTypePayload {
+  id: ID;
+  name: string;
 }
 
 export interface UpdateCurrentTablePayload extends Partial<TableInstance> {}

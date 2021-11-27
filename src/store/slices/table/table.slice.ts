@@ -24,6 +24,7 @@ import {
   UpdateCellEditablePayload,
   UpdateCellLabelPayload,
   UpdateCellMetadataPayload,
+  UpdateColumnTypePayload,
   UpdateCurrentTablePayload,
   UpdateSelectedCellsPayload,
   UpdateSelectedColumnPayload,
@@ -81,6 +82,7 @@ const initialState: TableState = {
     openReconciliateDialog: false,
     openExtensionDialog: false,
     openMetadataDialog: false,
+    openMetadataColumnDialog: false,
     openExportDialog: false,
     view: 'table',
     selectedColumnCellsIds: {},
@@ -332,6 +334,37 @@ export const tableSlice = createSliceWithRequests({
       });
     },
     /**
+     * Handle update of the type of a column
+     * -- UNDOABLE ACTION --
+     */
+    updateColumnType: (state, action: PayloadAction<Payload<UpdateColumnTypePayload>>) => {
+      const { undoable = true, ...type } = action.payload;
+      const { selectedColumnCellsIds } = state.ui;
+
+      const colId = Object.keys(selectedColumnCellsIds)[0];
+
+      return produceWithPatch(state, undoable, (draft) => {
+        const { columns } = draft.entities;
+
+        const newType = [{
+          ...type,
+          match: true,
+          score: 100
+        }];
+
+        if (columns.byId[colId].metadata.length === 0) {
+          (columns.byId[colId].metadata as any) = [{
+            type: newType
+          }];
+        } else {
+          (columns.byId[colId].metadata[0].type as any) = newType;
+        }
+      }, (draft) => {
+        // do not include in undo history
+        draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+      });
+    },
+    /**
      * Handle changes to selected columns.
      */
     updateColumnSelection: (state, action: PayloadAction<UpdateSelectedColumnPayload>) => {
@@ -572,6 +605,7 @@ export const {
   updateColumnSelection,
   updateRowSelection,
   updateCellSelection,
+  updateColumnType,
   updateUI,
   addTutorialBox,
   deleteColumn,

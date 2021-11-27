@@ -211,6 +211,20 @@ export const selectCurrentCell = createSelector(
 
 // SELECTORS FOR UI STATUS
 
+export const selectIsMetadataButtonEnabled = createSelector(
+  selectSelectedCellsIdsAsArray,
+  selectSelectedColumnCellsIds,
+  (cellIds, colIds) => {
+    if (cellIds.length === 1) {
+      return { status: true, type: 'cell' };
+    }
+    if (Object.keys(colIds).length === 1) {
+      return { status: true, type: 'column' };
+    }
+    return { status: false, type: null };
+  }
+);
+
 export const selectLastSaved = createSelector(
   selectUIState,
   (ui) => ui.lastSaved
@@ -257,6 +271,10 @@ export const selectExtensionDialogStatus = createSelector(
 export const selectMetadataDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openMetadataDialog
+);
+export const selectMetadataColumnDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openMetadataColumnDialog
 );
 export const selectExportDialogStatus = createSelector(
   selectUIState,
@@ -421,16 +439,6 @@ export const selectAutoMatchingCells = createSelector(
   }
 );
 
-const toString = (value: any) => {
-  if (typeof value === 'number') {
-    return value.toFixed(2);
-  }
-  if (typeof value === 'boolean') {
-    return `${value}`;
-  }
-  return value;
-};
-
 /**
  * Get metadata formatted to display as table.
  */
@@ -446,27 +454,7 @@ export const selectCellMetadataTableFormat = createSelector(
       const cellContext = getCellContext(cell);
       const service = reconciliators.byId[cellContext];
       if (service) {
-        // const columns = service.metaToViz.map((tableColId) => ({
-        //   Header: tableColId,
-        //   accessor: tableColId
-        // }));
-
         const col = cols.byId[colId];
-
-        // const data = cell.metadata.map((item) => {
-        //   const [prefix, id] = item.id.split(':');
-        //   return {
-        //     ...service.metaToViz.reduce((acc, tableColId) => {
-        //       acc[tableColId] = tableColId === 'name' ? {
-        //         label: toString(item[tableColId as keyof BaseMetadata]),
-        //         isLink: tableColId === 'name',
-        //         link: tableColId === 'name' && `${col.context[prefix].uri}/${id}`
-        //       } : toString(item[tableColId as keyof BaseMetadata]);
-        //       return acc;
-        //     }, {} as { [key: string]: any } & Row)
-        //   };
-        // });
-        // return { cell, service };
         return {
           columnContext: col.context,
           cell,
@@ -497,5 +485,81 @@ export const selectColumnForExtension = createSelector(
       }, {} as Record<string, any>);
     }
     return [];
+  }
+);
+
+export const selectColumnTypes = createSelector(
+  selectSelectedColumnCellsIds,
+  selectRowsState,
+  selectColumnsState,
+  (selectedColumnCells, rowsState, columnsState) => {
+    const colIds = Object.keys(selectedColumnCells);
+
+    if (colIds.length !== 1) {
+      return null;
+    }
+
+    const map = rowsState.allIds.reduce((acc, rowId) => {
+      const { metadata } = rowsState.byId[rowId].cells[colIds[0]];
+
+      metadata.forEach((metaItem) => {
+        if (metaItem.type && metaItem.match) {
+          metaItem.type.forEach(({ id, name }) => {
+            if (acc[id]) {
+              acc[id] = {
+                ...acc[id],
+                count: ++acc[id].count
+              };
+            } else {
+              acc[id] = {
+                id,
+                label: name as any,
+                count: 1
+              };
+            }
+          });
+        }
+      });
+      return acc;
+    }, {} as Record<string, { id: string, count: number, label: string }>);
+
+    // add current type
+    let currentColType: any;
+
+    if (columnsState.byId[colIds[0]].metadata.length > 0) {
+      if (columnsState.byId[colIds[0]].metadata[0].type) {
+        const metaItem = columnsState.byId[colIds[0]].metadata[0];
+        currentColType = metaItem.type ? metaItem.type[0] : null;
+
+        if (currentColType) {
+          if (!map[currentColType.id]) {
+            map[currentColType.id] = {
+              id: currentColType.id,
+              label: currentColType.name as any,
+              count: 0
+            };
+          }
+        }
+      }
+    }
+
+    const totalCount = Object.keys(map).reduce((acc, key) => acc + map[key].count, 0);
+
+    let selectedType: any;
+    const allTypes = Object.keys(map).map((key) => {
+      const item = {
+        ...map[key],
+        percentage: (totalCount !== 0 ? (map[key].count / totalCount) * 100 : 0).toFixed(2)
+      };
+      if (currentColType && key === currentColType.id) {
+        selectedType = item;
+      }
+      return item;
+    }).sort((a, b) => b.count - a.count);
+
+    return {
+      allTypes,
+      selectedType
+    };
   }
 );

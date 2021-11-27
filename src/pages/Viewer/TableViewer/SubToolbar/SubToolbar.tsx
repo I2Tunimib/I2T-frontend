@@ -23,20 +23,23 @@ import {
   useEffect
 } from 'react';
 import {
-  selectIsCellSelected, selectIsOnlyOneCellSelected,
+  selectIsCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
   selectCanRedo, selectCanDelete, selectIsDenseView,
   selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled,
-  selectIsViewOnly, selectMetadataDialogStatus, selectExtensionDialogStatus
+  selectIsViewOnly, selectMetadataDialogStatus,
+  selectExtensionDialogStatus, selectIsMetadataButtonEnabled, selectMetadataColumnDialogStatus
 } from '@store/slices/table/table.selectors';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { filterTable } from '@store/slices/table/table.thunk';
 import styled from '@emotion/styled';
+import { TableUIState } from '@store/slices/table/interfaces/table';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
 import AutoMatching from '../AutoMatching';
 import ExtensionDialog from '../ExtensionDialog';
+import MetadataColumnDialog from '../MetadataColumnDialog/MetadataColumnDialog';
 
 const tagRegex = /:([A-Za-z]+):/;
 
@@ -64,7 +67,10 @@ const SubToolbar = () => {
     { distance: number, label: string }[]
   >([]);
   const isCellSelected = useAppSelector(selectIsCellSelected);
-  const isMetadataButtonEnabled = useAppSelector(selectIsOnlyOneCellSelected);
+  const {
+    status: isMetadataButtonEnabled,
+    type: metadataAction
+  } = useAppSelector(selectIsMetadataButtonEnabled);
   const isExtendButtonEnabled = useAppSelector(selectIsExtendButtonEnabled);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
   const isDenseView = useAppSelector(selectIsDenseView);
@@ -73,10 +79,10 @@ const SubToolbar = () => {
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
-  const searchFilter = useAppSelector(selectSearchStatus);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const { API } = useAppSelector(selectAppConfig);
   const openMetadataDialog = useAppSelector(selectMetadataDialogStatus);
+  const openMetadataColumnDialog = useAppSelector(selectMetadataColumnDialogStatus);
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
 
   const ref = useRef<HTMLButtonElement>(null);
@@ -130,6 +136,14 @@ const SubToolbar = () => {
     }));
   };
 
+  const handleMetadataDialogAction = () => {
+    if (metadataAction === 'cell') {
+      dispatch(updateUI({ openMetadataDialog: true }));
+    } else if (metadataAction === 'column') {
+      dispatch(updateUI({ openMetadataColumnDialog: true }));
+    }
+  };
+
   const handleTagChange = (newTag: string) => {
     setTag(newTag);
   };
@@ -145,8 +159,8 @@ const SubToolbar = () => {
   const handleCloseAutoMatching = () => {
     setIsAutoMatching(false);
   };
-  const handleExtensionClose = () => {
-    dispatch(updateUI({ openExtensionDialog: false }));
+  const handleExtensionClose = (key: keyof TableUIState) => {
+    dispatch(updateUI({ [key]: false }));
   };
 
   return (
@@ -178,7 +192,7 @@ const SubToolbar = () => {
             tooltipText="Manage metadata"
             Icon={SettingsEthernetRoundedIcon}
             disabled={!isMetadataButtonEnabled}
-            onClick={() => dispatch(updateUI({ openMetadataDialog: true }))}
+            onClick={handleMetadataDialogAction}
           />
           {(API.ENDPOINTS.SAVE && !isViewOnly)
             && (
@@ -250,7 +264,8 @@ const SubToolbar = () => {
       </ToolbarActions>
       {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}
       <ReconciliateDialog />
-      <ExtensionDialog open={openExtensionDialog} handleClose={handleExtensionClose} />
+      <MetadataColumnDialog open={openMetadataColumnDialog} onClose={() => handleExtensionClose('openMetadataColumnDialog')} />
+      <ExtensionDialog open={openExtensionDialog} handleClose={() => handleExtensionClose('openExtensionDialog')} />
       <AutoMatching
         open={isAutoMatching}
         anchorElement={autoMatchingAnchor}
