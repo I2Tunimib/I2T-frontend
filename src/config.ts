@@ -21,6 +21,7 @@ export type ApiConfig = {
     DELETE_TABLE: Endpoint;
     UPLOAD_DATASET: Endpoint;
     SAVE: Endpoint;
+    AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
     EXPORT: Endpoint[];
   }
@@ -66,6 +67,9 @@ const CONFIG: AppConfig = {
       },
       SAVE: {
         path: '/dataset/:datasetId/table/:tableId'
+      },
+      AUTOMATIC_ANNOTATION: {
+        path: '/reconciliators/mantis/dataset/:datasetId/table/:tableId'
       },
       PROCESS_START: [
         {

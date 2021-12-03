@@ -1,14 +1,16 @@
 import {
   useMemo, useCallback,
   MouseEvent,
-  useState
+  useState,
+  useEffect
 } from 'react';
 import {
   redo,
   undo, updateCellLabel, updateCellSelection,
   updateColumnCellsSelection,
   updateColumnSelection,
-  updateRowSelection
+  updateRowSelection,
+  updateUI
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { HotKeys } from 'react-hotkeys';
@@ -20,7 +22,7 @@ import {
   selectGetTableStatus, selectIsUnsaved,
   selectIsHeaderExpanded, selectExpandedCellsIds,
   selectExpandedColumnsIds, selectEditableCellsIds,
-  selectTutorialBBoxes, selectSelectedColumnCellsIds
+  selectTutorialBBoxes, selectSelectedColumnCellsIds, selectCurrentTable
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { saveTable } from '@store/slices/table/table.thunk';
@@ -60,6 +62,7 @@ const TableViewer = () => {
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
   const history = useHistory();
   const { datasetId, tableId } = useParams<{ datasetId: string, tableId: string }>();
+  const currentTable = useAppSelector(selectCurrentTable);
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableStatus);
   const unsavedChanges = useAppSelector(selectIsUnsaved);
@@ -74,6 +77,12 @@ const TableViewer = () => {
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const tutorialBBoxes = useAppSelector(selectTutorialBBoxes);
+
+  useEffect(() => {
+    if (currentTable && currentTable.mantisStatus === 'PENDING') {
+      dispatch(updateUI({ viewOnly: true }));
+    }
+  }, [currentTable]);
 
   /**
  * Keyboard shortcut handlers

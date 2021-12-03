@@ -1,4 +1,3 @@
-import { SquaredBox } from '@components/core';
 import styled from '@emotion/styled';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { Box, Button, FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography } from '@mui/material';
@@ -12,9 +11,15 @@ const PercentageBar = styled.div<{ percentage: string, checked: boolean }>((
   width: `${percentage}%`,
   height: '8px',
   borderRadius: '6px',
-  backgroundColor: checked ? 'var(--brand-color-one-base)' : '#E4E6EB',
+  backgroundColor: checked ? '#4AC99B' : '#E4E6EB',
   transition: 'all 250ms ease-out'
 }));
+
+const SquaredBox = styled.div({
+  borderRadius: '7px',
+  padding: '10px',
+  boxShadow: 'inset 0 0 0 1px rgb(0 0 0 / 10%)'
+});
 
 type RadioLabelProps = {
   percentage: string;
@@ -61,14 +66,14 @@ const RadioButtonsGroup: FC<
                 '&:hover': {
                   '& span:nth-of-type(2)': {
                     '& div:nth-of-type(2)': {
-                      boxShadow: 'inset 0px 0px 0px 1px var(--brand-color-one-base)'
+                      boxShadow: 'inset 0px 0px 0px 1px #4AC99B'
                     }
                   }
                 }
               }}
               key={id}
               value={id}
-              control={<Radio />}
+              control={<Radio color="success" />}
               label={<RadioLabel key={id} id={id} checked={value === id} {...rest} />} />
           ))}
         </RadioGroup>

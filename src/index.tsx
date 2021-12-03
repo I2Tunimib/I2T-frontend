@@ -9,6 +9,7 @@ import {
   Theme, StyledEngineProvider
 } from '@mui/material/styles';
 import { SnackbarProvider } from 'notistack';
+import { SocketIoProvider } from '@components/core';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
@@ -34,6 +35,12 @@ const theme = createTheme({
       main: '#547560',
       dark: '#3f5446',
       contrastText: '#fff'
+    },
+    info: {
+      main: '#E4E6EB'
+    },
+    success: {
+      main: '#4AC99B'
     },
     text: {
       primary: '#283236',
@@ -79,7 +86,9 @@ ReactDOM.render(
           <ThemeProvider theme={theme}>
             <SnackbarProvider
               maxSnack={3}>
-              <App />
+              <SocketIoProvider>
+                <App />
+              </SocketIoProvider>
             </SnackbarProvider>
           </ThemeProvider>
         </StyledEngineProvider>

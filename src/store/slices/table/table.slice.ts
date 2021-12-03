@@ -7,6 +7,7 @@ import { ID, Payload } from '@store/interfaces/store';
 import {
   AddCellMetadataPayload,
   AutoMatchingPayload,
+  AutomaticAnnotationPayload,
   BBox,
   ColumnStatus,
   DeleteCellMetadataPayload,
@@ -31,6 +32,7 @@ import {
   UpdateSelectedRowPayload
 } from './interfaces/table';
 import {
+  automaticAnnotation,
   extend,
   ExtendThunkResponseProps,
   getTable,
@@ -69,7 +71,7 @@ import {
 
 const initialState: TableState = {
   entities: {
-    tableInstance: { name: '' },
+    tableInstance: {},
     columns: { byId: {}, allIds: [] },
     rows: { byId: {}, allIds: [] }
   },
@@ -119,6 +121,23 @@ export const tableSlice = createSliceWithRequests({
         ...action.payload
       };
       state.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+    },
+    updateTable: (state, action: PayloadAction<Payload<GetTableResponse>>) => {
+      const { table, columns, rows } = action.payload;
+      let tableInstance = {} as TableInstance;
+      tableInstance = { ...table };
+      state.ui.lastSaved = tableInstance.lastModifiedDate;
+      state.entities = {
+        tableInstance,
+        columns: {
+          byId: columns,
+          allIds: Object.keys(columns)
+        },
+        rows: {
+          byId: rows,
+          allIds: Object.keys(rows)
+        }
+      };
     },
     /**
      *  Set selected cell as expanded.
@@ -545,6 +564,13 @@ export const tableSlice = createSliceWithRequests({
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
       })
+      .addCase(automaticAnnotation.fulfilled, (
+        state, action: PayloadAction<Payload<AutomaticAnnotationPayload>>
+      ) => {
+        const { datasetId, tableId, mantisStatus } = action.payload;
+        state.entities.tableInstance.mantisStatus = mantisStatus;
+        state.ui.viewOnly = true;
+      })
       .addCase(extend.fulfilled, (
         state, action: PayloadAction<Payload<ExtendThunkResponseProps>>
       ) => {
@@ -611,6 +637,7 @@ export const {
   deleteColumn,
   deleteRow,
   deleteSelected,
+  updateTable,
   undo,
   redo
 } = tableSlice.actions;

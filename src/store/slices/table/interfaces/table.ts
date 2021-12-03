@@ -9,7 +9,7 @@ import { Reconciliator } from '@store/slices/config/interfaces/config';
  */
 export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   entities: {
-    tableInstance: CurrentTableState;
+    tableInstance: Partial<CurrentTableState>;
     columns: ColumnState;
     rows: RowState;
   },
@@ -20,12 +20,14 @@ export interface CurrentTableState extends Partial<TableInstance>{}
 
 export interface TableInstance {
   id: ID;
+  idDataset: ID;
   name: string;
   format: FileFormat;
   type: TableType;
   lastModifiedDate: string;
   nCells: number;
   nCellsReconciliated: number;
+  mantisStatus?: 'PENDING' | 'DONE';
 }
 
 /**
@@ -143,6 +145,12 @@ export interface SetDataPayload {
 export interface UpdateSelectedCellsPayload {
   id: ID;
   multi?: boolean;
+}
+
+export interface AutomaticAnnotationPayload {
+  datasetId: string;
+  tableId: string;
+  mantisStatus: 'PENDING';
 }
 
 export interface UpdateSelectedRowPayload {

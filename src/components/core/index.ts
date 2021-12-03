@@ -14,6 +14,8 @@ import DotLoading from './DotLoading';
 import Loader from './Loader';
 import SplitButton from './SplitButton';
 import SquaredBox from './SquaredBox';
+import SocketIoProvider from './SocketIoProvider/SocketIoProvider';
+import useSocketIo from './SocketIoProvider/useSocketIo';
 
 export {
   StatusBadge,
@@ -31,5 +33,7 @@ export {
   DotLoading,
   Loader,
   SplitButton,
-  SquaredBox
+  SquaredBox,
+  SocketIoProvider,
+  useSocketIo
 };

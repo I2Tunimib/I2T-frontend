@@ -25,8 +25,8 @@ export function makeData<T extends {}>({
 }: MakeDataProps<T>): { columns: Column[]; data: T[] } {
   const { sortFunctions } = options;
 
-  const columns = collection.length ? Object.keys(collection[0]).reduce((acc, key) => {
-    const metaItem = meta[key as keyof typeof collection[0]];
+  const columns = collection.length ? Object.keys(meta).reduce((acc, key) => {
+    const metaItem = meta[key as keyof typeof meta];
 
     if (key !== 'id') {
       return [

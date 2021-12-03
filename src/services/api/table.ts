@@ -27,7 +27,8 @@ const tableAPI = {
       apiEndpoint({
         endpoint: 'GET_TABLE',
         paramsValue: { ...params }
-      })
+      }),
+      { clearCacheEntry: true }
     );
   },
   exportTable: (
@@ -49,6 +50,14 @@ const tableAPI = {
         paramsValue: { ...params }
       }),
       data
+    );
+  },
+  automaticAnnotation: (params: Record<string, string | number> = {}) => {
+    return apiClient.post<any>(
+      apiEndpoint({
+        endpoint: 'AUTOMATIC_ANNOTATION',
+        paramsValue: { ...params }
+      })
     );
   },
   reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data),

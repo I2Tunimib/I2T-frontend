@@ -26,14 +26,18 @@ import {
   selectIsCellSelected,
   selectIsAutoMatchingEnabled, selectCanUndo,
   selectCanRedo, selectCanDelete, selectIsDenseView,
-  selectSearchStatus, selectIsHeaderExpanded, selectIsExtendButtonEnabled,
+  selectIsHeaderExpanded, selectIsExtendButtonEnabled,
   selectIsViewOnly, selectMetadataDialogStatus,
-  selectExtensionDialogStatus, selectIsMetadataButtonEnabled, selectMetadataColumnDialogStatus
+  selectExtensionDialogStatus, selectIsMetadataButtonEnabled,
+  selectMetadataColumnDialogStatus, selectAutomaticAnnotationStatus, selectCurrentTable
 } from '@store/slices/table/table.selectors';
+import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
-import { filterTable } from '@store/slices/table/table.thunk';
+import { automaticAnnotation, filterTable } from '@store/slices/table/table.thunk';
 import styled from '@emotion/styled';
 import { TableUIState } from '@store/slices/table/interfaces/table';
+import { LoadingButton } from '@mui/lab';
+import { useParams } from 'react-router-dom';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
@@ -66,11 +70,14 @@ const SubToolbar = () => {
   const [searchSuggestions, setSearchSuggestion] = useState<
     { distance: number, label: string }[]
   >([]);
+  const params = useParams<{ datasetId: string; tableId: string }>();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const {
     status: isMetadataButtonEnabled,
     type: metadataAction
   } = useAppSelector(selectIsMetadataButtonEnabled);
+  const { API } = useAppSelector(selectAppConfig);
+  const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
   const isExtendButtonEnabled = useAppSelector(selectIsExtendButtonEnabled);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
   const isDenseView = useAppSelector(selectIsDenseView);
@@ -80,10 +87,10 @@ const SubToolbar = () => {
   const canRedo = useAppSelector(selectCanRedo);
   const canDelete = useAppSelector(selectCanDelete);
   const isViewOnly = useAppSelector(selectIsViewOnly);
-  const { API } = useAppSelector(selectAppConfig);
   const openMetadataDialog = useAppSelector(selectMetadataDialogStatus);
   const openMetadataColumnDialog = useAppSelector(selectMetadataColumnDialogStatus);
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
+  const currenTable = useAppSelector(selectCurrentTable);
 
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -162,6 +169,9 @@ const SubToolbar = () => {
   const handleExtensionClose = (key: keyof TableUIState) => {
     dispatch(updateUI({ [key]: false }));
   };
+  const handleAutomaticAnnotation = () => {
+    dispatch(automaticAnnotation(params));
+  };
 
   return (
     <>
@@ -226,6 +236,9 @@ const SubToolbar = () => {
         {!isViewOnly && (
           <ActionGroup>
             <Button
+              sx={{
+                textTransform: 'none'
+              }}
               color="primary"
               disabled={!isCellSelected}
               onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
@@ -233,6 +246,9 @@ const SubToolbar = () => {
               Reconcile
             </Button>
             <Button
+              sx={{
+                textTransform: 'none'
+              }}
               disabled={!isExtendButtonEnabled}
               onClick={() => dispatch(updateUI({ openExtensionDialog: true }))}
               variant="contained">
@@ -240,6 +256,19 @@ const SubToolbar = () => {
             </Button>
           </ActionGroup>
         )}
+        <ActionGroup>
+          <Button
+            sx={{
+              textTransform: 'none'
+            }}
+            color="primary"
+            disabled={loadingAutomaticAnnotation || (currenTable && currenTable.mantisStatus === 'PENDING')}
+            onClick={handleAutomaticAnnotation}
+            endIcon={<PlayCircleOutlineRoundedIcon />}
+            variant="contained">
+            Automatic annotation
+          </Button>
+        </ActionGroup>
         <Searchbar
           defaultTag="label"
           placeholder="Search table, metadata..."

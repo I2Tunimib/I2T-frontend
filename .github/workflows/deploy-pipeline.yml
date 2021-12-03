@@ -71,6 +71,8 @@ jobs:
           echo LAMAPI_BASE=${{ secrets.LAMAPI_BASE }} >> backend/.env
           echo LAMAPI_TOKEN=${{ secrets.LAMAPI_TOKEN }} >> backend/.env
           echo WIKIDATA=${{ secrets.WIKIDATA }} >> backend/.env
+          echo MANTIS=${{ secrets.MANTIS }} >> backend/.env
+          echo MANTIS_AUTH_TOKEN=${{ secrets.MANTIS_AUTH_TOKEN }} >> backend/.env
           echo RELEASE_TAG=${{ github.event.release.tag_name }} >> backend/.env
       
       - name: copy file via ssh key

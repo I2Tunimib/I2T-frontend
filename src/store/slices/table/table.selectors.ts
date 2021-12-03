@@ -48,6 +48,10 @@ export const selectSaveTableStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.SAVE_TABLE)
 );
+export const selectAutomaticAnnotationStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, TableThunkActions.AUTOMATIC_ANNOTATION)
+);
 
 // UNDO SELECTORS
 export const selectCanUndo = createSelector(

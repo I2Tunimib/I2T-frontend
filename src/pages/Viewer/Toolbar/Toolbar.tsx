@@ -59,7 +59,8 @@ const Toolbar = () => {
   const { loading } = useAppSelector(selectSaveTableStatus);
   const {
     name,
-    lastModifiedDate
+    lastModifiedDate,
+    mantisStatus
   } = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
   const { API } = useAppSelector(selectAppConfig);
@@ -199,6 +200,7 @@ const Toolbar = () => {
             </Button>
           )}
           <IconButtonTooltip
+            disabled={mantisStatus === 'PENDING'}
             tooltipText={isViewOnly ? 'Enable changes' : 'Disable changes'}
             Icon={isViewOnly
               ? ModeEditOutlineOutlinedIcon

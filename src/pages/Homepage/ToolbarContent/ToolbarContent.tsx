@@ -32,9 +32,11 @@ const ToolbarContent: FC<any> = () => {
   const dispatch = useAppDispatch();
 
   const handleOnChange = (value: string) => {
-    dispatch(globalSearch({ query: value }))
-      .unwrap()
-      .then((res) => setSearchResults(res));
+    if (value) {
+      dispatch(globalSearch({ query: value }))
+        .unwrap()
+        .then((res) => setSearchResults(res));
+    }
   };
 
   const autocompleteComponent = tables.length > 0 || datasets.length > 0 ? (

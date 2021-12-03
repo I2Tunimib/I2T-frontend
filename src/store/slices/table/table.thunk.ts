@@ -1,9 +1,11 @@
-import tableAPI from '@services/api/table';
+import tableAPI, { GetTableResponse } from '@services/api/table';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '@store';
 import { levDistance } from '@services/utils/lev-distance';
+import { isEmptyObject } from '@services/utils/objects-utils';
 import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
 import { ColumnState, RowState, TableState } from './interfaces/table';
+import { updateTable, updateUI } from './table.slice';
 
 const ACTION_PREFIX = 'table';
 
@@ -12,6 +14,8 @@ export enum TableThunkActions {
   GET_TABLE = 'getTable',
   GET_CHALLENGE_TABLE = 'getChallengeTable',
   RECONCILE = 'reconcile',
+  AUTOMATIC_ANNOTATION = 'automaticAnnotation',
+  UPDATE_TABLE_SOCKET = 'updateTableSocket',
   EXTEND = 'extend',
   CONVER_W3C = 'convertToW3C',
   EXPORT_TABLE = 'exportTable',
@@ -140,6 +144,27 @@ export const reconcile = createAsyncThunk(
   }
 );
 
+type AutomaticAnnotationThunkInputProps = {
+  datasetId: string;
+  tableId: string;
+}
+
+type AutomaticAnnotationThunkOutputProps = {
+  datasetId: string;
+  tableId: string;
+  mantisStatus: 'PENDING';
+}
+
+export const automaticAnnotation = createAsyncThunk<
+AutomaticAnnotationThunkOutputProps,
+AutomaticAnnotationThunkInputProps>(
+  `${ACTION_PREFIX}/automaticAnnotation`,
+  async (params) => {
+    const response = await tableAPI.automaticAnnotation(params);
+    return response.data;
+  }
+);
+
 export type ExtendThunkInputProps = {
   extender: Extender;
   formValues: Record<string, any>;
@@ -216,5 +241,19 @@ export const extend = createAsyncThunk<ExtendThunkResponseProps, ExtendThunkInpu
       data: response.data,
       extender
     };
+  }
+);
+
+export const updateTableSocket = createAsyncThunk(
+  `${ACTION_PREFIX}/updateTableSocket`,
+  async (inputProps: GetTableResponse, { getState, dispatch }) => {
+    const state = getState() as RootState;
+    const { tableInstance } = state.table.entities;
+    const { table } = inputProps;
+
+    if (!isEmptyObject(tableInstance) && table.id === tableInstance.id) {
+      dispatch(updateTable(inputProps));
+      dispatch(updateUI({ viewOnly: false }));
+    }
   }
 );

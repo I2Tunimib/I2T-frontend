@@ -1,6 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import {
   Box, Button, Dialog,
+  Divider,
   FormControl, IconButton,
   InputLabel,
   MenuItem, Select,
@@ -30,10 +31,19 @@ import deferMounting from '@components/HOC';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { Cell } from 'react-table';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
+import { StatusBadge } from '@components/core';
 import usePrepareTable, { DataSelectorReturn } from './usePrepareTable';
 import { getCellComponent } from './componentsConfig';
 
 const DeferredTable = deferMounting(CustomTable);
+
+const getBadgeStatus = (metadata: BaseMetadata[]) => {
+  const matching = metadata.some((meta: BaseMetadata) => meta.match);
+  if (matching) {
+    return 'Success';
+  }
+  return 'Warn';
+};
 
 const makeData = (rawData: DataSelectorReturn) => {
   const { cell, service } = rawData;
@@ -231,12 +241,21 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       onClose={handleCancel}>
       <Stack height="100%" minHeight="600px">
         <Stack direction="row" gap="10px" alignItems="center" padding="12px 16px">
-          <Typography variant="h4">
-            Metadata
-          </Typography>
-          <Typography color="textSecondary">
-            {`(Cell value: ${cell?.label})`}
-          </Typography>
+          <Stack direction="row" alignItems="center" gap={1}>
+            {cell?.metadata
+              && (
+              <StatusBadge
+                status={getBadgeStatus(cell.metadata)}
+              />
+              )
+            }
+            <Typography variant="h5">
+              {cell?.label}
+            </Typography>
+            <Typography color="textSecondary">
+              (Cell label)
+            </Typography>
+          </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
             <Button onClick={handleClose}>
               {(API.ENDPOINTS.SAVE && !isViewOnly) ? 'Cancel' : 'Close'}
@@ -252,7 +271,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             }
           </Stack>
         </Stack>
-        <Box paddingLeft="16px" paddingBottom="12px">
+        <Divider orientation="horizontal" flexItem />
+        <Box paddingLeft="16px" paddingBottom="12px" marginTop="20px">
           {currentService && (
             <FormControl
               sx={{
