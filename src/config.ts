@@ -57,7 +57,7 @@ const CONFIG: AppConfig = {
         path: '/dataset/:datasetId'
       },
       DELETE_TABLE: {
-        path: '/dataset/:datasetId'
+        path: '/dataset/:datasetId/table/:tableId'
       },
       GLOBAL_SEARCH: {
         path: '/dataset/search?query=:query'
