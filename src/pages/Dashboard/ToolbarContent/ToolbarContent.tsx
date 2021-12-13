@@ -65,7 +65,15 @@ const ToolbarContent: FC<any> = () => {
 
   return (
     <>
-      <Stack direction="row" alignItems="center" gap="8px">
+      <Stack
+        component={Link}
+        sx={{
+          textDecoration: 'none'
+        }}
+        to="/"
+        direction="row"
+        alignItems="center"
+        gap="8px">
         <Typography className={styles.AppTitle} component="span" variant="h4">
           SemTUI
         </Typography>

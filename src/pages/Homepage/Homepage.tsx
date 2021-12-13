@@ -202,7 +202,7 @@ const Homepage = () => {
           <Typography component="span" variant="h1" fontWeight="600">semantic table</Typography>
           <Typography component="span" variant="h1" fontWeight="600">annotation and extension.</Typography>
         </Stack>
-        <ExploreButton to="/dataset">
+        <ExploreButton to="/datasets">
           <Stack component="span" direction="row" alignItems="center" gap="5px">
             Get started
             <ArrowForwardRoundedIcon />
