@@ -28,6 +28,7 @@ import ColumnHide from './ColumnHide';
 
 export interface TableProperties<T extends Record<string, unknown>> extends TableOptions<T> {
   onSelectedRowChange: (row: T | null) => void;
+  stickyHeaderTop?: string;
   loading?: boolean;
 }
 
@@ -136,6 +137,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
     columns,
     data,
     onSelectedRowChange,
+    stickyHeaderTop = '0px',
     loading = false,
     showRadio = true
   } = props;
@@ -146,7 +148,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
       initialState: {
         pageSize: 20
       },
-      autoResetExpanded: false
+      autoResetExpanded: false,
+      autoResetSortBy: false
     },
     ...defaultHooks
   );
@@ -215,7 +218,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
           }}>
           {data.length > 0 ? (
             <Table {...getTableProps()}>
-              <TableHead>
+              <TableHead stickyHeaderTop={stickyHeaderTop}>
                 {// Loop over the header rows
                   headerGroups.map((headerGroup) => (
                     // Apply the header row props

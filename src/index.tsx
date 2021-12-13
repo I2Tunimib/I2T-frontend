@@ -51,15 +51,15 @@ const theme = createTheme({
       disabledBackground: '#eaeef3'
     }
   },
-  // typography: {
-  //   h1: { color: '#5E514B' },
-  //   h2: { color: '#5E514B' },
-  //   h3: { color: '#5E514B' },
-  //   h4: { color: '#5E514B' },
-  //   h5: { color: '#5E514B' },
-  //   h6: { color: '#5E514B' },
-  //   body1: { color: '#3a3331' }
-  // },
+  typography: {
+    h1: { color: '#1B1F3B' },
+    h2: { color: '#1B1F3B' },
+    h3: { color: '#1B1F3B' },
+    h4: { color: '#1B1F3B' },
+    h5: { color: '#1B1F3B' },
+    h6: { color: '#1B1F3B' },
+    body1: { color: '#1B1F3B' }
+  },
   components: {
     MuiDialog: {
       styleOverrides: {

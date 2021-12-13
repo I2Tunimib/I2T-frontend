@@ -67,7 +67,7 @@ const ToolbarContent: FC<any> = () => {
     <>
       <Stack direction="row" alignItems="center" gap="8px">
         <Typography className={styles.AppTitle} component="span" variant="h4">
-          I2T4E
+          SemTUI
         </Typography>
       </Stack>
 

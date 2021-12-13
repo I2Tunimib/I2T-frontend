@@ -22,7 +22,8 @@ import {
   selectGetTableStatus, selectIsUnsaved,
   selectIsHeaderExpanded, selectExpandedCellsIds,
   selectExpandedColumnsIds, selectEditableCellsIds,
-  selectTutorialBBoxes, selectSelectedColumnCellsIds, selectCurrentTable
+  selectSelectedColumnCellsIds,
+  selectCurrentTable, selectSettingsDialogStatus, selectSettings
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { saveTable } from '@store/slices/table/table.thunk';
@@ -76,11 +77,14 @@ const TableViewer = () => {
   const editableCellsIds = useAppSelector(selectEditableCellsIds);
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
-  const tutorialBBoxes = useAppSelector(selectTutorialBBoxes);
+  const settings = useAppSelector(selectSettings);
 
   useEffect(() => {
     if (currentTable && currentTable.mantisStatus === 'PENDING') {
-      dispatch(updateUI({ viewOnly: true }));
+      dispatch(updateUI({ settings: {
+        ...settings.lowerBound,
+        isViewOnly: true
+      } }));
     }
   }, [currentTable]);
 
@@ -229,12 +233,14 @@ const TableViewer = () => {
       id,
       selected: !!selectedColumns[id] || !!selectedColumnCells[id],
       expanded: !!expandedColumnsIds[id],
+      settings,
       data,
       handleCellRightClick,
       handleSelectedColumnChange,
       handleSelectedColumnCellChange
     };
   }, [
+    settings,
     selectedColumns,
     selectedColumnCells,
     expandedColumnsIds
@@ -257,12 +263,14 @@ const TableViewer = () => {
       selected,
       expanded,
       editable,
+      settings,
       handleSelectedRowChange,
       handleSelectedCellChange,
       handleCellRightClick,
       updateTableData
     };
   }, [
+    settings,
     selectedCells,
     selectedRows,
     expandedCellsIds,
@@ -289,6 +297,7 @@ const TableViewer = () => {
         <Table
           data={rowsTable}
           columns={columnsTable}
+          tableSettings={settings}
           searchFilter={searchFilterTable}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}

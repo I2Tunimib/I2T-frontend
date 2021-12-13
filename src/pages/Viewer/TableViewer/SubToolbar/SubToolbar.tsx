@@ -1,4 +1,4 @@
-import { Button, Stack } from '@mui/material';
+import { Button, Menu, Stack, Typography } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
@@ -9,18 +9,21 @@ import ViewStreamRoundedIcon from '@mui/icons-material/ViewStreamRounded';
 import ReorderRoundedIcon from '@mui/icons-material/ReorderRounded';
 import ArrowRightAltRoundedIcon from '@mui/icons-material/ArrowRightAltRounded';
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
+import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import {
   addTutorialBox,
   deleteSelected,
   redo, undo, updateSelectedCellExpanded, updateUI
 } from '@store/slices/table/table.slice';
 import { Searchbar, ToolbarActions } from '@components/kit';
-import { ActionGroup, IconButtonTooltip } from '@components/core';
+import { ActionGroup, CheckboxGroup, IconButtonTooltip, StatusBadge, TaggedSearch } from '@components/core';
 import {
   MouseEvent,
   useState,
   useRef,
-  useEffect
+  useEffect,
+  ChangeEvent,
+  useMemo
 } from 'react';
 import {
   selectIsCellSelected,
@@ -29,7 +32,8 @@ import {
   selectIsHeaderExpanded, selectIsExtendButtonEnabled,
   selectIsViewOnly, selectMetadataDialogStatus,
   selectExtensionDialogStatus, selectIsMetadataButtonEnabled,
-  selectMetadataColumnDialogStatus, selectAutomaticAnnotationStatus, selectCurrentTable
+  selectMetadataColumnDialogStatus, selectAutomaticAnnotationStatus,
+  selectCurrentTable, selectSearchStatus
 } from '@store/slices/table/table.selectors';
 import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
@@ -38,6 +42,7 @@ import styled from '@emotion/styled';
 import { TableUIState } from '@store/slices/table/interfaces/table';
 import { LoadingButton } from '@mui/lab';
 import { useParams } from 'react-router-dom';
+import { Tag } from '@components/core/TaggedSearch/TagSelect';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
@@ -45,18 +50,44 @@ import AutoMatching from '../AutoMatching';
 import ExtensionDialog from '../ExtensionDialog';
 import MetadataColumnDialog from '../MetadataColumnDialog/MetadataColumnDialog';
 
-const tagRegex = /:([A-Za-z]+):/;
+const tags = [
+  { label: 'label', value: 'label', description: 'Search for table cells labels' },
+  { label: 'metaName', value: 'metaName', description: 'Search for a metadata name' },
+  { label: 'metaType', value: 'metaType', description: 'Search for a metadata type' }
+];
 
-const permittedTags = ['metaName', 'metaType'];
-
-const SuggestionItem = styled.div({
-  padding: '5px 10px',
-  borderRadius: '6px',
-  '&:hover': {
-    backgroundColor: '#E4E6EB',
-    fontWeight: 500
+const filters = [
+  {
+    label: (
+      <Stack direction="row" alignItems="center" gap="5px">
+        <StatusBadge status="Success" size="small" />
+        <Typography>Matches</Typography>
+      </Stack>
+    ),
+    value: 'match',
+    checked: true
+  },
+  {
+    label: (
+      <Stack direction="row" alignItems="center" gap="5px">
+        <StatusBadge status="Warn" size="small" />
+        <Typography>Ambiguous</Typography>
+      </Stack>
+    ),
+    value: 'pending',
+    checked: true
+  },
+  {
+    label: (
+      <Stack direction="row" alignItems="center" gap="5px">
+        <StatusBadge status="Error" size="small" />
+        <Typography>Miss matches</Typography>
+      </Stack>
+    ),
+    value: 'miss',
+    checked: true
   }
-});
+];
 
 /**
  * Sub toolbar for common and contextual actions
@@ -65,11 +96,10 @@ const SubToolbar = () => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [autoMatchingAnchor, setAutoMatchingAnchor] = useState<null | HTMLElement>(null);
-  const [searchValue, setSearchValue] = useState<string>('');
-  const [tag, setTag] = useState<string>('label');
   const [searchSuggestions, setSearchSuggestion] = useState<
     { distance: number, label: string }[]
   >([]);
+  const [anchorElMenuFilter, setAnchorElMenuFilter] = useState<null | HTMLElement>(null);
   const params = useParams<{ datasetId: string; tableId: string }>();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const {
@@ -91,6 +121,7 @@ const SubToolbar = () => {
   const openMetadataColumnDialog = useAppSelector(selectMetadataColumnDialogStatus);
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
   const currenTable = useAppSelector(selectCurrentTable);
+  const searchFilter = useAppSelector(selectSearchStatus);
 
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -122,13 +153,24 @@ const SubToolbar = () => {
     }
   }, [ref]);
 
-  const handleSearchChange = (value: string) => {
+  const handleMetadataDialogAction = () => {
+    if (metadataAction === 'cell') {
+      dispatch(updateUI({ openMetadataDialog: true }));
+    } else if (metadataAction === 'column') {
+      dispatch(updateUI({ openMetadataColumnDialog: true }));
+    }
+  };
+  const handleDelete = () => {
+    dispatch(deleteSelected({}));
+  };
+
+  const handleSearch = ({ tag: currentTag, value }: { tag: Tag, value: string }) => {
     if (!value) {
       setSearchSuggestion([]);
     } else {
       dispatch(filterTable({
         value,
-        tag
+        tag: currentTag.value
       }))
         .unwrap()
         .then((res) => {
@@ -137,26 +179,11 @@ const SubToolbar = () => {
     }
     dispatch(updateUI({
       search: {
-        filter: tag,
+        ...searchFilter,
+        filter: currentTag.value,
         value
       }
     }));
-  };
-
-  const handleMetadataDialogAction = () => {
-    if (metadataAction === 'cell') {
-      dispatch(updateUI({ openMetadataDialog: true }));
-    } else if (metadataAction === 'column') {
-      dispatch(updateUI({ openMetadataColumnDialog: true }));
-    }
-  };
-
-  const handleTagChange = (newTag: string) => {
-    setTag(newTag);
-  };
-
-  const handleDelete = () => {
-    dispatch(deleteSelected({}));
   };
 
   const handleClickAutoMatching = (event: MouseEvent<HTMLElement>) => {
@@ -172,6 +199,31 @@ const SubToolbar = () => {
   const handleAutomaticAnnotation = () => {
     dispatch(automaticAnnotation(params));
   };
+
+  const handleFilterButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
+    setAnchorElMenuFilter(event.currentTarget);
+  };
+  const handleCloseFilterMenu = () => {
+    setAnchorElMenuFilter(null);
+  };
+  const handleGlobalFilterChange = (selectedFilters: string[]) => {
+    dispatch(updateUI({
+      search: {
+        ...searchFilter,
+        globalFilter: selectedFilters
+      }
+    }));
+  };
+
+  const openFilterMenu = Boolean(anchorElMenuFilter);
+
+  const memoFilters = useMemo(() => {
+    const { globalFilter } = searchFilter;
+
+    return filters.map((filter) => (globalFilter.includes(filter.value)
+      ? ({ ...filter, checked: true })
+      : filter));
+  }, [searchFilter]);
 
   return (
     <>
@@ -269,27 +321,28 @@ const SubToolbar = () => {
             Automatic annotation
           </Button>
         </ActionGroup>
-        <Searchbar
-          defaultTag="label"
-          placeholder="Search table, metadata..."
-          enableAutocomplete
-          debounceChange
-          autocompleteComponent={(
-            <Stack padding="2px">
-              {searchSuggestions.map((suggestion, index) => (
-                <SuggestionItem role="button" key={index} onClick={() => setSearchValue(suggestion.label)}>
-                  {suggestion.label}
-                </SuggestionItem>
-              ))}
-            </Stack>
-          )}
-          tagRegex={tagRegex}
-          permittedTags={permittedTags}
-          onTagChange={handleTagChange}
-          value={searchValue}
-          onInputChange={(value) => { setSearchValue(value); handleSearchChange(value); }}
-          className={styles.Search}
-        />
+        <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
+          <IconButtonTooltip
+            tooltipText="Filter"
+            Icon={FilterAltOutlinedIcon}
+            onClick={handleFilterButtonClick}
+          />
+          <Menu
+            id="basic-menu"
+            anchorEl={anchorElMenuFilter}
+            open={openFilterMenu}
+            keepMounted
+            onClose={handleCloseFilterMenu}>
+            <CheckboxGroup items={memoFilters} onChange={handleGlobalFilterChange} />
+          </Menu>
+          <TaggedSearch
+            tags={tags}
+            autocompleteItems={searchSuggestions}
+            autocompleteMapFnItem={(item: any) => item.label}
+            onSearchChange={handleSearch}
+            className={styles.Search}
+          />
+        </Stack>
       </ToolbarActions>
       {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}
       <ReconciliateDialog />

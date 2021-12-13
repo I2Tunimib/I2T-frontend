@@ -25,6 +25,7 @@ import {
   UpdateCellEditablePayload,
   UpdateCellLabelPayload,
   UpdateCellMetadataPayload,
+  UpdateColumnMetadataPayload,
   UpdateColumnTypePayload,
   UpdateCurrentTablePayload,
   UpdateSelectedCellsPayload,
@@ -48,7 +49,10 @@ import {
   incrementContextCounters, decrementContextCounters, decrementContextTotal,
   decrementContextReconciliated,
   incrementContextReconciliated,
-  updateNumberOfReconciliatedCells
+  updateNumberOfReconciliatedCells,
+  updateScoreBoundaries,
+  computeCellAnnotationStats,
+  computeColumnAnnotationStats
 } from './utils/table.reconciliation-utils';
 import {
   areOnlyRowsSelected,
@@ -77,15 +81,21 @@ const initialState: TableState = {
   },
   ui: {
     lastSaved: '',
-    search: { filter: 'all', value: '' },
+    search: { globalFilter: ['match', 'pending', 'miss'], filter: 'all', value: '' },
     denseView: false,
-    viewOnly: false,
+    // viewOnly: false,
     headerExpanded: false,
     openReconciliateDialog: false,
     openExtensionDialog: false,
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
     openExportDialog: false,
+    settingsDialog: false,
+    settings: {
+      isViewOnly: false,
+      isScoreLowerBoundEnabled: true,
+      scoreLowerBound: 0
+    },
     view: 'table',
     selectedColumnCellsIds: {},
     selectedColumnsIds: {},
@@ -243,13 +253,53 @@ export const tableSlice = createSliceWithRequests({
             column.context[cellContext] = decrementContextReconciliated(
               column.context[cellContext]
             );
+            cell.annotationMeta = {
+              ...cell.annotationMeta,
+              match: false
+            };
           } else if (!wasReconciliated && isCellReconciliated(cell)) {
             column.context[cellContext] = incrementContextReconciliated(
               column.context[cellContext]
             );
+            cell.annotationMeta = {
+              ...cell.annotationMeta,
+              match: true
+            };
           }
           column.status = getColumnStatus(draft, colId);
           updateNumberOfReconciliatedCells(draft);
+        }, (draft) => {
+          // do not include in undo history
+          draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+        });
+      }
+    },
+    /**
+     * Handle the assignment of a metadata to a cell.
+     * --UNDOABLE ACTION--
+     */
+    updateColumnMetadata: (state, action: PayloadAction<Payload<UpdateColumnMetadataPayload>>) => {
+      const { metadataId, colId, undoable = true } = action.payload;
+
+      const column = getColumn(state, colId);
+
+      if (column.metadata.length > 0
+        && column.metadata[0].entity
+        && column.metadata[0].entity.length > 0) {
+        return produceWithPatch(state, undoable, (draft) => {
+          const columnToUpdate = getColumn(draft, colId);
+
+          if (columnToUpdate.metadata.length > 0
+            && columnToUpdate.metadata[0].entity
+            && columnToUpdate.metadata[0].entity.length > 0) {
+            columnToUpdate.metadata[0].entity.forEach((metaItem) => {
+              if (metaItem.id === metadataId) {
+                metaItem.match = !metaItem.match;
+              } else {
+                metaItem.match = false;
+              }
+            });
+          }
         }, (draft) => {
           // do not include in undo history
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -514,6 +564,9 @@ export const tableSlice = createSliceWithRequests({
             allIds: Object.keys(rows)
           }
         };
+        if (table.maxMetaScore != null && table.minMetaScore != null) {
+          state.ui.settings.scoreLowerBound = (table.maxMetaScore - table.minMetaScore) / 3;
+        }
       })
       .addCase(saveTable.fulfilled, (state, action: PayloadAction<TableInstance>) => {
         state.ui.lastSaved = action.payload.lastModifiedDate;
@@ -530,36 +583,70 @@ export const tableSlice = createSliceWithRequests({
 
         return produceWithPatch(state, undoable, (draft) => {
           data.forEach(({ id: cellId, metadata }) => {
-            const [rowId, colId] = getIdsFromCell(cellId);
-            // get column
-            const column = getColumn(draft, colId);
-            // get cell and previous reconciliator
-            const cell = getCell(draft, rowId, colId);
-            const previousContext = getCellContext(cell);
+            if (cellId.includes('$')) {
+              const [rowId, colId] = getIdsFromCell(cellId);
+              // get column
+              const column = getColumn(draft, colId);
+              // get cell and previous reconciliator
+              const cell = getCell(draft, rowId, colId);
 
-            if (previousContext) {
-              // decrement previous
-              column.context[previousContext] = decrementContextCounters(
-                column.context[previousContext],
-                cell
-              );
+              const previousContext = getCellContext(cell);
+
+              if (previousContext) {
+                // decrement previous
+                column.context[previousContext] = decrementContextCounters(
+                  column.context[previousContext],
+                  cell
+                );
+              }
+              // assign new reconciliator and metadata
+              // cell.metadata.reconciliator.id = reconciliator.id;
+              cell.metadata = metadata.map(({ id, ...rest }) => ({
+                id: `${prefix}:${id}`,
+                ...rest
+              }));
+              cell.annotationMeta = {
+                annotated: true,
+                ...computeCellAnnotationStats(cell)
+              };
+              // increment current
+              if (!column.context[prefix] || isEmptyObject(column.context[prefix])) {
+                // create context if doesn't exist
+                column.context[prefix] = createContext({ uri });
+              }
+              column.context[prefix] = incrementContextCounters(column.context[prefix], cell);
+              // update column status after changes
+              column.status = getColumnStatus(draft, colId);
+            } else {
+              // get column
+              const column = getColumn(draft, cellId);
+
+              if (column.metadata.length > 0) {
+                column.metadata[0].entity = metadata.map(({ id, ...rest }) => ({
+                  id: `${prefix}:${id}`,
+                  ...rest
+                }));
+              } else {
+                column.metadata[0] = {
+                  id: '',
+                  match: true,
+                  score: 0,
+                  name: { value: '', uri: '' },
+                  entity: metadata.map(({ id, ...rest }) => ({
+                    id: `${prefix}:${id}`,
+                    ...rest
+                  }))
+                };
+              }
+
+              column.annotationMeta = {
+                annotated: true,
+                ...computeColumnAnnotationStats(column)
+              };
             }
-            // assign new reconciliator and metadata
-            // cell.metadata.reconciliator.id = reconciliator.id;
-            cell.metadata = metadata.map(({ id, ...rest }) => ({
-              id: `${prefix}:${id}`,
-              ...rest
-            }));
-            // increment current
-            if (!column.context[prefix] || isEmptyObject(column.context[prefix])) {
-              // create context if doesn't exist
-              column.context[prefix] = createContext({ uri });
-            }
-            column.context[prefix] = incrementContextCounters(column.context[prefix], cell);
-            // update column status after changes
-            column.status = getColumnStatus(draft, colId);
           });
           updateNumberOfReconciliatedCells(draft);
+          updateScoreBoundaries(draft);
         }, (draft) => {
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
@@ -569,7 +656,7 @@ export const tableSlice = createSliceWithRequests({
       ) => {
         const { datasetId, tableId, mantisStatus } = action.payload;
         state.entities.tableInstance.mantisStatus = mantisStatus;
-        state.ui.viewOnly = true;
+        state.ui.settings.isViewOnly = true;
       })
       .addCase(extend.fulfilled, (
         state, action: PayloadAction<Payload<ExtendThunkResponseProps>>
@@ -587,13 +674,18 @@ export const tableSlice = createSliceWithRequests({
           newColIds.forEach((colId) => {
             draft.entities.rows.allIds.forEach((rowId) => {
               if (rows[rowId]) {
-                draft.entities.rows.byId[rowId].cells[colId] = rows[rowId].cells[colId];
+                draft.entities.rows.byId[rowId].cells[colId] = {
+                  ...rows[rowId].cells[colId],
+                  ...(rows[rowId].cells[colId].metadata.length > 0 && {
+                    annotated: true
+                  })
+                };
               } else {
                 draft.entities.rows.byId[rowId].cells[colId] = {
                   id: `${rowId}$${colId}`,
                   label: 'null',
                   metadata: []
-                };
+                } as any;
               }
             });
 
@@ -625,6 +717,7 @@ export const {
   updateCellEditable,
   updateCellLabel,
   addCellMetadata,
+  updateColumnMetadata,
   updateCellMetadata,
   deleteCellMetadata,
   autoMatching,

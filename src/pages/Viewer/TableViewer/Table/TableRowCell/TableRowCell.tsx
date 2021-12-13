@@ -21,6 +21,7 @@ interface TableRowCellProps extends TableCell {
   matching: boolean;
   dense: boolean;
   highlightState: any;
+  settings: any,
   searchHighlightState: any;
   handleSelectedRowChange: (event: MouseEvent<any>, id: string) => void;
   handleSelectedCellChange: (event: MouseEvent<any>, id: string) => void;
@@ -66,6 +67,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
   expanded,
   editable,
   value,
+  settings,
   dense,
   highlightState,
   searchHighlightState,
@@ -140,6 +142,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
           ) : (
             <NormalCell
               label={cellValue}
+              settings={settings}
               expanded={expanded}
               value={value}
               dense={dense}

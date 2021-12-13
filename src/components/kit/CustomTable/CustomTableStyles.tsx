@@ -11,9 +11,13 @@ export const Table = styled.table`
   border-radius: 6px;
 `;
 
-export const TableHead = styled.thead`
+type TableHeadProps = {
+  stickyHeaderTop: string;
+}
+
+export const TableHead = styled.thead<TableHeadProps>`
   position: sticky;
-  top: 0px;
+  top: ${({ stickyHeaderTop }) => stickyHeaderTop};
   z-index: 10;
   background-color: inherit;
 `;

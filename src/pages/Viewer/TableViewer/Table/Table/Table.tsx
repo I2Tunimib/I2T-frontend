@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import clsx from 'clsx';
+import partition from '@services/utils/partition';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
@@ -18,11 +19,13 @@ import TableRow from '../TableRow';
 import TableFooter from '../TableFooter';
 import styles from './Table.module.scss';
 import SvgContainer from '../SvgContainer';
+import { pipeFilters } from './globalFilters';
 
 interface TableProps {
   columns: any[];
   data: any[];
   headerExpanded: boolean;
+  tableSettings: any;
   searchFilter?: TableGlobalFilter;
   dense?: boolean;
   getGlobalProps: () => any;
@@ -31,6 +34,7 @@ interface TableProps {
 }
 
 interface TableGlobalFilter {
+  globalFilter: string[];
   filter: string;
   value: string;
 }
@@ -48,6 +52,7 @@ const Table: FC<TableProps> = ({
   data,
   searchFilter,
   headerExpanded,
+  tableSettings,
   dense = false,
   getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
@@ -56,6 +61,13 @@ const Table: FC<TableProps> = ({
   const columnRefs = useRef<Record<any, HTMLElement>>({});
   const [highlightState, setHighlightState] = useState<HighlightState | null>(null);
   const [searchHighlightState, setSearchHighlight] = useState<Record<string, boolean>>({});
+
+  const {
+    lowerBound: {
+      isScoreLowerBoundEnabled,
+      scoreLowerBound = 0
+    }
+  } = tableSettings;
 
   /**
    * Custom function id.
@@ -143,24 +155,40 @@ const Table: FC<TableProps> = ({
     return filteredRows;
   }, []);
 
-  const customGlobalFilter = useCallback((
-    rows: Array<Row>, [index, ...colIds]: Array<string>, { filter, value }: TableGlobalFilter
+  const initialFilter = useCallback((
+    rows: Array<Row>, colIds: Array<string>, globalFilter: string[]
   ) => {
-    setSearchHighlight({});
-    const regex = new RegExp(value.toLowerCase());
-    // return all rows if value is empty
-    if (value === '') {
+    if (globalFilter.length === 3) {
       return rows;
     }
+    if (globalFilter.length === 0) {
+      return [] as Array<Row>;
+    }
+    return pipeFilters(rows, colIds, globalFilter, scoreLowerBound);
+  }, [scoreLowerBound]);
+
+  const customGlobalFilter = useCallback((
+    rows: Array<Row>,
+    [index, ...colIds]: Array<string>,
+    { globalFilter, filter, value }: TableGlobalFilter
+  ) => {
+    setSearchHighlight({});
+    const regex = new RegExp(value.toLowerCase().replace(/[^a-zA-Z0-9]/g, '\\$&'));
+    const filteredRows = initialFilter(rows, colIds, globalFilter);
+    // return all rows if value is empty
+    if (value === '') {
+      return filteredRows;
+    }
+
     switch (filter) {
       case 'label':
-        return filterAll(rows, colIds, regex);
+        return filterAll(filteredRows, colIds, regex);
       case 'metaName':
-        return filterMetaName(rows, colIds, regex);
+        return filterMetaName(filteredRows, colIds, regex);
       case 'metaType':
-        return filterMetaType(rows, colIds, regex);
+        return filterMetaType(filteredRows, colIds, regex);
       default:
-        return filterAll(rows, colIds, regex);
+        return filterAll(filteredRows, colIds, regex);
     }
   }, []);
 

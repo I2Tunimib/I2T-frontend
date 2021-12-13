@@ -5,18 +5,15 @@ interface UsePrefetchProps {
   delay: number;
 }
 
-const MODE = 'challenge';
-
 export const usePrefetch = ({
   delay
 }: Partial<UsePrefetchProps> = {
   delay: 2000
 }) => {
-  // const { MODE = 'CHALLENGE' } = config.APP;
-  const preloadConf = APP_ROUTES[MODE].preload;
+  const { preload } = APP_ROUTES.options;
 
   useEffect(() => {
-    if (preloadConf) {
+    if (preload) {
       setTimeout(() => {
         getRoutes().forEach((route) => {
           try {
@@ -30,7 +27,7 @@ export const usePrefetch = ({
         });
       }, delay);
     }
-  }, [preloadConf]);
+  }, [preload]);
 };
 
 export default usePrefetch;

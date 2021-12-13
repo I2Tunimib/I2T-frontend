@@ -249,11 +249,16 @@ export const updateTableSocket = createAsyncThunk(
   async (inputProps: GetTableResponse, { getState, dispatch }) => {
     const state = getState() as RootState;
     const { tableInstance } = state.table.entities;
+    const { settings } = state.table.ui;
     const { table } = inputProps;
 
     if (!isEmptyObject(tableInstance) && table.id === tableInstance.id) {
       dispatch(updateTable(inputProps));
-      dispatch(updateUI({ viewOnly: false }));
+      dispatch(updateUI({ settings: {
+        ...settings,
+        isViewOnly: false,
+        scoreLowerBound: (table.maxMetaScore - table.minMetaScore) / 3
+      } }));
     }
   }
 );

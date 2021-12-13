@@ -9,17 +9,17 @@ export type State<T = {}> = {
   data: T[]
 }
 
-export type DataSelectorReturn = {
-  columnContext: Record<string, Context>;
-  cell: Cell;
-  service: Reconciliator;
-}
+// export type DataSelectorReturn = {
+//   columnContext: Record<string, Context>;
+//   cell: Cell;
+//   service: Reconciliator;
+// }
 
-export type DataSelector = (state: any) => DataSelectorReturn | undefined;
+// export type DataSelector = (state: any) => DataSelectorReturn | undefined;
 
-export type UsePrepareTableProps<T> = {
-  selector: DataSelector;
-  makeData: (state: DataSelectorReturn) => State<T>;
+export type UsePrepareTableProps<T, Y> = {
+  selector: (state: any) => Y;
+  makeData: (state: Y) => State<T>;
 }
 
 const defaultTableState = {
@@ -27,7 +27,9 @@ const defaultTableState = {
   data: []
 };
 
-function usePrepareTable<T extends {} = {}>({ selector, makeData }: UsePrepareTableProps<T>) {
+function usePrepareTable<T extends {} = any, Y = {}>(
+  { selector, makeData }: UsePrepareTableProps<T, Y>
+) {
   const [tableState, setTableState] = useState<State<T>>(defaultTableState);
   const data = useAppSelector(selector);
 

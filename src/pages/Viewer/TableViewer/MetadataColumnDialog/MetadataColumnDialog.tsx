@@ -1,5 +1,6 @@
-import { Box, Dialog, DialogProps, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Dialog, DialogProps, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { FC, ReactNode, SyntheticEvent, useState } from 'react';
+import EntityTab from './EntityTab';
 import TypeTab from './TypeTab';
 
 type TabPanelProps = {
@@ -11,21 +12,20 @@ type TabPanelProps = {
 const TabPanel: FC<TabPanelProps> = (props) => {
   const { children, value, index, ...other } = props;
 
-  return (
-    <div
+  return value === index ? (
+    <Stack
+      flexGrow={1}
       role="tabpanel"
       hidden={value !== index}
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box padding="10px">
-          {children}
-        </Box>
-      )}
-    </div>
-  );
+      <Stack flexGrow={1}>
+        {children}
+      </Stack>
+    </Stack>
+  ) : null;
 };
 
 const a11yProps = (index: number) => {
@@ -43,7 +43,7 @@ const Content = () => {
   };
 
   return (
-    <>
+    <Stack>
       <Tabs
         sx={{
           position: 'sticky',
@@ -57,16 +57,18 @@ const Content = () => {
         <Tab label="Properties" {...a11yProps(1)} />
         <Tab label="Entities" {...a11yProps(2)} />
       </Tabs>
-      <TabPanel value={value} index={0}>
-        <TypeTab />
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        Item Two
-      </TabPanel>
-      <TabPanel value={value} index={2}>
-        Item Three
-      </TabPanel>
-    </>
+      <Stack minHeight="600px">
+        <TabPanel value={value} index={0}>
+          <TypeTab />
+        </TabPanel>
+        <TabPanel value={value} index={1}>
+          Item Two
+        </TabPanel>
+        <TabPanel value={value} index={2}>
+          <EntityTab />
+        </TabPanel>
+      </Stack>
+    </Stack>
   );
 };
 

@@ -3,6 +3,7 @@ import { ID } from '@store/interfaces/store';
 import {
   BaseMetadata,
   Cell,
+  Column,
   ColumnStatus,
   Context,
   TableState
@@ -130,6 +131,98 @@ export const updateNumberOfReconciliatedCells = (state: Draft<TableState>) => {
   }, 0);
   tableInstance.nCellsReconciliated = reconciliated;
   tableInstance.nCells = columns.allIds.length * rows.allIds.length;
+};
+
+export const computeCellAnnotationStats = (cell: Cell) => {
+  if (cell.metadata.length === 0) {
+    return {
+      match: false,
+      highestScore: 0,
+      lowestScore: 0
+    };
+  }
+
+  const [firstItem, ...rest] = cell.metadata;
+
+  // eslint-disable-next-line prefer-destructuring
+  let match = firstItem.match;
+  let min = firstItem.score;
+  let max = firstItem.score;
+
+  rest.forEach((metaItem) => {
+    if (metaItem.match) {
+      match = true;
+    }
+    min = metaItem.score < min ? metaItem.score : min;
+    max = metaItem.score > max ? metaItem.score : max;
+  });
+
+  return {
+    match,
+    lowestScore: min,
+    highestScore: max
+  };
+};
+
+export const computeColumnAnnotationStats = (column: Column) => {
+  if (column.metadata.length === 0) {
+    return {
+      match: false,
+      highestScore: 0,
+      lowestScore: 0
+    };
+  }
+
+  if (!column.metadata[0].entity || column.metadata[0].entity.length === 0) {
+    return {
+      match: false,
+      highestScore: 0,
+      lowestScore: 0
+    };
+  }
+
+  const [firstItem, ...rest] = column.metadata[0].entity;
+
+  // eslint-disable-next-line prefer-destructuring
+  let match = firstItem.match;
+  let min = firstItem.score;
+  let max = firstItem.score;
+
+  rest.forEach((metaItem) => {
+    if (metaItem.match) {
+      match = true;
+    }
+    min = metaItem.score < min ? metaItem.score : min;
+    max = metaItem.score > max ? metaItem.score : max;
+  });
+
+  return {
+    match,
+    lowestScore: min,
+    highestScore: max
+  };
+};
+
+export const updateScoreBoundaries = (state: Draft<TableState>) => {
+  const { rows, columns, tableInstance } = state.entities;
+  let min = 0;
+  let max = 0;
+
+  rows.allIds.forEach((rowId) => {
+    columns.allIds.forEach((colId) => {
+      const { annotationMeta } = rows.byId[rowId].cells[colId];
+      if (annotationMeta) {
+        if (annotationMeta.annotated) {
+          const { lowestScore, highestScore } = annotationMeta;
+          min = lowestScore < min ? lowestScore : min;
+          max = highestScore > max ? highestScore : max;
+        }
+      }
+    });
+  });
+
+  tableInstance.minMetaScore = min;
+  tableInstance.maxMetaScore = max;
 };
 
 /** */

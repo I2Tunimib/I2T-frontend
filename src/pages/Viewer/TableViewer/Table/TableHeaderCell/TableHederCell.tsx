@@ -8,8 +8,9 @@ import { ColumnStatus } from '@store/slices/table/interfaces/table';
 import { RootState } from '@store';
 import { connect } from 'react-redux';
 import { selectColumnReconciliators } from '@store/slices/table/table.selectors';
-import { forwardRef, MouseEvent } from 'react';
+import { forwardRef, MouseEvent, useCallback } from 'react';
 import { capitalize } from '@services/utils/text-utils';
+import { StatusBadge } from '@components/core';
 import styles from './TableHeaderCell.module.scss';
 import TableHeaderCellExpanded from './TableHeaderCellExpanded';
 
@@ -37,12 +38,42 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   handleSelectedColumnCellChange,
   reconciliators,
   highlightState,
-  data
+  data,
+  settings
 }: any, ref) => {
+  const {
+    lowerBound
+  } = settings;
+
   const handleSelectColumn = (event: MouseEvent) => {
     event.stopPropagation();
     handleSelectedColumnChange(event, id);
   };
+
+  const getBadgeStatus = useCallback((column: any) => {
+    const {
+      annotationMeta: {
+        match,
+        highestScore
+      }
+    } = column;
+
+    if (match) {
+      return 'Success';
+    }
+
+    const {
+      isScoreLowerBoundEnabled,
+      scoreLowerBound
+    } = lowerBound;
+
+    if (isScoreLowerBoundEnabled) {
+      if (scoreLowerBound && highestScore < scoreLowerBound) {
+        return 'Error';
+      }
+    }
+    return 'Warn';
+  }, [lowerBound]);
 
   return (
     <th
@@ -70,6 +101,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
             <div className={styles.Row}>
               <div className={styles.Column}>
                 <div className={styles.Row}>
+                  {data.annotationMeta && data.annotationMeta.annotated && (
+                    <StatusBadge status={getBadgeStatus(data)} size="small" marginRight="5px" />
+                  )}
+                  {/* {!!(data.metadata.length > 0
+                    && data.metadata[0].entity
+                    && data.metadata[0].entity.length > 0) && (
+                    <StatusBadge status={getBadgeStatus(data)} size="small" marginRight="5px" />
+                  )} */}
                   <div className={styles.Label}>
                     {children}
                   </div>

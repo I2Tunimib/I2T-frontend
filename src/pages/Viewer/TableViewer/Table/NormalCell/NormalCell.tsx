@@ -11,7 +11,7 @@ import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRou
 import { selectReconciliatorCell } from '@store/slices/table/table.selectors';
 import { RootState } from '@store';
 import { connect } from 'react-redux';
-import { BaseMetadata } from '@store/slices/table/interfaces/table';
+import { BaseMetadata, Cell } from '@store/slices/table/interfaces/table';
 import { useAppDispatch } from '@hooks/store';
 import { updateUI } from '@store/slices/table/table.slice';
 import EntityLabel from '@components/core/EntityLabel';
@@ -23,26 +23,43 @@ interface NormalCellProps {
   dense: boolean;
   expanded: boolean;
   reconciliator: string;
+  settings: any;
 }
 
 const NormalCell: FC<NormalCellProps> = ({
   label,
   value,
+  settings,
   reconciliator,
   dense,
   expanded
 }) => {
   const dispatch = useAppDispatch();
 
-  const getBadgeStatus = (metadata: BaseMetadata[]) => {
-    const matching = value.metadata.some((meta: BaseMetadata) => meta.match);
-    if (matching) {
+  const {
+    lowerBound: {
+      isScoreLowerBoundEnabled,
+      scoreLowerBound
+    }
+  } = settings;
+
+  const getBadgeStatus = (cell: Cell) => {
+    const {
+      annotationMeta: {
+        match,
+        highestScore
+      }
+    } = cell;
+
+    if (match) {
       return 'Success';
     }
-    if (metadata.length > 0) {
-      return 'Warn';
+    if (isScoreLowerBoundEnabled) {
+      if (scoreLowerBound && highestScore < scoreLowerBound) {
+        return 'Error';
+      }
     }
-    return 'Error';
+    return 'Warn';
   };
 
   const getLabel = useCallback(() => {
@@ -79,9 +96,9 @@ const NormalCell: FC<NormalCellProps> = ({
           [styles.Dense]: dense
         }
       )}>
-        {value.metadata.length > 0 && (
+        {value.annotationMeta && value.annotationMeta.annotated && (
           <StatusBadge
-            status={getBadgeStatus(value.metadata)}
+            status={getBadgeStatus(value)}
           />
         )}
         <div className={styles.TextLabel}>

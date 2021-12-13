@@ -16,7 +16,7 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
   ui: TableUIState;
 }
 
-export interface CurrentTableState extends Partial<TableInstance>{}
+export interface CurrentTableState extends TableInstance{}
 
 export interface TableInstance {
   id: ID;
@@ -27,6 +27,8 @@ export interface TableInstance {
   lastModifiedDate: string;
   nCells: number;
   nCellsReconciliated: number;
+  minMetaScore: number;
+  maxMetaScore: number;
   mantisStatus?: 'PENDING' | 'DONE';
 }
 
@@ -34,14 +36,16 @@ export interface TableInstance {
  * Table UI state.
  */
 export interface TableUIState {
-  search: { filter: string; value: string };
+  search: { globalFilter: string[]; filter: string; value: string };
   denseView: boolean;
-  viewOnly: boolean;
+  // viewOnly: boolean;
   openReconciliateDialog: boolean;
   openExtensionDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
   openMetadataColumnDialog: boolean;
+  settingsDialog: boolean;
+  settings: Partial<Settings>;
   headerExpanded: boolean;
   view: 'table' | 'graph' | 'raw';
   selectedColumnCellsIds: Record<ID, boolean>;
@@ -53,6 +57,12 @@ export interface TableUIState {
   editableCellsIds: Record<ID, boolean>;
   lastSaved: string;
   tutorialBBoxes: Record<string, BBox>;
+}
+
+export interface Settings {
+  isViewOnly: boolean;
+  isScoreLowerBoundEnabled: boolean;
+  scoreLowerBound: number;
 }
 
 export interface BBox {
@@ -89,6 +99,7 @@ export interface Column {
   label: string;
   status: ColumnStatus;
   context: Record<ID, Context>;
+  annotationMeta: AnnotationMeta;
   metadata: ColumnMetadata[];
   kind?: string;
   role?: string;
@@ -107,6 +118,14 @@ export interface Cell {
   id: ID;
   label: string;
   metadata: BaseMetadata[];
+  annotationMeta: AnnotationMeta;
+}
+
+export interface AnnotationMeta {
+  annotated?: boolean;
+  match: boolean;
+  highestScore: number;
+  lowestScore: number;
 }
 
 export interface Context {
@@ -121,13 +140,14 @@ export interface BaseMetadata {
     value: string;
     uri: string;
   };
-  match?: boolean;
-  score?: number;
+  match: boolean;
+  score: number;
   type?: BaseMetadata[];
 }
 
 export interface ColumnMetadata extends BaseMetadata {
   property?: PropertyMetadata[];
+  entity?: BaseMetadata[];
 }
 
 export interface PropertyMetadata extends BaseMetadata {
@@ -190,6 +210,10 @@ export interface AddCellMetadataPayload {
 export interface UpdateCellMetadataPayload {
   metadataId: ID,
   cellId: ID
+}
+export interface UpdateColumnMetadataPayload {
+  metadataId: ID,
+  colId: ID
 }
 
 export interface DeleteCellMetadataPayload {

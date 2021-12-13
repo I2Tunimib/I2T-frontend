@@ -120,7 +120,7 @@ const TypeTab: FC<{}> = () => {
   };
 
   return types ? (
-    <Stack gap="10px">
+    <Stack gap="10px" padding="10px">
       <Stack direction="row">
         <Typography variant="h6">Column types</Typography>
         <Stack direction="row" gap="10px" marginLeft="auto">

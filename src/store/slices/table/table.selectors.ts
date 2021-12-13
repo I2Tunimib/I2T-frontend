@@ -71,6 +71,31 @@ export const selectCurrentTable = createSelector(
   (entities) => entities.tableInstance
 );
 
+export const selectUISettings = createSelector(
+  selectUIState,
+  (ui) => {
+    return ui.settings;
+  }
+);
+
+export const selectSettings = createSelector(
+  selectCurrentTable,
+  selectUISettings,
+  (table, settings) => {
+    const { scoreLowerBound, isScoreLowerBoundEnabled, ...rest } = settings;
+    const { minMetaScore, maxMetaScore } = table;
+    return {
+      lowerBound: {
+        isScoreLowerBoundEnabled,
+        scoreLowerBound,
+        minMetaScore,
+        maxMetaScore
+      },
+      ...rest
+    };
+  }
+);
+
 export const selectColumnReconciliators = createSelector(
   selectColumnContexts,
   selectReconciliatorsAsObject,
@@ -125,12 +150,18 @@ export const selectSelectedColumnCellsIds = createSelector(
   selectUIState,
   (ui) => ui.selectedColumnCellsIds
 );
+export const selectSelectedColumnCellsIdsAsArray = createSelector(
+  selectUIState,
+  (ui) => Object.keys(ui.selectedColumnCellsIds)
+);
 /**
  * Get selected columns ids as array.
  */
 export const selectSelectedColumnIdsAsArray = createSelector(
   selectSelectedColumnIds,
-  (colIds) => Object.keys(colIds)
+  (colIds) => {
+    return Object.keys(colIds);
+  }
 );
 
 /**
@@ -178,7 +209,9 @@ export const selectSelectedCells = createSelector(
  */
 export const selectIsCellSelected = createSelector(
   selectSelectedCellsIdsAsArray,
-  (cellIds) => cellIds.length > 0
+  selectSelectedColumnCellsIdsAsArray,
+  selectSelectedColumnIdsAsArray,
+  (cellIds, cellColIds, colIds) => cellIds.length > 0 || cellColIds.length > 0 || colIds.length > 0
 );
 /**
  * Check if ONLY ONE cell is selected.
@@ -198,6 +231,27 @@ export const selectCellIdIfOneSelected = createSelector(
       return '';
     }
     return cellIds[0];
+  }
+);
+
+export const selectCurrentColCellId = createSelector(
+  selectSelectedColumnCellsIdsAsArray,
+  (colIds) => {
+    if (colIds.length === 0) {
+      return null;
+    }
+    return colIds[0];
+  }
+);
+
+export const selectCurrentCol = createSelector(
+  selectCurrentColCellId,
+  selectColumnsState,
+  (colId, cols) => {
+    if (colId) {
+      return cols.byId[colId];
+    }
+    return undefined;
   }
 );
 
@@ -255,6 +309,11 @@ export const selectIsDenseView = createSelector(
   (ui) => ui.denseView
 );
 
+export const selectSettingsDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.settingsDialog
+);
+
 /**
  * Get reconciliation dialog status.
  */
@@ -302,7 +361,7 @@ export const selectTutorialBBoxes = createSelector(
 
 export const selectIsViewOnly = createSelector(
   selectUIState,
-  (ui) => ui.viewOnly
+  (ui) => ui.settings.isViewOnly
 );
 
 // SELECTORS TO CHECK IF AN ACTION IS ENABLED
@@ -405,15 +464,27 @@ export const selectDataTableFormat = createSelector(
  */
 export const selectReconciliationCells = createSelector(
   selectSelectedCellsIdsAsArray,
+  selectSelectedColumnCellsIdsAsArray,
+  selectSelectedColumnIdsAsArray,
   selectRowsState,
-  (cellIds, rows) => {
-    return cellIds.map((cellId) => {
+  selectColumnsState,
+  (cellIds, colCellsIds, colIds, rows, cols) => {
+    let ids = [] as any;
+
+    if (colCellsIds.length > 0 || colIds.length > 0) {
+      const uniqueColIds = [...new Set(colCellsIds.concat(colIds))];
+      ids = ids.concat(uniqueColIds.map((colId) => ({
+        id: colId,
+        label: cols.byId[colId].label
+      })));
+    }
+    return ids.concat(cellIds.map((cellId) => {
       const [rowId, colId] = getIdsFromCell(cellId);
       return {
         id: cellId,
         label: rows.byId[rowId].cells[colId].label
       };
-    });
+    }));
   }
 );
 
@@ -467,6 +538,40 @@ export const selectCellMetadataTableFormat = createSelector(
       }
     }
     return undefined;
+  }
+);
+
+export const selectColumnCellMetadataTableFormat = createSelector(
+  selectCurrentColCellId,
+  selectReconciliators,
+  selectColumnsState,
+  (colId, reconciliators, cols) => {
+    if (colId) {
+      const column = cols.byId[colId];
+
+      if (column.metadata.length > 0) {
+        if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
+          const cellContext = column.metadata[0].entity[0].id.split(':')[0];
+          const service = reconciliators.byId[cellContext];
+          if (service) {
+            return {
+              column,
+              service
+            };
+          }
+        }
+      }
+      return {
+        column: {
+          ...column,
+          metadata: [{
+            entity: []
+          }]
+        },
+        service: null
+      };
+    }
+    return null;
   }
 );
 
@@ -565,5 +670,62 @@ export const selectColumnTypes = createSelector(
       allTypes,
       selectedType
     };
+  }
+);
+
+export const selectColumnsAnnotationPercentages = createSelector(
+  selectSettings,
+  selectSelectedColumnIdsAsArray,
+  selectRowsState,
+  (settings, selectedColIds, rows) => {
+    if (selectedColIds.length > 0) {
+      const {
+        lowerBound: {
+          scoreLowerBound = 0
+        }
+      } = settings;
+
+      let nMatches = 0;
+      let nPending = 0;
+      let nMissMatches = 0;
+
+      selectedColIds.forEach((colId) => {
+        rows.allIds.forEach((rowId) => {
+          const cell = rows.byId[rowId].cells[colId];
+
+          if (cell.annotationMeta) {
+            const { annotated, match, highestScore } = cell.annotationMeta;
+
+            if (annotated) {
+              if (match) {
+                nMatches += 1;
+              } else if (highestScore < scoreLowerBound) {
+                nMissMatches += 1;
+              } else {
+                nPending += 1;
+              }
+            }
+          }
+        });
+      });
+
+      const total = (rows.allIds.length) * selectedColIds.length;
+
+      return {
+        match: {
+          n: nMatches,
+          percentage: ((nMatches / total) * 100).toFixed(2)
+        },
+        pending: {
+          n: nPending,
+          percentage: ((nPending / total) * 100).toFixed(2)
+        },
+        miss: {
+          n: nMissMatches,
+          percentage: ((nMissMatches / total) * 100).toFixed(2)
+        }
+      };
+    }
+    return null;
   }
 );

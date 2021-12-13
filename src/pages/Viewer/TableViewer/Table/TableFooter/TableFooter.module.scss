@@ -14,8 +14,9 @@
   background-color: var(--white);
   z-index: 10;
   box-sizing: border-box;
+  justify-content: space-between;
 
-  & > :nth-child(4)  {
-    margin-right: auto;
-  }
+  // & > :nth-child(4)  {
+  //   margin-right: auto;
+  // }
 }

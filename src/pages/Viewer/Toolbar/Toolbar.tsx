@@ -13,13 +13,15 @@ import {
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
+import SettingsIcon from '@mui/icons-material/Settings';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   selectCurrentTable,
   selectIsViewOnly,
   selectLastSaved,
-  selectSaveTableStatus
+  selectSaveTableStatus,
+  selectSettingsDialogStatus
 } from '@store/slices/table/table.selectors';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import BubbleChartRoundedIcon from '@mui/icons-material/BubbleChartRounded';
@@ -34,6 +36,7 @@ import { IconButtonTooltip } from '@components/core';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
+import SettingsDialog from '../SettingsDialog/SettingsDialog';
 
 interface MenuState extends Record<string, boolean> {
 }
@@ -65,6 +68,7 @@ const Toolbar = () => {
   const lastSaved = useAppSelector(selectLastSaved);
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
+  const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
   const dispatch = useAppDispatch();
 
   const { view } = useQuery();
@@ -114,6 +118,10 @@ const Toolbar = () => {
     setAnchorEl(null);
   };
 
+  const handleCloseSettings = () => {
+    dispatch(updateUI({ settingsDialog: false }));
+  };
+
   const handleSave = () => {
     dispatch(saveTable({
       datasetId,
@@ -137,7 +145,7 @@ const Toolbar = () => {
               className={clsx({
                 [styles.DefaultName]: tableName === 'Unnamed table'
               })}
-              disabled={!API.ENDPOINTS.SAVE || isViewOnly}
+              disabled={!API.ENDPOINTS.SAVE || !!isViewOnly}
             />
             {(API.ENDPOINTS.SAVE && !isViewOnly) && (
               <SaveIndicator
@@ -199,7 +207,7 @@ const Toolbar = () => {
               Save
             </Button>
           )}
-          <IconButtonTooltip
+          {/* <IconButtonTooltip
             disabled={mantisStatus === 'PENDING'}
             tooltipText={isViewOnly ? 'Enable changes' : 'Disable changes'}
             Icon={isViewOnly
@@ -210,7 +218,13 @@ const Toolbar = () => {
               ? <ModeEditOutlineOutlinedIcon />
               : <EditOffOutlinedIcon />
             }
-          </IconButtonTooltip>
+          </IconButtonTooltip> */}
+          <IconButtonTooltip
+            tooltipText="Settings"
+            Icon={SettingsIcon}
+            // disabled={!isMetadataButtonEnabled}
+            onClick={() => dispatch(updateUI({ settingsDialog: true }))}
+          />
         </Stack>
       </div>
       {/* <FileMenu
@@ -228,7 +242,7 @@ const Toolbar = () => {
         anchorElement={anchorEl}
         handleClose={handleMenuClose}
       /> */}
-
+      <SettingsDialog open={openSettingsDialog} onClose={handleCloseSettings} />
     </>
   );
 };

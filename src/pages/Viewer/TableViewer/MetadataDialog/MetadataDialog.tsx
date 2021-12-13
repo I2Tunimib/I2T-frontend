@@ -20,7 +20,8 @@ import {
   selectCellMetadataTableFormat,
   selectCurrentCell,
   selectIsViewOnly,
-  selectReconcileRequestStatus
+  selectReconcileRequestStatus,
+  selectSettings
 } from '@store/slices/table/table.selectors';
 import { selectAppConfig, selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
 import { Controller, useForm } from 'react-hook-form';
@@ -30,51 +31,49 @@ import CustomTable from '@components/kit/CustomTable/CustomTable';
 import deferMounting from '@components/HOC';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { Cell } from 'react-table';
-import { BaseMetadata } from '@store/slices/table/interfaces/table';
+import { BaseMetadata, Cell as TableCell } from '@store/slices/table/interfaces/table';
 import { StatusBadge } from '@components/core';
-import usePrepareTable, { DataSelectorReturn } from './usePrepareTable';
+import usePrepareTable from './usePrepareTable';
 import { getCellComponent } from './componentsConfig';
 
 const DeferredTable = deferMounting(CustomTable);
 
-const getBadgeStatus = (metadata: BaseMetadata[]) => {
-  const matching = metadata.some((meta: BaseMetadata) => meta.match);
-  if (matching) {
-    return 'Success';
-  }
-  return 'Warn';
-};
+const makeData = (rawData: ReturnType<typeof selectCellMetadataTableFormat>) => {
+  if (rawData) {
+    const { cell, service } = rawData;
+    const { metaToView } = service;
+    const { metadata } = cell;
 
-const makeData = (rawData: DataSelectorReturn) => {
-  const { cell, service } = rawData;
-  const { metaToView } = service;
-  const { metadata } = cell;
+    const columns = Object.keys(metaToView).map((key) => {
+      const { label = key, type } = metaToView[key];
+      return {
+        Header: label,
+        accessor: key,
+        Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type)
+      };
+    });
 
-  const columns = Object.keys(metaToView).map((key) => {
-    const { label = key, type } = metaToView[key];
+    const data = metadata.map((metadataItem) => {
+      return Object.keys(metaToView).reduce((acc, key) => {
+        const value = metadataItem[key as keyof BaseMetadata];
+        if (value !== undefined) {
+          acc[key] = value;
+        } else {
+          acc[key] = null;
+        }
+
+        return acc;
+      }, {} as Record<string, any>);
+    });
+
     return {
-      Header: label,
-      accessor: key,
-      Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type)
+      columns,
+      data
     };
-  });
-
-  const data = metadata.map((metadataItem) => {
-    return Object.keys(metaToView).reduce((acc, key) => {
-      const value = metadataItem[key as keyof BaseMetadata];
-      if (value !== undefined) {
-        acc[key] = value;
-      } else {
-        acc[key] = null;
-      }
-
-      return acc;
-    }, {} as Record<string, any>);
-  });
-
+  }
   return {
-    columns,
-    data
+    columns: [],
+    data: []
   };
 };
 
@@ -115,7 +114,15 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const cell = useAppSelector(selectCurrentCell);
   const isViewOnly = useAppSelector(selectIsViewOnly);
+  const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
+
+  const {
+    lowerBound: {
+      isScoreLowerBoundEnabled,
+      scoreLowerBound
+    }
+  } = settings;
 
   useEffect(() => {
     // set initial value of select
@@ -212,6 +219,25 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     setShowTooltip(false);
   };
 
+  const getBadgeStatus = (cellItem: TableCell) => {
+    const {
+      annotationMeta: {
+        match,
+        highestScore
+      }
+    } = cellItem;
+
+    if (match) {
+      return 'Success';
+    }
+    if (isScoreLowerBoundEnabled) {
+      if (scoreLowerBound && highestScore < scoreLowerBound) {
+        return 'Error';
+      }
+    }
+    return 'Warn';
+  };
+
   const fetchMetadata = (service: string) => {
     const reconciliator = reconciliators.find((recon) => recon.prefix === service);
     if (reconciliator && cell) {
@@ -234,7 +260,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     }
   };
 
-  return (
+  return cell ? (
     <Dialog
       maxWidth="lg"
       open={open}
@@ -242,11 +268,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       <Stack height="100%" minHeight="600px">
         <Stack direction="row" gap="10px" alignItems="center" padding="12px 16px">
           <Stack direction="row" alignItems="center" gap={1}>
-            {cell?.metadata
+            {cell.annotationMeta && cell.annotationMeta.annotated
               && (
-              <StatusBadge
-                status={getBadgeStatus(cell.metadata)}
-              />
+                <StatusBadge
+                  status={getBadgeStatus(cell)}
+                />
               )
             }
             <Typography variant="h5">
@@ -383,7 +409,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         />
       </Stack>
     </Dialog>
-  );
+  ) : null;
 };
 
 export default MetadataDialog;

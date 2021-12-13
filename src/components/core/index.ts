@@ -16,6 +16,8 @@ import SplitButton from './SplitButton';
 import SquaredBox from './SquaredBox';
 import SocketIoProvider from './SocketIoProvider/SocketIoProvider';
 import useSocketIo from './SocketIoProvider/useSocketIo';
+import TaggedSearch from './TaggedSearch/TaggedSearch';
+import CheckboxGroup from './CheckboxGroup/CheckboxGroup';
 
 export {
   StatusBadge,
@@ -35,5 +37,7 @@ export {
   SplitButton,
   SquaredBox,
   SocketIoProvider,
-  useSocketIo
+  useSocketIo,
+  TaggedSearch,
+  CheckboxGroup
 };
