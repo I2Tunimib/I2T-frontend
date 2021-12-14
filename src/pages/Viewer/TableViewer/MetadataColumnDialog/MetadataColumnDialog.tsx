@@ -53,9 +53,9 @@ const Content = () => {
         }}
         value={value}
         onChange={handleChange}>
-        <Tab label="Types" {...a11yProps(0)} />
-        <Tab label="Properties" {...a11yProps(1)} />
-        <Tab label="Entities" {...a11yProps(2)} />
+        <Tab label="Column types" {...a11yProps(0)} />
+        <Tab label="Column properties" {...a11yProps(1)} />
+        <Tab label="Cell entities" {...a11yProps(2)} />
       </Tabs>
       <Stack minHeight="600px">
         <TabPanel value={value} index={0}>

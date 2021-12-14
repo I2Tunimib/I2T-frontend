@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 import { Stack, Typography, useMediaQuery } from '@mui/material';
 import { MouseEvent, useRef, useState, useEffect, useCallback } from 'react';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -10,6 +11,15 @@ import screen3 from '../../assets/screen3.png';
 import screen4 from '../../assets/screen4.png';
 
 const images = [screen1, screen2, screen3, screen4];
+
+const rotate = keyframes`
+  0% {
+    transform: rotate(0);
+  },
+  100% {
+    transform: rotate(360deg);
+  }
+`;
 
 const Container = styled.div({
   display: 'flex',
@@ -58,7 +68,8 @@ const Dash = styled(Typography)({
 
 const LogoSized = styled(Logo)({
   width: '120px',
-  height: '120px'
+  height: '120px',
+  animation: `${rotate} 14s linear infinite`
 });
 
 const ExploreButton = styled(Link)({
@@ -162,7 +173,7 @@ const Homepage = () => {
       const cX = left + width / 2;
       const cY = top + height / 2;
 
-      const x = (((cX - clientX) / cX) * 4);
+      const x = (((cX - clientX) / cX) * 3);
       const y = (((cY - clientY) / cY) * 3);
       cardRef.current.style.transform = `translateY(-50%) perspective(600px) rotate3d(1, 0, 0, ${y}deg) rotate3d(0, 1, 0, ${x}deg) translateZ(0)`;
     }

@@ -40,7 +40,10 @@ export function makeData<T extends {}>({
             }),
             Cell: ({ row, value }: Cell<T>) => {
               if (metaItem.type) {
-                return CELL_COMPONENTS_TYPES[metaItem.type].component(value);
+                return CELL_COMPONENTS_TYPES[metaItem.type].component(row, {
+                  value,
+                  props: metaItem.props
+                });
               }
             }
           })

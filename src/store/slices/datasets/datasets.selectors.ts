@@ -52,10 +52,7 @@ export const selectCurrentDatasetTables = createSelector(
     if (currentDatasetId !== '') {
       return {
         meta: metaTables,
-        collection: datasets.byId[currentDatasetId].tables.map((tableId) => {
-          const { idDataset, ...rest } = tables.byId[tableId];
-          return rest;
-        })
+        collection: datasets.byId[currentDatasetId].tables.map((tableId) => tables.byId[tableId])
       };
     }
     return {

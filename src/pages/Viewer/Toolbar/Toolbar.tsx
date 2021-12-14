@@ -14,9 +14,11 @@ import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import SettingsIcon from '@mui/icons-material/Settings';
+import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
+  selectAutomaticAnnotationStatus,
   selectCurrentTable,
   selectIsViewOnly,
   selectLastSaved,
@@ -27,7 +29,7 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import BubbleChartRoundedIcon from '@mui/icons-material/BubbleChartRounded';
 import FormatAlignJustifyRoundedIcon from '@mui/icons-material/FormatAlignJustifyRounded';
 import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
-import { saveTable } from '@store/slices/table/table.thunk';
+import { automaticAnnotation, saveTable } from '@store/slices/table/table.thunk';
 import { useQuery } from '@hooks/router';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
@@ -60,15 +62,12 @@ const Toolbar = () => {
   const history = useHistory();
   const { datasetId, tableId } = useParams<{ datasetId: string; tableId: string; }>();
   const { loading } = useAppSelector(selectSaveTableStatus);
-  const {
-    name,
-    lastModifiedDate,
-    mantisStatus
-  } = useAppSelector(selectCurrentTable);
+  const currentTable = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
+  const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
   const dispatch = useAppDispatch();
 
   const { view } = useQuery();
@@ -78,10 +77,10 @@ const Toolbar = () => {
   };
 
   useEffect(() => {
-    if (name) {
-      setTableName(name);
+    if (currentTable.name) {
+      setTableName(currentTable.name);
     }
-  }, [name]);
+  }, [currentTable.name]);
 
   const onChangeTableName = (event: ChangeEvent<HTMLInputElement>) => {
     // keep track of name
@@ -129,6 +128,10 @@ const Toolbar = () => {
     }));
   };
 
+  const handleAutomaticAnnotation = () => {
+    dispatch(automaticAnnotation({ datasetId, tableId }));
+  };
+
   return (
     <>
       <div className={styles.Container}>
@@ -149,7 +152,7 @@ const Toolbar = () => {
             />
             {(API.ENDPOINTS.SAVE && !isViewOnly) && (
               <SaveIndicator
-                value={lastModifiedDate}
+                value={currentTable.lastModifiedDate}
                 lastSaved={lastSaved}
                 loading={!!loading}
                 className={styles.SaveIcon} />
@@ -181,6 +184,14 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
+          <Button
+            color="primary"
+            disabled={loadingAutomaticAnnotation || (currentTable && currentTable.mantisStatus === 'PENDING')}
+            onClick={handleAutomaticAnnotation}
+            startIcon={<PlayCircleOutlineRoundedIcon />}
+            variant="contained">
+            Automatic annotation
+          </Button>
           {API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0 && (
             <>
               <Button
@@ -201,7 +212,9 @@ const Toolbar = () => {
               variant="contained"
               color="primary"
               size="medium"
-              disabled={lastModifiedDate ? new Date(lastSaved) >= new Date(lastModifiedDate) : true}
+              disabled={currentTable.lastModifiedDate
+                ? new Date(lastSaved) >= new Date(currentTable.lastModifiedDate)
+                : true}
               startIcon={<SaveRoundedIcon />}
             >
               Save

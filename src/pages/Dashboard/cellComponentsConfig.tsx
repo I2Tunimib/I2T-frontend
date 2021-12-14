@@ -1,6 +1,7 @@
 import { Tag, Battery } from '@components/core';
-import { Tooltip, Stack } from '@mui/material';
+import { Tooltip, Stack, Link as MatLink } from '@mui/material';
 import { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
 
 export type PercentageComponentProps = {
@@ -14,24 +15,41 @@ export type TagComponentProps = {
 }
 
 export type CellComponentProps = {
-  component: (props: any) => ReactNode,
+  component: (row: any, { value, props }: any) => ReactNode,
   sortFn?: (...props: any) => number;
 }
-export type CellComponent = 'date' | 'tag' | 'percentage';
+export type CellComponent = 'date' | 'tag' | 'percentage' | 'link';
 
 /**
  * Components types to display and corresponding sort function if present
  */
 export const CELL_COMPONENTS_TYPES: Record<CellComponent, CellComponentProps> = {
+  link: {
+    component: (row, { value, props }) => {
+      const { url: rawUrl, queryParams } = props;
+      const { original } = row;
+      let url = rawUrl.split('/').map((split: string) => {
+        if (split.startsWith(':')) {
+          const [_, param] = split.split(':');
+          if (original[param] != null) {
+            return original[param];
+          }
+        }
+        return split;
+      }).join('/');
+      url = queryParams ? `${url}${queryParams}` : url;
+      return <MatLink sx={{ textDecoration: 'none' }} component={Link} to={url}>{value}</MatLink>;
+    }
+  },
   date: {
-    component: (value: number) => <TimeAgo title="" date={value} />
+    component: (row, { value }) => <TimeAgo title="" date={value} />
   },
   tag: {
-    component: ({ status, value }: TagComponentProps) => <Tag status={status}>{value}</Tag>
+    component: (row, { status, value }) => <Tag status={status}>{value}</Tag>
   },
   percentage: {
-    component: (props: PercentageComponentProps) => {
-      const { total, value } = props;
+    component: (row, props) => {
+      const { total, value } = props.value;
       return (
         <Tooltip
           arrow

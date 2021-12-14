@@ -43,6 +43,9 @@ const TableFooter = ({
     gotoPage(page - 1);
   };
 
+  // console.log(nCells);
+  // console.log(nCellsReconciliated);
+
   return (
     <div className={styles.TableFooter}>
       <Stack direction="row" alignItems="center" gap="10px">

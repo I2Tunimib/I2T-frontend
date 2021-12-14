@@ -68,7 +68,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
     } = lowerBound;
 
     if (isScoreLowerBoundEnabled) {
-      if (scoreLowerBound && highestScore < scoreLowerBound) {
+      if (
+        column.metadata.length > 0
+        && column.metadata[0].entity
+        && column.metadata[0].entity.length === 0) {
+        return 'Error';
+      }
+
+      if (scoreLowerBound != null && highestScore < scoreLowerBound) {
         return 'Error';
       }
     }

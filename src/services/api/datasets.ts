@@ -12,6 +12,7 @@ export type GlobalSearchResult = {
 export type MetaCollection = {
   label: string;
   type?: 'date' | 'percentage' | 'tag';
+  props?: any;
 }
 export type Meta<T> = Partial<Record<keyof T, MetaCollection>>;
 

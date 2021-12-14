@@ -124,11 +124,14 @@ export const updateNumberOfReconciliatedCells = (state: Draft<TableState>) => {
 
   const reconciliated = columns.allIds.reduce((acc, columnId) => {
     acc += Object.keys(columns.byId[columnId].context).reduce((accInner, key) => {
-      accInner += columns.byId[columnId].context[key].reconciliated;
+      accInner += columns.byId[columnId].context[key].reconciliated
+        ? columns.byId[columnId].context[key].reconciliated
+        : 0;
       return accInner;
     }, 0);
     return acc;
   }, 0);
+
   tableInstance.nCellsReconciliated = reconciliated;
   tableInstance.nCells = columns.allIds.length * rows.allIds.length;
 };

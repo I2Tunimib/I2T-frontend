@@ -308,19 +308,20 @@ const SubToolbar = () => {
             </Button>
           </ActionGroup>
         )}
-        <ActionGroup>
+        {/* <ActionGroup>
           <Button
             sx={{
               textTransform: 'none'
             }}
             color="primary"
-            disabled={loadingAutomaticAnnotation || (currenTable && currenTable.mantisStatus === 'PENDING')}
+            disabled={loadingAutomaticAnnotation
+              || (currenTable && currenTable.mantisStatus === 'PENDING')}
             onClick={handleAutomaticAnnotation}
             endIcon={<PlayCircleOutlineRoundedIcon />}
             variant="contained">
             Automatic annotation
           </Button>
-        </ActionGroup>
+        </ActionGroup> */}
         <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
           <IconButtonTooltip
             tooltipText="Filter"

@@ -294,6 +294,10 @@ export const tableSlice = createSliceWithRequests({
             && columnToUpdate.metadata[0].entity.length > 0) {
             columnToUpdate.metadata[0].entity.forEach((metaItem) => {
               if (metaItem.id === metadataId) {
+                columnToUpdate.annotationMeta = {
+                  ...columnToUpdate.annotationMeta,
+                  match: !metaItem.match
+                };
                 metaItem.match = !metaItem.match;
               } else {
                 metaItem.match = false;
@@ -355,6 +359,7 @@ export const tableSlice = createSliceWithRequests({
 
       return produceWithPatch(state, undoable, (draft) => {
         const { selectedCellIds } = draft.ui;
+        const { selectedColumnsIds } = draft.ui;
         const updatedColumns = new Set<ID>();
         Object.keys(selectedCellIds).forEach((cellId) => {
           const [rowId, colId] = getIdsFromCell(cellId);
@@ -377,6 +382,10 @@ export const tableSlice = createSliceWithRequests({
                 column.context[cellContext] = decrementContextReconciliated(
                   column.context[cellContext]
                 );
+                cell.annotationMeta = {
+                  ...cell.annotationMeta,
+                  match: false
+                };
               }
             }
           });
@@ -388,6 +397,48 @@ export const tableSlice = createSliceWithRequests({
               column.context[cellContext] = incrementContextReconciliated(
                 column.context[cellContext]
               );
+              cell.annotationMeta = {
+                ...cell.annotationMeta,
+                match: true
+              };
+            }
+          }
+        });
+        Object.keys(selectedColumnsIds).forEach((colId) => {
+          const column = getColumn(draft, colId);
+
+          if (column.metadata && column.metadata.length > 0) {
+            if (column.metadata[0].entity) {
+              let maxIndex = { index: -1, max: -1 };
+
+              column.metadata[0].entity.forEach(({ score = 0, match }, i) => {
+                // find matching element
+                if (score > threshold && score > maxIndex.max) {
+                  maxIndex = { index: i, max: score };
+                } else {
+                  if (match) {
+                    if (column.metadata[0].entity) {
+                      column.metadata[0].entity[i].match = false;
+                      column.annotationMeta = {
+                        ...column.annotationMeta,
+                        match: false
+                      };
+                    }
+                  }
+                }
+                if (maxIndex.index !== -1) {
+                  if (column.metadata[0].entity) {
+                    if (!column.metadata[0].entity[maxIndex.index].match) {
+                      // assign match
+                      column.metadata[0].entity[maxIndex.index].match = true;
+                      column.annotationMeta = {
+                        ...column.annotationMeta,
+                        match: true
+                      };
+                    }
+                  }
+                }
+              });
             }
           }
         });
