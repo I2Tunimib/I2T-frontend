@@ -372,7 +372,7 @@ export const tableSlice = createSliceWithRequests({
           let maxIndex = { index: -1, max: -1 };
           cell.metadata.forEach(({ score = 0, match }, i) => {
             // find matching element
-            if (score > threshold && score > maxIndex.max) {
+            if (score >= threshold && score > maxIndex.max) {
               maxIndex = { index: i, max: score };
             } else {
               if (match) {

@@ -12,7 +12,8 @@ import DoneIcon from '@mui/icons-material/Done';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { autoMatching } from '@store/slices/table/table.slice';
 import { Cell } from '@store/slices/table/interfaces/table';
-import { selectAutoMatchingCells } from '@store/slices/table/table.selectors';
+import { selectAutoMatchingCells, selectSettings } from '@store/slices/table/table.selectors';
+import styled from '@emotion/styled';
 import styles from './AutoMatching.module.scss';
 
 interface AutoMatchingProps {
@@ -22,6 +23,14 @@ interface AutoMatchingProps {
   placement?: PopperPlacementType | undefined;
   handleClose: () => void;
 }
+
+const Emph = styled.span({
+  backgroundColor: '#f2f2f2',
+  padding: '2px 3px',
+  boxShadow: 'inset 0 -2px #ebefff',
+  borderRadius: '6px',
+  marginLeft: '5px'
+});
 
 const AutoMatching: FC<AutoMatchingProps> = ({
   open,
@@ -35,6 +44,11 @@ const AutoMatching: FC<AutoMatchingProps> = ({
     selectedCells, n,
     minScore, maxScore
   } = useAppSelector(selectAutoMatchingCells);
+  const {
+    lowerBound: {
+      scoreLowerBound
+    }
+  } = useAppSelector(selectSettings);
 
   const getNumberOfReconciliatedCells = (allCells: Cell[], thresholdReconciliation: number) => {
     return allCells.reduce((acc, cell) => {
@@ -50,6 +64,12 @@ const AutoMatching: FC<AutoMatchingProps> = ({
       getNumberOfReconciliatedCells(selectedCells, threshold)
     );
   }, [selectedCells, threshold]);
+
+  useEffect(() => {
+    if (scoreLowerBound) {
+      setThreshold(Number(scoreLowerBound.toFixed(2)));
+    }
+  }, [scoreLowerBound]);
 
   const handleChange = (event: any, newValue: number | number[]) => {
     setThreshold(newValue as number);
@@ -82,6 +102,8 @@ const AutoMatching: FC<AutoMatchingProps> = ({
         </Typography>
         <Typography variant="subtitle1" color="textSecondary" gutterBottom>
           Choose a threshold to renconcile selected cells.
+          The lower bound for the table is currently set to
+          <Emph>{scoreLowerBound != null ? scoreLowerBound.toFixed(2) : 0}</Emph>
         </Typography>
         <div className={styles.Row}>
           <Chip
