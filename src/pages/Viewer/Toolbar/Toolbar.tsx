@@ -20,6 +20,7 @@ import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   selectAutomaticAnnotationStatus,
   selectCurrentTable,
+  selectHelpDialogStatus,
   selectIsViewOnly,
   selectLastSaved,
   selectSaveTableStatus,
@@ -34,11 +35,13 @@ import { useQuery } from '@hooks/router';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { IconButtonTooltip } from '@components/core';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
 import SettingsDialog from '../SettingsDialog/SettingsDialog';
+import HelpDialog from '../HelpDialog/HelpDialog';
 
 interface MenuState extends Record<string, boolean> {
 }
@@ -67,6 +70,7 @@ const Toolbar = () => {
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
+  const openHelpDialog = useAppSelector(selectHelpDialogStatus);
   const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
   const dispatch = useAppDispatch();
 
@@ -120,6 +124,9 @@ const Toolbar = () => {
   const handleCloseSettings = () => {
     dispatch(updateUI({ settingsDialog: false }));
   };
+  const handleCloseHelp = () => {
+    dispatch(updateUI({ openHelpDialog: false }));
+  };
 
   const handleSave = () => {
     dispatch(saveTable({
@@ -156,8 +163,7 @@ const Toolbar = () => {
                 lastSaved={lastSaved}
                 loading={!!loading}
                 className={styles.SaveIcon} />
-            )
-            }
+            )}
           </div>
         </div>
         <Stack direction="row" gap="20px" className={styles.TopButtons}>
@@ -220,42 +226,20 @@ const Toolbar = () => {
               Save
             </Button>
           )}
-          {/* <IconButtonTooltip
-            disabled={mantisStatus === 'PENDING'}
-            tooltipText={isViewOnly ? 'Enable changes' : 'Disable changes'}
-            Icon={isViewOnly
-              ? ModeEditOutlineOutlinedIcon
-              : EditOffOutlinedIcon}
-            onClick={() => dispatch(updateUI({ viewOnly: !isViewOnly }))}>
-            {isViewOnly
-              ? <ModeEditOutlineOutlinedIcon />
-              : <EditOffOutlinedIcon />
-            }
-          </IconButtonTooltip> */}
+
           <IconButtonTooltip
             tooltipText="Settings"
             Icon={SettingsIcon}
-            // disabled={!isMetadataButtonEnabled}
             onClick={() => dispatch(updateUI({ settingsDialog: true }))}
           />
+          <IconButtonTooltip
+            tooltipText="Help"
+            onClick={() => dispatch(updateUI({ openHelpDialog: true }))}
+            Icon={HelpOutlineRoundedIcon} />
         </Stack>
       </div>
-      {/* <FileMenu
-        open={menuState.file}
-        anchorElement={anchorEl}
-        handleClose={handleMenuClose}
-      />
-      <EditMenu
-        open={menuState.edit}
-        anchorElement={anchorEl}
-        handleClose={handleMenuClose}
-      />
-      <ViewMenu
-        open={menuState.view}
-        anchorElement={anchorEl}
-        handleClose={handleMenuClose}
-      /> */}
       <SettingsDialog open={openSettingsDialog} onClose={handleCloseSettings} />
+      <HelpDialog open={openHelpDialog} onClose={handleCloseHelp} />
     </>
   );
 };

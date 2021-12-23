@@ -18,6 +18,8 @@ import SocketIoProvider from './SocketIoProvider/SocketIoProvider';
 import useSocketIo from './SocketIoProvider/useSocketIo';
 import TaggedSearch from './TaggedSearch/TaggedSearch';
 import CheckboxGroup from './CheckboxGroup/CheckboxGroup';
+import MultipleSelectChip from './MultipleSelectChip';
+import CheckboxGroupCompact from './CheckboxGroupCompact';
 
 export {
   StatusBadge,
@@ -39,5 +41,7 @@ export {
   SocketIoProvider,
   useSocketIo,
   TaggedSearch,
-  CheckboxGroup
+  CheckboxGroup,
+  MultipleSelectChip,
+  CheckboxGroupCompact
 };

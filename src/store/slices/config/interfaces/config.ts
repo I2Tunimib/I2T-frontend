@@ -17,6 +17,7 @@ export interface ExtendersState extends BaseState<Extender> {}
 export interface Reconciliator {
   id: ID;
   name: string;
+  description: string;
   prefix: string;
   uri: string;
   relativeUrl: string;

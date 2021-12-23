@@ -139,7 +139,9 @@ export const updateNumberOfReconciliatedCells = (state: Draft<TableState>) => {
 export const computeCellAnnotationStats = (cell: Cell) => {
   if (cell.metadata.length === 0) {
     return {
-      match: false,
+      match: {
+        value: false
+      },
       highestScore: 0,
       lowestScore: 0
     };
@@ -148,13 +150,21 @@ export const computeCellAnnotationStats = (cell: Cell) => {
   const [firstItem, ...rest] = cell.metadata;
 
   // eslint-disable-next-line prefer-destructuring
-  let match = firstItem.match;
+  let match = {
+    value: firstItem.match,
+    ...(firstItem.match && {
+      reason: 'reconciliator'
+    })
+  } as any;
   let min = firstItem.score;
   let max = firstItem.score;
 
   rest.forEach((metaItem) => {
     if (metaItem.match) {
-      match = true;
+      match = {
+        value: true,
+        reason: 'reconciliator'
+      };
     }
     min = metaItem.score < min ? metaItem.score : min;
     max = metaItem.score > max ? metaItem.score : max;
@@ -187,13 +197,21 @@ export const computeColumnAnnotationStats = (column: Column) => {
   const [firstItem, ...rest] = column.metadata[0].entity;
 
   // eslint-disable-next-line prefer-destructuring
-  let match = firstItem.match;
+  let match = {
+    value: firstItem.match,
+    ...(firstItem.match && {
+      reason: 'reconciliator'
+    })
+  } as any;
   let min = firstItem.score;
   let max = firstItem.score;
 
   rest.forEach((metaItem) => {
     if (metaItem.match) {
-      match = true;
+      match = {
+        value: true,
+        reason: 'reconciliator'
+      };
     }
     min = metaItem.score < min ? metaItem.score : min;
     max = metaItem.score > max ? metaItem.score : max;

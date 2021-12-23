@@ -189,8 +189,17 @@ const EntityTab: FC<{}> = () => {
       }
     } = col;
 
-    if (match) {
-      return 'Success';
+    if (match.value) {
+      switch (match.reason) {
+        case 'manual':
+          return 'match-manual';
+        case 'reconciliator':
+          return 'match-reconciliator';
+        case 'refinement':
+          return 'match-refinement';
+        default:
+          return 'match-reconciliator';
+      }
     }
 
     const {
@@ -200,10 +209,10 @@ const EntityTab: FC<{}> = () => {
 
     if (isScoreLowerBoundEnabled) {
       if (scoreLowerBound && highestScore < scoreLowerBound) {
-        return 'Error';
+        return 'miss';
       }
     }
-    return 'Warn';
+    return 'warn';
   }, [lowerBound]);
 
   return (

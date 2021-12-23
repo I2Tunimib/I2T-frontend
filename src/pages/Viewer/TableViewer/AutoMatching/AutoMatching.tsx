@@ -10,7 +10,7 @@ import {
 } from 'react';
 import DoneIcon from '@mui/icons-material/Done';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { autoMatching } from '@store/slices/table/table.slice';
+// import { autoMatching } from '@store/slices/table/table.slice';
 import { Cell } from '@store/slices/table/interfaces/table';
 import { selectAutoMatchingCells, selectSettings } from '@store/slices/table/table.selectors';
 import styled from '@emotion/styled';
@@ -76,7 +76,7 @@ const AutoMatching: FC<AutoMatchingProps> = ({
   };
 
   const handleConfirm = () => {
-    dispatch(autoMatching({ threshold }));
+    // dispatch(autoMatching({ threshold }));
     handleClose();
   };
 

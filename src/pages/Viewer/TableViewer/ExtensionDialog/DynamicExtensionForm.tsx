@@ -3,6 +3,8 @@ import { Extender } from '@store/slices/config/interfaces/config';
 import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import LoadingButton from '@mui/lab/LoadingButton';
+import { useAppDispatch } from '@hooks/store';
+import { updateUI } from '@store/slices/table/table.slice';
 import { FORM_COMPONENTS, getDefaultValues, prepareFormInput } from './componentsConfig';
 
 export type DynamicExtensionFormProps = {
@@ -16,6 +18,8 @@ const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
   extender,
   onSubmit: onSubmitCallback
 }) => {
+  const dispatch = useAppDispatch();
+
   const {
     control, handleSubmit,
     reset, setValue,
@@ -66,7 +70,7 @@ const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
         );
       })}
       <Stack direction="row" justifyContent="flex-end">
-        <Button>Cancel</Button>
+        <Button onClick={() => dispatch(updateUI({ openExtensionDialog: false }))}>Cancel</Button>
         <LoadingButton type="submit" loading={loading}>Confirm</LoadingButton>
       </Stack>
     </Stack>

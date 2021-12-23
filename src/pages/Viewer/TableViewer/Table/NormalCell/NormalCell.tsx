@@ -51,15 +51,25 @@ const NormalCell: FC<NormalCellProps> = ({
       }
     } = cell;
 
-    if (match) {
-      return 'Success';
-    }
-    if (isScoreLowerBoundEnabled) {
-      if (scoreLowerBound && highestScore < scoreLowerBound) {
-        return 'Error';
+    if (match.value) {
+      switch (match.reason) {
+        case 'manual':
+          return 'match-manual';
+        case 'reconciliator':
+          return 'match-reconciliator';
+        case 'refinement':
+          return 'match-refinement';
+        default:
+          return 'match-reconciliator';
       }
     }
-    return 'Warn';
+
+    if (isScoreLowerBoundEnabled) {
+      if (scoreLowerBound && highestScore < scoreLowerBound) {
+        return 'miss';
+      }
+    }
+    return 'warn';
   };
 
   const getLabel = useCallback(() => {

@@ -69,19 +69,19 @@ const TableFooter = ({
               </Typography>
               <Stack direction="row" alignItems="center" gap="10px">
                 <Stack direction="row" alignItems="center" gap="5px">
-                  <StatusBadge status="Error" size="small" />
+                  <StatusBadge status="miss" size="small" />
                   <Typography color="textSecondary" variant="body2">
                     {`${columnAnnotationPercentages.miss.percentage}%`}
                   </Typography>
                 </Stack>
                 <Stack direction="row" alignItems="center" gap="5px">
-                  <StatusBadge status="Warn" size="small" />
+                  <StatusBadge status="warn" size="small" />
                   <Typography color="textSecondary" variant="body2">
                     {`${columnAnnotationPercentages.pending.percentage}%`}
                   </Typography>
                 </Stack>
                 <Stack direction="row" alignItems="center" gap="5px">
-                  <StatusBadge status="Success" size="small" />
+                  <StatusBadge status="match-reconciliator" size="small" />
                   <Typography color="textSecondary" variant="body2">
                     {`${columnAnnotationPercentages.match.percentage}%`}
                   </Typography>

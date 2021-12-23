@@ -1,16 +1,16 @@
 import {
   Row, useGlobalFilter,
-  usePagination, useTable
+  usePagination, useSortBy, useTable
 } from 'react-table';
 import {
   FC, useCallback,
   useEffect,
   useRef,
-  useState
+  useState,
+  useMemo
 } from 'react';
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import clsx from 'clsx';
-import partition from '@services/utils/partition';
 import TableHead from '../TableHead';
 import TableHeaderCell from '../TableHeaderCell';
 import TableRoot from '../TableRoot';
@@ -43,6 +43,14 @@ interface HighlightState {
   color: string;
   columns: string[];
 }
+
+const findMatchingMetadata = (metadata: BaseMetadata[]) => {
+  if (!metadata || metadata.length === 0) {
+    return null;
+  }
+
+  return metadata.find((metaItem) => metaItem.match);
+};
 
 // default prop getter for when it is not provided
 const defaultPropGetter = () => ({});
@@ -192,6 +200,35 @@ const Table: FC<TableProps> = ({
     }
   }, []);
 
+  const sortByMetadata = useCallback(
+    (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
+      if (!rowA.values[columnId].annotationMeta
+        || !rowA.values[columnId].annotationMeta.match.value) {
+        return -1;
+      }
+
+      if (!rowB.values[columnId].annotationMeta
+        || !rowB.values[columnId].annotationMeta.match.value) {
+        return 1;
+      }
+
+      const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
+      if (!matchingA) {
+        return -1;
+      }
+
+      const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
+      if (!matchingB) {
+        return 1;
+      }
+
+      return matchingA.score - matchingB.score;
+    },
+    []
+  );
+
+  const sortTypes = useMemo(() => ({ sortByMetadata }), [sortByMetadata]);
+
   const {
     getTableProps,
     getTableBodyProps,
@@ -215,11 +252,13 @@ const Table: FC<TableProps> = ({
     columns,
     data,
     getRowId,
+    sortTypes,
     globalFilter: customGlobalFilter,
     initialState: { pageSize: 30 },
     autoResetGlobalFilter: false
   },
   useGlobalFilter,
+  useSortBy,
   usePagination,
   (hooks) => {
     // push a column for the index
@@ -304,7 +343,13 @@ const Table: FC<TableProps> = ({
                     <TableHeaderCell
                       ref={(el: any) => { columnRefs.current[column.id] = el; }}
                       {...column.getHeaderProps([
-                        getHeaderProps(column), getGlobalProps(), { index, highlightState }])}>
+                        getHeaderProps(column), getGlobalProps(), {
+                          index,
+                          highlightState,
+                          sortByProps: column.getSortByToggleProps(),
+                          isSorted: column.isSorted,
+                          isSortedDesc: column.isSortedDesc
+                        }])}>
                       {// Render the header
                         column.render('Header')
                       }

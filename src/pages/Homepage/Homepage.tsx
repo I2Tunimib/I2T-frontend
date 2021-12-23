@@ -211,7 +211,8 @@ const Homepage = () => {
           </Stack>
           <Typography component="span" variant="h1" fontWeight="600">A framework for</Typography>
           <Typography component="span" variant="h1" fontWeight="600">semantic table</Typography>
-          <Typography component="span" variant="h1" fontWeight="600">annotation and extension.</Typography>
+          <Typography component="span" variant="h1" fontWeight="600">annotation and</Typography>
+          <Typography component="span" variant="h1" fontWeight="600">extension.</Typography>
         </Stack>
         <ExploreButton to="/datasets">
           <Stack component="span" direction="row" alignItems="center" gap="5px">

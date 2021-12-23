@@ -4,6 +4,7 @@ import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
 import { selectAppConfig, selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
+import { Cell } from './interfaces/table';
 import { TableThunkActions } from './table.thunk';
 import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getIdsFromCell } from './utils/table.utils';
@@ -314,6 +315,11 @@ export const selectSettingsDialogStatus = createSelector(
   (ui) => ui.settingsDialog
 );
 
+export const selectHelpDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openHelpDialog
+);
+
 /**
  * Get reconciliation dialog status.
  */
@@ -430,6 +436,7 @@ export const selectDataTableFormat = createSelector(
       return {
         Header: label,
         accessor: colId,
+        sortType: 'sortByMetadata',
         id,
         data: { ...rest }
       };
@@ -727,5 +734,84 @@ export const selectColumnsAnnotationPercentages = createSelector(
       };
     }
     return null;
+  }
+);
+
+export const selectCellRefinement = createSelector(
+  selectSelectedCells,
+  (cells) => {
+    return cells.reduce((acc, cell) => {
+      if (cell.annotationMeta && cell.annotationMeta.annotated) {
+        if (cell.annotationMeta.match.value) {
+          if (cell.annotationMeta.match.reason === 'manual') {
+            acc.matchingManual.push(cell);
+          } else if (cell.annotationMeta.match.reason === 'reconciliator') {
+            acc.matchingReconciliator.push(cell);
+          } else if (cell.annotationMeta.match.reason === 'refinement') {
+            acc.matchingRefinement.push(cell);
+          }
+        } else {
+          acc.notMatching.push(cell);
+        }
+      }
+      return acc;
+    }, {
+      matchingManual: [] as Cell[],
+      matchingReconciliator: [] as Cell[],
+      matchingRefinement: [] as Cell[],
+      notMatching: [] as Cell[]
+    });
+  }
+);
+
+export const selectSelectedCellsTypes = createSelector(
+  selectSelectedCellsIdsAsArray,
+  selectSelectedColumnIdsAsArray,
+  selectRowsState,
+  selectColumnsState,
+  (cellIds, colIds, rows, columns) => {
+    const types = [] as string[];
+
+    if (cellIds.length > 0) {
+      cellIds.forEach((cellId) => {
+        const [rowId, colId] = getIdsFromCell(cellId);
+        const cell = rows.byId[rowId].cells[colId];
+
+        if (cell.annotationMeta && cell.annotationMeta.annotated) {
+          cell.metadata.forEach((metaItem) => {
+            if (metaItem.type) {
+              metaItem.type.forEach((typeItem) => {
+                types.push((typeItem.name as unknown as string).toLowerCase());
+              });
+            }
+          });
+        }
+      });
+    }
+
+    if (colIds.length > 0) {
+      colIds.forEach((colId) => {
+        const column = columns.byId[colId];
+        if (column.annotationMeta && column.annotationMeta.annotated) {
+          if (column.metadata.length > 0) {
+            if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
+              column.metadata[0].entity.forEach((metaItem) => {
+                if (metaItem.type) {
+                  metaItem.type.forEach((typeItem) => {
+                    types.push((typeItem.name as unknown as string).toLowerCase());
+                  });
+                }
+              });
+            }
+          }
+        }
+      });
+    }
+
+    if (types.length > 0) {
+      return Array.from(new Set(types.sort()));
+    }
+
+    return types;
   }
 );

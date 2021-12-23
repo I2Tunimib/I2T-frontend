@@ -10,6 +10,7 @@ import Table from './Table';
 import RouteLeaveGuard from './RouteLeaveGuard';
 import TableListView from './TableListView';
 import SvgPathCoordinator from './SvgPathCoordinator';
+import Hist from './Hist';
 
 export {
   ExpandableList,
@@ -23,5 +24,6 @@ export {
   Table,
   RouteLeaveGuard,
   TableListView,
-  SvgPathCoordinator
+  SvgPathCoordinator,
+  Hist
 };

@@ -30,6 +30,8 @@ import {
 import { updateUI } from '@store/slices/table/table.slice';
 import { selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
 import { LoadingButton } from '@mui/lab';
+import { SquaredBox } from '@components/core';
+import { Reconciliator } from '@store/slices/config/interfaces/config';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -38,7 +40,7 @@ const Transition = forwardRef((
 
 const ReconciliateDialog = () => {
   // keep track of selected service
-  const [currentService, setCurrentService] = useState<string>();
+  const [currentService, setCurrentService] = useState<Reconciliator | null>();
   const dispatch = useAppDispatch();
   // keep track of open state
   const open = useAppSelector(selectReconcileDialogStatus);
@@ -49,12 +51,12 @@ const ReconciliateDialog = () => {
   useEffect(() => {
     // set initial value of select
     if (reconciliators) {
-      setCurrentService(reconciliators[0].prefix);
+      setCurrentService(reconciliators[0]);
     }
   }, [reconciliators]);
 
   const handleConfirm = () => {
-    const reconciliator = reconciliators.find((recon) => recon.prefix === currentService);
+    const reconciliator = reconciliators.find((recon) => recon.prefix === currentService?.prefix);
     if (reconciliator) {
       dispatch(reconcile({
         baseUrl: reconciliator.relativeUrl,
@@ -78,7 +80,7 @@ const ReconciliateDialog = () => {
 
   const handleChange = (event: SelectChangeEvent<string>) => {
     if (event.target.value) {
-      setCurrentService(event.target.value);
+      setCurrentService(reconciliators.find((recon) => recon.prefix === event.target.value));
     }
   };
 
@@ -97,21 +99,28 @@ const ReconciliateDialog = () => {
         </DialogContentText>
         <Stack gap="10px">
           {currentService && (
-            <FormControl className="field">
-              <Select
-                value={currentService}
-                onChange={(e) => handleChange(e)}
-                variant="outlined"
-              >
-                {reconciliators && reconciliators.map((reconciliator) => (
-                  <MenuItem key={reconciliator.prefix} value={reconciliator.prefix}>
-                    {reconciliator.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Stack gap="10px">
+              <FormControl className="field">
+                <Select
+                  value={currentService.prefix}
+                  onChange={(e) => handleChange(e)}
+                  variant="outlined"
+                >
+                  {reconciliators && reconciliators.map((reconciliator) => (
+                    <MenuItem key={reconciliator.prefix} value={reconciliator.prefix}>
+                      {reconciliator.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {error && <Typography color="error">{error.message}</Typography>}
+              {currentService.description && (
+                <SquaredBox>
+                  {currentService.description}
+                </SquaredBox>
+              )}
+            </Stack>
           )}
-          {error && <Typography color="error">{error.message}</Typography>}
         </Stack>
       </DialogContent>
       <DialogActions>

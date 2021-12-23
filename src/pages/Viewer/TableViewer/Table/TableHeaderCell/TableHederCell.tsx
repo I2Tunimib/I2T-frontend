@@ -1,18 +1,25 @@
 /* eslint-disable react/destructuring-assignment */
-import { IconButton, Stack } from '@mui/material';
+import { Box, IconButton, Stack } from '@mui/material';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import clsx from 'clsx';
 import { ButtonShortcut } from '@components/kit';
 import { ColumnStatus } from '@store/slices/table/interfaces/table';
 import { RootState } from '@store';
 import { connect } from 'react-redux';
 import { selectColumnReconciliators } from '@store/slices/table/table.selectors';
-import { forwardRef, MouseEvent, useCallback } from 'react';
+import { forwardRef, MouseEvent, useCallback, useState } from 'react';
 import { capitalize } from '@services/utils/text-utils';
-import { StatusBadge } from '@components/core';
+import { IconButtonTooltip, StatusBadge } from '@components/core';
+import styled from '@emotion/styled';
 import styles from './TableHeaderCell.module.scss';
 import TableHeaderCellExpanded from './TableHeaderCellExpanded';
+
+const SortButton = styled(IconButton)({
+
+});
 
 const getKind = (kind: string) => {
   if (kind === 'entity') {
@@ -38,9 +45,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   handleSelectedColumnCellChange,
   reconciliators,
   highlightState,
+  sortByProps,
   data,
-  settings
+  settings,
+  isSorted,
+  isSortedDesc
 }: any, ref) => {
+  const [hover, setHover] = useState<boolean>(false);
+
   const {
     lowerBound
   } = settings;
@@ -58,8 +70,17 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
       }
     } = column;
 
-    if (match) {
-      return 'Success';
+    if (match.value) {
+      switch (match.reason) {
+        case 'manual':
+          return 'match-manual';
+        case 'reconciliator':
+          return 'match-reconciliator';
+        case 'refinement':
+          return 'match-refinement';
+        default:
+          return 'match-reconciliator';
+      }
     }
 
     const {
@@ -68,23 +89,18 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
     } = lowerBound;
 
     if (isScoreLowerBoundEnabled) {
-      if (
-        column.metadata.length > 0
-        && column.metadata[0].entity
-        && column.metadata[0].entity.length === 0) {
-        return 'Error';
-      }
-
-      if (scoreLowerBound != null && highestScore < scoreLowerBound) {
-        return 'Error';
+      if (scoreLowerBound && highestScore < scoreLowerBound) {
+        return 'miss';
       }
     }
-    return 'Warn';
+    return 'warn';
   }, [lowerBound]);
 
   return (
     <th
       ref={ref}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       onClick={(e) => handleSelectedColumnCellChange(e, id)}
       onContextMenu={(e) => handleCellRightClick(e, 'column', id)}
       style={{
@@ -116,9 +132,36 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                     && data.metadata[0].entity.length > 0) && (
                     <StatusBadge status={getBadgeStatus(data)} size="small" marginRight="5px" />
                   )} */}
-                  <div className={styles.Label}>
-                    {children}
-                  </div>
+                  <Stack
+                    sx={{
+                      flex: '1 1 auto',
+                      marginRight: '10px'
+                    }}
+                    alignItems="center"
+                    direction="row">
+                    <Box sx={{
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {children}
+                    </Box>
+                    <SortButton
+                      sx={{
+                        visibility: hover || isSorted ? 'visible' : 'hidden',
+                        ...(!isSorted && {
+                          color: 'rgba(0, 0, 0, 0.377)'
+                        })
+                      }}
+                      size="small"
+                      {...sortByProps}
+                      title="Sort by Metadata score">
+                      {isSortedDesc
+                        ? <ArrowDownwardRoundedIcon fontSize="small" />
+                        : <ArrowUpwardRoundedIcon fontSize="small" />
+                      }
+                    </SortButton>
+                  </Stack>
                   {data.kind && getKind(data.kind)}
                   {data.role
                     && <ButtonShortcut className={styles.SubjectLabel} text={capitalize(data.role)} variant="flat" color="darkblue" size="xs" />}

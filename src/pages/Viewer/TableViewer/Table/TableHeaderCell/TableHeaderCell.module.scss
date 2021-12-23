@@ -7,6 +7,8 @@
   border-right: 1px solid #ededed;
   border-top: 2px solid transparent;
 
+
+
   .Role {
     position: absolute;
     top: 10px;
@@ -17,6 +19,10 @@
     .ColumnSelectionButton {
       visibility: visible;
     }
+
+    .SortButton {
+      visibility: visible;
+    }
   }
 
   .ColumnSelectionButton {
@@ -25,6 +31,10 @@
     right: 5px;
     visibility: hidden;
     z-index: 10;
+  }
+
+  .SortButton {
+    visibility: hidden;
   }
 
   &.TableHeaderIndex {

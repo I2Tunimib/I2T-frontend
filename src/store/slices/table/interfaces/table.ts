@@ -1,3 +1,4 @@
+import { ItemsToMatch } from '@pages/Viewer/TableViewer/RefineMatching/RefineMatching';
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
 import { ID, BaseState } from '@store/interfaces/store';
@@ -38,12 +39,12 @@ export interface TableInstance {
 export interface TableUIState {
   search: { globalFilter: string[]; filter: string; value: string };
   denseView: boolean;
-  // viewOnly: boolean;
   openReconciliateDialog: boolean;
   openExtensionDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
   openMetadataColumnDialog: boolean;
+  openHelpDialog: boolean;
   settingsDialog: boolean;
   settings: Partial<Settings>;
   headerExpanded: boolean;
@@ -56,6 +57,7 @@ export interface TableUIState {
   expandedCellsIds: Record<ID, boolean>;
   editableCellsIds: Record<ID, boolean>;
   lastSaved: string;
+  tmpCell: Cell | null;
   tutorialBBoxes: Record<string, BBox>;
 }
 
@@ -123,7 +125,10 @@ export interface Cell {
 
 export interface AnnotationMeta {
   annotated?: boolean;
-  match: boolean;
+  match: {
+    value: boolean;
+    reason?: 'reconciliator' | 'manual' | 'refinement'
+  };
   highestScore: number;
   lowestScore: number;
 }
@@ -234,6 +239,10 @@ export interface AutoMatchingPayload {
   threshold: number;
 }
 
+export interface RefineMatchingPayload {
+  changes: ItemsToMatch[]
+}
+
 export interface UpdateColumnTypePayload {
   id: ID;
   name: string;
@@ -248,6 +257,14 @@ export interface DeleteColumnPayload {
 }
 export interface DeleteRowPayload {
   rowId: ID;
+}
+
+export interface CopyCellPayload {
+  cellId: ID;
+}
+
+export interface PasteCellPayload {
+  cellId: ID;
 }
 
 export enum TableType {

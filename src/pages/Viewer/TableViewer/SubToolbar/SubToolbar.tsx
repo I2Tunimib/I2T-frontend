@@ -35,20 +35,17 @@ import {
   selectMetadataColumnDialogStatus, selectAutomaticAnnotationStatus,
   selectCurrentTable, selectSearchStatus
 } from '@store/slices/table/table.selectors';
-import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { automaticAnnotation, filterTable } from '@store/slices/table/table.thunk';
-import styled from '@emotion/styled';
 import { TableUIState } from '@store/slices/table/interfaces/table';
-import { LoadingButton } from '@mui/lab';
 import { useParams } from 'react-router-dom';
 import { Tag } from '@components/core/TaggedSearch/TagSelect';
 import styles from './SubToolbar.module.scss';
 import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
-import AutoMatching from '../AutoMatching';
 import ExtensionDialog from '../ExtensionDialog';
 import MetadataColumnDialog from '../MetadataColumnDialog/MetadataColumnDialog';
+import RefineMatching from '../RefineMatching/RefineMatching';
 
 const tags = [
   { label: 'label', value: 'label', description: 'Search for table cells labels' },
@@ -60,7 +57,7 @@ const filters = [
   {
     label: (
       <Stack direction="row" alignItems="center" gap="5px">
-        <StatusBadge status="Success" size="small" />
+        <StatusBadge status="match-reconciliator" size="small" />
         <Typography>Matches</Typography>
       </Stack>
     ),
@@ -70,7 +67,7 @@ const filters = [
   {
     label: (
       <Stack direction="row" alignItems="center" gap="5px">
-        <StatusBadge status="Warn" size="small" />
+        <StatusBadge status="warn" size="small" />
         <Typography>Ambiguous</Typography>
       </Stack>
     ),
@@ -80,7 +77,7 @@ const filters = [
   {
     label: (
       <Stack direction="row" alignItems="center" gap="5px">
-        <StatusBadge status="Error" size="small" />
+        <StatusBadge status="miss" size="small" />
         <Typography>Miss matches</Typography>
       </Stack>
     ),
@@ -259,7 +256,7 @@ const SubToolbar = () => {
           {(API.ENDPOINTS.SAVE && !isViewOnly)
             && (
               <IconButtonTooltip
-                tooltipText="Auto matching"
+                tooltipText="Refine matching"
                 Icon={PlaylistAddCheckRoundedIcon}
                 disabled={!isAutoMatchingEnabled}
                 onClick={handleClickAutoMatching}
@@ -308,23 +305,9 @@ const SubToolbar = () => {
             </Button>
           </ActionGroup>
         )}
-        {/* <ActionGroup>
-          <Button
-            sx={{
-              textTransform: 'none'
-            }}
-            color="primary"
-            disabled={loadingAutomaticAnnotation
-              || (currenTable && currenTable.mantisStatus === 'PENDING')}
-            onClick={handleAutomaticAnnotation}
-            endIcon={<PlayCircleOutlineRoundedIcon />}
-            variant="contained">
-            Automatic annotation
-          </Button>
-        </ActionGroup> */}
         <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
           <IconButtonTooltip
-            tooltipText="Filter"
+            tooltipText="Filter rows"
             Icon={FilterAltOutlinedIcon}
             onClick={handleFilterButtonClick}
           />
@@ -349,11 +332,16 @@ const SubToolbar = () => {
       <ReconciliateDialog />
       <MetadataColumnDialog open={openMetadataColumnDialog} onClose={() => handleExtensionClose('openMetadataColumnDialog')} />
       <ExtensionDialog open={openExtensionDialog} handleClose={() => handleExtensionClose('openExtensionDialog')} />
-      <AutoMatching
+      <RefineMatching
         open={isAutoMatching}
         anchorElement={autoMatchingAnchor}
         handleClose={handleCloseAutoMatching}
       />
+      {/* <AutoMatching
+        open={isAutoMatching}
+        anchorElement={autoMatchingAnchor}
+        handleClose={handleCloseAutoMatching}
+      /> */}
     </>
   );
 };
