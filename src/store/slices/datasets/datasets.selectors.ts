@@ -37,6 +37,11 @@ export const selectUploadDatasetStatus = createSelector(
   (requests) => getRequestStatus(requests, DatasetThunkActions.UPLOAD_DATASET)
 );
 
+export const selectUploadTableStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, DatasetThunkActions.UPLOAD_TABLE)
+);
+
 export const selectCurrentDataset = createSelector(
   selectCurrentDatasetId,
   selectDatasetsEntities,
@@ -62,7 +67,12 @@ export const selectCurrentDatasetTables = createSelector(
   }
 );
 
-export const selectIsUploadDialogOpen = createSelector(
+export const selectIsUploadDatasetDialogOpen = createSelector(
   selectDatasetsUI,
-  (ui) => ui.uploadDialogOpen
+  (ui) => ui.uploadDatasetDialogOpen
+);
+
+export const selectIsUploadTableDialogOpen = createSelector(
+  selectDatasetsUI,
+  (ui) => ui.uploadTableDialogOpen
 );

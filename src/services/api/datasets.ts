@@ -73,6 +73,15 @@ const datasetAPI = {
       })
     );
   },
+  uploadTable: (formData: FormData, datasetId: string) => {
+    return apiClient.post(
+      apiEndpoint({
+        endpoint: 'UPLOAD_TABLE',
+        paramsValue: { datasetId }
+      }),
+      formData
+    );
+  },
   deleteTable: (params: { datasetId: string; tableId: string }) => {
     return apiClient.delete(
       apiEndpoint({

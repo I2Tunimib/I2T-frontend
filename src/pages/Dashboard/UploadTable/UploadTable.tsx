@@ -7,45 +7,48 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { selectIsUploadDatasetDialogOpen, selectUploadDatasetStatus } from '@store/slices/datasets/datasets.selectors';
+import { selectCurrentDataset, selectIsUploadTableDialogOpen, selectUploadDatasetStatus } from '@store/slices/datasets/datasets.selectors';
 import { updateUI } from '@store/slices/datasets/datasets.slice';
 import { LoadingButton } from '@mui/lab';
 import {
   ChangeEvent, useState,
   FocusEvent, useRef
 } from 'react';
-import { uploadDataset } from '@store/slices/datasets/datasets.thunk';
+import { uploadTable } from '@store/slices/datasets/datasets.thunk';
+import { useParams } from 'react-router-dom';
 
 type ErrorState = Record<string, string>;
 
-const supportedFormats = ['zip', 'rar'];
+const supportedFormats = ['csv', 'json'];
 
-const UploadDataset = () => {
+const UploadTable = () => {
   const [datasetName, setDatasetName] = useState<string>('');
-  const [datasetFile, setDatasetFile] = useState<File>();
+  const [tableFile, setTableFile] = useState<File>();
   const [error, setError] = useState<ErrorState>({});
   const ref = useRef<HTMLInputElement>(null);
 
   const dispatch = useAppDispatch();
-  const isOpen = useAppSelector(selectIsUploadDatasetDialogOpen);
+  const isOpen = useAppSelector(selectIsUploadTableDialogOpen);
+  const currentDataset = useAppSelector(selectCurrentDataset);
   const { loading, error: uploadError } = useAppSelector(selectUploadDatasetStatus);
 
   const handleClose = () => {
-    dispatch(updateUI({ uploadDatasetDialogOpen: false }));
+    dispatch(updateUI({ uploadTableDialogOpen: false }));
   };
 
   const handleConfirm = () => {
     if (!datasetName) {
       setError((old) => ({ ...old, name: 'A name must be set' }));
     }
-    if (!datasetFile) {
+    if (!tableFile) {
       setError((old) => ({ ...old, file: 'A file must be selected' }));
     }
-    if (datasetName && datasetFile) {
+    if (datasetName && tableFile) {
       const formData = new FormData();
-      formData.append('file', datasetFile);
+      formData.append('file', tableFile);
       formData.append('name', datasetName);
-      dispatch(uploadDataset({ formData }))
+
+      dispatch(uploadTable({ formData, datasetId: currentDataset.id }))
         .unwrap()
         .then(() => {
           handleClose();
@@ -64,7 +67,7 @@ const UploadDataset = () => {
       const splittedName = file.name.split('.');
 
       if (supportedFormats.includes(splittedName[splittedName.length - 1])) {
-        setDatasetFile(files[0]);
+        setTableFile(files[0]);
       }
     }
     if (ref && ref.current) {
@@ -77,11 +80,10 @@ const UploadDataset = () => {
       open={isOpen}
       onClose={handleClose}
     >
-      <DialogTitle>Add dataset</DialogTitle>
+      <DialogTitle>Add table</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          <p>Select a dataset to upload (.zip or .rar).</p>
-          <p>Each dataset should contain one or more tables.</p>
+          <p>Select a table to upload (.csv or .json).</p>
         </DialogContentText>
         <Stack padding="10px 0" gap="10px">
           <TextField
@@ -89,7 +91,7 @@ const UploadDataset = () => {
             helperText={error.name}
             value={datasetName}
             onChange={handleNameChange}
-            label="Dataset name"
+            label="Table name"
             variant="outlined" />
           <Stack direction="row" alignItems="center" gap="10px">
             <Button
@@ -101,7 +103,7 @@ const UploadDataset = () => {
               component="label"
               color="primary"
               variant="contained">
-              Select file (.zip or .rar)
+              Select file (.csv or .json)
               <input
                 ref={ref}
                 type="file"
@@ -110,7 +112,7 @@ const UploadDataset = () => {
                 hidden
               />
             </Button>
-            {datasetFile && <Typography>{datasetFile.name}</Typography>}
+            {tableFile && <Typography>{tableFile.name}</Typography>}
           </Stack>
           {uploadError && <Typography color="error">{uploadError.message}</Typography>}
         </Stack>
@@ -119,7 +121,7 @@ const UploadDataset = () => {
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <LoadingButton loading={loading && !uploadError} disabled={!datasetFile || datasetName === ''} color="primary" onClick={handleConfirm}>
+        <LoadingButton loading={loading && !uploadError} disabled={!tableFile || datasetName === ''} color="primary" onClick={handleConfirm}>
           Confirm
         </LoadingButton>
       </DialogActions>
@@ -127,4 +129,4 @@ const UploadDataset = () => {
   );
 };
 
-export default UploadDataset;
+export default UploadTable;

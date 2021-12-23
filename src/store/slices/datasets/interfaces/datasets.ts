@@ -21,7 +21,8 @@ export interface DatasetsState extends RequestEnhancedState {
  */
 export interface DatasetsUIState {
   challengeDialogOpen: boolean;
-  uploadDialogOpen: boolean;
+  uploadDatasetDialogOpen: boolean;
+  uploadTableDialogOpen: boolean;
   uploadProgressDialogOpen: boolean;
 }
 

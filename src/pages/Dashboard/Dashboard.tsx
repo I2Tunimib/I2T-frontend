@@ -28,6 +28,7 @@ import styles from './Dashboard.module.scss';
 import Datasets from './Datasets/Datasets';
 import Tables from './Tables';
 import UploadDataset from './UploadDataset/UploadDataset';
+import UploadTable from './UploadTable/UploadTable';
 
 export const calcPercentage = (status: CompletionStatus) => {
   const total = Object.keys(status)
@@ -177,9 +178,22 @@ const Dashboard: FC<any> = () => {
                   component="label"
                   startIcon={<AddRoundedIcon />}
                   color="primary"
-                  onClick={() => dispatch(updateUI({ uploadDialogOpen: true }))}
+                  onClick={() => dispatch(updateUI({ uploadDatasetDialogOpen: true }))}
                   variant="text">
                   New Dataset
+                </Button>
+                )
+        }
+        {currentDataset && API.ENDPOINTS.UPLOAD_TABLE
+                && (
+                <Button
+                  size="small"
+                  component="label"
+                  startIcon={<AddRoundedIcon />}
+                  color="primary"
+                  onClick={() => dispatch(updateUI({ uploadTableDialogOpen: true }))}
+                  variant="text">
+                  New Table
                 </Button>
                 )
         }
@@ -197,6 +211,7 @@ const Dashboard: FC<any> = () => {
         </Switch>
       </div>
       <UploadDataset />
+      <UploadTable />
     </MainLayout>
   );
 };

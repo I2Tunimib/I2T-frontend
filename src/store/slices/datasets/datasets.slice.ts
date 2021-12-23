@@ -4,7 +4,7 @@ import { createSliceWithRequests } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
 import {
   deleteDataset, deleteTable, getDataset,
-  getTablesByDataset, uploadDataset
+  getTablesByDataset, uploadDataset, uploadTable
 } from './datasets.thunk';
 import {
   DatasetsInstancesState, DatasetsState,
@@ -21,7 +21,8 @@ const initialState: DatasetsState = {
   },
   ui: {
     challengeDialogOpen: false,
-    uploadDialogOpen: false,
+    uploadDatasetDialogOpen: false,
+    uploadTableDialogOpen: false,
     uploadProgressDialogOpen: false
   },
   _requests: { byId: {}, allIds: [] }
@@ -92,6 +93,16 @@ export const datasetsSlice = createSliceWithRequests({
             acc.allIds.push(item.id);
             return acc;
           }, state.entities.datasets);
+        })
+      .addCase(uploadTable.fulfilled,
+        (state, action: PayloadAction<{ tables: any[], datasetId: string }>) => {
+          const { tables, datasetId } = action.payload;
+
+          tables.forEach((table) => {
+            state.entities.datasets.byId[datasetId].tables.push(table.id);
+            state.entities.tables.byId[table.id] = table;
+            state.entities.tables.allIds.push(table.id);
+          });
         })
       .addCase(deleteDataset.fulfilled,
         (state, action: PayloadAction<string>) => {
