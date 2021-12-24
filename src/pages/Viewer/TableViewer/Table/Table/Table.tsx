@@ -236,7 +236,6 @@ const Table: FC<TableProps> = ({
     rows,
     columns: tableColumns,
     page,
-    // The rest of these things are super handy, too ;)
     canPreviousPage,
     canNextPage,
     pageOptions,

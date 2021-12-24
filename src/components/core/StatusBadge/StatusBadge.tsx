@@ -36,13 +36,13 @@ const StatusBadge = styled(Box)<StatusBadgeProps>(({ size = 'medium', status }) 
     backgroundColor: '#ffc700'
   }),
   ...(status === 'match-manual' && {
-    backgroundColor: '#4ac99b',
+    backgroundColor: '#106b4a',
     width: '9px',
     height: '5px',
     borderRadius: '5px'
   }),
   ...(status === 'match-refinement' && {
-    backgroundColor: '#4ac99b',
+    backgroundColor: '#30a077',
     width: '5px',
     height: '9px',
     borderRadius: '5px'

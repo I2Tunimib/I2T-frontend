@@ -704,7 +704,7 @@ export const selectColumnsAnnotationPercentages = createSelector(
             const { annotated, match, highestScore } = cell.annotationMeta;
 
             if (annotated) {
-              if (match) {
+              if (match.value) {
                 nMatches += 1;
               } else if (highestScore < scoreLowerBound) {
                 nMissMatches += 1;

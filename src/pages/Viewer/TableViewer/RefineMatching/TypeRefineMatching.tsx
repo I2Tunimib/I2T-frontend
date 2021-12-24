@@ -9,12 +9,8 @@ import { selectCellRefinement, selectSelectedCells, selectSelectedCellsTypes } f
 import { refineMatching } from '@store/slices/table/table.slice';
 import { FC, useState, useEffect, useCallback, useMemo } from 'react';
 
-export type RefineMatchingProps = {
-  open: boolean;
-  anchorElement: any;
+export type TypeRefineMatchingProps = {
   handleClose: () => void;
-  id?: string;
-  placement?: PopperPlacementType | undefined;
 }
 
 export type ItemsToMatch = {
@@ -30,9 +26,9 @@ const ITEMS = [
 ];
 
 const HIST_GROUPS_MATCHING = [
-  { id: 'matchingRefinement', name: 'Matching refinement', color: '#3584e4' },
-  { id: 'matchingManual', name: 'Matching manual', color: '#1B74E4' },
-  { id: 'matchingReconciliator', name: 'Matching reconciliator', color: '#056be7' }
+  { id: 'matchingRefinement', name: 'Matching refinement', color: '#30a077' },
+  { id: 'matchingManual', name: 'Matching manual', color: '#106b4a' },
+  { id: 'matchingReconciliator', name: 'Matching reconciliator', color: '#4ac99b' }
 ];
 
 const HIST_GROUPS_NOT_MATCHING = [
@@ -54,9 +50,7 @@ type CurrentGroupsState = {
   changes: ItemsToMatch[]
 }
 
-const RefineMatching: FC<RefineMatchingProps> = ({
-  open,
-  anchorElement,
+const TypeRefineMatching: FC<TypeRefineMatchingProps> = ({
   handleClose
 }) => {
   const [currentGroups, setCurrentGroup] = useState<CurrentGroupsState | null>(null);
@@ -136,6 +130,7 @@ const RefineMatching: FC<RefineMatchingProps> = ({
     if (currentGroups) {
       dispatch(refineMatching({ changes: currentGroups.changes }));
     }
+    handleClose();
   };
 
   const groups = useMemo(() => {
@@ -160,10 +155,7 @@ const RefineMatching: FC<RefineMatchingProps> = ({
   }, [currentGroups]);
 
   return (
-    <MenuBase
-      open={open}
-      anchorElement={anchorElement}
-      handleClose={handleClose}>
+    <>
       <Stack padding="10px" maxWidth="400px">
         <Typography variant="h6" gutterBottom>
           Refine matching
@@ -174,11 +166,30 @@ const RefineMatching: FC<RefineMatchingProps> = ({
         <MultipleSelectChips items={selectedTypes} onChange={handleTypeChange} />
       </Stack>
       <Stack direction="row" gap="10px" padding="10px" justifyContent="flex-end">
-        <Button color="primary">Cancel</Button>
+        <Button color="primary" onClick={() => handleClose()}>Cancel</Button>
         <Button color="primary" onClick={handleConfirm}>Confirm</Button>
       </Stack>
-    </MenuBase>
+    </>
+    // <MenuBase
+    //   open={open}
+    //   anchorElement={anchorElement}
+    //   handleClose={handleClose}>
+    //   <Stack padding="10px" maxWidth="400px">
+    //     <Typography variant="h6" gutterBottom>
+    //       Refine matching
+    //     </Typography>
+    //     <Typography color="textSecondary"
+    // gutterBottom>Select which kind of cells to refine:</Typography>
+    //     <CheckboxGroupCompact items={ITEMS} onChange={handleCellTypeChange} />
+    //     {groups && <Hist groups={groups} />}
+    //     <MultipleSelectChips items={selectedTypes} onChange={handleTypeChange} />
+    //   </Stack>
+    //   <Stack direction="row" gap="10px" padding="10px" justifyContent="flex-end">
+    //     <Button color="primary">Cancel</Button>
+    //     <Button color="primary" onClick={handleConfirm}>Confirm</Button>
+    //   </Stack>
+    // </MenuBase>
   );
 };
 
-export default RefineMatching;
+export default TypeRefineMatching;

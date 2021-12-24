@@ -425,105 +425,115 @@ export const tableSlice = createSliceWithRequests({
      * It updates cell matching metadata based on threshold.
      * --UNDOABLE ACTION--
      */
-    // autoMatching: (state, action: PayloadAction<Payload<AutoMatchingPayload>>) => {
-    //   const { threshold, undoable = true } = action.payload;
+    autoMatching: (state, action: PayloadAction<Payload<AutoMatchingPayload>>) => {
+      const { threshold, undoable = true } = action.payload;
 
-    //   return produceWithPatch(state, undoable, (draft) => {
-    //     const { selectedCellIds } = draft.ui;
-    //     const { selectedColumnsIds } = draft.ui;
-    //     const updatedColumns = new Set<ID>();
-    //     Object.keys(selectedCellIds).forEach((cellId) => {
-    //       const [rowId, colId] = getIdsFromCell(cellId);
-    //       const column = getColumn(draft, colId);
-    //       const cell = getCell(draft, rowId, colId);
-    //       const cellContext = getCellContext(cell);
-    //       // keep track of all columns uniquely with a set
-    //       updatedColumns.add(colId);
+      return produceWithPatch(state, undoable, (draft) => {
+        const { selectedCellIds } = draft.ui;
+        const { selectedColumnsIds } = draft.ui;
+        const updatedColumns = new Set<ID>();
+        Object.keys(selectedCellIds).forEach((cellId) => {
+          const [rowId, colId] = getIdsFromCell(cellId);
+          const column = getColumn(draft, colId);
+          const cell = getCell(draft, rowId, colId);
+          const cellContext = getCellContext(cell);
+          // keep track of all columns uniquely with a set
+          updatedColumns.add(colId);
 
-    //       let maxIndex = { index: -1, max: -1 };
-    //       cell.metadata.forEach(({ score = 0, match }, i) => {
-    //         // find matching element
-    //         if (score >= threshold && score > maxIndex.max) {
-    //           maxIndex = { index: i, max: score };
-    //         } else {
-    //           if (match) {
-    //             // assign match
-    //             cell.metadata[i].match = false;
-    //             // decrement number of reconciliated cells
-    //             column.context[cellContext] = decrementContextReconciliated(
-    //               column.context[cellContext]
-    //             );
-    //             cell.annotationMeta = {
-    //               ...cell.annotationMeta,
-    //               match: false
-    //             };
-    //           }
-    //         }
-    //       });
-    //       if (maxIndex.index !== -1) {
-    //         if (!cell.metadata[maxIndex.index].match) {
-    //           // assign match
-    //           cell.metadata[maxIndex.index].match = true;
-    //           // increment number of reconciliated cells
-    //           column.context[cellContext] = incrementContextReconciliated(
-    //             column.context[cellContext]
-    //           );
-    //           cell.annotationMeta = {
-    //             ...cell.annotationMeta,
-    //             match: true
-    //           };
-    //         }
-    //       }
-    //     });
-    //     Object.keys(selectedColumnsIds).forEach((colId) => {
-    //       const column = getColumn(draft, colId);
+          let maxIndex = { index: -1, max: -1 };
+          cell.metadata.forEach(({ score = 0, match }, i) => {
+            // find matching element
+            if (score >= threshold && score > maxIndex.max) {
+              maxIndex = { index: i, max: score };
+            } else {
+              if (match) {
+                // assign match
+                cell.metadata[i].match = false;
+                // decrement number of reconciliated cells
+                column.context[cellContext] = decrementContextReconciliated(
+                  column.context[cellContext]
+                );
+                cell.annotationMeta = {
+                  ...cell.annotationMeta,
+                  match: {
+                    value: false
+                  }
+                };
+              }
+            }
+          });
+          if (maxIndex.index !== -1) {
+            if (!cell.metadata[maxIndex.index].match) {
+              // assign match
+              cell.metadata[maxIndex.index].match = true;
+              // increment number of reconciliated cells
+              column.context[cellContext] = incrementContextReconciliated(
+                column.context[cellContext]
+              );
+              cell.annotationMeta = {
+                ...cell.annotationMeta,
+                match: {
+                  value: true,
+                  reason: 'refinement'
+                }
+              };
+            }
+          }
+        });
+        Object.keys(selectedColumnsIds).forEach((colId) => {
+          const column = getColumn(draft, colId);
 
-    //       if (column.metadata && column.metadata.length > 0) {
-    //         if (column.metadata[0].entity) {
-    //           let maxIndex = { index: -1, max: -1 };
+          if (column.metadata && column.metadata.length > 0) {
+            if (column.metadata[0].entity) {
+              let maxIndex = { index: -1, max: -1 };
 
-    //           column.metadata[0].entity.forEach(({ score = 0, match }, i) => {
-    //             // find matching element
-    //             if (score > threshold && score > maxIndex.max) {
-    //               maxIndex = { index: i, max: score };
-    //             } else {
-    //               if (match) {
-    //                 if (column.metadata[0].entity) {
-    //                   column.metadata[0].entity[i].match = false;
-    //                   column.annotationMeta = {
-    //                     ...column.annotationMeta,
-    //                     match: false
-    //                   };
-    //                 }
-    //               }
-    //             }
-    //             if (maxIndex.index !== -1) {
-    //               if (column.metadata[0].entity) {
-    //                 if (!column.metadata[0].entity[maxIndex.index].match) {
-    //                   // assign match
-    //                   column.metadata[0].entity[maxIndex.index].match = true;
-    //                   column.annotationMeta = {
-    //                     ...column.annotationMeta,
-    //                     match: true
-    //                   };
-    //                 }
-    //               }
-    //             }
-    //           });
-    //         }
-    //       }
-    //     });
-    //     // update columns status for 'touched' columns
-    //     updatedColumns.forEach((colId) => {
-    //       const column = getColumn(draft, colId);
-    //       column.status = getColumnStatus(draft, colId);
-    //     });
-    //     updateNumberOfReconciliatedCells(draft);
-    //   }, (draft) => {
-    //     // do not include in undo history
-    //     draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
-    //   });
-    // },
+              column.metadata[0].entity.forEach(({ score = 0, match }, i) => {
+                // find matching element
+                if (score > threshold && score > maxIndex.max) {
+                  maxIndex = { index: i, max: score };
+                } else {
+                  if (match) {
+                    if (column.metadata[0].entity) {
+                      column.metadata[0].entity[i].match = false;
+                      column.annotationMeta = {
+                        ...column.annotationMeta,
+                        match: {
+                          value: false
+                        }
+                      };
+                    }
+                  }
+                }
+                if (maxIndex.index !== -1) {
+                  if (column.metadata[0].entity) {
+                    if (!column.metadata[0].entity[maxIndex.index].match) {
+                      // assign match
+                      column.metadata[0].entity[maxIndex.index].match = true;
+                      column.annotationMeta = {
+                        ...column.annotationMeta,
+                        match: {
+                          value: true,
+                          reason: 'refinement'
+                        }
+                      };
+                    }
+                  }
+                }
+              });
+            }
+          }
+        });
+        // update columns status for 'touched' columns
+        updatedColumns.forEach((colId) => {
+          const column = getColumn(draft, colId);
+          column.status = getColumnStatus(draft, colId);
+        });
+        updateNumberOfReconciliatedCells(draft);
+      }, (draft) => {
+        // do not include in undo history
+        draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+      });
+    },
     /**
      * Handle update of the type of a column
      * -- UNDOABLE ACTION --
@@ -664,7 +674,6 @@ export const tableSlice = createSliceWithRequests({
       return produceWithPatch(state, undoable, (draft) => {
         const { tmpCell } = draft.ui;
         const [rowId, colId] = getIdsFromCell(cellId);
-        console.log(cellId);
 
         if (tmpCell) {
           const { id, ...rest } = tmpCell;
@@ -869,7 +878,7 @@ export const {
   updateColumnMetadata,
   updateCellMetadata,
   deleteCellMetadata,
-  // autoMatching,
+  autoMatching,
   refineMatching,
   updateColumnSelection,
   updateRowSelection,

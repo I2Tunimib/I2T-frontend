@@ -45,7 +45,7 @@ import ReconciliateDialog from '../ReconciliationDialog';
 import MetadataDialog from '../MetadataDialog';
 import ExtensionDialog from '../ExtensionDialog';
 import MetadataColumnDialog from '../MetadataColumnDialog/MetadataColumnDialog';
-import RefineMatching from '../RefineMatching/RefineMatching';
+import RefineMatchingDialog from '../RefineMatching/RefineMatchingDialog';
 
 const tags = [
   { label: 'label', value: 'label', description: 'Search for table cells labels' },
@@ -332,7 +332,7 @@ const SubToolbar = () => {
       <ReconciliateDialog />
       <MetadataColumnDialog open={openMetadataColumnDialog} onClose={() => handleExtensionClose('openMetadataColumnDialog')} />
       <ExtensionDialog open={openExtensionDialog} handleClose={() => handleExtensionClose('openExtensionDialog')} />
-      <RefineMatching
+      <RefineMatchingDialog
         open={isAutoMatching}
         anchorElement={autoMatchingAnchor}
         handleClose={handleCloseAutoMatching}

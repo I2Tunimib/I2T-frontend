@@ -5,7 +5,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, D
 import { updateUI } from '@store/slices/table/table.slice';
 import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRounded';
 import PlaylistAddCheckRoundedIcon from '@mui/icons-material/PlaylistAddCheckRounded';
-import { FC, useState, useRef, useEffect, ReactNode } from 'react';
+import { FC, useState, useRef, useEffect, useCallback, FunctionComponent, ReactNode } from 'react';
 import { StatusBadge } from '@components/core';
 import manualAnnotation from '../../../assets/manual-reconciliation.gif';
 import automaticAnnotation from '../../../assets/automatic-annotation.gif';
@@ -36,10 +36,29 @@ const ButtonText = styled.span({
   boxShadow: 'inset 0 -2px #ebefff'
 });
 
-const steps = [
+type Step = {
+  label: string;
+  Description: FunctionComponent<{ goTo: (step: number) => void }>;
+};
+
+const steps: Step[] = [
+  {
+    label: 'Tutorial journey',
+    Description: ({ goTo }) => (
+      <Stack alignItems="flex-start">
+        <Button onClick={() => goTo(1)} sx={{ textTransform: 'none' }}>1. Introduction</Button>
+        <Button onClick={() => goTo(2)} sx={{ textTransform: 'none' }}>2. Reconciliation</Button>
+        <Button onClick={() => goTo(3)} sx={{ textTransform: 'none', marginLeft: '10px' }}>2.1 Manual Annotation</Button>
+        <Button onClick={() => goTo(4)} sx={{ textTransform: 'none', marginLeft: '10px' }}>2.2 Automatic Annotation</Button>
+        <Button onClick={() => goTo(5)} sx={{ textTransform: 'none', marginLeft: '10px' }}>2.3 Annotation Symbols</Button>
+        <Button onClick={() => goTo(6)} sx={{ textTransform: 'none' }}>3. Matching Refinement</Button>
+        <Button onClick={() => goTo(8)} sx={{ textTransform: 'none' }}>4. Extension</Button>
+      </Stack>
+    )
+  },
   {
     label: 'The enrichment process',
-    description: (
+    Description: () => (
       <Stack>
         The enrichment process is usually composed by two main task:
         <List>
@@ -61,7 +80,7 @@ const steps = [
   },
   {
     label: 'Reconciliation',
-    description: (
+    Description: () => (
       <Stack>
         SemTUI offers two way to reconcile entities within your table:
         <List>
@@ -80,7 +99,7 @@ const steps = [
   },
   {
     label: 'Manual annotation',
-    description: (
+    Description: () => (
       <Stack gap="10px">
         <Typography>
           Select one or more cell to reconcile and click on the
@@ -94,7 +113,7 @@ const steps = [
   },
   {
     label: 'Automatic annotation',
-    description: (
+    Description: () => (
       <Stack gap="10px">
         <Typography>
           You can also choose to automatically annotate the whole table
@@ -110,7 +129,7 @@ const steps = [
   },
   {
     label: 'Annotation symbols',
-    description: (
+    Description: () => (
       <Stack gap="10px">
         <Typography>
           To help you understand the result of an annotation process some symbols
@@ -184,7 +203,7 @@ const steps = [
   },
   {
     label: 'Refine matching (1)',
-    description: (
+    Description: () => (
       <Stack gap="10px">
         <Typography>
           Once the reconciliation process is done you will be able to refine your matching by
@@ -203,7 +222,7 @@ const steps = [
   },
   {
     label: 'Refine matching (2)',
-    description: (
+    Description: () => (
       <Stack gap="10px">
         <Typography>
           You can also choose to refine matching based on
@@ -223,7 +242,7 @@ const steps = [
   },
   {
     label: 'Extension',
-    description: (
+    Description: () => (
       <Stack gap="10px">
         <Typography>
           Finally, once you have one or more column reconciliated you will be able
@@ -237,7 +256,7 @@ const steps = [
   },
   {
     label: '',
-    description: (
+    Description: () => (
       <Stack
         sx={{
           height: '200px',
@@ -257,10 +276,10 @@ const steps = [
 
 type TutorialStepProps = {
   label: string;
-  description: ReactNode;
+  Description: ReactNode;
 }
 
-const TutorialStep: FC<TutorialStepProps> = ({ label, description }) => {
+const TutorialStep: FC<TutorialStepProps> = ({ label, Description, ...rest }) => {
   return (
     <>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -268,7 +287,7 @@ const TutorialStep: FC<TutorialStepProps> = ({ label, description }) => {
       </DialogTitle>
       <DialogContent>
         <Box>
-          {description}
+          {Description}
         </Box>
       </DialogContent>
     </>
@@ -301,11 +320,17 @@ const TutorialStepper: FC<TutorialStepperProps> = ({ onDone, onStart }) => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
+  const goTo = useCallback((step: number) => {
+    setActiveStep(step);
+  }, [setActiveStep]);
+
+  const { label, Description } = steps[activeStep];
+
   return (
     <>
       <TutorialStep
-        label={steps[activeStep].label}
-        description={steps[activeStep].description} />
+        label={label}
+        Description={<Description goTo={goTo} />} />
       <MobileStepper
         variant="dots"
         steps={maxSteps}

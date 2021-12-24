@@ -1,4 +1,4 @@
-import { ItemsToMatch } from '@pages/Viewer/TableViewer/RefineMatching/RefineMatching';
+import { ItemsToMatch } from '@pages/Viewer/TableViewer/RefineMatching/TypeRefineMatching';
 import { RequestEnhancedState } from '@store/enhancers/requests';
 import { UndoEnhancedState } from '@store/enhancers/undo';
 import { ID, BaseState } from '@store/interfaces/store';
