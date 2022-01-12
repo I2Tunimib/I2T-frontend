@@ -1,5 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
+  Alert,
   Dialog,
   DialogContent,
   DialogContentText,
@@ -21,7 +22,7 @@ import {
 } from 'react';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-import { selectExtendRequestStatus } from '@store/slices/table/table.selectors';
+import { selectAreCellReconciliated, selectExtendRequestStatus } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
 import { selectExtendersAsArray } from '@store/slices/config/config.selectors';
 import { Extender } from '@store/slices/config/interfaces/config';
@@ -47,6 +48,7 @@ const DialogInnerContent = () => {
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const extensionServices = useAppSelector(selectExtendersAsArray);
+  const cellReconciliated = useAppSelector(selectAreCellReconciliated);
   const { loading } = useAppSelector(selectExtendRequestStatus);
 
   useEffect(() => {
@@ -104,6 +106,13 @@ const DialogInnerContent = () => {
             </Select>
           </FormControl>
           <SquaredBox>{currentService.description}</SquaredBox>
+          {!cellReconciliated && (
+            <Alert severity="warning">
+              The selected column does not have reconciliated cells,
+              the result of the extension will be
+              <b> null</b>
+            </Alert>
+          )}
           <Divider />
           <DynamicExtensionForm
             loading={loading}

@@ -409,15 +409,31 @@ export const selectIsExtendButtonEnabled = createSelector(
       return !(colId in selectedColumnsIds);
     });
 
-    if (onlyColsSelected) {
-      return colIds.some((colId) => {
-        const { context } = columns.byId[colId];
-        const totalReconciliated = Object.keys(context)
-          .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
-        return totalReconciliated > 0;
-      });
-    }
-    return false;
+    return onlyColsSelected;
+    // if (onlyColsSelected) {
+    //   return colIds.some((colId) => {
+    //     const { context } = columns.byId[colId];
+    //     const totalReconciliated = Object.keys(context)
+    //       .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
+    //     return totalReconciliated > 0;
+    //   });
+    // }
+    // return false;
+  }
+);
+
+export const selectAreCellReconciliated = createSelector(
+  selectUIState,
+  selectColumnsState,
+  ({ selectedColumnsIds }, columns) => {
+    const colIds = Object.keys(selectedColumnsIds);
+
+    return colIds.some((colId) => {
+      const { context } = columns.byId[colId];
+      const totalReconciliated = Object.keys(context)
+        .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
+      return totalReconciliated > 0;
+    });
   }
 );
 
