@@ -55,9 +55,9 @@ export const CELL_COMPONENTS_TYPES: Record<CellComponent, CellComponentProps> = 
           arrow
           title={(
             <Stack>
-              {Object.keys(props).map((key, index) => (
+              {Object.keys(props.value).map((key, index) => (
                 <span key={index}>
-                  {`${key}: ${props[key as keyof typeof props]}`}
+                  {`${key}: ${props.value[key as keyof typeof props.value]}`}
                 </span>
               ))}
             </Stack>
