@@ -105,7 +105,7 @@ const DialogInnerContent = () => {
               ))}
             </Select>
           </FormControl>
-          <SquaredBox>{currentService.description}</SquaredBox>
+          <SquaredBox dangerouslySetInnerHTML={{ __html: currentService.description }} />
           {!cellReconciliated && (
             <Alert severity="warning">
               The selected column does not have reconciliated cells,
