@@ -33,7 +33,7 @@ import {
   selectIsViewOnly, selectMetadataDialogStatus,
   selectExtensionDialogStatus, selectIsMetadataButtonEnabled,
   selectMetadataColumnDialogStatus, selectAutomaticAnnotationStatus,
-  selectCurrentTable, selectSearchStatus
+  selectCurrentTable, selectSearchStatus, selectAreCellReconciliated
 } from '@store/slices/table/table.selectors';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { automaticAnnotation, filterTable } from '@store/slices/table/table.thunk';
@@ -119,6 +119,7 @@ const SubToolbar = () => {
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
   const currenTable = useAppSelector(selectCurrentTable);
   const searchFilter = useAppSelector(selectSearchStatus);
+  const cellReconciliated = useAppSelector(selectAreCellReconciliated);
 
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -295,6 +296,7 @@ const SubToolbar = () => {
               Reconcile
             </Button>
             <Button
+              {...(!cellReconciliated && { color: 'info' })}
               sx={{
                 textTransform: 'none'
               }}
