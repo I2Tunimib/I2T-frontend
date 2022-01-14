@@ -275,6 +275,14 @@ export const tableSlice = createSliceWithRequests({
                 reason: 'manual'
               }
             };
+          } else if (wasReconciliated && isCellReconciliated(cell)) {
+            cell.annotationMeta = {
+              ...cell.annotationMeta,
+              match: {
+                value: true,
+                reason: 'manual'
+              }
+            };
           }
           column.status = getColumnStatus(draft, colId);
           updateNumberOfReconciliatedCells(draft);
