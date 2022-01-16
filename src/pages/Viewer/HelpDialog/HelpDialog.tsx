@@ -12,6 +12,7 @@ import automaticAnnotation from '../../../assets/automatic-annotation.gif';
 import refineMatchingManual from '../../../assets/refine-matching-manual.gif';
 import refineMatchingAutomatic from '../../../assets/refine-matching-automatic.gif';
 import extension from '../../../assets/extension.gif';
+import search from '../../../assets/search.gif';
 
 type HelpDialogProps = DialogProps;
 
@@ -51,8 +52,9 @@ const steps: Step[] = [
         <Button onClick={() => goTo(3)} sx={{ textTransform: 'none', marginLeft: '10px' }}>2.1 Manual Annotation</Button>
         <Button onClick={() => goTo(4)} sx={{ textTransform: 'none', marginLeft: '10px' }}>2.2 Automatic Annotation</Button>
         <Button onClick={() => goTo(5)} sx={{ textTransform: 'none', marginLeft: '10px' }}>2.3 Annotation Symbols</Button>
-        <Button onClick={() => goTo(6)} sx={{ textTransform: 'none' }}>3. Matching Refinement</Button>
-        <Button onClick={() => goTo(8)} sx={{ textTransform: 'none' }}>4. Extension</Button>
+        <Button onClick={() => goTo(6)} sx={{ textTransform: 'none' }}>3. Table search and navigation</Button>
+        <Button onClick={() => goTo(7)} sx={{ textTransform: 'none' }}>4. Matching Refinement</Button>
+        <Button onClick={() => goTo(9)} sx={{ textTransform: 'none' }}>5. Extension</Button>
       </Stack>
     )
   },
@@ -82,16 +84,18 @@ const steps: Step[] = [
     label: 'Reconciliation',
     Description: () => (
       <Stack>
-        SemTUI offers two way to reconcile entities within your table:
+        SemTUI offers two ways to reconcile entities within your table:
         <List>
           <li>
-            <b>Manual annotation: </b>
-            you can use different kind of services available
-            to reconcile the selected cells or columns
+            <b>Manual reconciliation: </b>
+            by selecting cells or columns and then using the different reconciliation
+            services available.
           </li>
           <li>
-            <b>Automatic annotation: </b>
-            automatically annotate your entire table with one click
+            <b>Automatic reconciliation: </b>
+            automatically annotate
+            (reconcile cells and associate headers with predicates and types)
+            the entire table with one click.
           </li>
         </List>
       </Stack>
@@ -202,11 +206,31 @@ const steps: Step[] = [
     )
   },
   {
-    label: 'Refine matching (1)',
+    label: 'Table search and navigation',
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Once the reconciliation process is done you will be able to refine your matching by
+          In the top right you can find a search and filtering functionality.
+          It provides rows filtering based on cell
+          <b> labels </b>
+          and
+          <b> metadata names </b>
+          and
+          <b> types</b>
+          .
+          Cells matching the search filter are highlighted leaving rows without matches outside
+          of the table visualization.
+        </Typography>
+        <Img src={search} />
+      </Stack>
+    )
+  },
+  {
+    label: 'Refine matching (1) - single cell',
+    Description: () => (
+      <Stack gap="10px">
+        <Typography>
+          Once the reconciliation process is done you will be able to refine your matchings by
           inspecting metadata for each cell. You can click on the
           <SettingsEthernetRoundedIcon
             sx={{
@@ -221,12 +245,16 @@ const steps: Step[] = [
     )
   },
   {
-    label: 'Refine matching (2)',
+    label: 'Refine matching (2) - group of cells',
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          You can also choose to refine matching based on
-          the types present in the selected cells or columns. You can click on
+          You can also choose to refine the matching of a group of cells by
+          (i) selecting a column or some cells of a column and
+          (ii) select types among the ones associated with
+          the selected cells
+          (&quot;Type refine matching&quot;), or set a threshold for the scores
+          (&quot;Score refine matching&quot;). You can click on
           the
           <PlaylistAddCheckRoundedIcon
             sx={{
