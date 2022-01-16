@@ -55,10 +55,7 @@
                 "SwitchCase": 1
             }
         ],
-        "linebreak-style": [
-            "error",
-            "windows"
-        ],
+        "linebreak-style": 0,
         "no-use-before-define": "off",
         "@typescript-eslint/no-use-before-define": [
             "error"
