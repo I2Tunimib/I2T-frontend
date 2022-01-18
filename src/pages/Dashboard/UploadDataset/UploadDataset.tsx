@@ -64,6 +64,7 @@ const UploadDataset = () => {
       const splittedName = file.name.split('.');
 
       if (supportedFormats.includes(splittedName[splittedName.length - 1])) {
+        setDatasetName(splittedName[0]);
         setDatasetFile(files[0]);
       }
     }
@@ -80,8 +81,13 @@ const UploadDataset = () => {
       <DialogTitle>Add dataset</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          <p>Select a dataset to upload (.zip or .rar).</p>
-          <p>Each dataset should contain one or more tables.</p>
+          <p>Select a dataset to upload (.zip).</p>
+          <p>
+            Each dataset should contain one or more tables.
+            Please refer to the
+            <b> (?) </b>
+            for more information about the supported table formats.
+          </p>
         </DialogContentText>
         <Stack padding="10px 0" gap="10px">
           <TextField

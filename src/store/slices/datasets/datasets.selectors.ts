@@ -76,3 +76,8 @@ export const selectIsUploadTableDialogOpen = createSelector(
   selectDatasetsUI,
   (ui) => ui.uploadTableDialogOpen
 );
+
+export const selectIsHelpDialogOpen = createSelector(
+  selectDatasetsUI,
+  (ui) => ui.helpDialogOpen
+);

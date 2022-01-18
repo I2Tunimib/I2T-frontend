@@ -1,4 +1,4 @@
-import { Chip, Stack, Typography } from '@mui/material';
+import { Chip, IconButton, Stack, Typography } from '@mui/material';
 import { Searchbar } from '@components/kit';
 import { FC, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -7,6 +7,8 @@ import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { globalSearch } from '@store/slices/datasets/datasets.thunk';
 import { GlobalSearchResult } from '@services/api/datasets';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import { updateUI } from '@store/slices/datasets/datasets.slice';
 import styles from './ToolbarContent.module.scss';
 
 const SearchResultItem = styled(Link)({
@@ -64,7 +66,7 @@ const ToolbarContent: FC<any> = () => {
   ) : <div className={styles.SearchNoResult}>No results found</div>;
 
   return (
-    <>
+    <Stack direction="row" gap="10px" width="100%" alignItems="center">
       <Stack
         component={Link}
         sx={{
@@ -91,7 +93,14 @@ const ToolbarContent: FC<any> = () => {
           placeholder="Search for a table name"
         />
       )}
-    </>
+      <IconButton
+        sx={{
+          color: '#FFF'
+        }}
+        onClick={() => dispatch(updateUI({ helpDialogOpen: true }))}>
+        <HelpOutlineRoundedIcon />
+      </IconButton>
+    </Stack>
   );
 };
 

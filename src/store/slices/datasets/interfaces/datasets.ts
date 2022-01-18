@@ -24,6 +24,7 @@ export interface DatasetsUIState {
   uploadDatasetDialogOpen: boolean;
   uploadTableDialogOpen: boolean;
   uploadProgressDialogOpen: boolean;
+  helpDialogOpen: boolean;
 }
 
 /**

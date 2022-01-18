@@ -23,7 +23,8 @@ const initialState: DatasetsState = {
     challengeDialogOpen: false,
     uploadDatasetDialogOpen: false,
     uploadTableDialogOpen: false,
-    uploadProgressDialogOpen: false
+    uploadProgressDialogOpen: false,
+    helpDialogOpen: false
   },
   _requests: { byId: {}, allIds: [] }
 };

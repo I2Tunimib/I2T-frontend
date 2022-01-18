@@ -22,7 +22,7 @@ type ErrorState = Record<string, string>;
 const supportedFormats = ['csv', 'json'];
 
 const UploadTable = () => {
-  const [datasetName, setDatasetName] = useState<string>('');
+  const [tableName, setTableName] = useState<string>('');
   const [tableFile, setTableFile] = useState<File>();
   const [error, setError] = useState<ErrorState>({});
   const ref = useRef<HTMLInputElement>(null);
@@ -37,16 +37,16 @@ const UploadTable = () => {
   };
 
   const handleConfirm = () => {
-    if (!datasetName) {
+    if (!tableName) {
       setError((old) => ({ ...old, name: 'A name must be set' }));
     }
     if (!tableFile) {
       setError((old) => ({ ...old, file: 'A file must be selected' }));
     }
-    if (datasetName && tableFile) {
+    if (tableName && tableFile) {
       const formData = new FormData();
       formData.append('file', tableFile);
-      formData.append('name', datasetName);
+      formData.append('name', tableName);
 
       dispatch(uploadTable({ formData, datasetId: currentDataset.id }))
         .unwrap()
@@ -57,7 +57,7 @@ const UploadTable = () => {
   };
 
   const handleNameChange = (event: FocusEvent<HTMLInputElement>) => {
-    setDatasetName(event.target.value);
+    setTableName(event.target.value);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +67,7 @@ const UploadTable = () => {
       const splittedName = file.name.split('.');
 
       if (supportedFormats.includes(splittedName[splittedName.length - 1])) {
+        setTableName(splittedName[0]);
         setTableFile(files[0]);
       }
     }
@@ -83,13 +84,18 @@ const UploadTable = () => {
       <DialogTitle>Add table</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          <p>Select a table to upload (.csv or .json).</p>
+          <p>
+            Select a table to upload.
+            Please refer to the
+            <b> (?) </b>
+            for more information about the supported table formats.
+          </p>
         </DialogContentText>
         <Stack padding="10px 0" gap="10px">
           <TextField
             error={!!error.name}
             helperText={error.name}
-            value={datasetName}
+            value={tableName}
             onChange={handleNameChange}
             label="Table name"
             variant="outlined" />
@@ -121,7 +127,7 @@ const UploadTable = () => {
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <LoadingButton loading={loading && !uploadError} disabled={!tableFile || datasetName === ''} color="primary" onClick={handleConfirm}>
+        <LoadingButton loading={loading && !uploadError} disabled={!tableFile || tableName === ''} color="primary" onClick={handleConfirm}>
           Confirm
         </LoadingButton>
       </DialogActions>
