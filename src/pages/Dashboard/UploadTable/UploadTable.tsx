@@ -67,7 +67,9 @@ const UploadTable = () => {
       const splittedName = file.name.split('.');
 
       if (supportedFormats.includes(splittedName[splittedName.length - 1])) {
-        setTableName(splittedName[0]);
+        if (tableName === '') {
+          setTableName(splittedName[0]);
+        }
         setTableFile(files[0]);
       }
     }

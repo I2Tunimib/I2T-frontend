@@ -64,7 +64,9 @@ const UploadDataset = () => {
       const splittedName = file.name.split('.');
 
       if (supportedFormats.includes(splittedName[splittedName.length - 1])) {
-        setDatasetName(splittedName[0]);
+        if (datasetName === '') {
+          setDatasetName(splittedName[0]);
+        }
         setDatasetFile(files[0]);
       }
     }
