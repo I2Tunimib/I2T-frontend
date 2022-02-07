@@ -4,7 +4,7 @@ import { RootState } from '@store';
 import { getRequestStatus } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
 import { selectAppConfig, selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
-import { Cell } from './interfaces/table';
+import { Cell, Context } from './interfaces/table';
 import { TableThunkActions } from './table.thunk';
 import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getIdsFromCell } from './utils/table.utils';
@@ -439,6 +439,31 @@ export const selectAreCellReconciliated = createSelector(
 
 // DATA TRANSFORMATION SELECTORS
 
+const getMetadata = (cell: Cell, cellContext: Context) => {
+  if (!Array.isArray(cell.metadata)) {
+    return [];
+  }
+
+  const metadata = cell.metadata.map((item) => ({
+    ...item,
+    url: `${cellContext.uri}${item.id.split(':')[1]}`
+  }));
+
+  if (cell.annotationMeta && !cell.annotationMeta.match) {
+    return metadata;
+  }
+
+  return metadata.sort((a, b) => {
+    if (a.match) {
+      return -1;
+    }
+    if (b.match) {
+      return 1;
+    }
+    return 1;
+  });
+};
+
 /**
  * Get data to display in main table component.
  * Transform data in Column and Data objects for react-table component.
@@ -468,10 +493,7 @@ export const selectDataTableFormat = createSelector(
           ...acc,
           [colId]: {
             ...cell,
-            metadata: Array.isArray(cell.metadata) ? cell.metadata.map((item) => ({
-              ...item,
-              url: `${cellContext.uri}${item.id.split(':')[1]}`
-            })) : [],
+            metadata: getMetadata(cell, cellContext),
             rowId
           }
         };

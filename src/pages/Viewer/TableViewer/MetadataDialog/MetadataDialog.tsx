@@ -53,7 +53,15 @@ const makeData = (rawData: ReturnType<typeof selectCellMetadataTableFormat>) => 
       };
     });
 
-    const data = metadata.map((metadataItem) => {
+    const data = [...metadata].sort((a, b) => {
+      if (a.match) {
+        return -1;
+      }
+      if (b.match) {
+        return 1;
+      }
+      return 1;
+    }).map((metadataItem) => {
       return Object.keys(metaToView).reduce((acc, key) => {
         const value = metadataItem[key as keyof BaseMetadata];
         if (value !== undefined) {

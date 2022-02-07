@@ -152,16 +152,18 @@ const NormalCell: FC<NormalCellProps> = ({
               <ExpandableListItem key={`${item.id}`}>
                 <div className={styles.Item}>
                   {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
-                  <Link
-                    sx={{
-                      marginLeft: '20px'
-                    }}
-                    href={item.url}
-                    title={`${item.id} (${item.name.value})`}
-                    target="_blank"
-                    className={styles.MetaLink}>
-                    {`${item.id} (${item.name.value})`}
-                  </Link>
+                  <EntityLabel className={styles.MetaLink} type="entity">
+                    <Link
+                      sx={{
+                        marginLeft: '20px'
+                      }}
+                      href={item.url}
+                      title={`${item.id} (${item.name.value})`}
+                      target="_blank"
+                      className={styles.MetaLink}>
+                      {`${item.id} (${item.name.value})`}
+                    </Link>
+                  </EntityLabel>
                 </div>
               </ExpandableListItem>
             ))}

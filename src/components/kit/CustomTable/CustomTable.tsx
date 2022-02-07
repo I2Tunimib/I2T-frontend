@@ -149,7 +149,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
         pageSize: 20
       },
       autoResetExpanded: false,
-      autoResetSortBy: false
+      autoResetSortBy: false,
+      autoResetPage: false
     },
     ...defaultHooks
   );
