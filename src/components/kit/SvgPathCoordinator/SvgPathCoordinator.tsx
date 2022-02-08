@@ -43,8 +43,8 @@ const SvgPathCoordinator: FC<SvgPathCoordinatorProps> = ({
       {...props}>
       {processedPaths && processedPaths.map((path: any, index: number) => (
         <SvgArrow
-          key={path.id}
-          id={path.id}
+          key={`${path.id}_${index}`}
+          id={`${path.id}_${index}`}
           d={path.path.draw()}
           arrowId={`${index}`}
           direction={path.direction}
