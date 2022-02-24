@@ -392,7 +392,7 @@ export const selectCanDelete = createSelector(
 export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
   (selectedCells) => selectedCells.length > 0
-    && !selectedCells.some((cell) => cell.metadata.length === 0)
+    && !selectedCells.some((cell) => cell && cell.metadata.length === 0)
 );
 
 export const selectIsExtendButtonEnabled = createSelector(
@@ -429,10 +429,13 @@ export const selectAreCellReconciliated = createSelector(
     const colIds = Object.keys(selectedColumnsIds);
 
     return colIds.some((colId) => {
-      const { context } = columns.byId[colId];
-      const totalReconciliated = Object.keys(context)
-        .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
-      return totalReconciliated > 0;
+      if (columns.byId[colId] && columns.byId[colId].context) {
+        const { context } = columns.byId[colId];
+        const totalReconciliated = Object.keys(context)
+          .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
+        return totalReconciliated > 0;
+      }
+      return false;
     });
   }
 );
@@ -487,6 +490,7 @@ export const selectDataTableFormat = createSelector(
       Object.keys(entities.rows.byId[rowId].cells).reduce((acc, colId) => {
         const cell = entities.rows.byId[rowId].cells[colId];
         const { context } = entities.columns.byId[colId];
+
         const cellContextPrefix = getCellContext(cell);
         const cellContext = context[cellContextPrefix];
         return {
@@ -515,7 +519,6 @@ export const selectReconciliationCells = createSelector(
   selectColumnsState,
   (cellIds, colCellsIds, colIds, rows, cols) => {
     let ids = [] as any;
-
     if (colCellsIds.length > 0 || colIds.length > 0) {
       const uniqueColIds = [...new Set(colCellsIds.concat(colIds))];
       ids = ids.concat(uniqueColIds.map((colId) => ({

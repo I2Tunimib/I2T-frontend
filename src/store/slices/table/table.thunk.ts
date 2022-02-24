@@ -4,7 +4,7 @@ import { RootState } from '@store';
 import { levDistance } from '@services/utils/lev-distance';
 import { isEmptyObject } from '@services/utils/objects-utils';
 import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
-import { ColumnState, RowState, TableState } from './interfaces/table';
+import { BaseMetadata, ColumnMetadata, ColumnState, RowState, TableState } from './interfaces/table';
 import { updateTable, updateUI } from './table.slice';
 
 const ACTION_PREFIX = 'table';
@@ -169,11 +169,20 @@ export type ExtendThunkInputProps = {
   extender: Extender;
   formValues: Record<string, any>;
 }
+export type ExtendedColumnCell = {
+  label: string;
+  metadata: BaseMetadata[];
+}
+type ExtendedColumn = {
+  label: string;
+  metadata: ColumnMetadata[];
+  cells: Record<string, ExtendedColumnCell | null>
+}
+
 export type ExtendThunkResponseProps = {
   extender: Extender;
   data: {
-    columns: ColumnState['byId']
-    rows: RowState['byId'],
+    columns: Record<string, ExtendedColumn>
     meta: Record<string, string>
   }
 }

@@ -65,6 +65,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   const getBadgeStatus = useCallback((column: any) => {
     const {
       annotationMeta: {
+        annotated,
         match,
         highestScore
       }
@@ -81,6 +82,11 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
         default:
           return 'match-reconciliator';
       }
+    }
+
+    if (annotated && column.metadata.length > 0
+      && column.metadata[0].entity && column.metadata[0].entity.length === 0) {
+      return 'miss';
     }
 
     const {

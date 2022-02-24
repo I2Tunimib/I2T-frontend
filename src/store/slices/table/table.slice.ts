@@ -1,5 +1,6 @@
 import { current, PayloadAction } from '@reduxjs/toolkit';
 import { GetTableResponse } from '@services/api/table';
+import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from '@services/utils/objects-utils';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
@@ -46,6 +47,7 @@ import {
   deleteOneColumn, deleteOneRow,
   deleteSelectedColumns, deleteSelectedRows
 } from './utils/table.delete-utils';
+import { createCell, getAnnotationMeta, getColumnAnnotationMeta, getColumnMetadata, getMetadata, updateContext } from './utils/table.extension-utils';
 import {
   isCellReconciliated,
   getCellContext, getColumnStatus, createContext,
@@ -700,6 +702,10 @@ export const tableSlice = createSliceWithRequests({
      */
     undo: (state, action: PayloadAction<void>) => {
       return applyUndoPatches(state, (draft) => {
+        draft.ui.selectedColumnCellsIds = {};
+        draft.ui.selectedColumnsIds = {};
+        draft.ui.selectedRowsIds = {};
+        draft.ui.selectedCellIds = {};
         draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
       });
     },
@@ -767,10 +773,17 @@ export const tableSlice = createSliceWithRequests({
               }
               // assign new reconciliator and metadata
               // cell.metadata.reconciliator.id = reconciliator.id;
-              cell.metadata = metadata.map(({ id, ...rest }) => ({
-                id: `${prefix}:${id}`,
-                ...rest
-              }));
+              cell.metadata = metadata.map(({ id, name, ...rest }) => {
+                const [_, metaId] = id.split(':');
+                return {
+                  id,
+                  name: {
+                    value: name as unknown as string,
+                    uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                  },
+                  ...rest
+                };
+              });
               cell.annotationMeta = {
                 annotated: true,
                 ...computeCellAnnotationStats(cell)
@@ -828,49 +841,95 @@ export const tableSlice = createSliceWithRequests({
         state, action: PayloadAction<Payload<ExtendThunkResponseProps>>
       ) => {
         const { data, extender, undoable = true } = action.payload;
-        const { columns, rows, meta } = data;
+
+        const { columns, meta } = data;
+
+        const newColumnsIds = Object.keys(columns);
 
         return produceWithPatch(state, undoable, (draft) => {
-          const newColIds = Object.keys(columns);
-          draft.entities.columns.byId = {
-            ...draft.entities.columns.byId,
-            ...columns
-          };
+          newColumnsIds.forEach((newColId) => {
+            const { metadata: columnMetadata, cells, label, ...rest } = columns[newColId];
 
-          newColIds.forEach((colId) => {
+            // add new column
+            draft.entities.columns.byId[newColId] = {
+              id: newColId,
+              label,
+              metadata: getColumnMetadata(columnMetadata),
+              status: ColumnStatus.EMPTY,
+              context: {},
+              ...getColumnAnnotationMeta(columnMetadata),
+              ...rest
+            };
+
+            // add rows
+
             draft.entities.rows.allIds.forEach((rowId) => {
-              if (rows[rowId]) {
-                draft.entities.rows.byId[rowId].cells[colId] = {
-                  ...rows[rowId].cells[colId],
-                  ...(rows[rowId].cells[colId].metadata.length > 0 && {
-                    annotated: true
-                  })
-                };
-              } else {
-                draft.entities.rows.byId[rowId].cells[colId] = {
-                  id: `${rowId}$${colId}`,
-                  label: 'null',
-                  metadata: []
-                } as any;
-              }
+              const newCell = createCell(rowId, newColId, cells[rowId]);
+
+              draft.entities.rows
+                .byId[rowId].cells[newColId] = newCell;
+              updateContext(draft, newCell);
             });
 
-            if (!draft.entities.columns.allIds.includes(colId)) {
+            draft.entities.columns.byId[newColId].status = getColumnStatus(draft, newColId);
+
+            if (!draft.entities.columns.allIds.includes(newColId)) {
               const index = draft.entities.columns.allIds
-                .findIndex((originalColId) => originalColId === meta[colId]);
+                .findIndex((originalColId) => originalColId === meta[newColId]);
 
               if (index !== -1) {
-                draft.entities.columns.allIds.splice(index + 1, 0, colId);
+                draft.entities.columns.allIds.splice(index + 1, 0, newColId);
               } else {
-                draft.entities.columns.allIds.push(colId);
+                draft.entities.columns.allIds.push(newColId);
               }
             }
           });
-
           updateNumberOfReconciliatedCells(draft);
         }, (draft) => {
           draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
         });
+
+        // return produceWithPatch(state, undoable, (draft) => {
+        //   const newColIds = Object.keys(columns);
+        //   draft.entities.columns.byId = {
+        //     ...draft.entities.columns.byId,
+        //     ...columns
+        //   };
+
+        //   newColIds.forEach((colId) => {
+        //     draft.entities.rows.allIds.forEach((rowId) => {
+        //       if (rows[rowId]) {
+        //         draft.entities.rows.byId[rowId].cells[colId] = {
+        //           ...rows[rowId].cells[colId],
+        //           ...(rows[rowId].cells[colId].metadata.length > 0 && {
+        //             annotated: true
+        //           })
+        //         };
+        //       } else {
+        //         draft.entities.rows.byId[rowId].cells[colId] = {
+        //           id: `${rowId}$${colId}`,
+        //           label: 'null',
+        //           metadata: []
+        //         } as any;
+        //       }
+        //     });
+
+        //     if (!draft.entities.columns.allIds.includes(colId)) {
+        //       const index = draft.entities.columns.allIds
+        //         .findIndex((originalColId) => originalColId === meta[colId]);
+
+        //       if (index !== -1) {
+        //         draft.entities.columns.allIds.splice(index + 1, 0, colId);
+        //       } else {
+        //         draft.entities.columns.allIds.push(colId);
+        //       }
+        //     }
+        //   });
+
+        //   updateNumberOfReconciliatedCells(draft);
+        // }, (draft) => {
+        //   draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+        // });
       })
   )
 });

@@ -326,9 +326,12 @@ const TableViewer = () => {
       <RouteLeaveGuard
         when={unsavedChanges}
         navigate={(path) => history.push(path)}
-        shouldBlockNavigation={(location) => {
-          if (unsavedChanges) {
-            return true;
+        shouldBlockNavigation={({ pathname }) => {
+          const { pathname: prevPathname } = history.location;
+          if (pathname !== prevPathname) {
+            if (unsavedChanges) {
+              return true;
+            }
           }
           return false;
         }}

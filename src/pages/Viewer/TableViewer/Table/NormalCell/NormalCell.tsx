@@ -46,6 +46,7 @@ const NormalCell: FC<NormalCellProps> = ({
   const getBadgeStatus = (cell: Cell) => {
     const {
       annotationMeta: {
+        annotated,
         match,
         highestScore
       }
@@ -64,8 +65,12 @@ const NormalCell: FC<NormalCellProps> = ({
       }
     }
 
+    if (annotated && cell.metadata.length === 0) {
+      return 'miss';
+    }
+
     if (isScoreLowerBoundEnabled) {
-      if (scoreLowerBound && highestScore < scoreLowerBound) {
+      if ((scoreLowerBound && highestScore < scoreLowerBound)) {
         return 'miss';
       }
     }
