@@ -6,7 +6,7 @@ import { Box, Button, Divider, FormControl, InputLabel, MenuItem, Select, Select
 import { selectAppConfig, selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
 import { BaseMetadata, Column } from '@store/slices/table/interfaces/table';
 import { selectColumnCellMetadataTableFormat, selectCurrentCol, selectIsViewOnly, selectReconcileRequestStatus, selectSettings } from '@store/slices/table/table.selectors';
-import { updateColumnMetadata } from '@store/slices/table/table.slice';
+import { updateColumnMetadata, updateUI } from '@store/slices/table/table.slice';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { FC, useCallback, useEffect, useState } from 'react';
 import { Cell } from 'react-table';
@@ -120,9 +120,14 @@ const EntityTab: FC<{}> = () => {
         const previousMatch = entity.find((meta) => meta.match);
         if (!previousMatch || (previousMatch.id !== selectedMetadata)) {
           dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
+          dispatch(updateUI({ openMetadataColumnDialog: false }));
         }
       }
     }
+  };
+
+  const handleCancel = () => {
+    dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 
   const handleSelectedRowChange = useCallback((row: any) => {
@@ -231,7 +236,7 @@ const EntityTab: FC<{}> = () => {
             </Typography>
           </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
-            <Button>
+            <Button onClick={handleCancel}>
               {(API.ENDPOINTS.SAVE && !isViewOnly) ? 'Cancel' : 'Close'}
             </Button>
             {(API.ENDPOINTS.SAVE && !isViewOnly)

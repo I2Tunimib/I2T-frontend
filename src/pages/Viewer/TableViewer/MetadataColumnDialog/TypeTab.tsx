@@ -119,12 +119,16 @@ const TypeTab: FC<{}> = () => {
     dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 
+  const handleCancel = () => {
+    dispatch(updateUI({ openMetadataColumnDialog: false }));
+  };
+
   return types ? (
     <Stack gap="10px" padding="10px">
       <Stack direction="row">
         <Typography variant="h6">Column types</Typography>
         <Stack direction="row" gap="10px" marginLeft="auto">
-          <Button variant="outlined">Cancel</Button>
+          <Button variant="outlined" onClick={handleCancel}>Cancel</Button>
           <Button variant="outlined" onClick={handleConfirm}>Confirm</Button>
         </Stack>
       </Stack>

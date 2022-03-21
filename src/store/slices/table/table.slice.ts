@@ -161,13 +161,27 @@ export const tableSlice = createSliceWithRequests({
      */
     updateSelectedCellExpanded: (state, action: PayloadAction<Payload>) => {
       const { undoable = false } = action.payload;
-      const { selectedColumnsIds, expandedCellsIds, expandedColumnsIds } = state.ui;
+      const {
+        selectedColumnsIds, expandedCellsIds,
+        selectedColumnCellsIds,
+        expandedColumnsIds, selectedCellIds
+      } = state.ui;
+      const uniqueColumns = new Set<string>();
 
-      Object.keys(state.ui.selectedCellIds).forEach((cellId) => {
-        state.ui.expandedCellsIds = toggleObject(state.ui.expandedCellsIds, cellId, true);
+      Object.keys(selectedCellIds).forEach((cellId) => {
+        const [_, colId] = cellId.split('$');
+        uniqueColumns.add(colId);
       });
 
       Object.keys(selectedColumnsIds).forEach((colId) => {
+        uniqueColumns.add(colId);
+      });
+
+      Object.keys(selectedColumnCellsIds).forEach((colId) => {
+        uniqueColumns.add(colId);
+      });
+
+      uniqueColumns.forEach((colId) => {
         state.ui.expandedColumnsIds = toggleObject(state.ui.expandedColumnsIds, colId, true);
       });
     },
@@ -801,20 +815,34 @@ export const tableSlice = createSliceWithRequests({
               const column = getColumn(draft, cellId);
 
               if (column.metadata.length > 0) {
-                column.metadata[0].entity = metadata.map(({ id, ...rest }) => ({
-                  id: `${prefix}:${id}`,
-                  ...rest
-                }));
+                column.metadata[0].entity = metadata.map(({ id, name, ...rest }) => {
+                  const [_, metaId] = id.split(':');
+                  return {
+                    id,
+                    name: {
+                      value: name as unknown as string,
+                      uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                    },
+                    ...rest
+                  };
+                });
               } else {
                 column.metadata[0] = {
                   id: '',
                   match: true,
                   score: 0,
                   name: { value: '', uri: '' },
-                  entity: metadata.map(({ id, ...rest }) => ({
-                    id: `${prefix}:${id}`,
-                    ...rest
-                  }))
+                  entity: metadata.map(({ id, name, ...rest }) => {
+                    const [_, metaId] = id.split(':');
+                    return {
+                      id,
+                      name: {
+                        value: name as unknown as string,
+                        uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                      },
+                      ...rest
+                    };
+                  })
                 };
               }
 

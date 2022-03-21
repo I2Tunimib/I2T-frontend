@@ -254,7 +254,7 @@ const TableViewer = () => {
   }: TableCell) => {
     const cellId = `${row.id}$${column.id}`;
     const selected = !!selectedCells[cellId] || !!selectedRows[row.id];
-    const expanded = !!expandedCellsIds[cellId];
+    const expanded = !!expandedColumnsIds[cellId.split('$')[1]];
     const editable = !!editableCellsIds[cellId];
     return {
       column,
@@ -273,7 +273,7 @@ const TableViewer = () => {
     settings,
     selectedCells,
     selectedRows,
-    expandedCellsIds,
+    expandedColumnsIds,
     editableCellsIds
   ]);
 

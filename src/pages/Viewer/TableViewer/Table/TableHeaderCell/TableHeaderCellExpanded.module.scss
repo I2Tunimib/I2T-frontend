@@ -46,6 +46,41 @@
     }
   }
 
+  .ExpandableList {
+    flex-shrink: 0;
+    border-top: 1px solid #ededed;
+
+    .Item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      font-size: 12px;
+
+      .MetaLink {
+        max-width: 80%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-right: auto;
+        margin-left: 25px;
+
+        a {
+          margin: 0
+        }
+      }
+
+      .Icon {
+        position: absolute;
+        left: 0px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        color: #4AC99B;
+      }
+    }
+  }
+
   .Row {
     display: flex;
     flex-direction: row;

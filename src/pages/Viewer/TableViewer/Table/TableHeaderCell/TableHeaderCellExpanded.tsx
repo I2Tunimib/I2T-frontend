@@ -4,6 +4,8 @@ import { ColumnMetadata, Context } from '@store/slices/table/interfaces/table';
 import { FC, useCallback } from 'react';
 import ArrowRightAltRoundedIcon from '@mui/icons-material/ArrowRightAltRounded';
 import EntityLabel from '@components/core/EntityLabel';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import { ExpandableList, ExpandableListBody, ExpandableListHeader, ExpandableListItem } from '@components/kit';
 import styles from './TableHeaderCellExpanded.module.scss';
 
 interface TableHeaderCellExpandedProps {
@@ -46,6 +48,26 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
     </div>
   ), []);
 
+  const getItems = useCallback((start: number, finish: number): any[] => {
+    if (!metadata[0]) {
+      return [];
+    }
+    if (!metadata[0].entity) {
+      return [];
+    }
+    let end = finish;
+    if (finish > metadata[0].entity.length) {
+      end = metadata[0].entity.length;
+    }
+    return metadata[0].entity.slice(start, end);
+  }, [metadata]);
+
+  const nEntities = metadata[0]
+    ? metadata[0].entity
+      ? metadata[0].entity.length
+      : 0
+    : 0;
+
   // <div className={styles.PropertyContainer}>
   //   <Typography variant="subtitle2">Type</Typography>
   //   {metadata[0].type.map((type) => RenderType(type))}
@@ -63,6 +85,51 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
           {metadata[0].property.map((property) => RenderProperty(property))}
         </div>
       )}
+      <ExpandableList
+        messageIfNoContent="Cell doesn't have any entity metadata"
+        className={styles.ExpandableList}>
+        <ExpandableListHeader>
+          {getItems(0, 3).map((item, index) => (
+            <ExpandableListItem key={`${item.id}`}>
+              <div className={styles.Item}>
+                {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
+                <EntityLabel className={styles.MetaLink} type="entity">
+                  <Link
+                    sx={{
+                      marginLeft: '20px'
+                    }}
+                    title={`${item.id} (${item.name.value})`}
+                    href={item.url}
+                    target="_blank">
+                    {`${item.id} (${item.name.value})`}
+                  </Link>
+                </EntityLabel>
+              </div>
+            </ExpandableListItem>
+          ))}
+        </ExpandableListHeader>
+        <ExpandableListBody>
+          {getItems(3, nEntities).map((item, index) => (
+            <ExpandableListItem key={`${item.id}`}>
+              <div className={styles.Item}>
+                {item.match ? <CheckRoundedIcon className={styles.Icon} /> : null}
+                <EntityLabel className={styles.MetaLink} type="entity">
+                  <Link
+                    sx={{
+                      marginLeft: '20px'
+                    }}
+                    href={item.url}
+                    title={`${item.id} (${item.name.value})`}
+                    target="_blank"
+                    className={styles.MetaLink}>
+                    {`${item.id} (${item.name.value})`}
+                  </Link>
+                </EntityLabel>
+              </div>
+            </ExpandableListItem>
+          ))}
+        </ExpandableListBody>
+      </ExpandableList>
     </div>
   ) : null;
 };
