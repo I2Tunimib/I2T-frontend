@@ -4,7 +4,7 @@ import { Row } from 'react-table';
 const filterMatches = (rows: Array<Row>, colIds: Array<string>, scoreLowerBound: number) => {
   return partition(rows, (row) => colIds
     .some((colId) => row.values[colId].annotationMeta
-      && row.values[colId].annotationMeta.match));
+      && row.values[colId].annotationMeta.match.value));
 };
 
 const filterPending = (rows: Array<Row>, colIds: Array<string>, scoreLowerBound: number) => {
@@ -12,7 +12,7 @@ const filterPending = (rows: Array<Row>, colIds: Array<string>, scoreLowerBound:
     .some((colId) => {
       const cell = row.values[colId];
       return cell.annotationMeta
-        && !cell.annotationMeta.match
+        && !cell.annotationMeta.match.value
         && cell.annotationMeta.highestScore >= scoreLowerBound;
     }));
 };
@@ -22,7 +22,7 @@ const filterMiss = (rows: Array<Row>, colIds: Array<string>, scoreLowerBound: nu
     .some((colId) => {
       const cell = row.values[colId];
       return cell.annotationMeta
-        && !cell.annotationMeta.match
+        && !cell.annotationMeta.match.value
         && cell.annotationMeta.highestScore < scoreLowerBound;
     }));
 };
