@@ -202,7 +202,7 @@ const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
 const getColumnValues = (colId: string, rowEntities: RowState) => {
   return rowEntities.allIds.reduce((acc, rowId) => {
     const cell = rowEntities.byId[rowId].cells[colId];
-    acc[rowId] = cell.label;
+    acc[rowId] = [cell.label, cell.metadata, colId];
     return acc;
   }, {} as Record<string, any>);
 };

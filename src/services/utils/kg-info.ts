@@ -7,5 +7,8 @@ export const KG_INFO = {
   },
   wd: {
     uri: 'https://www.wikidata.org/wiki/'
+  },
+  here: {
+    uri: 'https://www.here.com/'
   }
 };

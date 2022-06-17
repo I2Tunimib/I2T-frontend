@@ -32,7 +32,10 @@ const DEFAULT_STATE = {
 
 const getLink = (context: Record<ID, Context>, id: string) => {
   const [prefix, resourceId] = id.split(':');
-  return `${context[prefix].uri}${resourceId}`;
+  if (context[prefix] !== undefined) {
+    return `${context[prefix].uri}${resourceId}`;
+  }
+  return '';
 };
 
 const SvgContainer: FC<SvgContainerProps> = ({
