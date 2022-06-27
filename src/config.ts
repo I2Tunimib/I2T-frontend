@@ -6,6 +6,7 @@ export type Endpoint = {
   path: string;
   name?: string;
   useGlobal?: boolean;
+  params?: Record<string, any>;
 }
 
 export type ApiConfig = {
@@ -88,7 +89,18 @@ const CONFIG: AppConfig = {
       EXPORT: [
         {
           path: '/dataset/:datasetId/table/:tableId/export?format=w3c',
-          name: 'W3C'
+          name: 'W3C',
+          params: {
+            extension: 'json',
+            postDownload: (data: any) => JSON.stringify(data, null, 2)
+          }
+        },
+        {
+          path: '/dataset/:datasetId/table/:tableId/export?format=csv',
+          name: 'CSV',
+          params: {
+            extension: 'csv'
+          }
         }
       ]
     }

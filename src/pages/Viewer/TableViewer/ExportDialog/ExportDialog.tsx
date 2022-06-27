@@ -45,28 +45,26 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   };
 
   const handleConfirm = () => {
+    const exportEndpoint = API.ENDPOINTS.EXPORT.find((endpoint) => endpoint.name === format);
+    if (!exportEndpoint) {
+      return;
+    }
+
+    const { params } = exportEndpoint;
+
     dispatch(exportTable({
       format,
       params: { tableId, datasetId }
     }))
       .unwrap()
       .then((data) => {
-        fileDownload(JSON.stringify(data, null, 2), `${tableName}.json`);
+        if (params) {
+          const { postDownload, extension } = params;
+          fileDownload(postDownload ? postDownload(data) : data, `${tableName}.${extension}`);
+        }
       });
     dispatch(updateUI({ openExportDialog: false }));
   };
-  // const handleConfirm = () => {
-  //   dispatch(convertToW3C(keepMatching))
-  //     .unwrap()
-  //     .then((data) => {
-  //       fileDownload(JSON.stringify(data, null, 2), `${name}.json`);
-  //     });
-  //   dispatch(updateUI({ openExportDialog: false }));
-  // };
-
-  // const handleChange = () => {
-  //   setKeepMatching((state) => !state);
-  // };
 
   return (
     <Dialog
