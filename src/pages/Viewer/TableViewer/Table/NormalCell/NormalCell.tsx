@@ -77,6 +77,13 @@ const NormalCell: FC<NormalCellProps> = ({
     return 'warn';
   };
 
+  const limitLabel = (labelToLimit: any) => {
+    if (labelToLimit.length > 100) {
+      return labelToLimit.slice(0, 100).concat(' ...');
+    }
+    return labelToLimit;
+  };
+
   const getLabel = useCallback(() => {
     const match = value.metadata.find((meta: BaseMetadata) => meta.match);
     if (match) {
@@ -84,14 +91,14 @@ const NormalCell: FC<NormalCellProps> = ({
         <Link
           href={match.url}
           target="_blank">
-          {label}
+          {limitLabel(label)}
         </Link>
       );
     }
     if (label === 'null') {
-      return <Typography component="span" color="textSecondary" lineHeight="0">{label}</Typography>;
+      return <Typography component="span" color="textSecondary" lineHeight="0">{limitLabel(label)}</Typography>;
     }
-    return label;
+    return limitLabel(label);
   }, [value, label]);
 
   const getItems = useCallback((start: number, finish: number): any[] => {
