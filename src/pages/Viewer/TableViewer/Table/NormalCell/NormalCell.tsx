@@ -78,8 +78,8 @@ const NormalCell: FC<NormalCellProps> = ({
   };
 
   const limitLabel = (labelToLimit: any) => {
-    if (labelToLimit.length > 100) {
-      return labelToLimit.slice(0, 100).concat(' ...');
+    if (labelToLimit.length > 50) {
+      return labelToLimit.slice(0, 50).concat(' ...');
     }
     return labelToLimit;
   };
