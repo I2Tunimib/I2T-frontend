@@ -265,7 +265,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           id: cell.id,
           label: cell.label
         }],
-        reconciliator
+        reconciliator,
+        contextColumns: []
       }));
     }
   };

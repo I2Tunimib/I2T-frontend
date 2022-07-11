@@ -169,7 +169,8 @@ const EntityTab: FC<{}> = () => {
           id: column.id,
           label: column.label
         }],
-        reconciliator
+        reconciliator,
+        contextColumns: []
       }));
     }
   };

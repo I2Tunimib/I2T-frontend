@@ -4,8 +4,9 @@ import { RootState } from '@store';
 import { levDistance } from '@services/utils/lev-distance';
 import { isEmptyObject } from '@services/utils/objects-utils';
 import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
-import { BaseMetadata, ColumnMetadata, ColumnState, RowState, TableState } from './interfaces/table';
+import { BaseMetadata, Cell, ColumnMetadata, ColumnState, RowState, TableState } from './interfaces/table';
 import { updateTable, updateUI } from './table.slice';
+import { getIdsFromCell } from './utils/table.utils';
 
 const ACTION_PREFIX = 'table';
 
@@ -123,18 +124,41 @@ export const filterTable = createAsyncThunk(
   }
 );
 
+const getContextColumns = (ids: string[], rows: RowState) => {
+  return ids.reduce((acc, colId) => {
+    acc[colId] = rows.allIds.reduce((accInn, rowId) => {
+      const cell = rows.byId[rowId].cells[colId];
+      const [r, c] = getIdsFromCell(cell.id);
+      accInn[r] = cell;
+      return accInn;
+    }, {} as Record<string, Cell>);
+    return acc;
+  }, {} as Record<string, any>);
+};
+
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,
   async (
     {
       baseUrl,
       items,
-      reconciliator
-    }: { baseUrl: string, items: any, reconciliator: Reconciliator }
+      reconciliator,
+      contextColumns
+    }: {
+      baseUrl: string,
+      items: any,
+      reconciliator: Reconciliator,
+      contextColumns: string[]
+    }, { getState }
   ) => {
+    const { table } = getState() as RootState;
+
+    const contextColumnsData = getContextColumns(contextColumns, table.entities.rows);
+
     const data = {
       serviceId: reconciliator.id,
-      items
+      items,
+      contextColumns: contextColumnsData
     };
     const response = await tableAPI.reconcile(baseUrl, data);
     return {
@@ -156,14 +180,14 @@ type AutomaticAnnotationThunkOutputProps = {
 }
 
 export const automaticAnnotation = createAsyncThunk<
-AutomaticAnnotationThunkOutputProps,
-AutomaticAnnotationThunkInputProps>(
-  `${ACTION_PREFIX}/automaticAnnotation`,
-  async (params) => {
-    const response = await tableAPI.automaticAnnotation(params);
-    return response.data;
-  }
-);
+  AutomaticAnnotationThunkOutputProps,
+  AutomaticAnnotationThunkInputProps>(
+    `${ACTION_PREFIX}/automaticAnnotation`,
+    async (params) => {
+      const response = await tableAPI.automaticAnnotation(params);
+      return response.data;
+    }
+  );
 
 export type ExtendThunkInputProps = {
   extender: Extender;
@@ -263,11 +287,13 @@ export const updateTableSocket = createAsyncThunk(
 
     if (!isEmptyObject(tableInstance) && table.id === tableInstance.id) {
       dispatch(updateTable(inputProps));
-      dispatch(updateUI({ settings: {
-        ...settings,
-        isViewOnly: false,
-        scoreLowerBound: (table.maxMetaScore - table.minMetaScore) / 3
-      } }));
+      dispatch(updateUI({
+        settings: {
+          ...settings,
+          isViewOnly: false,
+          scoreLowerBound: (table.maxMetaScore - table.minMetaScore) / 3
+        }
+      }));
     }
   }
 );

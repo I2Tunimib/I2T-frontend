@@ -856,3 +856,9 @@ export const selectSelectedCellsTypes = createSelector(
     return types;
   }
 );
+
+export const selectReconciliatioContextColumnIds = createSelector(
+  selectEntitiesState,
+  selectSelectedColumnIds,
+  (entities, ids) => entities.columns.allIds.filter((id) => !(id in ids))
+);

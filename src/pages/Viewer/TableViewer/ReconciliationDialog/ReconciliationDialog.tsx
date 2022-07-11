@@ -1,13 +1,18 @@
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   FormControl,
+  InputLabel,
+  ListItemText,
   MenuItem,
+  OutlinedInput,
   Select,
   SelectChangeEvent,
   Stack,
@@ -25,7 +30,9 @@ import { TransitionProps } from '@mui/material/transitions';
 import { reconcile } from '@store/slices/table/table.thunk';
 import {
   selectReconcileDialogStatus, selectReconciliationCells,
-  selectReconcileRequestStatus
+  selectReconcileRequestStatus,
+  selectReconciliatioContextColumnIds,
+  selectSelectedColumnIds
 } from '@store/slices/table/table.selectors';
 import { updateUI } from '@store/slices/table/table.slice';
 import { selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
@@ -40,11 +47,13 @@ const Transition = forwardRef((
 
 const ReconciliateDialog = () => {
   // keep track of selected service
+  const [contextColumns, setContextColumns] = useState<string[]>([]);
   const [currentService, setCurrentService] = useState<Reconciliator | null>();
   const dispatch = useAppDispatch();
   // keep track of open state
   const open = useAppSelector(selectReconcileDialogStatus);
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
+  const columnIds = useAppSelector(selectReconciliatioContextColumnIds);
   const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading, error } = useAppSelector(selectReconcileRequestStatus);
 
@@ -61,7 +70,8 @@ const ReconciliateDialog = () => {
       dispatch(reconcile({
         baseUrl: reconciliator.relativeUrl,
         items: selectedCells,
-        reconciliator
+        reconciliator,
+        contextColumns
       }))
         .unwrap()
         .then((result) => {
@@ -82,6 +92,13 @@ const ReconciliateDialog = () => {
     if (event.target.value) {
       setCurrentService(reconciliators.find((recon) => recon.prefix === event.target.value));
     }
+  };
+
+  const handleChangeContextColumns = (event: SelectChangeEvent<string[]>) => {
+    const {
+      target: { value }
+    } = event;
+    setContextColumns(typeof value === 'string' ? value.split(',') : value);
   };
 
   return (
@@ -119,6 +136,29 @@ const ReconciliateDialog = () => {
                   {currentService.description}
                 </SquaredBox>
               )}
+              <Divider />
+              <div>
+                Select any context columns to provide to the reconciliator service
+              </div>
+              <FormControl className="field">
+                <InputLabel id="demo-multiple-checkbox-label">Context columns</InputLabel>
+                <Select
+                  labelId="demo-multiple-checkbox-label"
+                  id="demo-multiple-checkbox"
+                  multiple
+                  value={contextColumns}
+                  onChange={handleChangeContextColumns}
+                  input={<OutlinedInput label="Context columns" />}
+                  renderValue={(selected) => selected.join(', ')}
+                >
+                  {columnIds.map((id) => (
+                    <MenuItem key={id} value={id}>
+                      <Checkbox checked={contextColumns.indexOf(id) > -1} />
+                      <ListItemText primary={<span>{id}</span>} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Stack>
           )}
         </Stack>
