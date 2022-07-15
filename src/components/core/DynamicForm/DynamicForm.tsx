@@ -1,5 +1,5 @@
 import { Button, Stack } from '@mui/material';
-import { Extender } from '@store/slices/config/interfaces/config';
+import { Extender, Reconciliator } from '@store/slices/config/interfaces/config';
 import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -7,15 +7,15 @@ import { useAppDispatch } from '@hooks/store';
 import { updateUI } from '@store/slices/table/table.slice';
 import { FORM_COMPONENTS, getDefaultValues, prepareFormInput } from './componentsConfig';
 
-export type DynamicExtensionFormProps = {
+export type DynamicFormProps = {
   loading: boolean | undefined;
-  extender: Extender;
+  service: Extender | Reconciliator;
   onSubmit: (formState: Record<string, any>) => void;
 }
 
-const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
+const DynamicForm: FC<DynamicFormProps> = ({
   loading,
-  extender,
+  service,
   onSubmit: onSubmitCallback
 }) => {
   const dispatch = useAppDispatch();
@@ -25,15 +25,15 @@ const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
     reset, setValue,
     formState
   } = useForm({
-    defaultValues: getDefaultValues(extender)
+    defaultValues: getDefaultValues(service)
   });
 
   useEffect(() => {
     // rest form to selected extender values
-    reset(getDefaultValues(extender));
-  }, [extender]);
+    reset(getDefaultValues(service));
+  }, [service]);
 
-  const { formParams } = extender;
+  const { formParams } = service;
 
   const onSubmit = (formValue: any) => {
     onSubmitCallback(formValue);
@@ -41,7 +41,7 @@ const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
 
   return (
     <Stack component="form" gap="20px" onSubmit={handleSubmit(onSubmit)}>
-      {formParams.map(({
+      {formParams && formParams.map(({
         id, inputType, ...inputProps
       }) => {
         const FormComponent = FORM_COMPONENTS[inputType];
@@ -77,4 +77,4 @@ const DynamicExtensionForm: FC<DynamicExtensionFormProps> = ({
   );
 };
 
-export default DynamicExtensionForm;
+export default DynamicForm;

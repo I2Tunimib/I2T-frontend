@@ -1,7 +1,7 @@
-import { Extender, ExtenderFormInputParams } from '@store/slices/config/interfaces/config';
-import CheckboxGroup from './FormComponents/CheckboxGroup';
-import InputText from './FormComponents/InputText';
-import { Select, SelectColumns } from './FormComponents/Select';
+import { Extender, FormInputParams } from '@store/slices/config/interfaces/config';
+import CheckboxGroup from './formComponents/CheckboxGroup';
+import InputText from './formComponents/InputText';
+import { Select, SelectColumns } from './formComponents/Select';
 
 /**
  * Map of available form components
@@ -28,6 +28,9 @@ export const errors = {
  */
 export const getDefaultValues = (extender: Extender) => {
   const { formParams } = extender;
+  if (!formParams) {
+    return undefined;
+  }
   return formParams.reduce((acc, {
     id, defaultValue,
     options, inputType
@@ -50,7 +53,7 @@ export const getDefaultValues = (extender: Extender) => {
 /**
  * Add to input probs, rules props (e.g: required)
  */
-export const prepareFormInput = (inputProps: Omit<ExtenderFormInputParams, 'id' | 'inputType'>) => {
+export const prepareFormInput = (inputProps: Omit<FormInputParams, 'id' | 'inputType'>) => {
   const { rules: inputRules } = inputProps;
   const rules = inputRules.reduce((acc, key) => {
     if (key in errors) {

@@ -3,7 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '@store';
 import { levDistance } from '@services/utils/lev-distance';
 import { isEmptyObject } from '@services/utils/objects-utils';
-import { Extender, ExtenderFormInputParams, Reconciliator } from '../config/interfaces/config';
+import { Extender, FormInputParams, Reconciliator } from '../config/interfaces/config';
 import { BaseMetadata, Cell, ColumnMetadata, ColumnState, RowState, TableState } from './interfaces/table';
 import { updateTable, updateUI } from './table.slice';
 import { getIdsFromCell } from './utils/table.utils';
@@ -136,31 +136,80 @@ const getContextColumns = (ids: string[], rows: RowState) => {
   }, {} as Record<string, any>);
 };
 
+const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+    if (trueMeta) {
+      // eslint-disable-next-line prefer-destructuring
+      acc[rowId] = trueMeta.id;
+    }
+    return acc;
+  }, {} as Record<string, any>);
+};
+
+const getColumnValues = (colId: string, rowEntities: RowState) => {
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    acc[rowId] = [cell.label, cell.metadata, colId];
+    return acc;
+  }, {} as Record<string, any>);
+};
+
+const getRequestFormValues = (
+  formParams: FormInputParams[],
+  formValues: Record<string, any>,
+  table: TableState
+) => {
+  if (!formParams) {
+    return {};
+  }
+
+  const { ui, entities } = table;
+  const { rows } = entities;
+  const selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
+
+  const requestParams = {} as Record<string, any>;
+
+  requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+    acc[key] = getColumnMetaIds(key, rows);
+    return acc;
+  }, {} as Record<string, any>);
+
+  formParams.forEach(({ id, inputType }) => {
+    if (inputType === 'selectColumns') {
+      requestParams[id] = getColumnValues(formValues[id], rows);
+    } else {
+      requestParams[id] = formValues[id];
+    }
+  });
+
+  return requestParams;
+};
+
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,
   async (
     {
-      baseUrl,
       items,
       reconciliator,
-      contextColumns
+      formValues
     }: {
-      baseUrl: string,
       items: any,
       reconciliator: Reconciliator,
-      contextColumns: string[]
+      formValues: Record<string, any>;
     }, { getState }
   ) => {
     const { table } = getState() as RootState;
-
-    const contextColumnsData = getContextColumns(contextColumns, table.entities.rows);
+    const { relativeUrl, formParams, id } = reconciliator;
+    const params = getRequestFormValues(formParams, formValues, table);
 
     const data = {
       serviceId: reconciliator.id,
       items,
-      contextColumns: contextColumnsData
+      ...params
     };
-    const response = await tableAPI.reconcile(baseUrl, data);
+    const response = await tableAPI.reconcile(relativeUrl, data);
     return {
       data: response.data,
       reconciliator
@@ -210,53 +259,6 @@ export type ExtendThunkResponseProps = {
     meta: Record<string, string>
   }
 }
-
-const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce((acc, rowId) => {
-    const cell = rowEntities.byId[rowId].cells[colId];
-    const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-    if (trueMeta) {
-      // eslint-disable-next-line prefer-destructuring
-      acc[rowId] = trueMeta.id;
-    }
-    return acc;
-  }, {} as Record<string, any>);
-};
-
-const getColumnValues = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce((acc, rowId) => {
-    const cell = rowEntities.byId[rowId].cells[colId];
-    acc[rowId] = [cell.label, cell.metadata, colId];
-    return acc;
-  }, {} as Record<string, any>);
-};
-
-const getRequestFormValues = (
-  formParams: ExtenderFormInputParams[],
-  formValues: Record<string, any>,
-  table: TableState
-) => {
-  const { ui, entities } = table;
-  const { rows } = entities;
-  const selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
-
-  const requestParams = {} as Record<string, any>;
-
-  requestParams.items = selectedColumnsIds.reduce((acc, key) => {
-    acc[key] = getColumnMetaIds(key, rows);
-    return acc;
-  }, {} as Record<string, any>);
-
-  formParams.forEach(({ id, inputType }) => {
-    if (inputType === 'selectColumns') {
-      requestParams[id] = getColumnValues(formValues[id], rows);
-    } else {
-      requestParams[id] = formValues[id];
-    }
-  });
-
-  return requestParams;
-};
 
 /**
  * Handle api call for dynamic form extension

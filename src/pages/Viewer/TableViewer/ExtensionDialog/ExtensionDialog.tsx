@@ -30,7 +30,7 @@ import styled from '@emotion/styled';
 import { extend } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
 import { SquaredBox } from '@components/core';
-import DynamicExtensionForm from './DynamicExtensionForm';
+import DynamicExtensionForm from '@components/core/DynamicForm/DynamicForm';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -117,7 +117,7 @@ const DialogInnerContent = () => {
           <DynamicExtensionForm
             loading={loading}
             onSubmit={handleSubmit}
-            extender={currentService} />
+            service={currentService} />
         </>
       )}
     </>

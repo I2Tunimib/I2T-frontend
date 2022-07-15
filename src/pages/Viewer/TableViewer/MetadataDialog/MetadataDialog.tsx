@@ -259,15 +259,15 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const fetchMetadata = (service: string) => {
     const reconciliator = reconciliators.find((recon) => recon.prefix === service);
     if (reconciliator && cell) {
-      dispatch(reconcile({
-        baseUrl: reconciliator.relativeUrl,
-        items: [{
-          id: cell.id,
-          label: cell.label
-        }],
-        reconciliator,
-        contextColumns: []
-      }));
+      // dispatch(reconcile({
+      //   baseUrl: reconciliator.relativeUrl,
+      //   items: [{
+      //     id: cell.id,
+      //     label: cell.label
+      //   }],
+      //   reconciliator,
+      //   contextColumns: []
+      // }));
     }
   };
 

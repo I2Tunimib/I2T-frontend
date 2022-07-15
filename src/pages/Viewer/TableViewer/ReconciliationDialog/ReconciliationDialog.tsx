@@ -39,6 +39,7 @@ import { selectReconciliatorsAsArray } from '@store/slices/config/config.selecto
 import { LoadingButton } from '@mui/lab';
 import { SquaredBox } from '@components/core';
 import { Reconciliator } from '@store/slices/config/interfaces/config';
+import DynamicForm from '@components/core/DynamicForm/DynamicForm';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -65,21 +66,22 @@ const ReconciliateDialog = () => {
   }, [reconciliators]);
 
   const handleConfirm = () => {
-    const reconciliator = reconciliators.find((recon) => recon.prefix === currentService?.prefix);
-    if (reconciliator) {
-      dispatch(reconcile({
-        baseUrl: reconciliator.relativeUrl,
-        items: selectedCells,
-        reconciliator,
-        contextColumns
-      }))
-        .unwrap()
-        .then((result) => {
-          dispatch(updateUI({
-            openReconciliateDialog: false
-          }));
-        });
-    }
+    // const reconciliator = reconciliators.find((recon)
+    // => recon.prefix === currentService?.prefix);
+    // if (reconciliator) {
+    //   dispatch(reconcile({
+    //     baseUrl: reconciliator.relativeUrl,
+    //     items: selectedCells,
+    //     reconciliator,
+    //     contextColumns
+    //   }))
+    //     .unwrap()
+    //     .then((result) => {
+    //       dispatch(updateUI({
+    //         openReconciliateDialog: false
+    //       }));
+    //     });
+    // }
   };
 
   const handleClose = () => {
@@ -99,6 +101,21 @@ const ReconciliateDialog = () => {
       target: { value }
     } = event;
     setContextColumns(typeof value === 'string' ? value.split(',') : value);
+  };
+
+  const handleSubmit = (formState: Record<string, any>) => {
+    if (!currentService) return;
+    dispatch(reconcile({
+      items: selectedCells,
+      reconciliator: currentService,
+      formValues: formState
+    }))
+      .unwrap()
+      .then((result) => {
+        dispatch(updateUI({
+          openReconciliateDialog: false
+        }));
+      });
   };
 
   return (
@@ -137,7 +154,12 @@ const ReconciliateDialog = () => {
                 </SquaredBox>
               )}
               <Divider />
-              <div>
+              <DynamicForm
+                service={currentService}
+                loading={loading}
+                onSubmit={handleSubmit}
+              />
+              {/* <div>
                 Select any context columns to provide to the reconciliator service
               </div>
               <FormControl className="field">
@@ -158,19 +180,19 @@ const ReconciliateDialog = () => {
                     </MenuItem>
                   ))}
                 </Select>
-              </FormControl>
+              </FormControl> */}
             </Stack>
           )}
         </Stack>
       </DialogContent>
-      <DialogActions>
+      {/* <DialogActions>
         <Button onClick={handleClose}>
           Cancel
         </Button>
         <LoadingButton onClick={handleConfirm} loading={!!loading}>
           Confirm
         </LoadingButton>
-      </DialogActions>
+      </DialogActions> */}
     </Dialog>
   );
 };

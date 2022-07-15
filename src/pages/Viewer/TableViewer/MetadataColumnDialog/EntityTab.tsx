@@ -163,15 +163,15 @@ const EntityTab: FC<{}> = () => {
   const fetchMetadata = (service: string) => {
     const reconciliator = reconciliators.find((recon) => recon.prefix === service);
     if (reconciliator && column) {
-      dispatch(reconcile({
-        baseUrl: reconciliator.relativeUrl,
-        items: [{
-          id: column.id,
-          label: column.label
-        }],
-        reconciliator,
-        contextColumns: []
-      }));
+      // dispatch(reconcile({
+      //   baseUrl: reconciliator.relativeUrl,
+      //   items: [{
+      //     id: column.id,
+      //     label: column.label
+      //   }],
+      //   reconciliator,
+      //   contextColumns: []
+      // }));
     }
   };
 

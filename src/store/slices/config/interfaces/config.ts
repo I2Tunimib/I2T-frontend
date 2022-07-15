@@ -11,8 +11,8 @@ export interface IConfigState extends RequestEnhancedState {
   }
 }
 
-export interface ReconciliatorsState extends BaseState<Reconciliator> {}
-export interface ExtendersState extends BaseState<Extender> {}
+export interface ReconciliatorsState extends BaseState<Reconciliator> { }
+export interface ExtendersState extends BaseState<Extender> { }
 
 export interface Reconciliator {
   id: ID;
@@ -22,6 +22,7 @@ export interface Reconciliator {
   uri: string;
   relativeUrl: string;
   metaToView: Record<string, MetaToViewItem>;
+  formParams: FormInputParams[];
 }
 
 export type MetaToViewItem = {
@@ -34,10 +35,10 @@ export interface Extender extends Record<string, any> {
   name: string;
   relativeUrl: string;
   description: string;
-  formParams: ExtenderFormInputParams[];
+  formParams: FormInputParams[];
 }
 
-export interface ExtenderFormInputParams {
+export interface FormInputParams {
   id: string;
   description: string;
   label: string;
