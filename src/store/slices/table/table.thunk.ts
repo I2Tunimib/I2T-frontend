@@ -156,7 +156,7 @@ const getColumnValues = (colId: string, rowEntities: RowState) => {
   }, {} as Record<string, any>);
 };
 
-const getRequestFormValues = (
+const getRequestFormValuesExtension = (
   formParams: FormInputParams[],
   formValues: Record<string, any>,
   table: TableState
@@ -187,6 +187,37 @@ const getRequestFormValues = (
   return requestParams;
 };
 
+const getRequestFormValuesReconciliation = (
+  formParams: FormInputParams[],
+  formValues: Record<string, any>,
+  table: TableState
+) => {
+  if (!formParams) {
+    return {};
+  }
+
+  const { entities } = table;
+  const { rows } = entities;
+  // const selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
+
+  const requestParams = {} as Record<string, any>;
+
+  // requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+  //   acc[key] = getColumnMetaIds(key, rows);
+  //   return acc;
+  // }, {} as Record<string, any>);
+
+  formParams.forEach(({ id, inputType }) => {
+    if (inputType === 'selectColumns') {
+      requestParams[id] = getColumnValues(formValues[id], rows);
+    } else {
+      requestParams[id] = formValues[id];
+    }
+  });
+
+  return requestParams;
+};
+
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,
   async (
@@ -202,8 +233,7 @@ export const reconcile = createAsyncThunk(
   ) => {
     const { table } = getState() as RootState;
     const { relativeUrl, formParams, id } = reconciliator;
-    const params = getRequestFormValues(formParams, formValues, table);
-
+    const params = getRequestFormValuesReconciliation(formParams, formValues, table);
     const data = {
       serviceId: reconciliator.id,
       items,
@@ -270,7 +300,7 @@ export const extend = createAsyncThunk<ExtendThunkResponseProps, ExtendThunkInpu
     // get root table states
     const { table } = getState() as RootState;
     const { relativeUrl, formParams, id } = extender;
-    const params = getRequestFormValues(formParams, formValues, table);
+    const params = getRequestFormValuesExtension(formParams, formValues, table);
     const response = await tableAPI.extend(relativeUrl, { serviceId: id, ...params });
     return {
       data: response.data,
