@@ -10,5 +10,8 @@ export const KG_INFO = {
   },
   georss: {
     uri: 'http://www.georss.org/georss/'
+  },
+  atoka: {
+    uri: 'https://atoka.io/public/en/company/-/'
   }
 };
