@@ -16,11 +16,24 @@ export const FORM_COMPONENTS = {
 /**
  * Map of errors, can be extended
  */
-export const errors = {
+const ruleObjects = {
   required: {
     value: true,
     message: 'This field is required'
   }
+};
+
+export const getRules = (rules: string[]) => {
+  if (!rules) {
+    return {};
+  }
+  return rules.reduce((acc, rule) => {
+    const ruleObj = ruleObjects[rule as keyof typeof ruleObjects];
+    if (ruleObj) {
+      acc[rule] = ruleObj;
+    }
+    return acc;
+  }, {} as any);
 };
 
 /**
@@ -55,12 +68,7 @@ export const getDefaultValues = (extender: Extender) => {
  */
 export const prepareFormInput = (inputProps: Omit<FormInputParams, 'id' | 'inputType'>) => {
   const { rules: inputRules } = inputProps;
-  const rules = inputRules.reduce((acc, key) => {
-    if (key in errors) {
-      acc[key] = errors[key as keyof typeof errors];
-    }
-    return acc;
-  }, {} as Record<string, any>);
+  const rules = getRules(inputRules);
   return {
     ...inputProps,
     rules

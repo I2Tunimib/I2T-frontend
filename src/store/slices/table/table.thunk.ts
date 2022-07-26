@@ -177,10 +177,12 @@ const getRequestFormValuesExtension = (
   }, {} as Record<string, any>);
 
   formParams.forEach(({ id, inputType }) => {
-    if (inputType === 'selectColumns') {
-      requestParams[id] = getColumnValues(formValues[id], rows);
-    } else {
-      requestParams[id] = formValues[id];
+    if (formValues[id]) {
+      if (inputType === 'selectColumns') {
+        requestParams[id] = getColumnValues(formValues[id], rows);
+      } else {
+        requestParams[id] = formValues[id];
+      }
     }
   });
 
@@ -198,20 +200,15 @@ const getRequestFormValuesReconciliation = (
 
   const { entities } = table;
   const { rows } = entities;
-  // const selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
-
   const requestParams = {} as Record<string, any>;
 
-  // requestParams.items = selectedColumnsIds.reduce((acc, key) => {
-  //   acc[key] = getColumnMetaIds(key, rows);
-  //   return acc;
-  // }, {} as Record<string, any>);
-
   formParams.forEach(({ id, inputType }) => {
-    if (inputType === 'selectColumns') {
-      requestParams[id] = getColumnValues(formValues[id], rows);
-    } else {
-      requestParams[id] = formValues[id];
+    if (formValues[id]) {
+      if (inputType === 'selectColumns') {
+        requestParams[id] = getColumnValues(formValues[id], rows);
+      } else {
+        requestParams[id] = formValues[id];
+      }
     }
   });
 

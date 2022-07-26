@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { useAppDispatch } from '@hooks/store';
 import { updateUI } from '@store/slices/table/table.slice';
-import { FORM_COMPONENTS, getDefaultValues, prepareFormInput } from './componentsConfig';
+import { FORM_COMPONENTS, getDefaultValues, getRules, prepareFormInput } from './componentsConfig';
 
 export type DynamicFormProps = {
   loading: boolean | undefined;
@@ -49,12 +49,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
           <Controller
             key={id}
             defaultValue=""
-            rules={{
-              required: {
-                value: true,
-                message: 'This field is required'
-              }
-            }}
+            rules={getRules(inputProps.rules)}
             render={({ field }) => (
               <FormComponent
                 id={id}
