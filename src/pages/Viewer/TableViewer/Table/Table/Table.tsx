@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import {
   Row, useGlobalFilter,
   usePagination, useSortBy, useTable
@@ -20,6 +21,7 @@ import TableFooter from '../TableFooter';
 import styles from './Table.module.scss';
 import SvgContainer from '../SvgContainer';
 import { pipeFilters } from './globalFilters';
+import { useTableSort } from './sort/useTableSort';
 
 interface TableProps {
   columns: any[];
@@ -67,6 +69,8 @@ const Table: FC<TableProps> = ({
   getCellProps = defaultPropGetter
 }) => {
   const columnRefs = useRef<Record<any, HTMLElement>>({});
+  // const [sortFn, setSortFn] = useState<string>('metadata');
+  const { sortType, setSortType, sortTypes } = useTableSort();
   const [highlightState, setHighlightState] = useState<HighlightState | null>(null);
   const [searchHighlightState, setSearchHighlight] = useState<Record<string, boolean>>({});
 
@@ -200,34 +204,73 @@ const Table: FC<TableProps> = ({
     }
   }, []);
 
-  const sortByMetadata = useCallback(
-    (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
-      if (!rowA.values[columnId].annotationMeta
-        || !rowA.values[columnId].annotationMeta.match.value) {
-        return -1;
-      }
+  // const sortByMetadata = useCallback(
+  //   (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
+  //     console.log(rowA);
+  //     if (!rowA.values[columnId].annotationMeta
+  //       || !rowA.values[columnId].annotationMeta.match.value) {
+  //       return -1;
+  //     }
 
-      if (!rowB.values[columnId].annotationMeta
-        || !rowB.values[columnId].annotationMeta.match.value) {
-        return 1;
-      }
+  //     if (!rowB.values[columnId].annotationMeta
+  //       || !rowB.values[columnId].annotationMeta.match.value) {
+  //       return 1;
+  //     }
 
-      const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
-      if (!matchingA) {
-        return -1;
-      }
+  //     const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
+  //     if (!matchingA) {
+  //       return -1;
+  //     }
 
-      const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
-      if (!matchingB) {
-        return 1;
-      }
+  //     const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
+  //     if (!matchingB) {
+  //       return 1;
+  //     }
 
-      return matchingA.score - matchingB.score;
-    },
-    []
-  );
+  //     return matchingA.score - matchingB.score;
+  //   },
+  //   []
+  // );
 
-  const sortTypes = useMemo(() => ({ sortByMetadata }), [sortByMetadata]);
+  // const sortText = useCallback(
+  //   (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
+  //     return rowA.values[columnId].label.localeCompare(rowB.values[columnId].label);
+  //     // if (!rowA.values[columnId].annotationMeta
+  //     //   || !rowA.values[columnId].annotationMeta.match.value) {
+  //     //   return -1;
+  //     // }
+
+  //     // if (!rowB.values[columnId].annotationMeta
+  //     //   || !rowB.values[columnId].annotationMeta.match.value) {
+  //     //   return 1;
+  //     // }
+
+  //     // const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
+  //     // if (!matchingA) {
+  //     //   return -1;
+  //     // }
+
+  //     // const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
+  //     // if (!matchingB) {
+  //     //   return 1;
+  //     // }
+
+  //     // return matchingA.score - matchingB.score;
+  //   },
+  //   []
+  // );
+
+  // const test = useCallback(() => {
+  //   if (sortFn === 'metadata') {
+  //     return sortByMetadata;
+  //   }
+  //   return sortText;
+  //   // } else if (sortfn === 'text') {
+  //   //   return testSort;
+  //   // }
+  // }, [sortFn]);
+
+  // const sortTypes = useMemo(() => ({ sortByMetadata: test() }), [test]);
 
   const {
     getTableProps,
@@ -256,26 +299,26 @@ const Table: FC<TableProps> = ({
     initialState: { pageSize: 30 },
     autoResetGlobalFilter: false
   },
-  useGlobalFilter,
-  useSortBy,
-  usePagination,
-  (hooks) => {
-    // push a column for the index
-    hooks.visibleColumns.push((cols) => [
-      {
-        id: 'index',
-        Header: '0',
-        // eslint-disable-next-line react/prop-types
-        Cell: ({ row, flatRows, ...rest }) => {
-          return (
-            // eslint-disable-next-line react/prop-types
-            <div>{flatRows.indexOf(row) + 1}</div>
-          );
-        }
-      },
-      ...cols
-    ]);
-  });
+    useGlobalFilter,
+    useSortBy,
+    usePagination,
+    (hooks) => {
+      // push a column for the index
+      hooks.visibleColumns.push((cols) => [
+        {
+          id: 'index',
+          Header: '0',
+          // eslint-disable-next-line react/prop-types
+          Cell: ({ row, flatRows, ...rest }) => {
+            return (
+              // eslint-disable-next-line react/prop-types
+              <div>{flatRows.indexOf(row) + 1}</div>
+            );
+          }
+        },
+        ...cols
+      ]);
+    });
 
   const paginatorProps = {
     canPreviousPage,
@@ -345,6 +388,8 @@ const Table: FC<TableProps> = ({
                         getHeaderProps(column), getGlobalProps(), {
                           index,
                           highlightState,
+                          sortType,
+                          setSortType,
                           sortByProps: column.getSortByToggleProps(),
                           isSorted: column.isSorted,
                           isSortedDesc: column.isSortedDesc

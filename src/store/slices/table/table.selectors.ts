@@ -480,7 +480,7 @@ export const selectDataTableFormat = createSelector(
       return {
         Header: label,
         accessor: colId,
-        sortType: 'sortByMetadata',
+        sortType: 'customSort',
         id,
         data: { ...rest }
       };

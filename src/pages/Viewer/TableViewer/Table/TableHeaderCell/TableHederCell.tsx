@@ -4,6 +4,7 @@ import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import clsx from 'clsx';
 import { ButtonShortcut } from '@components/kit';
 import { ColumnStatus } from '@store/slices/table/interfaces/table';
@@ -45,6 +46,8 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   handleSelectedColumnCellChange,
   reconciliators,
   highlightState,
+  sortType,
+  setSortType,
   sortByProps,
   data,
   settings,
@@ -52,10 +55,16 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
   isSortedDesc
 }: any, ref) => {
   const [hover, setHover] = useState<boolean>(false);
+  const { onClick: sortBy, ...restSortByProps } = sortByProps;
 
   const {
     lowerBound
   } = settings;
+
+  const handleSortByClick = (event: any, type: string) => {
+    setSortType(type);
+    sortBy(event);
+  };
 
   const handleSelectColumn = (event: MouseEvent) => {
     event.stopPropagation();
@@ -133,11 +142,6 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                   {data.annotationMeta && data.annotationMeta.annotated && (
                     <StatusBadge status={getBadgeStatus(data)} size="small" marginRight="5px" />
                   )}
-                  {/* {!!(data.metadata.length > 0
-                    && data.metadata[0].entity
-                    && data.metadata[0].entity.length > 0) && (
-                    <StatusBadge status={getBadgeStatus(data)} size="small" marginRight="5px" />
-                  )} */}
                   <Stack
                     sx={{
                       flex: '1 1 auto',
@@ -153,16 +157,30 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(({
                       {children}
                     </Box>
                     <SortButton
+                      onClick={(e) => handleSortByClick(e, 'sortByText')}
                       sx={{
-                        visibility: hover || isSorted ? 'visible' : 'hidden',
-                        ...(!isSorted && {
+                        visibility: hover || (isSorted && sortType === 'sortByText') ? 'visible' : 'hidden',
+                        ...((!isSorted || sortType !== 'sortByText') && {
                           color: 'rgba(0, 0, 0, 0.377)'
                         })
                       }}
                       size="small"
-                      {...sortByProps}
-                      title="Sort by Metadata score">
-                      {isSortedDesc
+                      {...restSortByProps}
+                      title="">
+                      <SortByAlphaIcon fontSize="small" />
+                    </SortButton>
+                    <SortButton
+                      onClick={(e) => handleSortByClick(e, 'sortByMetadata')}
+                      sx={{
+                        visibility: hover || (isSorted && sortType === 'sortByMetadata') ? 'visible' : 'hidden',
+                        ...((!isSorted || sortType !== 'sortByMetadata') && {
+                          color: 'rgba(0, 0, 0, 0.377)'
+                        })
+                      }}
+                      size="small"
+                      {...restSortByProps}
+                      title="">
+                      {sortType === 'sortByMetadata' && isSortedDesc
                         ? <ArrowDownwardRoundedIcon fontSize="small" />
                         : <ArrowUpwardRoundedIcon fontSize="small" />
                       }
