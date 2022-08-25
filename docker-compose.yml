@@ -1,0 +1,16 @@
+version: "3.6"
+services:
+  server:
+    build:
+      context: .
+    env_file: .env
+    volumes:
+      - .:/usr/src/app/
+      - ./node_modules:/usr/src/app/node_modules
+  nginx:
+      build:
+        context: .
+        dockerfile: Dockerfile.nginx
+      env_file: .env
+      ports:
+        - "${FORWARD_PORT}:80"
