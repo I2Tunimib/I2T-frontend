@@ -13,5 +13,8 @@ export const KG_INFO = {
   },
   atoka: {
     uri: 'https://atoka.io/public/en/company/-/'
+  },
+  atokaPeople: {
+    uri: 'https://atoka.io/public/en/people/-/'
   }
 };
