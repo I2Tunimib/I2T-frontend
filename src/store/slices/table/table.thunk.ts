@@ -259,8 +259,15 @@ export const automaticAnnotation = createAsyncThunk<
   AutomaticAnnotationThunkOutputProps,
   AutomaticAnnotationThunkInputProps>(
     `${ACTION_PREFIX}/automaticAnnotation`,
-    async (params) => {
-      const response = await tableAPI.automaticAnnotation(params);
+    async (params, { getState }) => {
+      const { table } = getState() as any;
+      const { entities } = table;
+      const data = {
+        rows: entities.rows.byId,
+        columns: entities.columns.byId,
+        table: entities.tableInstance
+      };
+      const response = await tableAPI.automaticAnnotation(params, data);
       return response.data;
     }
   );

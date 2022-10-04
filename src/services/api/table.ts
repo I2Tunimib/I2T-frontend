@@ -52,12 +52,13 @@ const tableAPI = {
       data
     );
   },
-  automaticAnnotation: (params: Record<string, string | number> = {}) => {
+  automaticAnnotation: (params: Record<string, string | number> = {}, data: any) => {
     return apiClient.post<any>(
       apiEndpoint({
         endpoint: 'AUTOMATIC_ANNOTATION',
         paramsValue: { ...params }
-      })
+      }),
+      data
     );
   },
   reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data),

@@ -192,7 +192,7 @@ const Toolbar = () => {
           </ToggleButtonGroup>
           <Button
             color="primary"
-            disabled
+            disabled={loadingAutomaticAnnotation || (currentTable && currentTable.mantisStatus === 'PENDING')}
             onClick={handleAutomaticAnnotation}
             startIcon={<PlayCircleOutlineRoundedIcon />}
             variant="contained">
