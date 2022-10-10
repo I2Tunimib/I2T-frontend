@@ -7,10 +7,12 @@ services:
     volumes:
       - .:/usr/src/app/
       - ./node_modules:/usr/src/app/node_modules
+    restart: "always"
   nginx:
       build:
         context: .
         dockerfile: Dockerfile.nginx
       env_file: .env
+      restart: "always"
       ports:
         - "${FORWARD_PORT}:80"
