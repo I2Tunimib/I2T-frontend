@@ -28,7 +28,12 @@ const tableAPI = {
         endpoint: 'GET_TABLE',
         paramsValue: { ...params }
       }),
-      { clearCacheEntry: true }
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   exportTable: (
@@ -40,7 +45,12 @@ const tableAPI = {
         endpoint: 'EXPORT',
         subEndpoint: format,
         paramsValue: params
-      })
+      }),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   saveTable: (data: any, params: Record<string, string | number> = {}) => {
@@ -49,7 +59,12 @@ const tableAPI = {
         endpoint: 'SAVE',
         paramsValue: { ...params }
       }),
-      data
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   automaticAnnotation: (params: Record<string, string | number> = {}, data: any) => {
@@ -58,7 +73,12 @@ const tableAPI = {
         endpoint: 'AUTOMATIC_ANNOTATION',
         paramsValue: { ...params }
       }),
-      data
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data),

@@ -26,6 +26,8 @@ export type ApiConfig = {
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
     EXPORT: Endpoint[];
+    AUTH_SIGNIN: Endpoint;
+    AUTH_ME: Endpoint;
   }
 }
 
@@ -102,7 +104,13 @@ const CONFIG: AppConfig = {
             extension: 'csv'
           }
         }
-      ]
+      ],
+      AUTH_SIGNIN: {
+        path: '/auth/signin'
+      },
+      AUTH_ME: {
+        path: '/auth/me'
+      }
     }
   }
 };

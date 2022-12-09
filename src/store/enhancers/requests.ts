@@ -48,9 +48,9 @@ export type FulfilledAction = ReturnType<GenericAsyncThunk['fulfilled']>
  * Extension of CreateSliceOptions with 'extraRules'
  */
 export interface CreateSliceWithRequestsOptions
-<State = any, CR
-extends SliceCaseReducers<State> = SliceCaseReducers<State>, Name extends string = string>
-extends CreateSliceOptions<State, CR, Name> {
+  <State = any, CR
+  extends SliceCaseReducers<State> = SliceCaseReducers<State>, Name extends string = string>
+  extends CreateSliceOptions<State, CR, Name> {
   extraRules?: (builder: ActionReducerMapBuilder<State>) => ActionReducerMapBuilder<State>;
 }
 
@@ -96,7 +96,7 @@ const handleRejectedAction = <T>(state: any, action: any) => {
   const requestId = action.type.split('/')[1];
   state._requests.byId[requestId] = {
     status: 'done',
-    error: action.error
+    error: action?.payload?.error || action.error
   };
 };
 

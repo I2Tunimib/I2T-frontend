@@ -1,7 +1,8 @@
 import { RouteContainer } from '@components/layout';
 import useInit from '@hooks/init/useInit';
 import React, { Suspense, useEffect } from 'react';
-import { Link, Redirect, Route } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
+import Route from '@components/core/Route';
 import { Loader, useSocketIo } from '@components/core';
 import { useSnackbar } from 'notistack';
 import { useAppDispatch } from '@hooks/store';
@@ -9,9 +10,6 @@ import { updateTableSocket } from '@store/slices/table/table.thunk';
 import { GetTableResponse } from '@services/api/table';
 import { Button } from '@mui/material';
 import { getRedirects, getRoutes } from './routes';
-
-// const { MODE } = config.APP;
-const MODE = 'challenge';
 
 const App = () => {
   // initialize app

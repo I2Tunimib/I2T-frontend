@@ -1,8 +1,9 @@
+import { RouteProps } from '@components/core/Route';
 import {
   ComponentType, lazy,
   LazyExoticComponent
 } from 'react';
-import { RedirectProps, RouteProps } from 'react-router-dom';
+import { RedirectProps } from 'react-router-dom';
 import { store } from './store';
 
 export type LazyExoticComponentWithPreload = LazyExoticComponent<any>
@@ -30,8 +31,9 @@ interface RouteOptions {
 const APP_ROUTES: AppRoutes = {
   routes: [
     { path: '/', exact: true, component: lazyWithPreload(() => import('@pages/Homepage/Homepage')) },
-    { path: '/datasets/:datasetId/tables/:tableId', exact: false, component: lazyWithPreload(() => import('@pages/Viewer')) },
-    { path: '/datasets', exact: false, component: lazyWithPreload(() => import('@pages/Dashboard/Dashboard')) },
+    { path: '/signin', exact: true, redirectWhen: ({ loggedIn }) => loggedIn, redirectTo: '/datasets', component: lazyWithPreload(() => import('@pages/Login')) },
+    { path: '/datasets/:datasetId/tables/:tableId', redirectWhen: ({ loggedIn }) => !loggedIn, redirectTo: '/signin', exact: false, component: lazyWithPreload(() => import('@pages/Viewer')) },
+    { path: '/datasets', exact: false, redirectWhen: ({ loggedIn }) => !loggedIn, redirectTo: '/signin', component: lazyWithPreload(() => import('@pages/Dashboard/Dashboard')) },
     { path: '/404', exact: false, component: lazyWithPreload(() => import('@pages/NotFound/NotFound')) }
   ],
   redirect: [
