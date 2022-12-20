@@ -1,5 +1,5 @@
 name: Workflow to deploy app on remote docker engine
-on: 
+on:
   push:
     branches:
       - main
@@ -19,26 +19,26 @@ jobs:
           path: ~/frontend/.npm
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
-      
+
       - name: Build frontend app
         run: |
           touch frontend/.env
-          echo REACT_APP_BACKEND_API_URL=${{ secrets.REACT_APP_BACKEND_API_URL }} >> frontend/.env
-          echo REACT_APP_BACKEND_DOMAIN=${{ secrets.REACT_APP_BACKEND_DOMAIN }} >> frontend/.env
+          echo VITE_BACKEND_API_URL=${{ secrets.VITE_BACKEND_API_URL }} >> frontend/.env
+          echo VITE_BACKEND_DOMAIN=${{ secrets.VITE_BACKEND_DOMAIN }} >> frontend/.env
           cd frontend && npm ci && npm run build && cd ../
       - name: Clone backend repo
         uses: actions/checkout@v2 # https://github.com/actions/checkout
         with:
           repository: I2Tunimib/I2T-backend
           path: backend/
-      
+
       - name: Cache backend dependencies
         uses: actions/cache@v2
         with:
           path: ~/backend/.npm
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
-      
+
       - name: Move frontend build folder inside backend folder
         run: |
           mkdir backend/build 
@@ -50,7 +50,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      
+
       - name: Login to GithHub Container
         uses: docker/login-action@v1 # https://github.com/docker/login-action
         with:
@@ -63,7 +63,7 @@ jobs:
           cd backend
           docker-compose -f docker-compose.image-prod.yml build
           docker-compose -f docker-compose.image-prod.yml push
-      
+
       - name: Create env file for runtime
         run: |
           touch backend/.env
@@ -75,7 +75,7 @@ jobs:
           echo MANTIS=${{ secrets.MANTIS }} >> backend/.env
           echo MANTIS_AUTH_TOKEN=${{ secrets.MANTIS_AUTH_TOKEN }} >> backend/.env
           echo RELEASE_TAG=${{ github.event.release.tag_name }} >> backend/.env
-      
+
       - name: copy file via ssh key
         uses: appleboy/scp-action@master
         with:

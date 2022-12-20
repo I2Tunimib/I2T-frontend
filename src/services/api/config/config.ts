@@ -5,7 +5,7 @@ import { setup } from 'axios-cache-adapter';
  */
 
 const apiClient = setup({
-  baseURL: process.env.REACT_APP_BACKEND_API_URL,
+  baseURL: import.meta.env.VITE_BACKEND_API_URL,
   cache: {
     maxAge: 15 * 60 * 1000,
     invalidate: async (config, request) => {
