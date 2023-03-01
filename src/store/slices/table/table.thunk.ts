@@ -3,7 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { RootState } from '@store';
 import { levDistance } from '@services/utils/lev-distance';
 import { isEmptyObject } from '@services/utils/objects-utils';
-import { Extender, FormInputParams, Reconciliator } from '../config/interfaces/config';
+import { Extender, FormSchema, Reconciliator } from '../config/interfaces/config';
 import { BaseMetadata, Cell, ColumnMetadata, ColumnState, RowState, TableState } from './interfaces/table';
 import { updateTable, updateUI } from './table.slice';
 import { getIdsFromCell } from './utils/table.utils';
@@ -157,11 +157,11 @@ const getColumnValues = (colId: string, rowEntities: RowState) => {
 };
 
 const getRequestFormValuesExtension = (
-  formParams: FormInputParams[],
+  formSchema: FormSchema,
   formValues: Record<string, any>,
   table: TableState
 ) => {
-  if (!formParams) {
+  if (!formSchema) {
     return {};
   }
 
@@ -176,9 +176,11 @@ const getRequestFormValuesExtension = (
     return acc;
   }, {} as Record<string, any>);
 
-  formParams.forEach(({ id, inputType }) => {
+  Object.keys(formSchema).forEach((id) => {
+    const { component } = formSchema[id];
+
     if (formValues[id]) {
-      if (inputType === 'selectColumns') {
+      if (component === 'selectColumns') {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else {
         requestParams[id] = formValues[id];
@@ -190,11 +192,11 @@ const getRequestFormValuesExtension = (
 };
 
 const getRequestFormValuesReconciliation = (
-  formParams: FormInputParams[],
+  formSchema: FormSchema,
   formValues: Record<string, any>,
   table: TableState
 ) => {
-  if (!formParams) {
+  if (!formSchema) {
     return {};
   }
 
@@ -202,9 +204,10 @@ const getRequestFormValuesReconciliation = (
   const { rows } = entities;
   const requestParams = {} as Record<string, any>;
 
-  formParams.forEach(({ id, inputType }) => {
+  Object.keys(formSchema).forEach((id) => {
+    const { component } = formSchema[id];
     if (formValues[id]) {
-      if (inputType === 'selectColumns') {
+      if (component === 'selectColumns') {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else {
         requestParams[id] = formValues[id];
@@ -229,14 +232,14 @@ export const reconcile = createAsyncThunk(
     }, { getState }
   ) => {
     const { table } = getState() as RootState;
-    const { relativeUrl, formParams, id } = reconciliator;
-    const params = getRequestFormValuesReconciliation(formParams, formValues, table);
+    const { relativeUrl, formSchema, id } = reconciliator;
+    const params = getRequestFormValuesReconciliation(formSchema, formValues, table);
     const data = {
       serviceId: reconciliator.id,
       items,
       ...params
     };
-    const response = await tableAPI.reconcile(relativeUrl, data);
+    const response = await tableAPI.reconcile(relativeUrl, { serviceId: id, data });
     return {
       data: response.data,
       reconciliator
@@ -303,8 +306,8 @@ export const extend = createAsyncThunk<ExtendThunkResponseProps, ExtendThunkInpu
     const { extender, formValues } = inputProps;
     // get root table states
     const { table } = getState() as RootState;
-    const { relativeUrl, formParams, id } = extender;
-    const params = getRequestFormValuesExtension(formParams, formValues, table);
+    const { relativeUrl, formSchema, id } = extender;
+    const params = getRequestFormValuesExtension(formSchema, formValues, table);
     const response = await tableAPI.extend(relativeUrl, { serviceId: id, ...params });
     return {
       data: response.data,

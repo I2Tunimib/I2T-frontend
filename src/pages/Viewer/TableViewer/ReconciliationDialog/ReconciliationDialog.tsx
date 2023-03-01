@@ -65,25 +65,6 @@ const ReconciliateDialog = () => {
     }
   }, [reconciliators]);
 
-  const handleConfirm = () => {
-    // const reconciliator = reconciliators.find((recon)
-    // => recon.prefix === currentService?.prefix);
-    // if (reconciliator) {
-    //   dispatch(reconcile({
-    //     baseUrl: reconciliator.relativeUrl,
-    //     items: selectedCells,
-    //     reconciliator,
-    //     contextColumns
-    //   }))
-    //     .unwrap()
-    //     .then((result) => {
-    //       dispatch(updateUI({
-    //         openReconciliateDialog: false
-    //       }));
-    //     });
-    // }
-  };
-
   const handleClose = () => {
     dispatch(updateUI({
       openReconciliateDialog: false
@@ -153,46 +134,21 @@ const ReconciliateDialog = () => {
                   {currentService.description}
                 </SquaredBox>
               )}
-              <Divider />
-              <DynamicForm
-                service={currentService}
-                loading={loading}
-                onSubmit={handleSubmit}
-              />
-              {/* <div>
-                Select any context columns to provide to the reconciliator service
-              </div>
-              <FormControl className="field">
-                <InputLabel id="demo-multiple-checkbox-label">Context columns</InputLabel>
-                <Select
-                  labelId="demo-multiple-checkbox-label"
-                  id="demo-multiple-checkbox"
-                  multiple
-                  value={contextColumns}
-                  onChange={handleChangeContextColumns}
-                  input={<OutlinedInput label="Context columns" />}
-                  renderValue={(selected) => selected.join(', ')}
-                >
-                  {columnIds.map((id) => (
-                    <MenuItem key={id} value={id}>
-                      <Checkbox checked={contextColumns.indexOf(id) > -1} />
-                      <ListItemText primary={<span>{id}</span>} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl> */}
+              {currentService.formSchema && (
+                <>
+                  <Divider />
+                  <DynamicForm
+                    service={currentService}
+                    loading={loading}
+                    onCancel={handleClose}
+                    onSubmit={handleSubmit}
+                  />
+                </>
+              )}
             </Stack>
           )}
         </Stack>
       </DialogContent>
-      {/* <DialogActions>
-        <Button onClick={handleClose}>
-          Cancel
-        </Button>
-        <LoadingButton onClick={handleConfirm} loading={!!loading}>
-          Confirm
-        </LoadingButton>
-      </DialogActions> */}
     </Dialog>
   );
 };

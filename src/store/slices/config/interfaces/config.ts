@@ -14,6 +14,8 @@ export interface IConfigState extends RequestEnhancedState {
 export interface ReconciliatorsState extends BaseState<Reconciliator> { }
 export interface ExtendersState extends BaseState<Extender> { }
 
+// export type FormFieldSchema = FormInputParams | Record<string, FormInputParams>[];
+
 export interface Reconciliator {
   id: ID;
   name: string;
@@ -22,7 +24,7 @@ export interface Reconciliator {
   uri: string;
   relativeUrl: string;
   metaToView: Record<string, MetaToViewItem>;
-  formParams: FormInputParams[];
+  formSchema: FormSchema;
 }
 
 export type MetaToViewItem = {
@@ -35,19 +37,75 @@ export interface Extender extends Record<string, any> {
   name: string;
   relativeUrl: string;
   description: string;
-  formParams: FormInputParams[];
+  formSchema: FormSchema;
 }
 
-export interface FormInputParams {
-  id: string;
-  description: string;
-  label: string;
-  inputType: 'text' | 'select' | 'selectColumns' | 'checkbox';
-  rules: string[];
-  options?: Option[];
+// export interface FormInputParams {
+//   description: string;
+//   label: string;
+//   inputType: 'text' | 'select' | 'selectColumns' | 'checkbox';
+//   rules: string[];
+//   options?: Option[];
+//   infoText?: string;
+//   defaultValue?: string;
+// }
+
+interface FormFieldBaseSchema {
+  title?: string;
+  description?: string;
+  dynamic?: boolean;
+}
+
+interface FormInputFieldBaseSchema {
+  description?: string;
+  label?: string;
   infoText?: string;
+  defaultValue?: any;
+  rules?: string[];
+  dynamic?: boolean;
+}
+
+export interface GroupFieldSchema extends FormFieldBaseSchema {
+  component: 'group';
+  fields: FormSchema;
+}
+
+export interface CheckboxSchema extends FormInputFieldBaseSchema {
+  component: 'checkbox';
+  options: {
+    id: string;
+    label: string;
+    value: string;
+  }[]
+}
+
+export interface InputTextSchema extends FormInputFieldBaseSchema {
+  component: 'text';
   defaultValue?: string;
 }
+
+export interface SelectColumnsSchema extends FormInputFieldBaseSchema {
+  component: 'selectColumns';
+}
+
+export interface SelectSchema extends FormInputFieldBaseSchema {
+  component: 'select';
+  options: {
+    id: string;
+    label: string;
+    value: string;
+  }[]
+}
+
+export type FormInputSchema =
+  | CheckboxSchema
+  | InputTextSchema
+  | SelectColumnsSchema
+  | SelectSchema
+
+export type FormFieldSchema = FormInputSchema | GroupFieldSchema
+
+export type FormSchema = Record<string, FormFieldSchema>;
 
 export interface Option {
   id: string;

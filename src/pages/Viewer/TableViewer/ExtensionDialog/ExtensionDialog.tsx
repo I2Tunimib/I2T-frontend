@@ -30,7 +30,7 @@ import styled from '@emotion/styled';
 import { extend } from '@store/slices/table/table.thunk';
 import { useSnackbar } from 'notistack';
 import { SquaredBox } from '@components/core';
-import DynamicExtensionForm from '@components/core/DynamicForm/DynamicForm';
+import DynamicForm from '@components/core/DynamicForm/DynamicForm';
 
 const Transition = forwardRef((
   props: TransitionProps & { children?: ReactElement<any, any> },
@@ -113,11 +113,17 @@ const DialogInnerContent = () => {
               <b> null</b>
             </Alert>
           )}
-          <Divider />
-          <DynamicExtensionForm
-            loading={loading}
-            onSubmit={handleSubmit}
-            service={currentService} />
+          {currentService.formSchema && (
+            <>
+              <Divider />
+              <DynamicForm
+                service={currentService}
+                loading={loading}
+                onCancel={() => dispatch(updateUI({ openReconciliateDialog: false }))}
+                onSubmit={handleSubmit}
+              />
+            </>
+          )}
         </>
       )}
     </>

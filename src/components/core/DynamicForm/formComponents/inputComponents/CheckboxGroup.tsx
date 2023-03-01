@@ -2,39 +2,26 @@
 import {
   Stack, Checkbox as MaterialCheckbox,
   FormControlLabel,
-  FormControl,
-  FormHelperText
+  FormControl
 } from '@mui/material';
 import {
   ChangeEvent, forwardRef,
   useState, useEffect
 } from 'react';
-import { BaseFormControlProps, Option } from './types';
-import InputDescription from './InputDescription';
+import { CheckboxSchema } from '@store/slices/config/interfaces/config';
+import { BaseFormControlProps } from '../types';
 
-export type CheckboxProps = BaseFormControlProps & {
-  id: string;
-  label: string;
-  options: Option[];
-  onChange: (e: any) => void;
-  defaultValue?: any;
-}
+export type CheckboxProps = BaseFormControlProps & CheckboxSchema;
 
 /**
  * Group of checkboxes
  */
 const CheckboxGroup = forwardRef<HTMLInputElement, CheckboxProps>(({
-  id: inputId,
-  description,
-  infoText,
-  defaultValue,
   options,
-  formState,
+  defaultValue,
   onChange
 }, ref) => {
   const [state, setState] = useState<string[]>(defaultValue || []);
-
-  const { errors } = formState;
 
   const handleCheck = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
@@ -47,27 +34,23 @@ const CheckboxGroup = forwardRef<HTMLInputElement, CheckboxProps>(({
     onChange(state);
   }, [state]);
 
-  const error = Boolean(errors[inputId]);
-
   return (
     <Stack gap="10px">
-      <InputDescription description={description} infoText={infoText} />
-      <Stack component={FormControl} error={error}>
-        {options.map(({ id, value, label }) => (
+      <Stack component={FormControl}>
+        {options.map(({ id: optId, value: optValue, label }) => (
           <FormControlLabel
-            key={id}
+            key={optId}
             control={(
               <MaterialCheckbox
                 inputRef={ref}
-                value={value}
-                onChange={(e) => handleCheck(e)}
-                checked={state.includes(value)}
+                value={optValue}
+                onChange={handleCheck}
+                checked={state.includes(optValue)}
               />
             )}
             label={label}
           />
         ))}
-        {error && <FormHelperText>{errors[inputId].message}</FormHelperText>}
       </Stack>
     </Stack>
   );

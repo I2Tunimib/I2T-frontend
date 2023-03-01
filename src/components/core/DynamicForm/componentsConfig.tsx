@@ -1,7 +1,8 @@
-import { Extender, FormInputParams } from '@store/slices/config/interfaces/config';
-import CheckboxGroup from './formComponents/CheckboxGroup';
-import InputText from './formComponents/InputText';
-import { Select, SelectColumns } from './formComponents/Select';
+import { FormInputSchema, FormSchema } from '@store/slices/config/interfaces/config';
+import CheckboxGroup from './formComponents/inputComponents/CheckboxGroup';
+import InputText from './formComponents/inputComponents/InputText';
+import SelectColumns from './formComponents/inputComponents/SelectColumns';
+import Select from './formComponents/inputComponents/Select';
 
 /**
  * Map of available form components
@@ -11,7 +12,9 @@ export const FORM_COMPONENTS = {
   select: Select,
   selectColumns: SelectColumns,
   checkbox: CheckboxGroup
-};
+} as const;
+
+export type FormComponentKind = keyof typeof FORM_COMPONENTS;
 
 /**
  * Map of errors, can be extended
@@ -36,41 +39,53 @@ export const getRules = (rules: string[]) => {
   }, {} as any);
 };
 
-/**
- * Function which provides initial value to each form component
- */
-export const getDefaultValues = (extender: Extender) => {
-  const { formParams } = extender;
-  if (!formParams) {
-    return undefined;
-  }
-  return formParams.reduce((acc, {
-    id, defaultValue,
-    options, inputType
-  }) => {
-    if (inputType === 'text') {
-      acc[id] = defaultValue || '';
-    } else if (inputType === 'select') {
-      if (options) {
-        acc[id] = defaultValue || options[0].value;
-      }
-    } else if (inputType === 'checkbox') {
-      acc[id] = defaultValue || [];
-    } else if (inputType === 'selectColumns') {
-      acc[id] = defaultValue || '';
+export const parseFormField = (formFieldSchema: FormInputSchema) => {
+  switch (formFieldSchema.component) {
+    case 'text': {
+      return formFieldSchema.defaultValue || '';
     }
+    case 'select': {
+      return formFieldSchema.defaultValue || formFieldSchema.options[0].value;
+    }
+
+    case 'selectColumns': {
+      return formFieldSchema.defaultValue || '';
+    }
+
+    case 'checkbox': {
+      return formFieldSchema.defaultValue || [];
+    }
+
+    default: {
+      // eslint-disable-next-line no-console
+      console.warn('unhendled form component');
+      return undefined;
+    }
+  }
+};
+
+export const parseForm = (formSchema: FormSchema) => {
+  return Object.keys(formSchema).reduce((acc, id) => {
+    const formFieldSchema = formSchema[id];
+
+    if (formFieldSchema.component === 'group') {
+      acc[id] = formFieldSchema.dynamic
+        ? [parseForm(formFieldSchema.fields)]
+        : parseForm(formFieldSchema.fields);
+      return acc;
+    }
+
+    acc[id] = parseFormField(formFieldSchema);
     return acc;
   }, {} as Record<string, any>);
 };
 
 /**
- * Add to input probs, rules props (e.g: required)
+ * Function which provides initial value to each form component
  */
-export const prepareFormInput = (inputProps: Omit<FormInputParams, 'id' | 'inputType'>) => {
-  const { rules: inputRules } = inputProps;
-  const rules = getRules(inputRules);
-  return {
-    ...inputProps,
-    rules
-  };
+export const getDefaultValues = (form: FormSchema) => {
+  if (!form) {
+    return undefined;
+  }
+  return parseForm(form);
 };

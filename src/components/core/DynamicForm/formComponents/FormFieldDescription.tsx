@@ -4,8 +4,8 @@ import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { FC } from 'react';
 import styled from '@emotion/styled';
 
-export type InputDescriptionProps = {
-  description: string;
+export type FormFieldDescriptionProps = {
+  description?: string;
   infoText?: string;
 }
 
@@ -20,11 +20,11 @@ const InfoIcon = styled(HelpOutlineRoundedIcon)`
 /**
  * Description of an input with helper text
  */
-const InputDescription: FC<InputDescriptionProps> = ({
+const FormFieldDescription: FC<FormFieldDescriptionProps> = ({
   description,
   infoText
 }) => {
-  return (
+  return description ? (
     <Stack position="relative" direction="row" marginRight="30px">
       <div dangerouslySetInnerHTML={{ __html: description }} />
       {infoText && (
@@ -33,7 +33,7 @@ const InputDescription: FC<InputDescriptionProps> = ({
         </Tooltip>
       )}
     </Stack>
-  );
+  ) : null;
 };
 
-export default InputDescription;
+export default FormFieldDescription;
