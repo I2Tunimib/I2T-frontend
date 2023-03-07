@@ -149,9 +149,38 @@ const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
 };
 
 const getColumnValues = (colId: string, rowEntities: RowState) => {
+  if (!colId) {
+    return '';
+  }
   return rowEntities.allIds.reduce((acc, rowId) => {
     const cell = rowEntities.byId[rowId].cells[colId];
     acc[rowId] = [cell.label, cell.metadata, colId];
+    return acc;
+  }, {} as Record<string, any>);
+};
+
+const getFormValues = (
+  formSchema: FormSchema,
+  formValues: Record<string, any>,
+  rows: RowState
+) => {
+  return Object.keys(formSchema).reduce((acc, key) => {
+    const formFieldSchema = formSchema[key];
+
+    if (formFieldSchema.component === 'group') {
+      if (formFieldSchema.dynamic) {
+        acc[key] = formValues[key]
+          .map((item: any) => getFormValues(formFieldSchema.fields, item, rows));
+      } else {
+        acc[key] = getFormValues(formFieldSchema.fields, formValues[key], rows);
+      }
+    } else {
+      if (formFieldSchema.component === 'selectColumns') {
+        acc[key] = getColumnValues(formValues[key], rows);
+      } else {
+        acc[key] = formValues[key];
+      }
+    }
     return acc;
   }, {} as Record<string, any>);
 };
@@ -169,26 +198,29 @@ const getRequestFormValuesExtension = (
   const { rows } = entities;
   const selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
 
-  const requestParams = {} as Record<string, any>;
+  // const requestParams = {} as Record<string, any>;
 
-  requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+  const items = selectedColumnsIds.reduce((acc, key) => {
     acc[key] = getColumnMetaIds(key, rows);
     return acc;
   }, {} as Record<string, any>);
 
-  Object.keys(formSchema).forEach((id) => {
-    const { component } = formSchema[id];
+  // Object.keys(formSchema).forEach((id) => {
+  //   const { component } = formSchema[id];
 
-    if (formValues[id]) {
-      if (component === 'selectColumns') {
-        requestParams[id] = getColumnValues(formValues[id], rows);
-      } else {
-        requestParams[id] = formValues[id];
-      }
-    }
-  });
+  //   if (formValues[id]) {
+  //     if (component === 'selectColumns') {
+  //       requestParams[id] = getColumnValues(formValues[id], rows);
+  //     } else {
+  //       requestParams[id] = formValues[id];
+  //     }
+  //   }
+  // });
 
-  return requestParams;
+  return {
+    items,
+    ...getFormValues(formSchema, formValues, rows)
+  };
 };
 
 const getRequestFormValuesReconciliation = (
@@ -202,20 +234,23 @@ const getRequestFormValuesReconciliation = (
 
   const { entities } = table;
   const { rows } = entities;
-  const requestParams = {} as Record<string, any>;
+  // const requestParams = {} as Record<string, any>;
 
-  Object.keys(formSchema).forEach((id) => {
-    const { component } = formSchema[id];
-    if (formValues[id]) {
-      if (component === 'selectColumns') {
-        requestParams[id] = getColumnValues(formValues[id], rows);
-      } else {
-        requestParams[id] = formValues[id];
-      }
-    }
-  });
+  // console.log(getFormValues(formSchema, formValues, rows));
+  // console.log('LOL');
 
-  return requestParams;
+  // Object.keys(formSchema).forEach((id) => {
+  //   const { component } = formSchema[id];
+  //   if (formValues[id]) {
+  //     if (component === 'selectColumns') {
+  //       requestParams[id] = getColumnValues(formValues[id], rows);
+  //     } else {
+  //       requestParams[id] = formValues[id];
+  //     }
+  //   }
+  // });
+
+  return getFormValues(formSchema, formValues, rows);
 };
 
 export const reconcile = createAsyncThunk(
