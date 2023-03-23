@@ -9,7 +9,7 @@ export const KG_INFO = {
     uri: 'https://www.wikidata.org/wiki/'
   },
   georss: {
-    uri: 'http://149.132.178.112:3002/map?polyline='
+    uri: 'http://149.132.178.149:3002/map?polyline='
   },
   atoka: {
     uri: 'https://atoka.io/public/en/company/-/'
