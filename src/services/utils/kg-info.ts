@@ -8,6 +8,9 @@ export const KG_INFO = {
   wd: {
     uri: 'https://www.wikidata.org/wiki/'
   },
+  wiki: {
+    uri: 'https://www.wikidata.org/wiki/'
+  },
   georss: {
     uri: 'http://149.132.178.149:3002/map?polyline='
   },
