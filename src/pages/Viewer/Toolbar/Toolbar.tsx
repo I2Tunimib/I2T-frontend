@@ -37,6 +37,8 @@ import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutl
 import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { IconButtonTooltip } from '@components/core';
+import UserAvatar from '@components/kit/UserAvatar';
+import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
@@ -73,6 +75,7 @@ const Toolbar = () => {
   const openHelpDialog = useAppSelector(selectHelpDialogStatus);
   const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
   const dispatch = useAppDispatch();
+  const auth = useAppSelector(selectIsLoggedIn);
 
   const { view } = useQuery();
 
@@ -166,7 +169,7 @@ const Toolbar = () => {
             )}
           </div>
         </div>
-        <Stack direction="row" gap="20px" className={styles.TopButtons}>
+        <Stack direction="row" gap="20px" alignItems="center" className={styles.TopButtons}>
           <ToggleButtonGroup
             size="small"
             value={view}
@@ -226,7 +229,6 @@ const Toolbar = () => {
               Save
             </Button>
           )}
-
           <IconButtonTooltip
             tooltipText="Settings"
             Icon={SettingsIcon}
@@ -236,6 +238,11 @@ const Toolbar = () => {
             tooltipText="Help"
             onClick={() => dispatch(updateUI({ openHelpDialog: true }))}
             Icon={HelpOutlineRoundedIcon} />
+          {auth.loggedIn && auth.user && (
+            <UserAvatar>
+              {auth.user.username.slice(0, 2).toUpperCase()}
+            </UserAvatar>
+          )}
         </Stack>
       </div>
       <SettingsDialog open={openSettingsDialog} onClose={handleCloseSettings} />

@@ -26,6 +26,8 @@ export type ApiConfig = {
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
     EXPORT: Endpoint[];
+    AUTH_SIGNIN: Endpoint;
+    AUTH_ME: Endpoint;
   }
 }
 
@@ -35,7 +37,7 @@ export type ApiConfig = {
 const CONFIG: AppConfig = {
   API: {
     // global endpoint prefixed to each path, unless useGlobal is set to false
-    GLOBAL: process.env.REACT_APP_BACKEND_API_URL || '',
+    GLOBAL: import.meta.env.VITE_BACKEND_API_URL || '',
 
     ENDPOINTS: {
       GET_SERVICES_CONFIG: {
@@ -102,7 +104,13 @@ const CONFIG: AppConfig = {
             extension: 'csv'
           }
         }
-      ]
+      ],
+      AUTH_SIGNIN: {
+        path: '/auth/signin'
+      },
+      AUTH_ME: {
+        path: '/auth/me'
+      }
     }
   }
 };

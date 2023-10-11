@@ -11,7 +11,6 @@ import {
 import { SnackbarProvider } from 'notistack';
 import { SocketIoProvider } from '@components/core';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
 
 declare module '@mui/styles/defaultTheme' {
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -97,8 +96,3 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

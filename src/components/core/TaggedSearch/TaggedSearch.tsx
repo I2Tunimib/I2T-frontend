@@ -4,7 +4,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { ClickAwayListener, IconButton, Popper, Stack, Typography } from '@mui/material';
 import { ChangeEvent, FC, HTMLAttributes, useState, useEffect, useRef, ReactNode, ReactElement, FocusEvent } from 'react';
-import { useDebouncedCallback } from 'use-debounce/lib';
+import { useDebouncedCallback } from 'use-debounce';
 import Loader from '../Loader';
 import TagSelect, { Tag } from './TagSelect';
 

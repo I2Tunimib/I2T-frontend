@@ -5,8 +5,8 @@ import apiClient from './config/config';
 export type Dataset = Omit<DatasetInstance, 'tables'>;
 export type Table = TableInstance;
 export type GlobalSearchResult = {
-    datasets: DatasetInstance[];
-    tables: TableInstance[];
+  datasets: DatasetInstance[];
+  tables: TableInstance[];
 }
 
 export type MetaCollection = {
@@ -26,19 +26,34 @@ const datasetAPI = {
     return apiClient.get<GetCollectionResult<Dataset>>(apiEndpoint({
       endpoint: 'GET_DATASET',
       paramsValue: { ...params }
-    }), { clearCacheEntry: true });
+    }), {
+      clearCacheEntry: true,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
   },
   getDatasetInfo: (params: Record<string, string | number> = {}) => {
     return apiClient.get<Dataset>(apiEndpoint({
       endpoint: 'GET_DATASET_INFO',
       paramsValue: { ...params }
-    }), { clearCacheEntry: true });
+    }), {
+      clearCacheEntry: true,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
   },
   getTablesByDataset: (params: Record<string, string | number> = {}) => {
     return apiClient.get<GetCollectionResult<Table>>(apiEndpoint({
       endpoint: 'GET_TABLES_BY_DATASET',
       paramsValue: { ...params }
-    }), { clearCacheEntry: true });
+    }), {
+      clearCacheEntry: true,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
   },
   annotate: (name: string, data: { idDataset: any[]; idTable: any[] }) => {
     return apiClient.post<Table[]>(
@@ -46,7 +61,12 @@ const datasetAPI = {
         endpoint: 'PROCESS_START',
         subEndpoint: name
       }),
-      data
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   globalSearch: (query: string) => {
@@ -54,7 +74,12 @@ const datasetAPI = {
       apiEndpoint({
         endpoint: 'GLOBAL_SEARCH',
         paramsValue: { query }
-      })
+      }),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   uploadDataset: (formData: FormData) => {
@@ -62,7 +87,12 @@ const datasetAPI = {
       apiEndpoint({
         endpoint: 'UPLOAD_DATASET'
       }),
-      formData
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   deleteDataset: (datasetId: string) => {
@@ -70,7 +100,12 @@ const datasetAPI = {
       apiEndpoint({
         endpoint: 'DELETE_DATASET',
         paramsValue: { datasetId }
-      })
+      }),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   uploadTable: (formData: FormData, datasetId: string) => {
@@ -79,7 +114,12 @@ const datasetAPI = {
         endpoint: 'UPLOAD_TABLE',
         paramsValue: { datasetId }
       }),
-      formData
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   },
   deleteTable: (params: { datasetId: string; tableId: string }) => {
@@ -87,7 +127,12 @@ const datasetAPI = {
       apiEndpoint({
         endpoint: 'DELETE_TABLE',
         paramsValue: params
-      })
+      }),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }
     );
   }
 };

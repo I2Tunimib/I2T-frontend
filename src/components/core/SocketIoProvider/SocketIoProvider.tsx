@@ -6,7 +6,7 @@ const SocketIoProvider: FC<{}> = ({ children }) => {
   const [state, setState] = useState<Socket>();
 
   useEffect(() => {
-    const socket = io(process.env.REACT_APP_BACKEND_DOMAIN || '', { transports: ['websocket'] });
+    const socket = io(import.meta.env.VITE_BACKEND_DOMAIN || '', { transports: ['websocket'] });
     setState(socket);
 
     return () => { socket.disconnect(); };

@@ -1,4 +1,4 @@
-import { Chip, IconButton, Stack, Typography } from '@mui/material';
+import { Avatar, Chip, IconButton, Stack, Typography } from '@mui/material';
 import { Searchbar } from '@components/kit';
 import { FC, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -9,6 +9,8 @@ import { globalSearch } from '@store/slices/datasets/datasets.thunk';
 import { GlobalSearchResult } from '@services/api/datasets';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { updateUI } from '@store/slices/datasets/datasets.slice';
+import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
+import UserAvatar from '@components/kit/UserAvatar';
 import styles from './ToolbarContent.module.scss';
 
 const SearchResultItem = styled(Link)({
@@ -29,6 +31,7 @@ const ToolbarContent: FC<any> = () => {
   const [
     { datasets, tables },
     setSearchResults] = useState<GlobalSearchResult>({ datasets: [], tables: [] });
+  const auth = useAppSelector(selectIsLoggedIn);
 
   const { API } = useAppSelector(selectAppConfig);
   const dispatch = useAppDispatch();
@@ -93,6 +96,7 @@ const ToolbarContent: FC<any> = () => {
           placeholder="Search for a table name"
         />
       )}
+
       <IconButton
         sx={{
           color: '#FFF'
@@ -100,6 +104,11 @@ const ToolbarContent: FC<any> = () => {
         onClick={() => dispatch(updateUI({ helpDialogOpen: true }))}>
         <HelpOutlineRoundedIcon />
       </IconButton>
+      {auth.loggedIn && auth.user && (
+        <UserAvatar>
+          {auth.user.username.slice(0, 2).toUpperCase()}
+        </UserAvatar>
+      )}
     </Stack>
   );
 };
