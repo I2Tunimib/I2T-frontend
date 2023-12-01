@@ -446,12 +446,12 @@ const getMetadata = (cell: Cell, cellContext: Context) => {
   if (!Array.isArray(cell.metadata)) {
     return [];
   }
-
+   
   const metadata = cell.metadata.map((item) => ({
     ...item,
-    url: `${cellContext.uri}${item.id.split(':')[1]}`
+    url: cellContext !== undefined ? `${cellContext.uri}${item.id.split(':')[1]}` : null
   }));
-
+ 
   if (cell.annotationMeta && !cell.annotationMeta.match) {
     return metadata;
   }

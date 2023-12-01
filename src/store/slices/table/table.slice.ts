@@ -828,7 +828,7 @@ export const tableSlice = createSliceWithRequests({
                 });
               } else {
                 column.metadata[0] = {
-                  id: '',
+                  id: 'None:',
                   match: true,
                   score: 0,
                   name: { value: '', uri: '' },

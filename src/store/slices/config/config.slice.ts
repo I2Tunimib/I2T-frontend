@@ -20,8 +20,9 @@ export const configSlice = createSliceWithRequests({
   extraRules: (builder) => (
     builder.addCase(getConfig.fulfilled, (state, action) => {
       const { reconciliators, extenders } = action.payload;
-
-      reconciliators.forEach((reconciliator) => {
+      reconciliators.forEach((reconciliator, i) => {
+        //state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
+        //state.entities.reconciliators.allIds.push(reconciliator.id);
         state.entities.reconciliators.byId[reconciliator.prefix] = reconciliator;
         state.entities.reconciliators.allIds.push(reconciliator.prefix);
       });

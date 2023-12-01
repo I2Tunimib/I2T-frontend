@@ -59,6 +59,8 @@ const ReconciliateDialog = () => {
   const { loading, error } = useAppSelector(selectReconcileRequestStatus);
 
   useEffect(() => {
+    // Log the value of reconciliators
+
     // set initial value of select
     if (reconciliators) {
       setCurrentService(reconciliators[0]);
