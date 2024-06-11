@@ -19,5 +19,11 @@ export const KG_INFO = {
   },
   atokaPeople: {
     uri: 'https://atoka.io/public/en/people/-/'
+  },
+  wdA: {
+    uri: 'https://www.wikidata.org/wiki/'
+  },
+  geoCoord: {
+    uri: 'http://www.google.com/maps/place/'
   }
 };
