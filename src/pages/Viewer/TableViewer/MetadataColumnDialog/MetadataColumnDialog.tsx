@@ -2,6 +2,7 @@ import { Box, Dialog, DialogProps, Stack, Tab, Tabs, Typography } from '@mui/mat
 import { FC, ReactNode, SyntheticEvent, useState } from 'react';
 import EntityTab from './EntityTab';
 import TypeTab from './TypeTab';
+import PropertyTab from './PropertyTab';
 
 type TabPanelProps = {
   children?: ReactNode;
@@ -62,7 +63,7 @@ const Content = () => {
           <TypeTab />
         </TabPanel>
         <TabPanel value={value} index={1}>
-          Item Two
+          <PropertyTab />
         </TabPanel>
         <TabPanel value={value} index={2}>
           <EntityTab />

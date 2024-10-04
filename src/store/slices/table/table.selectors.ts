@@ -8,6 +8,7 @@ import { Cell, Context } from './interfaces/table';
 import { TableThunkActions } from './table.thunk';
 import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
 import { getIdsFromCell } from './utils/table.utils';
+import { property } from 'lodash';
 
 // Input selectors
 const selectTableState = (state: RootState) => state.table;
@@ -446,7 +447,7 @@ const getMetadata = (cell: Cell, cellContext: Context) => {
   if (!Array.isArray(cell.metadata)) {
     return [];
   }
-   
+  
   const metadata = cell.metadata.map((item) => ({
     ...item,
     url: cellContext !== undefined ? `${cellContext.uri}${item.id.split(':')[1]}` : null
@@ -608,12 +609,23 @@ export const selectColumnCellMetadataTableFormat = createSelector(
             };
           }
         }
+        else if(column.metadata[0].property && column.metadata[0].property.length > 0){          
+          const cellContext = column.metadata[0].property[0].id.split(':')[0];
+          const service = reconciliators.byId[cellContext];
+          if (service) {
+            return {
+              column,
+              service
+            };
+          }
+        }
       }
       return {
         column: {
           ...column,
           metadata: [{
-            entity: []
+            entity: [],
+            property : []
           }]
         },
         service: null

@@ -57,6 +57,12 @@ const DialogInnerContent = () => {
     }
   }, [extensionServices]);
 
+  const handleClose = () => {
+    dispatch(updateUI({
+      openExtensionDialog: false
+    }));
+  };
+
   const handleChange = (event: SelectChangeEvent<string>) => {
     const val = extensionServices.find((service) => service.id === event.target.value);
     if (val) {
@@ -117,6 +123,7 @@ const DialogInnerContent = () => {
           <DynamicExtensionForm
             loading={loading}
             onSubmit={handleSubmit}
+            onCancel={handleClose}
             service={currentService} />
         </>
       )}

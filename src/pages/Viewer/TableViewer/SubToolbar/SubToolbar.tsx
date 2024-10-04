@@ -33,7 +33,7 @@ import {
   selectIsViewOnly, selectMetadataDialogStatus,
   selectExtensionDialogStatus, selectIsMetadataButtonEnabled,
   selectMetadataColumnDialogStatus, selectAutomaticAnnotationStatus,
-  selectCurrentTable, selectSearchStatus, selectAreCellReconciliated
+  selectCurrentTable, selectSearchStatus, selectAreCellReconciliated, selectReconcileDialogStatus
 } from '@store/slices/table/table.selectors';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
 import { automaticAnnotation, filterTable } from '@store/slices/table/table.thunk';
@@ -117,6 +117,7 @@ const SubToolbar = () => {
   const openMetadataDialog = useAppSelector(selectMetadataDialogStatus);
   const openMetadataColumnDialog = useAppSelector(selectMetadataColumnDialogStatus);
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
+  const openReconciliationDialog = useAppSelector(selectReconcileDialogStatus);
   const currenTable = useAppSelector(selectCurrentTable);
   const searchFilter = useAppSelector(selectSearchStatus);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
@@ -331,7 +332,7 @@ const SubToolbar = () => {
         </Stack>
       </ToolbarActions>
       {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}
-      <ReconciliateDialog />
+      <ReconciliateDialog open={openReconciliationDialog} handleClose={() => handleExtensionClose('openReconciliateDialog')}/>
       <MetadataColumnDialog open={openMetadataColumnDialog} onClose={() => handleExtensionClose('openMetadataColumnDialog')} />
       <ExtensionDialog open={openExtensionDialog} handleClose={() => handleExtensionClose('openExtensionDialog')} />
       <RefineMatchingDialog

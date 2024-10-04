@@ -23,7 +23,8 @@ import {
   Ref,
   ReactElement,
   useEffect,
-  useState
+  useState,
+  FC
 } from 'react';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
@@ -46,13 +47,20 @@ const Transition = forwardRef((
   ref: Ref<unknown>,
 ) => (<Slide direction="down" ref={ref} {...props} />));
 
-const ReconciliateDialog = () => {
+export type ReconciliationDialogProps = {
+  open: boolean;
+  handleClose: () => void;
+}
+
+const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
+  open,
+  handleClose
+}) => {
   // keep track of selected service
   const [contextColumns, setContextColumns] = useState<string[]>([]);
   const [currentService, setCurrentService] = useState<Reconciliator | null>();
   const dispatch = useAppDispatch();
-  // keep track of open state
-  const open = useAppSelector(selectReconcileDialogStatus);
+ 
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const columnIds = useAppSelector(selectReconciliatioContextColumnIds);
   const selectedCells = useAppSelector(selectReconciliationCells);
@@ -84,12 +92,6 @@ const ReconciliateDialog = () => {
     //       }));
     //     });
     // }
-  };
-
-  const handleClose = () => {
-    dispatch(updateUI({
-      openReconciliateDialog: false
-    }));
   };
 
   const handleChange = (event: SelectChangeEvent<string>) => {
@@ -151,8 +153,10 @@ const ReconciliateDialog = () => {
               </FormControl>
               {error && <Typography color="error">{error.message}</Typography>}
               {currentService.description && (
-                <SquaredBox>
-                  {currentService.description}
+                <SquaredBox dangerouslySetInnerHTML={{ __html: currentService.description }}>
+                 {/*
+                 {currentService.description}
+                 */} 
                 </SquaredBox>
               )}
               <Divider />
@@ -160,6 +164,7 @@ const ReconciliateDialog = () => {
                 service={currentService}
                 loading={loading}
                 onSubmit={handleSubmit}
+                onCancel={handleClose}
               />
               {/* <div>
                 Select any context columns to provide to the reconciliator service

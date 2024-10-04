@@ -11,12 +11,14 @@ export type DynamicFormProps = {
   loading: boolean | undefined;
   service: Extender | Reconciliator;
   onSubmit: (formState: Record<string, any>) => void;
+  onCancel: () => void;
 }
 
 const DynamicForm: FC<DynamicFormProps> = ({
   loading,
   service,
-  onSubmit: onSubmitCallback
+  onSubmit: onSubmitCallback,
+  onCancel: onCancelCallback
 }) => {
   const dispatch = useAppDispatch();
 
@@ -37,6 +39,10 @@ const DynamicForm: FC<DynamicFormProps> = ({
 
   const onSubmit = (formValue: any) => {
     onSubmitCallback(formValue);
+  };
+
+  const onCancel = () => {
+    onCancelCallback();
   };
 
   return (
@@ -65,7 +71,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
         );
       })}
       <Stack direction="row" justifyContent="flex-end">
-        <Button onClick={() => dispatch(updateUI({ openExtensionDialog: false }))}>Cancel</Button>
+        <Button onClick={onCancel}>Cancel</Button>
         <LoadingButton type="submit" loading={loading}>Confirm</LoadingButton>
       </Stack>
     </Stack>
