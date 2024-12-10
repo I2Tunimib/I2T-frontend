@@ -163,6 +163,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     handleClose();
   };
 
+const handleSelectedRowDelete = useCallback((row: any) => {
+  console.log("request to delete: " + row);
+}, []);
+
   const handleSelectedRowChange = useCallback((row: any) => {
     if (row) {
       setState(({ columns: colState, data: dataState }) => {
@@ -424,6 +428,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           data={data}
           loading={loading}
           onSelectedRowChange={handleSelectedRowChange}
+          onSelectedRowDeleteRequest ={handleSelectedRowDelete}
           showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
         />
       </Stack>

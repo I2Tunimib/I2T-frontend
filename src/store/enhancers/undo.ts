@@ -96,7 +96,7 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
 /**
  * Apply patches for current version.
  */
-export const applyUndoPatches = <T extends UndoEnhancedState>(
+/*export const applyUndoPatches = <T extends UndoEnhancedState>(
   state: T, mutations?: (draft: T) => void
 ) => {
   if (state._draft.undoPointer > -1) {
@@ -107,6 +107,32 @@ export const applyUndoPatches = <T extends UndoEnhancedState>(
     }
     return newDraft;
   }
+};*/
+export const applyUndoPatches = <T extends UndoEnhancedState>(
+  state: T, 
+  steps = 1, // (default 1)
+  mutations?: (draft: T) => void
+) => {
+  if (state._draft.undoPointer < 0 || steps <= 0) {
+    return state; // No patches to apply
+  }
+
+  let newDraft = state;
+
+  // Limit steps to max available undo steps
+  const actualSteps = Math.min(steps, state._draft.undoPointer + 1);
+
+  // Apply patches
+  for (let i = 0; i < actualSteps; i++) {
+    state._draft.redoPointer += 1;
+    newDraft = applyPatches(newDraft, state._draft.inversePatches[state._draft.undoPointer--]);
+  }
+
+  if (mutations) {
+    mutations(newDraft);
+  }
+
+  return newDraft;
 };
 
 /**
@@ -152,7 +178,7 @@ export const createSliceWithUndo = <T extends UndoEnhancedState>(
     reducers: {
       ...rest.reducers,
       undo: undoReducer,
-      redo: redoReducer
+      redo: redoReducer,
     }
   });
 };

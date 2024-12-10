@@ -2,16 +2,19 @@ import { StatusBadge } from '@components/core';
 import deferMounting from '@components/HOC';
 import CustomTable from '@components/kit/CustomTable/CustomTable';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { Box, Button, Divider, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Typography } from '@mui/material';
+import { Box, Button, Divider, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { selectAppConfig, selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
 import { BaseMetadata, Column } from '@store/slices/table/interfaces/table';
 import { selectColumnCellMetadataTableFormat, selectCurrentCol, selectIsViewOnly, selectReconcileRequestStatus, selectSettings } from '@store/slices/table/table.selectors';
-import { updateColumnMetadata, updateUI } from '@store/slices/table/table.slice';
+import { addCellMetadata, addColumnMetadata, updateColumnMetadata, updateUI } from '@store/slices/table/table.slice';
 import { reconcile } from '@store/slices/table/table.thunk';
+import { getCellContext } from '@store/slices/table/utils/table.reconciliation-utils';
 import { FC, useCallback, useEffect, useState } from 'react';
+import { Controller, FormState, useForm } from 'react-hook-form';
 import { Cell } from 'react-table';
 import { getCellComponent } from '../MetadataDialog/componentsConfig';
 import usePrepareTable from '../MetadataDialog/usePrepareTable';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -86,6 +89,13 @@ const hasColumnMetadata = (column: Column | undefined) => {
 //   }
 //   return 'Warn';
 // };
+interface NewMetadata {
+  id: string;
+  name: string;
+  score: number;
+  match: string;
+  uri?: string;
+}
 
 const EntityTab: FC<{}> = () => {
   const {
@@ -105,6 +115,18 @@ const EntityTab: FC<{}> = () => {
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
 
+  const [showAdd, setShowAdd] = useState<boolean>(false);
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const {
+    handleSubmit, reset,
+    register, control
+  } = useForm<NewMetadata>({
+    defaultValues: {
+      score: 0,
+      match: 'false'
+    }
+  });
+  
   useEffect(() => {
     // set initial value of select
     if (reconciliators) {
@@ -130,6 +152,9 @@ const EntityTab: FC<{}> = () => {
     dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 
+  const handleSelectedRowDelete = useCallback((row: any) => {
+  }, []);
+  
   const handleSelectedRowChange = useCallback((row: any) => {
     if (row) {
       setState(({ columns: colState, data: dataState }) => {
@@ -186,6 +211,50 @@ const EntityTab: FC<{}> = () => {
   const {
     lowerBound
   } = settings;
+
+  const onSubmitNewMetadata = (formState: NewMetadata) => {
+    if (column) {
+      if (column.metadata && column.metadata.length > 0 && column.metadata[0].entity) {
+        const { entity } = column.metadata[0];
+        const previousMatch = entity.find((meta) => meta.match);
+        if (!previousMatch || (previousMatch.id !== selectedMetadata)) {
+          //dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
+          //dispatch(updateUI({ openMetadataColumnDialog: false }));
+          dispatch(addColumnMetadata({
+            colId: column.id,
+            type: 'entity',
+            prefix: getCellContext(column),
+            value: { ...formState }
+          }));
+          reset();
+          setShowAdd(false);
+        }
+      }
+    }
+
+    /*if (cell) {
+      dispatch(addCellMetadata({
+        cellId: cell.id,
+        prefix: getCellContext(cell),
+        value: { ...formState }
+      }));
+      reset();
+      setShowAdd(false);
+    }*/
+  };
+  
+  const handleTooltipOpen = () => {
+    setShowTooltip(!showAdd);
+  };
+
+  const handleTooltipClose = () => {
+    setShowTooltip(false);
+  };
+
+  const handleShowAdd = () => {
+    setShowAdd(!showAdd);
+    setShowTooltip(false);
+  };
 
   const getBadgeStatus = useCallback((col: Column) => {
     const {
@@ -279,6 +348,87 @@ const EntityTab: FC<{}> = () => {
           </FormControl>
         )}
       </Box>
+      {(data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly) && (
+          <Stack
+            position="relative"
+            direction="row"
+            alignItems="center"
+            alignSelf="flex-start"
+            padding="0px 12px">
+            <Tooltip open={showTooltip} title="Add metadata" placement="right">
+              <IconButton
+                color="primary"
+                onMouseLeave={handleTooltipClose}
+                onMouseEnter={handleTooltipOpen}
+                onClick={handleShowAdd}>
+                <AddRoundedIcon sx={{
+                  transition: 'transform 150ms ease-out',
+                  transform: showAdd ? 'rotate(45deg)' : 'rotate(0)'
+                }} />
+              </IconButton>
+            </Tooltip>
+            <Box
+              sx={{
+                position: 'absolute',
+                left: '100%',
+                top: '50%',
+                padding: '12px 16px',
+                borderRadius: '6px',
+                transition: 'all 150ms ease-out',
+                opacity: showAdd ? 1 : 0,
+                transform: showAdd ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-20px)'
+              }}>
+              <Stack
+                component="form"
+                direction="row"
+                gap="10px"
+                onSubmit={handleSubmit(onSubmitNewMetadata)}>
+                <TextField
+                  sx={{ minWidth: '200px' }}
+                  size="small"
+                  label="Id"
+                  variant="outlined"
+                  {...register('id')} />
+                <TextField
+                  sx={{ minWidth: '200px' }}
+                  size="small"
+                  label="Name"
+                  variant="outlined"
+                  {...register('name')} />
+                  <TextField
+                  sx={{ minWidth: '200px' }}
+                  size="small"
+                  label="Uri"
+                  variant="outlined"
+                  {...register('uri')} />
+                <TextField
+                  sx={{ minWidth: '200px' }}
+                  size="small"
+                  label="Score"
+                  variant="outlined"
+                  {...register('score')} />
+                <FormControl size="small" sx={{ width: '200px' }}>
+                  <InputLabel>Match</InputLabel>
+                  <Controller
+                    render={({ field }) => (
+                      <Select {...field} labelId="select-match" label="Match">
+                        <MenuItem value="true">
+                          true
+                        </MenuItem>
+                        <MenuItem value="false">
+                          false
+                        </MenuItem>
+                      </Select>
+                    )}
+                    name="match"
+                    control={control}
+                  />
+                </FormControl>
+                <Button type="submit" size="small" sx={{ textTransform: 'none' }}>Add</Button>
+              </Stack>
+            </Box>
+          </Stack>
+        )}
       <DeferredTable
         flexGrow={1}
         stickyHeaderTop="61.5px"
@@ -286,6 +436,7 @@ const EntityTab: FC<{}> = () => {
         data={data}
         loading={loading}
         onSelectedRowChange={handleSelectedRowChange}
+        onSelectedRowDeleteRequest={handleSelectedRowDelete}
         showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
       />
     </>

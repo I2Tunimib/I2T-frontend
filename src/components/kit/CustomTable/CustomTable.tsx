@@ -5,7 +5,7 @@ import {
   IconButton,
   Pagination, Paper,
   Radio,
-  Stack, Typography
+  Stack, TableCell, Typography
 } from '@mui/material';
 import {
   forwardRef, Fragment, PropsWithChildren,
@@ -17,6 +17,7 @@ import {
   usePagination, useSortBy, useTable
 } from 'react-table';
 import Empty from '@components/kit/Empty';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import {
@@ -28,6 +29,7 @@ import ColumnHide from './ColumnHide';
 
 export interface TableProperties<T extends Record<string, unknown>> extends TableOptions<T> {
   onSelectedRowChange: (row: T | null) => void;
+  onSelectedRowDeleteRequest: (row: T | null) => void;
   stickyHeaderTop?: string;
   loading?: boolean;
 }
@@ -137,6 +139,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
     columns,
     data,
     onSelectedRowChange,
+    onSelectedRowDeleteRequest,
     stickyHeaderTop = '0px',
     loading = false,
     showRadio = true
@@ -192,6 +195,10 @@ export default function CustomTable<T extends Record<string, unknown>>(
     onSelectedRowChange(row.original);
   };
 
+  const handleDeleteRow = (row: Row<T>) => {
+    onSelectedRowDeleteRequest(row.original);
+  };
+
   return (
     <Stack position="relative" flexGrow={1}>
       {loading && (
@@ -224,6 +231,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
                   headerGroups.map((headerGroup) => (
                     // Apply the header row props
                     <TableRow {...headerGroup.getHeaderGroupProps()}>
+                      <TableHeaderCell sorted = {false}/>
                       {// Loop over the headers in each row
                         headerGroup.headers.map((column) => (
                           // Apply the header cell props
@@ -272,6 +280,18 @@ export default function CustomTable<T extends Record<string, unknown>>(
                         <TableRow
                           onClick={() => handleRowClick(row)}
                           {...rowProps}>
+                          {/* Cella per l'icona di eliminazione */}
+                          <TableCell /*padding="checkbox"*/>
+                            <IconButton
+                              color="error"
+                              onClick={(event) => {
+                                event.stopPropagation(); // Previene l'attivazione di handleRowClick
+                                handleDeleteRow(row);
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </TableCell>
                           {// Loop over the rows cells
                             row.cells.map((cell) => {
                               // Apply the cell props

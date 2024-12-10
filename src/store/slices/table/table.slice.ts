@@ -1,18 +1,24 @@
+import { useAppSelector } from '@hooks/store';
 import { current, PayloadAction } from '@reduxjs/toolkit';
 import { GetTableResponse } from '@services/api/table';
-import { KG_INFO } from '@services/utils/kg-info';
+//import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from '@services/utils/objects-utils';
+import { buildURI } from '@services/utils/uri-utils';
+import { RootState, store } from '@store';
 import { createSliceWithRequests } from '@store/enhancers/requests';
 import { applyRedoPatches, applyUndoPatches, produceWithPatch } from '@store/enhancers/undo';
 import { ID, Payload } from '@store/interfaces/store';
+import { selectReconciliators, selectReconciliatorsAsArray } from '../config/config.selectors';
 import {
   AddCellMetadataPayload,
+  AddColumnMetadataPayload,
   AutoMatchingPayload,
   AutomaticAnnotationPayload,
   BBox,
   ColumnStatus,
   CopyCellPayload,
   DeleteCellMetadataPayload,
+  DeleteColumnMetadataPayload,
   DeleteColumnPayload,
   DeleteRowPayload,
   DeleteSelectedPayload,
@@ -29,6 +35,7 @@ import {
   UpdateCellEditablePayload,
   UpdateCellLabelPayload,
   UpdateCellMetadataPayload,
+  UpdateColumnEditablePayload,
   UpdateColumnMetadataPayload,
   UpdateColumnTypePayload,
   UpdateCurrentTablePayload,
@@ -77,6 +84,8 @@ import {
   getIdsFromCell, getRowCells, removeObject,
   toggleObject
 } from './utils/table.utils';
+
+
 
 const initialState: TableState = {
   entities: {
@@ -184,6 +193,13 @@ export const tableSlice = createSliceWithRequests({
       uniqueColumns.forEach((colId) => {
         state.ui.expandedColumnsIds = toggleObject(state.ui.expandedColumnsIds, colId, true);
       });
+    },
+    /**
+     * Set cell editable.
+     */
+    updateColumnEditable: (state, action: PayloadAction<Payload<UpdateColumnEditablePayload>>) => {
+      const { colId } = action.payload;
+      state.ui.editableCellsIds = toggleObject(state.ui.editableCellsIds, colId, true);
     },
     /**
      * Set cell editable.
@@ -312,6 +328,172 @@ export const tableSlice = createSliceWithRequests({
      * Handle the assignment of a metadata to a cell.
      * --UNDOABLE ACTION--
      */
+    addColumnMetadata: (state, action: PayloadAction<Payload<AddColumnMetadataPayload>>) => {
+      const {
+        colId, type, prefix,
+        value, undoable = true
+      } = action.payload;
+
+      const column = getColumn(state, colId);
+
+      switch (type) {
+        case 'entity':
+          {
+            if (column.metadata.length > 0
+              && column.metadata[0].entity
+              && column.metadata[0].entity.length > 0) {
+              return produceWithPatch(state, undoable, (draft) => {
+                const columnToUpdate = getColumn(draft, colId);
+
+                if (columnToUpdate.metadata.length > 0
+                  && columnToUpdate.metadata[0].entity
+                  && columnToUpdate.metadata[0].entity.length > 0
+                  && draft.entities.columns.byId[colId].metadata
+                  && draft.entities.columns.byId[colId].metadata[0].entity) {
+
+                  const {
+                    id, match,
+                    name, uri, ...rest
+                  } = value;
+
+                  const isMatching = match === 'true';
+
+                  if (isMatching) {
+                    draft.entities.columns.byId[colId].metadata[0].entity =
+                      draft.entities.columns.byId[colId].metadata[0].entity?.map((item) => ({ ...item, match: false }));
+                  }
+
+                  const newMeta = {
+                    //id: `${prefix}:${id}`,
+                    id: `${id}`,
+                    match: isMatching,
+                    name: {
+                      value: name,
+                      uri: uri
+                    },
+                    ...rest
+                  };
+
+                  draft.entities.columns.byId[colId].metadata[0].entity?.push(newMeta);
+                }
+              }, (draft) => {
+                // do not include in undo history
+                draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+              });
+            }
+            break;
+          }
+          case 'property':{
+            if (column.metadata.length > 0
+              && column.metadata[0].property
+              /*&& column.metadata[0].property.length > 0*/) {
+              return produceWithPatch(state, undoable, (draft) => {
+                const columnToUpdate = getColumn(draft, colId);
+
+                if (columnToUpdate.metadata.length > 0
+                  && columnToUpdate.metadata[0].property
+                  /*&& columnToUpdate.metadata[0].property.length > 0*/
+                  && draft.entities.columns.byId[colId].metadata
+                  && draft.entities.columns.byId[colId].metadata[0].property) {
+
+                  const {
+                    id, match,
+                    name, uri, obj, ...rest
+                  } = value;
+
+                  const isMatching = match === 'true';
+
+                  if (isMatching) {
+                     draft.entities.columns.byId[colId].metadata[0].property =
+                      draft.entities.columns.byId[colId].metadata[0].property?.map((item) => ({ ...item, match: false }));
+                  }
+
+                  const newMeta = {
+                    //id: `${prefix}:${id}`,
+                    id: `${id}`,
+                    obj: value.obj,
+                    match: isMatching,
+                    name: name,                    
+                    ...rest
+                  };
+
+                  draft.entities.columns.byId[colId].metadata[0].property?.push(newMeta);
+                }
+              }, (draft) => {
+                // do not include in undo history
+                draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+              });
+            }
+            break;
+          }
+      }
+    },
+     /**
+     * Handle the deletion of a metadata to a column.
+     * --UNDOABLE ACTION--
+     */
+     deleteColumnMetadata: (state, action: PayloadAction<Payload<DeleteColumnMetadataPayload>>) => {
+      const {
+        colId, type,
+        metadataId, undoable = true
+      } = action.payload;
+
+      const column = getColumn(state, colId);
+
+      switch (type) {
+        case 'entity':
+          {
+            if (column.metadata.length > 0
+              && column.metadata[0].entity
+              && column.metadata[0].entity.length > 0) {
+              return produceWithPatch(state, undoable, (draft) => {
+                const columnToUpdate = getColumn(draft, colId);
+
+                if (columnToUpdate.metadata.length > 0
+                  && columnToUpdate.metadata[0].entity
+                  && columnToUpdate.metadata[0].entity.length > 0
+                  && draft.entities.columns.byId[colId].metadata
+                  && draft.entities.columns.byId[colId].metadata[0].entity) {
+
+                  draft.entities.columns.byId[colId].metadata[0].entity =  draft.entities.columns.byId[colId].metadata[0].entity?.filter(
+                    (item) => item.id !== metadataId
+                  );
+                
+                }
+              }, (draft) => {
+                // do not include in undo history
+                draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+              });
+            }
+            break;
+          }
+          case 'property':{
+            if (column.metadata.length > 0
+              && column.metadata[0].property
+              /*&& column.metadata[0].property.length > 0*/) {
+              return produceWithPatch(state, undoable, (draft) => {
+                const columnToUpdate = getColumn(draft, colId);
+
+                if (columnToUpdate.metadata.length > 0
+                  && columnToUpdate.metadata[0].property
+                  /*&& columnToUpdate.metadata[0].property.length > 0*/
+                  && draft.entities.columns.byId[colId].metadata
+                  && draft.entities.columns.byId[colId].metadata[0].property) {
+
+                 
+                 draft.entities.columns.byId[colId].metadata[0].property =  draft.entities.columns.byId[colId].metadata[0].property?.filter(
+                  (item) => item.id !== metadataId
+                );                 
+                }
+              }, (draft) => {
+                // do not include in undo history
+                draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+              });
+            }
+            break;
+          }
+      }
+    },
     updateColumnMetadata: (state, action: PayloadAction<Payload<UpdateColumnMetadataPayload>>) => {
       const { metadataId, colId, undoable = true } = action.payload;
 
@@ -714,8 +896,8 @@ export const tableSlice = createSliceWithRequests({
     /**
      * Perform an undo by applying undo patches (past patches).
      */
-    undo: (state, action: PayloadAction<void>) => {
-      return applyUndoPatches(state, (draft) => {
+    undo: (state, action: PayloadAction<number>) => {
+      return applyUndoPatches(state,action.payload ? action.payload : 1, (draft) => {
         draft.ui.selectedColumnCellsIds = {};
         draft.ui.selectedColumnsIds = {};
         draft.ui.selectedRowsIds = {};
@@ -793,7 +975,8 @@ export const tableSlice = createSliceWithRequests({
                   id,
                   name: {
                     value: name as unknown as string,
-                    uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                    //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                    uri: buildURI(reconciliator.uri, metaId)
                   },
                   ...rest
                 };
@@ -815,13 +998,15 @@ export const tableSlice = createSliceWithRequests({
               const column = getColumn(draft, cellId);
 
               if (column.metadata.length > 0) {
+
                 column.metadata[0].entity = metadata.map(({ id, name, ...rest }) => {
                   const [_, metaId] = id.split(':');
                   return {
                     id,
                     name: {
                       value: name as unknown as string,
-                      uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                      //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`                      
+                      uri: buildURI(reconciliator.uri, metaId)
                     },
                     ...rest
                   };
@@ -838,7 +1023,8 @@ export const tableSlice = createSliceWithRequests({
                       id,
                       name: {
                         value: name as unknown as string,
-                        uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                        //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
+                        uri: buildURI(reconciliator.uri, metaId)
                       },
                       ...rest
                     };
@@ -967,8 +1153,11 @@ export const {
   updateCurrentTable,
   updateColumnCellsSelection,
   updateSelectedCellExpanded,
+  updateColumnEditable,
   updateCellEditable,
   updateCellLabel,
+  addColumnMetadata,
+  deleteColumnMetadata,
   addCellMetadata,
   updateColumnMetadata,
   updateCellMetadata,

@@ -143,8 +143,8 @@ export interface BaseMetadata {
   id: ID;
   name: {
     value: string;
-    uri: string;
-  };
+    uri: string | undefined;
+  } | string;
   match: boolean;
   score: number;
   type?: BaseMetadata[];
@@ -212,6 +212,26 @@ export interface AddCellMetadataPayload {
   }
 }
 
+export interface AddColumnMetadataPayload {
+  colId: ID;
+  type: 'type' | 'property' | 'entity'
+  prefix?: string;
+  value: {
+    id: string;
+    name: string;
+    uri?: string;
+    score: number;
+    match: string;
+    obj?: string;
+  }
+}
+
+export interface DeleteColumnMetadataPayload {
+  metadataId: ID,
+  colId: ID;
+  type: 'type' | 'property' | 'entity'
+}
+
 export interface UpdateCellMetadataPayload {
   metadataId: ID,
   cellId: ID
@@ -229,6 +249,10 @@ export interface DeleteCellMetadataPayload {
 export interface UpdateCellLabelPayload {
   cellId: ID,
   value: string
+}
+
+export interface UpdateColumnEditablePayload {
+  colId: ID
 }
 
 export interface UpdateCellEditablePayload {

@@ -4,7 +4,7 @@ import { Draft } from 'immer';
 import { BaseMetadata, Cell, ColumnMetadata, TableState } from '../interfaces/table';
 import { ExtendedColumnCell } from '../table.thunk';
 import { createContext, getCellContext, incrementContextReconciliated, incrementContextTotal } from './table.reconciliation-utils';
-import { getColumn, getIdsFromCell } from './table.utils';
+import { getColumn, getContextPrefix, getIdsFromCell } from './table.utils';
 
 export const getAnnotationMeta = (metadata: BaseMetadata[] | undefined | null) => {
   if (!metadata || metadata.length === 0) {

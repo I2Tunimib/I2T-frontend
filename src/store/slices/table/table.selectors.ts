@@ -597,7 +597,7 @@ export const selectColumnCellMetadataTableFormat = createSelector(
   (colId, reconciliators, cols) => {
     if (colId) {
       const column = cols.byId[colId];
-
+      
       if (column.metadata.length > 0) {
         if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
           const cellContext = column.metadata[0].entity[0].id.split(':')[0];
@@ -605,7 +605,7 @@ export const selectColumnCellMetadataTableFormat = createSelector(
           if (service) {
             return {
               column,
-              service
+              service              
             };
           }
         }
@@ -615,7 +615,7 @@ export const selectColumnCellMetadataTableFormat = createSelector(
           if (service) {
             return {
               column,
-              service
+              service              
             };
           }
         }
