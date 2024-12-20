@@ -311,13 +311,11 @@ const PropertyTab: FC<{}> = () => {
   };
 
   const onSubmitNewMetadata = (formState: NewMetadata) => {
-    if (column) {
-      if (column.metadata && column.metadata.length > 0 && column.metadata[0].property) {
-        const { property } = column.metadata[0];
+    if (column) {      
+      if (column.metadata /*&& column.metadata.length > 0 && column.metadata[0].property*/) {
+       /* const { property } = column.metadata[0];
         const previousMatch = property.find((meta) => meta.match);
-        if (!previousMatch || (previousMatch.id !== selectedMetadata)) {
-          //dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
-          //dispatch(updateUI({ openMetadataColumnDialog: false }));
+        if (!previousMatch || (previousMatch.id !== selectedMetadata)) {*/
           dispatch(addColumnMetadata({
             colId: column.id,
             type: 'property',
@@ -327,7 +325,7 @@ const PropertyTab: FC<{}> = () => {
           setUndoSteps(undoSteps + 1);
           reset();
           setShowAdd(false);
-        }
+        //}
       }
     }
 

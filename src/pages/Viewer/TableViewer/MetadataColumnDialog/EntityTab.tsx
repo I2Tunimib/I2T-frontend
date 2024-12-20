@@ -6,7 +6,7 @@ import { Box, Button, Divider, FormControl, IconButton, InputLabel, MenuItem, Se
 import { selectAppConfig, selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
 import { BaseMetadata, Column } from '@store/slices/table/interfaces/table';
 import { selectColumnCellMetadataTableFormat, selectCurrentCol, selectIsViewOnly, selectReconcileRequestStatus, selectSettings } from '@store/slices/table/table.selectors';
-import { addCellMetadata, addColumnMetadata, updateColumnMetadata, updateUI } from '@store/slices/table/table.slice';
+import { addCellMetadata, addColumnMetadata, updateColumnMetadata, undo, updateUI } from '@store/slices/table/table.slice';
 import { reconcile } from '@store/slices/table/table.thunk';
 import { getCellContext } from '@store/slices/table/utils/table.reconciliation-utils';
 import { FC, useCallback, useEffect, useState } from 'react';
@@ -107,6 +107,7 @@ const EntityTab: FC<{}> = () => {
   } = usePrepareTable({ selector: selectColumnCellMetadataTableFormat, makeData });
   const [selectedMetadata, setSelectedMetadata] = useState<string>('');
   const [currentService, setCurrentService] = useState<string>();
+  const [undoSteps, setUndoSteps] = useState(0);
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const column = useAppSelector(selectCurrentCol);
@@ -126,7 +127,7 @@ const EntityTab: FC<{}> = () => {
       match: 'false'
     }
   });
-  
+
   useEffect(() => {
     // set initial value of select
     if (reconciliators) {
@@ -149,12 +150,13 @@ const EntityTab: FC<{}> = () => {
   };
 
   const handleCancel = () => {
+    dispatch(undo(undoSteps));
     dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 
   const handleSelectedRowDelete = useCallback((row: any) => {
   }, []);
-  
+
   const handleSelectedRowChange = useCallback((row: any) => {
     if (row) {
       setState(({ columns: colState, data: dataState }) => {
@@ -214,21 +216,22 @@ const EntityTab: FC<{}> = () => {
 
   const onSubmitNewMetadata = (formState: NewMetadata) => {
     if (column) {
-      if (column.metadata && column.metadata.length > 0 && column.metadata[0].entity) {
-        const { entity } = column.metadata[0];
+      if (column.metadata /*&& column.metadata.length > 0 && column.metadata[0].entity*/) {
+        /*const { entity } = column.metadata[0];
         const previousMatch = entity.find((meta) => meta.match);
-        if (!previousMatch || (previousMatch.id !== selectedMetadata)) {
-          //dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
-          //dispatch(updateUI({ openMetadataColumnDialog: false }));
-          dispatch(addColumnMetadata({
-            colId: column.id,
-            type: 'entity',
-            prefix: getCellContext(column),
-            value: { ...formState }
-          }));
-          reset();
-          setShowAdd(false);
-        }
+        if (!previousMatch || (previousMatch.id !== selectedMetadata)) {*/
+        //dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
+        //dispatch(updateUI({ openMetadataColumnDialog: false }));
+        dispatch(addColumnMetadata({
+          colId: column.id,
+          type: 'entity',
+          prefix: getCellContext(column),
+          value: { ...formState }
+        }));
+        setUndoSteps(undoSteps + 1);
+        reset();
+        setShowAdd(false);
+        //}
       }
     }
 
@@ -242,7 +245,7 @@ const EntityTab: FC<{}> = () => {
       setShowAdd(false);
     }*/
   };
-  
+
   const handleTooltipOpen = () => {
     setShowTooltip(!showAdd);
   };
@@ -348,87 +351,97 @@ const EntityTab: FC<{}> = () => {
           </FormControl>
         )}
       </Box>
-      {(data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly) && (
-          <Stack
-            position="relative"
-            direction="row"
-            alignItems="center"
-            alignSelf="flex-start"
-            padding="0px 12px">
-            <Tooltip open={showTooltip} title="Add metadata" placement="right">
-              <IconButton
-                color="primary"
-                onMouseLeave={handleTooltipClose}
-                onMouseEnter={handleTooltipOpen}
-                onClick={handleShowAdd}>
-                <AddRoundedIcon sx={{
-                  transition: 'transform 150ms ease-out',
-                  transform: showAdd ? 'rotate(45deg)' : 'rotate(0)'
-                }} />
-              </IconButton>
-            </Tooltip>
-            <Box
-              sx={{
-                position: 'absolute',
-                left: '100%',
-                top: '50%',
-                padding: '12px 16px',
-                borderRadius: '6px',
-                transition: 'all 150ms ease-out',
-                opacity: showAdd ? 1 : 0,
-                transform: showAdd ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-20px)'
-              }}>
-              <Stack
-                component="form"
-                direction="row"
-                gap="10px"
-                onSubmit={handleSubmit(onSubmitNewMetadata)}>
+      {(/*data.length > 0 && */API.ENDPOINTS.SAVE && !isViewOnly) && (
+        <Stack
+          position="relative"
+          direction="row"
+          alignItems="center"
+          alignSelf="flex-start"
+          padding="0px 12px">
+          <Tooltip open={showTooltip} title="Add metadata" placement="right">
+            <IconButton
+              color="primary"
+              onMouseLeave={handleTooltipClose}
+              onMouseEnter={handleTooltipOpen}
+              onClick={handleShowAdd}>
+              <AddRoundedIcon sx={{
+                transition: 'transform 150ms ease-out',
+                transform: showAdd ? 'rotate(45deg)' : 'rotate(0)'
+              }} />
+            </IconButton>
+          </Tooltip>
+          <Box
+            sx={{
+              position: 'absolute',
+              left: '100%',
+              top: '50%',
+              padding: '12px 16px',
+              borderRadius: '6px',
+              transition: 'all 150ms ease-out',
+              opacity: showAdd ? 1 : 0,
+              transform: showAdd ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-20px)'
+            }}>
+            <Stack
+              component="form"
+              direction="row"
+              gap="10px"
+              onSubmit={handleSubmit(onSubmitNewMetadata)}>
+              <Tooltip title="Enter a complete id, like wd:Q215627" arrow placement="top">
                 <TextField
                   sx={{ minWidth: '200px' }}
                   size="small"
                   label="Id"
                   variant="outlined"
+                  required
+                  placeholder="wd:"
                   {...register('id')} />
+              </Tooltip>
+              <Tooltip title="Enter a name, like person" arrow placement="top">
                 <TextField
                   sx={{ minWidth: '200px' }}
                   size="small"
                   label="Name"
                   variant="outlined"
+                  required
                   {...register('name')} />
-                  <TextField
-                  sx={{ minWidth: '200px' }}
-                  size="small"
-                  label="Uri"
-                  variant="outlined"
-                  {...register('uri')} />
+              </Tooltip>
+              <TextField
+                sx={{ minWidth: '200px' }}
+                size="small"
+                label="Uri"
+                variant="outlined"
+                {...register('uri')} />
+              <Tooltip title="Enter the score value, from 0.00 to 1.00" arrow placement="top">
                 <TextField
                   sx={{ minWidth: '200px' }}
                   size="small"
                   label="Score"
                   variant="outlined"
+                  required
                   {...register('score')} />
-                <FormControl size="small" sx={{ width: '200px' }}>
-                  <InputLabel>Match</InputLabel>
-                  <Controller
-                    render={({ field }) => (
-                      <Select {...field} labelId="select-match" label="Match">
-                        <MenuItem value="true">
-                          true
-                        </MenuItem>
-                        <MenuItem value="false">
-                          false
-                        </MenuItem>
-                      </Select>
-                    )}
-                    name="match"
-                    control={control}
-                  />
-                </FormControl>
-                <Button type="submit" size="small" sx={{ textTransform: 'none' }}>Add</Button>
-              </Stack>
-            </Box>
-          </Stack>
-        )}
+              </Tooltip>
+              <FormControl size="small" sx={{ width: '200px' }}>
+                <InputLabel>Match</InputLabel>
+                <Controller
+                  render={({ field }) => (
+                    <Select {...field} labelId="select-match" label="Match">
+                      <MenuItem value="true">
+                        true
+                      </MenuItem>
+                      <MenuItem value="false">
+                        false
+                      </MenuItem>
+                    </Select>
+                  )}
+                  name="match"
+                  control={control}
+                />
+              </FormControl>
+              <Button type="submit" size="small" sx={{ textTransform: 'none' }}>Add</Button>
+            </Stack>
+          </Box>
+        </Stack>
+      )}
       <DeferredTable
         flexGrow={1}
         stickyHeaderTop="61.5px"

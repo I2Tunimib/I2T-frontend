@@ -84,6 +84,7 @@ import {
   getIdsFromCell, getRowCells, removeObject,
   toggleObject
 } from './utils/table.utils';
+import { property } from 'lodash';
 
 
 
@@ -339,11 +340,18 @@ export const tableSlice = createSliceWithRequests({
       switch (type) {
         case 'entity':
           {
-            if (column.metadata.length > 0
+            if (column.metadata/*.length > 0
               && column.metadata[0].entity
-              && column.metadata[0].entity.length > 0) {
+              && column.metadata[0].entity.length > 0*/) {
               return produceWithPatch(state, undoable, (draft) => {
                 const columnToUpdate = getColumn(draft, colId);
+
+                const {
+                  id, match,
+                  name, uri, ...rest
+                } = value;
+
+                const isMatching = match === 'true';
 
                 if (columnToUpdate.metadata.length > 0
                   && columnToUpdate.metadata[0].entity
@@ -351,31 +359,32 @@ export const tableSlice = createSliceWithRequests({
                   && draft.entities.columns.byId[colId].metadata
                   && draft.entities.columns.byId[colId].metadata[0].entity) {
 
-                  const {
-                    id, match,
-                    name, uri, ...rest
-                  } = value;
-
-                  const isMatching = match === 'true';
-
                   if (isMatching) {
                     draft.entities.columns.byId[colId].metadata[0].entity =
                       draft.entities.columns.byId[colId].metadata[0].entity?.map((item) => ({ ...item, match: false }));
                   }
-
-                  const newMeta = {
-                    //id: `${prefix}:${id}`,
-                    id: `${id}`,
-                    match: isMatching,
-                    name: {
-                      value: name,
-                      uri: uri
-                    },
-                    ...rest
-                  };
-
-                  draft.entities.columns.byId[colId].metadata[0].entity?.push(newMeta);
                 }
+
+                const newMeta = {
+                  //id: `${prefix}:${id}`,
+                  id: `${id}`,
+                  match: isMatching,
+                  name: {
+                    value: name,
+                    uri: uri
+                  },
+                  ...rest
+                };
+
+                draft.entities.columns.byId[colId].metadata = [
+                  {
+                    ...draft.entities.columns.byId[colId].metadata[0],
+                    entity: [...(draft.entities.columns.byId[colId].metadata[0]?.entity || []), newMeta],
+                  },
+                ];
+
+                //draft.entities.columns.byId[colId].metadata[0].entity?.push(newMeta);
+
               }, (draft) => {
                 // do not include in undo history
                 draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
@@ -383,56 +392,62 @@ export const tableSlice = createSliceWithRequests({
             }
             break;
           }
-          case 'property':{
-            if (column.metadata.length > 0
-              && column.metadata[0].property
+        case 'property': {
+          if (column.metadata/*.length > 0
+            && column.metadata[0].property*/
               /*&& column.metadata[0].property.length > 0*/) {
-              return produceWithPatch(state, undoable, (draft) => {
-                const columnToUpdate = getColumn(draft, colId);
+            return produceWithPatch(state, undoable, (draft) => {
+              const columnToUpdate = getColumn(draft, colId);
 
-                if (columnToUpdate.metadata.length > 0
-                  && columnToUpdate.metadata[0].property
-                  /*&& columnToUpdate.metadata[0].property.length > 0*/
-                  && draft.entities.columns.byId[colId].metadata
-                  && draft.entities.columns.byId[colId].metadata[0].property) {
+              const {
+                id, match,
+                name, uri, obj, ...rest
+              } = value;
+              const isMatching = match === 'true';
 
-                  const {
-                    id, match,
-                    name, uri, obj, ...rest
-                  } = value;
-
-                  const isMatching = match === 'true';
-
-                  if (isMatching) {
-                     draft.entities.columns.byId[colId].metadata[0].property =
-                      draft.entities.columns.byId[colId].metadata[0].property?.map((item) => ({ ...item, match: false }));
-                  }
-
-                  const newMeta = {
-                    //id: `${prefix}:${id}`,
-                    id: `${id}`,
-                    obj: value.obj,
-                    match: isMatching,
-                    name: name,                    
-                    ...rest
-                  };
-
-                  draft.entities.columns.byId[colId].metadata[0].property?.push(newMeta);
+              if (columnToUpdate.metadata.length > 0
+                && columnToUpdate.metadata[0].property
+                && columnToUpdate.metadata[0].property.length > 0
+                && draft.entities.columns.byId[colId].metadata
+                && draft.entities.columns.byId[colId].metadata[0].property) {
+                if (isMatching) {
+                  draft.entities.columns.byId[colId].metadata[0].property =
+                    draft.entities.columns.byId[colId].metadata[0].property?.map((item) => ({ ...item, match: false }));
                 }
-              }, (draft) => {
-                // do not include in undo history
-                draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
-              });
-            }
-            break;
+              }
+
+              const newMeta = {
+                //id: `${prefix}:${id}`,
+                id: `${id}`,
+                obj: value.obj,
+                match: isMatching,
+                name: name,
+                ...rest
+              };
+
+              draft.entities.columns.byId[colId].metadata = [
+                {
+                  ...draft.entities.columns.byId[colId].metadata[0],
+                  property: [...(draft.entities.columns.byId[colId].metadata[0]?.property || []), newMeta],
+                },
+              ];
+
+              //draft.entities.columns.byId[colId].metadata[0].property?.push(newMeta);
+
+            }, (draft) => {
+              // do not include in undo history
+              draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+            });
           }
+          break;
+        }
       }
     },
-     /**
-     * Handle the deletion of a metadata to a column.
-     * --UNDOABLE ACTION--
-     */
-     deleteColumnMetadata: (state, action: PayloadAction<Payload<DeleteColumnMetadataPayload>>) => {
+    /**
+    * Handle the deletion of a metadata to a column.
+    * --UNDOABLE ACTION--
+    */
+    deleteColumnMetadata: (state, action: PayloadAction<Payload<DeleteColumnMetadataPayload>>) => {
       const {
         colId, type,
         metadataId, undoable = true
@@ -455,10 +470,10 @@ export const tableSlice = createSliceWithRequests({
                   && draft.entities.columns.byId[colId].metadata
                   && draft.entities.columns.byId[colId].metadata[0].entity) {
 
-                  draft.entities.columns.byId[colId].metadata[0].entity =  draft.entities.columns.byId[colId].metadata[0].entity?.filter(
+                  draft.entities.columns.byId[colId].metadata[0].entity = draft.entities.columns.byId[colId].metadata[0].entity?.filter(
                     (item) => item.id !== metadataId
                   );
-                
+
                 }
               }, (draft) => {
                 // do not include in undo history
@@ -467,31 +482,31 @@ export const tableSlice = createSliceWithRequests({
             }
             break;
           }
-          case 'property':{
-            if (column.metadata.length > 0
-              && column.metadata[0].property
+        case 'property': {
+          if (column.metadata.length > 0
+            && column.metadata[0].property
               /*&& column.metadata[0].property.length > 0*/) {
-              return produceWithPatch(state, undoable, (draft) => {
-                const columnToUpdate = getColumn(draft, colId);
+            return produceWithPatch(state, undoable, (draft) => {
+              const columnToUpdate = getColumn(draft, colId);
 
-                if (columnToUpdate.metadata.length > 0
-                  && columnToUpdate.metadata[0].property
-                  /*&& columnToUpdate.metadata[0].property.length > 0*/
-                  && draft.entities.columns.byId[colId].metadata
-                  && draft.entities.columns.byId[colId].metadata[0].property) {
+              if (columnToUpdate.metadata.length > 0
+                && columnToUpdate.metadata[0].property
+                /*&& columnToUpdate.metadata[0].property.length > 0*/
+                && draft.entities.columns.byId[colId].metadata
+                && draft.entities.columns.byId[colId].metadata[0].property) {
 
-                 
-                 draft.entities.columns.byId[colId].metadata[0].property =  draft.entities.columns.byId[colId].metadata[0].property?.filter(
+
+                draft.entities.columns.byId[colId].metadata[0].property = draft.entities.columns.byId[colId].metadata[0].property?.filter(
                   (item) => item.id !== metadataId
-                );                 
-                }
-              }, (draft) => {
-                // do not include in undo history
-                draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
-              });
-            }
-            break;
+                );
+              }
+            }, (draft) => {
+              // do not include in undo history
+              draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+            });
           }
+          break;
+        }
       }
     },
     updateColumnMetadata: (state, action: PayloadAction<Payload<UpdateColumnMetadataPayload>>) => {
@@ -897,7 +912,7 @@ export const tableSlice = createSliceWithRequests({
      * Perform an undo by applying undo patches (past patches).
      */
     undo: (state, action: PayloadAction<number>) => {
-      return applyUndoPatches(state,action.payload ? action.payload : 1, (draft) => {
+      return applyUndoPatches(state, action.payload ? action.payload : 1, (draft) => {
         draft.ui.selectedColumnCellsIds = {};
         draft.ui.selectedColumnsIds = {};
         draft.ui.selectedRowsIds = {};
