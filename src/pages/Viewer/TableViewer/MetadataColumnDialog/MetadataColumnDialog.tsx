@@ -1,15 +1,33 @@
-import { Box, Dialog, DialogProps, Stack, Tab, Tabs, Typography } from '@mui/material';
-import { FC, ReactNode, SyntheticEvent, useState } from 'react';
-import EntityTab from './EntityTab';
-import TypeTab from './TypeTab';
-import PropertyTab from './PropertyTab';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogProps,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+} from "@mui/material";
+import { FC, ReactNode, SyntheticEvent, useEffect, useState } from "react";
+
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import { selectAppConfig } from "@store/slices/config/config.selectors";
+import { selectIsViewOnly } from "@store/slices/table/table.selectors";
+import { set } from "lodash";
+import { undo, updateUI } from "@store/slices/table/table.slice";
+import EntityTab from "./EntityTab";
+import TypeTab from "./TypeTab";
+import PropertyTab from "./PropertyTab";
 
 type TabPanelProps = {
   children?: ReactNode;
   index: number;
   value: number;
-}
-
+};
+type ReduxEditObject = {
+  type: string;
+  payload: Object;
+};
 const TabPanel: FC<TabPanelProps> = (props) => {
   const { children, value, index, ...other } = props;
 
@@ -22,9 +40,7 @@ const TabPanel: FC<TabPanelProps> = (props) => {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      <Stack flexGrow={1}>
-        {children}
-      </Stack>
+      <Stack flexGrow={1}>{children}</Stack>
     </Stack>
   ) : null;
 };
@@ -32,41 +48,133 @@ const TabPanel: FC<TabPanelProps> = (props) => {
 const a11yProps = (index: number) => {
   return {
     id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`
+    "aria-controls": `simple-tabpanel-${index}`,
   };
 };
 
 const Content = () => {
   const [value, setValue] = useState(0);
-
+  const [editsState, setEditsState] = useState<ReduxEditObject[]>([]);
+  const { API } = useAppSelector(selectAppConfig);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
+  const dispatch = useAppDispatch();
   const handleChange = (event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
 
+  /**
+   * Function used to remove the last edit of a specific type from the editsState array,
+   * used in cases like updating the column type, where only the last
+   * edit is kept to the same information
+   * @param type : the string used to identify the type of the edit
+   * @returns the new array of edits without the last edit of the specified type
+   */
+  const removeLastEditOfType = (type: string) => {
+    // Find the index of the last occurrence of the element with the specified type
+    const lastIndex = editsState.map((edit) => edit.type).lastIndexOf(type);
+
+    // If the type is not found, return the original array
+    if (lastIndex === -1) {
+      return editsState;
+    }
+
+    // Create a new array that excludes the element at the found index
+    return editsState.filter((_, index) => index !== lastIndex);
+  };
+
+  /**
+   * Adds an edit to the editsState array and optionally increments the undo steps.
+   * If removeLast is true, it removes the last edit of the
+   * specified type before adding the new edit.
+   * @param {ReduxEditObject} editFunction - The edit object to be added.
+   * @param {boolean} [undoable=false] - If true, increments the undo steps.
+   * @param {boolean} [removeLast=false] - If true, removes the last edit of the specified type before adding the new edit.
+   */
+  const handleAddEdit = (
+    editFunction: ReduxEditObject,
+    undoable: boolean = false,
+    removeLast: boolean = false
+  ) => {
+    //increment the number of undo steps if undoable
+    //remove last edit of the same type if needed and set the new state else add the new edit
+    if (removeLast) {
+      const filteredEdits = removeLastEditOfType(editFunction.type);
+      setEditsState([...filteredEdits, editFunction]);
+    } else setEditsState([...editsState, editFunction]);
+  };
+
+  /**
+   * Applies all the edits stored in the editsState array by dispatching them.
+   * Clears the editsState array and closes the metadata column dialog.
+   * Logs any errors encountered during the process.
+   */
+  const handleApplyEdits = () => {
+    try {
+      for (const edit of editsState) {
+        dispatch(edit);
+      }
+      setEditsState([]);
+
+      dispatch(updateUI({ openMetadataColumnDialog: false }));
+    } catch (error) {
+      console.error("Error during edits apply", error);
+    }
+  };
+
+  /**
+   * Resets the edits state and undo steps, and closes the metadata column dialog.
+   * Logs any errors encountered during the process.
+   */
+  const handleCancel = () => {
+    try {
+      setEditsState([]);
+
+      dispatch(updateUI({ openMetadataColumnDialog: false }));
+    } catch (error) {
+      console.error("Error during edits apply", error);
+    }
+  };
   return (
     <Stack>
+      <Stack
+        direction="row"
+        marginLeft="auto"
+        marginRight="15px"
+        marginTop="15px"
+        gap="10px"
+      >
+        <Button onClick={handleCancel} variant="outlined">
+          {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
+        </Button>
+        {API.ENDPOINTS.SAVE && !isViewOnly && (
+          <Button onClick={handleApplyEdits} variant="outlined">
+            Confirm
+          </Button>
+        )}
+      </Stack>
       <Tabs
         sx={{
-          position: 'sticky',
+          position: "sticky",
           top: 0,
           zIndex: 10,
-          backgroundColor: '#FFF'
+          backgroundColor: "#FFF",
         }}
         value={value}
-        onChange={handleChange}>
+        onChange={handleChange}
+      >
         <Tab label="Column types" {...a11yProps(0)} />
         <Tab label="Column properties" {...a11yProps(1)} />
         <Tab label="Cell entities" {...a11yProps(2)} />
       </Tabs>
       <Stack minHeight="600px">
         <TabPanel value={value} index={0}>
-          <TypeTab />
+          <TypeTab addEdit={handleAddEdit} />
         </TabPanel>
         <TabPanel value={value} index={1}>
-          <PropertyTab />
+          <PropertyTab addEdit={handleAddEdit} />
         </TabPanel>
         <TabPanel value={value} index={2}>
-          <EntityTab />
+          <EntityTab addEdit={handleAddEdit} />
         </TabPanel>
       </Stack>
     </Stack>
@@ -74,13 +182,11 @@ const Content = () => {
 };
 
 const MetadataColumnDialog: FC<DialogProps> = ({
-  maxWidth = 'lg',
+  maxWidth = "lg",
   ...props
 }) => {
   return (
-    <Dialog
-      maxWidth={maxWidth}
-      {...props}>
+    <Dialog maxWidth={maxWidth} {...props}>
       <Content />
     </Dialog>
   );
