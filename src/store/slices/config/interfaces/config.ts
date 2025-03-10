@@ -1,6 +1,6 @@
-import { RequestEnhancedState } from '@store/enhancers/requests';
-import { BaseState, ID } from '@store/interfaces/store';
-import { AppConfig } from 'config';
+import { RequestEnhancedState } from "@store/enhancers/requests";
+import { BaseState, ID } from "@store/interfaces/store";
+import { AppConfig } from "config";
 
 // Define a type for the slice state
 export interface IConfigState extends RequestEnhancedState {
@@ -8,11 +8,11 @@ export interface IConfigState extends RequestEnhancedState {
   entities: {
     reconciliators: ReconciliatorsState;
     extenders: ExtendersState;
-  }
+  };
 }
 
-export interface ReconciliatorsState extends BaseState<Reconciliator> { }
-export interface ExtendersState extends BaseState<Extender> { }
+export interface ReconciliatorsState extends BaseState<Reconciliator> {}
+export interface ExtendersState extends BaseState<Extender> {}
 
 export interface Reconciliator {
   id: ID;
@@ -27,8 +27,8 @@ export interface Reconciliator {
 
 export type MetaToViewItem = {
   label?: string;
-  type?: 'link' | 'subList' | 'tag';
-}
+  type?: "link" | "subList" | "tag";
+};
 
 export interface Extender extends Record<string, any> {
   id: ID;
@@ -42,7 +42,7 @@ export interface FormInputParams {
   id: string;
   description: string;
   label: string;
-  inputType: 'text' | 'select' | 'selectColumns' | 'checkbox';
+  inputType: "text" | "textArea" | "select" | "selectColumns" | "checkbox";
   rules: string[];
   options?: Option[];
   infoText?: string;
@@ -85,5 +85,5 @@ export interface ApiConfig {
     SAVE: Endpoint;
     PROCESS_START: Endpoint[];
     EXPORT: Endpoint[];
-  }
+  };
 }

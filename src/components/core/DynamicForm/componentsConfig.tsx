@@ -1,7 +1,11 @@
-import { Extender, FormInputParams } from '@store/slices/config/interfaces/config';
-import CheckboxGroup from './formComponents/CheckboxGroup';
-import InputText from './formComponents/InputText';
-import { Select, SelectColumns } from './formComponents/Select';
+import {
+  Extender,
+  FormInputParams,
+} from "@store/slices/config/interfaces/config";
+import CheckboxGroup from "./formComponents/CheckboxGroup";
+import InputText from "./formComponents/InputText";
+import { Select, SelectColumns } from "./formComponents/Select";
+import TextArea from "./formComponents/TextArea";
 
 /**
  * Map of available form components
@@ -10,7 +14,8 @@ export const FORM_COMPONENTS = {
   text: InputText,
   select: Select,
   selectColumns: SelectColumns,
-  checkbox: CheckboxGroup
+  checkbox: CheckboxGroup,
+  textArea: TextArea,
 };
 
 /**
@@ -19,8 +24,8 @@ export const FORM_COMPONENTS = {
 const ruleObjects = {
   required: {
     value: true,
-    message: 'This field is required'
-  }
+    message: "This field is required",
+  },
 };
 
 export const getRules = (rules: string[]) => {
@@ -44,20 +49,17 @@ export const getDefaultValues = (extender: Extender) => {
   if (!formParams) {
     return undefined;
   }
-  return formParams.reduce((acc, {
-    id, defaultValue,
-    options, inputType
-  }) => {
-    if (inputType === 'text') {
-      acc[id] = defaultValue || '';
-    } else if (inputType === 'select') {
+  return formParams.reduce((acc, { id, defaultValue, options, inputType }) => {
+    if (inputType === "text" || inputType === "textArea") {
+      acc[id] = defaultValue || "";
+    } else if (inputType === "select") {
       if (options) {
         acc[id] = defaultValue || options[0].value;
       }
-    } else if (inputType === 'checkbox') {
+    } else if (inputType === "checkbox") {
       acc[id] = defaultValue || [];
-    } else if (inputType === 'selectColumns') {
-      acc[id] = defaultValue || '';
+    } else if (inputType === "selectColumns") {
+      acc[id] = defaultValue || "";
     }
     return acc;
   }, {} as Record<string, any>);
@@ -66,11 +68,13 @@ export const getDefaultValues = (extender: Extender) => {
 /**
  * Add to input probs, rules props (e.g: required)
  */
-export const prepareFormInput = (inputProps: Omit<FormInputParams, 'id' | 'inputType'>) => {
+export const prepareFormInput = (
+  inputProps: Omit<FormInputParams, "id" | "inputType">
+) => {
   const { rules: inputRules } = inputProps;
   const rules = getRules(inputRules);
   return {
     ...inputProps,
-    rules
+    rules,
   };
 };
