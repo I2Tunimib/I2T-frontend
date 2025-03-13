@@ -21,7 +21,7 @@ const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
     borderRadius: "6px",
     backgroundColor: checked ? "#4AC99B" : "#E4E6EB",
     transition: "all 250ms ease-out",
-  }),
+  })
 );
 
 const SquaredBox = styled.div({
@@ -110,32 +110,26 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (types && types.allTypes) {
       const selectedType = types.allTypes.find(
-        (item) => item.id === event.target.value,
+        (item) => item.id === event.target.value
       );
 
       if (selectedType) {
         setSelected(selectedType);
-        addEdit(
-          updateColumnType({
-            id: selectedType.id,
-            name: selectedType.label,
-          }),
-          true,
-          true,
-        );
-      }
-      if (selected) {
-        addEdit(
-          updateColumnType({
-            id: selected.id,
-            name: selected.label,
-          }),
-          true,
-          true,
-        );
       }
     }
   };
+  useEffect(() => {
+    if (selected) {
+      addEdit(
+        updateColumnType({
+          id: selected.id,
+          name: selected.label,
+        }),
+        true,
+        true
+      );
+    }
+  }, [selected]);
 
   useEffect(() => {
     if (types && types.selectedType) {
@@ -150,7 +144,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           id: selected.id,
           name: selected.label,
         }),
-        true,
+        true
       );
     }
     //   dispatch(updateColumnType({
