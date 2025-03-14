@@ -1,14 +1,21 @@
-import { createSelector } from '@reduxjs/toolkit';
-import { floor } from '@services/utils/math';
-import { RootState } from '@store';
-import { getRequestStatus } from '@store/enhancers/requests';
-import { ID } from '@store/interfaces/store';
-import { selectAppConfig, selectReconciliators, selectReconciliatorsAsObject } from '../config/config.selectors';
-import { Cell, Context } from './interfaces/table';
-import { TableThunkActions } from './table.thunk';
-import { getCellContext, getMinMaxScore } from './utils/table.reconciliation-utils';
-import { getIdsFromCell } from './utils/table.utils';
-import { property } from 'lodash';
+import { createSelector } from "@reduxjs/toolkit";
+import { floor } from "@services/utils/math";
+import { RootState } from "@store";
+import { getRequestStatus } from "@store/enhancers/requests";
+import { ID } from "@store/interfaces/store";
+import {
+  selectAppConfig,
+  selectReconciliators,
+  selectReconciliatorsAsObject,
+} from "../config/config.selectors";
+import { Cell, Context } from "./interfaces/table";
+import { TableThunkActions } from "./table.thunk";
+import {
+  getCellContext,
+  getMinMaxScore,
+} from "./utils/table.reconciliation-utils";
+import { getIdsFromCell } from "./utils/table.utils";
+import { property } from "lodash";
 
 // Input selectors
 const selectTableState = (state: RootState) => state.table;
@@ -24,18 +31,20 @@ const selectReconciliatorById = (state: RootState, { value }: any) => {
 };
 const selectColumnContexts = (state: RootState, { data }: any) => {
   return data
-    ? Object.keys(data.context).filter((context: ID) => data.context[context].reconciliated > 0)
+    ? Object.keys(data.context).filter(
+        (context: ID) => data.context[context].reconciliated > 0
+      )
     : [];
 };
 
 // LOADING SELECTORS
-export const selectGetTableStatus = createSelector(
-  selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.GET_TABLE)
+export const selectGetTableStatus = createSelector(selectRequests, (requests) =>
+  getRequestStatus(requests, TableThunkActions.GET_TABLE)
 );
 export const selectGetChallengeTableStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.GET_CHALLENGE_TABLE)
+  (requests) =>
+    getRequestStatus(requests, TableThunkActions.GET_CHALLENGE_TABLE)
 );
 export const selectReconcileRequestStatus = createSelector(
   selectRequests,
@@ -52,7 +61,8 @@ export const selectSaveTableStatus = createSelector(
 );
 export const selectAutomaticAnnotationStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.AUTOMATIC_ANNOTATION)
+  (requests) =>
+    getRequestStatus(requests, TableThunkActions.AUTOMATIC_ANNOTATION)
 );
 
 // UNDO SELECTORS
@@ -73,12 +83,9 @@ export const selectCurrentTable = createSelector(
   (entities) => entities.tableInstance
 );
 
-export const selectUISettings = createSelector(
-  selectUIState,
-  (ui) => {
-    return ui.settings;
-  }
-);
+export const selectUISettings = createSelector(selectUIState, (ui) => {
+  return ui.settings;
+});
 
 export const selectSettings = createSelector(
   selectCurrentTable,
@@ -91,9 +98,9 @@ export const selectSettings = createSelector(
         isScoreLowerBoundEnabled,
         scoreLowerBound,
         minMetaScore,
-        maxMetaScore
+        maxMetaScore,
       },
-      ...rest
+      ...rest,
     };
   }
 );
@@ -109,7 +116,7 @@ export const selectColumnReconciliators = createSelector(
 
 export const selectReconciliatorCell = createSelector(
   selectReconciliatorById,
-  (reconciliator) => '' // (reconciliator ? reconciliator.name : '')
+  (reconciliator) => "" // (reconciliator ? reconciliator.name : '')
 );
 
 export const selectExpandedCellsIds = createSelector(
@@ -135,7 +142,7 @@ export const selectColumnsAsSelectOptions = createSelector(
       return {
         id,
         label,
-        value: id
+        value: id,
       };
     });
   }
@@ -201,10 +208,11 @@ export const selectSelectedCellsIdsAsArray = createSelector(
 export const selectSelectedCells = createSelector(
   selectSelectedCellsIdsAsArray,
   selectRowsState,
-  (selectedCellsIds, rows) => selectedCellsIds.map((cellId) => {
-    const [rowId, colId] = getIdsFromCell(cellId);
-    return rows.byId[rowId].cells[colId];
-  })
+  (selectedCellsIds, rows) =>
+    selectedCellsIds.map((cellId) => {
+      const [rowId, colId] = getIdsFromCell(cellId);
+      return rows.byId[rowId].cells[colId];
+    })
 );
 /**
  * Check if AT LEAST a cell is selected.
@@ -213,7 +221,8 @@ export const selectIsCellSelected = createSelector(
   selectSelectedCellsIdsAsArray,
   selectSelectedColumnCellsIdsAsArray,
   selectSelectedColumnIdsAsArray,
-  (cellIds, cellColIds, colIds) => cellIds.length > 0 || cellColIds.length > 0 || colIds.length > 0
+  (cellIds, cellColIds, colIds) =>
+    cellIds.length > 0 || cellColIds.length > 0 || colIds.length > 0
 );
 /**
  * Check if ONLY ONE cell is selected.
@@ -230,7 +239,7 @@ export const selectCellIdIfOneSelected = createSelector(
   selectSelectedCellsIdsAsArray,
   (isOnlyOneCell, cellIds) => {
     if (!isOnlyOneCell) {
-      return '';
+      return "";
     }
     return cellIds[0];
   }
@@ -276,10 +285,10 @@ export const selectIsMetadataButtonEnabled = createSelector(
   selectSelectedColumnCellsIds,
   (cellIds, colIds) => {
     if (cellIds.length === 1) {
-      return { status: true, type: 'cell' };
+      return { status: true, type: "cell" };
     }
     if (Object.keys(colIds).length === 1) {
-      return { status: true, type: 'column' };
+      return { status: true, type: "column" };
     }
     return { status: false, type: null };
   }
@@ -301,10 +310,7 @@ export const selectIsUnsaved = createSelector(
   }
 );
 
-export const selectCurrentView = createSelector(
-  selectUIState,
-  (ui) => ui.view
-);
+export const selectCurrentView = createSelector(selectUIState, (ui) => ui.view);
 
 export const selectIsDenseView = createSelector(
   selectUIState,
@@ -381,9 +387,13 @@ export const selectCanDelete = createSelector(
   selectSelectedColumnIds,
   selectSelectedRowIds,
   selectSelectedCellsIdsAsArray,
-  (colIds, rowIds, cellIds) => cellIds.length > 0 && cellIds.every((cellId) => (
-    getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
-  ))
+  (colIds, rowIds, cellIds) =>
+    cellIds.length > 0 &&
+    cellIds.every(
+      (cellId) =>
+        getIdsFromCell(cellId)[0] in rowIds ||
+        getIdsFromCell(cellId)[1] in colIds
+    )
 );
 
 /**
@@ -392,8 +402,9 @@ export const selectCanDelete = createSelector(
  */
 export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
-  (selectedCells) => selectedCells.length > 0
-    && !selectedCells.some((cell) => cell && cell.metadata.length === 0)
+  (selectedCells) =>
+    selectedCells.length > 0 &&
+    !selectedCells.some((cell) => cell && cell.metadata.length === 0)
 );
 
 export const selectIsExtendButtonEnabled = createSelector(
@@ -432,8 +443,10 @@ export const selectAreCellReconciliated = createSelector(
     return colIds.some((colId) => {
       if (columns.byId[colId] && columns.byId[colId].context) {
         const { context } = columns.byId[colId];
-        const totalReconciliated = Object.keys(context)
-          .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
+        const totalReconciliated = Object.keys(context).reduce(
+          (acc, ctx) => acc + context[ctx].reconciliated,
+          0
+        );
         return totalReconciliated > 0;
       }
       return false;
@@ -447,12 +460,15 @@ const getMetadata = (cell: Cell, cellContext: Context) => {
   if (!Array.isArray(cell.metadata)) {
     return [];
   }
-  
+
   const metadata = cell.metadata.map((item) => ({
     ...item,
-    url: cellContext !== undefined ? `${cellContext.uri}${item.id.split(':')[1]}` : null
+    url:
+      cellContext !== undefined
+        ? `${cellContext.uri}${item.id.split(":")[1]}`
+        : null,
   }));
- 
+
   if (cell.annotationMeta && !cell.annotationMeta.match) {
     return metadata;
   }
@@ -481,13 +497,13 @@ export const selectDataTableFormat = createSelector(
       return {
         Header: label,
         accessor: colId,
-        sortType: 'customSort',
+        sortType: "customSort",
         id,
-        data: { ...rest }
+        data: { ...rest },
       };
     });
 
-    const rows = entities.rows.allIds.map((rowId) => (
+    const rows = entities.rows.allIds.map((rowId) =>
       Object.keys(entities.rows.byId[rowId].cells).reduce((acc, colId) => {
         const cell = entities.rows.byId[rowId].cells[colId];
         const { context } = entities.columns.byId[colId];
@@ -499,11 +515,11 @@ export const selectDataTableFormat = createSelector(
           [colId]: {
             ...cell,
             metadata: getMetadata(cell, cellContext),
-            rowId
-          }
+            rowId,
+          },
         };
       }, {})
-    ));
+    );
     return { columns, rows };
   }
 );
@@ -522,18 +538,22 @@ export const selectReconciliationCells = createSelector(
     let ids = [] as any;
     if (colCellsIds.length > 0 || colIds.length > 0) {
       const uniqueColIds = [...new Set(colCellsIds.concat(colIds))];
-      ids = ids.concat(uniqueColIds.map((colId) => ({
-        id: colId,
-        label: cols.byId[colId].label
-      })));
+      ids = ids.concat(
+        uniqueColIds.map((colId) => ({
+          id: colId,
+          label: cols.byId[colId].label,
+        }))
+      );
     }
-    return ids.concat(cellIds.map((cellId) => {
-      const [rowId, colId] = getIdsFromCell(cellId);
-      return {
-        id: cellId,
-        label: rows.byId[rowId].cells[colId].label
-      };
-    }));
+    return ids.concat(
+      cellIds.map((cellId) => {
+        const [rowId, colId] = getIdsFromCell(cellId);
+        return {
+          id: cellId,
+          label: rows.byId[rowId].cells[colId].label,
+        };
+      })
+    );
   }
 );
 
@@ -544,21 +564,22 @@ export const selectReconciliationCells = createSelector(
 export const selectAutoMatchingCells = createSelector(
   selectSelectedCells,
   (selectedCells) => {
-    const {
-      minScoreAcc: minScore,
-      maxScoreAcc: maxScore
-    } = selectedCells.reduce(({ minScoreAcc, maxScoreAcc }, cell) => {
-      const { min, max } = getMinMaxScore(cell.metadata);
-      return {
-        minScoreAcc: minScoreAcc < min ? minScoreAcc : min,
-        maxScoreAcc: maxScoreAcc > max ? maxScoreAcc : max
-      };
-    }, { minScoreAcc: 500, maxScoreAcc: 0 });
+    const { minScoreAcc: minScore, maxScoreAcc: maxScore } =
+      selectedCells.reduce(
+        ({ minScoreAcc, maxScoreAcc }, cell) => {
+          const { min, max } = getMinMaxScore(cell.metadata);
+          return {
+            minScoreAcc: minScoreAcc < min ? minScoreAcc : min,
+            maxScoreAcc: maxScoreAcc > max ? maxScoreAcc : max,
+          };
+        },
+        { minScoreAcc: 500, maxScoreAcc: 0 }
+      );
     return {
       selectedCells,
       n: selectedCells.length,
       minScore: floor(minScore),
-      maxScore: floor(maxScore)
+      maxScore: floor(maxScore),
     };
   }
 );
@@ -582,7 +603,7 @@ export const selectCellMetadataTableFormat = createSelector(
         return {
           columnContext: col.context,
           cell,
-          service
+          service,
         };
       }
     }
@@ -597,25 +618,27 @@ export const selectColumnCellMetadataTableFormat = createSelector(
   (colId, reconciliators, cols) => {
     if (colId) {
       const column = cols.byId[colId];
-      
+
       if (column.metadata.length > 0) {
         if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
-          const cellContext = column.metadata[0].entity[0].id.split(':')[0];
+          const cellContext = column.metadata[0].entity[0].id.split(":")[0];
           const service = reconciliators.byId[cellContext];
           if (service) {
             return {
               column,
-              service              
+              service,
             };
           }
-        }
-        else if(column.metadata[0].property && column.metadata[0].property.length > 0){          
-          const cellContext = column.metadata[0].property[0].id.split(':')[0];
+        } else if (
+          column.metadata[0].property &&
+          column.metadata[0].property.length > 0
+        ) {
+          const cellContext = column.metadata[0].property[0].id.split(":")[0];
           const service = reconciliators.byId[cellContext];
           if (service) {
             return {
               column,
-              service              
+              service,
             };
           }
         }
@@ -623,12 +646,14 @@ export const selectColumnCellMetadataTableFormat = createSelector(
       return {
         column: {
           ...column,
-          metadata: [{
-            entity: [],
-            property : []
-          }]
+          metadata: [
+            {
+              entity: [],
+              property: [],
+            },
+          ],
         },
-        service: null
+        service: null,
       };
     }
     return null;
@@ -677,58 +702,73 @@ export const selectColumnTypes = createSelector(
             if (acc[id]) {
               acc[id] = {
                 ...acc[id],
-                count: ++acc[id].count
+                count: ++acc[id].count,
               };
             } else {
               acc[id] = {
                 id,
                 label: name as any,
-                count: 1
+                count: 1,
               };
             }
           });
         }
       });
+      console.log("acc non so cosa sia", acc);
       return acc;
-    }, {} as Record<string, { id: string, count: number, label: string }>);
+    }, {} as Record<string, { id: string; count: number; label: string }>);
 
     // add current type
-    let currentColType: any;
+    let currentColType: any[] = [];
 
     if (columnsState.byId[colIds[0]].metadata.length > 0) {
       if (columnsState.byId[colIds[0]].metadata[0].type) {
         const metaItem = columnsState.byId[colIds[0]].metadata[0];
-        currentColType = metaItem.type ? metaItem.type[0] : null;
-
-        if (currentColType) {
-          if (!map[currentColType.id]) {
-            map[currentColType.id] = {
-              id: currentColType.id,
-              label: currentColType.name as any,
-              count: 0
-            };
+        if (metaItem.type) {
+          for (let i = 0; i < metaItem.type.length; i++) {
+            currentColType.push(metaItem.type[i]);
+          }
+        }
+        if (currentColType.length > 0) {
+          for (let i = 0; i < currentColType.length; i++) {
+            if (!map[currentColType[i].id]) {
+              map[currentColType[i].id] = {
+                id: currentColType[i].id,
+                label: currentColType[i].name as any,
+                count: 0,
+              };
+            }
           }
         }
       }
     }
 
-    const totalCount = Object.keys(map).reduce((acc, key) => acc + map[key].count, 0);
-
-    let selectedType: any;
-    const allTypes = Object.keys(map).map((key) => {
-      const item = {
-        ...map[key],
-        percentage: (totalCount !== 0 ? (map[key].count / totalCount) * 100 : 0).toFixed(2)
-      };
-      if (currentColType && key === currentColType.id) {
-        selectedType = item;
-      }
-      return item;
-    }).sort((a, b) => b.count - a.count);
+    const totalCount = Object.keys(map).reduce(
+      (acc, key) => acc + map[key].count,
+      0
+    );
+    console.log("map object", map);
+    //TODO: transform into an array
+    let selectedType: any[] = [];
+    const allTypes = Object.keys(map)
+      .map((key) => {
+        const item = {
+          ...map[key],
+          percentage: (totalCount !== 0
+            ? (map[key].count / totalCount) * 100
+            : 0
+          ).toFixed(2),
+        };
+        if (currentColType && currentColType.some((type) => type.id === key)) {
+          selectedType.push(item);
+        }
+        return item;
+      })
+      .sort((a, b) => b.count - a.count);
 
     return {
       allTypes,
-      selectedType
+      selectedType,
     };
   }
 );
@@ -740,9 +780,7 @@ export const selectColumnsAnnotationPercentages = createSelector(
   (settings, selectedColIds, rows) => {
     if (selectedColIds.length > 0) {
       const {
-        lowerBound: {
-          scoreLowerBound = 0
-        }
+        lowerBound: { scoreLowerBound = 0 },
       } = settings;
 
       let nMatches = 0;
@@ -769,21 +807,21 @@ export const selectColumnsAnnotationPercentages = createSelector(
         });
       });
 
-      const total = (rows.allIds.length) * selectedColIds.length;
+      const total = rows.allIds.length * selectedColIds.length;
 
       return {
         match: {
           n: nMatches,
-          percentage: ((nMatches / total) * 100).toFixed(2)
+          percentage: ((nMatches / total) * 100).toFixed(2),
         },
         pending: {
           n: nPending,
-          percentage: ((nPending / total) * 100).toFixed(2)
+          percentage: ((nPending / total) * 100).toFixed(2),
         },
         miss: {
           n: nMissMatches,
-          percentage: ((nMissMatches / total) * 100).toFixed(2)
-        }
+          percentage: ((nMissMatches / total) * 100).toFixed(2),
+        },
       };
     }
     return null;
@@ -793,27 +831,30 @@ export const selectColumnsAnnotationPercentages = createSelector(
 export const selectCellRefinement = createSelector(
   selectSelectedCells,
   (cells) => {
-    return cells.reduce((acc, cell) => {
-      if (cell.annotationMeta && cell.annotationMeta.annotated) {
-        if (cell.annotationMeta.match.value) {
-          if (cell.annotationMeta.match.reason === 'manual') {
-            acc.matchingManual.push(cell);
-          } else if (cell.annotationMeta.match.reason === 'reconciliator') {
-            acc.matchingReconciliator.push(cell);
-          } else if (cell.annotationMeta.match.reason === 'refinement') {
-            acc.matchingRefinement.push(cell);
+    return cells.reduce(
+      (acc, cell) => {
+        if (cell.annotationMeta && cell.annotationMeta.annotated) {
+          if (cell.annotationMeta.match.value) {
+            if (cell.annotationMeta.match.reason === "manual") {
+              acc.matchingManual.push(cell);
+            } else if (cell.annotationMeta.match.reason === "reconciliator") {
+              acc.matchingReconciliator.push(cell);
+            } else if (cell.annotationMeta.match.reason === "refinement") {
+              acc.matchingRefinement.push(cell);
+            }
+          } else {
+            acc.notMatching.push(cell);
           }
-        } else {
-          acc.notMatching.push(cell);
         }
+        return acc;
+      },
+      {
+        matchingManual: [] as Cell[],
+        matchingReconciliator: [] as Cell[],
+        matchingRefinement: [] as Cell[],
+        notMatching: [] as Cell[],
       }
-      return acc;
-    }, {
-      matchingManual: [] as Cell[],
-      matchingReconciliator: [] as Cell[],
-      matchingRefinement: [] as Cell[],
-      notMatching: [] as Cell[]
-    });
+    );
   }
 );
 
@@ -847,11 +888,16 @@ export const selectSelectedCellsTypes = createSelector(
         const column = columns.byId[colId];
         if (column.annotationMeta && column.annotationMeta.annotated) {
           if (column.metadata.length > 0) {
-            if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
+            if (
+              column.metadata[0].entity &&
+              column.metadata[0].entity.length > 0
+            ) {
               column.metadata[0].entity.forEach((metaItem) => {
                 if (metaItem.type) {
                   metaItem.type.forEach((typeItem) => {
-                    types.push((typeItem.name as unknown as string).toLowerCase());
+                    types.push(
+                      (typeItem.name as unknown as string).toLowerCase()
+                    );
                   });
                 }
               });

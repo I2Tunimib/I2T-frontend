@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Box,
   Button,
+  Checkbox,
   FormControl,
   FormControlLabel,
   Radio,
@@ -53,40 +54,44 @@ const RadioLabel: FC<RadioLabelProps> = ({ percentage, label, checked }) => {
 const RadioButtonsGroup: FC<{
   types: any | null;
   value: string;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-}> = ({ types, value, onChange }) => {
+  selected: SelectedTypeState[];
+  onChange: (event: ChangeEvent<HTMLInputElement>, checked: boolean) => void;
+}> = ({ selected, types, value, onChange }) => {
+  function typeInSelected(id: string) {
+    return selected.some((item) => item.id === id);
+  }
   return (
     <FormControl component="fieldset">
-      <RadioGroup
-        aria-label="gender"
-        name="radio-buttons-group"
-        value={value}
-        onChange={onChange}
-      >
-        {types &&
-          types.map(({ id, ...rest }: any) => (
-            <FormControlLabel
-              sx={{
+      {selected &&
+        types &&
+        types.map(({ id, ...rest }: any) => (
+          <FormControlLabel
+            sx={{
+              "& span:nth-of-type(2)": {
+                flexGrow: 1,
+              },
+              "&:hover": {
                 "& span:nth-of-type(2)": {
-                  flexGrow: 1,
-                },
-                "&:hover": {
-                  "& span:nth-of-type(2)": {
-                    "& div:nth-of-type(2)": {
-                      boxShadow: "inset 0px 0px 0px 1px #4AC99B",
-                    },
+                  "& div:nth-of-type(2)": {
+                    boxShadow: "inset 0px 0px 0px 1px #4AC99B",
                   },
                 },
-              }}
-              key={id}
-              value={id}
-              control={<Radio color="success" />}
-              label={
-                <RadioLabel key={id} id={id} checked={value === id} {...rest} />
-              }
-            />
-          ))}
-      </RadioGroup>
+              },
+            }}
+            key={id}
+            value={id}
+            control={
+              <Checkbox
+                color="success"
+                checked={typeInSelected(id)}
+                onChange={onChange}
+              />
+            }
+            label={
+              <RadioLabel key={id} id={id} checked={value === id} {...rest} />
+            }
+          />
+        ))}
     </FormControl>
   );
 };
@@ -103,35 +108,44 @@ interface TypeTabProps {
   addEdit: Function;
 }
 const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
-  const [selected, setSelected] = useState<SelectedTypeState>();
+  const [selected, setSelected] = useState<SelectedTypeState[]>([]);
   const types = useAppSelector(selectColumnTypes);
   const dispatch = useAppDispatch();
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (types && types.allTypes) {
-      const selectedType = types.allTypes.find(
-        (item) => item.id === event.target.value
-      );
+  const handleChange = (
+    event: ChangeEvent<HTMLInputElement>,
+    checked: boolean
+  ) => {
+    console.log("event", event.target.value, checked);
 
-      if (selectedType) {
-        setSelected(selectedType);
+    if (types && types.allTypes) {
+      if (checked) {
+        const selectedType = types.allTypes.find(
+          (item) => item.id === event.target.value
+        );
+
+        if (selectedType) {
+          setSelected([...selected, selectedType]);
+        }
+      } else {
+        setSelected(selected.filter((item) => item.id !== event.target.value));
       }
     }
   };
   useEffect(() => {
-    if (selected) {
-      addEdit(
-        updateColumnType({
-          id: selected.id,
-          name: selected.label,
-        }),
-        true,
-        true
-      );
+    if (selected && selected.length > 0) {
+      const mappedTypes = selected.map((item) => ({
+        id: item.id,
+        name: item.label,
+      }));
+      const payload = updateColumnType(mappedTypes);
+      console.log("payload", payload);
+      addEdit(updateColumnType(mappedTypes), true, true);
     }
   }, [selected]);
 
   useEffect(() => {
+    console.log("types", types);
     if (types && types.selectedType) {
       setSelected(types.selectedType);
     }
@@ -186,11 +200,17 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
             <Typography variant="h6" fontSize="14px">
               Current selection
             </Typography>
-            <RadioLabel checked {...selected} />
+            {selected.map((type) => (
+              <div style={{ marginBottom: "10px" }}>
+                <RadioLabel checked {...type} />
+              </div>
+            ))}
+            {/* <RadioLabel checked {...selected[0]} /> */}
           </Stack>
         </Box>
       )}
       <RadioButtonsGroup
+        selected={selected}
         types={types.allTypes}
         value={selected ? selected.id : ""}
         onChange={handleChange}
