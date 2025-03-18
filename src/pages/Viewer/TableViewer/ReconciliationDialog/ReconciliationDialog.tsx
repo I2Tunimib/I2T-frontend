@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Button,
   Checkbox,
@@ -16,51 +16,47 @@ import {
   Select,
   SelectChangeEvent,
   Stack,
-  Typography
-} from '@mui/material';
+  Typography,
+} from "@mui/material";
+import { forwardRef, Ref, ReactElement, useEffect, useState, FC } from "react";
+import Slide from "@mui/material/Slide";
+import { TransitionProps } from "@mui/material/transitions";
+import { reconcile } from "@store/slices/table/table.thunk";
 import {
-  forwardRef,
-  Ref,
-  ReactElement,
-  useEffect,
-  useState,
-  FC
-} from 'react';
-import Slide from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
-import { reconcile } from '@store/slices/table/table.thunk';
-import {
-  selectReconcileDialogStatus, selectReconciliationCells,
+  selectReconcileDialogStatus,
+  selectReconciliationCells,
   selectReconcileRequestStatus,
   selectReconciliatioContextColumnIds,
-  selectSelectedColumnIds
-} from '@store/slices/table/table.selectors';
-import { updateUI } from '@store/slices/table/table.slice';
-import { selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
-import { LoadingButton } from '@mui/lab';
-import { SquaredBox } from '@components/core';
-import { Reconciliator } from '@store/slices/config/interfaces/config';
-import DynamicForm from '@components/core/DynamicForm/DynamicForm';
+  selectSelectedColumnIds,
+} from "@store/slices/table/table.selectors";
+import { updateUI } from "@store/slices/table/table.slice";
+import { selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
+import { LoadingButton } from "@mui/lab";
+import { SquaredBox } from "@components/core";
+import { Reconciliator } from "@store/slices/config/interfaces/config";
+import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 
-const Transition = forwardRef((
-  props: TransitionProps & { children?: ReactElement<any, any> },
-  ref: Ref<unknown>,
-) => (<Slide direction="down" ref={ref} {...props} />));
+const Transition = forwardRef(
+  (
+    props: TransitionProps & { children?: ReactElement<any, any> },
+    ref: Ref<unknown>
+  ) => <Slide direction="down" ref={ref} {...props} />
+);
 
 export type ReconciliationDialogProps = {
   open: boolean;
   handleClose: () => void;
-}
+};
 
 const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   open,
-  handleClose
+  handleClose,
 }) => {
   // keep track of selected service
   const [contextColumns, setContextColumns] = useState<string[]>([]);
   const [currentService, setCurrentService] = useState<Reconciliator | null>();
   const dispatch = useAppDispatch();
- 
+
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const columnIds = useAppSelector(selectReconciliatioContextColumnIds);
   const selectedCells = useAppSelector(selectReconciliationCells);
@@ -96,29 +92,36 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
 
   const handleChange = (event: SelectChangeEvent<string>) => {
     if (event.target.value) {
-      setCurrentService(reconciliators.find((recon) => recon.prefix === event.target.value));
+      setCurrentService(
+        reconciliators.find((recon) => recon.prefix === event.target.value)
+      );
     }
   };
 
   const handleChangeContextColumns = (event: SelectChangeEvent<string[]>) => {
     const {
-      target: { value }
+      target: { value },
     } = event;
-    setContextColumns(typeof value === 'string' ? value.split(',') : value);
+    setContextColumns(typeof value === "string" ? value.split(",") : value);
   };
 
   const handleSubmit = (formState: Record<string, any>) => {
     if (!currentService) return;
-    dispatch(reconcile({
-      items: selectedCells,
-      reconciliator: currentService,
-      formValues: formState
-    }))
+    console.log("formState", formState);
+    dispatch(
+      reconcile({
+        items: selectedCells,
+        reconciliator: currentService,
+        formValues: formState,
+      })
+    )
       .unwrap()
       .then((result) => {
-        dispatch(updateUI({
-          openReconciliateDialog: false
-        }));
+        dispatch(
+          updateUI({
+            openReconciliateDialog: false,
+          })
+        );
       });
   };
 
@@ -144,19 +147,27 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                   onChange={(e) => handleChange(e)}
                   variant="outlined"
                 >
-                  {reconciliators && reconciliators.map((reconciliator) => (
-                    <MenuItem key={reconciliator.prefix} value={reconciliator.prefix}>
-                      {reconciliator.name}
-                    </MenuItem>
-                  ))}
+                  {reconciliators &&
+                    reconciliators.map((reconciliator) => (
+                      <MenuItem
+                        key={reconciliator.prefix}
+                        value={reconciliator.prefix}
+                      >
+                        {reconciliator.name}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
               {error && <Typography color="error">{error.message}</Typography>}
               {currentService.description && (
-                <SquaredBox dangerouslySetInnerHTML={{ __html: currentService.description }}>
-                 {/*
+                <SquaredBox
+                  dangerouslySetInnerHTML={{
+                    __html: currentService.description,
+                  }}
+                >
+                  {/*
                  {currentService.description}
-                 */} 
+                 */}
                 </SquaredBox>
               )}
               <Divider />

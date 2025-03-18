@@ -20,7 +20,7 @@ export type SelectProps = BaseFormControlProps &
     label: string;
     options: Option[];
     onChange: (e: any) => void;
-    defaultValue?: string;
+    defaultValue?: string[];
   };
 
 export type SelectOptionSelector = (state: any) => Option[];
@@ -42,6 +42,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       reset,
       setValue,
       onChange,
+      multiple,
       ...props
     },
     ref
@@ -49,7 +50,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
     const { errors } = formState;
 
     const error = Boolean(errors[id]);
-
+    console.log("received value", props.value);
     return (
       <Stack gap="10px">
         <InputDescription description={description} infoText={infoText} />
@@ -58,6 +59,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
           <SelectMaterial
             inputRef={ref}
             onChange={onChange}
+            multiple={true}
             labelId="select-match"
             label={label}
             {...props}
@@ -80,18 +82,19 @@ export type SelectColumnProps = Omit<SelectProps, "options">;
 /**
  * Select component where the options are the columns of the table
  */
-export const SelectColumns = forwardRef<HTMLInputElement, SelectColumnProps>(
-  (props, ref) => {
-    const { id, setValue } = props;
+export const MultipleColumnSelect = forwardRef<
+  HTMLInputElement,
+  SelectColumnProps
+>((props, ref) => {
+  const { id, setValue } = props;
 
-    const options = useAppSelector(selectColumnsAsSelectOptions);
+  const options = useAppSelector(selectColumnsAsSelectOptions);
 
-    // useEffect(() => {
-    //   if (options && options.length > 0) {
-    //     setValue(id, options[0].value);
-    //   }
-    // }, [setValue, options]);
+  // useEffect(() => {
+  //   if (options && options.length > 0) {
+  //     setValue(id, [options[0].value]);
+  //   }
+  // }, [setValue, options]);
 
-    return <Select ref={ref} options={options} {...props} />;
-  }
-);
+  return <Select ref={ref} options={options} {...props} />;
+});

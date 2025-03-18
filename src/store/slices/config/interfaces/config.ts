@@ -42,7 +42,13 @@ export interface FormInputParams {
   id: string;
   description: string;
   label: string;
-  inputType: "text" | "textArea" | "select" | "selectColumns" | "checkbox";
+  inputType:
+    | "text"
+    | "textArea"
+    | "select"
+    | "selectColumns"
+    | "multipleColumnSelect"
+    | "checkbox";
   rules: string[];
   options?: Option[];
   infoText?: string;

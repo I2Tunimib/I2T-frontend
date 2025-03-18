@@ -1,33 +1,50 @@
-import useScroll from '@hooks/scroll/useScroll';
+import useScroll from "@hooks/scroll/useScroll";
 import {
   Box,
   CircularProgress,
   IconButton,
-  Pagination, Paper,
+  Pagination,
+  Paper,
   Radio,
-  Stack, TableCell, Typography
-} from '@mui/material';
+  Stack,
+  TableCell,
+  Typography,
+} from "@mui/material";
 import {
-  forwardRef, Fragment, PropsWithChildren,
-  useRef, useState
-} from 'react';
+  forwardRef,
+  Fragment,
+  PropsWithChildren,
+  useRef,
+  useState,
+} from "react";
 import {
-  Row, TableOptions,
+  Row,
+  TableOptions,
+  useBlockLayout,
   useExpanded,
-  usePagination, useSortBy, useTable
-} from 'react-table';
-import Empty from '@components/kit/Empty';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
-import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+  useFlexLayout,
+  usePagination,
+  useResizeColumns,
+  useSortBy,
+  useTable,
+} from "react-table";
+import Empty from "@components/kit/Empty";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
+import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import {
-  Table, TableHead, TableHeaderCell,
+  Table,
+  TableHead,
+  TableHeaderCell,
   TableLoadingOverlay,
-  TableRow, TableRowCell, TableSubRow
-} from './CustomTableStyles';
-import ColumnHide from './ColumnHide';
+  TableRow,
+  TableRowCell,
+  TableSubRow,
+} from "./CustomTableStyles";
+import ColumnHide from "./ColumnHide";
 
-export interface TableProperties<T extends Record<string, unknown>> extends TableOptions<T> {
+export interface TableProperties<T extends Record<string, unknown>>
+  extends TableOptions<T> {
   onSelectedRowChange: (row: T | null) => void;
   onSelectedRowDeleteRequest: (row: T | null) => void;
   stickyHeaderTop?: string;
@@ -46,14 +63,8 @@ interface FooterProps<T extends Record<string, unknown>> {
 export function Footer<T extends Record<string, unknown>>(
   props: PropsWithChildren<FooterProps<T>>
 ) {
-  const {
-    rows,
-    pageIndex,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage
-  } = props;
+  const { rows, pageIndex, pageCount, gotoPage, nextPage, previousPage } =
+    props;
 
   const handleChange = (event: any, page: number) => {
     gotoPage(page - 1);
@@ -66,35 +77,32 @@ export function Footer<T extends Record<string, unknown>>(
       direction="row"
       alignItems="center"
       sx={{
-        backgroundColor: '#FFF',
-        borderTop: '1px solid rgb(224, 224, 224)',
-        marginTop: 'auto',
-        padding: '6px 16px'
-      }}>
+        backgroundColor: "#FFF",
+        borderTop: "1px solid rgb(224, 224, 224)",
+        marginTop: "auto",
+        padding: "6px 16px",
+      }}
+    >
       <Typography color="textSecondary" variant="body2">
         {`Total candidates: ${rows.length}`}
       </Typography>
       <Pagination
         sx={{
-          marginLeft: 'auto'
+          marginLeft: "auto",
         }}
         size="small"
         onChange={handleChange}
         count={pageCount}
         page={pageIndex + 1}
         showFirstButton
-        showLastButton />
+        showLastButton
+      />
     </Stack>
   );
 }
 
 const RadioCell = forwardRef(
-  ({
-    indeterminate,
-    checked,
-    onChange,
-    ...rest
-  }: any, ref) => {
+  ({ indeterminate, checked, onChange, ...rest }: any, ref) => {
     const defaultRef = useRef();
     const resolvedRef = ref || defaultRef;
 
@@ -115,7 +123,7 @@ const RadioCell = forwardRef(
           checked={checked}
           inputRef={resolvedRef}
           inputProps={{
-            ...rest
+            ...rest,
           }}
         />
       </>
@@ -126,11 +134,13 @@ const RadioCell = forwardRef(
 const defaultHooks = [
   useSortBy,
   useExpanded,
-  usePagination
+  usePagination,
+  useResizeColumns,
+  useBlockLayout,
   // useRowSelect
 ];
 
-const defaultPropGetter = () => ({ prova: 'ok' });
+const defaultPropGetter = () => ({ prova: "ok" });
 
 export default function CustomTable<T extends Record<string, unknown>>(
   props: PropsWithChildren<TableProperties<T>>
@@ -140,20 +150,20 @@ export default function CustomTable<T extends Record<string, unknown>>(
     data,
     onSelectedRowChange,
     onSelectedRowDeleteRequest,
-    stickyHeaderTop = '0px',
+    stickyHeaderTop = "0px",
     loading = false,
-    showRadio = true
+    showRadio = true,
   } = props;
   const tableInstance = useTable<T>(
     {
       columns,
       data,
       initialState: {
-        pageSize: 20
+        pageSize: 20,
       },
       autoResetExpanded: false,
       autoResetSortBy: false,
-      autoResetPage: false
+      autoResetPage: false,
     },
     ...defaultHooks
   );
@@ -179,7 +189,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
     previousPage,
     // toggleRowSelected,
     // selectedFlatRows,
-    state: { pageIndex, selectedRowIds }
+    state: { pageIndex, selectedRowIds },
   } = tableInstance;
 
   const paginationProps = {
@@ -188,7 +198,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
     pageCount,
     gotoPage,
     nextPage,
-    previousPage
+    previousPage,
   };
 
   const handleRowClick = (row: Row<T>) => {
@@ -207,69 +217,95 @@ export default function CustomTable<T extends Record<string, unknown>>(
         </TableLoadingOverlay>
       )}
       <Box padding="5px 16px" marginTop="12px" borderTop="1px solid #f0f0f0">
-        <ColumnHide {...{ indeterminate: getToggleHideAllColumnsProps(), allColumns }} />
+        <ColumnHide
+          {...{ indeterminate: getToggleHideAllColumnsProps(), allColumns }}
+        />
       </Box>
-      <Box sx={{
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1
-      }}>
+      <Box
+        sx={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          flexGrow: 1,
+        }}
+      >
         <Box
           sx={{
             flexGrow: 1,
             ...(data.length === 0 && {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            })
-          }}>
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }),
+          }}
+        >
           {data.length > 0 ? (
             <Table {...getTableProps()}>
               <TableHead stickyHeaderTop={stickyHeaderTop}>
-                {// Loop over the header rows
+                {
+                  // Loop over the header rows
                   headerGroups.map((headerGroup) => (
                     // Apply the header row props
                     <TableRow {...headerGroup.getHeaderGroupProps()}>
-                      <TableHeaderCell sorted = {false}/>
-                      {// Loop over the headers in each row
+                      <TableHeaderCell sorted={false} />
+                      {
+                        // Loop over the headers in each row
                         headerGroup.headers.map((column) => (
                           // Apply the header cell props
                           <TableHeaderCell
                             sorted={column.isSorted}
-                            {...column.getHeaderProps(column.getSortByToggleProps())}>
-                            {column.id !== 'selection' ? (
+                            {...column.getHeaderProps(
+                              column.getSortByToggleProps()
+                            )}
+                          >
+                            {column.id !== "selection" ? (
                               <Stack
                                 direction="row"
                                 overflow="hidden"
                                 whiteSpace="nowrap"
                                 textOverflow="ellipsis"
                                 gap="10px"
-                                alignItems="center">
-                                {// Render the header
-                                  column.render('Header')}
+                                alignItems="center"
+                              >
+                                {
+                                  // Render the header
+                                  column.render("Header")
+                                }
                                 <IconButton
                                   sx={{
-                                    width: '25px',
-                                    height: '25px'
+                                    width: "25px",
+                                    height: "25px",
                                   }}
-                                  size="small">
-                                  {column.isSorted
-                                    ? column.isSortedDesc
-                                      ? <ArrowDownwardRoundedIcon fontSize="small" />
-                                      : <ArrowUpwardRoundedIcon fontSize="small" />
-                                    : <ArrowUpwardRoundedIcon sx={{ color: '#d4d4d4' }} fontSize="small" />}
+                                  size="small"
+                                >
+                                  {column.isSorted ? (
+                                    column.isSortedDesc ? (
+                                      <ArrowDownwardRoundedIcon fontSize="small" />
+                                    ) : (
+                                      <ArrowUpwardRoundedIcon fontSize="small" />
+                                    )
+                                  ) : (
+                                    <ArrowUpwardRoundedIcon
+                                      sx={{ color: "#d4d4d4" }}
+                                      fontSize="small"
+                                    />
+                                  )}
                                 </IconButton>
                               </Stack>
-                            ) : column.render('Header')}
+                            ) : (
+                              column.render("Header")
+                            )}
                           </TableHeaderCell>
-                        ))}
+                        ))
+                      }
                     </TableRow>
-                  ))}
+                  ))
+                }
               </TableHead>
               {/* Apply the table body props */}
               <tbody {...getTableBodyProps()}>
-                {// Loop over the table rows
+                {
+                  // Loop over the table rows
                   page.map((row) => {
                     // Prepare the row for display
                     prepareRow(row);
@@ -279,7 +315,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
                       <Fragment key={rowProps.key}>
                         <TableRow
                           onClick={() => handleRowClick(row)}
-                          {...rowProps}>
+                          {...rowProps}
+                        >
                           {/* Cella per l'icona di eliminazione */}
                           <TableCell /*padding="checkbox"*/>
                             <IconButton
@@ -292,19 +329,29 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               <DeleteIcon />
                             </IconButton>
                           </TableCell>
-                          {// Loop over the rows cells
+                          {
+                            // Loop over the rows cells
                             row.cells.map((cell) => {
                               // Apply the cell props
                               return (
-                                <TableRowCell title={`${cell.value}`} {...cell.getCellProps()}>
-                                  {// Render the cell contents
-                                    cell.render('Cell', { setSubRows })}
+                                <TableRowCell
+                                  title={`${cell.value}`}
+                                  {...cell.getCellProps()}
+                                >
+                                  {
+                                    // Render the cell contents
+                                    cell.render("Cell", { setSubRows })
+                                  }
                                 </TableRowCell>
                               );
-                            })}
+                            })
+                          }
                         </TableRow>
                         {row.isExpanded ? (
-                          <TableSubRow {...rowProps} key={`${rowProps.key}-expanded`}>
+                          <TableSubRow
+                            {...rowProps}
+                            key={`${rowProps.key}-expanded`}
+                          >
                             <TableRowCell colSpan={visibleColumns.length}>
                               {subRows[row.id]}
                             </TableRowCell>
@@ -326,7 +373,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
                       //     })}
                       // </TableRow>
                     );
-                  })}
+                  })
+                }
               </tbody>
             </Table>
           ) : (

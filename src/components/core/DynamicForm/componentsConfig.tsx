@@ -6,6 +6,7 @@ import CheckboxGroup from "./formComponents/CheckboxGroup";
 import InputText from "./formComponents/InputText";
 import { Select, SelectColumns } from "./formComponents/Select";
 import TextArea from "./formComponents/TextArea";
+import { MultipleColumnSelect } from "./formComponents/MultipleColumnSelect";
 
 /**
  * Map of available form components
@@ -14,6 +15,7 @@ export const FORM_COMPONENTS = {
   text: InputText,
   select: Select,
   selectColumns: SelectColumns,
+  multipleColumnSelect: MultipleColumnSelect,
   checkbox: CheckboxGroup,
   textArea: TextArea,
 };
@@ -54,13 +56,16 @@ export const getDefaultValues = (extender: Extender) => {
       acc[id] = defaultValue || "";
     } else if (inputType === "select") {
       if (options) {
-        acc[id] = defaultValue || options[0].value;
+        acc[id] = defaultValue || "";
       }
     } else if (inputType === "checkbox") {
       acc[id] = defaultValue || [];
     } else if (inputType === "selectColumns") {
-      acc[id] = defaultValue || "";
+      acc[id] = defaultValue || ""; //TODO: cange back to ""
+    } else if (inputType === "multipleColumnSelect") {
+      acc[id] = defaultValue || [];
     }
+    console.log("temp acc", acc);
     return acc;
   }, {} as Record<string, any>);
 };
