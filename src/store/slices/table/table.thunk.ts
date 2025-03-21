@@ -202,6 +202,11 @@ const getRequestFormValuesExtension = (
     if (formValues[id]) {
       if (inputType === "selectColumns") {
         requestParams[id] = getColumnValues(formValues[id], rows);
+      } else if (inputType === "multipleColumnSelect") {
+        requestParams[id] = {};
+        for (const colId of formValues[id]) {
+          requestParams[id][colId] = getMultipleColumnsValues(colId, rows);
+        }
       } else {
         requestParams[id] = formValues[id];
       }
