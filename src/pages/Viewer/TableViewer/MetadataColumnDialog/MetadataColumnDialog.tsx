@@ -3,6 +3,10 @@ import {
   Button,
   Dialog,
   DialogProps,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
   Stack,
   Tab,
   Tabs,
@@ -12,9 +16,19 @@ import { FC, ReactNode, SyntheticEvent, useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
-import { selectIsViewOnly } from "@store/slices/table/table.selectors";
+import {
+  selectColumnKind,
+  selectColumnRole,
+  selecteSelectedColumnId,
+  selectIsViewOnly,
+} from "@store/slices/table/table.selectors";
 import { set } from "lodash";
-import { undo, updateUI } from "@store/slices/table/table.slice";
+import {
+  undo,
+  updateColumnKind,
+  updateColumnRole,
+  updateUI,
+} from "@store/slices/table/table.slice";
 import EntityTab from "./EntityTab";
 import TypeTab from "./TypeTab";
 import PropertyTab from "./PropertyTab";
@@ -57,6 +71,11 @@ const Content = () => {
   const [editsState, setEditsState] = useState<ReduxEditObject[]>([]);
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
+  const kind = useAppSelector(selectColumnKind);
+  const currentColId = useAppSelector(selecteSelectedColumnId);
+  const [currentKind, setCurrentKind] = useState(kind);
+  const role = useAppSelector(selectColumnRole);
+  const [currentRole, setCurrentRole] = useState(role);
   const dispatch = useAppDispatch();
   const handleChange = (event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -135,23 +154,64 @@ const Content = () => {
       console.error("Error during edits apply", error);
     }
   };
+  const handleKindChange = (event: SelectChangeEvent<string>) => {
+    setCurrentKind(event.target.value);
+    const edit = updateColumnKind({
+      colId: currentColId,
+      kind: event.target.value,
+    });
+    handleAddEdit(edit, true, true);
+  };
+  const handleRoleChange = (event: SelectChangeEvent<string>) => {
+    setCurrentRole(event.target.value);
+    const edit = updateColumnRole({
+      colId: currentColId,
+      role: event.target.value,
+    });
+    handleAddEdit(edit, true, true);
+  };
   return (
     <Stack>
-      <Stack
-        direction="row"
-        marginLeft="auto"
-        marginRight="15px"
-        marginTop="15px"
-        gap="10px"
-      >
-        <Button onClick={handleCancel} variant="outlined">
-          {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
-        </Button>
-        {API.ENDPOINTS.SAVE && !isViewOnly && (
-          <Button onClick={handleApplyEdits} variant="outlined">
-            Confirm
+      <Stack direction="row" alignItems="center" marginTop="15px" gap="10px">
+        <InputLabel style={{ marginLeft: 15 }} id="kind-select-label">
+          Column Kind
+        </InputLabel>
+        <Select
+          labelId="kind-select-label"
+          value={currentKind}
+          onChange={handleKindChange}
+          variant="outlined"
+          size="small"
+        >
+          <MenuItem value="entity">Named Entity</MenuItem>
+          <MenuItem value="literal">Literal</MenuItem>
+          <MenuItem value="none">None</MenuItem>
+        </Select>
+        <InputLabel style={{ marginLeft: 15 }} id="role-select-label">
+          Column Role
+        </InputLabel>
+
+        <Select
+          labelId="role-select-label"
+          value={currentRole}
+          onChange={handleRoleChange}
+          variant="outlined"
+          size="small"
+        >
+          <MenuItem value="subject">Subject</MenuItem>
+          <MenuItem value="none">None</MenuItem>
+        </Select>
+
+        <Stack direction="row" marginLeft="auto" marginRight="15px" gap="10px">
+          <Button onClick={handleCancel} variant="outlined">
+            {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
           </Button>
-        )}
+          {API.ENDPOINTS.SAVE && !isViewOnly && (
+            <Button onClick={handleApplyEdits} variant="outlined">
+              Confirm
+            </Button>
+          )}
+        </Stack>
       </Stack>
       <Tabs
         sx={{

@@ -681,7 +681,33 @@ export const selectColumnForExtension = createSelector(
     return [];
   }
 );
-
+export const selectColumnKind = createSelector(
+  selectSelectedColumnCellsIds,
+  selectRowsState,
+  selectColumnsState,
+  (selectedColumnCells, rowsState, columnsState) => {
+    const colIds = Object.keys(selectedColumnCells);
+    return columnsState.byId[colIds[0]].kind;
+  }
+);
+export const selecteSelectedColumnId = createSelector(
+  selectSelectedColumnCellsIds,
+  selectRowsState,
+  selectColumnsState,
+  (selectedColumnCells, rowsState, columnsState) => {
+    const colIds = Object.keys(selectedColumnCells);
+    return colIds[0];
+  }
+);
+export const selectColumnRole = createSelector(
+  selectSelectedColumnCellsIds,
+  selectRowsState,
+  selectColumnsState,
+  (selectedColumnCells, rowsState, columnsState) => {
+    const colIds = Object.keys(selectedColumnCells);
+    return columnsState.byId[colIds[0]].role;
+  }
+);
 export const selectColumnTypes = createSelector(
   selectSelectedColumnCellsIds,
   selectRowsState,
@@ -714,7 +740,6 @@ export const selectColumnTypes = createSelector(
           });
         }
       });
-      console.log("acc non so cosa sia", acc);
       return acc;
     }, {} as Record<string, { id: string; count: number; label: string }>);
 

@@ -637,6 +637,53 @@ export const tableSlice = createSliceWithRequests({
         }
       }
     },
+    updateColumnRole: (
+      state,
+      action: PayloadAction<Payload<{ colId: ID; role: string }>>
+    ) => {
+      const { colId, role } = action.payload;
+      return produceWithPatch(
+        state,
+        true,
+        (draft) => {
+          if (role !== "none") {
+            for (let i = 0; i < draft.entities.columns.allIds.length; i++) {
+              const currentId = draft.entities.columns.allIds[i];
+              if (currentId !== colId) {
+                draft.entities.columns.byId[currentId].role = undefined;
+              }
+            }
+          }
+          draft.entities.columns.byId[colId].role = role;
+        },
+        (draft) => {
+          // do not include in undo history
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        }
+      );
+    },
+    updateColumnKind: (
+      state,
+      action: PayloadAction<Payload<{ colId: ID; kind: string }>>
+    ) => {
+      const { colId, kind } = action.payload;
+      const column = getColumn(state, colId);
+      return produceWithPatch(
+        state,
+        true,
+        (draft) => {
+          const columnToUpdate = getColumn(draft, colId);
+          draft.entities.columns.byId[colId].kind = kind;
+        },
+        (draft) => {
+          // do not include in undo history
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        }
+      );
+    },
+
     updateColumnMetadata: (
       state,
       action: PayloadAction<Payload<UpdateColumnMetadataPayload>>
@@ -1462,6 +1509,8 @@ export const {
   deleteCellMetadata,
   autoMatching,
   refineMatching,
+  updateColumnKind,
+  updateColumnRole,
   updateColumnSelection,
   updateRowSelection,
   updateCellSelection,
