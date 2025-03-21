@@ -123,7 +123,7 @@ const initialState: TableState = {
       filter: "all",
       value: "",
     },
-    denseView: false,
+    denseView: true,
     // viewOnly: false,
     headerExpanded: false,
     openReconciliateDialog: false,
