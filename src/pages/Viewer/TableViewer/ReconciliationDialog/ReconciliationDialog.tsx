@@ -11,6 +11,7 @@ import {
   FormControl,
   InputLabel,
   ListItemText,
+  ListSubheader,
   MenuItem,
   OutlinedInput,
   Select,
@@ -18,7 +19,15 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { forwardRef, Ref, ReactElement, useEffect, useState, FC } from "react";
+import {
+  forwardRef,
+  Ref,
+  ReactElement,
+  useEffect,
+  useState,
+  FC,
+  Fragment,
+} from "react";
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import { reconcile } from "@store/slices/table/table.thunk";
@@ -55,6 +64,9 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   // keep track of selected service
   const [contextColumns, setContextColumns] = useState<string[]>([]);
   const [currentService, setCurrentService] = useState<Reconciliator | null>();
+  const [reconciliatorsGroups, setReconciliatorsGroups] = useState<
+    Map<string, Reconciliator[]>
+  >(new Map());
   const dispatch = useAppDispatch();
 
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
@@ -68,8 +80,29 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     // set initial value of select
     if (reconciliators) {
       setCurrentService(reconciliators[0]);
+      groupReconciliators();
     }
   }, [reconciliators]);
+
+  async function groupReconciliators() {
+    let mappedReconciliators = new Map();
+    for (const reconciliator of reconciliators) {
+      console.log("reconciliator", reconciliator);
+      const reconUri = reconciliator.uri;
+      const reconPrefix = reconciliator.prefix;
+      const reconName = reconciliator.name;
+
+      if (mappedReconciliators.has(reconUri)) {
+        const reconciliatorGroup = mappedReconciliators.get(reconUri);
+        reconciliatorGroup.push(reconciliator);
+        mappedReconciliators.set(reconUri, reconciliatorGroup);
+      } else {
+        mappedReconciliators.set(reconUri, [reconciliator]);
+      }
+
+      setReconciliatorsGroups(mappedReconciliators);
+    }
+  }
 
   const handleConfirm = () => {
     // const reconciliator = reconciliators.find((recon)
@@ -93,7 +126,9 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const handleChange = (event: SelectChangeEvent<string>) => {
     if (event.target.value) {
       setCurrentService(
-        reconciliators.find((recon) => recon.prefix === event.target.value)
+        reconciliators.find((recon) => {
+          return recon.prefix === event.target.value;
+        })
       );
     }
   };
@@ -144,18 +179,26 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
               <FormControl className="field">
                 <Select
                   value={currentService.prefix}
+                  multiline={false}
                   onChange={(e) => handleChange(e)}
                   variant="outlined"
                 >
-                  {reconciliators &&
-                    reconciliators.map((reconciliator) => (
-                      <MenuItem
-                        key={reconciliator.prefix}
-                        value={reconciliator.prefix}
-                      >
-                        {reconciliator.name}
-                      </MenuItem>
-                    ))}
+                  {reconciliatorsGroups &&
+                    Array.from(reconciliatorsGroups).flatMap(
+                      ([uri, reconciliators]) => [
+                        <ListSubheader key={`header-${uri}`}>
+                          {uri}
+                        </ListSubheader>,
+                        ...reconciliators.map((reconciliator) => (
+                          <MenuItem
+                            key={reconciliator.prefix}
+                            value={reconciliator.prefix}
+                          >
+                            {reconciliator.name}
+                          </MenuItem>
+                        )),
+                      ]
+                    )}
                 </Select>
               </FormControl>
               {error && <Typography color="error">{error.message}</Typography>}

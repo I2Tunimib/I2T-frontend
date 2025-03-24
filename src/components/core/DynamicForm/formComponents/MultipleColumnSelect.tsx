@@ -43,6 +43,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       setValue,
       onChange,
       multiple,
+      value,
       ...props
     },
     ref
@@ -50,7 +51,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
     const { errors } = formState;
 
     const error = Boolean(errors[id]);
-    console.log("received value", props.value);
+    console.log("received value", value);
     return (
       <Stack gap="10px">
         <InputDescription description={description} infoText={infoText} />
@@ -62,6 +63,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
             multiple={true}
             labelId="select-match"
             label={label}
+            value={Array.isArray(value) ? value : [value]}
             {...props}
           >
             {options.map((option) => (
