@@ -51,7 +51,6 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
     const { errors } = formState;
 
     const error = Boolean(errors[id]);
-    console.log("received value", value);
     return (
       <Stack gap="10px">
         <InputDescription description={description} infoText={infoText} />

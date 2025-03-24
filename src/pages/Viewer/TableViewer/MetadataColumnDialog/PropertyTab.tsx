@@ -54,7 +54,7 @@ import { SelectColumns } from "@components/core/DynamicForm/formComponents/Selec
 const DeferredTable = deferMounting(CustomTable);
 
 const makeData = (
-  rawData: ReturnType<typeof selectColumnCellMetadataTableFormat>,
+  rawData: ReturnType<typeof selectColumnCellMetadataTableFormat>
 ) => {
   if (!rawData) {
     return {
@@ -122,19 +122,16 @@ const makeData = (
 
   const data = newMetadata.map((metadataItem) => {
     //const data = metadata.map((metadataItem) => {
-    return Object.keys(metaToView).reduce(
-      (acc, key) => {
-        const value = metadataItem[key as keyof BaseMetadata];
-        if (value !== undefined) {
-          acc[key] = value;
-        } else {
-          acc[key] = null;
-        }
+    return Object.keys(metaToView).reduce((acc, key) => {
+      const value = metadataItem[key as keyof BaseMetadata];
+      if (value !== undefined) {
+        acc[key] = value;
+      } else {
+        acc[key] = null;
+      }
 
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
+      return acc;
+    }, {} as Record<string, any>);
   });
 
   return {
@@ -231,23 +228,14 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
       ) {
         const { property } = column.metadata[0];
         const previousMatch = property.find((meta) => meta.match);
-        console.log("updating", previousMatch, selectedMetadataId);
-        console.log("condition", previousMatch.id !== selectedMetadataId);
-        // if (!previousMatch || previousMatch.id !== selectedMetadataId) {
-        console.log(
-          "updated",
-          updateColumnMetadata({
-            metadataId: selectedMetadataId,
-            colId: column.id,
-          }),
-        );
+
         addEdit(
           updateColumnMetadata({
             metadataId: selectedMetadataId,
             colId: column.id,
           }),
           false,
-          true,
+          true
         );
         // dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
         // dispatch(updateUI({ openMetadataColumnDialog: false }));
@@ -284,7 +272,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                 colId: column.id,
                 type: "property",
               }),
-              true,
+              true
             );
             // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'property' }));
             // setUndoSteps(undoSteps + 1);
@@ -295,7 +283,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                 colId: column.id,
                 type: "entity",
               }),
-              true,
+              true
             );
             // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'entity' }));
             // setUndoSteps(undoSteps + 1);
@@ -345,7 +333,6 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
           // Inverti `match` solo per la riga con lo stesso `id` della riga selezionata
           if (item.id === row.id) {
             const newMatch = !item.match;
-            console.log("updated row", row, newMatch);
             // Aggiorna `selectedMetadata` in base al nuovo valore di `match`
             setSelectedMetadata(newMatch ? row.id : "");
             handleConfirm(row.id);
@@ -365,12 +352,12 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
         };
       });
     },
-    [setState, setSelectedMetadata],
+    [setState, setSelectedMetadata]
   );
 
   const fetchMetadata = (service: string) => {
     const reconciliator = reconciliators.find(
-      (recon) => recon.prefix === service,
+      (recon) => recon.prefix === service
     );
     if (reconciliator && column) {
       // dispatch(reconcile({
@@ -408,7 +395,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
             prefix: /*getCellContext(column),*/ "None:",
             value: { ...formState },
           }),
-          true,
+          true
         );
         // dispatch(
         //   addColumnMetadata({
@@ -466,7 +453,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
       }
       return "warn";
     },
-    [lowerBound],
+    [lowerBound]
   );
 
   return (

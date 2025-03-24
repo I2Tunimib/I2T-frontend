@@ -65,7 +65,6 @@ export const getDefaultValues = (extender: Extender) => {
     } else if (inputType === "multipleColumnSelect") {
       acc[id] = defaultValue || [];
     }
-    console.log("temp acc", acc);
     return acc;
   }, {} as Record<string, any>);
 };

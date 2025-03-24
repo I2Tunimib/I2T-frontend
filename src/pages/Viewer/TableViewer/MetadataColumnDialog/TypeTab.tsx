@@ -116,8 +116,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     event: ChangeEvent<HTMLInputElement>,
     checked: boolean
   ) => {
-    console.log("event", event.target.value, checked);
-
     if (types && types.allTypes) {
       if (checked) {
         const selectedType = types.allTypes.find(
@@ -139,13 +137,11 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         name: item.label,
       }));
       const payload = updateColumnType(mappedTypes);
-      console.log("payload", payload);
       addEdit(updateColumnType(mappedTypes), true, true);
     }
   }, [selected]);
 
   useEffect(() => {
-    console.log("types", types);
     if (types && types.selectedType) {
       setSelected(types.selectedType);
     }

@@ -1,44 +1,59 @@
 /* eslint-disable react/destructuring-assignment */
 import {
-  Box, Button, Dialog,
+  Box,
+  Button,
+  Dialog,
   Divider,
-  FormControl, IconButton,
+  FormControl,
+  IconButton,
   InputLabel,
-  MenuItem, Select,
+  MenuItem,
+  Select,
   SelectChangeEvent,
-  Stack, TextField, Tooltip,
-  Typography
-} from '@mui/material';
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { FC, useCallback, useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
-  FC, useCallback, useEffect, useState
-} from 'react';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import {
-  addCellMetadata, deleteCellMetadata, updateCellMetadata, updateUI
-} from '@store/slices/table/table.slice';
+  addCellMetadata,
+  deleteCellMetadata,
+  updateCellMetadata,
+  updateUI,
+} from "@store/slices/table/table.slice";
 import {
   selectCellMetadataTableFormat,
   selectCurrentCell,
   selectIsViewOnly,
   selectReconcileRequestStatus,
-  selectSettings
-} from '@store/slices/table/table.selectors';
-import { selectAppConfig, selectReconciliatorsAsArray } from '@store/slices/config/config.selectors';
-import { Controller, useForm } from 'react-hook-form';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import { getCellContext } from '@store/slices/table/utils/table.reconciliation-utils';
-import CustomTable from '@components/kit/CustomTable/CustomTable';
-import deferMounting from '@components/HOC';
-import { reconcile } from '@store/slices/table/table.thunk';
-import { Cell } from 'react-table';
-import { BaseMetadata, Cell as TableCell } from '@store/slices/table/interfaces/table';
-import { StatusBadge } from '@components/core';
-import usePrepareTable from './usePrepareTable';
-import { getCellComponent } from './componentsConfig';
+  selectSettings,
+} from "@store/slices/table/table.selectors";
+import {
+  selectAppConfig,
+  selectReconciliatorsAsArray,
+} from "@store/slices/config/config.selectors";
+import { Controller, useForm } from "react-hook-form";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import { getCellContext } from "@store/slices/table/utils/table.reconciliation-utils";
+import CustomTable from "@components/kit/CustomTable/CustomTable";
+import deferMounting from "@components/HOC";
+import { reconcile } from "@store/slices/table/table.thunk";
+import { Cell } from "react-table";
+import {
+  BaseMetadata,
+  Cell as TableCell,
+} from "@store/slices/table/interfaces/table";
+import { StatusBadge } from "@components/core";
+import usePrepareTable from "./usePrepareTable";
+import { getCellComponent } from "./componentsConfig";
 
 const DeferredTable = deferMounting(CustomTable);
 
-const makeData = (rawData: ReturnType<typeof selectCellMetadataTableFormat>) => {
+const makeData = (
+  rawData: ReturnType<typeof selectCellMetadataTableFormat>
+) => {
   if (rawData) {
     const { cell, service } = rawData;
     const { metaToView } = service;
@@ -49,45 +64,47 @@ const makeData = (rawData: ReturnType<typeof selectCellMetadataTableFormat>) => 
       return {
         Header: label,
         accessor: key,
-        Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type)
+        Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
       };
     });
 
-    const data = [...metadata].sort((a, b) => {
-      if (a.match) {
-        return -1;
-      }
-      if (b.match) {
-        return 1;
-      }
-      return 1;
-    }).map((metadataItem) => {
-      return Object.keys(metaToView).reduce((acc, key) => {
-        const value = metadataItem[key as keyof BaseMetadata];
-        if (value !== undefined) {
-          acc[key] = value;
-        } else {
-          acc[key] = null;
+    const data = [...metadata]
+      .sort((a, b) => {
+        if (a.match) {
+          return -1;
         }
+        if (b.match) {
+          return 1;
+        }
+        return 1;
+      })
+      .map((metadataItem) => {
+        return Object.keys(metaToView).reduce((acc, key) => {
+          const value = metadataItem[key as keyof BaseMetadata];
+          if (value !== undefined) {
+            acc[key] = value;
+          } else {
+            acc[key] = null;
+          }
 
-        return acc;
-      }, {} as Record<string, any>);
-    });
+          return acc;
+        }, {} as Record<string, any>);
+      });
 
     return {
       columns,
-      data
+      data,
     };
   }
   return {
     columns: [],
-    data: []
+    data: [],
   };
 };
 
 type MetadataDialogProps = {
   open: boolean;
-}
+};
 
 interface FormState {
   id: string;
@@ -99,23 +116,17 @@ interface FormState {
 const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const {
     setState,
-    memoizedState: {
-      columns,
-      data
-    }
+    memoizedState: { columns, data },
   } = usePrepareTable({ selector: selectCellMetadataTableFormat, makeData });
   const [currentService, setCurrentService] = useState<string>();
-  const [selectedMetadata, setSelectedMetadata] = useState<string>('');
+  const [selectedMetadata, setSelectedMetadata] = useState<string>("");
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
-  const {
-    handleSubmit, reset,
-    register, control
-  } = useForm<FormState>({
+  const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
       score: 0,
-      match: 'false'
-    }
+      match: "false",
+    },
   });
   const { API } = useAppSelector(selectAppConfig);
   const { loading } = useAppSelector(selectReconcileRequestStatus);
@@ -126,10 +137,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const dispatch = useAppDispatch();
 
   const {
-    lowerBound: {
-      isScoreLowerBoundEnabled,
-      scoreLowerBound
-    }
+    lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
   } = settings;
 
   useEffect(() => {
@@ -142,9 +150,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const handleClose = () => {
     setShowAdd(false);
     setShowTooltip(false);
-    dispatch(updateUI({
-      openMetadataDialog: false
-    }));
+    dispatch(
+      updateUI({
+        openMetadataDialog: false,
+      })
+    );
   };
 
   const handleCancel = () => {
@@ -156,16 +166,18 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     // update global state if confirmed
     if (cell) {
       const previousMatch = cell.metadata.find((meta) => meta.match);
-      if (!previousMatch || (previousMatch.id !== selectedMetadata)) {
-        dispatch(updateCellMetadata({ metadataId: selectedMetadata, cellId: cell.id }));
+      if (!previousMatch || previousMatch.id !== selectedMetadata) {
+        dispatch(
+          updateCellMetadata({ metadataId: selectedMetadata, cellId: cell.id })
+        );
       }
     }
     handleClose();
   };
 
-const handleSelectedRowDelete = useCallback((row: any) => {
-  console.log("request to delete: " + row);
-}, []);
+  const handleSelectedRowDelete = useCallback((row: any) => {
+    console.log("request to delete: " + row);
+  }, []);
 
   const handleSelectedRowChange = useCallback((row: any) => {
     if (row) {
@@ -176,22 +188,22 @@ const handleSelectedRowDelete = useCallback((row: any) => {
             if (match) {
               setSelectedMetadata(row.id);
             } else {
-              setSelectedMetadata('');
+              setSelectedMetadata("");
             }
             return {
               ...item,
-              match
+              match,
             };
           }
           return {
             ...item,
-            match: false
+            match: false,
           };
         });
 
         return {
           columns: colState,
-          data: newData
+          data: newData,
         };
       });
     }
@@ -199,20 +211,24 @@ const handleSelectedRowDelete = useCallback((row: any) => {
 
   const handleDeleteRow = ({ original }: any) => {
     if (cell) {
-      dispatch(deleteCellMetadata({
-        cellId: cell.id,
-        metadataId: original.id.label
-      }));
+      dispatch(
+        deleteCellMetadata({
+          cellId: cell.id,
+          metadataId: original.id.label,
+        })
+      );
     }
   };
 
   const onSubmitNewMetadata = (formState: FormState) => {
     if (cell) {
-      dispatch(addCellMetadata({
-        cellId: cell.id,
-        prefix: getCellContext(cell),
-        value: { ...formState }
-      }));
+      dispatch(
+        addCellMetadata({
+          cellId: cell.id,
+          prefix: getCellContext(cell),
+          value: { ...formState },
+        })
+      );
       reset();
       setShowAdd(false);
     }
@@ -233,35 +249,34 @@ const handleSelectedRowDelete = useCallback((row: any) => {
 
   const getBadgeStatus = (cellItem: TableCell) => {
     const {
-      annotationMeta: {
-        match,
-        highestScore
-      }
+      annotationMeta: { match, highestScore },
     } = cellItem;
 
     if (match.value) {
       switch (match.reason) {
-        case 'manual':
-          return 'match-manual';
-        case 'reconciliator':
-          return 'match-reconciliator';
-        case 'refinement':
-          return 'match-refinement';
+        case "manual":
+          return "match-manual";
+        case "reconciliator":
+          return "match-reconciliator";
+        case "refinement":
+          return "match-refinement";
         default:
-          return 'match-reconciliator';
+          return "match-reconciliator";
       }
     }
 
     if (isScoreLowerBoundEnabled) {
       if (scoreLowerBound && highestScore < scoreLowerBound) {
-        return 'miss';
+        return "miss";
       }
     }
-    return 'warn';
+    return "warn";
   };
 
   const fetchMetadata = (service: string) => {
-    const reconciliator = reconciliators.find((recon) => recon.prefix === service);
+    const reconciliator = reconciliators.find(
+      (recon) => recon.prefix === service
+    );
     if (reconciliator && cell) {
       // dispatch(reconcile({
       //   baseUrl: reconciliator.relativeUrl,
@@ -284,40 +299,30 @@ const handleSelectedRowDelete = useCallback((row: any) => {
   };
 
   return cell ? (
-    <Dialog
-      maxWidth="lg"
-      open={open}
-      onClose={handleCancel}>
+    <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
       <Stack height="100%" minHeight="600px">
-        <Stack direction="row" gap="10px" alignItems="center" padding="12px 16px">
+        <Stack
+          direction="row"
+          gap="10px"
+          alignItems="center"
+          padding="12px 16px"
+        >
           <Stack direction="row" alignItems="center" gap={1}>
-            {cell.annotationMeta && cell.annotationMeta.annotated
-              && (
-                <StatusBadge
-                  status={getBadgeStatus(cell)}
-                />
-              )
-            }
-            <Typography variant="h5">
-              {cell?.label}
-            </Typography>
-            <Typography color="textSecondary">
-              (Cell label)
-            </Typography>
+            {cell.annotationMeta && cell.annotationMeta.annotated && (
+              <StatusBadge status={getBadgeStatus(cell)} />
+            )}
+            <Typography variant="h5">{cell?.label}</Typography>
+            <Typography color="textSecondary">(Cell label)</Typography>
           </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
             <Button onClick={handleClose}>
-              {(API.ENDPOINTS.SAVE && !isViewOnly) ? 'Cancel' : 'Close'}
+              {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
             </Button>
-            {(API.ENDPOINTS.SAVE && !isViewOnly)
-              && (
-                <Button
-                  onClick={handleConfirm}
-                  variant="outlined">
-                  Confirm
-                </Button>
-              )
-            }
+            {API.ENDPOINTS.SAVE && !isViewOnly && (
+              <Button onClick={handleConfirm} variant="outlined">
+                Confirm
+              </Button>
+            )}
           </Stack>
         </Stack>
         <Divider orientation="horizontal" flexItem />
@@ -325,10 +330,11 @@ const handleSelectedRowDelete = useCallback((row: any) => {
           {currentService && (
             <FormControl
               sx={{
-                maxWidth: '200px'
+                maxWidth: "200px",
               }}
               fullWidth
-              size="small">
+              size="small"
+            >
               <InputLabel variant="outlined" htmlFor="uncontrolled-native">
                 Reconciliator service
               </InputLabel>
@@ -338,86 +344,103 @@ const handleSelectedRowDelete = useCallback((row: any) => {
                 onChange={(e) => handleChangeService(e)}
                 variant="outlined"
               >
-                {reconciliators && reconciliators.map((reconciliator) => (
-                  <MenuItem key={reconciliator.prefix} value={reconciliator.prefix}>
-                    {reconciliator.name}
-                  </MenuItem>
-                ))}
+                {reconciliators &&
+                  reconciliators.map((reconciliator) => (
+                    <MenuItem
+                      key={reconciliator.prefix}
+                      value={reconciliator.prefix}
+                    >
+                      {reconciliator.name}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
           )}
         </Box>
-        {(data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly) && (
+        {data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly && (
           <Stack
             position="relative"
             direction="row"
             alignItems="center"
             alignSelf="flex-start"
-            padding="0px 12px">
+            padding="0px 12px"
+          >
             <Tooltip open={showTooltip} title="Add metadata" placement="right">
               <IconButton
                 color="primary"
                 onMouseLeave={handleTooltipClose}
                 onMouseEnter={handleTooltipOpen}
-                onClick={handleShowAdd}>
-                <AddRoundedIcon sx={{
-                  transition: 'transform 150ms ease-out',
-                  transform: showAdd ? 'rotate(45deg)' : 'rotate(0)'
-                }} />
+                onClick={handleShowAdd}
+              >
+                <AddRoundedIcon
+                  sx={{
+                    transition: "transform 150ms ease-out",
+                    transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                  }}
+                />
               </IconButton>
             </Tooltip>
             <Box
               sx={{
-                position: 'absolute',
-                left: '100%',
-                top: '50%',
-                padding: '12px 16px',
-                borderRadius: '6px',
-                transition: 'all 150ms ease-out',
+                position: "absolute",
+                left: "100%",
+                top: "50%",
+                padding: "12px 16px",
+                borderRadius: "6px",
+                transition: "all 150ms ease-out",
                 opacity: showAdd ? 1 : 0,
-                transform: showAdd ? 'translateY(-50%) translateX(0)' : 'translateY(-50%) translateX(-20px)'
-              }}>
+                transform: showAdd
+                  ? "translateY(-50%) translateX(0)"
+                  : "translateY(-50%) translateX(-20px)",
+              }}
+            >
               <Stack
                 component="form"
                 direction="row"
                 gap="10px"
-                onSubmit={handleSubmit(onSubmitNewMetadata)}>
+                onSubmit={handleSubmit(onSubmitNewMetadata)}
+              >
                 <TextField
-                  sx={{ minWidth: '200px' }}
+                  sx={{ minWidth: "200px" }}
                   size="small"
                   label="Id"
                   variant="outlined"
-                  {...register('id')} />
+                  {...register("id")}
+                />
                 <TextField
-                  sx={{ minWidth: '200px' }}
+                  sx={{ minWidth: "200px" }}
                   size="small"
                   label="Name"
                   variant="outlined"
-                  {...register('name')} />
+                  {...register("name")}
+                />
                 <TextField
-                  sx={{ minWidth: '200px' }}
+                  sx={{ minWidth: "200px" }}
                   size="small"
                   label="Score"
                   variant="outlined"
-                  {...register('score')} />
-                <FormControl size="small" sx={{ width: '200px' }}>
+                  {...register("score")}
+                />
+                <FormControl size="small" sx={{ width: "200px" }}>
                   <InputLabel>Match</InputLabel>
                   <Controller
                     render={({ field }) => (
                       <Select {...field} labelId="select-match" label="Match">
-                        <MenuItem value="true">
-                          true
-                        </MenuItem>
-                        <MenuItem value="false">
-                          false
-                        </MenuItem>
+                        <MenuItem value="true">true</MenuItem>
+                        <MenuItem value="false">false</MenuItem>
                       </Select>
                     )}
                     name="match"
                     control={control}
                   />
                 </FormControl>
-                <Button type="submit" size="small" sx={{ textTransform: 'none' }}>Add</Button>
+                <Button
+                  type="submit"
+                  size="small"
+                  sx={{ textTransform: "none" }}
+                >
+                  Add
+                </Button>
               </Stack>
             </Box>
           </Stack>
@@ -428,7 +451,7 @@ const handleSelectedRowDelete = useCallback((row: any) => {
           data={data}
           loading={loading}
           onSelectedRowChange={handleSelectedRowChange}
-          onSelectedRowDeleteRequest ={handleSelectedRowDelete}
+          onSelectedRowDeleteRequest={handleSelectedRowDelete}
           showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
         />
       </Stack>
