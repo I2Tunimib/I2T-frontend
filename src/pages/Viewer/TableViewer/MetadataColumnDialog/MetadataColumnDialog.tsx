@@ -173,7 +173,7 @@ const Content = () => {
     <Stack>
       <Stack direction="row" alignItems="center" marginTop="15px" gap="10px">
         <InputLabel style={{ marginLeft: 15 }} id="kind-select-label">
-          Column Kind
+          <b style={{ marginRight: 25 }}> {currentColId}</b>Column Kind:
         </InputLabel>
         <Select
           labelId="kind-select-label"
@@ -187,12 +187,12 @@ const Content = () => {
           <MenuItem value="none">None</MenuItem>
         </Select>
         <InputLabel style={{ marginLeft: 15 }} id="role-select-label">
-          Column Role
+          Column Role:
         </InputLabel>
 
         <Select
           labelId="role-select-label"
-          value={currentRole}
+          value={currentRole ?? "none"}
           onChange={handleRoleChange}
           variant="outlined"
           size="small"
