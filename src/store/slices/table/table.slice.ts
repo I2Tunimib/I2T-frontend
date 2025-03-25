@@ -45,6 +45,7 @@ import {
   UpdateColumnEditablePayload,
   UpdateColumnMetadataPayload,
   UpdateColumnTypePayload,
+  AddColumnTypePayload,
   UpdateCurrentTablePayload,
   UpdateSelectedCellsPayload,
   UpdateSelectedColumnPayload,
@@ -109,6 +110,7 @@ import {
   toggleObject,
 } from "./utils/table.utils";
 import { property } from "lodash";
+import { a } from "react-spring";
 
 const initialState: TableState = {
   entities: {
@@ -972,6 +974,59 @@ export const tableSlice = createSliceWithRequests({
         }
       );
     },
+    addColumnType: (
+      state,
+      action: PayloadAction<Payload<AddColumnTypePayload[]>>
+    ) => {
+      const { selectedColumnCellsIds } = state.ui;
+      const undoable = true;
+      const colId = Object.keys(selectedColumnCellsIds)[0];
+      const columns = state.entities;
+      console.log("payload", action.payload);
+      const nextState = produceWithPatch(
+        state,
+        undoable,
+        (draft) => {
+          const { columns } = draft.entities;
+          const newTypes = action.payload.map((type) => ({
+            ...type,
+            match: true,
+            score: 100,
+          }));
+
+          console.log(
+            "New type:",
+            newTypes,
+            "ColId:",
+            columns.byId[colId].metadata[0].type
+          );
+          if (!columns.byId[colId].metadata[0].additionalTypes) {
+            console.log("setting new additional type");
+            columns.byId[colId].metadata[0].additionalTypes = [];
+            columns.byId[colId].metadata[0].additionalTypes = newTypes;
+          } else {
+            columns.byId[colId].metadata[0].additionalTypes =
+              columns.byId[colId].metadata[0].additionalTypes?.concat(newTypes);
+          }
+
+          // if (columns.byId[colId].metadata.length === 0) {
+          //   (columns.byId[colId].metadata as any) = [
+          //     {
+          //       type: newTypes,
+          //     },
+          //   ];
+          // } else {
+          //   (columns.byId[colId].metadata[0] as any) = newTypes;
+          // }
+        },
+        (draft) => {
+          // do not include in undo history
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        }
+      );
+      return nextState;
+    },
     /**
      * Handle update of the type of a column
      * -- UNDOABLE ACTION --
@@ -1515,6 +1570,7 @@ export const {
   updateRowSelection,
   updateCellSelection,
   updateColumnType,
+  addColumnType,
   updateUI,
   addTutorialBox,
   deleteColumn,

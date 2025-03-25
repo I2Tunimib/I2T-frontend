@@ -745,13 +745,16 @@ export const selectColumnTypes = createSelector(
 
     // add current type
     let currentColType: any[] = [];
-
+    let currentTypesIds = [];
+    let additionalTypes =
+      columnsState.byId[colIds[0]].metadata[0].additionalTypes ?? [];
     if (columnsState.byId[colIds[0]].metadata.length > 0) {
       if (columnsState.byId[colIds[0]].metadata[0].type) {
         const metaItem = columnsState.byId[colIds[0]].metadata[0];
         if (metaItem.type) {
           for (let i = 0; i < metaItem.type.length; i++) {
             currentColType.push(metaItem.type[i]);
+            currentTypesIds.push(metaItem.type[i].id);
           }
         }
         if (currentColType.length > 0) {
@@ -767,15 +770,19 @@ export const selectColumnTypes = createSelector(
         }
       }
     }
-
+    additionalTypes = additionalTypes.filter(
+      (type) => !currentTypesIds.includes(type.id)
+    );
     const totalCount = Object.keys(map).reduce(
       (acc, key) => acc + map[key].count,
       0
     );
-    console.log("map object", map);
+
     //TODO: transform into an array
     let selectedType: any[] = [];
-    const allTypes = Object.keys(map)
+
+    console.log("additional types", additionalTypes, currentTypesIds);
+    let allTypes = Object.keys(map)
       .map((key) => {
         const item = {
           ...map[key],
@@ -789,6 +796,14 @@ export const selectColumnTypes = createSelector(
         }
         return item;
       })
+      .concat(
+        additionalTypes.map((type) => ({
+          id: type.id,
+          label: type.name,
+          count: 0,
+          percentage: "0.00",
+        }))
+      )
       .sort((a, b) => b.count - a.count);
 
     return {
