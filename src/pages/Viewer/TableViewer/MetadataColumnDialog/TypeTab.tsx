@@ -6,14 +6,28 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
+  IconButton,
+  InputLabel,
+  MenuItem,
   Radio,
   RadioGroup,
+  Select,
   Stack,
+  TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import { KG_INFO } from "@services/utils/kg-info";
+import { selectAppConfig } from "@store/slices/config/config.selectors";
 import { selectColumnTypes } from "@store/slices/table/table.selectors";
-import { updateColumnType, updateUI } from "@store/slices/table/table.slice";
+import {
+  addColumnType,
+  updateColumnType,
+  updateUI,
+} from "@store/slices/table/table.slice";
 import { ChangeEvent, FC, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
   ({ percentage, checked }) => ({
@@ -107,11 +121,88 @@ interface TypeTabProps {
   // actions to do in order to persist the modifications
   addEdit: Function;
 }
+
+interface NewMetadata {
+  id: string;
+  name: string;
+  uri?: string;
+}
 const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const [selected, setSelected] = useState<SelectedTypeState[]>([]);
-  const types = useAppSelector(selectColumnTypes);
-  const dispatch = useAppDispatch();
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [showAdd, setShowAdd] = useState<boolean>(false);
 
+  const {
+    handleSubmit: handleSubmitNewType,
+    reset,
+    register,
+    control,
+  } = useForm<NewMetadata>();
+  const { API } = useAppSelector(selectAppConfig);
+
+  const types = useAppSelector(selectColumnTypes);
+  console.log("types", types);
+  const dispatch = useAppDispatch();
+  const handleTooltipOpen = () => {
+    setShowTooltip(!showAdd);
+  };
+
+  const handleTooltipClose = () => {
+    setShowTooltip(false);
+  };
+
+  const handleShowAdd = () => {
+    setShowAdd(!showAdd);
+    setShowTooltip(false);
+  };
+  const onSubmitNewMetadata = (formState: NewMetadata) => {
+    console.log("formState", formState);
+    console.log("kg info", KG_INFO);
+    const mainUrls = Object.keys(KG_INFO)
+      .map((item) => {
+        const fullUrl = KG_INFO[item].uri;
+        try {
+          const url = new URL(fullUrl);
+          return url.origin; // Get the main URL (e.g., https://atoka.io)
+        } catch (error) {
+          console.error(`Invalid URL: ${fullUrl}`, error);
+          return null;
+        }
+      })
+      .filter(Boolean);
+    console.log("urls", mainUrls);
+    let prefixSplit = formState.id.split(":");
+    let prefix = null;
+    if (prefixSplit.length > 1) {
+      prefix = prefixSplit[0];
+    } else {
+      const matchingUrl = mainUrls.find((url) =>
+        formState.uri?.startsWith(url)
+      );
+      console.log("matchingUrl", matchingUrl);
+      const keys = Object.keys(KG_INFO);
+      console.log("keys", keys, KG_INFO[keys[0]]);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        console.log("key", key);
+        if (KG_INFO[key].uri.includes(matchingUrl)) {
+          prefix = key + ":";
+          break;
+        }
+      }
+    }
+    console.log("prefix", prefix);
+    if (prefix) {
+      const newType = {
+        id: prefix + formState.id,
+        name: formState.name,
+        uri: formState.uri,
+      };
+      dispatch(addColumnType([newType]));
+      console.log("newType", newType);
+      // dispatch(addNewType(newType));
+    }
+  };
   const handleChange = (
     event: ChangeEvent<HTMLInputElement>,
     checked: boolean
@@ -205,6 +296,99 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           </Stack>
         </Box>
       )}
+      {
+        /*data.length > 0 && */ API.ENDPOINTS.SAVE && (
+          <Stack
+            position="relative"
+            direction="row"
+            alignItems="center"
+            alignSelf="flex-start"
+            padding="0px 0px"
+          >
+            <Tooltip open={showTooltip} title="Add metadata" placement="right">
+              <IconButton
+                color="primary"
+                onMouseLeave={handleTooltipClose}
+                onMouseEnter={handleTooltipOpen}
+                onClick={handleShowAdd}
+              >
+                <AddRoundedIcon
+                  sx={{
+                    transition: "transform 150ms ease-out",
+                    transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+            <Box
+              sx={{
+                position: "absolute",
+                left: "100%",
+                top: "50%",
+                padding: "12px 16px",
+                borderRadius: "6px",
+                transition: "all 150ms ease-out",
+                opacity: showAdd ? 1 : 0,
+                transform: showAdd
+                  ? "translateY(-50%) translateX(0)"
+                  : "translateY(-50%) translateX(-20px)",
+              }}
+            >
+              <Stack
+                component="form"
+                direction="row"
+                gap="10px"
+                onSubmit={handleSubmitNewType(onSubmitNewMetadata)}
+              >
+                <Tooltip
+                  title="Enter a complete id, like wd:Q215627"
+                  arrow
+                  placement="top"
+                >
+                  <TextField
+                    sx={{ minWidth: "200px" }}
+                    size="small"
+                    label="Id"
+                    variant="outlined"
+                    required
+                    placeholder="wd:"
+                    {...register("id")}
+                  />
+                </Tooltip>
+                <Tooltip
+                  title="Enter a name, like person"
+                  arrow
+                  placement="top"
+                >
+                  <TextField
+                    sx={{ minWidth: "200px" }}
+                    size="small"
+                    label="Name"
+                    variant="outlined"
+                    required
+                    {...register("name")}
+                  />
+                </Tooltip>
+                <TextField
+                  sx={{ minWidth: "200px" }}
+                  size="small"
+                  label="Uri"
+                  variant="outlined"
+                  {...register("uri")}
+                />
+
+                <Button
+                  type="submit"
+                  size="small"
+                  sx={{ textTransform: "none" }}
+                >
+                  Add
+                </Button>
+              </Stack>
+            </Box>
+          </Stack>
+        )
+      }
       <RadioButtonsGroup
         selected={selected}
         types={types.allTypes}
