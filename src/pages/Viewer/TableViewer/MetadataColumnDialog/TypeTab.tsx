@@ -20,14 +20,25 @@ import {
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { KG_INFO } from "@services/utils/kg-info";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
-import { selectColumnTypes } from "@store/slices/table/table.selectors";
+import {
+  selectColumnCellMetadataTableFormat,
+  selectColumnTypes,
+  selectIsViewOnly,
+} from "@store/slices/table/table.selectors";
 import {
   addColumnType,
   updateColumnType,
   updateUI,
 } from "@store/slices/table/table.slice";
-import { ChangeEvent, FC, useEffect, useState } from "react";
+import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { getCellComponent } from "../MetadataDialog/componentsConfig";
+import { Cell, Row } from "react-table";
+import { BaseMetadata } from "@store/slices/table/interfaces/table";
+import usePrepareTable from "../MetadataDialog/usePrepareTable";
+import deferMounting from "@components/HOC";
+import CustomTable from "@components/kit/CustomTable/CustomTable";
+const DeferredTable = deferMounting(CustomTable);
 
 const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
   ({ percentage, checked }) => ({
@@ -131,6 +142,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const [selected, setSelected] = useState<SelectedTypeState[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
 
   const {
     handleSubmit: handleSubmitNewType,
@@ -155,6 +167,118 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     setShowAdd(!showAdd);
     setShowTooltip(false);
   };
+  const makeData = (
+    rawData: ReturnType<typeof selectColumnCellMetadataTableFormat>
+  ) => {
+    if (!rawData) {
+      return {
+        columns: [],
+        data: [],
+      };
+    }
+
+    const { column, service } = rawData;
+
+    if (!service) {
+      return {
+        columns: [],
+        data: [],
+      };
+    }
+
+    // const { metaToView } = service;
+    const metaToView: {
+      [key: string]: {
+        label?: string;
+        type?: "link" | "subList" | "tag" | "checkBox";
+      };
+    } = {
+      selected: { label: "Selected", type: "checkBox" },
+      id: { label: "ID" },
+      name: { label: "Name", type: "link" },
+      percentage: { label: "Percentage" },
+      // match: { label: "Match", type: "tag" },
+    };
+
+    if (!column.metadata || !column.metadata[0].property) {
+      return {
+        columns: [],
+        data: [],
+      };
+    }
+
+    const { property: metadata } = column.metadata[0];
+    // Use types from Redux state
+
+    if (!types || !types.allTypes) {
+      return {
+        columns: [],
+        data: [],
+      };
+    }
+    /*
+  the following snippet is a workaround because Datamodel of Property (API response JSON) is different
+  from Entity Datamodel
+  COULD HAVE SAME DATAMODEL? IN THIS CASE, IT NEEDS TO MAKE A CHANGE IN THE BACKEND APPLICATION
+  */
+    const newMetadata = types.allTypes
+      .map((type) => {
+        return {
+          selected: selected.some((item) => item.id === type.id),
+          id: type.id,
+          name: { value: type.label, uri: "" },
+          percentage: Number(type.percentage).toFixed(0) + "%",
+          // match: "",
+        };
+      })
+      .sort((a, b) => {
+        // Sort by selected status first (selected items come first)
+        if (a.selected !== b.selected) {
+          return a.selected ? -1 : 1;
+        }
+        // Then sort by percentage (descending order)
+        const percentageA = parseFloat(a.percentage.replace("%", ""));
+        const percentageB = parseFloat(b.percentage.replace("%", ""));
+        return percentageB - percentageA;
+      });
+
+    const columns = Object.keys(metaToView).map((key) => {
+      const { label = key, type } = metaToView[key];
+      return {
+        Header: label,
+        accessor: key,
+        Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
+      };
+    });
+
+    const data = newMetadata.map((metadataItem) => {
+      //const data = metadata.map((metadataItem) => {
+      return Object.keys(metaToView).reduce((acc, key) => {
+        const value = metadataItem[key as keyof BaseMetadata];
+        if (value !== undefined) {
+          acc[key] = value;
+        } else {
+          acc[key] = null;
+        }
+
+        return acc;
+      }, {} as Record<string, any>);
+    });
+
+    return {
+      columns,
+      data,
+    };
+  };
+  const {
+    state,
+    setState,
+    memoizedState: { columns, data },
+  } = usePrepareTable({
+    selector: selectColumnCellMetadataTableFormat,
+    makeData,
+    dependencies: [selected],
+  });
   const onSubmitNewMetadata = (formState: NewMetadata) => {
     console.log("formState", formState);
     console.log("kg info", KG_INFO);
@@ -203,6 +327,51 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
       // dispatch(addNewType(newType));
     }
   };
+
+  const handleRowTypeCheck = (row: any) => {
+    const rowId = row.id;
+    const index = selected.findIndex((item) => item.id === rowId);
+    console.log("index", index);
+    if (index > -1) {
+      setSelected(selected.filter((item) => item.id !== rowId));
+    } else {
+      if (types) {
+        const selectedType = types.allTypes.find((item) => item.id === rowId);
+        if (selectedType) {
+          setSelected([...selected, selectedType]);
+        }
+      }
+    }
+  };
+
+  const handleSelectedRowChange = useCallback(
+    (row: any) => {
+      setState(({ columns: colState, data: dataState }) => {
+        if (!row.id) {
+          return { columns: colState, data: dataState };
+        }
+        const selectedRow = dataState.find((item) => item.id === row.id);
+        if (!selectedRow) {
+          return { columns: colState, data: dataState };
+        }
+        const newData = dataState.map((item) => {
+          if (item.id === row.id) {
+            return {
+              ...item,
+              selected: !selectedRow.selected,
+            };
+          }
+          return item;
+        });
+        return {
+          columns: colState,
+          data: newData,
+        };
+      });
+    },
+    [selected, setSelected]
+  );
+
   const handleChange = (
     event: ChangeEvent<HTMLInputElement>,
     checked: boolean
@@ -273,7 +442,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         In the following list is shown the frequency of the types which are
         present in the column
       </Typography>
-      {selected && (
+      {false && selected && (
         <Box
           marginLeft="-10px"
           marginRight="-10px"
@@ -389,11 +558,25 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           </Stack>
         )
       }
-      <RadioButtonsGroup
+      {/* <RadioButtonsGroup
         selected={selected}
         types={types.allTypes}
         value={selected ? selected.id : ""}
         onChange={handleChange}
+      /> */}
+      <DeferredTable
+        flexGrow={1}
+        stickyHeaderTop="61.5px"
+        columns={columns}
+        data={data}
+        disableDelete={true}
+        loading={false}
+        onSelectedRowChange={handleRowTypeCheck}
+        onSelectedRowDeleteRequest={() => {}}
+        showCheckbox={true}
+        onRowCheck={handleRowTypeCheck}
+        checkedRows={selected.map((item) => item.id)}
+        showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
       />
     </Stack>
   ) : null;

@@ -5,6 +5,7 @@ import {
   IconButton,
   Pagination,
   Paper,
+  Checkbox,
   Radio,
   Stack,
   TableCell,
@@ -42,11 +43,14 @@ import {
   TableSubRow,
 } from "./CustomTableStyles";
 import ColumnHide from "./ColumnHide";
+import { CheckBox } from "@mui/icons-material";
 
 export interface TableProperties<T extends Record<string, unknown>>
   extends TableOptions<T> {
   onSelectedRowChange: (row: T | null) => void;
   onSelectedRowDeleteRequest: (row: T | null) => void;
+  showCheckbox?: boolean;
+  onRowCheck: (rowId: string) => void;
   stickyHeaderTop?: string;
   loading?: boolean;
 }
@@ -150,9 +154,13 @@ export default function CustomTable<T extends Record<string, unknown>>(
     data,
     onSelectedRowChange,
     onSelectedRowDeleteRequest,
+    onRowCheck,
     stickyHeaderTop = "0px",
+    disableDelete = false,
     loading = false,
     showRadio = true,
+    showCheckbox = false,
+    checkedRows = [],
   } = props;
   const tableInstance = useTable<T>(
     {
@@ -202,6 +210,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
   };
 
   const handleRowClick = (row: Row<T>) => {
+    console.log("Row clicked:", row);
     onSelectedRowChange(row.original);
   };
 
@@ -317,9 +326,40 @@ export default function CustomTable<T extends Record<string, unknown>>(
                           onClick={() => handleRowClick(row)}
                           {...rowProps}
                         >
+                          {/* Cella per checkBox */}
+                          {/* <TableCell
+                            padding="checkbox"
+                            sx={{
+                              width: "50px",
+                              minWidth: "50px",
+                              maxWidth: "50px",
+                            }} // Set fixed width
+                          > */}
+                          {/* Material UI checkbox */}
+                          {/* <Checkbox
+                              disabled={showCheckbox}
+                              checked={checkedRows.includes(row.id)}
+                              onChange={(event) => {
+                                onRowCheck(row.id);
+                              }}
+                            />
+                          </TableCell> */}
+
                           {/* Cella per l'icona di eliminazione */}
-                          <TableCell /*padding="checkbox"*/>
+                          <TableCell /*padding="checkbox"*/
+                            style={{
+                              width: "50px",
+                              minWidth: "50px",
+                              maxWidth: "50px",
+                            }}
+                            sx={{
+                              width: "50px",
+                              minWidth: "50px",
+                              maxWidth: "50px",
+                            }} // Set fixed width
+                          >
                             <IconButton
+                              disabled={disableDelete}
                               color="error"
                               onClick={(event) => {
                                 event.stopPropagation(); // Previene l'attivazione di handleRowClick
