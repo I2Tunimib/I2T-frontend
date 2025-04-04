@@ -1,5 +1,5 @@
 import tableAPI, { GetTableResponse } from "@services/api/table";
-import { createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk, current } from "@reduxjs/toolkit";
 import { RootState } from "@store";
 import { levDistance } from "@services/utils/lev-distance";
 import { isEmptyObject } from "@services/utils/objects-utils";
@@ -29,6 +29,7 @@ export enum TableThunkActions {
   AUTOMATIC_ANNOTATION = "automaticAnnotation",
   UPDATE_TABLE_SOCKET = "updateTableSocket",
   EXTEND = "extend",
+  SUGGEST = "suggest",
   CONVER_W3C = "convertToW3C",
   EXPORT_TABLE = "exportTable",
   FILTER_TABLE = "filterTable",
@@ -306,6 +307,43 @@ export const automaticAnnotation = createAsyncThunk<
   };
   const response = await tableAPI.automaticAnnotation(params, data);
   return response.data;
+});
+export type SuggestThunkInputProps = {
+  // rowCellsEntities: any;
+  suggester: string;
+};
+export type SuggestThunkOutputProps = {
+  suggester: string;
+  data: any;
+};
+
+export const suggest = createAsyncThunk<
+  SuggestThunkOutputProps,
+  SuggestThunkInputProps
+>(`${ACTION_PREFIX}/suggest`, async (inputProps, { getState }) => {
+  const { suggester } = inputProps;
+  const { table } = getState() as RootState;
+  const { ui, entities } = table;
+  const { rows } = entities;
+  const selectedColumnId = Object.keys(ui.selectedColumnsIds)[0];
+  const rowsMetadata = rows.allIds
+    .map((rowId) => {
+      let currentMetadata =
+        rows.byId[rowId].cells[selectedColumnId].metadata[0];
+      if (currentMetadata.match) {
+        return currentMetadata;
+      } else {
+        return null;
+      }
+    })
+    .filter((meta) => meta !== null);
+  const response = await tableAPI.suggest(suggester, rowsMetadata);
+  let currentDataResponse = response.data.data;
+  console.log("suggest", currentDataResponse);
+  return {
+    suggester,
+    data: currentDataResponse,
+  };
 });
 
 export type ExtendThunkInputProps = {

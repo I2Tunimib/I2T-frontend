@@ -1,21 +1,33 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Alert,
+  Box,
+  Button,
+  Collapse,
   Dialog,
   DialogContent,
   DialogContentText,
   DialogTitle,
   Divider,
   FormControl,
+  ListItemText,
   ListSubheader,
   MenuItem,
   Select,
   SelectChangeEvent,
   Typography,
 } from "@mui/material";
-import { forwardRef, Ref, ReactElement, useState, useEffect, FC } from "react";
+import React, {
+  forwardRef,
+  Ref,
+  ReactElement,
+  useState,
+  useEffect,
+  FC,
+} from "react";
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import {
   selectAreCellReconciliated,
   selectExtendRequestStatus,
@@ -43,6 +55,8 @@ const Content = styled.div({
 });
 
 const DialogInnerContent = () => {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+
   const [currentService, setCurrentService] = useState<Extender>();
   const [groupedServices, setGroupedServices] =
     useState<Map<string, Extender[]>>();
@@ -86,6 +100,7 @@ const DialogInnerContent = () => {
       (service) => service.id === event.target.value
     );
     if (val) {
+      console.log("current service", val);
       setCurrentService(val);
     }
   };
@@ -115,7 +130,13 @@ const DialogInnerContent = () => {
         });
     }
   };
-
+  const toggleGroup = (uri: string) => {
+    setExpandedGroup((prev) => (prev === uri ? null : uri));
+  };
+  const handleHeaderClick = (e, uri) => {
+    e.stopPropagation(); // Prevent the Select from closing
+    setExpandedGroup((prev) => (prev === uri ? null : uri));
+  };
   return (
     <>
       {currentService && (
@@ -123,18 +144,61 @@ const DialogInnerContent = () => {
           <FormControl className="field">
             <Select
               value={currentService.id}
-              onChange={(e) => handleChange(e)}
+              onChange={handleChange}
               variant="outlined"
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: "400px",
+                  },
+                },
+              }}
+              renderValue={(selected) => {
+                const selectedService = extensionServices.find(
+                  (service) => service.id === selected
+                );
+                return selectedService ? selectedService.name : "";
+              }}
             >
               {groupedServices &&
-                Array.from(groupedServices).flatMap(([uri, extenders]) => [
-                  <ListSubheader key={`header-${uri}`}>{uri}</ListSubheader>,
-                  ...extenders.map((extender) => (
-                    <MenuItem key={extender.id} value={extender.id}>
-                      {extender.name}
-                    </MenuItem>
-                  )),
-                ])}
+                Array.from(groupedServices).map(([uri, extenders]) => (
+                  <React.Fragment key={`group-${uri}`}>
+                    <ListSubheader
+                      onClick={(e) => handleHeaderClick(e, uri)}
+                      sx={{
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        "&:hover": {
+                          backgroundColor: "action.hover",
+                        },
+                      }}
+                    >
+                      <ListItemText primary={uri} />
+                      <Box sx={{ ml: "auto" }}>
+                        {expandedGroup === uri ? (
+                          <ExpandLess />
+                        ) : (
+                          <ExpandMore />
+                        )}
+                      </Box>
+                    </ListSubheader>
+                    <Collapse in={expandedGroup === uri} unmountOnExit>
+                      {extenders.map((extender) => (
+                        <MenuItem
+                          key={extender.id}
+                          value={extender.id}
+                          sx={{ pl: 4 }}
+                          onClick={() =>
+                            handleChange({ target: { value: extender.id } })
+                          }
+                        >
+                          {extender.name}
+                        </MenuItem>
+                      ))}
+                    </Collapse>
+                  </React.Fragment>
+                ))}
             </Select>
           </FormControl>
           <SquaredBox

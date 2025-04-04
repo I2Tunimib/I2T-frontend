@@ -1,8 +1,12 @@
-import { ID } from '@store/interfaces/store';
-import { Column, Row, TableInstance } from '@store/slices/table/interfaces/table';
-import { CancelToken } from 'axios';
-import { apiEndpoint } from '../../configHelpers';
-import apiClient from './config/config';
+import { ID } from "@store/interfaces/store";
+import {
+  Column,
+  Row,
+  TableInstance,
+} from "@store/slices/table/interfaces/table";
+import { CancelToken } from "axios";
+import { apiEndpoint } from "../../configHelpers";
+import apiClient from "./config/config";
 
 export interface GetTableResponse {
   table: TableInstance;
@@ -17,7 +21,7 @@ export interface ChallengeTableDataset {
     format: string;
     ctime: Date;
     size: number;
-  }[],
+  }[];
   annotations: string[];
 }
 
@@ -25,14 +29,14 @@ const tableAPI = {
   getTable: (params: Record<string, string | number> = {}) => {
     return apiClient.get<GetTableResponse>(
       apiEndpoint({
-        endpoint: 'GET_TABLE',
-        paramsValue: { ...params }
+        endpoint: "GET_TABLE",
+        paramsValue: { ...params },
       }),
       {
         clearCacheEntry: true,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       }
     );
   },
@@ -42,49 +46,60 @@ const tableAPI = {
   ) => {
     return apiClient.get<any>(
       apiEndpoint({
-        endpoint: 'EXPORT',
+        endpoint: "EXPORT",
         subEndpoint: format,
-        paramsValue: params
+        paramsValue: params,
       }),
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       }
     );
   },
   saveTable: (data: any, params: Record<string, string | number> = {}) => {
     return apiClient.put<any>(
       apiEndpoint({
-        endpoint: 'SAVE',
-        paramsValue: { ...params }
+        endpoint: "SAVE",
+        paramsValue: { ...params },
       }),
       data,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       }
     );
   },
-  automaticAnnotation: (params: Record<string, string | number> = {}, data: any) => {
+  automaticAnnotation: (
+    params: Record<string, string | number> = {},
+    data: any
+  ) => {
     return apiClient.post<any>(
       apiEndpoint({
-        endpoint: 'AUTOMATIC_ANNOTATION',
-        paramsValue: { ...params }
+        endpoint: "AUTOMATIC_ANNOTATION",
+        paramsValue: { ...params },
       }),
       data,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       }
     );
   },
-  reconcile: (baseUrl: string, data: any) => apiClient.post(`/reconciliators${baseUrl}`, data),
-  extend: (baseUrl: string, data: any) => apiClient.post(`extenders${baseUrl}`, data),
-  getChallengeDatasets: () => apiClient.get<ChallengeTableDataset[]>('/tables/challenge/datasets'),
-  getChallengeTable: (datasetName: string, tableName: string) => apiClient.get(`/tables/challenge/datasets/${datasetName}/tables/${tableName}`)
+  reconcile: (baseUrl: string, data: any) =>
+    apiClient.post(`/reconciliators${baseUrl}`, data),
+  extend: (baseUrl: string, data: any) =>
+    apiClient.post(`extenders${baseUrl}`, data),
+  suggest: (baseUrl: string, data: any) =>
+    apiClient.post(`/suggestion${baseUrl}`, data),
+  getChallengeDatasets: () =>
+    apiClient.get<ChallengeTableDataset[]>("/tables/challenge/datasets"),
+  getChallengeTable: (datasetName: string, tableName: string) =>
+    apiClient.get(
+      `/tables/challenge/datasets/${datasetName}/tables/${tableName}`
+    ),
 };
 
 export default tableAPI;

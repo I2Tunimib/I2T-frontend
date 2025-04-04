@@ -1,9 +1,16 @@
-import { Button, Stack } from "@mui/material";
+import {
+  Button,
+  Stack,
+  Select as SelectMaterial,
+  MenuItem,
+  InputLabel,
+  Chip,
+} from "@mui/material";
 import {
   Extender,
   Reconciliator,
 } from "@store/slices/config/interfaces/config";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { useAppDispatch } from "@hooks/store";
@@ -14,6 +21,7 @@ import {
   getRules,
   prepareFormInput,
 } from "./componentsConfig";
+import { suggest } from "@store/slices/table/table.thunk";
 
 export type DynamicFormProps = {
   loading: boolean | undefined;
@@ -29,7 +37,8 @@ const DynamicForm: FC<DynamicFormProps> = ({
   onCancel: onCancelCallback,
 }) => {
   const dispatch = useAppDispatch();
-
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<any[]>([]);
   const { control, handleSubmit, reset, setValue, formState } = useForm({
     defaultValues: getDefaultValues(service),
   });
@@ -42,12 +51,30 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const { formParams } = service;
 
   const onSubmit = (formValue: any) => {
+    console.log("formValue", formValue);
+    return;
     onSubmitCallback(formValue);
     reset(getDefaultValues(service));
   };
 
   const onCancel = () => {
     onCancelCallback();
+  };
+
+  const onSuggest = async () => {
+    let data = await dispatch(
+      suggest({
+        suggester: "/wikidata",
+      })
+    ).unwrap();
+    setSuggestions(data.data);
+    console.log("data", data);
+  };
+
+  const onSuggestChange = (event: any) => {
+    const { value } = event.target;
+    setSelectedSuggestion(value);
+ 
   };
 
   return (
@@ -75,6 +102,43 @@ const DynamicForm: FC<DynamicFormProps> = ({
             />
           );
         })}
+      {service.id === "wikidataPropertySPARQL" && (
+        <Button onClick={onSuggest}>Suggest</Button>
+      )}
+      {suggestions.length > 0 && (
+        <>
+          <InputLabel id="suggestion-label">Suggestion list</InputLabel>
+          <SelectMaterial
+            onChange={onSuggestChange}
+            multiple={true}
+            labelId="suggestion-match"
+            label={"Select suggestion"}
+            value={selectedSuggestion}
+            renderValue={(selected) => (
+              <div>
+                {selected.map((value) => {
+                  const selectedOption = suggestions.find(
+                    (option) => option.id === value
+                  );
+                  return (
+                    <Chip
+                      style={{ marginRight: 5 }}
+                      key={value}
+                      label={selectedOption ? selectedOption.label : value}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          >
+            {suggestions.map((option) => (
+              <MenuItem key={option.id} value={option.id}>
+                {option.label} {option.percentage + "%"}
+              </MenuItem>
+            ))}
+          </SelectMaterial>
+        </>
+      )}
       <Stack direction="row" justifyContent="flex-end">
         <Button onClick={onCancel}>Cancel</Button>
         <LoadingButton type="submit" loading={loading}>
