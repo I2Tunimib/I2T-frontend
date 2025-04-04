@@ -39,6 +39,7 @@ import {
   deleteColumnMetadata,
   undo,
   updateColumnMetadata,
+  updateColumnPropertyMetadata,
   updateUI,
 } from "@store/slices/table/table.slice";
 import { reconcile } from "@store/slices/table/table.thunk";
@@ -50,6 +51,7 @@ import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { SelectColumns } from "@components/core/DynamicForm/formComponents/Select";
+import { getPrefixIfAvailable } from "@services/utils/kg-info";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -74,8 +76,12 @@ const makeData = (
 
   // const { metaToView } = service;
   const metaToView: {
-    [key: string]: { label?: string; type?: "link" | "subList" | "tag" };
+    [key: string]: {
+      label?: string;
+      type?: "link" | "subList" | "tag" | "checkBox";
+    };
   } = {
+    selected: { label: "Selected", type: "checkBox" },
     id: { label: "ID" },
     name: { label: "Name", type: "link" },
     obj: { label: "Obj" /*, type:'link' */ },
@@ -104,9 +110,15 @@ const makeData = (
       if (resourceContext) {
         return {
           ...item,
+          selected: item.match,
           name: { value: item.name, uri: `${resourceContext.uri}${id}` },
         };
-      } else return { ...item, name: { value: item.name, uri: "" } };
+      } else
+        return {
+          ...item,
+          selected: item.match,
+          name: { value: item.name, uri: "" },
+        };
     }
     return item;
   });
@@ -120,19 +132,28 @@ const makeData = (
     };
   });
 
-  const data = newMetadata.map((metadataItem) => {
-    //const data = metadata.map((metadataItem) => {
-    return Object.keys(metaToView).reduce((acc, key) => {
-      const value = metadataItem[key as keyof BaseMetadata];
-      if (value !== undefined) {
-        acc[key] = value;
-      } else {
-        acc[key] = null;
-      }
+  const data = newMetadata
+    .map((metadataItem) => {
+      //const data = metadata.map((metadataItem) => {
+      return Object.keys(metaToView).reduce((acc, key) => {
+        const value = metadataItem[key as keyof BaseMetadata];
+        if (value !== undefined) {
+          acc[key] = value;
+        } else {
+          acc[key] = null;
+        }
 
-      return acc;
-    }, {} as Record<string, any>);
-  });
+        return acc;
+      }, {} as Record<string, any>);
+    })
+    .sort((a, b) => {
+      // Sort by selected status first (selected items come first)
+      if (a.selected !== b.selected) {
+        return a.selected ? -1 : 1;
+      }
+      // Then sort by alphabetical order of the name
+      return a.name.value.localeCompare(b.name.value);
+    });
 
   return {
     columns,
@@ -162,12 +183,12 @@ const hasColumnMetadata = (column: Column | undefined) => {
 // };
 
 interface NewMetadata {
-  id: string;
+  id?: string;
   name: string;
   obj: string;
   score: number;
   match: string;
-  uri?: string;
+  uri: string;
 }
 interface PropertyTabProps {
   // function used to pass to the main component the
@@ -175,6 +196,8 @@ interface PropertyTabProps {
   addEdit: Function;
 }
 const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
+  const column = useAppSelector(selectCurrentCol);
+
   const {
     state,
     setState,
@@ -182,6 +205,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   } = usePrepareTable({
     selector: selectColumnCellMetadataTableFormat,
     makeData,
+    dependencies: [column],
   });
 
   const [selectedMetadata, setSelectedMetadata] = useState<string>("");
@@ -189,7 +213,6 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   const [undoSteps, setUndoSteps] = useState(0);
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
-  const column = useAppSelector(selectCurrentCol);
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const { loading } = useAppSelector(selectReconcileRequestStatus);
   const settings = useAppSelector(selectSettings);
@@ -213,7 +236,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
-      score: 0,
+      score: 1,
       match: "false",
     },
   });
@@ -228,14 +251,14 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
       ) {
         const { property } = column.metadata[0];
         const previousMatch = property.find((meta) => meta.match);
-
+        console.log("adding edit");
         addEdit(
-          updateColumnMetadata({
+          updateColumnPropertyMetadata({
             metadataId: selectedMetadataId,
             colId: column.id,
           }),
           false,
-          true
+          false
         );
         // dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
         // dispatch(updateUI({ openMetadataColumnDialog: false }));
@@ -329,23 +352,33 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
       if (!row) return;
 
       setState(({ columns: colState, data: dataState }) => {
-        const newData = dataState.map((item: any) => {
-          // Inverti `match` solo per la riga con lo stesso `id` della riga selezionata
-          if (item.id === row.id) {
-            const newMatch = !item.match;
-            // Aggiorna `selectedMetadata` in base al nuovo valore di `match`
-            setSelectedMetadata(newMatch ? row.id : "");
-            handleConfirm(row.id);
-            return {
-              ...item,
-              match: newMatch,
-            };
-          }
+        const newData = dataState
+          .map((item: any) => {
+            // Inverti `match` solo per la riga con lo stesso `id` della riga selezionata
+            if (item.id === row.id) {
+              const newMatch = !item.match;
+              // Aggiorna `selectedMetadata` in base al nuovo valore di `match`
+              setSelectedMetadata(newMatch ? row.id : "");
+              console.log("selectedMetadata", newMatch ? row.id : "");
+              handleConfirm(row.id);
+              return {
+                ...item,
+                match: newMatch,
+                selected: newMatch,
+              };
+            }
 
-          // Restituisci le altre righe senza modifiche
-          return item;
-        });
-
+            // Restituisci le altre righe senza modifiche
+            return item;
+          })
+          .sort((a, b) => {
+            // Sort by selected status first (selected items come first)
+            if (a.selected !== b.selected) {
+              return a.selected ? -1 : 1;
+            }
+            // Then sort by alphabetical order of the name
+            return a.name.value.localeCompare(b.name.value);
+          });
         return {
           columns: colState,
           data: newData,
@@ -385,6 +418,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
       if (
         column.metadata /*&& column.metadata.length > 0 && column.metadata[0].property*/
       ) {
+        let prefix = getPrefixIfAvailable(formState.uri, formState.id || "");
         /* const { property } = column.metadata[0];
         const previousMatch = property.find((meta) => meta.match);
         if (!previousMatch || (previousMatch.id !== selectedMetadata)) {*/
@@ -392,7 +426,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
           addColumnMetadata({
             colId: column.id,
             type: "property",
-            prefix: /*getCellContext(column),*/ "None:",
+            prefix: prefix,
             value: { ...formState },
           }),
           true
@@ -572,7 +606,6 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                     size="small"
                     label="Id"
                     variant="outlined"
-                    required
                     placeholder="wd:"
                     {...register("id")}
                   />
@@ -637,6 +670,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                   sx={{ minWidth: "200px" }}
                   size="small"
                   label="Uri"
+                  required
                   variant="outlined"
                   {...register("uri")}
                 />

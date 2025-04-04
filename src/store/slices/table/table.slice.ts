@@ -685,7 +685,54 @@ export const tableSlice = createSliceWithRequests({
         }
       );
     },
+    updateColumnPropertyMetadata: (
+      state,
+      action: PayloadAction<Payload<UpdateColumnMetadataPayload>>
+    ) => {
+      const { metadataId, colId, undoable = true } = action.payload;
 
+      const column = getColumn(state, colId);
+
+      if (
+        column.metadata.length > 0 &&
+        column.metadata[0].entity &&
+        column.metadata[0].entity.length > 0
+      ) {
+        return produceWithPatch(
+          state,
+          undoable,
+          (draft) => {
+            const columnToUpdate = getColumn(draft, colId);
+
+            if (
+              columnToUpdate.metadata.length > 0 &&
+              columnToUpdate.metadata[0].property &&
+              columnToUpdate.metadata[0].property.length > 0
+            ) {
+              columnToUpdate.metadata[0].property.forEach((metaItem) => {
+                if (metaItem.id === metadataId) {
+                  columnToUpdate.annotationMeta = {
+                    ...columnToUpdate.annotationMeta,
+                    match: {
+                      value: !metaItem.match,
+                      ...(!metaItem.match && {
+                        reason: "manual",
+                      }),
+                    },
+                  };
+                  metaItem.match = !metaItem.match;
+                }
+              });
+            }
+          },
+          (draft) => {
+            // do not include in undo history
+            draft.entities.tableInstance.lastModifiedDate =
+              new Date().toISOString();
+          }
+        );
+      }
+    },
     updateColumnMetadata: (
       state,
       action: PayloadAction<Payload<UpdateColumnMetadataPayload>>
@@ -721,6 +768,7 @@ export const tableSlice = createSliceWithRequests({
                       }),
                     },
                   };
+                  console.log("toggling match value");
                   metaItem.match = !metaItem.match;
                 } else {
                   metaItem.match = false;
@@ -1560,6 +1608,7 @@ export const {
   deleteColumnMetadata,
   addCellMetadata,
   updateColumnMetadata,
+  updateColumnPropertyMetadata,
   updateCellMetadata,
   deleteCellMetadata,
   autoMatching,

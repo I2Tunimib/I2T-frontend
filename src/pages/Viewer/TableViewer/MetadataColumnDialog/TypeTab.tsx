@@ -18,7 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { KG_INFO } from "@services/utils/kg-info";
+import { getPrefixIfAvailable, KG_INFO } from "@services/utils/kg-info";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
   selectColumnCellMetadataTableFormat,
@@ -280,51 +280,18 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     dependencies: [selected],
   });
   const onSubmitNewMetadata = (formState: NewMetadata) => {
-    console.log("formState", formState);
-    console.log("kg info", KG_INFO);
-    const mainUrls = Object.keys(KG_INFO)
-      .map((item) => {
-        const fullUrl = KG_INFO[item].uri;
-        try {
-          const url = new URL(fullUrl);
-          return url.origin; // Get the main URL (e.g., https://atoka.io)
-        } catch (error) {
-          console.error(`Invalid URL: ${fullUrl}`, error);
-          return null;
-        }
-      })
-      .filter(Boolean);
-    console.log("urls", mainUrls);
-    let prefixSplit = formState.id.split(":");
-    let prefix = null;
-    if (prefixSplit.length > 1) {
-      prefix = prefixSplit[0];
-    } else {
-      const matchingUrl = mainUrls.find((url) =>
-        formState.uri?.startsWith(url)
-      );
-      console.log("matchingUrl", matchingUrl);
-      const keys = Object.keys(KG_INFO);
-      console.log("keys", keys, KG_INFO[keys[0]]);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        console.log("key", key);
-        if (KG_INFO[key].uri.includes(matchingUrl)) {
-          prefix = key + ":";
-          break;
-        }
+    if (formState.uri) {
+      let prefix = getPrefixIfAvailable(formState.uri, formState.id);
+      if (prefix) {
+        const newType = {
+          id: prefix + formState.id,
+          name: formState.name,
+          uri: formState.uri,
+        };
+        dispatch(addColumnType([newType]));
+        console.log("newType", newType);
+        // dispatch(addNewType(newType));
       }
-    }
-    console.log("prefix", prefix);
-    if (prefix) {
-      const newType = {
-        id: prefix + formState.id,
-        name: formState.name,
-        uri: formState.uri,
-      };
-      dispatch(addColumnType([newType]));
-      console.log("newType", newType);
-      // dispatch(addNewType(newType));
     }
   };
 

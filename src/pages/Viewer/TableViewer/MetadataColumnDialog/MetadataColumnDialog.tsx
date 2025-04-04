@@ -130,6 +130,7 @@ const Content = () => {
   const handleApplyEdits = () => {
     try {
       for (const edit of editsState) {
+        console.log("edit", edit);
         dispatch(edit);
       }
       setEditsState([]);
