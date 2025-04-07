@@ -69,8 +69,10 @@ const DynamicForm: FC<DynamicFormProps> = ({
   };
 
   const onSuggestChange = (event: any) => {
+    console.log("event", event, formParams);
     const { value } = event.target;
     setSelectedSuggestion(value);
+    setValue("properties", value.join(" "));
   };
 
   return (
