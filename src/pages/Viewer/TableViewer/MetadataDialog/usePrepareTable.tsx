@@ -42,6 +42,7 @@ function usePrepareTable<T extends {} = any, Y = {}>({
 
   useEffect(() => {
     if (data) {
+      console.log("dependencies trigger", data);
       setTableState(makeData(data));
     }
   }, [data, ...dependencies]);

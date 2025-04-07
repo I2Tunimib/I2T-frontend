@@ -153,7 +153,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const { API } = useAppSelector(selectAppConfig);
 
   const types = useAppSelector(selectColumnTypes);
-  console.log("types", types);
   const dispatch = useAppDispatch();
   const handleTooltipOpen = () => {
     setShowTooltip(!showAdd);
@@ -176,15 +175,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         data: [],
       };
     }
-
     const { column, service } = rawData;
-
-    if (!service) {
-      return {
-        columns: [],
-        data: [],
-      };
-    }
 
     // const { metaToView } = service;
     const metaToView: {
@@ -200,7 +191,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
       // match: { label: "Match", type: "tag" },
     };
 
-    if (!column.metadata || !column.metadata[0].property) {
+    if (!column.metadata || !column.metadata[0]) {
       return {
         columns: [],
         data: [],
@@ -209,7 +200,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
 
     const { property: metadata } = column.metadata[0];
     // Use types from Redux state
-
     if (!types || !types.allTypes) {
       return {
         columns: [],
@@ -264,7 +254,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         return acc;
       }, {} as Record<string, any>);
     });
-
     return {
       columns,
       data,
@@ -277,7 +266,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   } = usePrepareTable({
     selector: selectColumnCellMetadataTableFormat,
     makeData,
-    dependencies: [selected],
+    dependencies: [selected, types],
   });
   const onSubmitNewMetadata = (formState: NewMetadata) => {
     if (formState.uri) {
@@ -289,7 +278,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           uri: formState.uri,
         };
         dispatch(addColumnType([newType]));
-        console.log("newType", newType);
+
         // dispatch(addNewType(newType));
       }
     }
@@ -298,7 +287,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const handleRowTypeCheck = (row: any) => {
     const rowId = row.id;
     const index = selected.findIndex((item) => item.id === rowId);
-    console.log("index", index);
     if (index > -1) {
       setSelected(selected.filter((item) => item.id !== rowId));
     } else {

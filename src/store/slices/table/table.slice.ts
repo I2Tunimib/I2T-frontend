@@ -1042,14 +1042,12 @@ export const tableSlice = createSliceWithRequests({
             score: 100,
           }));
 
-          console.log(
-            "New type:",
-            newTypes,
-            "ColId:",
-            columns.byId[colId].metadata[0].type
-          );
+          if (!columns.byId[colId].metadata[0]) {
+            columns.byId[colId].metadata[0] = {
+              type: newTypes,
+            };
+          }
           if (!columns.byId[colId].metadata[0].additionalTypes) {
-            console.log("setting new additional type");
             columns.byId[colId].metadata[0].additionalTypes = [];
             columns.byId[colId].metadata[0].additionalTypes = newTypes;
           } else {
