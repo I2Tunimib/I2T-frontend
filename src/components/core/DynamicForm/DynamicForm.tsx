@@ -51,8 +51,6 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const { formParams } = service;
 
   const onSubmit = (formValue: any) => {
-    console.log("formValue", formValue);
-    return;
     onSubmitCallback(formValue);
     reset(getDefaultValues(service));
   };
@@ -68,13 +66,11 @@ const DynamicForm: FC<DynamicFormProps> = ({
       })
     ).unwrap();
     setSuggestions(data.data);
-    console.log("data", data);
   };
 
   const onSuggestChange = (event: any) => {
     const { value } = event.target;
     setSelectedSuggestion(value);
- 
   };
 
   return (
