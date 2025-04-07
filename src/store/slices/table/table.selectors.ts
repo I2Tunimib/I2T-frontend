@@ -746,10 +746,20 @@ export const selectColumnTypes = createSelector(
     // add current type
     let currentColType: any[] = [];
     let currentTypesIds = [];
-    let additionalTypes =
-      columnsState.byId[colIds[0]].metadata[0].additionalTypes ?? [];
+    let additionalTypes = [];
+    if (
+      columnsState.byId[colIds[0]] &&
+      columnsState.byId[colIds[0]].metadata &&
+      columnsState.byId[colIds[0]].metadata[0]
+    ) {
+      additionalTypes =
+        columnsState.byId[colIds[0]].metadata[0].additionalTypes ?? [];
+    }
     if (columnsState.byId[colIds[0]].metadata.length > 0) {
-      if (columnsState.byId[colIds[0]].metadata[0].type) {
+      if (
+        columnsState.byId[colIds[0]].metadata[0] &&
+        columnsState.byId[colIds[0]].metadata[0].type
+      ) {
         const metaItem = columnsState.byId[colIds[0]].metadata[0];
         if (metaItem.type) {
           for (let i = 0; i < metaItem.type.length; i++) {
