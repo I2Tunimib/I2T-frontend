@@ -185,7 +185,7 @@ const Content = () => {
         >
           <MenuItem value="entity">Named Entity</MenuItem>
           <MenuItem value="literal">Literal</MenuItem>
-          <MenuItem value="none">None</MenuItem>
+          <MenuItem value="none">Undefined</MenuItem>
         </Select>
         <InputLabel style={{ marginLeft: 15 }} id="role-select-label">
           Column Role:
@@ -199,7 +199,7 @@ const Content = () => {
           size="small"
         >
           <MenuItem value="subject">Subject</MenuItem>
-          <MenuItem value="none">None</MenuItem>
+          <MenuItem value="none">Undefined</MenuItem>
         </Select>
 
         <Stack direction="row" marginLeft="auto" marginRight="15px" gap="10px">
