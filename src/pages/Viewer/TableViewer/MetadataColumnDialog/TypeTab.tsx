@@ -474,7 +474,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                     size="small"
                     label="Id"
                     variant="outlined"
-                    required
                     placeholder="wd:"
                     {...register("id")}
                   />
@@ -498,6 +497,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                   size="small"
                   label="Uri"
                   variant="outlined"
+                  required
                   {...register("uri")}
                 />
 
