@@ -429,7 +429,12 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
             alignSelf="flex-start"
             padding="0px 0px"
           >
-            <Tooltip open={showTooltip} title="Add metadata" placement="right">
+            <Tooltip
+              open={showTooltip}
+              title="Add metadata"
+              placement="right"
+              style={{ zIndex: 100 }}
+            >
               <IconButton
                 color="primary"
                 onMouseLeave={handleTooltipClose}
