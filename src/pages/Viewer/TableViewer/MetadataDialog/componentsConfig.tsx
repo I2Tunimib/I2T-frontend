@@ -5,11 +5,17 @@ import { Cell } from "react-table";
 
 export const ResourceLink = ({ value: cellValue }: Cell<{}>) => {
   const { value, uri } = cellValue;
+  console.log("cell uri", uri);
+  if (!uri) {
+    // If the URI is empty, render plain text instead of a clickable link
+    return <Typography color="textSecondary">{value}</Typography>;
+  }
+
   return (
     <Link
       onClick={(event) => event.stopPropagation()}
       title={value}
-      href={uri}
+      href={uri ?? "#"}
       target="_blank"
     >
       {value}
