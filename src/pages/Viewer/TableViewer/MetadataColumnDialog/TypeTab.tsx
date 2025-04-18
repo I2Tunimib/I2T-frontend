@@ -213,6 +213,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   */
     const newMetadata = types.allTypes
       .map((type) => {
+        console.log("mapped types", type);
         return {
           selected: selected.some((item) => item.id === type.id),
           id: type.id,
@@ -244,6 +245,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     const data = newMetadata.map((metadataItem) => {
       //const data = metadata.map((metadataItem) => {
       return Object.keys(metaToView).reduce((acc, key) => {
+        console.log("tttest", metadataItem[key]);
         const value = metadataItem[key as keyof BaseMetadata];
         if (value !== undefined) {
           acc[key] = value;
@@ -254,6 +256,8 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         return acc;
       }, {} as Record<string, any>);
     });
+    console.log("data", data);
+    console.log("columns", columns);
     return {
       columns,
       data,

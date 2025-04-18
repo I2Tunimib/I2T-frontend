@@ -1,6 +1,7 @@
 export const KG_INFO = {
   geo: {
     uri: "http://www.geonames.org/",
+    groupName: "",
   },
   dbp: {
     uri: "https://dbpedia.org/page/",
@@ -10,6 +11,9 @@ export const KG_INFO = {
   },
   wiki: {
     uri: "https://www.wikidata.org/wiki/",
+  },
+  geoCoord: {
+    uri: "http://20.8.170.217:3002/geocoords",
   },
   georss: {
     uri: "http://149.132.176.67:3002/map?polyline=",

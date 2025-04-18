@@ -7,7 +7,7 @@ export type Endpoint = {
   name?: string;
   useGlobal?: boolean;
   params?: Record<string, any>;
-}
+};
 
 export type ApiConfig = {
   GLOBAL: string;
@@ -28,8 +28,8 @@ export type ApiConfig = {
     EXPORT: Endpoint[];
     AUTH_SIGNIN: Endpoint;
     AUTH_ME: Endpoint;
-  }
-}
+  };
+};
 
 /**
  * App configuration
@@ -37,82 +37,82 @@ export type ApiConfig = {
 const CONFIG: AppConfig = {
   API: {
     // global endpoint prefixed to each path, unless useGlobal is set to false
-    GLOBAL: import.meta.env.VITE_BACKEND_API_URL || '',
+    GLOBAL: import.meta.env.VITE_BACKEND_API_URL || "",
 
     ENDPOINTS: {
       GET_SERVICES_CONFIG: {
-        path: '/config',
+        path: "/config",
         // prefix global endpoint to /config. If not specified it defaults to true
-        useGlobal: true
+        useGlobal: true,
       },
       GET_DATASET: {
-        path: '/dataset'
+        path: "/dataset",
       },
       GET_DATASET_INFO: {
-        path: '/dataset/:datasetId'
+        path: "/dataset/:datasetId",
       },
       GET_TABLES_BY_DATASET: {
-        path: '/dataset/:datasetId/table'
+        path: "/dataset/:datasetId/table",
       },
       GET_TABLE: {
-        path: '/dataset/:datasetId/table/:tableId'
+        path: "/dataset/:datasetId/table/:tableId",
       },
       DELETE_DATASET: {
-        path: '/dataset/:datasetId'
+        path: "/dataset/:datasetId",
       },
       UPLOAD_TABLE: {
-        path: '/dataset/:datasetId/table'
+        path: "/dataset/:datasetId/table",
       },
       DELETE_TABLE: {
-        path: '/dataset/:datasetId/table/:tableId'
+        path: "/dataset/:datasetId/table/:tableId",
       },
       GLOBAL_SEARCH: {
-        path: '/dataset/search?query=:query'
+        path: "/dataset/search?query=:query",
       },
       UPLOAD_DATASET: {
-        path: '/dataset'
+        path: "/dataset",
       },
       SAVE: {
-        path: '/dataset/:datasetId/table/:tableId'
+        path: "/dataset/:datasetId/table/:tableId",
       },
       AUTOMATIC_ANNOTATION: {
-        path: '/reconciliators/mantis/dataset/:datasetId/table/:tableId'
+        path: "/reconciliators/mantis/dataset/:datasetId/table/:tableId",
       },
       PROCESS_START: [
         {
-          path: '/path/process/start1',
-          name: 'Endpoint 1'
+          path: "/path/process/start1",
+          name: "Endpoint 1",
         },
         {
-          path: '/path/process/start2',
-          name: 'Endpoint 2'
-        }
+          path: "/path/process/start2",
+          name: "Endpoint 2",
+        },
       ],
       EXPORT: [
         {
-          path: '/dataset/:datasetId/table/:tableId/export?format=w3c',
-          name: 'W3C',
+          path: "/dataset/:datasetId/table/:tableId/export?format=w3c",
+          name: "JSON (W3C Compliant)",
           params: {
-            extension: 'json',
-            postDownload: (data: any) => JSON.stringify(data, null, 2)
-          }
+            extension: "json",
+            postDownload: (data: any) => JSON.stringify(data, null, 2),
+          },
         },
         {
-          path: '/dataset/:datasetId/table/:tableId/export?format=csv',
-          name: 'CSV',
+          path: "/dataset/:datasetId/table/:tableId/export?format=csv",
+          name: "CSV",
           params: {
-            extension: 'csv'
-          }
-        }
+            extension: "csv",
+          },
+        },
       ],
       AUTH_SIGNIN: {
-        path: '/auth/signin'
+        path: "/auth/signin",
       },
       AUTH_ME: {
-        path: '/auth/me'
-      }
-    }
-  }
+        path: "/auth/me",
+      },
+    },
+  },
 };
 
 export default CONFIG;
