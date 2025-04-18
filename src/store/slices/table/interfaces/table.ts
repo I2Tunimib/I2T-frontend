@@ -238,6 +238,7 @@ export interface DeleteColumnMetadataPayload {
 export interface UpdateCellMetadataPayload {
   metadataId: ID;
   cellId: ID;
+  match?: boolean;
 }
 export interface UpdateColumnMetadataPayload {
   metadataId: ID;

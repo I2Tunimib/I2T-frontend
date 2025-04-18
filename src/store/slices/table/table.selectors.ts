@@ -605,6 +605,12 @@ export const selectCellMetadataTableFormat = createSelector(
           cell,
           service,
         };
+      } else {
+        const col = cols.byId[colId];
+        return {
+          columnContext: col.context,
+          cell,
+        };
       }
     }
     return undefined;
@@ -618,7 +624,7 @@ export const selectColumnCellMetadataTableFormat = createSelector(
   (colId, reconciliators, cols) => {
     if (colId) {
       const column = cols.byId[colId];
-
+      console.log("obtained column", column);
       if (column.metadata.length > 0) {
         if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
           const cellContext = column.metadata[0].entity[0].id.split(":")[0];
@@ -724,7 +730,9 @@ export const selectColumnTypes = createSelector(
 
       metadata.forEach((metaItem) => {
         if (metaItem.type && metaItem.match) {
+          console.log("metaItem", metaItem);
           metaItem.type.forEach(({ id, name }) => {
+            console.log("name in forEach", name);
             if (acc[id]) {
               acc[id] = {
                 ...acc[id],
@@ -742,7 +750,7 @@ export const selectColumnTypes = createSelector(
       });
       return acc;
     }, {} as Record<string, { id: string; count: number; label: string }>);
-
+    console.log("test map", map);
     // add current type
     let currentColType: any[] = [];
     let currentTypesIds = [];
@@ -770,6 +778,7 @@ export const selectColumnTypes = createSelector(
         if (currentColType.length > 0) {
           for (let i = 0; i < currentColType.length; i++) {
             if (!map[currentColType[i].id]) {
+              console.log("current name test ", currentColType[i].name);
               map[currentColType[i].id] = {
                 id: currentColType[i].id,
                 label: currentColType[i].name as any,
@@ -792,6 +801,7 @@ export const selectColumnTypes = createSelector(
     let selectedType: any[] = [];
 
     console.log("additional types", additionalTypes, currentTypesIds);
+    console.log("currentmap", map);
     let allTypes = Object.keys(map)
       .map((key) => {
         const item = {

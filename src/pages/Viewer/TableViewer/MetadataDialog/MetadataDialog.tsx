@@ -20,6 +20,7 @@ import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   addCellMetadata,
   deleteCellMetadata,
+  propagateCellMetadata,
   updateCellMetadata,
   updateUI,
 } from "@store/slices/table/table.slice";
@@ -56,9 +57,26 @@ const makeData = (
 ) => {
   if (rawData) {
     const { cell, service } = rawData;
-    const { metaToView } = service;
+    let metaToView = {};
+    if (service) {
+      console.log("meta to view from service", service);
+      metaToView = service.metaToView;
+    } else {
+      metaToView = {
+        selected: { label: "Selected", type: "checkBox" },
+        id: { label: "Id" },
+        name: { label: "Name", type: "link" },
+        type: { label: "Type", type: "subList" },
+        score: { label: "Score" },
+        match: { label: "Match", type: "tag" },
+      };
+    }
     const { metadata } = cell;
-
+    // add checkbox column
+    const metaWithCheck = {
+      selected: { label: "Selected", type: "checkBox" },
+      ...metaToView,
+    };
     const columns = Object.keys(metaToView).map((key) => {
       const { label = key, type } = metaToView[key];
       return {
@@ -80,7 +98,8 @@ const makeData = (
       })
       .map((metadataItem) => {
         return Object.keys(metaToView).reduce((acc, key) => {
-          const value = metadataItem[key as keyof BaseMetadata];
+          let value = metadataItem[key as keyof BaseMetadata];
+
           if (value !== undefined) {
             acc[key] = value;
           } else {
@@ -89,8 +108,14 @@ const makeData = (
 
           return acc;
         }, {} as Record<string, any>);
+      })
+      .map((item) => {
+        return {
+          ...item,
+          selected: item.match,
+        };
       });
-
+    console.log("final data", data);
     return {
       columns,
       data,
@@ -114,14 +139,20 @@ interface FormState {
 }
 
 const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
+  const [toUpdate, setToUpdate] = useState<boolean>(false);
   const {
     setState,
     memoizedState: { columns, data },
-  } = usePrepareTable({ selector: selectCellMetadataTableFormat, makeData });
+  } = usePrepareTable({
+    selector: selectCellMetadataTableFormat,
+    makeData,
+    dependencies: [toUpdate],
+  });
   const [currentService, setCurrentService] = useState<string>();
   const [selectedMetadata, setSelectedMetadata] = useState<string>("");
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [showPropagate, setShowPropagate] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
       score: 0,
@@ -164,15 +195,21 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   const handleConfirm = () => {
     // update global state if confirmed
-    if (cell) {
+    if (cell && selectedMetadata) {
       const previousMatch = cell.metadata.find((meta) => meta.match);
+      console.log("previous match", previousMatch, selectedMetadata);
       if (!previousMatch || previousMatch.id !== selectedMetadata) {
         dispatch(
           updateCellMetadata({ metadataId: selectedMetadata, cellId: cell.id })
         );
+        setShowPropagate(true);
+      } else {
+        handleClose();
       }
+    } else {
+      handleClose();
     }
-    handleClose();
+    //handleClose();
   };
 
   const handleSelectedRowDelete = useCallback((row: any) => {
@@ -192,11 +229,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             }
             return {
               ...item,
-              match,
+              match: match,
+              selected: match,
             };
           }
           return {
             ...item,
+            selected: false,
             match: false,
           };
         });
@@ -206,6 +245,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           data: newData,
         };
       });
+      setShowPropagate(true);
     }
   }, []);
 
@@ -222,15 +262,43 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   const onSubmitNewMetadata = (formState: FormState) => {
     if (cell) {
+      let tempPrefix = getCellContext(cell);
+      if (formState.id.split(":").length > 1) {
+        tempPrefix = formState.id.split(":")[0];
+      } else {
+        if (
+          tempPrefix === "" ||
+          (tempPrefix.startsWith("r0$") && cell.id.split(":").length > 1)
+        ) {
+          tempPrefix = cell.id.split(":")[0];
+        }
+      }
+
+      console.log(
+        "prefix",
+        getCellContext(cell) !== ""
+          ? getCellContext(cell)
+          : cell.id.split(":")[0]
+      );
+
       dispatch(
         addCellMetadata({
           cellId: cell.id,
-          prefix: getCellContext(cell),
+          prefix: tempPrefix,
           value: { ...formState },
         })
       );
+      setSelectedMetadata(
+        formState.id.startsWith(tempPrefix)
+          ? formState.id
+          : tempPrefix + ":" + formState.id
+      );
+      if (formState.match === "true") {
+        setShowPropagate(true);
+      }
       reset();
       setShowAdd(false);
+      setToUpdate(!toUpdate);
     }
   };
 
@@ -289,7 +357,19 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       // }));
     }
   };
-
+  const handlePropagate = () => {
+    try {
+      if (cell) {
+        dispatch(
+          propagateCellMetadata({
+            metadataId: selectedMetadata,
+            cellId: cell.id,
+          })
+        );
+        handleClose();
+      }
+    } catch (error) {}
+  };
   const handleChangeService = (event: SelectChangeEvent<string>) => {
     const newService = event.target.value;
     if (newService) {
@@ -315,6 +395,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             <Typography color="textSecondary">(Cell label)</Typography>
           </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
+            {showPropagate && (
+              <Button onClick={handlePropagate} variant="outlined">
+                Propagate
+              </Button>
+            )}
             <Button onClick={handleClose}>
               {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
             </Button>
@@ -357,7 +442,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             </FormControl>
           )}
         </Box>
-        {data.length > 0 && API.ENDPOINTS.SAVE && !isViewOnly && (
+        {API.ENDPOINTS.SAVE && !isViewOnly && (
           <Stack
             position="relative"
             direction="row"
