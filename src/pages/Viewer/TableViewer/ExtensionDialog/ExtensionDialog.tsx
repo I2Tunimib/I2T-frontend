@@ -66,17 +66,9 @@ const DialogInnerContent = () => {
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
   const { loading } = useAppSelector(selectExtendRequestStatus);
 
-  useEffect(() => {
-    if (extensionServices && extensionServices.length > 0) {
-      setCurrentService(extensionServices[0]);
-      groupServices();
-    }
-  }, [extensionServices]);
-
   async function groupServices() {
     const groupedServsMap = new Map();
     for (const service of extensionServices) {
-      console.log("service", service);
       const currentUri = service.uri ?? "other";
       if (groupedServsMap.has(currentUri)) {
         groupedServsMap.get(currentUri).push(service);
@@ -139,68 +131,39 @@ const DialogInnerContent = () => {
   };
   return (
     <>
+      <FormControl className="field">
+        <Select
+          value={currentService ? currentService.id : undefined}
+          onChange={handleChange}
+          variant="outlined"
+          MenuProps={{
+            PaperProps: {
+              style: {
+                maxHeight: "400px",
+              },
+            },
+          }}
+          renderValue={(selected) => {
+            const selectedService = extensionServices.find(
+              (service) => service.id === selected
+            );
+            return selectedService ? selectedService.name : "";
+          }}
+        >
+          {extensionServices.map((extender) => (
+            <MenuItem
+              key={extender.id}
+              value={extender.id}
+              sx={{ pl: 4 }}
+              onClick={() => handleChange({ target: { value: extender.id } })}
+            >
+              {extender.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       {currentService && (
         <>
-          <FormControl className="field">
-            <Select
-              value={currentService.id}
-              onChange={handleChange}
-              variant="outlined"
-              MenuProps={{
-                PaperProps: {
-                  style: {
-                    maxHeight: "400px",
-                  },
-                },
-              }}
-              renderValue={(selected) => {
-                const selectedService = extensionServices.find(
-                  (service) => service.id === selected
-                );
-                return selectedService ? selectedService.name : "";
-              }}
-            >
-              {groupedServices &&
-                Array.from(groupedServices).map(([uri, extenders]) => (
-                  <React.Fragment key={`group-${uri}`}>
-                    <ListSubheader
-                      onClick={(e) => handleHeaderClick(e, uri)}
-                      sx={{
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        "&:hover": {
-                          backgroundColor: "action.hover",
-                        },
-                      }}
-                    >
-                      <ListItemText primary={uri} />
-                      <Box sx={{ ml: "auto" }}>
-                        {expandedGroup === uri ? (
-                          <ExpandLess />
-                        ) : (
-                          <ExpandMore />
-                        )}
-                      </Box>
-                    </ListSubheader>
-                    <Collapse in={expandedGroup === uri} unmountOnExit>
-                      {extenders.map((extender) => (
-                        <MenuItem
-                          key={extender.id}
-                          value={extender.id}
-                          sx={{ pl: 4 }}
-                          onClick={() =>
-                            handleChange({ target: { value: extender.id } })
-                          }
-                        >
-                          {extender.name}
-                        </MenuItem>
-                      ))}
-                    </Collapse>
-                  </React.Fragment>
-                ))}
-            </Select>
-          </FormControl>
           <SquaredBox
             dangerouslySetInnerHTML={{ __html: currentService.description }}
           />

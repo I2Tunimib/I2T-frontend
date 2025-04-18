@@ -42,7 +42,10 @@ export const selectExtendersAsObject = createSelector(
 
 export const selectExtendersAsArray = createSelector(
   selectExtenders,
-  (extenders) => extenders.allIds.map((id) => extenders.byId[id])
+  (extenders) =>
+    extenders.allIds
+      .map((id) => extenders.byId[id])
+      .sort((a, b) => a.name.localeCompare(b.name))
 );
 
 // Loading selectors
