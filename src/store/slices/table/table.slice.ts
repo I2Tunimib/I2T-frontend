@@ -306,7 +306,7 @@ export const tableSlice = createSliceWithRequests({
         state,
         undoable,
         (draft) => {
-          const { id, match, name, ...rest } = value;
+          const { id, match, name, uri, ...rest } = value;
 
           const isMatching = match === "true";
           const cell = draft.entities.rows.byId[rowId].cells[colId];
@@ -323,7 +323,7 @@ export const tableSlice = createSliceWithRequests({
             match: isMatching,
             name: {
               value: name,
-              uri: "prova",
+              uri: uri,
             },
             ...rest,
           };

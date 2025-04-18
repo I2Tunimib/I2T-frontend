@@ -212,6 +212,7 @@ export interface AddCellMetadataPayload {
     name: string;
     score: number;
     match: string;
+    uri: string;
   };
 }
 
