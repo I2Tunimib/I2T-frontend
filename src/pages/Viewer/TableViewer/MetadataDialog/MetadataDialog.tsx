@@ -46,7 +46,7 @@ import {
   BaseMetadata,
   Cell as TableCell,
 } from "@store/slices/table/interfaces/table";
-import { StatusBadge } from "@components/core";
+import { ConfirmationDialog, StatusBadge } from "@components/core";
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
 
@@ -60,7 +60,10 @@ const makeData = (
     let metaToView = {};
     if (service) {
       console.log("meta to view from service", service);
-      metaToView = service.metaToView;
+      metaToView = {
+        selected: { label: "Selected", type: "checkBox" },
+        ...service.metaToView,
+      };
     } else {
       metaToView = {
         selected: { label: "Selected", type: "checkBox" },
@@ -141,6 +144,8 @@ interface FormState {
 
 const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [toUpdate, setToUpdate] = useState<boolean>(false);
+  const [showConfirmPropagate, setShowConfirmPropagate] =
+    useState<boolean>(false);
   const {
     setState,
     memoizedState: { columns, data },
@@ -396,11 +401,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             <Typography color="textSecondary">(Cell label)</Typography>
           </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
-            {showPropagate && (
-              <Button onClick={handlePropagate} variant="outlined">
-                Propagate
-              </Button>
-            )}
             <Button onClick={handleClose}>
               {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
             </Button>
@@ -408,6 +408,32 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               <Button onClick={handleConfirm} variant="outlined">
                 Confirm
               </Button>
+            )}
+            {showPropagate && (
+              <>
+                <Button
+                  onClick={() => setShowConfirmPropagate(true)}
+                  variant="outlined"
+                >
+                  Propagate
+                </Button>
+                <ConfirmationDialog
+                  open={showConfirmPropagate}
+                  onClose={() => setShowConfirmPropagate(false)}
+                  title="Are you sure to propagate?"
+                  content="You are about to propagate the selected metadata to all cells in this column. Cells with the same value will have their matching status updated."
+                  actions={[
+                    {
+                      label: "Cancel",
+                      callback: () => setShowConfirmPropagate(false),
+                    },
+                    {
+                      label: "Confirm",
+                      callback: handlePropagate,
+                    },
+                  ]}
+                />
+              </>
             )}
           </Stack>
         </Stack>
