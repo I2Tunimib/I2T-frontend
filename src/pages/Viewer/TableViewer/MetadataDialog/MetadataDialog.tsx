@@ -136,6 +136,7 @@ interface FormState {
   name: string;
   score: number;
   match: string;
+  uri: string;
 }
 
 const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
@@ -473,6 +474,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 padding: "12px 16px",
                 borderRadius: "6px",
                 transition: "all 150ms ease-out",
+                display: showAdd ? "block" : "none",
                 opacity: showAdd ? 1 : 0,
                 transform: showAdd
                   ? "translateY(-50%) translateX(0)"
@@ -489,6 +491,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   sx={{ minWidth: "200px" }}
                   size="small"
                   label="Id"
+                  required
                   variant="outlined"
                   {...register("id")}
                 />
@@ -496,8 +499,16 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   sx={{ minWidth: "200px" }}
                   size="small"
                   label="Name"
+                  required
                   variant="outlined"
                   {...register("name")}
+                />
+                <TextField
+                  sx={{ minWidth: "200px" }}
+                  size="small"
+                  label="Uri"
+                  variant="outlined"
+                  {...register("uri")}
                 />
                 <TextField
                   sx={{ minWidth: "200px" }}
