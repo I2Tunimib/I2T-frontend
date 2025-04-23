@@ -415,7 +415,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   onClick={() => setShowConfirmPropagate(true)}
                   variant="outlined"
                 >
-                  Propagate
+                  Confirm and Propagate
                 </Button>
                 <ConfirmationDialog
                   open={showConfirmPropagate}
@@ -477,6 +477,17 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             alignSelf="flex-start"
             padding="0px 12px"
           >
+            <Typography
+              sx={{
+                display: !showAdd ? "block" : "none",
+                opacity: !showAdd ? 1 : 0,
+                transition: "opacity 300ms ease-out",
+              }}
+              variant="body2"
+            >
+              Add Metadata
+            </Typography>
+
             <Tooltip open={showTooltip} title="Add metadata" placement="right">
               <IconButton
                 color="primary"

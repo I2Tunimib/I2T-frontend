@@ -137,9 +137,9 @@ const DynamicForm: FC<DynamicFormProps> = ({
           </SelectMaterial>
         </>
       )}
-      <Stack direction="row" justifyContent="flex-end">
+      <Stack direction="row" justifyContent="flex-end" spacing={2}>
         <Button onClick={onCancel}>Cancel</Button>
-        <LoadingButton type="submit" loading={loading}>
+        <LoadingButton variant="outlined" type="submit" loading={loading}>
           Confirm
         </LoadingButton>
       </Stack>
