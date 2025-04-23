@@ -3,10 +3,7 @@
     "browser": true,
     "es2021": true
   },
-  "extends": [
-    "plugin:react/recommended",
-    "airbnb"
-  ],
+  "extends": ["plugin:react/recommended", "airbnb"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -15,11 +12,13 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
-  "plugins": [
-    "react",
-    "@typescript-eslint"
-  ],
+  "plugins": ["react", "@typescript-eslint"],
   "rules": {
+    "max-len": "off",
+    "no-console": "off",
+    "quotes": "off",
+    "operator-linebreak": "off",
+    "spaced-comment": "off",
     "no-nested-ternary": "off",
     "camelcase": "off",
     "no-restricted-syntax": "off",
@@ -33,9 +32,7 @@
     "react/require-default-props": "off",
     "react/prop-types": "off",
     "no-shadow": "off",
-    "@typescript-eslint/no-shadow": [
-      "error"
-    ],
+    "@typescript-eslint/no-shadow": ["error"],
     "react/jsx-curly-newline": "off",
     "react/jsx-props-no-spreading": "off",
     "react/button-has-type": "off",
@@ -48,26 +45,20 @@
     "jsx-a11y/interactive-supports-focus": "off",
     "jsx-a11y/click-events-have-key-events": "off",
     "indent": [
-      "error",
+      "off",
       2,
       {
-        "ignoredNodes": [
-          "JSXElement"
-        ],
+        "ignoredNodes": ["JSXElement"],
         "SwitchCase": 1
       }
     ],
     "linebreak-style": 0,
     "no-use-before-define": "off",
-    "@typescript-eslint/no-use-before-define": [
-      "error"
-    ],
+    "@typescript-eslint/no-use-before-define": ["error"],
     "react/jsx-filename-extension": [
       "warn",
       {
-        "extensions": [
-          ".tsx"
-        ]
+        "extensions": [".tsx"]
       }
     ],
     "import/extensions": [
@@ -79,7 +70,7 @@
       }
     ],
     "comma-dangle": [
-      "error",
+      "off",
       {
         "functions": "ignore"
       }

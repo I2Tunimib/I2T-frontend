@@ -68,7 +68,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const [contextColumns, setContextColumns] = useState<string[]>([]);
   const [currentService, setCurrentService] = useState<Reconciliator | null>();
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
-
+  const [serviceSelectOpen, setServiceSelectOpen] = useState(false);
   const [reconciliatorsGroups, setReconciliatorsGroups] = useState<
     Map<string, Reconciliator[]>
   >(new Map());
@@ -78,17 +78,22 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const columnIds = useAppSelector(selectReconciliatioContextColumnIds);
   const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading, error } = useAppSelector(selectReconcileRequestStatus);
-
+  const selectRef = React.useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Log the value of reconciliators
 
     // set initial value of select
     if (reconciliators) {
-      setCurrentService(reconciliators[0]);
+      // setCurrentService(reconciliators[0]);
       groupReconciliators();
     }
   }, [reconciliators]);
-
+  function handleServiceSelectOpen() {
+    setServiceSelectOpen(true);
+  }
+  function handleServiceSelectClose() {
+    setServiceSelectOpen(false);
+  }
   async function groupReconciliators() {
     let mappedReconciliators = new Map();
     for (const reconciliator of reconciliators) {
@@ -143,6 +148,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
           return recon.id === event.target.value;
         })
       );
+      handleServiceSelectClose();
     }
   };
 
@@ -191,92 +197,105 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
           Select a service to reconcile with:
         </DialogContentText>
         <Stack gap="10px">
-          {currentService && (
-            <Stack gap="10px">
-              <FormControl className="field">
-                <Select
-                  value={currentService.id}
-                  onChange={handleChange}
-                  variant="outlined"
-                  MenuProps={{
-                    PaperProps: {
-                      style: {
-                        maxHeight: "400px",
-                      },
+          <Stack gap="10px">
+            <FormControl className="field">
+              <Select
+                inputRef={selectRef}
+                open={serviceSelectOpen}
+                onOpen={handleServiceSelectOpen}
+                onClose={handleServiceSelectClose}
+                value={currentService?.id || ""} // Use an empty string as the fallback
+                onChange={handleChange}
+                variant="outlined"
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: "400px",
                     },
-                  }}
-                  renderValue={(selected) => {
-                    const selectedService = reconciliators.find(
-                      (service) => service.id === selected
-                    );
-                    return selectedService ? selectedService.name : "";
-                  }}
-                >
-                  {reconciliatorsGroups &&
-                    Array.from(reconciliatorsGroups).map(
-                      ([uri, reconciliators]) => (
-                        <React.Fragment key={`group-${uri}`}>
-                          <ListSubheader
-                            onClick={(e) => handleHeaderClick(e, uri)}
-                            sx={{
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              "&:hover": {
-                                backgroundColor: "action.hover",
-                              },
-                            }}
-                          >
-                            <ListItemText primary={uri} />
-                            <Box sx={{ ml: "auto" }}>
-                              {expandedGroup === uri ? (
-                                <ExpandLess />
-                              ) : (
-                                <ExpandMore />
-                              )}
-                            </Box>
-                          </ListSubheader>
-                          <Collapse in={expandedGroup === uri} unmountOnExit>
-                            {reconciliators.map((reconciliator) => (
-                              <MenuItem
-                                key={reconciliator.id}
-                                value={reconciliator.id}
-                                sx={{ pl: 4 }}
-                                onClick={() =>
-                                  handleChange({
-                                    target: { value: reconciliator.id },
-                                  })
-                                }
-                              >
-                                {reconciliator.name}
-                              </MenuItem>
-                            ))}
-                          </Collapse>
-                        </React.Fragment>
-                      )
-                    )}
-                </Select>
-              </FormControl>
-              {error && <Typography color="error">{error.message}</Typography>}
-              {currentService.description && (
-                <SquaredBox
-                  dangerouslySetInnerHTML={{
-                    __html: currentService.description,
-                  }}
-                >
-                  {/*
+                  },
+                }}
+                renderValue={(selected) => {
+                  if (!selected) return "Please select a service";
+                  const selectedService = reconciliators.find(
+                    (service) => service.id === selected
+                  );
+                  return selectedService ? selectedService.name : "";
+                }}
+              >
+                {reconciliatorsGroups &&
+                  Array.from(reconciliatorsGroups).map(
+                    ([uri, reconciliators]) => (
+                      <React.Fragment key={`group-${uri}`}>
+                        <ListSubheader
+                          onClick={(e) => handleHeaderClick(e, uri)}
+                          sx={{
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            "&:hover": {
+                              backgroundColor: "action.hover",
+                            },
+                          }}
+                        >
+                          <ListItemText primary={uri} />
+                          <Box sx={{ ml: "auto" }}>
+                            {expandedGroup === uri ? (
+                              <ExpandLess />
+                            ) : (
+                              <ExpandMore />
+                            )}
+                          </Box>
+                        </ListSubheader>
+                        <Collapse in={expandedGroup === uri} unmountOnExit>
+                          {reconciliators.map((reconciliator) => (
+                            <MenuItem
+                              key={reconciliator.id}
+                              value={reconciliator.id}
+                              sx={{ pl: 4 }}
+                              onClick={() => {
+                                handleChange({
+                                  target: { value: reconciliator.id },
+                                });
+
+                                // if (selectRef.current) {
+                                //   selectRef.current.hidePopover(); // manually closes the dropdown
+                                // }
+                              }}
+                            >
+                              {reconciliator.name}
+                            </MenuItem>
+                          ))}
+                        </Collapse>
+                      </React.Fragment>
+                    )
+                  )}
+              </Select>
+            </FormControl>
+            {error && <Typography color="error">{error.message}</Typography>}
+            {currentService && currentService.description && (
+              <SquaredBox
+                dangerouslySetInnerHTML={{
+                  __html: currentService.description,
+                }}
+              >
+                {/*
                  {currentService.description}
                  */}
-                </SquaredBox>
-              )}
-              <Divider />
-              <DynamicForm
-                service={currentService}
-                loading={loading}
-                onSubmit={handleSubmit}
-                onCancel={handleClose}
-              />
-              {/* <div>
+              </SquaredBox>
+            )}
+            {currentService && (
+              <>
+                <Divider />
+                <DynamicForm
+                  service={currentService}
+                  loading={loading}
+                  onSubmit={handleSubmit}
+                  onCancel={handleClose}
+                />
+              </>
+            )}
+
+            {/* <div>
                 Select any context columns to provide to the reconciliator service
               </div>
               <FormControl className="field">
@@ -298,8 +317,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                   ))}
                 </Select>
               </FormControl> */}
-            </Stack>
-          )}
+          </Stack>
         </Stack>
       </DialogContent>
       {/* <DialogActions>
