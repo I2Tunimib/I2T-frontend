@@ -38,6 +38,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<any[]>([]);
   const { control, handleSubmit, reset, setValue, formState } = useForm({
     defaultValues: getDefaultValues(service),
@@ -60,12 +61,14 @@ const DynamicForm: FC<DynamicFormProps> = ({
   };
 
   const onSuggest = async () => {
+    setSuggestLoading(true);
     let data = await dispatch(
       suggest({
         suggester: "/wikidata",
       })
     ).unwrap();
     setSuggestions(data.data);
+    setSuggestLoading(false);
   };
 
   const onSuggestChange = (event: any) => {
@@ -101,7 +104,13 @@ const DynamicForm: FC<DynamicFormProps> = ({
           );
         })}
       {service.id === "wikidataPropertySPARQL" && (
-        <Button onClick={onSuggest}>Suggest</Button>
+        <LoadingButton
+          variant="outlined"
+          loading={suggestLoading}
+          onClick={onSuggest}
+        >
+          Suggest
+        </LoadingButton>
       )}
       {suggestions.length > 0 && (
         <>
@@ -109,9 +118,29 @@ const DynamicForm: FC<DynamicFormProps> = ({
           <SelectMaterial
             onChange={onSuggestChange}
             multiple={true}
-            labelId="suggestion-match"
+            labelId="suggestion-label"
             label={"Select suggestion"}
             value={selectedSuggestion}
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  maxHeight: 300, // Controls the height of the dropdown
+                  overflow: "auto", // Enables scrolling
+                },
+              },
+              // These control how the menu is positioned relative to the select
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "left",
+              },
+              transformOrigin: {
+                vertical: "top",
+                horizontal: "left",
+              },
+              TransitionProps: {
+                style: { marginTop: "10px" },
+              },
+            }}
             renderValue={(selected) => (
               <div>
                 {selected.map((value) => {
