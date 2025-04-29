@@ -359,12 +359,23 @@ type ExtendedColumn = {
   metadata: ColumnMetadata[];
   cells: Record<string, ExtendedColumnCell | null>;
 };
+interface Property {
+  id: string; // Wikidata property ID (e.g., "wd:P31")
+  obj: string; // Column name that this property maps to
+  name: string; // Human-readable name of the property
+  match: boolean; // Whether this is a matched property
+  score: number; // Match confidence score (1 = exact match)
+}
 
 export type ExtendThunkResponseProps = {
   extender: Extender;
   data: {
     columns: Record<string, ExtendedColumn>;
     meta: Record<string, string>;
+    originalColMeta: {
+      originalColName: string;
+      properties: Property[];
+    };
   };
 };
 
@@ -399,6 +410,7 @@ export const updateTableSocket = createAsyncThunk(
     const { table } = inputProps;
 
     if (!isEmptyObject(tableInstance) && table.id === tableInstance.id) {
+      console.log("update table socket called");
       dispatch(updateTable(inputProps));
       dispatch(
         updateUI({

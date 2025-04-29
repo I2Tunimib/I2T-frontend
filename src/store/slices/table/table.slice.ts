@@ -318,6 +318,18 @@ export const tableSlice = createSliceWithRequests({
           }
           if (id.startsWith(prefix)) {
           }
+          let annotationMetaMatching =
+            draft.entities.rows.byId[rowId].cells[colId].annotationMeta.match;
+          if (!annotationMetaMatching.value && isMatching) {
+            draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
+              ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
+              match: {
+                value: true,
+                reason: "manual",
+              },
+            };
+          }
+          console.log("annotationMetaMatching", annotationMetaMatching);
           const newMeta = {
             id: id.startsWith(prefix) ? id : `${prefix}:${id}`,
             match: isMatching,
@@ -331,10 +343,7 @@ export const tableSlice = createSliceWithRequests({
           draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
             ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
             annotated: true,
-            match: {
-              value: isMatching,
-              reason: "manual",
-            },
+            match: annotationMetaMatching,
           };
           //draft.entities.rows.byId[rowId].cells[colId].metadata = [];
         },
@@ -926,6 +935,7 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<DeleteCellMetadataPayload>>
     ) => {
+      console.log("deleteCellMetadata", action.payload);
       const { metadataId, cellId, undoable = true } = action.payload;
       const [rowId, colId] = getIdsFromCell(cellId);
 
@@ -952,11 +962,25 @@ export const tableSlice = createSliceWithRequests({
               column.context[cellContext] = decrementContextReconciliated(
                 column.context[cellContext]
               );
+              draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
+                ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
+                annotated: true,
+                match: {
+                  value: false,
+                },
+              };
             }
           } else if (wasMatch) {
             column.context[cellContext] = decrementContextReconciliated(
               column.context[cellContext]
             );
+            draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
+              ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
+              annotated: true,
+              match: {
+                value: false,
+              },
+            };
           }
           column.status = getColumnStatus(draft, colId);
           updateNumberOfReconciliatedCells(draft);
@@ -1487,6 +1511,7 @@ export const tableSlice = createSliceWithRequests({
           action: PayloadAction<Payload<ReconciliationFulfilledPayload>>
         ) => {
           const { data, reconciliator, undoable = true } = action.payload;
+          console.log("reconcile data", data);
           const { prefix, uri } = reconciliator;
 
           return produceWithPatch(
@@ -1611,10 +1636,10 @@ export const tableSlice = createSliceWithRequests({
         (state, action: PayloadAction<Payload<ExtendThunkResponseProps>>) => {
           const { data, extender, undoable = true } = action.payload;
 
-          const { columns, meta } = data;
-
+          const { columns, meta, originalColMeta } = data;
+          console.log("extend data", columns, meta);
           const newColumnsIds = Object.keys(columns);
-
+          console.log("newColumnsIds", newColumnsIds);
           return produceWithPatch(
             state,
             undoable,
@@ -1669,6 +1694,26 @@ export const tableSlice = createSliceWithRequests({
                 }
               });
               updateNumberOfReconciliatedCells(draft);
+              //add additional meta if needed (up to now only properties)
+              if (originalColMeta && originalColMeta.originalColName) {
+                if (
+                  draft.entities.columns.byId[originalColMeta.originalColName]
+                    .metadata[0].property
+                ) {
+                  draft.entities.columns.byId[
+                    originalColMeta.originalColName
+                  ].metadata[0].property = [
+                    ...draft.entities.columns.byId[
+                      originalColMeta.originalColName
+                    ].metadata[0].property,
+                    ...originalColMeta.properties,
+                  ];
+                } else {
+                  draft.entities.columns.byId[
+                    originalColMeta.originalColName
+                  ].metadata[0].property = originalColMeta.properties;
+                }
+              }
             },
             (draft) => {
               draft.entities.tableInstance.lastModifiedDate =

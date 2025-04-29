@@ -197,7 +197,6 @@ interface PropertyTabProps {
 }
 const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   const column = useAppSelector(selectCurrentCol);
-
   const {
     state,
     setState,
@@ -288,29 +287,32 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     if (row) {
       if (column) {
         if (column.metadata && column.metadata.length > 0) {
+          console.log("deleting prop metadata", row);
           if (column.metadata[0].property) {
-            addEdit(
-              deleteColumnMetadata({
-                metadataId: row.id,
-                colId: column.id,
-                type: "property",
-              }),
-              true
-            );
+            deleteColumnMetadata({
+              metadataId: row.id,
+              colId: column.id,
+              type: "property",
+            }),
+              true;
+
             // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'property' }));
             // setUndoSteps(undoSteps + 1);
           } else if (column.metadata[0].entity) {
-            addEdit(
-              deleteColumnMetadata({
-                metadataId: row.id,
-                colId: column.id,
-                type: "entity",
-              }),
-              true
-            );
+            deleteColumnMetadata({
+              metadataId: row.id,
+              colId: column.id,
+              type: "entity",
+            }),
+              true;
+
             // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'entity' }));
             // setUndoSteps(undoSteps + 1);
           }
+          setState((prevState) => ({
+            ...prevState,
+            data: prevState.data.filter((item: any) => item.id !== row.id),
+          }));
         }
       }
     }

@@ -155,7 +155,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     dependencies: [toUpdate],
   });
   const [currentService, setCurrentService] = useState<string>();
-  const [selectedMetadata, setSelectedMetadata] = useState<string>("");
+  const [selectedMetadata, setSelectedMetadata] = useState<FormState | null>(
+    null
+  );
+  const [newMetaMatching, setNewMetaMatching] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
@@ -201,12 +204,20 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   const handleConfirm = () => {
     // update global state if confirmed
-    if (cell && selectedMetadata) {
+    console.log(
+      "confirm condition",
+      cell && selectedMetadata && selectedMetadata.match,
+      selectedMetadata
+    );
+    if (cell && selectedMetadata && selectedMetadata.match === "true") {
       const previousMatch = cell.metadata.find((meta) => meta.match);
       console.log("previous match", previousMatch, selectedMetadata);
-      if (!previousMatch || previousMatch.id !== selectedMetadata) {
+      if (!previousMatch || previousMatch.id !== selectedMetadata.id) {
         dispatch(
-          updateCellMetadata({ metadataId: selectedMetadata, cellId: cell.id })
+          updateCellMetadata({
+            metadataId: selectedMetadata.id,
+            cellId: cell.id,
+          })
         );
         setShowPropagate(true);
       } else {
@@ -219,7 +230,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   };
 
   const handleSelectedRowDelete = useCallback((row: any) => {
-    console.log("request to delete: " + row);
+    handleDeleteRow(row);
+    console.log("request to delete: ", row);
   }, []);
 
   const handleSelectedRowChange = useCallback((row: any) => {
@@ -229,10 +241,15 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           if (item.id === row.id) {
             const match = !item.match;
             if (match) {
-              setSelectedMetadata(row.id);
+              setSelectedMetadata({ ...row, match: match ? "true" : "false" });
             } else {
-              setSelectedMetadata("");
+              setSelectedMetadata(null);
             }
+            console.log("changing selected row", {
+              ...item,
+              match: match ? "true" : "false",
+              selected: match,
+            });
             return {
               ...item,
               match: match,
@@ -255,12 +272,14 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     }
   }, []);
 
-  const handleDeleteRow = ({ original }: any) => {
+  const handleDeleteRow = (original: any) => {
+    console.log("original Id", original.id);
     if (cell) {
+      console.log();
       dispatch(
         deleteCellMetadata({
           cellId: cell.id,
-          metadataId: original.id.label,
+          metadataId: original.id.label || original.id,
         })
       );
     }
@@ -294,15 +313,18 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           value: { ...formState },
         })
       );
-      setSelectedMetadata(
-        formState.id.startsWith(tempPrefix)
+      let newMetadata = {
+        ...formState,
+        id: formState.id.startsWith(tempPrefix)
           ? formState.id
-          : tempPrefix + ":" + formState.id
-      );
+          : tempPrefix + ":" + formState.id,
+      };
+      setSelectedMetadata(newMetadata);
       if (formState.match === "true") {
         setShowPropagate(true);
       }
       reset();
+      setNewMetaMatching(formState.match === "true");
       setShowAdd(false);
       setToUpdate(!toUpdate);
     }
@@ -365,10 +387,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   };
   const handlePropagate = () => {
     try {
-      if (cell) {
+      if (cell && selectedMetadata) {
         dispatch(
           propagateCellMetadata({
-            metadataId: selectedMetadata,
+            metadataId: selectedMetadata.id,
             cellId: cell.id,
           })
         );
@@ -583,6 +605,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           columns={columns}
           data={data}
           loading={loading}
+          onDeleteRow={handleDeleteRow}
           onSelectedRowChange={handleSelectedRowChange}
           onSelectedRowDeleteRequest={handleSelectedRowDelete}
           showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
