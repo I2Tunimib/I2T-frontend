@@ -482,12 +482,13 @@ export const tableSlice = createSliceWithRequests({
             let matched = false;
             cell.metadata.forEach((metaItem) => {
               if (metaItem.id === metadataId) {
-                metaItem.match = !metaItem.match;
+                metaItem.match = match ? match : !metaItem.match;
                 matched = metaItem.match;
               } else {
                 metaItem.match = false;
               }
             });
+            console.log("matched", matched);
             if (wasReconciliated && !isCellReconciliated(cell)) {
               if (!column.context || !column.context[cellContext]) {
                 column.context[cellContext] = {
@@ -504,7 +505,7 @@ export const tableSlice = createSliceWithRequests({
               cell.annotationMeta = {
                 ...cell.annotationMeta,
                 match: {
-                  value: matched,
+                  value: match ? match : matched,
                 },
               };
             } else if (!wasReconciliated && isCellReconciliated(cell)) {

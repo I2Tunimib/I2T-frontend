@@ -206,22 +206,40 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     // update global state if confirmed
     console.log(
       "confirm condition",
-      cell && selectedMetadata && selectedMetadata.match,
+      cell && selectedMetadata,
       selectedMetadata
     );
-    if (cell && selectedMetadata && selectedMetadata.match === "true") {
-      const previousMatch = cell.metadata.find((meta) => meta.match);
+    let previousMatch = null;
+    if (cell && selectedMetadata) {
+      previousMatch = cell.metadata.find((meta) => meta.match);
       console.log("previous match", previousMatch, selectedMetadata);
       if (!previousMatch || previousMatch.id !== selectedMetadata.id) {
-        dispatch(
-          updateCellMetadata({
-            metadataId: selectedMetadata.id,
-            cellId: cell.id,
-          })
-        );
-        setShowPropagate(true);
+        if (!previousMatch?.match && selectedMetadata.match === "true") {
+          dispatch(
+            updateCellMetadata({
+              metadataId: selectedMetadata.id,
+              cellId: cell.id,
+            })
+          );
+          setShowPropagate(true);
+        } else {
+          handleClose();
+        }
       } else {
-        handleClose();
+        console.log("previous match", previousMatch);
+        if (previousMatch.id === selectedMetadata.id) {
+          // remove match
+          setShowPropagate(false);
+          dispatch(
+            updateCellMetadata({
+              metadataId: selectedMetadata.id,
+              cellId: cell.id,
+              match: selectedMetadata.match === "true",
+            })
+          );
+        } else {
+          handleClose();
+        }
       }
     } else {
       handleClose();
@@ -243,7 +261,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             if (match) {
               setSelectedMetadata({ ...row, match: match ? "true" : "false" });
             } else {
-              setSelectedMetadata(null);
+              setSelectedMetadata({ ...row, match: match ? "true" : "false" });
             }
             console.log("changing selected row", {
               ...item,
