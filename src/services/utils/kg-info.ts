@@ -1,22 +1,27 @@
 export const KG_INFO = {
   geo: {
     uri: "http://www.geonames.org/",
-    groupName: "",
+    groupName: "GeoNames",
   },
   dbp: {
     uri: "https://dbpedia.org/page/",
+    groupName: "dbPedia",
   },
   wd: {
     uri: "https://www.wikidata.org/wiki/",
+    groupName: "Wikidata",
   },
   wiki: {
     uri: "https://www.wikidata.org/wiki/",
+    groupName: "Wikidata",
   },
   geoCoord: {
     uri: "http://20.8.170.217:3002/geocoords",
+    groupName: "geoCoding",
   },
   georss: {
     uri: "http://149.132.176.67:3002/map?polyline=",
+    groupName: "geoCoding",
   },
   atoka: {
     uri: "https://atoka.io/public/en/company/-/",
@@ -24,6 +29,24 @@ export const KG_INFO = {
   atokaPeople: {
     uri: "https://atoka.io/public/en/people/-/",
   },
+};
+
+export const getGroupFromId = (id: string): string => {
+  if (Object.keys(KG_INFO).includes(id)) {
+    return KG_INFO[id].groupName;
+  } else {
+    return "";
+  }
+};
+export const getGroupFromUri = (uri: string): string => {
+  const keys = Object.keys(KG_INFO);
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    if (KG_INFO[key].uri.includes(uri)) {
+      return KG_INFO[key].groupName;
+    }
+  }
+  return "";
 };
 
 export const getPrefixIfAvailable = (uri: string, id: string): string => {

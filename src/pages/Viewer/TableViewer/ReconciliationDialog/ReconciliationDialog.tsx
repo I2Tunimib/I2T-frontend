@@ -47,6 +47,7 @@ import { SquaredBox } from "@components/core";
 import { Reconciliator } from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { getGroupFromUri } from "@services/utils/kg-info";
 
 const Transition = forwardRef(
   (
@@ -97,21 +98,19 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   async function groupReconciliators() {
     let mappedReconciliators = new Map();
     for (const reconciliator of reconciliators) {
-      console.log("reconciliator", reconciliator);
       const reconUri = reconciliator.uri;
-      const reconPrefix = reconciliator.prefix;
-      const reconName = reconciliator.name;
+      // Get the group name if available, otherwise use the URI
+      const groupKey = getGroupFromUri(reconUri) || reconUri;
 
-      if (mappedReconciliators.has(reconUri)) {
-        const reconciliatorGroup = mappedReconciliators.get(reconUri);
+      if (mappedReconciliators.has(groupKey)) {
+        const reconciliatorGroup = mappedReconciliators.get(groupKey);
         reconciliatorGroup.push(reconciliator);
-        mappedReconciliators.set(reconUri, reconciliatorGroup);
+        mappedReconciliators.set(groupKey, reconciliatorGroup);
       } else {
-        mappedReconciliators.set(reconUri, [reconciliator]);
+        mappedReconciliators.set(groupKey, [reconciliator]);
       }
-
-      setReconciliatorsGroups(mappedReconciliators);
     }
+    setReconciliatorsGroups(mappedReconciliators);
   }
 
   const handleConfirm = () => {
