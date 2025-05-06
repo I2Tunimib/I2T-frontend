@@ -26,6 +26,10 @@ export const KG_INFO = {
   atoka: {
     uri: "https://atoka.io/public/en/company/-/",
   },
+  maps: {
+    uri: "http://www.google.com/maps/place/",
+    groupName: "Geo Coordinates",
+  },
   atokaPeople: {
     uri: "https://atoka.io/public/en/people/-/",
   },

@@ -158,7 +158,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     setContextColumns(typeof value === "string" ? value.split(",") : value);
   };
 
-  const handleSubmit = (formState: Record<string, any>) => {
+  const handleSubmit = (formState: Record<string, any>, reset?: Function) => {
     if (!currentService) return;
     console.log("formState", formState);
     dispatch(
@@ -170,6 +170,8 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     )
       .unwrap()
       .then((result) => {
+        if (reset) reset();
+        setCurrentService(null);
         dispatch(
           updateUI({
             openReconciliateDialog: false,

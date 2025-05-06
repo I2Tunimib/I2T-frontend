@@ -5,6 +5,7 @@ import {
   MenuItem,
   InputLabel,
   Chip,
+  FormControl,
 } from "@mui/material";
 import {
   Extender,
@@ -26,7 +27,7 @@ import { suggest } from "@store/slices/table/table.thunk";
 export type DynamicFormProps = {
   loading: boolean | undefined;
   service: Extender | Reconciliator;
-  onSubmit: (formState: Record<string, any>) => void;
+  onSubmit: (formState: Record<string, any>, reset?: Function) => void;
   onCancel: () => void;
 };
 
@@ -52,8 +53,8 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const { formParams } = service;
 
   const onSubmit = (formValue: any) => {
-    onSubmitCallback(formValue);
-    reset(getDefaultValues(service));
+    onSubmitCallback(formValue, () => reset(getDefaultValues(service)));
+    // reset(getDefaultValues(service));
   };
 
   const onCancel = () => {
@@ -114,56 +115,64 @@ const DynamicForm: FC<DynamicFormProps> = ({
       )}
       {suggestions.length > 0 && (
         <>
-          <InputLabel id="suggestion-label">Suggestion list</InputLabel>
-          <SelectMaterial
-            onChange={onSuggestChange}
-            multiple={true}
-            labelId="suggestion-label"
-            label={"Select suggestion"}
-            value={selectedSuggestion}
-            MenuProps={{
-              PaperProps: {
-                style: {
-                  maxHeight: 300, // Controls the height of the dropdown
-                  overflow: "auto", // Enables scrolling
+          {/*  */}
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="suggestion-label">Suggestion list</InputLabel>
+            <SelectMaterial
+              onChange={onSuggestChange}
+              multiple={true}
+              id="suggestion"
+              variant="outlined"
+              labelId="suggestion-label"
+              label={"Suggestion list"}
+              value={selectedSuggestion}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300, // Controls the height of the dropdown
+                    overflow: "auto", // Enables scrolling
+                  },
                 },
-              },
-              // These control how the menu is positioned relative to the select
-              anchorOrigin: {
-                vertical: "bottom",
-                horizontal: "left",
-              },
-              transformOrigin: {
-                vertical: "top",
-                horizontal: "left",
-              },
-              TransitionProps: {
-                style: { marginTop: "10px" },
-              },
-            }}
-            renderValue={(selected) => (
-              <div>
-                {selected.map((value) => {
-                  const selectedOption = suggestions.find(
-                    (option) => option.id === value
-                  );
-                  return (
-                    <Chip
-                      style={{ marginRight: 5 }}
-                      key={value}
-                      label={selectedOption ? selectedOption.label : value}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          >
-            {suggestions.map((option) => (
-              <MenuItem key={option.id} value={option.id}>
-                {option.label} {option.percentage + "%"}
-              </MenuItem>
-            ))}
-          </SelectMaterial>
+                // These control how the menu is positioned relative to the select
+                anchorOrigin: {
+                  vertical: "bottom",
+                  horizontal: "left",
+                },
+                transformOrigin: {
+                  vertical: "top",
+                  horizontal: "left",
+                },
+                TransitionProps: {
+                  style: { marginTop: "10px" },
+                },
+              }}
+              renderValue={(selected) => (
+                <div>
+                  {selected.map((value) => {
+                    const selectedOption = suggestions.find(
+                      (option) => option.id === value
+                    );
+                    return (
+                      <Chip
+                        style={{ marginRight: 5 }}
+                        key={value}
+                        label={selectedOption ? selectedOption.label : value}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            >
+              {suggestions.map((option) => (
+                <MenuItem key={option.id} value={option.id}>
+                  {option.label}{" "}
+                  {Number.isInteger(option.percentage)
+                    ? option.percentage + "%"
+                    : option.percentage.toFixed(2) + "%"}
+                </MenuItem>
+              ))}
+            </SelectMaterial>
+          </FormControl>
         </>
       )}
       <Stack direction="row" justifyContent="flex-end" spacing={2}>

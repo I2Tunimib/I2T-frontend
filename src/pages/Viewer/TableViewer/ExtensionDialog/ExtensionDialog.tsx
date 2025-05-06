@@ -97,7 +97,7 @@ const DialogInnerContent = () => {
     }
   };
 
-  const handleSubmit = (formState: Record<string, any>) => {
+  const handleSubmit = (formState: Record<string, any>, reset?: Function) => {
     if (currentService) {
       dispatch(
         extend({
@@ -107,6 +107,8 @@ const DialogInnerContent = () => {
       )
         .unwrap()
         .then(({ data }) => {
+          if (reset) reset();
+          setCurrentService(undefined);
           dispatch(updateUI({ openExtensionDialog: false }));
           const nColumns = Object.keys(data.columns).length;
           const infoText = `${nColumns} ${
