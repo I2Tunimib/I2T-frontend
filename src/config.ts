@@ -1,3 +1,5 @@
+import Path from "@services/classes";
+
 export type AppConfig = {
   API: ApiConfig;
 };
@@ -27,6 +29,8 @@ export type ApiConfig = {
     PROCESS_START: Endpoint[];
     EXPORT: Endpoint[];
     AUTH_SIGNIN: Endpoint;
+    AUTH_SIGNUP: Endpoint;
+    AUTH_VERIFY: Endpoint;
     AUTH_ME: Endpoint;
   };
 };
@@ -107,6 +111,12 @@ const CONFIG: AppConfig = {
       ],
       AUTH_SIGNIN: {
         path: "/auth/signin",
+      },
+      AUTH_SIGNUP: {
+        path: "/auth/signup",
+      },
+      AUTH_VERIFY: {
+        path: "/auth/verify",
       },
       AUTH_ME: {
         path: "/auth/me",

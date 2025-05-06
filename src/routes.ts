@@ -32,6 +32,7 @@ const APP_ROUTES: AppRoutes = {
   routes: [
     { path: '/', exact: true, component: lazyWithPreload(() => import('@pages/Homepage/Homepage')) },
     { path: '/signin', exact: true, redirectWhen: ({ loggedIn }) => loggedIn, redirectTo: '/datasets', component: lazyWithPreload(() => import('@pages/Login')) },
+    { path: '/signup', exact: true, redirectWhen: ({ loggedIn }) => loggedIn, redirectTo: '/datasets', component: lazyWithPreload(() => import('@pages/SignUp')) },
     { path: '/datasets/:datasetId/tables/:tableId', redirectWhen: ({ loggedIn }) => !loggedIn, redirectTo: '/signin', exact: false, component: lazyWithPreload(() => import('@pages/Viewer')) },
     { path: '/datasets', exact: false, redirectWhen: ({ loggedIn }) => !loggedIn, redirectTo: '/signin', component: lazyWithPreload(() => import('@pages/Dashboard/Dashboard')) },
     { path: '/404', exact: false, component: lazyWithPreload(() => import('@pages/NotFound/NotFound')) }

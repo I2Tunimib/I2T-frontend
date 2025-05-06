@@ -1,38 +1,44 @@
-import styled from '@emotion/styled';
-import { Button, IconButton, InputAdornment, TextField, Typography } from '@mui/material';
-import { useForm } from 'react-hook-form';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
-import VisibilityOffOutlined from '@mui/icons-material/VisibilityOffOutlined';
-import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
-import { useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { authSignIn } from '@store/slices/auth/auth.thunk';
-import { selectSignInStatus } from '@store/slices/auth/auth.selectors';
-import { LoadingButton } from '@mui/lab';
-import { useHistory } from 'react-router-dom';
+import styled from "@emotion/styled";
+import {
+  Button,
+  IconButton,
+  InputAdornment,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useForm } from "react-hook-form";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
+import { useState } from "react";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import { authSignIn } from "@store/slices/auth/auth.thunk";
+import { selectSignInStatus } from "@store/slices/auth/auth.selectors";
+import { LoadingButton } from "@mui/lab";
+import { useHistory } from "react-router-dom";
 
 const Container = styled.div({
-  height: '100%',
-  width: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center'
+  height: "100%",
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
 const FormContainer = styled.form({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '10px',
-  alignItems: 'center',
-  maxWidth: '400px',
-  width: '100%'
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  alignItems: "center",
+  maxWidth: "400px",
+  width: "100%",
 });
 
 type FormState = {
   username: string;
   password: string;
-}
+};
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -42,9 +48,9 @@ const LoginPage = () => {
 
   const { register, handleSubmit } = useForm<FormState>({
     defaultValues: {
-      username: '',
-      password: ''
-    }
+      username: "",
+      password: "",
+    },
   });
 
   const handleClickShowPassword = () => {
@@ -52,9 +58,12 @@ const LoginPage = () => {
   };
 
   const onSubmit = (state: FormState) => {
-    dispatch(authSignIn(state)).unwrap().then((res) => {
-      history.push('/datasets');
-    }).catch((err) => { });
+    dispatch(authSignIn(state))
+      .unwrap()
+      .then((res) => {
+        history.push("/datasets");
+      })
+      .catch((err) => {});
   };
 
   return (
@@ -64,7 +73,7 @@ const LoginPage = () => {
           Sign in
         </Typography>
         <TextField
-          {...register('username')}
+          {...register("username")}
           disabled={!!loading}
           required
           label="Username"
@@ -74,12 +83,12 @@ const LoginPage = () => {
               <InputAdornment position="end">
                 <AccountCircleOutlinedIcon />
               </InputAdornment>
-            )
+            ),
           }}
         />
         <TextField
-          {...register('password')}
-          type={showPassword ? 'text' : 'password'}
+          {...register("password")}
+          type={showPassword ? "text" : "password"}
           disabled={!!loading}
           required
           label="Password"
@@ -92,14 +101,27 @@ const LoginPage = () => {
                   onClick={handleClickShowPassword}
                   edge="end"
                 >
-                  {showPassword ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                  {showPassword ? (
+                    <VisibilityOffOutlined />
+                  ) : (
+                    <VisibilityOutlined />
+                  )}
                 </IconButton>
               </InputAdornment>
-            )
+            ),
           }}
         />
         {error && <Typography color="error">{error}</Typography>}
-        <LoadingButton type="submit" loading={loading} variant="contained">Confirm</LoadingButton>
+        <LoadingButton type="submit" loading={loading} variant="contained">
+          Confirm
+        </LoadingButton>
+        <Button
+          variant="text"
+          onClick={() => history.push("/signup")}
+          disabled={loading}
+        >
+          Don't have an account? Sign up
+        </Button>
       </FormContainer>
     </Container>
   );
