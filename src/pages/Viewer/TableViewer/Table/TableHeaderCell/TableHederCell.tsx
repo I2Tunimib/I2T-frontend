@@ -161,10 +161,11 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                 onClick={handleSelectColumn}
                 size="small"
                 className={styles.ColumnSelectionButton}
+                sx={{ marginBottom: 15 }}
               >
                 <CheckCircleOutlineRoundedIcon fontSize="medium" />
               </IconButton>
-              <div className={styles.Row}>
+              <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
                   <div className={styles.Row}>
                     {data.annotationMeta && data.annotationMeta.annotated && (
