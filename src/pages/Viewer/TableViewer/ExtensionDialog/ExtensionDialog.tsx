@@ -10,11 +10,13 @@ import {
   DialogTitle,
   Divider,
   FormControl,
+  IconButton,
   ListItemText,
   ListSubheader,
   MenuItem,
   Select,
   SelectChangeEvent,
+  Stack,
   Typography,
 } from "@mui/material";
 import React, {
@@ -27,7 +29,12 @@ import React, {
 } from "react";
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import {
+  ExpandLess,
+  ExpandMore,
+  HelpCenterRounded,
+  HelpOutlineRounded,
+} from "@mui/icons-material";
 import {
   selectAreCellReconciliated,
   selectExtendRequestStatus,
@@ -195,9 +202,29 @@ export type ExtensionDialogProps = {
 };
 
 const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
+  const dispatch = useAppDispatch();
+
   return (
     <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
-      <DialogTitle>Extension</DialogTitle>
+      <Stack
+        direction={"row"}
+        alignItems={"center"}
+        justifyContent={"space-between"}
+      >
+        <DialogTitle>Extension</DialogTitle>
+
+        <IconButton
+          sx={{
+            color: "rgba(0, 0, 0, 0.54)",
+            marginRight: "20px",
+          }}
+          onClick={() => {
+            dispatch(updateUI({ openHelpDialog: true }));
+          }}
+        >
+          <HelpOutlineRounded />
+        </IconButton>
+      </Stack>
       <DialogContent>
         <DialogContentText paddingBottom="10px">
           Select an extension service:

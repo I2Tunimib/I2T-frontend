@@ -11,6 +11,7 @@ import {
   DialogTitle,
   Divider,
   FormControl,
+  IconButton,
   InputLabel,
   ListItemText,
   ListSubheader,
@@ -46,8 +47,14 @@ import { LoadingButton } from "@mui/lab";
 import { SquaredBox } from "@components/core";
 import { Reconciliator } from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import {
+  ExpandLess,
+  ExpandMore,
+  HelpOutlineRounded,
+} from "@mui/icons-material";
 import { getGroupFromUri } from "@services/utils/kg-info";
+import HelpDialog from "@pages/Viewer/HelpDialog/HelpDialog";
+import { selectIsHelpDialogOpen } from "@store/slices/datasets/datasets.selectors";
 
 const Transition = forwardRef(
   (
@@ -77,6 +84,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
 
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const columnIds = useAppSelector(selectReconciliatioContextColumnIds);
+  const helpDialogOpen = useAppSelector(selectIsHelpDialogOpen);
   const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading, error } = useAppSelector(selectReconcileRequestStatus);
   const selectRef = React.useRef<HTMLDivElement>(null);
@@ -192,7 +200,28 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
       keepMounted
       onClose={handleClose}
     >
-      <DialogTitle>Reconciliation</DialogTitle>
+      {/* <HelpDialog
+        open={helpDialogOpen}
+        onClose={() => dispatch(updateUI({ helpDialogOpen: false }))}
+      /> */}
+      <Stack
+        direction={"row"}
+        alignItems="center"
+        justifyContent={"space-between"}
+      >
+        <DialogTitle>Reconciliation</DialogTitle>
+        <IconButton
+          sx={{
+            color: "rgba(0, 0, 0, 0.54)",
+            marginRight: "20px",
+          }}
+          onClick={() => {
+            dispatch(updateUI({ openHelpDialog: true }));
+          }}
+        >
+          <HelpOutlineRounded />
+        </IconButton>
+      </Stack>
       <DialogContent>
         <DialogContentText>
           Select a service to reconcile with:
