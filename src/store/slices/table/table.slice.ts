@@ -1587,15 +1587,19 @@ export const tableSlice = createSliceWithRequests({
                         };
                       }
                     );
-                    column.metadata[0].property = metadata.flatMap((metas) => {
-                      if (metas.property) {
-                        return metas.property.map((property) => ({
-                          ...property,
-                          match: true,
-                        }));
-                      }
-                      return [];
-                    });
+                    if (column.metadata[0].property) {
+                      column.metadata[0].property = metadata.flatMap(
+                        (metas) => {
+                          if (metas.property) {
+                            return metas.property.map((property) => ({
+                              ...property,
+                              match: true,
+                            }));
+                          }
+                          return [];
+                        }
+                      );
+                    }
                   } else {
                     column.metadata[0] = {
                       id: "None:",
