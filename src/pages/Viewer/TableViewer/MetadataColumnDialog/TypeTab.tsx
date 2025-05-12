@@ -38,6 +38,8 @@ import { BaseMetadata } from "@store/slices/table/interfaces/table";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import deferMounting from "@components/HOC";
 import CustomTable from "@components/kit/CustomTable/CustomTable";
+import { isValidWikidataId } from "@services/utils/regexs";
+import { createWikidataURI } from "@services/utils/uri-utils";
 const DeferredTable = deferMounting(CustomTable);
 
 const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
@@ -216,8 +218,11 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         console.log("mapped types", type);
         return {
           selected: selected.some((item) => item.id === type.id),
-          id: type.id,
-          name: { value: type.label, uri: "" },
+          id: isValidWikidataId(type.id) ? "wd:" + type.id : type.id,
+          name: {
+            value: type.label,
+            uri: createWikidataURI(type.id),
+          },
           percentage: Number(type.percentage).toFixed(0) + "%",
           // match: "",
         };
@@ -289,7 +294,10 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   };
 
   const handleRowTypeCheck = (row: any) => {
-    const rowId = row.id;
+    let rowId = row.id;
+    if (rowId.startsWith("wd:")) {
+      rowId = rowId.replace("wd:", "");
+    }
     const index = selected.findIndex((item) => item.id === rowId);
     if (index > -1) {
       setSelected(selected.filter((item) => item.id !== rowId));

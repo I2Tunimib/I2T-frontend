@@ -7,8 +7,12 @@ export const ResourceLink = ({ value: cellValue }: Cell<{}>) => {
   const { value, uri } = cellValue;
   console.log("cell uri", uri);
   if (!uri) {
-    // If the URI is empty, render plain text instead of a clickable link
-    return <Typography color="textSecondary">{value}</Typography>;
+    // If the URI is empty, render plain text instead of a clickable link with a tooltip for the value
+    return (
+      <Typography variant="body2" color="textSecondary">
+        {value}
+      </Typography>
+    );
   }
 
   return (
