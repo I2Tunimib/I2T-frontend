@@ -1587,18 +1587,22 @@ export const tableSlice = createSliceWithRequests({
                         };
                       }
                     );
-                    if (column.metadata[0].property) {
-                      column.metadata[0].property = metadata.flatMap(
-                        (metas) => {
-                          if (metas.property) {
-                            return metas.property.map((property) => ({
-                              ...property,
-                              match: true,
-                            }));
-                          }
-                          return [];
+                    console.log("current meta", metadata);
+                    if (metadata[0].property) {
+                      console.log("found property", metadata);
+                      const newProps = metadata.flatMap((metas) => {
+                        if (metas.property) {
+                          return metas.property.map((property) => ({
+                            ...property,
+                            match: true,
+                          }));
                         }
-                      );
+                        return [];
+                      });
+                      column.metadata[0].property = [
+                        ...column.metadata[0].property,
+                        ...newProps,
+                      ];
                     }
                   } else {
                     column.metadata[0] = {
@@ -1606,6 +1610,15 @@ export const tableSlice = createSliceWithRequests({
                       match: true,
                       score: 0,
                       name: { value: "", uri: "" },
+                      property: metadata.flatMap((metas) => {
+                        if (metas.property) {
+                          return metas.property.map((property) => ({
+                            ...property,
+                            match: true,
+                          }));
+                        }
+                        return [];
+                      }),
                       entity: metadata.map(({ id, name, ...rest }) => {
                         const [_, metaId] = id.split(":");
                         return {
