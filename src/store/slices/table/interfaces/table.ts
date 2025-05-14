@@ -277,11 +277,17 @@ export interface UpdateColumnTypePayload {
   id: ID;
   name: string;
 }
+
+export interface UpdateColumnTypeMatchesPayload {
+  typeIds: string[];
+}
+
 export interface AddColumnTypePayload {
   id: string;
   name: string;
   uri?: string;
 }
+
 export interface UpdateCurrentTablePayload extends Partial<TableInstance> {}
 
 export interface DeleteSelectedPayload {}

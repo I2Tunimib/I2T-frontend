@@ -28,6 +28,7 @@ import {
 import {
   addColumnType,
   updateColumnType,
+  updateColumnTypeMatches,
   updateUI,
 } from "@store/slices/table/table.slice";
 import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
@@ -215,7 +216,12 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   */
     const newMetadata = types.allTypes
       .map((type) => {
-        console.log("mapped types", type);
+        console.log(
+          "mapped types",
+          type,
+          selected,
+          selected.some((item) => item.id === type.id)
+        );
         return {
           selected: selected.some((item) => item.id === type.id),
           id: isValidWikidataId(type.id) ? "wd:" + type.id : type.id,
@@ -359,37 +365,30 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   };
   useEffect(() => {
     if (selected && selected.length > 0) {
-      const mappedTypes = selected.map((item) => ({
-        id: item.id,
-        name: item.label,
-      }));
+      const mappedTypes = selected.map((item) => item.id);
       const payload = updateColumnType(mappedTypes);
-      addEdit(updateColumnType(mappedTypes), true, true);
+      addEdit(updateColumnTypeMatches({ typeIds: mappedTypes }), true, true);
     }
   }, [selected]);
 
   useEffect(() => {
     if (types && types.selectedType) {
+      console.log("types.selectedType", types.selectedType);
       setSelected(types.selectedType);
     }
   }, [types]);
 
   const handleConfirm = () => {
-    if (selected) {
-      addEdit(
-        updateColumnType({
-          id: selected.id,
-          name: selected.label,
-        }),
-        true
-      );
+    if (selected && selected.length > 0) {
+      // Create types from selection for updateColumnType
+      const mappedTypes = selected.map((item) => ({
+        id: item.id,
+        name: item.label,
+      }));
+
+      addEdit(updateColumnTypeMatches(mappedTypes), true);
     }
-    //   dispatch(updateColumnType({
-    //     id: selected.id,
-    //     name: selected.label
-    //   }));
-    // }
-    // dispatch(updateUI({ openMetadataColumnDialog: false }));
+    dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 
   const handleCancel = () => {

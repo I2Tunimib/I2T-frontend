@@ -50,6 +50,7 @@ import {
   UpdateSelectedCellsPayload,
   UpdateSelectedColumnPayload,
   UpdateSelectedRowPayload,
+  UpdateColumnTypeMatchesPayload,
 } from "./interfaces/table";
 import {
   automaticAnnotation,
@@ -1276,6 +1277,46 @@ export const tableSlice = createSliceWithRequests({
       return nextState;
     },
     /**
+     * Update the match property of column types without replacing them
+     * -- UNDOABLE ACTION --
+     */
+    updateColumnTypeMatches: (
+      state,
+      action: PayloadAction<Payload<UpdateColumnTypeMatchesPayload>>
+    ) => {
+      const { selectedColumnCellsIds } = state.ui;
+      const { typeIds, undoable = true } = action.payload;
+      console.log("updateColumnTypeMatches", action.payload);
+      const colId = Object.keys(selectedColumnCellsIds)[0];
+
+      return produceWithPatch(
+        state,
+        undoable,
+        (draft) => {
+          const { columns } = draft.entities;
+
+          if (columns.byId[colId].metadata.length === 0) {
+            return; // No metadata to update
+          }
+
+          // If there are types already, update their match property
+          if (columns.byId[colId].metadata[0].type) {
+            columns.byId[colId].metadata[0].type = columns.byId[
+              colId
+            ].metadata[0].type.map((type: any) => ({
+              ...type,
+              match: typeIds.includes(type.id),
+            }));
+          }
+        },
+        (draft) => {
+          // do not include in undo history
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        }
+      );
+    },
+    /**
      * Handle changes to selected columns.
      */
     updateColumnSelection: (
@@ -1600,10 +1641,21 @@ export const tableSlice = createSliceWithRequests({
                         }
                         return [];
                       });
+
                       column.metadata[0].property = [
                         ...column.metadata[0].property,
                         ...newProps,
                       ];
+                    }
+                    if (column.metadata[0].type) {
+                      column.metadata[0].type = metadata.flatMap((metas) => {
+                        if (metas.type) {
+                          return metas.type.map((type) => ({
+                            ...type,
+                          }));
+                        }
+                        return [];
+                      });
                     }
                   } else {
                     column.metadata[0] = {
@@ -1611,6 +1663,14 @@ export const tableSlice = createSliceWithRequests({
                       match: true,
                       score: 0,
                       name: { value: "", uri: "" },
+                      type: metadata.flatMap((metas) => {
+                        if (metas.type) {
+                          return metas.type.map((type) => ({
+                            ...type,
+                          }));
+                        }
+                        return [];
+                      }),
                       property: metadata.flatMap((metas) => {
                         if (metas.property) {
                           return metas.property.map((property) => ({
@@ -1818,6 +1878,7 @@ export const {
   updateRowSelection,
   updateCellSelection,
   updateColumnType,
+  updateColumnTypeMatches,
   addColumnType,
   updateUI,
   addTutorialBox,
