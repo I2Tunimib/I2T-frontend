@@ -59,6 +59,7 @@ export interface TableUIState {
   lastSaved: string;
   tmpCell: Cell | null;
   tutorialBBoxes: Record<string, BBox>;
+  tutorialStep: number;
 }
 
 export interface Settings {

@@ -150,6 +150,7 @@ const initialState: TableState = {
     editableCellsIds: {},
     tmpCell: null,
     tutorialBBoxes: {},
+    tutorialStep: 1,
   },
   _requests: { byId: {}, allIds: [] },
   _draft: {

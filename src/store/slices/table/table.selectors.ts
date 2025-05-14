@@ -328,6 +328,14 @@ export const selectHelpDialogStatus = createSelector(
 );
 
 /**
+ * Get tutorial step.
+ */
+export const selectTutorialStep = createSelector(
+  selectUIState,
+  (ui) => ui.tutorialStep || 1
+);
+
+/**
  * Get reconciliation dialog status.
  */
 export const selectReconcileDialogStatus = createSelector(
@@ -742,6 +750,7 @@ export const selectColumnTypes = createSelector(
               acc[id] = {
                 id,
                 label: name as any,
+
                 count: 1,
               };
             }

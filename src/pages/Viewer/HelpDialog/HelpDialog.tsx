@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { useAppDispatch } from "@hooks/store";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { KeyboardArrowLeft, KeyboardArrowRight } from "@mui/icons-material";
 import {
   Box,
@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { updateUI } from "@store/slices/table/table.slice";
+import { selectTutorialStep } from "@store/slices/table/table.selectors";
 import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import PlaylistAddCheckRoundedIcon from "@mui/icons-material/PlaylistAddCheckRounded";
 import {
@@ -21,6 +22,7 @@ import {
   useCallback,
   FunctionComponent,
   ReactNode,
+  useEffect,
 } from "react";
 import { StatusBadge } from "@components/core";
 import manualAnnotation from "../../../assets/manual-reconciliation.gif";
@@ -412,7 +414,15 @@ type TutorialStepperProps = {
 };
 
 const TutorialStepper: FC<TutorialStepperProps> = ({ onDone }) => {
-  const [activeStep, setActiveStep] = useState(1); // Start with introduction step
+  const tutorialStep = useAppSelector(selectTutorialStep);
+  const [activeStep, setActiveStep] = useState(tutorialStep);
+
+  useEffect(() => {
+    // Set the active step from Redux when it changes
+    if (tutorialStep > 0 && tutorialStep < steps.length) {
+      setActiveStep(tutorialStep);
+    }
+  }, [tutorialStep]);
 
   const maxSteps = steps.length;
 
@@ -477,6 +487,15 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
   const [start, setStart] = useState(false);
   const refWrapper = useRef<HTMLDivElement | null>(null);
   const dispatch = useAppDispatch();
+  const tutorialStep = useAppSelector(selectTutorialStep);
+
+  useEffect(() => {
+    // If a specific tutorial step is set (greater than 1),
+    // automatically start the tutorial
+    if (tutorialStep > 1) {
+      setStart(true);
+    }
+  }, [tutorialStep]);
 
   const handleOnClose = (
     event: {},
@@ -533,3 +552,15 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
 };
 
 export default HelpDialog;
+
+/**
+ * To open the help dialog with a specific tutorial section, dispatch the following Redux action:
+ *
+ * dispatch(updateUI({
+ *   openHelpDialog: true,  // Open the dialog
+ *   tutorialStep: n        // Show section n (1-10), where 1 is intro and 2-10 are tutorial sections
+ * }));
+ *
+ * If tutorialStep is not specified or is set to 1, the welcome screen will be shown first.
+ * If tutorialStep is set to a value from 2-10, the dialog will open directly to that tutorial section.
+ */
