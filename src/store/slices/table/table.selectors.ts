@@ -778,6 +778,7 @@ export const selectColumnTypes = createSelector(
         columnsState.byId[colIds[0]].metadata[0].type
       ) {
         const metaItem = columnsState.byId[colIds[0]].metadata[0];
+        console.log("current meta item", metaItem);
         if (metaItem.type) {
           for (let i = 0; i < metaItem.type.length; i++) {
             currentColType.push(metaItem.type[i]);
@@ -791,6 +792,7 @@ export const selectColumnTypes = createSelector(
               map[currentColType[i].id] = {
                 id: currentColType[i].id,
                 label: currentColType[i].name as any,
+                match: currentColType[i].match,
                 count: 0,
               };
             }
@@ -820,7 +822,7 @@ export const selectColumnTypes = createSelector(
             : 0
           ).toFixed(2),
         };
-        if (currentColType && currentColType.some((type) => type.id === key)) {
+        if (currentColType && item.match) {
           selectedType.push(item);
         }
         return item;
