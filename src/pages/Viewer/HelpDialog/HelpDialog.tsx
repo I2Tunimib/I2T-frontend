@@ -93,7 +93,9 @@ const steps: Step[] = [
     label: "The enrichment process",
     Description: () => (
       <Stack>
-        The enrichment process is usually composed by two main task:
+        The enrichment process, which involves matching entities in the original
+        data to a target dataset (e.g., Wikidata, DBpedia, etc.), is composed of
+        two main tasks:
         <List>
           <li>
             <b>Reconciliation: </b>
@@ -102,12 +104,12 @@ const steps: Step[] = [
           </li>
           <li>
             <b>Extension: </b>
-            fetch new information on the target dataset using the reconciliated
-            entities to enrich the original data.
+            fetch new information on the target dataset using the reconciled
+            entities as matching keys.
           </li>
         </List>
-        SemTUI makes these steps easier for you so that you can refine end
-        perfect your results of data enrichment.
+        SemTUI addresses these steps by giving seamless access to reconciliation
+        and extension services.
       </Stack>
     ),
   },
@@ -115,17 +117,18 @@ const steps: Step[] = [
     label: "Reconciliation",
     Description: () => (
       <Stack>
-        SemTUI offers two ways to reconcile entities within your table:
+        SemTUI offers access to manual and automatic entity reconciliation
+        services:
         <List>
           <li>
-            <b>Manual reconciliation: </b>
-            by selecting cells or columns and then using the different
-            reconciliation services available.
+            <b>Manual reconciliation: </b>a semantic table interpretation (STI)
+            service can be activated to automatically reconcile cells and
+            annotate headers with predicates and types from Wikidata.
           </li>
           <li>
-            <b>Automatic reconciliation: </b>
-            automatically annotate (reconcile cells and associate headers with
-            predicates and types) the entire table with one click.
+            <b>Automatic reconciliation: </b>A semantic table interpretation
+            (STI) service can be activated to automatically reconcile cells and
+            annotate headers with predicates and types to Wikidata.
           </li>
         </List>
       </Stack>
@@ -136,10 +139,10 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Select one or more cell to reconcile and click on the
+          Select a column or some cells to reconcile and click on the
           <ButtonText>Reconcile</ButtonText>
-          button in the application toolbar. Multiple services are available for
-          you to choose from.
+          button in the application toolbar. Choose a reconciliation service
+          from the list.
         </Typography>
         <Img src={manualAnnotation} />
       </Stack>
@@ -150,12 +153,13 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          You can also choose to automatically annotate the whole table by
+          Activate the automatic annotation service for the whole table by
           pressing the
           <ButtonText>Automatic annotation</ButtonText>
-          button in the top right corner. The process might take a while, but
-          you are free to work on other tables. When the annotation process is
-          done a notification will popup for you.
+          button in the top right corner. The annotation process is a
+          long-running asynchronous process that allows users to work on other
+          tables. When the annotation process is completed, a notification will
+          pop up.
         </Typography>
         <Img src={automaticAnnotation} />
       </Stack>
@@ -166,8 +170,8 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          To help you understand the result of an annotation process some
-          symbols will appear within annotated cells.
+          Colors and shapes of icons in front of reconciled entities provide
+          visual feedback on the reconciliation process result.
         </Typography>
         <Stack gap="10px">
           <Stack direction="row">
@@ -179,9 +183,8 @@ const steps: Step[] = [
               status="miss"
             />
             <Typography>
-              : The cell is annotated, but the service did not successfully
-              assign any metadata to it, or associated metadata have a score
-              lower than the configured lower bound threshold.
+              Unsuccessful reconciliation: No candidate entities have been
+              found, or none have scores above the threshold.
             </Typography>
           </Stack>
           <Stack direction="row">
@@ -193,8 +196,9 @@ const steps: Step[] = [
               status="warn"
             />
             <Typography>
-              : The cell is annotated, but it does not have a matching metadata
-              yet.
+              Uncertain reconciliation: There are candidate entities above the
+              threshold, but none have been selected for the cell due to
+              uncertainty.
             </Typography>
           </Stack>
           <Stack direction="row">
@@ -206,8 +210,8 @@ const steps: Step[] = [
               status="match-manual"
             />
             <Typography>
-              : The cell is annotated and the matching metadata has been
-              assigned manually by the user.
+              Successful reconciliation: An entity has been manually assigned to
+              the cell.
             </Typography>
           </Stack>
           <Stack direction="row">
@@ -219,8 +223,8 @@ const steps: Step[] = [
               status="match-refinement"
             />
             <Typography>
-              : The cell is annotated and the matching metadata has been
-              assigned by the refinement feature.
+              Successful reconciliation: An entity has been assigned by the
+              column refinement feature.
             </Typography>
           </Stack>
           <Stack direction="row">
@@ -232,8 +236,8 @@ const steps: Step[] = [
               status="match-reconciliator"
             />
             <Typography>
-              : The cell is annotated and the matching metadata has been
-              assigned automatically by the reconciliator service.
+              Successful reconciliation: The cell is annotated with an entity
+              automatically assigned by the reconciliation service.
             </Typography>
           </Stack>
         </Stack>
@@ -245,14 +249,12 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          In the top right you can find a search and filtering functionality. It
-          provides rows filtering based on cell
-          <b> labels </b>
-          and
-          <b> metadata names </b>
-          and
-          <b> types</b>. Cells matching the search filter are highlighted
-          leaving rows without matches outside of the table visualization.
+          A search and filtering feature is available at the top right.
+          <br />
+          It enables row filtering based on cell <b>labels</b>,{" "}
+          <b>metadata names</b>, and <b>types</b>. <br />
+          Cells matching the search criteria are highlighted, and rows without
+          matches are excluded from the table view.
         </Typography>
         <Img src={search} />
       </Stack>
@@ -263,16 +265,15 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Once the reconciliation process is done you will be able to refine
-          your matchings by inspecting metadata for each cell. You can click on
-          the
+          After the reconciliation process is complete, matchings can be refined
+          by inspecting the metadata associated with each cell. The
           <SettingsEthernetRoundedIcon
             sx={{
               margin: "0px 3px",
               verticalAlign: "middle",
             }}
           />
-          to inspect metadata of a selected cell.
+          icon can be used to inspect the metadata of a selected cell.
         </Typography>
         <Img src={refineMatchingManual} />
       </Stack>
@@ -283,18 +284,18 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          You can also choose to refine the matching of a group of cells by (i)
-          selecting a column or some cells of a column and (ii) select types
-          among the ones associated with the selected cells (&quot;Type refine
-          matching&quot;), or set a threshold for the scores (&quot;Score refine
-          matching&quot;). You can click on the
+          The matching of a group of cells can also be refined by (i) selecting
+          a column or a subset of its cells, and (ii) choosing types from those
+          associated with the selected cells (<q>Type refine matching</q>), or
+          by setting a threshold for the scores (<q>Score refine matching</q>).
+          The
           <PlaylistAddCheckRoundedIcon
             sx={{
               margin: "0px 3px",
               verticalAlign: "middle",
             }}
           />
-          to access this functionality.
+          icon provides access to this functionality.
         </Typography>
         <Img src={refineMatchingAutomatic} />
       </Stack>
@@ -305,10 +306,10 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Finally, once you have one or more column reconciliated you will be
-          able to extend those by clicking the
+          Once one or more columns have been reconciled, they can be extended by
+          clicking the
           <ButtonText>Extend</ButtonText>
-          button in the toolbar and choosing one of the available extension
+          button in the toolbar and selecting one of the available extension
           services.
         </Typography>
         <Img src={extension} />
@@ -325,8 +326,11 @@ const steps: Step[] = [
           alignItems: "center",
         }}
       >
-        <Typography variant="h4">You are done!</Typography>
-        <Typography>Those are the basics to work with SemTUI.</Typography>
+        <Typography variant="h4">Tutorial completed!</Typography>
+        <Typography>
+          These are the core steps to start working with SemTUI. <br />
+          Explore further to make the most of its features.
+        </Typography>
       </Stack>
     ),
   },
