@@ -207,6 +207,7 @@ export interface ExtendFulfilledPayload {
 
 export interface AddCellMetadataPayload {
   cellId: ID;
+  metadataId: string;
   prefix: string;
   value: {
     id: string;

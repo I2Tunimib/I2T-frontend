@@ -312,41 +312,61 @@ export const tableSlice = createSliceWithRequests({
 
           const isMatching = match === "true";
           const cell = draft.entities.rows.byId[rowId].cells[colId];
-          if (isMatching) {
-            draft.entities.rows.byId[rowId].cells[colId].metadata =
-              draft.entities.rows.byId[rowId].cells[colId].metadata.map(
-                (item) => ({ ...item, match: false })
-              );
-          }
-          if (id.startsWith(prefix)) {
-          }
-          let annotationMetaMatching =
-            draft.entities.rows.byId[rowId].cells[colId].annotationMeta.match;
-          if (!annotationMetaMatching.value && isMatching) {
-            draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
-              ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
-              match: {
-                value: true,
-                reason: "manual",
+          const existingMetadata = cell.metadata.findIndex(
+            (metaItem) => metaItem.id === id
+          );
+          //this replaces items id their id is already in the metadata array
+          if (existingMetadata !== -1) {
+            draft.entities.rows.byId[rowId].cells[colId].metadata[
+              existingMetadata
+            ] = {
+              ...draft.entities.rows.byId[rowId].cells[colId].metadata[
+                existingMetadata
+              ],
+              match: isMatching,
+              name: {
+                value: name,
+                uri: uri,
               },
             };
+          } else {
+            if (isMatching) {
+              draft.entities.rows.byId[rowId].cells[colId].metadata =
+                draft.entities.rows.byId[rowId].cells[colId].metadata.map(
+                  (item) => ({ ...item, match: false })
+                );
+            }
+            if (id.startsWith(prefix)) {
+            }
+            let annotationMetaMatching =
+              draft.entities.rows.byId[rowId].cells[colId].annotationMeta.match;
+            if (!annotationMetaMatching.value && isMatching) {
+              draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
+                ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
+                match: {
+                  value: true,
+                  reason: "manual",
+                },
+              };
+            }
+            console.log("annotationMetaMatching", annotationMetaMatching);
+            const newMeta = {
+              id: id.startsWith(prefix) ? id : `${prefix}:${id}`,
+              match: isMatching,
+              name: {
+                value: name,
+                uri: uri,
+              },
+              ...rest,
+            };
+            draft.entities.rows.byId[rowId].cells[colId].metadata.push(newMeta);
+            draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
+              ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
+              annotated: true,
+              match: annotationMetaMatching,
+            };
           }
-          console.log("annotationMetaMatching", annotationMetaMatching);
-          const newMeta = {
-            id: id.startsWith(prefix) ? id : `${prefix}:${id}`,
-            match: isMatching,
-            name: {
-              value: name,
-              uri: uri,
-            },
-            ...rest,
-          };
-          draft.entities.rows.byId[rowId].cells[colId].metadata.push(newMeta);
-          draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
-            ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
-            annotated: true,
-            match: annotationMetaMatching,
-          };
+
           //draft.entities.rows.byId[rowId].cells[colId].metadata = [];
         },
         (draft) => {
@@ -360,8 +380,9 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<AddCellMetadataPayload>>
     ) => {
-      const { metadataId, cellId, undoable = true } = action.payload;
-      console.log("received propagation ids", metadataId, cellId);
+      const { metadataId, cellId, value, undoable = true } = action.payload;
+      const currentMatchVal = value.match === "true" ? true : false;
+      console.log("received propagation ids", metadataId, cellId, value);
       const [rowId, colId] = getIdsFromCell(cellId);
       const { metadata } = getCell(state, rowId, colId);
       if (metadata.length > 0) {
@@ -378,6 +399,7 @@ export const tableSlice = createSliceWithRequests({
             const currentMetadata = cell.metadata.find(
               (metadata) => metadata.id === metadataId
             );
+            console.log("currentMetadata", current(currentMetadata));
             let rowsIds = draft.entities.rows.allIds;
             if (currentMetadata) {
               for (let i = 0; i < rowsIds.length; i++) {
@@ -399,10 +421,10 @@ export const tableSlice = createSliceWithRequests({
                     draft.entities.rows.byId[currentRowId].cells[
                       colId
                     ].metadata[correspondingMetadataIndex].match =
-                      !currentMatch;
+                      currentMatchVal;
 
                     // Only handle other metadata items if this one is now matched
-                    if (!currentMatch) {
+                    if (currentMatchVal) {
                       draft.entities.rows.byId[currentRowId].cells[
                         colId
                       ].metadata.forEach((metaItem) => {
@@ -419,7 +441,7 @@ export const tableSlice = createSliceWithRequests({
                         .annotationMeta,
                       annotated: true,
                       match: {
-                        value: !currentMatch,
+                        value: currentMatchVal,
                         reason: "manual",
                       },
                     };
@@ -448,7 +470,7 @@ export const tableSlice = createSliceWithRequests({
                         .annotationMeta,
                       annotated: true,
                       match: {
-                        value: currentMetadata.match,
+                        value: currentMatchVal,
                         reason: "manual",
                       },
                     };
@@ -1222,8 +1244,26 @@ export const tableSlice = createSliceWithRequests({
             columns.byId[colId].metadata[0].additionalTypes = [];
             columns.byId[colId].metadata[0].additionalTypes = newTypes;
           } else {
-            columns.byId[colId].metadata[0].additionalTypes =
-              columns.byId[colId].metadata[0].additionalTypes?.concat(newTypes);
+            // Check for existing types with the same ID and replace them
+            const existingTypes =
+              columns.byId[colId].metadata[0].additionalTypes || [];
+            const mergedTypes = [...existingTypes];
+            console.log("existingTypes", existingTypes);
+            console.log("newTypes", newTypes);
+            newTypes.forEach((newType) => {
+              const existingIndex = mergedTypes.findIndex(
+                (existingType) => existingType.id === newType.id
+              );
+              if (existingIndex !== -1) {
+                // Replace existing type with the same ID
+                mergedTypes[existingIndex] = newType;
+              } else {
+                // Add new type if ID doesn't exist
+                mergedTypes.push(newType);
+              }
+            });
+
+            columns.byId[colId].metadata[0].additionalTypes = mergedTypes;
           }
 
           // if (columns.byId[colId].metadata.length === 0) {

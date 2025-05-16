@@ -343,8 +343,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       };
       setSelectedMetadata(newMetadata);
       if (formState.match === "true") {
+        setSelectedMetadata(newMetadata);
         setShowPropagate(true);
       }
+      setShowPropagate(true);
+
       reset();
       setNewMetaMatching(formState.match === "true");
       setShowAdd(false);
@@ -412,6 +415,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       if (cell && selectedMetadata) {
         dispatch(
           propagateCellMetadata({
+            value: selectedMetadata,
             metadataId: selectedMetadata.id,
             cellId: cell.id,
           })
