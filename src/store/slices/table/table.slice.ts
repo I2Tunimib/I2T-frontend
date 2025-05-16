@@ -361,6 +361,7 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<Payload<AddCellMetadataPayload>>
     ) => {
       const { metadataId, cellId, undoable = true } = action.payload;
+      console.log("received propagation ids", metadataId, cellId);
       const [rowId, colId] = getIdsFromCell(cellId);
       const { metadata } = getCell(state, rowId, colId);
       if (metadata.length > 0) {
@@ -391,16 +392,26 @@ export const tableSlice = createSliceWithRequests({
                       (metadata) => metadata.id === metadataId
                     );
                   if (correspondingMetadataIndex !== -1) {
+                    // Flip the matching status instead of setting it to true
+                    const currentMatch =
+                      draft.entities.rows.byId[currentRowId].cells[colId]
+                        .metadata[correspondingMetadataIndex].match;
                     draft.entities.rows.byId[currentRowId].cells[
                       colId
-                    ].metadata[correspondingMetadataIndex].match = true;
-                    draft.entities.rows.byId[currentRowId].cells[
-                      colId
-                    ].metadata.forEach((metaItem) => {
-                      if (metaItem.id !== currentMetadata.id) {
-                        metaItem.match = false;
-                      }
-                    });
+                    ].metadata[correspondingMetadataIndex].match =
+                      !currentMatch;
+
+                    // Only handle other metadata items if this one is now matched
+                    if (!currentMatch) {
+                      draft.entities.rows.byId[currentRowId].cells[
+                        colId
+                      ].metadata.forEach((metaItem) => {
+                        if (metaItem.id !== currentMetadata.id) {
+                          metaItem.match = false;
+                        }
+                      });
+                    }
+
                     draft.entities.rows.byId[currentRowId].cells[
                       colId
                     ].annotationMeta = {
@@ -408,7 +419,7 @@ export const tableSlice = createSliceWithRequests({
                         .annotationMeta,
                       annotated: true,
                       match: {
-                        value: true,
+                        value: !currentMatch,
                         reason: "manual",
                       },
                     };
@@ -437,7 +448,7 @@ export const tableSlice = createSliceWithRequests({
                         .annotationMeta,
                       annotated: true,
                       match: {
-                        value: true,
+                        value: currentMetadata.match,
                         reason: "manual",
                       },
                     };

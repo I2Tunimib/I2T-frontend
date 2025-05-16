@@ -257,19 +257,22 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const handleSelectedRowChange = useCallback((row: any) => {
     if (row) {
       setState(({ columns: colState, data: dataState }) => {
+        // Check if the row is already matched (selected)
+        const isCurrentlyMatched = row.match;
+
         const newData = dataState.map((item: any) => {
           if (item.id === row.id) {
             const match = !item.match;
-            if (match) {
-              setSelectedMetadata({ ...row, match: match ? "true" : "false" });
-            } else {
-              setSelectedMetadata({ ...row, match: match ? "true" : "false" });
-            }
+            setSelectedMetadata({ ...row, match: match ? "true" : "false" });
             console.log("changing selected row", {
               ...item,
               match: match ? "true" : "false",
               selected: match,
             });
+
+            // Show propagate button if we're matching or unmatching
+            setShowPropagate(match || isCurrentlyMatched);
+
             return {
               ...item,
               match: match,
@@ -288,7 +291,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           data: newData,
         };
       });
-      setShowPropagate(true);
     }
   }, []);
 
@@ -425,6 +427,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       fetchMetadata(newService);
     }
   };
+
+  // Add a handler for row checking
+  const handleRowCheck = useCallback((rowId: string) => {
+    // This function is required by CustomTable but in our case we're using radio buttons
+    // We can implement it as a no-op, but it could be extended if needed
+    console.log("Row checked:", rowId);
+  }, []);
 
   return cell ? (
     <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
@@ -642,6 +651,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           onSelectedRowChange={handleSelectedRowChange}
           onSelectedRowDeleteRequest={handleSelectedRowDelete}
           showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
+          onRowCheck={handleRowCheck}
         />
       </Stack>
     </Dialog>
