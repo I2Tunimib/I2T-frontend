@@ -42,9 +42,11 @@ const List = styled.ul({
 });
 
 const Img = styled.img({
-  width: "550px",
-  height: "312px",
+  width: "100%",
+  height: "100%",
+  objectFit: "contain",
   borderRadius: "7px",
+  maxHeight: "400px",
 });
 
 const ButtonText = styled.span({
