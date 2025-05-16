@@ -164,8 +164,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
-      score: 0,
-      match: "false",
+      score: 1,
+      match: "true",
     },
   });
   const { API } = useAppSelector(selectAppConfig);
@@ -221,6 +221,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               cellId: cell.id,
             })
           );
+          handleClose();
           setShowPropagate(true);
         } else {
           handleClose();
@@ -237,6 +238,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               match: selectedMetadata.match === "true",
             })
           );
+          handleClose();
         } else {
           handleClose();
         }
@@ -446,7 +448,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             </Button>
             {API.ENDPOINTS.SAVE && !isViewOnly && (
               <Button onClick={handleConfirm} variant="outlined">
-                Confirm
+                Confirm and Close
               </Button>
             )}
             {showPropagate && (
@@ -509,6 +511,17 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             </FormControl>
           )}
         </Box>
+        <Typography
+          sx={{
+            display: showAdd ? "block" : "none",
+            opacity: showAdd ? 1 : 0,
+            transition: "opacity 300ms ease-out",
+            marginLeft: "27px",
+          }}
+          variant="body2"
+        >
+          * are required fields
+        </Typography>
         {API.ENDPOINTS.SAVE && !isViewOnly && (
           <Stack
             position="relative"
@@ -543,6 +556,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 />
               </IconButton>
             </Tooltip>
+
             <Box
               sx={{
                 position: "absolute",
@@ -585,6 +599,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   size="small"
                   label="Uri"
                   variant="outlined"
+                  required
                   {...register("uri")}
                 />
                 <TextField
