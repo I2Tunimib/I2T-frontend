@@ -30,6 +30,7 @@ import {
   selectIsViewOnly,
   selectReconcileRequestStatus,
   selectSettings,
+  selectHelpDialogStatus,
 } from "@store/slices/table/table.selectors";
 import {
   selectAppConfig,
@@ -37,6 +38,7 @@ import {
 } from "@store/slices/config/config.selectors";
 import { Controller, useForm } from "react-hook-form";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import { getCellContext } from "@store/slices/table/utils/table.reconciliation-utils";
 import CustomTable from "@components/kit/CustomTable/CustomTable";
 import deferMounting from "@components/HOC";
@@ -46,9 +48,14 @@ import {
   BaseMetadata,
   Cell as TableCell,
 } from "@store/slices/table/interfaces/table";
-import { ConfirmationDialog, StatusBadge } from "@components/core";
+import {
+  ConfirmationDialog,
+  StatusBadge,
+  IconButtonTooltip,
+} from "@components/core";
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
+import HelpDialog from "../../HelpDialog/HelpDialog";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -490,6 +497,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 />
               </>
             )}
+            <IconButtonTooltip
+              tooltipText="Help"
+              onClick={() =>
+                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 8 }))
+              }
+              Icon={HelpOutlineRoundedIcon}
+            />
           </Stack>
         </Stack>
         <Divider orientation="horizontal" flexItem />
