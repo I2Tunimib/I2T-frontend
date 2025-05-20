@@ -946,7 +946,10 @@ export const selectSelectedCellsTypes = createSelector(
           cell.metadata.forEach((metaItem) => {
             if (metaItem.type) {
               metaItem.type.forEach((typeItem) => {
-                types.push((typeItem.name as unknown as string).toLowerCase());
+                if (typeItem.name)
+                  types.push(
+                    (typeItem.name as unknown as string).toLowerCase()
+                  );
               });
             }
           });
@@ -966,9 +969,10 @@ export const selectSelectedCellsTypes = createSelector(
               column.metadata[0].entity.forEach((metaItem) => {
                 if (metaItem.type) {
                   metaItem.type.forEach((typeItem) => {
-                    types.push(
-                      (typeItem.name as unknown as string).toLowerCase()
-                    );
+                    if (typeItem.name)
+                      types.push(
+                        (typeItem.name as unknown as string).toLowerCase()
+                      );
                   });
                 }
               });

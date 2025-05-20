@@ -112,6 +112,7 @@ import {
 } from "./utils/table.utils";
 import { property } from "lodash";
 import { a } from "react-spring";
+import { annotate } from "../datasets/datasets.thunk";
 
 const initialState: TableState = {
   entities: {
@@ -375,6 +376,95 @@ export const tableSlice = createSliceWithRequests({
             new Date().toISOString();
         }
       );
+    },
+    propagateCellDeleteMetadata: (
+      state,
+      action: PayloadAction<
+        Payload<{ metadataIds: string[]; cellId: string; undoable?: boolean }>
+      >
+    ) => {
+      try {
+        const { metadataIds, cellId, undoable = true } = action.payload;
+        const [rowId, colId] = getIdsFromCell(cellId);
+        const cell = getCell(state, rowId, colId);
+        const cellLabel = cell.label;
+
+        return produceWithPatch(
+          state,
+          undoable,
+          (draft) => {
+            // Loop through all the rows, check if the cell has the same label as the one we are deleting the metadatas
+            const rowsIds = draft.entities.rows.allIds;
+            const column = getColumn(draft, colId);
+
+            for (let i = 0; i < rowsIds.length; i++) {
+              const currentRowId = rowsIds[i];
+              const currentCell =
+                draft.entities.rows.byId[currentRowId].cells[colId];
+
+              // Only process cells with matching labels
+              if (currentCell.label === cellLabel) {
+                const cellContext = getCellContext(currentCell);
+                let hasMatch = false;
+                let hadMatchingDeleted = false;
+
+                // Filter out the metadata IDs that need to be deleted
+                const originalMetadataLength = currentCell.metadata.length;
+                currentCell.metadata = currentCell.metadata.filter((meta) => {
+                  const shouldDelete = metadataIds.includes(meta.id);
+                  // Track if we're deleting any matching metadata
+                  if (shouldDelete && meta.match) {
+                    hadMatchingDeleted = true;
+                  }
+                  return !shouldDelete;
+                });
+
+                // Check if any remaining metadata is matching
+                if (currentCell.metadata.length > 0) {
+                  hasMatch = currentCell.metadata.some((meta) => meta.match);
+                }
+
+                // Update the annotation status based on deleted metadata
+                if (
+                  hadMatchingDeleted ||
+                  originalMetadataLength !== currentCell.metadata.length
+                ) {
+                  // Update column context if needed
+                  if (hadMatchingDeleted && !hasMatch) {
+                    if (column.context && column.context[cellContext]) {
+                      column.context[cellContext] =
+                        decrementContextReconciliated(
+                          column.context[cellContext]
+                        );
+                    }
+                  }
+
+                  // Update cell annotation meta
+                  currentCell.annotationMeta = {
+                    ...currentCell.annotationMeta,
+                    annotated: currentCell.metadata.length > 0,
+                    match: {
+                      value: hasMatch,
+                      ...(hasMatch && { reason: "manual" }),
+                    },
+                  };
+                }
+              }
+            }
+
+            // Update column status
+            column.status = getColumnStatus(draft, colId);
+            updateNumberOfReconciliatedCells(draft);
+          },
+          (draft) => {
+            // do not include in undo history
+            draft.entities.tableInstance.lastModifiedDate =
+              new Date().toISOString();
+          }
+        );
+      } catch (error) {
+        console.error("Error in propagateCellDeleteMetadata:", error);
+      }
     },
     propagateCellMetadata: (
       state,
@@ -1776,9 +1866,7 @@ export const tableSlice = createSliceWithRequests({
           const { data, extender, undoable = true } = action.payload;
 
           const { columns, meta, originalColMeta } = data;
-          console.log("extend data", columns, meta);
           const newColumnsIds = Object.keys(columns);
-          console.log("newColumnsIds", newColumnsIds);
           return produceWithPatch(
             state,
             undoable,
@@ -1806,9 +1894,17 @@ export const tableSlice = createSliceWithRequests({
 
                 draft.entities.rows.allIds.forEach((rowId) => {
                   const newCell = createCell(rowId, newColId, cells[rowId]);
-
+                  if (newCell.metadata.length === 0) {
+                    newCell.annotationMeta = {
+                      annotated: false,
+                      match: {
+                        value: false,
+                      },
+                    };
+                  }
                   draft.entities.rows.byId[rowId].cells[newColId] = newCell;
-                  updateContext(draft, newCell);
+                  if (newCell.metadata.length > 0)
+                    updateContext(draft, newCell);
                 });
 
                 draft.entities.columns.byId[newColId].status = getColumnStatus(
@@ -1917,6 +2013,7 @@ export const {
   deleteColumnMetadata,
   addCellMetadata,
   propagateCellMetadata,
+  propagateCellDeleteMetadata,
   updateColumnMetadata,
   updateColumnPropertyMetadata,
   updateCellMetadata,
