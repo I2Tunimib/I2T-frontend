@@ -145,7 +145,7 @@ const steps: Step[] = [
         <Typography>
           Select a column or some cells to reconcile and click on the
           <ButtonText>Reconcile</ButtonText>
-          button in the application toolbar. Choose a reconciliation service
+          button in the application toolbar. <br/>Choose a reconciliation service
           from the list.
         </Typography>
         <Img src={manualAnnotation} />
@@ -184,11 +184,37 @@ const steps: Step[] = [
                 marginTop: "6px",
                 marginRight: "6px",
               }}
-              status="miss"
+              status="match-reconciliator"
             />
             <Typography>
-              Unsuccessful reconciliation: No candidate entities have been
-              found, or none have scores above the threshold.
+              Successful reconciliation: The cell is annotated with an entity
+              automatically assigned by the reconciliation service.
+            </Typography>
+          </Stack>
+          <Stack direction="row">
+            <StatusBadge
+              sx={{
+                marginTop: "6px",
+                marginRight: "6px",
+              }}
+              status="match-refinement"
+            />
+            <Typography>
+              Successful reconciliation: An entity has been assigned by the
+              column refinement feature.
+            </Typography>
+          </Stack>
+          <Stack direction="row">
+            <StatusBadge
+              sx={{
+                marginTop: "6px",
+                marginRight: "6px",
+              }}
+              status="match-manual"
+            />
+            <Typography>
+              Successful reconciliation: An entity has been manually assigned to
+              the cell.
             </Typography>
           </Stack>
           <Stack direction="row">
@@ -211,37 +237,11 @@ const steps: Step[] = [
                 marginTop: "6px",
                 marginRight: "6px",
               }}
-              status="match-manual"
+              status="miss"
             />
             <Typography>
-              Successful reconciliation: An entity has been manually assigned to
-              the cell.
-            </Typography>
-          </Stack>
-          <Stack direction="row">
-            <StatusBadge
-              sx={{
-                marginTop: "6px",
-                marginRight: "6px",
-              }}
-              status="match-refinement"
-            />
-            <Typography>
-              Successful reconciliation: An entity has been assigned by the
-              column refinement feature.
-            </Typography>
-          </Stack>
-          <Stack direction="row">
-            <StatusBadge
-              sx={{
-                marginTop: "6px",
-                marginRight: "6px",
-              }}
-              status="match-reconciliator"
-            />
-            <Typography>
-              Successful reconciliation: The cell is annotated with an entity
-              automatically assigned by the reconciliation service.
+              Unsuccessful reconciliation: No candidate entities have been
+              found, or none have scores above the threshold.
             </Typography>
           </Stack>
         </Stack>
