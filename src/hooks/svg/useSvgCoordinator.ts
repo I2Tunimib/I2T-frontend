@@ -1,11 +1,8 @@
-import useWindowDimension from '@hooks/resize/useWindowResize';
-import Path from '@services/classes';
-import { bezierCurve, drawTo } from '@services/classes/PathOperators';
-import { isEmptyObject } from '@services/utils/objects-utils';
-import {
-  useCallback, useEffect,
-  useRef, useState
-} from 'react';
+import useWindowDimension from "@hooks/resize/useWindowResize";
+import Path from "@services/classes";
+import { bezierCurve, drawTo } from "@services/classes/PathOperators";
+import { isEmptyObject } from "@services/utils/objects-utils";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface UseSvgCoordinatorProps {
   paths: Record<string, CoordinatorPath[]>;
@@ -29,23 +26,45 @@ export interface DrawOptions {
 
 const DEFAULT_OPTIONS = {
   minimumDistance: 15,
-  alfa: 40
+  alfa: 40,
 };
 
 const COLORS = [
-  '#bd65a4',
-  '#2fad96',
-  '#7b439e',
-  '#ff8a00',
-  '#3682db',
-  '#2fad96'
+  "#bd65a4",
+  "#2fad96",
+  "#7b439e",
+  "#ff8a00",
+  "#3682db",
+  "#2fad96",
 ];
 
-const getPoint = (element: HTMLElement, { top: svgTop = 0 }: Partial<DOMRect>) => {
+const getPoint = (
+  element: HTMLElement,
+  { top: svgTop = 0 }: Partial<DOMRect>
+) => {
+  // Get element position relative to viewport
   const { left, top, width } = element.getBoundingClientRect();
-  const x = left + width / 2;
-  // y is relative to where the svg origin is
+
+  // We no longer need to add scrollLeft here because we're adjusting the SVG viewBox instead
+  // This returns the position as seen in the viewport
+  let correctedLeft = left;
+  if (correctedLeft < 0) {
+    correctedLeft = -correctedLeft;
+    correctedLeft = correctedLeft - width;
+  }
+  const x = correctedLeft + width / 2;
   const y = top - svgTop;
+  //log all parameters
+
+  console.log("getPoint", {
+    svgTop,
+    left,
+    top,
+    width,
+    correctedLeft,
+    x,
+    y,
+  });
   return [x, y];
 };
 
@@ -65,75 +84,86 @@ const calcPointsDistances = (
       p1: { x: x2, y: y2 },
       p2: { x: x1, y: y1 },
       distance: x1 - x2,
-      direction: 'start'
+      direction: "start",
     };
   }
   return {
     p1: { x: x1, y: y1 },
     p2: { x: x2, y: y2 },
     distance: x2 - x1,
-    direction: 'end'
+    direction: "end",
   };
 };
 
-const useSvgCoordinator = ({
-  paths,
-  options
-}: UseSvgCoordinatorProps) => {
-  const {
-    minimumDistance,
-    alfa
-  } = { ...DEFAULT_OPTIONS, ...options };
+const useSvgCoordinator = ({ paths, options }: UseSvgCoordinatorProps) => {
+  const { minimumDistance, alfa } = { ...DEFAULT_OPTIONS, ...options };
 
   const [processedPaths, setProcessedPaths] = useState<any>();
   const svgRef = useRef<SVGSVGElement>(null);
   const { windowWidth } = useWindowDimension();
 
-  const calcPaths = useCallback((distancesObjects: any[], offset: number) => {
-    let previousGroup = {
-      group: '',
-      horizontalOffset: 0
-    };
-
-    return distancesObjects.map(({
-      p1, p2, ...rest
-    }, index) => {
-      const currentGroup = rest.group;
-      const path = new Path(rest.direction === 'end'
-        ? { x: p1.x, y: p1.y }
-        : { x: p1.x - 5, y: p1.y - 5 });
-      // offset between each path
-      const offsetPath = offset * (index + 1);
-      // horizontal offset for control points of
-      // the same group, so that paths don't stack one on top of the other
-      const horizontalOffset = previousGroup.group === currentGroup
-        ? previousGroup.horizontalOffset - alfa
-        : 0;
-
-      previousGroup = {
-        group: currentGroup,
-        horizontalOffset
+  const calcPaths = useCallback(
+    (distancesObjects: any[], offset: number) => {
+      let previousGroup = {
+        group: "",
+        horizontalOffset: 0,
       };
-      path.pipe(
-        bezierCurve(
-          // first control point
-          p1.x + horizontalOffset, p1.y - (offsetPath - (0.9 * horizontalOffset)),
-          // second control point
-          p2.x, p2.y - (offsetPath - (0.9 * horizontalOffset))
-        ),
-        drawTo(rest.direction === 'end'
-          ? p2.x + 5
-          : p2.x,
-        rest.direction === 'end'
-          ? p2.y - 5
-          : p2.y)
-      );
-      return {
-        ...rest,
-        path
-      };
-    });
-  }, [alfa]);
+
+      return distancesObjects.map(({ p1, p2, ...rest }, index) => {
+        const currentGroup = rest.group;
+        const path = new Path(
+          rest.direction === "end"
+            ? { x: p1.x, y: p1.y }
+            : { x: p1.x - 5, y: p1.y - 5 }
+        );
+        // offset between each path
+        const offsetPath = offset * (index + 1);
+        // horizontal offset for control points of
+        // the same group, so that paths don't stack one on top of the other
+        const horizontalOffset =
+          previousGroup.group === currentGroup
+            ? previousGroup.horizontalOffset - alfa
+            : 0;
+
+        previousGroup = {
+          group: currentGroup,
+          horizontalOffset,
+        };
+
+        // Calculate more adaptive control point values
+        // Limit the maximum Y offset to prevent arrows from getting too high
+        const maxYOffset = 300;
+        const yOffset1 = Math.min(
+          offsetPath - 0.9 * horizontalOffset,
+          maxYOffset
+        );
+        const yOffset2 = Math.min(
+          offsetPath - 0.9 * horizontalOffset,
+          maxYOffset
+        );
+
+        path.pipe(
+          bezierCurve(
+            // first control point
+            p1.x + horizontalOffset,
+            p1.y - yOffset1,
+            // second control point
+            p2.x,
+            p2.y - yOffset2
+          ),
+          drawTo(
+            rest.direction === "end" ? p2.x + 5 : p2.x,
+            rest.direction === "end" ? p2.y - 5 : p2.y
+          )
+        );
+        return {
+          ...rest,
+          path,
+        };
+      });
+    },
+    [alfa]
+  );
 
   const draw = useCallback(() => {
     if (paths && !isEmptyObject(paths) && svgRef && svgRef.current) {
@@ -148,23 +178,27 @@ const useSvgCoordinator = ({
         // iterate on each path of a group
         return [
           ...acc,
-          ...paths[groupKey].map(({
-            id, startElement, endElement, ...rest
-          }) => {
-            const results = calcPointsDistances(startElement, endElement, svgBB);
-            return {
-              id,
-              group: groupKey,
-              color: COLORS[index],
-              ...rest,
-              ...results
-            };
-          })
+          ...paths[groupKey].map(
+            ({ id, startElement, endElement, ...rest }) => {
+              const results = calcPointsDistances(
+                startElement,
+                endElement,
+                svgBB
+              );
+              return {
+                id,
+                group: groupKey,
+                color: COLORS[index],
+                ...rest,
+                ...results,
+              };
+            }
+          ),
         ];
       }, [] as any[]);
 
       // // compute offset heights based on svg height and number of paths to draw
-      const offset = (height / distances.length) - minimumDistance;
+      const offset = height / distances.length - minimumDistance;
       // order distances in ascending order
       distances.sort((el1, el2) => (el2.distance < el1.distance ? 1 : -1));
       setProcessedPaths(calcPaths(distances, offset));
@@ -178,7 +212,7 @@ const useSvgCoordinator = ({
   return {
     svgRef,
     processedPaths,
-    draw
+    draw,
   };
 };
 
