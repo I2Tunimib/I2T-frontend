@@ -57,6 +57,7 @@ import {
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
 import HelpDialog from "../../HelpDialog/HelpDialog";
+import { initial } from "lodash";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -168,6 +169,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   );
   const [newMetaMatching, setNewMetaMatching] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
+  const [initialMatching, setInitialMatching] = useState<string[]>([]);
   const [metasToDelete, setMetasToDelete] = useState<any[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
@@ -196,9 +198,21 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     }
   }, [reconciliators]);
 
+  useEffect(() => {
+    //this useEffect is used to track the initial selected metadata in order to not show the propagation if not needed
+    if (cell) {
+      const { metadata } = cell;
+      const initialMatch = metadata
+        .filter((meta) => meta.match)
+        .map((meta) => meta.id);
+      setInitialMatching(initialMatch);
+    }
+  }, [cell]);
+
   const handleClose = () => {
     setShowAdd(false);
     setShowTooltip(false);
+    setShowPropagate(false);
     dispatch(
       updateUI({
         openMetadataDialog: false,
@@ -218,44 +232,92 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       cell && selectedMetadata,
       selectedMetadata
     );
+
+    // Check if the selection has changed from the initial state
+    const hasSelectionChanged = () => {
+      if (!cell || !selectedMetadata) {
+        console.log("case 0");
+        return false;
+      }
+
+      // If there was initially no match, check if we've selected something
+      if (initialMatching.length === 0) {
+        console.log("case 1");
+        return selectedMetadata.match === "true";
+      }
+
+      // If there was a match initially:
+      if (initialMatching.length > 0) {
+        // Case 1: We're now matching something different than what was initially matched
+        if (
+          selectedMetadata.match === "true" &&
+          !initialMatching.includes(selectedMetadata.id)
+        ) {
+          console.log("case 2");
+          return true;
+        }
+
+        // Case 2: We're now NOT matching something that WAS initially matched
+        if (
+          selectedMetadata.match === "false" &&
+          initialMatching.includes(selectedMetadata.id)
+        ) {
+          console.log("case 3");
+          return true;
+        }
+      }
+      console.log("no change in selection");
+      return false;
+    };
+
     let previousMatch = null;
     if (cell && selectedMetadata) {
       previousMatch = cell.metadata.find((meta) => meta.match);
       console.log("previous match", previousMatch, selectedMetadata);
-      if (!previousMatch || previousMatch.id !== selectedMetadata.id) {
-        if (!previousMatch?.match && selectedMetadata.match === "true") {
-          dispatch(
-            updateCellMetadata({
-              metadataId: selectedMetadata.id,
-              cellId: cell.id,
-            })
-          );
-          handleClose();
-          setShowPropagate(true);
+
+      // Only proceed with changes and show propagate if selection changed
+      if (hasSelectionChanged()) {
+        // Always show the propagate button for any change
+        setShowPropagate(true);
+
+        if (!previousMatch || previousMatch.id !== selectedMetadata.id) {
+          if (!previousMatch?.match && selectedMetadata.match === "true") {
+            dispatch(
+              updateCellMetadata({
+                metadataId: selectedMetadata.id,
+                cellId: cell.id,
+              })
+            );
+          } else if (selectedMetadata.match === "false") {
+            // For when we're deselecting a newly selected item
+            dispatch(
+              updateCellMetadata({
+                metadataId: selectedMetadata.id,
+                cellId: cell.id,
+                match: false,
+              })
+            );
+          }
         } else {
-          handleClose();
-        }
-      } else {
-        console.log("previous match", previousMatch);
-        if (previousMatch.id === selectedMetadata.id) {
-          // remove match
-          setShowPropagate(false);
-          dispatch(
-            updateCellMetadata({
-              metadataId: selectedMetadata.id,
-              cellId: cell.id,
-              match: selectedMetadata.match === "true",
-            })
-          );
-          handleClose();
-        } else {
-          handleClose();
+          console.log("previous match", previousMatch);
+          if (previousMatch.id === selectedMetadata.id) {
+            // remove match
+            dispatch(
+              updateCellMetadata({
+                metadataId: selectedMetadata.id,
+                cellId: cell.id,
+                match: selectedMetadata.match === "true",
+              })
+            );
+          }
         }
       }
+
+      // Always close the dialog
+      handleClose();
     } else {
       handleClose();
     }
-    //handleClose();
   };
 
   const handleSelectedRowDelete = useCallback((row: any) => {
@@ -273,45 +335,107 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log("request to delete: ", row);
   }, []);
 
-  const handleSelectedRowChange = useCallback((row: any) => {
-    if (row) {
-      setState(({ columns: colState, data: dataState }) => {
-        // Check if the row is already matched (selected)
-        const isCurrentlyMatched = row.match;
+  const handleSelectedRowChange = useCallback(
+    (row: any) => {
+      if (row) {
+        setState(({ columns: colState, data: dataState }) => {
+          // Check if the row is already matched (selected)
+          const isCurrentlyMatched = row.match;
 
-        const newData = dataState.map((item: any) => {
-          if (item.id === row.id) {
-            const match = !item.match;
-            setSelectedMetadata({ ...row, match: match ? "true" : "false" });
-            console.log("changing selected row", {
-              ...item,
-              match: match ? "true" : "false",
-              selected: match,
-            });
+          const newData = dataState.map((item: any) => {
+            if (item.id === row.id) {
+              const match = !item.match;
+              setSelectedMetadata({ ...row, match: match ? "true" : "false" });
+              console.log("changing selected row", {
+                ...item,
+                match: match ? "true" : "false",
+                selected: match,
+              });
 
-            // Show propagate button if we're matching or unmatching
-            setShowPropagate(match || isCurrentlyMatched);
+              // Show propagate button only if the selection is different from initial state
+              let selectionChanged = false;
 
+              // Store the current "state" of this row for better comparison
+              const currentState = {
+                id: item.id,
+                matched: match, // The new state after toggling
+              };
+
+              // When we're in a different state from the initial matching
+              if (initialMatching.length === 0) {
+                // Initially nothing was matched
+                // Show propagate if we're matching anything
+                selectionChanged = match;
+              } else if (initialMatching.length > 0) {
+                // Initially something was matched
+                console.log(
+                  "item",
+                  item,
+                  initialMatching.includes(item.id),
+                  !currentState.matched
+                );
+                if (
+                  initialMatching.includes(item.id) &&
+                  !currentState.matched
+                ) {
+                  console.log("case 1");
+                  // This item was initially matched, show propagate if we're unmatching
+                  selectionChanged = true;
+                } else if (
+                  !initialMatching.includes(item.id) &&
+                  !currentState.matched
+                ) {
+                  console.log("case 2");
+
+                  // This item was initially matched, show propagate if we're unmatching
+                  selectionChanged = true;
+                } else {
+                  console.log("case 3");
+                  if (
+                    initialMatching.includes(item.id) &&
+                    currentState.matched
+                  ) {
+                    console.log("case 3.5");
+                    selectionChanged = false;
+                  } else {
+                    selectionChanged = match;
+                  }
+                  // This item was not initially matched, show propagate if we're matching it
+                }
+              }
+
+              console.log(
+                "Selection changed:",
+                selectionChanged,
+                "Current state:",
+                currentState,
+                "Initial matching:",
+                initialMatching
+              );
+              setShowPropagate(selectionChanged);
+
+              return {
+                ...item,
+                match: match,
+                selected: match,
+              };
+            }
             return {
               ...item,
-              match: match,
-              selected: match,
+              selected: false,
+              match: false,
             };
-          }
+          });
+
           return {
-            ...item,
-            selected: false,
-            match: false,
+            columns: colState,
+            data: newData,
           };
         });
-
-        return {
-          columns: colState,
-          data: newData,
-        };
-      });
-    }
-  }, []);
+      }
+    },
+    [initialMatching]
+  );
 
   const handleDeleteRow = (original: any) => {
     console.log("original Id", original.id);
