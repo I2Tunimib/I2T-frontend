@@ -73,7 +73,12 @@ export const getMetadata = (metadata: BaseMetadata[]): any => {
   return metadata
     .map(({ id, name, ...rest }) => {
       const [prefix, resourceId] = id.split(":");
-      if (resourceId === undefined) {
+      console.log("getMetadata", prefix, resourceId);
+      if (
+        resourceId === undefined ||
+        id.startsWith("https://") ||
+        id.startsWith("http://")
+      ) {
         return null;
       }
       return {
