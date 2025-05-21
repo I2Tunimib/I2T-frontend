@@ -198,7 +198,11 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
       open={open}
       TransitionComponent={Transition}
       keepMounted
-      onClose={handleClose}
+      onClose={() => {
+        handleClose();
+        setCurrentService(null);
+        setExpandedGroup(null);
+      }}
     >
       {/* <HelpDialog
         open={helpDialogOpen}
@@ -320,7 +324,11 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                   service={currentService}
                   loading={loading}
                   onSubmit={handleSubmit}
-                  onCancel={handleClose}
+                  onCancel={() => {
+                    handleClose();
+                    setCurrentService(null);
+                    setExpandedGroup(null);
+                  }}
                 />
               </>
             )}
