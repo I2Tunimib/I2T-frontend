@@ -20,6 +20,7 @@ import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   addCellMetadata,
   deleteCellMetadata,
+  propagateCellDeleteMetadata,
   propagateCellMetadata,
   updateCellMetadata,
   updateUI,
@@ -167,6 +168,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   );
   const [newMetaMatching, setNewMetaMatching] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
+  const [metasToDelete, setMetasToDelete] = useState<any[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<FormState>({
@@ -258,6 +260,16 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   const handleSelectedRowDelete = useCallback((row: any) => {
     handleDeleteRow(row);
+    setMetasToDelete((prev) => {
+      const newMetas = [...prev];
+      const index = newMetas.findIndex((item) => item.id === row.id);
+      if (index === -1) {
+        console.log("adding to delete", row.id, row.name);
+        newMetas.push(row);
+      }
+      return newMetas;
+    });
+    setShowPropagate(true);
     console.log("request to delete: ", row);
   }, []);
 
@@ -427,8 +439,16 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             cellId: cell.id,
           })
         );
-        handleClose();
       }
+      if (metasToDelete.length > 0 && cell) {
+        dispatch(
+          propagateCellDeleteMetadata({
+            metadataIds: metasToDelete.map((meta) => meta.id),
+            cellId: cell.id,
+          })
+        );
+      }
+      handleClose();
     } catch (error) {}
   };
   const handleChangeService = (event: SelectChangeEvent<string>) => {
@@ -547,7 +567,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           }}
           variant="body2"
         >
-          * are required fields
+          * required fields
         </Typography>
         {API.ENDPOINTS.SAVE && !isViewOnly && (
           <Stack
