@@ -87,6 +87,8 @@ const DialogInnerContent = () => {
   }
 
   const handleClose = () => {
+    // Reset selected service when dialog is closed
+    setCurrentService(undefined);
     dispatch(
       updateUI({
         openExtensionDialog: false,
