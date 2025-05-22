@@ -392,7 +392,10 @@ export default function CustomTable<T extends Record<string, unknown>>(
                             {...rowProps}
                             key={`${rowProps.key}-expanded`}
                           >
-                            <TableRowCell colSpan={visibleColumns.length}>
+                            <TableRowCell
+                              style={{ width: "100%", maxWidth: "100%" }}
+                              colSpan={visibleColumns.length}
+                            >
                               {subRows[row.id]}
                             </TableRowCell>
                           </TableSubRow>

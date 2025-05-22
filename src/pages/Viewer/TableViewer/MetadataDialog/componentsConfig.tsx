@@ -39,7 +39,7 @@ export const MatchCell = ({ value: inputValue }: Cell<{}>) => {
 
 export const SubList = (value: any[] = []) => {
   return (
-    <Stack direction="row" gap="10px">
+    <Stack direction="row" gap="10px" style={{ width: '100%' }}>
       {value.length > 0 ? (
         value.map((item) => (
           <Chip key={item.id} size="small" label={item.name} />
@@ -112,5 +112,8 @@ export const getCellComponent = (
     }
     return value;
   }
-  return CELL_COMPONENTS_TYPES[type](cell);
+  return <div style={{ width: "100%" }}>
+    {CELL_COMPONENTS_TYPES[type](cell)
+    }
+  </div>
 };
