@@ -229,7 +229,7 @@ const Homepage = () => {
             ))}
           </CardContent>
         </Card>
-        <Author fontWeight="600" alignSelf="flex-end" marginTop="auto" color="#FAFAFA">by Insid&S Lab</Author>
+        <Author fontWeight="600" alignSelf="flex-end" marginTop="auto" color="#FAFAFA">by DatAI Lab</Author>
       </DarkSide>
     </Container>
   );

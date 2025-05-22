@@ -226,9 +226,8 @@ const steps: Step[] = [
               status="warn"
             />
             <Typography>
-              Uncertain reconciliation: There are candidate entities above the
-              threshold, but none have been selected for the cell due to
-              uncertainty.
+              Uncertain reconciliation: There are candidate entities above the threshold,
+              but none have been selected for the cell because multiple candidates have similar scores.
             </Typography>
           </Stack>
           <Stack direction="row">
