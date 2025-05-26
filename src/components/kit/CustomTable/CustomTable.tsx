@@ -393,10 +393,18 @@ export default function CustomTable<T extends Record<string, unknown>>(
                             key={`${rowProps.key}-expanded`}
                           >
                             <TableRowCell
-                              style={{ width: "100%", maxWidth: "100%" }}
-                              colSpan={visibleColumns.length}
+                              style={{
+                                width: "100%",
+                                maxWidth: "100%",
+                                padding: "12px",
+                              }}
+                              colSpan={
+                                visibleColumns.length + 1
+                              } /* +1 for the delete button column */
                             >
-                              {subRows[row.id]}
+                              <div className="expanded-content">
+                                {subRows[row.id]}
+                              </div>
                             </TableRowCell>
                           </TableSubRow>
                         ) : null}
