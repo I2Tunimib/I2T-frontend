@@ -221,7 +221,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 9 }));
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 10 }));
           }}
         >
           <HelpOutlineRounded />

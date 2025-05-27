@@ -220,7 +220,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 2 }));
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 3 }));
           }}
         >
           <HelpOutlineRounded />
