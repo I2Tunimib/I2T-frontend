@@ -145,7 +145,8 @@ const SignUpPage = () => {
           address solely for the purpose of issuing temporary login credentials.
           This email address will be deleted immediately after the credentials
           are sent and will not be stored, used for any further communication,
-          or shared with third parties. The full text of the{" "}
+          or shared with third parties. <br /> The full text of the Privacy
+          Policy is available at
           <Link
             href="/privacy_notice.pdf"
             target="_blank"
@@ -155,9 +156,9 @@ const SignUpPage = () => {
               history.push("/privacy-policy");
             }}
           >
-            Privacy Policy
+            this link
           </Link>{" "}
-          is available at this link.
+          .
         </Typography>
         {/* <FormControlLabel
           control={
