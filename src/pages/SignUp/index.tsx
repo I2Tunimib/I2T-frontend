@@ -156,6 +156,7 @@ const SignUpPage = () => {
               history.push("/privacy-policy");
             }}
           >
+            {" "}
             this link
           </Link>{" "}
           .
