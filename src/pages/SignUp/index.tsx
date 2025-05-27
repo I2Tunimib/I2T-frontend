@@ -63,11 +63,11 @@ const SignUpPage = () => {
     setLoading(true);
     setError(null);
 
-    if (!state.privacyPolicy) {
-      setError("You must accept the privacy policy to proceed");
-      setLoading(false);
-      return;
-    }
+    // if (!state.privacyPolicy) {
+    //   setError("You must accept the privacy policy to proceed");
+    //   setLoading(false);
+    //   return;
+    // }
 
     if (!recaptchaRef.current) {
       setError("Recaptcha not loaded");
@@ -139,8 +139,27 @@ const SignUpPage = () => {
           }}
         />
         {error && <Typography color="error">{error}</Typography>}
-
-        <FormControlLabel
+        <Typography variant="body2" color="textSecondary">
+          To prevent unauthorized access and block automated bots, the tool is
+          currently in closed-access mode. You will be asked to provide an email
+          address solely for the purpose of issuing temporary login credentials.
+          This email address will be deleted immediately after the credentials
+          are sent and will not be stored, used for any further communication,
+          or shared with third parties. The full text of the{" "}
+          <Link
+            href="/privacy_notice.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => {
+              e.stopPropagation();
+              history.push("/privacy-policy");
+            }}
+          >
+            Privacy Policy
+          </Link>{" "}
+          is available at this link.
+        </Typography>
+        {/* <FormControlLabel
           control={
             <Checkbox
               {...register("privacyPolicy", { required: true })}
@@ -165,7 +184,7 @@ const SignUpPage = () => {
             </Typography>
           }
           style={{ alignSelf: "flex-start" }}
-        />
+        /> */}
 
         <ReCAPTCHA
           sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
