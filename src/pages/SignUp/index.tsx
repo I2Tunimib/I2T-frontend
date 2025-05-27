@@ -158,8 +158,8 @@ const SignUpPage = () => {
           >
             {" "}
             this link
-          </Link>{" "}
-          .
+          </Link>
+          {""}.
         </Typography>
         {/* <FormControlLabel
           control={
