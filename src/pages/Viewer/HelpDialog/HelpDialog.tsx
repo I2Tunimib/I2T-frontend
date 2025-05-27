@@ -97,25 +97,17 @@ const steps: Step[] = [
     label: "The enrichment process",
     Description: () => (
       <Stack>
-        The enrichment process, which involves matching entities in the original
-        data to a target dataset (e.g., Wikidata, DBpedia, etc.), is composed of
-        two main tasks:
+        The enrichment process involves linking entities in the original data to external datasets (e.g., Wikidata, DBpedia) and consists of two main steps:
         <List>
           <li>
-            <b>Reconciliation: </b>
-            matching entities in the original data to a target dataset (e.g.:
-            Wikidata, DBPedia, ...).
+            <b>Reconciliation:</b> Match entities in the original data with entities in a target dataset.
           </li>
           <li>
-            <b>Extension: </b>
-            fetch new information on the target dataset using the reconciled
-            entities as matching keys.
+            <b>Extension:</b> Retrieve additional information from the target dataset using the reconciled entities.
           </li>
         </List>
-        SemTUI addresses these steps by giving seamless access to reconciliation
-        and extension services.
-      </Stack>
-    ),
+        SemTUI supports both steps by providing integrated access to reconciliation and extension services.
+      </Stack>    ),
   },
   {
     label: "Reconciliation",
@@ -125,9 +117,8 @@ const steps: Step[] = [
         services:
         <List>
           <li>
-            <b>Manual reconciliation: </b>a semantic table interpretation (STI)
-            service can be activated to automatically reconcile cells and
-            annotate headers with predicates and types from Wikidata.
+            <b>Manual reconciliation: </b>A column or a cell can be reconciled by activating one of the
+            reconciliation services available for the selected dataset or knowledge graph.
           </li>
           <li>
             <b>Automatic reconciliation: </b>A semantic table interpretation
@@ -264,33 +255,52 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "Refine matching (1) - single cell",
+    label: "Matching Refinement",
+    Description: () => (
+      <Stack>
+        SemTUI supports two types of matching refinement:
+        <List>
+          <li>
+            <b>Single cell refinement: </b>The user can assign true to one of the candidates associated with a
+            single cell and optionally propagate the choice to identical cells in the same column.
+          </li>
+          <li>
+            <b>Group of cells refinement: </b>The user can select a column (or multiple cells within it) and
+            refine the matching using the “Refine Matching” feature.
+          </li>
+        </List>
+      </Stack>
+    ),
+  },
+  {
+    label: "Refine matching - single cell",
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          After the reconciliation process is complete, matchings can be refined
-          by inspecting the metadata associated with each cell. The
+          After the reconciliation process is complete, matchings can be refined by inspecting the metadata
+          associated with each cell. Use the
           <SettingsEthernetRoundedIcon
             sx={{
               margin: "0px 3px",
               verticalAlign: "middle",
             }}
           />
-          icon can be used to inspect the metadata of a selected cell.
+          icon to view the metadata of a selected cell. The user can click on candidate names to view their
+          corresponding entities and browse the associated types to select the correct match.
         </Typography>
         <Img src={refineMatchingManual} />
       </Stack>
     ),
   },
   {
-    label: "Refine matching (2) - group of cells",
+    label: "Refine matching - group of cells",
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          The matching of a group of cells can also be refined by (i) selecting
-          a column or a subset of its cells, and (ii) choosing types from those
-          associated with the selected cells (<q>Type refine matching</q>), or
-          by setting a threshold for the scores (<q>Score refine matching</q>).
+          The matching of a group of cells can be refined by (i) selecting
+          a column or a subset of its cells, and (ii) refining by type—choosing
+          from the types associated with the selected cells (<q>Type refine matching</q>)—
+          or by applying a score threshold (<q>Score refine matching</q>).
           The
           <PlaylistAddCheckRoundedIcon
             sx={{
@@ -298,9 +308,8 @@ const steps: Step[] = [
               verticalAlign: "middle",
             }}
           />
-          icon provides access to this functionality.
-        </Typography>
-        <Img src={refineMatchingAutomatic} />
+          icon provides access to these options.
+        </Typography>        <Img src={refineMatchingAutomatic} />
       </Stack>
     ),
   },
@@ -309,11 +318,10 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Once one or more columns have been reconciled, they can be extended by
-          clicking the
+          Once a column has been reconciled, its matched entities can be used to extend the table
+          by selecting the column, clicking the
           <ButtonText>Extend</ButtonText>
-          button in the toolbar and selecting one of the available extension
-          services.
+          button in the toolbar, and choosing one of the available extension services.
         </Typography>
         <Img src={extension} />
       </Stack>
@@ -356,37 +364,28 @@ const TutorialIndex: FC<{
         <IndexButton active={activeStep === 2} onClick={() => onStepSelect(2)}>
           2. Reconciliation
         </IndexButton>
-        <IndexButton
-          active={activeStep === 3}
-          onClick={() => onStepSelect(3)}
-          sx={{ pl: 3 }}
-        >
+        <IndexButton active={activeStep === 3} onClick={() => onStepSelect(3)} sx={{ pl: 3 }}>
           2.1 Manual Annotation
         </IndexButton>
-        <IndexButton
-          active={activeStep === 4}
-          onClick={() => onStepSelect(4)}
-          sx={{ pl: 3 }}
-        >
+        <IndexButton active={activeStep === 4} onClick={() => onStepSelect(4)} sx={{ pl: 3 }}>
           2.2 Automatic Annotation
         </IndexButton>
-        <IndexButton
-          active={activeStep === 5}
-          onClick={() => onStepSelect(5)}
-          sx={{ pl: 3 }}
-        >
+        <IndexButton active={activeStep === 5} onClick={() => onStepSelect(5)} sx={{ pl: 3 }}>
           2.3 Annotation Symbols
         </IndexButton>
         <IndexButton active={activeStep === 6} onClick={() => onStepSelect(6)}>
           3. Table Search and Navigation
         </IndexButton>
-        <IndexButton
-          active={activeStep === 7 || activeStep === 8}
-          onClick={() => onStepSelect(7)}
-        >
+        <IndexButton active={activeStep === 7} onClick={() => onStepSelect(7)}>
           4. Matching Refinement
         </IndexButton>
-        <IndexButton active={activeStep === 9} onClick={() => onStepSelect(9)}>
+        <IndexButton active={activeStep === 8} onClick={() => onStepSelect(8)} sx={{ pl: 3 }}>
+          4.1 Single cell refinement
+        </IndexButton>
+        <IndexButton active={activeStep === 9} onClick={() => onStepSelect(9)} sx={{ pl: 3 }}>
+          4.2 Group of cells refinement
+        </IndexButton>
+        <IndexButton active={activeStep === 10} onClick={() => onStepSelect(10)}>
           5. Extension
         </IndexButton>
       </Stack>
@@ -514,7 +513,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
   };
 
   return (
-    <Dialog onClose={handleOnClose} maxWidth="lg" fullWidth {...props}>
+    <Dialog onClose={handleOnClose} maxWidth="md" fullWidth {...props}>
       <Box ref={refWrapper}>
         {!start ? (
           <>
@@ -525,12 +524,12 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
             </DialogTitle>
             <DialogContent>
               <Stack gap="10px">
-                SemTUI is a framework for semantic enrichment of tabular data.
-                The enrichment task is the process of augmenting or extending
-                some data with additional data from different external sources.
+                SemTUI is a framework for the semantic enrichment of tabular data.
+                <br /> Enrichment involves augmenting or extending existing data with
+                additional information from external sources.
                 <br />
-                SemTUI tries to make the steps to enrich a table easier and
-                affordable even to less experienced users.
+                SemTUI simplifies the enrichment process, making it accessible
+                even to less experienced users.
                 <Button
                   onClick={() => setStart(true)}
                   sx={{
