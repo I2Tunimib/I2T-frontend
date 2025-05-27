@@ -146,7 +146,7 @@ const SignUpPage = () => {
           This email address will be deleted immediately after the credentials
           are sent and will not be stored, used for any further communication,
           or shared with third parties. <br /> The full text of the Privacy
-          Policy is available at
+          Policy is available at{" "}
           <Link
             href="/privacy_notice.pdf"
             target="_blank"
@@ -156,7 +156,6 @@ const SignUpPage = () => {
               history.push("/privacy-policy");
             }}
           >
-            {" "}
             this link
           </Link>
           {""}.
