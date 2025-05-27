@@ -1,5 +1,13 @@
 import styled from "@emotion/styled";
-import { Button, InputAdornment, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  InputAdornment,
+  TextField,
+  Typography,
+  Checkbox,
+  FormControlLabel,
+  Link,
+} from "@mui/material";
 import { useForm } from "react-hook-form";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
@@ -30,6 +38,7 @@ const FormContainer = styled.form({
 
 type FormState = {
   email: string;
+  privacyPolicy: boolean;
 };
 
 const SignUpPage = () => {
@@ -39,15 +48,27 @@ const SignUpPage = () => {
   const dispatch = useAppDispatch();
 
   const recaptchaRef = useRef(null);
-  const { register, handleSubmit } = useForm<FormState>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormState>({
     defaultValues: {
       email: "",
+      privacyPolicy: false,
     },
   });
 
   const onSubmit = async (state: FormState) => {
     setLoading(true);
     setError(null);
+
+    if (!state.privacyPolicy) {
+      setError("You must accept the privacy policy to proceed");
+      setLoading(false);
+      return;
+    }
+
     if (!recaptchaRef.current) {
       setError("Recaptcha not loaded");
       setLoading(false);
@@ -118,6 +139,34 @@ const SignUpPage = () => {
           }}
         />
         {error && <Typography color="error">{error}</Typography>}
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              {...register("privacyPolicy", { required: true })}
+              color="primary"
+              disabled={loading}
+            />
+          }
+          label={
+            <Typography variant="body2">
+              I accept the{" "}
+              <Link
+                href="/privacy_notice.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  history.push("/privacy-policy");
+                }}
+              >
+                Privacy Policy
+              </Link>
+            </Typography>
+          }
+          style={{ alignSelf: "flex-start" }}
+        />
+
         <ReCAPTCHA
           sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
           ref={recaptchaRef}
