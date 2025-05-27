@@ -30,4 +30,4 @@ yarn-error.log*
 
 *.pdf
 
-package-lock.json
+# package-lock.json
