@@ -264,15 +264,27 @@ export const reconcile = createAsyncThunk(
   ) => {
     const { table } = getState() as RootState;
     const { relativeUrl, formParams, id } = reconciliator;
+    const { entities, ui } = table;
+    const { tableInstance, columns } = entities;
+
+    // Get the selected column name
+    const selectedColumnIds = Object.keys(ui.selectedColumnsIds);
+    const selectedColumnId = selectedColumnIds[0];
+    const columnName = columns.byId[selectedColumnId]?.label || "";
+
     const params = getRequestFormValuesReconciliation(
       formParams,
       formValues,
       table
     );
+
     console.log("reconcile", { items, reconciliator, formValues, params });
     const data = {
       serviceId: reconciliator.id,
       items,
+      tableId: tableInstance.id,
+      datasetId: tableInstance.idDataset,
+      columnName,
       ...params,
     };
     const response = await tableAPI.reconcile(relativeUrl, data);
