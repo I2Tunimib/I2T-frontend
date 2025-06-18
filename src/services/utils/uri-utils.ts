@@ -1,4 +1,4 @@
-import { isValidWikidataId } from "./regexs";
+import { isValidWikidataId, stripWikidataPrefix } from "./regexs";
 
 type QueryParams = {
   [key: string]: string | number | undefined;
@@ -45,8 +45,10 @@ console.log(fullURI); // Outputs: https://api.example.com/products?category=elec
 */
 
 export function createWikidataURI(id: string): string {
-  if (!isValidWikidataId(id)) {
+  const strippedId = stripWikidataPrefix(id);
+  if (!isValidWikidataId(strippedId)) {
+    console.log("not valid wikidata id: " + id);
     return "";
   }
-  return `https://www.wikidata.org/wiki/${id}`;
+  return `https://www.wikidata.org/wiki/${strippedId}`;
 }
