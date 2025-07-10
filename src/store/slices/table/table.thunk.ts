@@ -81,9 +81,31 @@ export const getChallengeTable = createAsyncThunk(
 
 export const saveTable = createAsyncThunk(
   `${ACTION_PREFIX}/saveTable`,
-  async (params: Record<string, string | number> = {}, { getState }) => {
-    const { table } = getState() as any;
-    const response = await tableAPI.saveTable(table.entities, params);
+  async (
+    params: Record<string, string | number> = {},
+    { getState, dispatch }
+  ) => {
+    const { table } = getState() as RootState;
+    const { entities } = table;
+    const { tableInstance } = entities;
+
+    // Get the list of deleted columns for this save operation
+    const deletedColumns = table.ui.deletedColumnsIds;
+    const deletedColumnsList = Object.values(deletedColumns) as string[];
+
+    console.log("Save operation - deleted columns:", deletedColumnsList);
+
+    const response = await tableAPI.saveTable(
+      table.entities,
+      params,
+      tableInstance.id,
+      tableInstance.idDataset,
+      deletedColumnsList // Pass deleted columns to the API
+    );
+
+    // Clear deleted columns after successful save
+    dispatch({ type: "table/clearDeletedColumns" });
+
     return response.data;
   }
 );
@@ -287,7 +309,13 @@ export const reconcile = createAsyncThunk(
       columnName,
       ...params,
     };
-    const response = await tableAPI.reconcile(relativeUrl, data);
+    const response = await tableAPI.reconcile(
+      relativeUrl,
+      data,
+      tableInstance.id,
+      tableInstance.idDataset,
+      columnName
+    );
     return {
       data: response.data,
       reconciliator,
@@ -402,11 +430,25 @@ export const extend = createAsyncThunk<
   // get root table states
   const { table } = getState() as RootState;
   const { relativeUrl, formParams, id } = extender;
+  const { entities, ui } = table;
+  const { tableInstance, columns } = entities;
+
+  // Get the selected column name
+  const selectedColumnIds = Object.keys(ui.selectedColumnsIds);
+  const selectedColumnId = selectedColumnIds[0];
+  const columnName = columns.byId[selectedColumnId]?.label || "";
+
   const params = getRequestFormValuesExtension(formParams, formValues, table);
-  const response = await tableAPI.extend(relativeUrl, {
-    serviceId: id,
-    ...params,
-  });
+  const response = await tableAPI.extend(
+    relativeUrl,
+    {
+      serviceId: id,
+      ...params,
+    },
+    tableInstance.id,
+    tableInstance.idDataset,
+    columnName
+  );
   return {
     data: response.data,
     extender,

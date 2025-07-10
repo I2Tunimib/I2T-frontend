@@ -76,7 +76,7 @@ const makeData = (
     } else {
       metaToView = {
         selected: { label: "Selected", type: "checkBox" },
-        id: { label: "Id" },
+        id: { label: "Id", type: "link" },
         name: { label: "Name", type: "link" },
         type: { label: "Type", type: "subList" },
         score: { label: "Score" },
@@ -89,8 +89,10 @@ const makeData = (
       selected: { label: "Selected", type: "checkBox" },
       ...metaToView,
     };
+    console.log("meta to view: ", metaToView);
     const columns = Object.keys(metaToView).map((key) => {
       const { label = key, type } = metaToView[key];
+      console.log("key", key, "label", label, "type", type);
       return {
         Header: label,
         accessor: key,

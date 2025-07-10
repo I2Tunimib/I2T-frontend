@@ -4,15 +4,25 @@ import { MetaToViewItem } from "@store/slices/config/interfaces/config";
 import { Cell } from "react-table";
 
 export const ResourceLink = ({ value: cellValue }: Cell<{}>) => {
+  console.log("ResourceLink called with:", cellValue);
   const { value, uri } = cellValue;
   console.log("cell uri", uri);
   if (!uri) {
     // If the URI is empty, render plain text instead of a clickable link with a tooltip for the value
-    return (
-      <Typography variant="body2" color="textSecondary">
-        {value}
-      </Typography>
-    );
+    if (typeof value === "object" && value !== null && "value" in value) {
+      console.log("Found object with value property:", value);
+      return (
+        <Typography variant="body2" color="textSecondary">
+          {value.value || ""}
+        </Typography>
+      );
+    } else {
+      return (
+        <Typography variant="body2" color="textSecondary">
+          {value}
+        </Typography>
+      );
+    }
   }
 
   return (
@@ -39,7 +49,7 @@ export const MatchCell = ({ value: inputValue }: Cell<{}>) => {
 
 export const SubList = (value: any[] = []) => {
   return (
-    <Stack direction="row" gap="10px" style={{ width: '100%' }}>
+    <Stack direction="row" gap="10px" style={{ width: "100%" }}>
       {value.length > 0 ? (
         value.map((item) => (
           <Chip key={item.id} size="small" label={item.name} />
@@ -103,6 +113,9 @@ export const getCellComponent = (
   type: MetaToViewItem["type"]
 ) => {
   const { value } = cell;
+
+  console.log("getCellComponent called with:", value, type, cell);
+
   if (value == null) {
     return <Typography color="textSecondary">null</Typography>;
   }
@@ -110,10 +123,14 @@ export const getCellComponent = (
     if (typeof value === "number") {
       return value.toFixed(2);
     }
+    // Handle objects with {value, uri} structure (common in metadata)
+    if (typeof value === "object" && value !== null && "value" in value) {
+      console.log("Found object with value property:", value);
+      return value.value || "";
+    }
     return value;
   }
-  return <div style={{ width: "100%" }}>
-    {CELL_COMPONENTS_TYPES[type](cell)
-    }
-  </div>
+  return (
+    <div style={{ width: "100%" }}>{CELL_COMPONENTS_TYPES[type](cell)}</div>
+  );
 };

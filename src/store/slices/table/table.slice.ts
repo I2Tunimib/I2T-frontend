@@ -150,6 +150,7 @@ const initialState: TableState = {
     expandedColumnsIds: {},
     expandedCellsIds: {},
     editableCellsIds: {},
+    deletedColumnsIds: {},
     tmpCell: null,
     tutorialBBoxes: {},
     tutorialStep: 1,
@@ -171,6 +172,12 @@ export const tableSlice = createSliceWithRequests({
       return { ...initialState };
     },
     /**
+     * Clear the list of deleted columns (e.g., after successful save or when loading a new table).
+     */
+    clearDeletedColumns: (state, action: PayloadAction<void>) => {
+      state.ui.deletedColumnsIds = {};
+    },
+    /**
      * Update current table.
      */
     updateCurrentTable: (
@@ -188,6 +195,8 @@ export const tableSlice = createSliceWithRequests({
       let tableInstance = {} as TableInstance;
       tableInstance = { ...table };
       state.ui.lastSaved = tableInstance.lastModifiedDate;
+      // Clear deleted columns when loading a new table
+      state.ui.deletedColumnsIds = {};
       state.entities = {
         tableInstance,
         columns: {
@@ -1571,6 +1580,11 @@ export const tableSlice = createSliceWithRequests({
         state,
         undoable,
         (draft) => {
+          // Track the deleted column before deleting it
+          const columnToDelete = draft.entities.columns.byId[colId];
+          if (columnToDelete) {
+            draft.ui.deletedColumnsIds[colId] = columnToDelete.label || colId;
+          }
           deleteOneColumn(draft, colId);
         },
         (draft) => {
@@ -2003,6 +2017,7 @@ export const tableSlice = createSliceWithRequests({
 
 export const {
   restoreInitialState,
+  clearDeletedColumns,
   updateCurrentTable,
   updateColumnCellsSelection,
   updateSelectedCellExpanded,

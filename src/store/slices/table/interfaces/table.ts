@@ -56,6 +56,7 @@ export interface TableUIState {
   expandedColumnsIds: Record<ID, boolean>;
   expandedCellsIds: Record<ID, boolean>;
   editableCellsIds: Record<ID, boolean>;
+  deletedColumnsIds: Record<ID, string>; // Track deleted columns with their names/labels
   lastSaved: string;
   tmpCell: Cell | null;
   tutorialBBoxes: Record<string, BBox>;
