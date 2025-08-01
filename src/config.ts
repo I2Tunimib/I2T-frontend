@@ -32,6 +32,7 @@ export type ApiConfig = {
     AUTH_SIGNUP: Endpoint;
     AUTH_VERIFY: Endpoint;
     AUTH_ME: Endpoint;
+    TRACK: Endpoint;
   };
 };
 
@@ -120,6 +121,9 @@ const CONFIG: AppConfig = {
       },
       AUTH_ME: {
         path: "/auth/me",
+      },
+      TRACK: {
+        path: "/dataset/track/:idDataset/:idTable",
       },
     },
   },
