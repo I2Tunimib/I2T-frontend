@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { selectCurrentDataset, selectIsUploadTableDialogOpen, selectUploadDatasetStatus } from '@store/slices/datasets/datasets.selectors';
 import { updateUI } from '@store/slices/datasets/datasets.slice';
-import { LoadingButton } from '@mui/lab';
+//import { LoadingButton } from '@mui/lab';
 import {
   ChangeEvent, useState,
   FocusEvent, useRef
@@ -129,9 +129,9 @@ const UploadTable = () => {
         <Button onClick={handleClose}>
           Cancel
         </Button>
-        <LoadingButton loading={loading && !uploadError} disabled={!tableFile || tableName === ''} color="primary" onClick={handleConfirm}>
+        <Button loading={loading && !uploadError} disabled={!tableFile || tableName === ''} color="primary" onClick={handleConfirm}>
           Confirm
-        </LoadingButton>
+        </Button>
       </DialogActions>
     </Dialog>
   );

@@ -197,17 +197,22 @@ const TableListView: FC<TableListViewProps> = ({
     <>
       <table className={styles.Root} {...getTableProps()}>
         <thead className={styles.THead}>
-          {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <th
+          {headerGroups.map((headerGroup) => {
+            const { key: keyTr, ...restTr } = headerGroup.getHeaderGroupProps();
+            return (
+            <tr key={keyTr} {...restTr}>
+              {headerGroup.headers.map((column) => {
+                const { key: keyTh, ...restTh } = column.getHeaderProps(column.getSortByToggleProps());
+                return (
+                <th key={keyTh}
                   className={clsx(
                     styles.Th,
                     {
                       [styles.Fixed]: column.id !== 'selection' && column.id !== 'icon'
                     }
                   )}
-                  {...column.getHeaderProps(column.getSortByToggleProps())}>
+                  {...restTh}
+              >
                   {column.id === 'selection' || column.id === 'action'
                     ? column.render('Header')
                     : (
@@ -223,20 +228,22 @@ const TableListView: FC<TableListViewProps> = ({
                       </Button>
                     )}
                 </th>
-              ))}
+                );
+              })}
             </tr>
-          ))}
+          );
+        })}
         </thead>
         <tbody {...getTableBodyProps()}>
           {page.map((row) => {
             prepareRow(row);
+            const { key: keyRow, ...restRow } = row.getRowProps([rowPropGetter(row)]);
             return (
-              <tr
-                className={styles.Tr}
-                {...row.getRowProps([rowPropGetter(row)])}>
+              <tr key={keyRow} className={styles.Tr} {...restRow}>
                 {row.cells.map((cell) => {
+                  const { key: cellKey, ...cellRest } = cell.getCellProps();
                   return (
-                    <td className={styles.Td} {...cell.getCellProps()}>
+                    <td key={cellKey} className={styles.Td} {...cellRest}>
                       {cell.render('Cell', { mediaMatch: match })}
                     </td>
                   );

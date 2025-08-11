@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { authSignIn } from "@store/slices/auth/auth.thunk";
 import { selectSignInStatus } from "@store/slices/auth/auth.selectors";
-import { LoadingButton } from "@mui/lab";
+//import { LoadingButton } from "@mui/lab";
 import { useHistory } from "react-router-dom";
 
 const Container = styled.div({
@@ -112,9 +112,9 @@ const LoginPage = () => {
           }}
         />
         {error && <Typography color="error">{error}</Typography>}
-        <LoadingButton type="submit" loading={loading} variant="contained">
+        <Button type="submit" loading={loading} variant="contained">
           Confirm
-        </LoadingButton>
+        </Button>
         <Button
           variant="text"
           onClick={() => history.push("/signup")}

@@ -253,19 +253,22 @@ export default function CustomTable<T extends Record<string, unknown>>(
               <TableHead stickyHeaderTop={stickyHeaderTop}>
                 {
                   // Loop over the header rows
-                  headerGroups.map((headerGroup) => (
+                  headerGroups.map((headerGroup) => {
                     // Apply the header row props
-                    <TableRow {...headerGroup.getHeaderGroupProps()}>
+                    const { key: headerGroupKey, ...headerGroupRest } = headerGroup.getHeaderGroupProps();
+                    return (
+                    <TableRow key={headerGroupKey} {...headerGroupRest}>
                       <TableHeaderCell sorted={false} />
                       {
                         // Loop over the headers in each row
-                        headerGroup.headers.map((column) => (
+                        headerGroup.headers.map((column) => {
                           // Apply the header cell props
+                          const { key: columnKey, ...columnRest } = column.getHeaderProps(column.getSortByToggleProps());
+                          return (
                           <TableHeaderCell
+                            key={columnKey}
                             sorted={column.isSorted}
-                            {...column.getHeaderProps(
-                              column.getSortByToggleProps()
-                            )}
+                            {...columnRest}
                           >
                             {column.id !== "selection" ? (
                               <Stack
@@ -305,11 +308,11 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               column.render("Header")
                             )}
                           </TableHeaderCell>
-                        ))
-                      }
+                        );
+                      })}
                     </TableRow>
-                  ))
-                }
+                  );
+                })}
               </TableHead>
               {/* Apply the table body props */}
               <tbody {...getTableBodyProps()}>
@@ -318,14 +321,14 @@ export default function CustomTable<T extends Record<string, unknown>>(
                   page.map((row) => {
                     // Prepare the row for display
                     prepareRow(row);
-                    const rowProps = row.getRowProps();
-                    return (
+                    const { key: rowKey, ...rowRest } = row.getRowProps();
+                      return (
                       // Apply the row props
-                      <Fragment key={rowProps.key}>
-                        <TableRow
-                          onClick={() => handleRowClick(row)}
-                          {...rowProps}
-                        >
+                      <Fragment key={rowKey}>
+                          <TableRow
+                              onClick={() => handleRowClick(row)}
+                              {...rowRest}
+                          >
                           {/* Cella per checkBox */}
                           {/* <TableCell
                             padding="checkbox"
@@ -373,10 +376,12 @@ export default function CustomTable<T extends Record<string, unknown>>(
                             // Loop over the rows cells
                             row.cells.map((cell) => {
                               // Apply the cell props
+                                const { key: cellKey, ...cellRest } = cell.getCellProps();
                               return (
                                 <TableRowCell
+                                  key={cellKey}
                                   title={`${cell.value}`}
-                                  {...cell.getCellProps()}
+                                  {...cellRest}
                                 >
                                   {
                                     // Render the cell contents

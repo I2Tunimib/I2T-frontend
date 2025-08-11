@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, FormControl, FormHelperText, Slider, Stack, styled, SwitchUnstyled, switchUnstyledClasses, TextField, Tooltip, Typography } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, FormControl, FormHelperText, Slider, Stack, styled, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { FC, useState, useEffect, ChangeEvent, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -15,12 +15,12 @@ const Root = styled('span')`
   margin: 10px;
   cursor: pointer;
 
-  &.${switchUnstyledClasses.disabled} {
+  &.Mui-disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
 
-  & .${switchUnstyledClasses.track} {
+  & .MuiSwitch-track {
     background: #b3c3d3;
     border-radius: 10px;
     display: block;
@@ -29,7 +29,7 @@ const Root = styled('span')`
     position: absolute;
   }
 
-  & .${switchUnstyledClasses.thumb} {
+  & .MuiSwitch-thumb {
     display: block;
     width: 19px;
     height: 14px;
@@ -41,24 +41,24 @@ const Root = styled('span')`
     transition: all 200ms ease;
   }
 
-  &.${switchUnstyledClasses.focusVisible} .${switchUnstyledClasses.thumb} {
+  &.Mui-focusVisible .MuiSwitch-thumb {
     background-color: rgba(255, 255, 255, 1);
     box-shadow: 0 0 1px 8px rgba(0, 0, 0, 0.25);
   }
 
-  &.${switchUnstyledClasses.checked} {
-    .${switchUnstyledClasses.thumb} {
+  &.Mui-checked {
+    .MuiSwitch-thumb {
       left: 14px;
       top: 3px;
       background-color: #fff;
     }
 
-    .${switchUnstyledClasses.track} {
+    .MuiSwitch-track {
       background: #007fff;
     }
   }
 
-  & .${switchUnstyledClasses.input} {
+  & .MuiSwitch-input {
     cursor: inherit;
     position: absolute;
     width: 100%;
@@ -148,7 +148,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
             <HelpOutlineRoundedIcon color="disabled" />
           </Tooltip>
         </Stack>
-        <SwitchUnstyled
+        <Switch
           component={Root}
           checked={!tmpSettingsState.isViewOnly}
           disabled={currentTable.mantisStatus === 'PENDING'}
@@ -161,7 +161,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
             <HelpOutlineRoundedIcon color="disabled" />
           </Tooltip>
         </Stack>
-        <SwitchUnstyled
+        <Switch
           component={Root}
           checked={tmpSettingsState.scoreLowerBoundEnabled}
           onChange={handleLowerBoundToggleChange} />

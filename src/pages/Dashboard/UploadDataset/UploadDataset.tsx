@@ -15,7 +15,7 @@ import {
   selectUploadDatasetStatus,
 } from "@store/slices/datasets/datasets.selectors";
 import { updateUI } from "@store/slices/datasets/datasets.slice";
-import { LoadingButton } from "@mui/lab";
+//import { LoadingButton } from "@mui/lab";
 import { ChangeEvent, useState, FocusEvent, useRef } from "react";
 import { uploadDataset } from "@store/slices/datasets/datasets.thunk";
 
@@ -128,14 +128,14 @@ const UploadDataset = () => {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <LoadingButton
+        <Button
           loading={loading && !uploadError}
           disabled={datasetName === ""}
           color="primary"
           onClick={handleConfirm}
         >
           Confirm
-        </LoadingButton>
+        </Button>
       </DialogActions>
     </Dialog>
   );

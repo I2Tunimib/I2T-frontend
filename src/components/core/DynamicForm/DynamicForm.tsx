@@ -13,7 +13,7 @@ import {
 } from "@store/slices/config/interfaces/config";
 import { FC, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import LoadingButton from "@mui/lab/LoadingButton";
+//import LoadingButton from "@mui/lab/LoadingButton";
 import { useAppDispatch } from "@hooks/store";
 import { updateUI } from "@store/slices/table/table.slice";
 import {
@@ -105,13 +105,13 @@ const DynamicForm: FC<DynamicFormProps> = ({
           );
         })}
       {service.id === "wikidataPropertySPARQL" && (
-        <LoadingButton
+        <Button
           variant="outlined"
           loading={suggestLoading}
           onClick={onSuggest}
         >
           Suggest
-        </LoadingButton>
+        </Button>
       )}
       {suggestions.length > 0 && (
         <>
@@ -177,9 +177,9 @@ const DynamicForm: FC<DynamicFormProps> = ({
       )}
       <Stack direction="row" justifyContent="flex-end" spacing={2}>
         <Button onClick={onCancel}>Cancel</Button>
-        <LoadingButton variant="outlined" type="submit" loading={loading}>
+        <Button variant="outlined" type="submit" loading={loading}>
           Confirm
-        </LoadingButton>
+        </Button>
       </Stack>
     </Stack>
   );

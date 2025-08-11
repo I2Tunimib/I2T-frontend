@@ -376,31 +376,42 @@ const Table: FC<TableProps> = ({
         {...getTableProps([getGlobalProps()])}>
         <TableHead>
           {// Loop over the header rows
-            headerGroups.map((headerGroup, jj) => (
+            headerGroups.map((headerGroup, jj) => {
               // Apply the header row props
-              <TableRow {...headerGroup.getHeaderGroupProps([getGlobalProps()])}>
-                {// Loop over the headers in each row
-                  headerGroup.headers.map((column, index) => (
-                    // Apply the header cell props
-                    <TableHeaderCell
-                      ref={(el: any) => { columnRefs.current[column.id] = el; }}
-                      {...column.getHeaderProps([
-                        getHeaderProps(column), getGlobalProps(), {
-                          index,
-                          highlightState,
-                          sortType,
-                          setSortType,
-                          sortByProps: column.getSortByToggleProps(),
-                          isSorted: column.isSorted,
-                          isSortedDesc: column.isSortedDesc
-                        }])}>
-                      {// Render the header
-                        column.render('Header')
-                      }
-                    </TableHeaderCell>
-                  ))}
-              </TableRow>
-            ))}
+              const {key: headerGroupKey, ...headerGroupProps} = headerGroup.getHeaderGroupProps([getGlobalProps()]);
+              return (
+                  <TableRow key={headerGroupKey} {...headerGroupProps}>
+                    {// Loop over the headers in each row
+                      headerGroup.headers.map((column, index) => {
+                        const {key: headerKey, ...headerProps} = column.getHeaderProps([
+                          getHeaderProps(column),
+                          getGlobalProps(),
+                          {
+                            index,
+                            highlightState,
+                            sortType,
+                            setSortType,
+                            sortByProps: column.getSortByToggleProps(),
+                            isSorted: column.isSorted,
+                            isSortedDesc: column.isSortedDesc
+                          }
+                        ]);
+                        return (
+                            // Apply the header cell props
+                            <TableHeaderCell key={headerKey}
+                                             ref={(el: any) => {
+                                               columnRefs.current[column.id] = el;
+                                             }}
+                                             {...headerProps}>
+                              {// Render the header
+                                column.render('Header')
+                              }
+                            </TableHeaderCell>
+                        );
+                      })}
+                  </TableRow>
+              );
+            })}
         </TableHead>
         {/* Apply the table body props */}
         <tbody {...getTableBodyProps()}>
@@ -408,20 +419,25 @@ const Table: FC<TableProps> = ({
             page.map((row) => {
               // Prepare the row for display
               prepareRow(row);
+              const { key: rowKey, ...rowProps } = row.getRowProps(getGlobalProps());
               return (
                 // Apply the row props
-                <TableRow {...row.getRowProps(getGlobalProps())}>
+                <TableRow key={rowKey} {...rowProps}>
                   {// Loop over the rows cells
-                    row.cells.map((cell) => (
-                      // Apply the cell prop
-                      <TableRowCell {...cell.getCellProps([
-                        getCellProps(cell), getGlobalProps(),
-                        { highlightState, searchHighlightState }
-                      ]) as any}>
-                        {// Render the cell contents
-                          cell.render('Cell')}
-                      </TableRowCell>
-                    ))}
+                    row.cells.map((cell) => {
+                      const {key: cellKey, ...cellProps} = cell.getCellProps([
+                        getCellProps(cell),
+                        getGlobalProps(),
+                        {highlightState, searchHighlightState}
+                      ]) as any;
+                      return (
+                          // Apply the cell prop
+                          <TableRowCell key={cellKey} {...cellProps}>
+                            {// Render the cell contents
+                              cell.render('Cell')}
+                          </TableRowCell>
+                      );
+                    })}
                 </TableRow>
               );
             })}

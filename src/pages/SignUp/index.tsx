@@ -11,7 +11,7 @@ import {
 import { useForm } from "react-hook-form";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { LoadingButton } from "@mui/lab";
+//import { LoadingButton } from "@mui/lab";
 import { useHistory } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -191,9 +191,9 @@ const SignUpPage = () => {
           sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
           ref={recaptchaRef}
         />
-        <LoadingButton type="submit" loading={loading} variant="contained">
+        <Button type="submit" loading={loading} variant="contained">
           Sign Up
-        </LoadingButton>
+        </Button>
         <Button
           variant="text"
           onClick={() => history.push("/login")}

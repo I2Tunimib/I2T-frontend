@@ -1,6 +1,6 @@
 import { BrowserRouter } from 'react-router-dom';
 import React, { FC } from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import './index.scss';
 import { store } from '@store';
 import { Provider } from 'react-redux';
@@ -12,11 +12,13 @@ import { SnackbarProvider } from 'notistack';
 import { SocketIoProvider } from '@components/core';
 import App from './App';
 
+/*
 declare module '@mui/styles/defaultTheme' {
   // eslint-disable-next-line @typescript-eslint/no-empty-interface
   interface DefaultTheme extends Theme {
   }
 }
+ */
 
 const theme = createTheme({
   palette: {
@@ -77,7 +79,13 @@ const theme = createTheme({
   }
 });
 
-ReactDOM.render(
+const rootElement = document.getElementById('root');
+
+if (!rootElement) throw new Error('Root element not found');
+
+const root = ReactDOM.createRoot(rootElement);
+
+root.render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
@@ -93,6 +101,5 @@ ReactDOM.render(
         </StyledEngineProvider>
       </BrowserRouter>
     </Provider>
-  </React.StrictMode>,
-  document.getElementById('root')
+  </React.StrictMode>
 );

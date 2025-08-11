@@ -50,6 +50,6 @@ const StatusBadge = styled(Box)<StatusBadgeProps>(({ size = 'medium', status }) 
   ...(status === 'match-reconciliator' && {
     backgroundColor: '#4ac99b'
   })
-}));
+})) as typeof Box;
 
 export default StatusBadge;
