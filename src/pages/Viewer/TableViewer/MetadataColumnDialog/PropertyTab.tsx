@@ -532,10 +532,11 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
             fullWidth
             size="small"
           >
-            <InputLabel variant="outlined" htmlFor="uncontrolled-native">
+            <InputLabel variant="outlined" id="reconciliator-label">
               Reconciliator service
             </InputLabel>
             <Select
+              labelId="reconciliator-label"
               label="Reconciliator service"
               value={currentService}
               onChange={(e) => handleChangeService(e)}
@@ -640,12 +641,13 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                   >
                     <InputLabel
                       variant="outlined"
-                      htmlFor="uncontrolled-native"
+                      id="obj-label"
                     >
                       Obj
                     </InputLabel>
                     <Select
                       id="obj-select"
+                      labelId="obj-label"
                       label="Obj"
                       variant="outlined"
                       sx={{ minWidth: "200px" }}
