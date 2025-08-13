@@ -150,12 +150,16 @@ const TaggedSearch: FC<TaggedSearchProps> = ({
   const refSearchWrapper = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const debouncedOnChange = useDebouncedCallback((event: ChangeEvent<HTMLInputElement>) => {
-    if (onSearchChange && searchState.tag.value !== '') {
-      onSearchChange(searchState);
+s  const debouncedOnChange = useDebouncedCallback((newSearchState: SearchState) => {
+    if (onSearchChange && newSearchState.tag.value !== '') {
+      onSearchChange(newSearchState);
     }
     setSearching(false);
   }, 300);
+
+  useEffect(() => {
+    debouncedOnChange(searchState);
+  }, [searchState, debouncedOnChange]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearching(true);
@@ -169,17 +173,10 @@ const TaggedSearch: FC<TaggedSearchProps> = ({
         }
       }
     }
-    debouncedOnChange(event);
   };
 
   const onTagChange = (tag: Tag) => {
-    setSearchState((old) => {
-      const newState = { ...old, tag };
-      if (onSearchChange) {
-        onSearchChange(newState);
-      }
-      return newState;
-    });
+    setSearchState((old) => ({ ...old, tag }));
   };
 
   const handleClickAway = (event: any) => {
@@ -199,27 +196,13 @@ const TaggedSearch: FC<TaggedSearchProps> = ({
   };
 
   const handleAutocompleteClick = (value: string) => {
-    setSearchState((old) => {
-      const newState = { ...old, value };
-      if (onSearchChange) {
-        onSearchChange(newState);
-      }
-      return newState;
-    });
+    setSearchState((old) => ({ ...old, value }));
     setAnchorEl(null);
   };
 
   const handleDeleteQuery = () => {
-    setSearchState((old) => {
-      const newState = { ...old, value: '' };
-      if (onSearchChange) {
-        onSearchChange(newState);
-      }
-      return newState;
-    });
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    setSearchState((old) => ({ ...old, value: '' }));
+    inputRef.current?.focus();
   };
 
   const open = Boolean(anchorEl);
