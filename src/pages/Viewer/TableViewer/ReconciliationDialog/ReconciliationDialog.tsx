@@ -257,52 +257,45 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 }}
               >
                 {reconciliatorsGroups &&
-                  Array.from(reconciliatorsGroups).map(
-                    ([uri, reconciliators]) => (
-                      <React.Fragment key={`group-${uri}`}>
-                        <ListSubheader
-                          onClick={(e) => handleHeaderClick(e, uri)}
-                          sx={{
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            "&:hover": {
-                              backgroundColor: "action.hover",
-                            },
+                  Array.from(reconciliatorsGroups).flatMap(([uri, reconciliators]) => [
+                    <ListSubheader
+                      key={`group-${uri}`}
+                      onClick={(e) => handleHeaderClick(e, uri)}
+                      sx={{
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        "&:hover": {
+                          backgroundColor: "action.hover",
+                        },
+                      }}
+                    >
+                      <ListItemText primary={uri} />
+                      <Box sx={{ ml: "auto" }}>
+                        {expandedGroup === uri ? <ExpandLess /> : <ExpandMore />}
+                      </Box>
+                    </ListSubheader>,
+                    ...(expandedGroup === uri
+                      ? reconciliators.map((reconciliator) => (
+                        <MenuItem
+                          key={reconciliator.id}
+                          value={reconciliator.id}
+                          sx={{ pl: 4 }}
+                          onClick={() => {
+                            handleChange({
+                              target: { value: reconciliator.id },
+                            });
+
+                            // if (selectRef.current) {
+                            //   selectRef.current.hidePopover(); // manually closes the dropdown
+                            // }
                           }}
                         >
-                          <ListItemText primary={uri} />
-                          <Box sx={{ ml: "auto" }}>
-                            {expandedGroup === uri ? (
-                              <ExpandLess />
-                            ) : (
-                              <ExpandMore />
-                            )}
-                          </Box>
-                        </ListSubheader>
-                        <Collapse in={expandedGroup === uri} unmountOnExit>
-                          {reconciliators.map((reconciliator) => (
-                            <MenuItem
-                              key={reconciliator.id}
-                              value={reconciliator.id}
-                              sx={{ pl: 4 }}
-                              onClick={() => {
-                                handleChange({
-                                  target: { value: reconciliator.id },
-                                });
-
-                                // if (selectRef.current) {
-                                //   selectRef.current.hidePopover(); // manually closes the dropdown
-                                // }
-                              }}
-                            >
-                              {reconciliator.name}
-                            </MenuItem>
-                          ))}
-                        </Collapse>
-                      </React.Fragment>
-                    )
-                  )}
+                          {reconciliator.name}
+                        </MenuItem>
+                        ))
+                        : []),
+                  ])}
               </Select>
             </FormControl>
             {error && <Typography color="error">{error.message}</Typography>}
