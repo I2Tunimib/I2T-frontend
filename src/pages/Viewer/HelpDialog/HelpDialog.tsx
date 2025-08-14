@@ -57,13 +57,14 @@ const ButtonText = styled.span({
   boxShadow: "inset 0 -2px #ebefff",
 });
 
-const IndexButton = styled(Button)(({ active }: { active?: boolean }) => ({
+const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
+      prop !== 'active' })(({ active }: { active?: boolean }) => ({
   textTransform: "none",
   justifyContent: "flex-start",
   fontWeight: active ? "bold" : "normal",
   backgroundColor: active ? "rgba(0, 0, 0, 0.04)" : "transparent",
   "&:hover": {
-    backgroundColor: active ? "rgba(0, 0, 0, 0.08)" : "rgba(0, 0, 0, 0.04)",
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
 }));
 
