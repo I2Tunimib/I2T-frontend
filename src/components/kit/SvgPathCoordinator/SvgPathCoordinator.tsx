@@ -10,6 +10,7 @@ export interface SvgPathCoordinatorProps
   shouldRedraw?: () => boolean;
   onPathMouseEnter?: (id: string) => void;
   onPathMouseLeave?: () => void;
+  showRelationTooltips?: boolean;
 }
 
 const SvgPathCoordinator: FC<SvgPathCoordinatorProps> = ({
@@ -17,6 +18,7 @@ const SvgPathCoordinator: FC<SvgPathCoordinatorProps> = ({
   shouldRedraw,
   onPathMouseEnter,
   onPathMouseLeave,
+  showRelationTooltips = true,
   ...props
 }) => {
   const { svgRef, processedPaths, draw } = useSvgCoordinator({
@@ -91,7 +93,19 @@ const SvgPathCoordinator: FC<SvgPathCoordinatorProps> = ({
             color={path.color}
             label={path.label}
             link={path.link}
-            onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
+            showLabel={!showRelationTooltips}
+            showTooltip={showRelationTooltips}
+            startElementLabel={path.startElementLabel}
+            endElementLabel={path.endElementLabel}
+            onMouseEnter={() =>
+              onPathMouseEnter &&
+              onPathMouseEnter({
+                ...path,
+                startColumn: path.startElementLabel,
+                endColumn: path.endElementLabel,
+                relationName: path.label,
+              })
+            }
             onMouseLeave={onPathMouseLeave}
           />
         ))}
