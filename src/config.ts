@@ -109,6 +109,20 @@ const CONFIG: AppConfig = {
             extension: "csv",
           },
         },
+        {
+          path: "/dataset/:datasetId/table/:tableId/code?format=python",
+          name: "Python pipeline",
+          params: {
+            extension: "py",
+          },
+        },
+        {
+          path: "/dataset/:datasetId/table/:tableId/code?format=notebook",
+          name: "Jupyter notebook pipeline",
+          params: {
+            extension: "ipynb",
+          },
+        },
       ],
       AUTH_SIGNIN: {
         path: "/auth/signin",
