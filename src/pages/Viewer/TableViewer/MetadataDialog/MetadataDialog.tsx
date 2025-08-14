@@ -188,6 +188,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
+  const uniqueReconciliators = Array.from(new Set(reconciliators.map(r => r.prefix)))
+      .map(prefix => reconciliators.find(r => r.prefix === prefix));
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -672,8 +674,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 onChange={(e) => handleChangeService(e)}
                 variant="outlined"
               >
-                {reconciliators &&
-                  reconciliators.map((reconciliator) => (
+                {uniqueReconciliators &&
+                    uniqueReconciliators.map((reconciliator) => (
                     <MenuItem
                       key={reconciliator.prefix}
                       value={reconciliator.prefix}
