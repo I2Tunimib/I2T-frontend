@@ -63,7 +63,7 @@ const Content = styled.div({
 
 const DialogInnerContent = () => {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
-
+  const [uniqueServices, setUniqueServices] = useState<Extender[]>([]);
   const [currentService, setCurrentService] = useState<Extender>();
   const [groupedServices, setGroupedServices] =
     useState<Map<string, Extender[]>>();
@@ -75,7 +75,13 @@ const DialogInnerContent = () => {
 
   async function groupServices() {
     const groupedServsMap = new Map();
-    for (const service of extensionServices) {
+    const uniqueExtensionServices = extensionServices.filter(
+        (service, index, self) => index === self.findIndex((s) => s.id === service.id)
+    );
+
+    setUniqueServices(uniqueExtensionServices);
+
+    for (const service of uniqueExtensionServices) {
       const currentUri = service.uri ?? "other";
       if (groupedServsMap.has(currentUri)) {
         groupedServsMap.get(currentUri).push(service);
@@ -85,6 +91,12 @@ const DialogInnerContent = () => {
     }
     setGroupedServices(groupedServsMap);
   }
+
+  useEffect(() => {
+    if (extensionServices) {
+      groupServices();
+    }
+  }, [extensionServices]);
 
   const handleClose = () => {
     // Reset selected service when dialog is closed
@@ -144,7 +156,7 @@ const DialogInnerContent = () => {
     <>
       <FormControl className="field">
         <Select
-          value={currentService ? currentService.id : undefined}
+          value={currentService ? currentService.id : ""}
           onChange={handleChange}
           variant="outlined"
           MenuProps={{
@@ -161,7 +173,7 @@ const DialogInnerContent = () => {
             return selectedService ? selectedService.name : "";
           }}
         >
-          {extensionServices.map((extender) => (
+          {uniqueServices.map((extender) => (
             <MenuItem
               key={extender.id}
               value={extender.id}
@@ -209,9 +221,9 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
   return (
     <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
       <Stack
-        direction={"row"}
-        alignItems={"center"}
-        justifyContent={"space-between"}
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
       >
         <DialogTitle>Extension</DialogTitle>
 

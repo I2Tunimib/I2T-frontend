@@ -45,7 +45,7 @@ import { updateUI } from "@store/slices/table/table.slice";
 import { selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
 //import { LoadingButton } from "@mui/lab";
 import { SquaredBox } from "@components/core";
-import { Reconciliator } from "@store/slices/config/interfaces/config";
+import {Extender, Reconciliator} from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import {
   ExpandLess,
@@ -81,7 +81,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     Map<string, Reconciliator[]>
   >(new Map());
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [selectedService, setSelectedService] = useState("");
+  const [uniqueGroupNames, setUniqueGroupNames] = useState<string[]>([]);
   const dispatch = useAppDispatch();
 
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
@@ -100,43 +100,36 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     }
   }, [reconciliators]);
 
-  // Logic to auto-select the only service in a group
-  useEffect(() => {
-    if (selectedGroup) {
-      const services = reconciliatorsGroups.get(selectedGroup) || [];
-      if (services.length === 1) {
-        setCurrentService(services[0]);
-      } else {
-        setCurrentService(null);
-      }
-    }
-  }, [selectedGroup, reconciliatorsGroups]);
-
   function handleServiceSelectOpen() {
     setServiceSelectOpen(true);
   }
   function handleServiceSelectClose() {
     setServiceSelectOpen(false);
   }
-  function groupReconciliators() {
-    const mappedReconciliators = new Map();
-    for (const reconciliator of reconciliators) {
+  async function groupReconciliators() {
+    const mappedReconciliators = new Map<string, Reconciliator[]>();
+    const uniqueGroupNamesSet = new Set<string>();
+
+    const uniqueReconciliators = reconciliators.filter(
+        (reconciliator, index, self) => index === self.findIndex((r) => r.id === reconciliator.id)
+    );
+
+    for (const reconciliator of uniqueReconciliators) {
       const reconUri = reconciliator.uri;
-      const groupKey = getGroupFromUri(reconUri) || "Other Services"; // Usiamo "Other Services" come fallback
+      const groupKey = getGroupFromUri(reconUri) || "Other Services";
+      uniqueGroupNamesSet.add(groupKey);
 
       if (mappedReconciliators.has(groupKey)) {
-        const reconciliatorGroup = mappedReconciliators.get(groupKey);
-        reconciliatorGroup.push(reconciliator);
-        mappedReconciliators.set(groupKey, reconciliatorGroup);
+        mappedReconciliators.get(groupKey)?.push(reconciliator);
       } else {
         mappedReconciliators.set(groupKey, [reconciliator]);
       }
     }
     setReconciliatorsGroups(mappedReconciliators);
+    setUniqueGroupNames(Array.from(uniqueGroupNamesSet));
   }
 
   const selectedServices = reconciliatorsGroups.get(selectedGroup || "") || [];
-  const uniqueGroupNames = Array.from(reconciliatorsGroups.keys());
 
   const handleConfirm = () => {
     // const reconciliator = reconciliators.find((recon)
@@ -160,6 +153,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const handleGroupChange = (event: SelectChangeEvent<string>) => {
     const groupName = event.target.value;
     setSelectedGroup(groupName);
+    setCurrentService(null);
   };
 
   const handleServiceChange = (event: SelectChangeEvent<string>) => {
@@ -305,18 +299,14 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                   },
                 }}
               >
-                {selectedServices
-                    .filter((service, index, self) =>
-                        index === self.findIndex((s) => s.id === service.id)
-                    )
-                    .map((reconciliator) => (
-                        <MenuItem
-                            key={reconciliator.id} // Use a unique and stable key
-                            value={reconciliator.id}
-                        >
-                          {reconciliator.name}
-                        </MenuItem>
-                    ))}
+                {selectedServices.map((reconciliator) => (
+                  <MenuItem
+                    key={reconciliator.id}
+                    value={reconciliator.id}
+                  >
+                    {reconciliator.name}
+                   </MenuItem>
+                 ))}
               </Select>
             </FormControl>
             {error && <Typography color="error">{error.message}</Typography>}
