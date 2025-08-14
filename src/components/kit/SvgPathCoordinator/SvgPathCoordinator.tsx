@@ -1,7 +1,7 @@
 import useSvgCoordinator, {
   UseSvgCoordinatorProps,
 } from "@hooks/svg/useSvgCoordinator";
-import { FC, useEffect, useState, HTMLAttributes } from "react";
+import { FC, useEffect, useState, HTMLAttributes, forwardRef, Ref } from "react";
 import SvgArrow from "../SvgArrow";
 
 export interface SvgPathCoordinatorProps
@@ -12,91 +12,90 @@ export interface SvgPathCoordinatorProps
   onPathMouseLeave?: () => void;
 }
 
-const SvgPathCoordinator: FC<SvgPathCoordinatorProps> = ({
-  paths,
-  shouldRedraw,
-  onPathMouseEnter,
-  onPathMouseLeave,
-  ...props
-}) => {
-  const { svgRef, processedPaths, draw } = useSvgCoordinator({
-    paths,
-    options: {
-      alfa: 30,
-    },
-  });
+const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
+  (
+    { paths, shouldRedraw, onPathMouseEnter, onPathMouseLeave, ...props },
+      ref
+  ) => {
+    const { processedPaths, draw } = useSvgCoordinator({
+      svgRef: ref,
+      paths,
+      options: {
+        alfa: 30,
+      },
+    });
 
-  // Store scrollLeft to adjust viewBox
-  const [containerScrollLeft, setContainerScrollLeft] = useState(0);
+    // Store scrollLeft to adjust viewBox
+    const [containerScrollLeft, setContainerScrollLeft] = useState(0);
 
-  // Update scroll position whenever visible
-  useEffect(() => {
-    const updateScrollPosition = () => {
-      if (svgRef.current) {
-        const tableContainer = svgRef.current.closest(".TableContainer");
+    // Update scroll position whenever visible
+    useEffect(() => {
+      const updateScrollPosition = () => {
+        if (ref.current) {
+          const tableContainer = ref.current.closest(".TableContainer");
+          if (tableContainer) {
+            setContainerScrollLeft(tableContainer.scrollLeft);
+          }
+        }
+      };
+
+      // Initial update
+      updateScrollPosition();
+
+      // Set up listener for scroll events
+      if (ref.current) {
+        const tableContainer = ref.current.closest(".TableContainer");
         if (tableContainer) {
-          setContainerScrollLeft(tableContainer.scrollLeft);
+          tableContainer.addEventListener("scroll", updateScrollPosition);
+          return () => {
+            tableContainer.removeEventListener("scroll", updateScrollPosition);
+          };
         }
       }
-    };
+    }, [ref]);
 
-    // Initial update
-    updateScrollPosition();
+    // Always force a redraw when the component mounts
+    useEffect(() => {
+      // Small delay to ensure DOM is fully rendered
+      const timeoutId = setTimeout(() => {
+        draw();
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }, []);
 
-    // Set up listener for scroll events
-    if (svgRef.current) {
-      const tableContainer = svgRef.current.closest(".TableContainer");
-      if (tableContainer) {
-        tableContainer.addEventListener("scroll", updateScrollPosition);
-        return () => {
-          tableContainer.removeEventListener("scroll", updateScrollPosition);
-        };
+    useEffect(() => {
+      if (shouldRedraw && shouldRedraw()) {
+        // redraw when condition is met
+        draw();
       }
-    }
-  }, [svgRef.current]);
+    }, [shouldRedraw]);
 
-  // Always force a redraw when the component mounts
-  useEffect(() => {
-    // Small delay to ensure DOM is fully rendered
-    const timeoutId = setTimeout(() => {
-      draw();
-    }, 0);
-    return () => clearTimeout(timeoutId);
-  }, []);
+    // Make sure to redraw when paths change
+    useEffect(() => {
+      if (Object.keys(paths || {}).length > 0) {
+        draw();
+      }
+    }, [paths]);
 
-  useEffect(() => {
-    if (shouldRedraw && shouldRedraw()) {
-      // redraw when condition is met
-      draw();
-    }
-  }, [shouldRedraw]);
-
-  // Make sure to redraw when paths change
-  useEffect(() => {
-    if (Object.keys(paths || {}).length > 0) {
-      draw();
-    }
-  }, [paths]);
-
-  return (
-    <svg ref={svgRef} {...props}>
-      {processedPaths &&
-        processedPaths.map((path: any, index: number) => (
-          <SvgArrow
-            key={`${path.id}_${index}`}
-            id={`${path.id}_${index}`}
-            d={path.path.draw()}
-            arrowId={`${index}`}
-            direction={path.direction}
-            color={path.color}
-            label={path.label}
-            link={path.link}
-            onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
-            onMouseLeave={onPathMouseLeave}
-          />
+    return (
+      <svg ref={ref} {...props}>
+        {processedPaths && processedPaths.map((path: any, index: number) => (
+        <SvgArrow
+          key={`${path.id}_${index}`}
+          id={`${path.id}_${index}`}
+          d={path.path.draw()}
+          arrowId={`${index}`}
+          direction={path.direction}
+          color={path.color}
+          label={path.label}
+          link={path.link}
+          onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
+          onMouseLeave={onPathMouseLeave}
+        />
         ))}
-    </svg>
-  );
-};
+      </svg>
+    );
+  }
+);
 
 export default SvgPathCoordinator;
