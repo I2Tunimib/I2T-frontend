@@ -150,7 +150,7 @@ const TaggedSearch: FC<TaggedSearchProps> = ({
   const refSearchWrapper = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-s  const debouncedOnChange = useDebouncedCallback((newSearchState: SearchState) => {
+  const debouncedOnChange = useDebouncedCallback((newSearchState: SearchState) => {
     if (onSearchChange && newSearchState.tag.value !== '') {
       onSearchChange(newSearchState);
     }
