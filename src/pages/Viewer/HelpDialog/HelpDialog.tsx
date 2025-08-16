@@ -73,14 +73,14 @@ const IndexContainer = styled(Box)({
   borderRight: "1px solid rgba(0, 0, 0, 0.12)",
   height: "100%",
   minWidth: "250px",
-});
+}) as typeof Box;
 
 const ContentContainer = styled(Box)({
   padding: "16px",
   height: "100%",
   width: "100%",
   overflow: "auto",
-});
+}) as typeof Box;
 
 type Step = {
   label: string;
