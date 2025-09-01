@@ -70,7 +70,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             vertical: "top",
             horizontal: "center",
           },
-        },
+        }
       );
       return;
     }
@@ -81,7 +81,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
 
   const handleConfirm = () => {
     const exportEndpoint = API.ENDPOINTS.EXPORT.find(
-      (endpoint) => endpoint.name === format,
+      (endpoint) => endpoint.name === format
     );
     if (!exportEndpoint) {
       return;
@@ -101,7 +101,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             vertical: "top",
             horizontal: "center",
           },
-        },
+        }
       );
       return;
     }
@@ -112,7 +112,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       exportTable({
         format,
         params: { tableId, datasetId },
-      }),
+      })
     )
       .unwrap()
       .then((data) => {
@@ -120,7 +120,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
           const { postDownload, extension } = params;
           fileDownload(
             postDownload ? postDownload(data) : data,
-            `${tableName}.${extension}`,
+            `${tableName}.${extension}`
           );
         }
       });
@@ -150,30 +150,32 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 name === "Jupyter notebook pipeline";
               const isDisabled = isPipeline && isUnsaved;
 
+              // For disabled items, wrap with Tooltip
+              if (isDisabled) {
+                return (
+                  <Tooltip
+                    key={path}
+                    title="You must save your changes before generating a pipeline"
+                    placement="right"
+                  >
+                    <span>
+                      <MenuItem
+                        value={name}
+                        disabled={isDisabled}
+                        sx={{ color: "text.disabled", fontStyle: "italic" }}
+                      >
+                        {name} (save required)
+                      </MenuItem>
+                    </span>
+                  </Tooltip>
+                );
+              }
+
+              // For enabled items, render MenuItem directly without Tooltip wrapper
               return (
-                <Tooltip
-                  key={path}
-                  title={
-                    isDisabled
-                      ? "You must save your changes before generating a pipeline"
-                      : ""
-                  }
-                  placement="right"
-                >
-                  <span>
-                    <MenuItem
-                      value={name}
-                      disabled={isDisabled}
-                      sx={
-                        isDisabled
-                          ? { color: "text.disabled", fontStyle: "italic" }
-                          : {}
-                      }
-                    >
-                      {name} {isDisabled && "(save required)"}
-                    </MenuItem>
-                  </span>
-                </Tooltip>
+                <MenuItem key={path} value={name}>
+                  {name}
+                </MenuItem>
               );
             })}
           </Select>
