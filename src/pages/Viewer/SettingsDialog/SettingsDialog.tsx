@@ -11,11 +11,11 @@ import {
   Slider,
   Stack,
   styled,
+  Switch,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
-import { SwitchUnstyled, switchUnstyledClasses } from "@mui/core";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import { FC, useState, useEffect, ChangeEvent, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
@@ -25,71 +25,6 @@ import {
 } from "@store/slices/table/table.selectors";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { updateUI } from "@store/slices/table/table.slice";
-
-const Root = styled("span")`
-  font-size: 0;
-  position: relative;
-  display: inline-block;
-  width: 38px;
-  height: 20px;
-  margin: 10px;
-  cursor: pointer;
-
-  &.${switchUnstyledClasses.disabled} {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  & .${switchUnstyledClasses.track} {
-    background: #b3c3d3;
-    border-radius: 10px;
-    display: block;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-  }
-
-  & .${switchUnstyledClasses.thumb} {
-    display: block;
-    width: 19px;
-    height: 14px;
-    top: 3px;
-    left: 3px;
-    border-radius: 16px;
-    background-color: #fff;
-    position: relative;
-    transition: all 200ms ease;
-  }
-
-  &.${switchUnstyledClasses.focusVisible} .${switchUnstyledClasses.thumb} {
-    background-color: rgba(255, 255, 255, 1);
-    box-shadow: 0 0 1px 8px rgba(0, 0, 0, 0.25);
-  }
-
-  &.${switchUnstyledClasses.checked} {
-    .${switchUnstyledClasses.thumb} {
-      left: 14px;
-      top: 3px;
-      background-color: #fff;
-    }
-
-    .${switchUnstyledClasses.track} {
-      background: #007fff;
-    }
-  }
-
-  & .${switchUnstyledClasses.input} {
-    cursor: inherit;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    z-index: 1;
-    margin: 0;
-  }
-`;
 
 type TmpSettingsState = {
   isViewOnly: boolean;
@@ -127,7 +62,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
         (scoreLowerBound === 0
           ? (maxMetaScore - minMetaScore) / 3
           : scoreLowerBound
-        ).toFixed(2),
+        ).toFixed(2)
       ),
     });
   }, [settings]);
@@ -155,7 +90,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
   };
 
   const handleLowerBoundScoreChange = (
-    event: ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>
   ) => {
     setTmpSettingsState((old) => {
       if (old) {
@@ -178,8 +113,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
             <HelpOutlineRoundedIcon color="disabled" />
           </Tooltip>
         </Stack>
-        <SwitchUnstyled
-          component={Root}
+        <Switch
           checked={!tmpSettingsState.isViewOnly}
           disabled={currentTable.mantisStatus === "PENDING"}
           onChange={handleViewOnlyChange}
@@ -198,8 +132,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
             <HelpOutlineRoundedIcon color="disabled" />
           </Tooltip>
         </Stack>
-        <SwitchUnstyled
-          component={Root}
+        <Switch
           checked={tmpSettingsState.scoreLowerBoundEnabled}
           onChange={handleLowerBoundToggleChange}
         />
@@ -230,7 +163,9 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
               value={Number(tmpSettingsState.scoreLowerBound)}
             />
             <FormHelperText>
-              {`Min is ${settings.lowerBound.minMetaScore?.toFixed(2)}, Max is ${settings.lowerBound.maxMetaScore?.toFixed(2)}`}
+              {`Min is ${settings.lowerBound.minMetaScore?.toFixed(
+                2
+              )}, Max is ${settings.lowerBound.maxMetaScore?.toFixed(2)}`}
             </FormHelperText>
           </FormControl>
         </Stack>
@@ -258,7 +193,7 @@ const SettingsDialog: FC<DialogProps> = ({ ...props }) => {
             scoreLowerBound: state.scoreLowerBound,
           },
         }),
-      }),
+      })
     );
   };
 
