@@ -33,10 +33,11 @@ const tableAPI = {
     };
     if (params.tableId && params.datasetId) {
       console.log(
-        `Adding headers for saveTable: tableId: ${params.tableId}, datasetId: ${params.datasetId}`,
+        `Adding headers for saveTable: tableId: ${params.tableId}, datasetId: ${params.datasetId}`
       );
-      headers["X-Table-Dataset-Info"] =
-        `tableId:${params.tableId};datasetId:${params.datasetId}`;
+      headers[
+        "X-Table-Dataset-Info"
+      ] = `tableId:${params.tableId};datasetId:${params.datasetId}`;
     }
     return apiClient.get<GetTableResponse>(
       apiEndpoint({
@@ -46,12 +47,12 @@ const tableAPI = {
       {
         clearCacheEntry: true,
         headers,
-      },
+      }
     );
   },
   exportTable: (
     format: string,
-    params: Record<string, string | number> = {},
+    params: Record<string, string | number> = {}
   ) => {
     return apiClient.get<any>(
       apiEndpoint({
@@ -63,7 +64,7 @@ const tableAPI = {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      },
+      }
     );
   },
   saveTable: (
@@ -71,7 +72,7 @@ const tableAPI = {
     params: Record<string, string | number> = {},
     tableId?: string,
     datasetId?: string,
-    deletedColumns?: string[],
+    deletedColumns?: string[]
   ) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -80,12 +81,13 @@ const tableAPI = {
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
       console.log(
-        `Adding headers for saveTable: tableId: ${tableId}, datasetId: ${datasetId}`,
+        `Adding headers for saveTable: tableId: ${tableId}, datasetId: ${datasetId}`
       );
-      headers["X-Table-Dataset-Info"] =
-        `tableId:${tableId};datasetId:${datasetId};deletedColumns:${
-          deletedColumns ? deletedColumns.join("|-|") : "NO_DELETED"
-        }`;
+      headers[
+        "X-Table-Dataset-Info"
+      ] = `tableId:${tableId};datasetId:${datasetId};deletedColumns:${
+        deletedColumns ? deletedColumns.join("|-|") : "NO_DELETED"
+      }`;
     }
 
     // Add deleted columns information ONLY for save operations
@@ -101,12 +103,12 @@ const tableAPI = {
       {
         headers,
         clearCacheEntry: true, // Bypass cache for this request
-      },
+      }
     );
   },
   automaticAnnotation: (
     params: Record<string, string | number> = {},
-    data: any,
+    data: any
   ) => {
     return apiClient.post<any>(
       apiEndpoint({
@@ -118,7 +120,7 @@ const tableAPI = {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      },
+      }
     );
   },
   reconcile: (
@@ -126,7 +128,7 @@ const tableAPI = {
     data: any,
     tableId?: string,
     datasetId?: string,
-    columnName?: string,
+    columnName?: string
   ) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -135,21 +137,33 @@ const tableAPI = {
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
       console.log(
-        `Adding headers for tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`,
+        `Adding headers for tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`
       );
-      headers["X-Table-Dataset-Info"] =
-        `tableId:${tableId};datasetId:${datasetId}${
-          columnName ? `;columnName:${columnName}` : ""
-        }`;
+
+      // Clean values to remove BOM and other problematic characters
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+      const cleanColumnName = columnName
+        ? columnName.replace(/\uFEFF/g, "").trim()
+        : "";
+
+      headers[
+        "X-Table-Dataset-Info"
+      ] = `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
+        cleanColumnName ? `;columnName:${cleanColumnName}` : ""
+      }`;
     }
     console.log("Reconciliation request headers:", headers);
-    console.log("Full reconcile URL:", `/reconciliators${baseUrl}`);
+
+    // Clean baseUrl to remove BOM characters
+    const cleanBaseUrl = baseUrl.replace(/\uFEFF/g, "").trim();
+    console.log("Full reconcile URL:", `/reconciliators${cleanBaseUrl}`);
     console.log("Reconcile request config:", {
       headers,
       clearCacheEntry: true,
     });
 
-    return apiClient.post(`/reconciliators${baseUrl}`, data, {
+    return apiClient.post(`/reconciliators${cleanBaseUrl}`, data, {
       headers,
       clearCacheEntry: true, // Bypass cache for this request
     });
@@ -159,7 +173,7 @@ const tableAPI = {
     data: any,
     tableId?: string,
     datasetId?: string,
-    columnName?: string,
+    columnName?: string
   ) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -168,19 +182,31 @@ const tableAPI = {
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
       console.log(
-        `Adding headers for extend: tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`,
+        `Adding headers for extend: tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`
       );
-      headers["X-Table-Dataset-Info"] =
-        `tableId:${tableId};datasetId:${datasetId}${
-          columnName ? `;columnName:${columnName}` : ""
-        }`;
+
+      // Clean values to remove BOM and other problematic characters
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+      const cleanColumnName = columnName
+        ? columnName.replace(/\uFEFF/g, "").trim()
+        : "";
+
+      headers[
+        "X-Table-Dataset-Info"
+      ] = `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
+        cleanColumnName ? `;columnName:${cleanColumnName}` : ""
+      }`;
     }
     console.log("Extension request headers:", headers);
-    console.log("Extension request URL:", `extenders${baseUrl}`);
+
+    // Clean baseUrl to remove BOM characters
+    const cleanBaseUrl = baseUrl.replace(/\uFEFF/g, "").trim();
+    console.log("Extension request URL:", `extenders${cleanBaseUrl}`);
     console.log("Extension request data:", data);
     console.log("Extend request config:", { headers, clearCacheEntry: true });
 
-    return apiClient.post(`extenders${baseUrl}`, data, {
+    return apiClient.post(`extenders${cleanBaseUrl}`, data, {
       headers,
       clearCacheEntry: true, // Bypass cache for this request
     });
@@ -191,7 +217,7 @@ const tableAPI = {
     apiClient.get<ChallengeTableDataset[]>("/tables/challenge/datasets"),
   getChallengeTable: (datasetName: string, tableName: string) =>
     apiClient.get(
-      `/tables/challenge/datasets/${datasetName}/tables/${tableName}`,
+      `/tables/challenge/datasets/${datasetName}/tables/${tableName}`
     ),
   trackTable: (datasetId: string, tableId: string, metadataToTrack: any) =>
     apiClient.post(`/dataset/track/${datasetId}/${tableId}`, metadataToTrack, {
