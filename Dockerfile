@@ -1,9 +1,8 @@
-FROM node:14-alpine AS builder
+FROM node:20-alpine AS builder
 # Add a work directory
 WORKDIR /app
 # Cache and Install dependencies
 COPY package.json .
-COPY package-lock.json .
 RUN npm install
 # Copy app files
 COPY . .
