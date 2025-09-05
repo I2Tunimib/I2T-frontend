@@ -114,6 +114,15 @@ const CONFIG: AppConfig = {
           name: "Python pipeline",
           params: {
             extension: "py",
+            postDownload: (data: any) => {
+              if (typeof data === "string") {
+                return data;
+              }
+              if (typeof data === "object" && data !== null) {
+                return JSON.stringify(data, null, 2);
+              }
+              return String(data);
+            },
           },
         },
         {
@@ -121,6 +130,21 @@ const CONFIG: AppConfig = {
           name: "Jupyter notebook pipeline",
           params: {
             extension: "ipynb",
+            postDownload: (data: any) => {
+              if (typeof data === "string") {
+                try {
+                  // Try to parse and re-stringify to ensure proper formatting
+                  return JSON.stringify(JSON.parse(data), null, 2);
+                } catch {
+                  // If it's not valid JSON, return as-is
+                  return data;
+                }
+              }
+              if (typeof data === "object" && data !== null) {
+                return JSON.stringify(data, null, 2);
+              }
+              return String(data);
+            },
           },
         },
       ],

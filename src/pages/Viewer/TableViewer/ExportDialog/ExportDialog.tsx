@@ -70,7 +70,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             vertical: "top",
             horizontal: "center",
           },
-        }
+        },
       );
       return;
     }
@@ -81,7 +81,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
 
   const handleConfirm = () => {
     const exportEndpoint = API.ENDPOINTS.EXPORT.find(
-      (endpoint) => endpoint.name === format
+      (endpoint) => endpoint.name === format,
     );
     if (!exportEndpoint) {
       return;
@@ -101,7 +101,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             vertical: "top",
             horizontal: "center",
           },
-        }
+        },
       );
       return;
     }
@@ -112,16 +112,31 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       exportTable({
         format,
         params: { tableId, datasetId },
-      })
+      }),
     )
       .unwrap()
       .then((data) => {
+        console.log("Export data received:", {
+          format,
+          dataType: typeof data,
+          isArray: Array.isArray(data),
+          dataPreview: typeof data === "string" ? data.substring(0, 100) : data,
+        });
+
         if (params) {
           const { postDownload, extension } = params;
-          fileDownload(
-            postDownload ? postDownload(data) : data,
-            `${tableName}.${extension}`
-          );
+          const processedData = postDownload ? postDownload(data) : data;
+
+          console.log("Processed data for download:", {
+            originalType: typeof data,
+            processedType: typeof processedData,
+            processedPreview:
+              typeof processedData === "string"
+                ? processedData.substring(0, 100)
+                : processedData,
+          });
+
+          fileDownload(processedData, `${tableName}.${extension}`);
         }
       });
     dispatch(updateUI({ openExportDialog: false }));
