@@ -1,10 +1,9 @@
-version: "3.6"
 services:
   server:
     container_name: semtui_frontend
     build:
       context: .
       target: production
-    restart: "always"  
+    restart: "always"
     ports:
-      - ${PORT}:80  
+      - ${PORT:-3000}:80
