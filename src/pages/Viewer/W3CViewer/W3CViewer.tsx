@@ -36,7 +36,7 @@ const W3CViewer = () => {
   }, []);
   async function convertToW3C() {
     const res = await dispatch(
-      exportTable({ format: "JSON (W3C Compliant)", params })
+      exportTable({ format: "JSON (W3C Compliant)", params }),
     ).unwrap();
     setData(res);
   }

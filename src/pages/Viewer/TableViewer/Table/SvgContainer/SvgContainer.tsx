@@ -1,16 +1,20 @@
-import { SvgPathCoordinator } from '@components/kit';
-import { useAppSelector } from '@hooks/store';
-import { CoordinatorPath } from '@hooks/svg/useSvgCoordinator';
-import { isEmptyObject } from '@services/utils/objects-utils';
-import { ID } from '@store/interfaces/store';
-import { selectOnExpandAction } from '@store/slices/action/action.selectors';
-import { Context } from '@store/slices/table/interfaces/table';
+import { SvgPathCoordinator } from "@components/kit";
+import { useAppSelector } from "@hooks/store";
+import { CoordinatorPath } from "@hooks/svg/useSvgCoordinator";
+import { isEmptyObject } from "@services/utils/objects-utils";
+import { ID } from "@store/interfaces/store";
+import { selectOnExpandAction } from "@store/slices/action/action.selectors";
+import { Context } from "@store/slices/table/interfaces/table";
 import {
   useMemo,
-  FC, HTMLAttributes,
-  MutableRefObject, useEffect,
-  useState, useCallback, useRef
-} from 'react';
+  FC,
+  HTMLAttributes,
+  MutableRefObject,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 
 interface SvgContainerProps extends HTMLAttributes<SVGSVGElement> {
   columns: any[];
@@ -18,6 +22,7 @@ interface SvgContainerProps extends HTMLAttributes<SVGSVGElement> {
   headerExpanded: boolean;
   onPathMouseEnter?: (path: any) => void;
   onPathMouseLeave?: () => void;
+  showRelationTooltips?: boolean;
 }
 
 interface SvgContainerState {
@@ -27,15 +32,15 @@ interface SvgContainerState {
 
 const DEFAULT_STATE = {
   showContent: false,
-  paths: {}
+  paths: {},
 };
 
 const getLink = (context: Record<ID, Context>, id: string) => {
-  const [prefix, resourceId] = id.split(':');
+  const [prefix, resourceId] = id.split(":");
   if (context[prefix] !== undefined) {
     return `${context[prefix].uri}${resourceId}`;
   }
-  return '';
+  return "";
 };
 
 const SvgContainer: FC<SvgContainerProps> = ({
@@ -44,6 +49,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
   headerExpanded,
   onPathMouseEnter,
   onPathMouseLeave,
+  showRelationTooltips = true,
   ...props
 }) => {
   const [state, setState] = useState<SvgContainerState>(DEFAULT_STATE);
@@ -51,13 +57,14 @@ const SvgContainer: FC<SvgContainerProps> = ({
   const containerRef = useRef<SVGSVGElement>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
   const lastScrollPositionRef = useRef(0);
+  const [hoveredPath, setHoveredPath] = useState<any>(null);
 
   // Listen for scroll events on parent container
   useEffect(() => {
     const handleScroll = () => {
       // Find closest scrollable parent
       if (containerRef.current) {
-        const tableContainer = containerRef.current.closest('.TableContainer');
+        const tableContainer = containerRef.current.closest(".TableContainer");
         if (tableContainer) {
           const newScrollLeft = tableContainer.scrollLeft;
           setScrollLeft(newScrollLeft);
@@ -68,14 +75,14 @@ const SvgContainer: FC<SvgContainerProps> = ({
 
     // Find scrollable container and attach event
     if (containerRef.current && headerExpanded) {
-      const tableContainer = containerRef.current.closest('.TableContainer');
+      const tableContainer = containerRef.current.closest(".TableContainer");
       if (tableContainer) {
         // Set initial scroll position
         setScrollLeft(lastScrollPositionRef.current);
 
-        tableContainer.addEventListener('scroll', handleScroll);
+        tableContainer.addEventListener("scroll", handleScroll);
         return () => {
-          tableContainer.removeEventListener('scroll', handleScroll);
+          tableContainer.removeEventListener("scroll", handleScroll);
         };
       }
     }
@@ -89,21 +96,23 @@ const SvgContainer: FC<SvgContainerProps> = ({
         const { property } = metadata[0] || [];
 
         if (property && property.length > 0) {
-          const groupPaths = property.map((prop: any) => {
-            // Only create paths if both start and end elements exist
-            if (columnRefs.current[id] && columnRefs.current[prop.obj]) {
-              return {
-                id: prop.id,
-                startElementLabel: id,
-                endElementLabel: prop.obj,
-                startElement: columnRefs.current[id],
-                endElement: columnRefs.current[prop.obj],
-                label: prop.name,
-                link: getLink(context, prop.id)
-              };
-            }
-            return null;
-          }).filter(Boolean); // Remove null entries
+          const groupPaths = property
+            .map((prop: any) => {
+              // Only create paths if both start and end elements exist
+              if (columnRefs.current[id] && columnRefs.current[prop.obj]) {
+                return {
+                  id: prop.id,
+                  startElementLabel: id,
+                  endElementLabel: prop.obj,
+                  startElement: columnRefs.current[id],
+                  endElement: columnRefs.current[prop.obj],
+                  label: prop.name,
+                  link: getLink(context, prop.id),
+                };
+              }
+              return null;
+            })
+            .filter(Boolean); // Remove null entries
 
           if (groupPaths.length > 0) {
             acc[id] = groupPaths;
@@ -126,7 +135,8 @@ const SvgContainer: FC<SvgContainerProps> = ({
 
           // After the component is shown, restore scroll position on the container
           if (restoreScrollPosition > 0) {
-            const tableContainer = containerRef.current?.closest('.TableContainer');
+            const tableContainer =
+              containerRef.current?.closest(".TableContainer");
             if (tableContainer) {
               // We don't set this through state to avoid re-renders
               // Just update the actual scroll position
@@ -145,13 +155,40 @@ const SvgContainer: FC<SvgContainerProps> = ({
   }, [columnRefs, headerExpanded]);
 
   const shouldRedraw = useCallback(() => {
-    if (action.startsWith('table/updateSelectedCellExpanded') || scrollLeft > 0) {
+    if (
+      action.startsWith("table/updateSelectedCellExpanded") ||
+      scrollLeft > 0
+    ) {
       return true;
     }
     return false;
   }, [action, scrollLeft]);
 
   const paths = useMemo(() => state.paths, [state.paths]);
+
+  // Enhanced hover handlers
+  const handlePathMouseEnter = useCallback(
+    (pathData: any) => {
+      setHoveredPath(pathData);
+      if (onPathMouseEnter) {
+        const enhancedData = {
+          ...pathData,
+          relationName: pathData.label,
+          fromColumn: pathData.startElementLabel,
+          toColumn: pathData.endElementLabel,
+        };
+        onPathMouseEnter(enhancedData);
+      }
+    },
+    [onPathMouseEnter],
+  );
+
+  const handlePathMouseLeave = useCallback(() => {
+    setHoveredPath(null);
+    if (onPathMouseLeave) {
+      onPathMouseLeave();
+    }
+  }, [onPathMouseLeave]);
 
   return (
     <>
@@ -160,18 +197,20 @@ const SvgContainer: FC<SvgContainerProps> = ({
           ref={containerRef}
           paths={paths}
           shouldRedraw={shouldRedraw}
-          onPathMouseEnter={onPathMouseEnter}
-          onPathMouseLeave={onPathMouseLeave}
+          onPathMouseEnter={handlePathMouseEnter}
+          onPathMouseLeave={handlePathMouseLeave}
+          showRelationTooltips={showRelationTooltips}
           style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
+            position: "absolute",
+            width: "100%",
+            height: "100%",
             left: 0,
             top: 0,
             zIndex: 5,
-            overflow: 'visible'
+            overflow: "visible",
           }}
-          {...props} />
+          {...props}
+        />
       )}
     </>
   );

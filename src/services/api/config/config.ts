@@ -30,7 +30,7 @@ apiClient.interceptors.request.use(
   (error) => {
     console.error("❌ Request error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // Add response interceptor to log responses
@@ -47,10 +47,10 @@ apiClient.interceptors.response.use(
     console.error(
       "❌ Response error:",
       error.response?.status,
-      error.response?.data
+      error.response?.data,
     );
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

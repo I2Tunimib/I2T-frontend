@@ -1,8 +1,10 @@
-import { Chip, Link, Typography } from "@mui/material";
+import { Chip, Link, Typography, Button } from "@mui/material";
 import { ID } from "@store/interfaces/store";
 import { ColumnMetadata, Context } from "@store/slices/table/interfaces/table";
-import { FC, useCallback } from "react";
+import { FC, useCallback, useState } from "react";
 import ArrowRightAltRoundedIcon from "@mui/icons-material/ArrowRightAltRounded";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import EntityLabel from "@components/core/EntityLabel";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import {
@@ -26,6 +28,8 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
   kind,
   role,
 }) => {
+  const [typesExpanded, setTypesExpanded] = useState(false);
+  const [propertiesExpanded, setPropertiesExpanded] = useState(false);
   const getResourceLink = useCallback(
     (idResource) => {
       const [prefix, id] = idResource.split(":");
@@ -38,7 +42,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
       }
       return "";
     },
-    [context]
+    [context],
   );
 
   const RenderType = useCallback(
@@ -51,7 +55,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
         </EntityLabel>
       </div>
     ),
-    []
+    [],
   );
 
   const RenderProperty = useCallback(
@@ -66,7 +70,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
         <span>{property.obj}</span>
       </div>
     ),
-    []
+    [],
   );
 
   const getItems = useCallback(
@@ -83,7 +87,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
       }
       return metadata[0].entity.slice(start, end);
     },
-    [metadata]
+    [metadata],
   );
 
   const nEntities = metadata[0]
@@ -92,23 +96,63 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
       : 0
     : 0;
 
-  // <div className={styles.PropertyContainer}>
-  //   <Typography variant="subtitle2">Type</Typography>
-  //   {metadata[0].type.map((type) => RenderType(type))}
-  // </div>
+  const renderExpandableSection = useCallback(
+    (
+      items: any[],
+      renderFunction: (item: any) => JSX.Element,
+      isExpanded: boolean,
+      toggleExpanded: () => void,
+    ) => {
+      if (!items || items.length === 0) return null;
+
+      const maxInitial = 3;
+      const displayItems = isExpanded ? items : items.slice(0, maxInitial);
+      const hasMore = items.length > maxInitial;
+
+      return (
+        <div className={styles.PropertyContainer}>
+          {displayItems.map((item) => renderFunction(item))}
+          {hasMore && (
+            <Button
+              variant="text"
+              size="small"
+              onClick={toggleExpanded}
+              startIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              sx={{
+                marginTop: 1,
+                fontSize: "0.75rem",
+                textTransform: "none",
+                color: "text.secondary",
+              }}
+            >
+              {isExpanded
+                ? `Show less`
+                : `Show ${items.length - maxInitial} more`}
+            </Button>
+          )}
+        </div>
+      );
+    },
+    [],
+  );
 
   return metadata.length > 0 ? (
     <div className={styles.Container}>
-      {metadata[0].type && Array.isArray(metadata[0].type) && (
-        <div className={styles.PropertyContainer}>
-          {metadata[0].type.map((type) => RenderType(type))}
-        </div>
-      )}
-      {metadata[0].property && (
-        <div className={styles.PropertyContainer}>
-          {metadata[0].property.map((property) => RenderProperty(property))}
-        </div>
-      )}
+      {metadata[0].type &&
+        Array.isArray(metadata[0].type) &&
+        renderExpandableSection(
+          metadata[0].type,
+          RenderType,
+          typesExpanded,
+          () => setTypesExpanded(!typesExpanded),
+        )}
+      {metadata[0].property &&
+        renderExpandableSection(
+          metadata[0].property,
+          RenderProperty,
+          propertiesExpanded,
+          () => setPropertiesExpanded(!propertiesExpanded),
+        )}
       <ExpandableList
         messageIfNoContent="Cell doesn't have any entity metadata"
         className={styles.ExpandableList}
