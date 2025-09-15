@@ -395,10 +395,11 @@ const EntityTab: FC<EntityTabProps> = ({ addEdit }) => {
             fullWidth
             size="small"
           >
-            <InputLabel variant="outlined" htmlFor="uncontrolled-native">
+            <InputLabel variant="outlined" id="reconciliator-label">
               Reconciliator service
             </InputLabel>
             <Select
+              labelId="reconciliator-label"
               label="Reconciliator service"
               value={currentService}
               onChange={(e) => handleChangeService(e)}

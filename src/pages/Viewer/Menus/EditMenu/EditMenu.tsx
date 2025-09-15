@@ -1,7 +1,8 @@
 import { MenuBase, MenuItemIconLabel } from '@components/core';
 import { MenuBaseProps } from '@components/core/MenuBase';
-import { MenuList } from '@mui/material';
-import makeStyles from '@mui/styles/makeStyles';
+import {MenuList, Paper} from '@mui/material';
+//import makeStyles from '@mui/styles/makeStyles';
+import styled from '@emotion/styled';
 import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
 import { FC } from 'react';
@@ -10,25 +11,31 @@ import { selectCanRedo, selectCanUndo } from '@store/slices/table/table.selector
 
 interface EditMenuProps extends MenuBaseProps {}
 
+/*
 const useMenuStyles = makeStyles({
   list: {
     outline: 0
   }
 });
+*/
+
+const StyledMenuList = styled(MenuList)`
+  outline: 0;
+`;
 
 const EditMenu: FC<EditMenuProps> = (props) => {
-  const classes = useMenuStyles();
+  //const classes = useMenuStyles();
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
 
   return (
     <MenuBase {...props}>
-      <MenuList autoFocus className={classes.list}>
+      <StyledMenuList autoFocus>
         <MenuItemIconLabel disabled={!canUndo} Icon={UndoRoundedIcon} shortcutLabel="Ctrl+Z">Undo</MenuItemIconLabel>
         <MenuItemIconLabel disabled={!canRedo} Icon={RedoRoundedIcon} shortcutLabel="Ctrl+Shift+Z">Redo</MenuItemIconLabel>
         <MenuItemIconLabel disabled={!canUndo}>Undo all</MenuItemIconLabel>
         <MenuItemIconLabel disabled={!canRedo}>Redo all</MenuItemIconLabel>
-      </MenuList>
+      </StyledMenuList>
     </MenuBase>
   );
 };

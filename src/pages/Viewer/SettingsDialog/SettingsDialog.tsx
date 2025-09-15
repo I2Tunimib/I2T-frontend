@@ -1,30 +1,76 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogProps,
-  DialogTitle,
-  FormControl,
-  FormHelperText,
-  Slider,
-  Stack,
-  styled,
-  Switch,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import { FC, useState, useEffect, ChangeEvent, useMemo } from "react";
-import { useAppDispatch, useAppSelector } from "@hooks/store";
-import {
-  selectCurrentTable,
-  selectSettings,
-} from "@store/slices/table/table.selectors";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { updateUI } from "@store/slices/table/table.slice";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, FormControl, FormHelperText, Slider, Stack, styled, Switch, TextField, Tooltip, Typography } from '@mui/material';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import { FC, useState, useEffect, ChangeEvent, useMemo } from 'react';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { selectCurrentTable, selectSettings } from '@store/slices/table/table.selectors';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { updateUI } from '@store/slices/table/table.slice';
+
+const Root = styled('span')`
+  font-size: 0;
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+  margin: 10px;
+  cursor: pointer;
+
+  &.Mui-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  & .MuiSwitch-track {
+    background: #b3c3d3;
+    border-radius: 10px;
+    display: block;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+  }
+
+  & .MuiSwitch-thumb {
+    display: block;
+    width: 19px;
+    height: 14px;
+    top: 3px;
+    left: 3px;
+    border-radius: 16px;
+    background-color: #fff;
+    position: relative;
+    transition: all 200ms ease;
+  }
+
+  &.Mui-focusVisible .MuiSwitch-thumb {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 1px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  &.Mui-checked {
+    .MuiSwitch-thumb {
+      left: 14px;
+      top: 3px;
+      background-color: #fff;
+    }
+
+    .MuiSwitch-track {
+      background: #007fff;
+    }
+  }
+
+  & .MuiSwitch-input {
+    cursor: inherit;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    z-index: 1;
+    margin: 0;
+  }
+`;
+
 
 type TmpSettingsState = {
   isViewOnly: boolean;
@@ -114,6 +160,8 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
           </Tooltip>
         </Stack>
         <Switch
+          component={Root}
+
           checked={!tmpSettingsState.isViewOnly}
           disabled={currentTable.mantisStatus === "PENDING"}
           onChange={handleViewOnlyChange}
@@ -133,6 +181,8 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
           </Tooltip>
         </Stack>
         <Switch
+          component={Root}
+
           checked={tmpSettingsState.scoreLowerBoundEnabled}
           onChange={handleLowerBoundToggleChange}
         />

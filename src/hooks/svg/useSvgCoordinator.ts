@@ -2,9 +2,10 @@ import useWindowDimension from "@hooks/resize/useWindowResize";
 import Path from "@services/classes";
 import { bezierCurve, drawTo } from "@services/classes/PathOperators";
 import { isEmptyObject } from "@services/utils/objects-utils";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, RefObject } from "react";
 
 export interface UseSvgCoordinatorProps {
+  svgRef: RefObject<SVGSVGElement>;
   paths: Record<string, CoordinatorPath[]>;
   options?: Partial<DrawOptions>;
 }
@@ -95,11 +96,10 @@ const calcPointsDistances = (
   };
 };
 
-const useSvgCoordinator = ({ paths, options }: UseSvgCoordinatorProps) => {
+const useSvgCoordinator = ({ svgRef, paths, options }: UseSvgCoordinatorProps) => {
   const { minimumDistance, alfa } = { ...DEFAULT_OPTIONS, ...options };
 
   const [processedPaths, setProcessedPaths] = useState<any>();
-  const svgRef = useRef<SVGSVGElement>(null);
   const { windowWidth } = useWindowDimension();
 
   const calcPaths = useCallback(
@@ -203,14 +203,13 @@ const useSvgCoordinator = ({ paths, options }: UseSvgCoordinatorProps) => {
       distances.sort((el1, el2) => (el2.distance < el1.distance ? 1 : -1));
       setProcessedPaths(calcPaths(distances, offset));
     }
-  }, [paths, svgRef, windowWidth]);
+  }, [paths, svgRef, windowWidth, minimumDistance, calcPaths]);
 
   useEffect(() => {
     draw();
   }, [draw]);
 
   return {
-    svgRef,
     processedPaths,
     draw,
   };

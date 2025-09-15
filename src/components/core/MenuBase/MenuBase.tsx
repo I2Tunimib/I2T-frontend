@@ -2,7 +2,8 @@ import {
   ClickAwayListener, Paper,
   Popper, PopperPlacementType
 } from '@mui/material';
-import makeStyles from '@mui/styles/makeStyles';
+//import makeStyles from '@mui/styles/makeStyles';
+import styled from '@emotion/styled';
 import { FC, useEffect } from 'react';
 import styles from './MenuBase.module.scss';
 
@@ -14,6 +15,7 @@ export interface MenuBaseProps {
   handleClose: () => void;
 }
 
+/*
 const useMenuStyles = makeStyles({
   paper: {
     maxHeight: 'calc(100% - 96px)',
@@ -21,6 +23,13 @@ const useMenuStyles = makeStyles({
     outline: 0
   }
 });
+ */
+
+const StyledPaper = styled(Paper)`
+  max-height: calc(100% - 96px);
+  -webkit-overflow-scrolling: touch;
+  outline: 0;
+`;
 
 const MenuBase: FC<MenuBaseProps> = ({
   open,
@@ -30,8 +39,7 @@ const MenuBase: FC<MenuBaseProps> = ({
   children,
   handleClose
 }) => {
-  const menuClasses = useMenuStyles();
-
+  //const menuClasses = useMenuStyles();
   return (
     <>
       {anchorElement && (
@@ -44,9 +52,11 @@ const MenuBase: FC<MenuBaseProps> = ({
         >
           {() => (
             <ClickAwayListener onClickAway={handleClose}>
-              <Paper elevation={3} className={menuClasses.paper}>
+              <StyledPaper elevation={3}
+                           //className={menuClasses.paper}
+              >
                 {children}
-              </Paper>
+              </StyledPaper>
             </ClickAwayListener>
           )}
         </Popper>

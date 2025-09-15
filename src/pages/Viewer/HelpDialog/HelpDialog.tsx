@@ -57,13 +57,14 @@ const ButtonText = styled.span({
   boxShadow: "inset 0 -2px #ebefff",
 });
 
-const IndexButton = styled(Button)(({ active }: { active?: boolean }) => ({
+const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
+      prop !== 'active' })(({ active }: { active?: boolean }) => ({
   textTransform: "none",
   justifyContent: "flex-start",
   fontWeight: active ? "bold" : "normal",
   backgroundColor: active ? "rgba(0, 0, 0, 0.04)" : "transparent",
   "&:hover": {
-    backgroundColor: active ? "rgba(0, 0, 0, 0.08)" : "rgba(0, 0, 0, 0.04)",
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
 }));
 
@@ -72,14 +73,14 @@ const IndexContainer = styled(Box)({
   borderRight: "1px solid rgba(0, 0, 0, 0.12)",
   height: "100%",
   minWidth: "250px",
-});
+}) as typeof Box;
 
 const ContentContainer = styled(Box)({
   padding: "16px",
   height: "100%",
   width: "100%",
   overflow: "auto",
-});
+}) as typeof Box;
 
 type Step = {
   label: string;

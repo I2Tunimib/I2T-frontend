@@ -2,7 +2,7 @@ import useIsMounted from "@hooks/is-mounted/useIsMounted";
 import { useAppDispatch } from "@hooks/store";
 import { exportTable } from "@store/slices/table/table.thunk";
 import { useEffect, useState } from "react";
-import ReactJson from "react-json-view";
+import ReactJson from "react18-json-view";
 import { useParams } from "react-router-dom";
 import styles from "./W3CViewer.module.scss";
 

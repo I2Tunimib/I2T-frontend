@@ -188,6 +188,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
+  const uniqueReconciliators = Array.from(new Set(reconciliators.map(r => r.prefix)))
+      .map(prefix => reconciliators.find(r => r.prefix === prefix));
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -662,17 +664,18 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               fullWidth
               size="small"
             >
-              <InputLabel variant="outlined" htmlFor="uncontrolled-native">
+              <InputLabel variant="outlined" id="reconciliator-label">
                 Reconciliator service
               </InputLabel>
               <Select
+                labelId="reconciliator-label"
                 label="Reconciliator service"
                 value={currentService}
                 onChange={(e) => handleChangeService(e)}
                 variant="outlined"
               >
-                {reconciliators &&
-                  reconciliators.map((reconciliator) => (
+                {uniqueReconciliators &&
+                    uniqueReconciliators.map((reconciliator) => (
                     <MenuItem
                       key={reconciliator.prefix}
                       value={reconciliator.prefix}

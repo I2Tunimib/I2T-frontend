@@ -11,5 +11,14 @@ export default defineConfig({
   server: {
     port: 3000
   },
-  plugins: [react(), viteTsconfigPaths(), svgrPlugin()]
+  plugins: [react(), viteTsconfigPaths(), svgrPlugin()],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern',
+        // To silent temporarly the warning about Dart Sass 2.0.0:
+        silenceDeprecations: ['legacy-js-api']
+      }
+    }
+  }
 });
