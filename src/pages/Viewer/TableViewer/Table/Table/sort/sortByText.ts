@@ -1,5 +1,7 @@
-import { Row } from 'react-table';
+import { Row } from '@tanstack/react-table';
 
-export const sortByText = (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
-  return rowA.values[columnId].label.localeCompare(rowB.values[columnId].label);
+export const sortByText = <TData>(rowA: Row<TData>, rowB: Row<TData>, columnId: string) => {
+  const a = (rowA.getValue(columnId) as { label: string })?.label ?? '';
+  const b = (rowB.getValue(columnId) as { label: string })?.label ?? '';
+  return a.localeCompare(b);
 };

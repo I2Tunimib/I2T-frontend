@@ -44,7 +44,7 @@ import { getCellContext } from "@store/slices/table/utils/table.reconciliation-u
 import CustomTable from "@components/kit/CustomTable/CustomTable";
 import deferMounting from "@components/HOC";
 import { reconcile } from "@store/slices/table/table.thunk";
-import { Cell } from "react-table";
+import { Cell } from "@tanstack/react-table";
 import {
   BaseMetadata,
   Cell as TableCell,
@@ -94,9 +94,9 @@ const makeData = (
       const { label = key, type } = metaToView[key];
       console.log("key", key, "label", label, "type", type);
       return {
-        Header: label,
-        accessor: key,
-        Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
+        header: label,
+        accessorKey: key,
+        cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
       };
     });
 

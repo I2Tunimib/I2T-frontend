@@ -6,10 +6,10 @@ import {
   Context,
 } from "@store/slices/table/interfaces/table";
 import { useEffect, useMemo, useState } from "react";
-import { Column } from "react-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 export type State<T = {}> = {
-  columns: Column<Record<string, unknown>>[];
+  columns: ColumnDef<T>[];
   data: T[];
 };
 
@@ -32,7 +32,7 @@ const defaultTableState = {
   data: [],
 };
 
-function usePrepareTable<T extends {} = any, Y = {}>({
+function usePrepareTable<T = any, Y = any>({
   selector,
   makeData,
   dependencies = [],

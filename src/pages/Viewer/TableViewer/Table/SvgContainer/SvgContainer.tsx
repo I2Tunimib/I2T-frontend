@@ -72,7 +72,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
       if (tableContainer) {
         // Set initial scroll position
         setScrollLeft(lastScrollPositionRef.current);
-        
+
         tableContainer.addEventListener('scroll', handleScroll);
         return () => {
           tableContainer.removeEventListener('scroll', handleScroll);
@@ -84,7 +84,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
   useEffect(() => {
     if (columns && columnRefs && columnRefs.current) {
       const paths = columns.reduce((acc, column) => {
-        const id = column.Header;
+        const id = column.header;
         const { metadata, context } = column.data;
         const { property } = metadata[0] || [];
 
@@ -104,7 +104,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
             }
             return null;
           }).filter(Boolean); // Remove null entries
-          
+
           if (groupPaths.length > 0) {
             acc[id] = groupPaths;
           }
@@ -120,10 +120,10 @@ const SvgContainer: FC<SvgContainerProps> = ({
       if (headerExpanded) {
         // When reopening, restore the previous scroll position
         const restoreScrollPosition = lastScrollPositionRef.current;
-        
+
         setTimeout(() => {
           setState((old) => ({ ...old, showContent: true }));
-          
+
           // After the component is shown, restore scroll position on the container
           if (restoreScrollPosition > 0) {
             const tableContainer = containerRef.current?.closest('.TableContainer');

@@ -34,7 +34,7 @@ import {
 import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
-import { Cell, Row } from "react-table";
+import { Cell } from "@tanstack/react-table";
 import { BaseMetadata } from "@store/slices/table/interfaces/table";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import deferMounting from "@components/HOC";
@@ -247,9 +247,9 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     const columns = Object.keys(metaToView).map((key) => {
       const { label = key, type } = metaToView[key];
       return {
-        Header: label,
-        accessor: key,
-        Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
+        header: label,
+        accessorKey: key,
+        cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
       };
     });
 

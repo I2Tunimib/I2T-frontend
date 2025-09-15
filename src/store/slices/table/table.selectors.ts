@@ -503,8 +503,8 @@ export const selectDataTableFormat = createSelector(
     const columns = entities.columns.allIds.map((colId) => {
       const { label, id, ...rest } = entities.columns.byId[colId];
       return {
-        Header: label,
-        accessor: colId,
+        header: label,
+        accessorKey: colId,
         sortType: "customSort",
         id,
         data: { ...rest },

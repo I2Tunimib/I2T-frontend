@@ -46,7 +46,7 @@ import { reconcile } from "@store/slices/table/table.thunk";
 import { getCellContext } from "@store/slices/table/utils/table.reconciliation-utils";
 import { FC, useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Cell } from "react-table";
+import { Cell } from "@tanstack/react-table";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -126,9 +126,9 @@ const makeData = (
   const columns = Object.keys(metaToView).map((key) => {
     const { label = key, type } = metaToView[key];
     return {
-      Header: label,
-      accessor: key,
-      Cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
+      header: label,
+      accessorKey: key,
+      cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
     };
   });
 
