@@ -79,7 +79,7 @@ const Table: FC<TableProps> = ({
   const columnRefs = useRef<Record<any, HTMLElement>>({});
   // const [sortFn, setSortFn] = useState<string>('metadata');
   const [sorting, setSorting] = useState<SortingState>([]);
-  const { sortType, setSortType, sortTypes } = useTableSort();
+  const { sortType, setSortType } = useTableSort();
   const [highlightState, setHighlightState] = useState<HighlightState | null>(null);
   const [searchHighlightState, setSearchHighlight] = useState<Record<string, boolean>>({});
 
@@ -100,12 +100,12 @@ const Table: FC<TableProps> = ({
   /**
  * Returns row which have at least a cell with label.
  */
-  const filterAll = useCallback((rows: Row<any>[], colIds: string[], searchValue: string
-  ) => {
+  const filterAll = useCallback((rows: Row<any>[], colIds: string[], searchValue: string) => {
     const filteredRows = rows.filter((row) => colIds
       .some((colId) => {
         const cellValue = row.getValue(colId)?.label?.toLowerCase();
-        return cellValue?.startsWith(searchValue);}));
+        return cellValue?.startsWith(searchValue);
+      }));
 
     filteredRows.forEach((row) => {
       colIds.forEach((colId) => {
@@ -124,8 +124,7 @@ const Table: FC<TableProps> = ({
   /**
    * Returns row which have at least a cell with metadata name.
    */
-  const filterMetaName = useCallback((rows: Row<any>[], colIds: string[], searchValue: string
-  ) => {
+  const filterMetaName = useCallback((rows: Row<any>[], colIds: string[], searchValue: string) => {
     const filteredRows = rows.filter((row) => colIds
       .some((colId) => row.getValue(colId)?.metadata?.some((item: BaseMetadata) =>
         item.name.value.toLowerCase().startsWith(searchValue))));
@@ -148,8 +147,7 @@ const Table: FC<TableProps> = ({
   /**
    * Returns row which have at least a cell with metadata type.
    */
-  const filterMetaType = useCallback((rows: Row<any>[], colIds: string[], searchValue: string
-  ) => {
+  const filterMetaType = useCallback((rows: Row<any>[], colIds: string[], searchValue: string) => {
     const filteredRows = rows.filter((row) => colIds
       .some((colId) => row.getValue(colId)?.metadata?.some((item: any) =>
         item.type?.some((type: any) => type.name.toLowerCase().startsWith(searchValue)))));
@@ -192,7 +190,7 @@ const Table: FC<TableProps> = ({
     if (!value) return true;
 
     const searchValue = value.toLowerCase();
-    const colIds = row.getAllCells().map(cell => cell.column.id);
+    const colIds = row.getAllCells().map((cell) => cell.column.id);
 
     switch (filter) {
       case 'label':
@@ -205,7 +203,6 @@ const Table: FC<TableProps> = ({
         return filterAll([row], colIds, searchValue).length > 0;
     }
   }, [filterAll, filterMetaName, filterMetaType]);
-
 
   // const sortByMetadata = useCallback(
   //   (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
@@ -281,8 +278,8 @@ const Table: FC<TableProps> = ({
       header: '',
       accessorFn: (_row, index) => index,
       enableSorting: true,
-      cell: ({ row, table }) => (
-          <div>{row.index + 1}</div>
+      cell: ({ row }) => (
+        <div>{row.index + 1}</div>
       ),
     },
     ...columns,
@@ -317,7 +314,7 @@ const Table: FC<TableProps> = ({
     if (!searchFilter?.value) return;
 
     const searchValue = searchFilter.value.toLowerCase();
-    const colIds = allColumns.map(col => col.id);
+    const colIds = allColumns.map((col) => col.id);
 
     let filteredRows: Row<any>[] = table.getRowModel().rows;
 
@@ -372,38 +369,41 @@ const Table: FC<TableProps> = ({
             table.getHeaderGroups().map((headerGroup) => (
               // Apply the header row props
               <TableRow key={headerGroup.id}>
-                    {// Loop over the headers in each row
-                      headerGroup.headers.map((header) => (
-                        // Apply the header cell props
-                        <TableHeaderCell key={header.id}
-                          ref={(el: any) => {
-                            columnRefs.current[header.id] = el;
-                          }}
-                          header={header}
-                          data={header.column.columnDef}
-                          highlightState={highlightState}
-                          sortType={sortType}
-                          setSortType={setSortType}
-                          setSorting={setSorting}
-                          {...getHeaderProps(header)}
-                        >
-                           {// Render the header
-                             flexRender(header.column.columnDef.header, header.getContext())
-                           }
-                        </TableHeaderCell>
-                        ))}
-                  </TableRow>
-              ))}
+                {
+                  // Loop over the headers in each row
+                  headerGroup.headers.map((header) => (
+                    // Apply the header cell props
+                      <TableHeaderCell
+                        key={header.id}
+                        ref={(el: any) => {
+                          columnRefs.current[header.id] = el;
+                        }}
+                        header={header}
+                        data={header.column.columnDef}
+                        highlightState={highlightState}
+                        sortType={sortType}
+                        setSortType={setSortType}
+                        setSorting={setSorting}
+                        {...getHeaderProps(header)}
+                      >
+                        {// Render the header
+                          flexRender(header.column.columnDef.header, header.getContext())
+                        }
+                      </TableHeaderCell>
+                     ))}
+              </TableRow>
+            ))}
         </TableHead>
         {/* Apply the table body props */}
         <tbody>
           {// Loop over the table rows
-            table.getPaginationRowModel().rows.map(row =>
+            table.getPaginationRowModel().rows.map((row) =>
               // Prepare the row for display
               <TableRow key={row.id}>
                 {// Loop over the rows cells
-                  row.getVisibleCells().map(cell => (
-                    <TableRowCell key={cell.id}
+                  row.getVisibleCells().map((cell) => (
+                    <TableRowCell
+                      key={cell.id}
                       cell={cell}
                       dense={dense}
                       highlightState={highlightState}
@@ -415,16 +415,16 @@ const Table: FC<TableProps> = ({
                       }
                     </TableRowCell>
                   ))}
-                </TableRow>
+              </TableRow>
             )}
-          </tbody>
-        </TableRoot>
-        <TableFooter
-          rows={table.getFilteredRowModel().rows}
-          columns={columns}
-          table={table}
-          pageIndex={table.getState().pagination.pageIndex}
-        />
+        </tbody>
+      </TableRoot>
+      <TableFooter
+        rows={table.getFilteredRowModel().rows}
+        columns={columns}
+        table={table}
+        pageIndex={table.getState().pagination.pageIndex}
+      />
     </>
   );
 };

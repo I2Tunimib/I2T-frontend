@@ -2,6 +2,7 @@ import { IconButton, Radio } from '@mui/material';
 import {
   FC, forwardRef,
   useEffect,
+  useState,
   useRef
 } from 'react';
 import {
@@ -69,7 +70,6 @@ const Table: FC<TableProps> = ({
   onSelectedRowChange,
   onDeleteRow
 }) => {
-
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const table = useReactTable({
     data,
@@ -79,7 +79,7 @@ const Table: FC<TableProps> = ({
         id: 'delete',
         cell: ({ row }) => (
           <IconButton size="small" onClick={() => onDeleteRow(row)}>
-            <DeleteOutlineRoundedIcon/>
+            <DeleteOutlineRoundedIcon />
           </IconButton>
         ),
       },
@@ -89,7 +89,7 @@ const Table: FC<TableProps> = ({
           <div>
             <RadioCell
               checked={row.getIsSelected()}
-              onChange={() => setRowSelection({ [row.id]: true })}/>
+              onChange={() => setRowSelection({ [row.id]: true })} />
           </div>
         ),
       },
@@ -146,20 +146,21 @@ const Table: FC<TableProps> = ({
       </thead>
       <tbody>
         {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}
-              onClick={() => handleRowClick(row)}
-              className={clsx(
-                styles.TableRow,
-                {
-                  [styles.Selected]: row.getIsSelected()
-                }
-              )}>
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className={styles.TableRowCell}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
+          <tr
+            key={row.id}
+            onClick={() => handleRowClick(row)}
+            className={clsx(
+              styles.TableRow,
+              {
+                [styles.Selected]: row.getIsSelected()
+              }
+            )}>
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id} className={styles.TableRowCell}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
               ))}
-            </tr>
+          </tr>
         ))}
       </tbody>
     </table>

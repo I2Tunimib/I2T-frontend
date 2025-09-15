@@ -32,6 +32,7 @@ import Empty from "@components/kit/Empty";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import { CheckBox } from "@mui/icons-material";
 import {
   Table,
   TableHead,
@@ -42,7 +43,6 @@ import {
   TableSubRow,
 } from "./CustomTableStyles";
 import ColumnHide from "./ColumnHide";
-import { CheckBox } from "@mui/icons-material";
 
 export interface TableProperties<T extends Record<string, unknown>> {
   columns: ColumnDef<T>[];
@@ -55,8 +55,7 @@ export interface TableProperties<T extends Record<string, unknown>> {
   loading?: boolean;
 }
 
-export function Footer<T>({table}: { table: ReturnType<typeof useReactTable<T>>}
-) {
+export function Footer<T>({ table }: { table: ReturnType<typeof useReactTable<T>>}) {
   const rowCount = table.getRowModel().rows.length;
   const pageCount = table.getPageCount();
   const pageIndex = table.getState().pagination.pageIndex;
@@ -148,6 +147,15 @@ export default function CustomTable<T extends Record<string, unknown>>(
   const [sorting, setSorting] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
 
+  const handleRowClick = (row: Row<T>) => {
+    console.log("Row clicked:", row);
+    onSelectedRowChange(row.original);
+  };
+
+  const handleDeleteRow = (row: Row<T>) => {
+    onSelectedRowDeleteRequest(row.original);
+  };
+
   const deleteColumn = {
     id: "delete",
     header: "",
@@ -181,14 +189,16 @@ export default function CustomTable<T extends Record<string, unknown>>(
       getExpandedRowModel: getExpandedRowModel(),
       getSortedRowModel: getSortedRowModel(),
       getPaginationRowModel: getPaginationRowModel(),
-  });
+    }
+  );
 
   const [subRows, setSubRows] = useState<Record<string, any>>({});
 
   const allColumnsWithToggleProps = table.getAllLeafColumns()
-    .filter(col => col.id !== "delete")
-    .map(col => ({
-      ...col, getToggleHiddenProps: () => ({
+    .filter((col) => col.id !== "delete")
+    .map((col) => ({
+      ...col,
+        getToggleHiddenProps: () => ({
         checked: col.getIsVisible(),
         onChange: () => col.toggleVisibility(),
       }),
@@ -196,23 +206,14 @@ export default function CustomTable<T extends Record<string, unknown>>(
   }));
 
   const toggleAllProps = {
-    checked: table.getAllLeafColumns().every(col => col.getIsVisible()),
+    checked: table.getAllLeafColumns().every((col) => col.getIsVisible()),
     indeterminate:
-      table.getAllLeafColumns().some(col => col.getIsVisible()) &&
-      !table.getAllLeafColumns().every(col => col.getIsVisible()),
+      table.getAllLeafColumns().some((col) => col.getIsVisible()) &&
+      !table.getAllLeafColumns().every((col) => col.getIsVisible()),
     onChange: () => {
-      const allVisible = table.getAllLeafColumns().every(col => col.getIsVisible());
-      table.getAllLeafColumns().forEach(col => col.toggleVisibility(!allVisible));
+      const allVisible = table.getAllLeafColumns().every((col) => col.getIsVisible());
+      table.getAllLeafColumns().forEach((col) => col.toggleVisibility(!allVisible));
     },
-  };
-
-  const handleRowClick = (row: Row<T>) => {
-    console.log("Row clicked:", row);
-    onSelectedRowChange(row.original);
-  };
-
-  const handleDeleteRow = (row: Row<T>) => {
-    onSelectedRowDeleteRequest(row.original);
   };
 
   return (
@@ -224,7 +225,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
       )}
       <Box padding="5px 16px" marginTop="12px" borderTop="1px solid #f0f0f0">
         <ColumnHide
-          indeterminate={toggleAllProps} allColumns={allColumnsWithToggleProps}
+          indeterminate={toggleAllProps}
+          allColumns={allColumnsWithToggleProps}
         />
       </Box>
       <Box
@@ -256,7 +258,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
                       {
                         // Loop over the headers in each row
                         headerGroup.headers.map((header) => (
-                        <TableHeaderCell key={header.id}>
+                          <TableHeaderCell key={header.id}>
                           {header.id !== "selection" ? (
                             <Stack
                               direction="row"
@@ -266,10 +268,10 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               gap="10px"
                               alignItems="center"
                             >
-                            {
-                              // Render the header
-                              flexRender(header.column.columnDef.header, header.getContext())
-                            }
+                              {
+                                // Render the header
+                                flexRender(header.column.columnDef.header, header.getContext())
+                              }
                             <IconButton
                               sx={{
                                 width: "25px",
@@ -289,14 +291,14 @@ export default function CustomTable<T extends Record<string, unknown>>(
                                   fontSize="small"
                                 />
                               )}
-                            </IconButton>
-                          </Stack>
+                              </IconButton>
+                            </Stack>
                         ) : (
                           flexRender(header.column.columnDef.header, header.getContext())
                         )}
-                      </TableHeaderCell>
+                        </TableHeaderCell>
                     ))}
-                  </TableRow>
+                    </TableRow>
                 ))}
               </TableHead>
               {/* Apply the table body props */}
@@ -305,10 +307,10 @@ export default function CustomTable<T extends Record<string, unknown>>(
                   // Loop over the table rows
                   table.getRowModel().rows.map((row) => (
                       // Apply the row props
-                      <Fragment key={row.id}>
-                        <TableRow
-                          onClick={() => handleRowClick(row)}
-                        >
+                    <Fragment key={row.id}>
+                      <TableRow
+                        onClick={() => handleRowClick(row)}
+                      >
                           {/* Cella per checkBox */}
                           {/* <TableCell
                             padding="checkbox"
@@ -331,19 +333,19 @@ export default function CustomTable<T extends Record<string, unknown>>(
                             // Loop over the rows cells
                             row.getVisibleCells().map((cell) => (
                               // Apply the cell props
-                                <TableRowCell
-                                  key={cell.id}
-                                  title={`${cell.getValue()}`}
-                                >
-                                  {
-                                    // Render the cell contents
-                                    flexRender(cell.column.columnDef.cell, {
-                                      ...cell.getContext(),
-                                      setSubRows,
-                                    })
-                                  }
-                                </TableRowCell>
-                              ))}
+                              <TableRowCell
+                                key={cell.id}
+                                title={`${cell.getValue()}`}
+                              >
+                                {
+                                  // Render the cell contents
+                                  flexRender(cell.column.columnDef.cell, {
+                                    ...cell.getContext(),
+                                    setSubRows,
+                                  })
+                                }
+                              </TableRowCell>
+                            ))}
                         </TableRow>
                         {row.getIsExpanded() ? (
                           <TableSubRow key={`${row.id}-expanded`}>
@@ -382,7 +384,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
               </tbody>
             </Table>
           ) : (
-            <Empty/>
+            <Empty />
           )}
         </Box>
         <Footer table={table} />

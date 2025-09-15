@@ -164,7 +164,7 @@ const TableListView: FC<TableListViewProps> = ({
   };
 
   useEffect(() => {
-    onChangeRowSelected(table.getSelectedRowModel().rows.map(row => row.original));
+    onChangeRowSelected(table.getSelectedRowModel().rows.map((row) => row.original));
   }, [table.getState().rowSelection]);
 
   return (
@@ -174,29 +174,31 @@ const TableListView: FC<TableListViewProps> = ({
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <th key={header.id}
+                <th
+                  key={header.id}
                   className={clsx(
                     styles.Th,
                     {
                       [styles.Fixed]: header.id !== 'selection' && header.id !== 'icon'
-                    })}
+                    }
+                    )}
                   onClick={header.column.getToggleSortingHandler()}
                 >
-                <Button
-                      color="inherit"
-                      className={styles.HeaderButton}
-                      endIcon={header.column.getIsSorted()
+                  <Button
+                    color="inherit"
+                    className={styles.HeaderButton}
+                    endIcon={header.column.getIsSorted()
                         ? header.column.getIsSorted() === 'desc'
                           ? <ArrowDownwardRoundedIcon color="action" />
                           : <ArrowUpwardRoundedIcon color="action" />
                         : null}>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </Button>
-                  </th>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </Button>
+                </th>
                 ))}
-              </tr>
+           </tr>
           ))}
-          </thead>
+        </thead>
           <tbody>
             {table.getSortedRowModel().rows.map((row) => (
               <tr key={row.id} className={styles.Tr} {...rowPropGetter(row)}>
@@ -207,7 +209,7 @@ const TableListView: FC<TableListViewProps> = ({
                 ))}
               </tr>
           ))}
-        </tbody>
+          </tbody>
       </table>
       <Footer {...paginationProps} />
     </>

@@ -1,3 +1,4 @@
+import { React } from 'react';
 import { Tag } from "@components/core";
 import { Button, Checkbox, Chip, Link, Stack, Typography } from "@mui/material";
 import { MetaToViewItem } from "@store/slices/config/interfaces/config";
@@ -17,13 +18,12 @@ export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
           {value.value || ""}
         </Typography>
       );
-    } else {
-      return (
-        <Typography variant="body2" color="textSecondary">
-          {value}
-        </Typography>
-      );
     }
+    return (
+      <Typography variant="body2" color="textSecondary">
+        {value}
+      </Typography>
+    );
   }
 
   return (
@@ -61,7 +61,7 @@ export const SubList = (value: any[] = []) => {
   );
 };
 
-export const Expander = ({ row, setSubRows, getValue}: {
+export const Expander = ({ row, setSubRows, getValue }: {
   row: Row<any>;
   setSubRows: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   getValue: () => any[];
