@@ -1785,7 +1785,7 @@ export const tableSlice = createSliceWithRequests({
                       }
                     );
                     console.log("current meta", metadata);
-                    if (metadata[0].property) {
+                    if (metadata.length > 0 && metadata.some((m) => m.property)) {
                       console.log("found property", metadata);
                       const newProps = metadata.flatMap((metas) => {
                         if (metas.property) {
