@@ -11,20 +11,8 @@ interface TableFooterProps {
    */
   rows: any[];
   columns: any[];
-  paginatorProps: PaginatorProps;
-}
-
-interface PaginatorProps {
-  canPreviousPage: boolean;
-  canNextPage: boolean;
-  pageOptions: number[];
-  pageCount: number;
+  table: any;
   pageIndex: number;
-  pageSize: number;
-  gotoPage: (updater: number | ((pageIndex: number) => number)) => void;
-  nextPage: () => void;
-  previousPage: () => void;
-  setPageSize: (pageSize: number) => void;
 }
 
 /**
@@ -33,14 +21,15 @@ interface PaginatorProps {
 const TableFooter = ({
   rows,
   columns,
-  paginatorProps
+  table,
+  pageIndex,
 }: TableFooterProps) => {
-  const { gotoPage, pageCount, pageIndex } = paginatorProps;
+  const pageCount = table.getPageCount();
   const { nCells = 0, nCellsReconciliated = 0 } = useAppSelector(selectCurrentTable);
   const columnAnnotationPercentages = useAppSelector(selectColumnsAnnotationPercentages);
 
   const handleChange = (event: any, page: number) => {
-    gotoPage(page - 1);
+    table.setPageIndex(page - 1);
   };
 
   // console.log(nCells);
@@ -54,7 +43,7 @@ const TableFooter = ({
             {`Total columns: ${columns.length}`}
           </Typography>
           <Typography color="textSecondary" variant="body2">
-            {`Total rows: ${rows.length}`}
+            {`Total rows: ${table.getFilteredRowModel().rows.length}`}
           </Typography>
           <Typography color="textSecondary" variant="body2">
             Completion:

@@ -224,17 +224,13 @@ const TableViewer = () => {
   /**
    * Properties to pass to each header.
    */
-  const getHeaderProps = useCallback(({
-    id,
-    data,
-    ...colTableProps
-  }: TableColumn) => {
+  const getHeaderProps = useCallback((header: any) => {
     return {
-      id,
-      selected: !!selectedColumns[id] || !!selectedColumnCells[id],
-      expanded: !!expandedColumnsIds[id],
+      id: header.id,
+      selected: !!selectedColumns[header.id] || !!selectedColumnCells[header.id],
+      expanded: !!expandedColumnsIds[header.id],
       settings,
-      data,
+      data: header.column.columnDef,
       handleCellRightClick,
       handleSelectedColumnChange,
       handleSelectedColumnCellChange
@@ -301,8 +297,14 @@ const TableViewer = () => {
           searchFilter={searchFilterTable}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}
+          dense={isDenseView}
           // getFirstHeaderProps={getFirstHeaderProps}
-          getHeaderProps={getHeaderProps}
+          getHeaderProps={(col) => ({
+            ...getHeaderProps(col),
+            handleCellRightClick,
+            handleSelectedColumnChange,
+            handleSelectedColumnCellChange,
+          })}
           getCellProps={getCellProps}
         />
         <ContextMenuCell

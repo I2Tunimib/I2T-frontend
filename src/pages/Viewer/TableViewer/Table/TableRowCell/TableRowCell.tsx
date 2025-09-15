@@ -13,6 +13,7 @@ import { TableCell, TableColumn, TableRow } from '../interfaces/table';
 import NormalCell from '../NormalCell';
 
 interface TableRowCellProps extends TableCell {
+  cell: any;
   column: TableColumn;
   row: TableRow;
   selected: boolean;
@@ -34,9 +35,10 @@ const Td = styled.td<{
   columnId: string;
   highlightState: any;
   searchHighlight: boolean;
+  dense?: boolean;
 }>(({
   selected, highlightState,
-  searchHighlight, columnId
+  searchHighlight, columnId, dense
 }) => ({
   position: 'relative',
   textAlign: 'center',
@@ -53,13 +55,17 @@ const Td = styled.td<{
   }),
   ...(searchHighlight && {
     backgroundColor: '#FFFCE8'
-  })
+  }),
+  ...(dense && {
+    padding: '0px',
+  }),
 }));
 
 /**
  * Table row cell.
  */
 const TableRowCell: FC<TableRowCellProps> = ({
+  cell,
   children,
   column: { id: columnId },
   row: { id: rowId, ...restRow },
@@ -70,22 +76,23 @@ const TableRowCell: FC<TableRowCellProps> = ({
   settings,
   dense,
   highlightState,
-  searchHighlightState,
+  searchHighlightState = {},
   handleSelectedRowChange,
   handleCellRightClick,
   handleSelectedCellChange,
   updateTableData
 }) => {
-  const [cellValue, setCellValue] = useState<string>(columnId === 'index' ? '' : value.label);
+  const initialValue = cell.getValue()?.label;
+  const [cellValue, setCellValue] = useState<string>(initialValue);
 
   // If value is changed externally, sync it up with local state
   useEffect(() => {
     if (value) {
       if (value.label !== cellValue) {
-        setCellValue(value.label);
+        setCellValue(initialValue);
       }
     }
-  }, [value]);
+  }, [initialValue]);
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setCellValue(event.target.value);
@@ -93,13 +100,13 @@ const TableRowCell: FC<TableRowCellProps> = ({
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      const cellId = `${value.rowId}$${columnId}`;
+      const cellId = `${rowId}$${columnId}`;
       updateTableData(cellId, (event.target as HTMLInputElement).value);
     }
   };
 
   const onBlur = (event: FocusEvent<HTMLInputElement>) => {
-    const cellId = `${value.rowId}$${columnId}`;
+    const cellId = `${rowId}$${columnId}`;
     updateTableData(cellId, event.target.value);
   };
 
@@ -128,6 +135,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
       role="gridcell"
       onClick={(event) => handleSelectCell(event)}
       onContextMenu={handleOnContextMenu}
+      dense={dense}
     >
       {columnId === 'index' ? children : (
         <>
@@ -141,10 +149,10 @@ const TableRowCell: FC<TableRowCellProps> = ({
             />
           ) : (
             <NormalCell
-              label={cellValue}
+              label={initialValue}
               settings={settings}
               expanded={expanded}
-              value={value}
+              value={cell.getValue()}
               dense={dense}
             />
           )}
