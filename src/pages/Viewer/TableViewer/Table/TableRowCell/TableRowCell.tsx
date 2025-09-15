@@ -89,10 +89,10 @@ const TableRowCell: FC<TableRowCellProps> = ({
   handleSelectedCellChange,
   updateTableData,
 }) => {
-  console.log("row cell value", value);
+  console.log("row cell value", cell.getValue()?.label);
 
   // Simple check: if value is not defined, use placeholder
-  const displayValue = value?.label || "N/A";
+  const displayValue = cell.getValue()?.label || "N/A";
 
   const [cellValue, setCellValue] = useState<string>(
     columnId === "index" ? "" : displayValue
@@ -100,7 +100,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
 
   // If value is changed externally, sync it up with local state
   useEffect(() => {
-    const newDisplayValue = value?.label || "N/A";
+    const newDisplayValue = cell.getValue()?.label || "N/A";
     if (newDisplayValue !== cellValue) {
       setCellValue(newDisplayValue);
     }
@@ -112,14 +112,14 @@ const TableRowCell: FC<TableRowCellProps> = ({
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && value?.rowId) {
-      const cellId = `${value.rowId}$${columnId}`;
+      const cellId = `${rowId}$${columnId}`;
       updateTableData(cellId, (event.target as HTMLInputElement).value);
     }
   };
 
   const onBlur = (event: FocusEvent<HTMLInputElement>) => {
     if (value?.rowId) {
-      const cellId = `${value.rowId}$${columnId}`;
+      const cellId = `${rowId}$${columnId}`;
       updateTableData(cellId, event.target.value);
     }
   };
@@ -145,9 +145,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
       columnId={columnId}
       selected={selected}
       highlightState={highlightState}
-      searchHighlight={
-        value?.rowId ? `${rowId}$${columnId}` in searchHighlightState : false
-      }
+      searchHighlight={`${rowId}$${columnId}` in searchHighlightState}
       role="gridcell"
       onClick={(event) => handleSelectCell(event)}
       onContextMenu={handleOnContextMenu}
@@ -167,10 +165,10 @@ const TableRowCell: FC<TableRowCellProps> = ({
             />
           ) : (
             <NormalCell
-              label={cellValue}
+              label={cell.getValue()?.label}
               settings={settings}
               expanded={expanded}
-              value={value}
+              value={cell.getValue()}
               dense={dense}
             />
           )}
