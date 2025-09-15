@@ -4,9 +4,14 @@ import {
   useEffect, useRef
 } from 'react';
 import {
-  Row, usePagination,
-  useRowSelect, useSortBy, useTable
-} from 'react-table';
+  Row,
+  ColumnDef,
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  flexRender,
+} from '@tanstack/react-table';
 import clsx from 'clsx';
 import {
   Pagination, Checkbox,
@@ -16,9 +21,9 @@ import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import styles from './TableListView.module.scss';
 
-interface TableListViewProps {
-  columns: any[];
-  data: any[];
+interface TableListViewProps<TData extends object> {
+  columns: ColumnDef<TData>[];
+  data: TData[];
   Actions?: (props: any) => ReactNode;
   Icon?: ReactNode;
   onChangeRowSelected: (selectedRows: any[]) => void;
@@ -35,11 +40,6 @@ interface FooterProps {
 
 const transformCamelCase = (value: any) => {
   if (typeof value === 'string') {
-    const a = value.split(/([A-Z][a-z]+)/)
-      .map((splitted) => (splitted ? splitted.toLowerCase() : ''))
-      .filter((splitted) => splitted)
-      .join(' ');
-
     return value.split(/([A-Z][a-z]+)/)
       .map((splitted) => (splitted ? splitted.toLowerCase() : ''))
       .filter((splitted) => splitted)
@@ -71,7 +71,7 @@ const Footer: FC<FooterProps> = ({
   );
 };
 
-const IndeterminateCheckbox = forwardRef(
+const IndeterminateCheckbox = forwardRef<HTMLInputElement, any>(
   ({ indeterminate, ...rest }: any, ref) => {
     const defaultRef = useRef(null);
 
@@ -106,151 +106,107 @@ const TableListView: FC<TableListViewProps> = ({
 }) => {
   const match = useMediaQuery('(max-width:1230px)');
 
-  const tableInstance = useTable(
-    { columns, data, initialState: { pageSize: 50 } },
-    useSortBy,
-    usePagination,
-    useRowSelect,
-    (hooks) => {
-      // push a column for the index
-      hooks.visibleColumns.push((cols) => [
-        {
-          id: 'selection',
-          Header: ({ getToggleAllRowsSelectedProps }) => (
-            <div>
-              <IndeterminateCheckbox {...getToggleAllRowsSelectedProps()} />
-            </div>
-          ),
-          Cell: ({ row }) => (
-            <div>
-              <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
-            </div>
-          )
-        },
-        ...cols
-      ]);
+  const extraColumns: ColumnDef<any>[] = [
+    {
+      id: 'selection',
+      header: ({ table }) => (
+        <IndeterminateCheckbox
+          checked={table.getIsAllRowsSelected()}
+          indeterminate={table.getIsSomeRowsSelected()}
+          onChange={() => table.toggleAllRowsSelected()}
+        />
+      ),
+      cell: ({ row }) => (
+        <IndeterminateCheckbox
+          checked={row.getIsSelected()}
+          indeterminate={row.getIsSomeSelected()}
+          onChange={() => row.toggleSelected()}
+        />
+      )
+    },
+    ...(Icon
+      ? [{
+            id: 'icon',
+            header: '',
+            cell: () => Icon
+        }]
+      : []),
+    ...columns,
+    ...(Actions
+      ? [{
+            id: 'action',
+            header: '',
+            cell: (props) => (
+              <div className={styles.Actions}>
+                {Actions(props)}
+              </div>
+            )
+          }
+        ]
+     : [])
+  ];
 
-      if (Actions) {
-        hooks.visibleColumns.push((cols) => {
-          return [
-            ...cols,
-            {
-              id: 'action',
-              Header: '',
-              Cell: (props) => (
-                <div className={styles.Actions}>
-                  {Actions(props)}
-                </div>
-              )
-            }
-          ];
-        });
-      }
-
-      if (Icon) {
-        hooks.visibleColumns.push(([first, ...rest]) => {
-          return [
-            first,
-            {
-              id: 'icon',
-              Header: '',
-              Cell: () => Icon
-            },
-            ...rest
-          ];
-        });
-      }
-    }
-  );
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    selectedFlatRows,
-    state: { pageIndex },
-    prepareRow
-  } = tableInstance;
+  const table = useReactTable({
+    data,
+    columns: extraColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    enableRowSelection: true,
+  });
 
   const paginationProps = {
-    pageIndex,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage
+    pageIndex: table.getState().pagination.pageIndex,
+    pageCount: table.getPageCount(),
+    gotoPage: table.setPageIndex,
+    nextPage: table.nextPage,
+    previousPage: table.previousPage
   };
 
   useEffect(() => {
-    onChangeRowSelected(selectedFlatRows.map((flatRow) => flatRow.original));
-  }, [selectedFlatRows]);
+    onChangeRowSelected(table.getSelectedRowModel().rows.map(row => row.original));
+  }, [table.getState().rowSelection]);
 
   return (
     <>
-      <table className={styles.Root} {...getTableProps()}>
+      <table className={styles.Root}>
         <thead className={styles.THead}>
-          {headerGroups.map((headerGroup) => {
-            const { key: keyTr, ...restTr } = headerGroup.getHeaderGroupProps();
-            return (
-            <tr key={keyTr} {...restTr}>
-              {headerGroup.headers.map((column) => {
-                const { key: keyTh, ...restTh } = column.getHeaderProps(column.getSortByToggleProps());
-                return (
-                <th key={keyTh}
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th key={header.id}
                   className={clsx(
                     styles.Th,
                     {
-                      [styles.Fixed]: column.id !== 'selection' && column.id !== 'icon'
-                    }
-                  )}
-                  {...restTh}
-              >
-                  {column.id === 'selection' || column.id === 'action'
-                    ? column.render('Header')
-                    : (
-                      <Button
-                        color="inherit"
-                        className={styles.HeaderButton}
-                        endIcon={column.isSorted
-                          ? column.isSortedDesc
-                            ? <ArrowDownwardRoundedIcon color="action" />
-                            : <ArrowUpwardRoundedIcon color="action" />
-                          : null}>
-                        {column.render('Header')}
-                      </Button>
-                    )}
-                </th>
-                );
-              })}
-            </tr>
-          );
-        })}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {page.map((row) => {
-            prepareRow(row);
-            const { key: keyRow, ...restRow } = row.getRowProps([rowPropGetter(row)]);
-            return (
-              <tr key={keyRow} className={styles.Tr} {...restRow}>
-                {row.cells.map((cell) => {
-                  const { key: cellKey, ...cellRest } = cell.getCellProps();
-                  return (
-                    <td key={cellKey} className={styles.Td} {...cellRest}>
-                      {cell.render('Cell', { mediaMatch: match })}
-                    </td>
-                  );
-                })}
+                      [styles.Fixed]: header.id !== 'selection' && header.id !== 'icon'
+                    })}
+                  onClick={header.column.getToggleSortingHandler()}
+                >
+                <Button
+                      color="inherit"
+                      className={styles.HeaderButton}
+                      endIcon={header.column.getIsSorted()
+                        ? header.column.getIsSorted() === 'desc'
+                          ? <ArrowDownwardRoundedIcon color="action" />
+                          : <ArrowUpwardRoundedIcon color="action" />
+                        : null}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </Button>
+                  </th>
+                ))}
               </tr>
-            );
-          })}
+          ))}
+          </thead>
+          <tbody>
+            {table.getSortedRowModel().rows.map((row) => (
+              <tr key={row.id} className={styles.Tr} {...rowPropGetter(row)}>
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className={styles.Td}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+          ))}
         </tbody>
       </table>
       <Footer {...paginationProps} />

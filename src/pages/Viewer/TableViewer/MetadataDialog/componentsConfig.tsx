@@ -1,9 +1,10 @@
 import { Tag } from "@components/core";
 import { Button, Checkbox, Chip, Link, Stack, Typography } from "@mui/material";
 import { MetaToViewItem } from "@store/slices/config/interfaces/config";
-import { Cell } from "react-table";
+import { CellContext, Row } from "@tanstack/react-table";
 
-export const ResourceLink = ({ value: cellValue }: Cell<{}>) => {
+export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
+  const cellValue = getValue();
   console.log("ResourceLink called with:", cellValue);
   const { value, uri } = cellValue;
   console.log("cell uri", uri);
@@ -37,9 +38,8 @@ export const ResourceLink = ({ value: cellValue }: Cell<{}>) => {
   );
 };
 
-export const MatchCell = ({ value: inputValue }: Cell<{}>) => {
-  const value = inputValue == null ? false : inputValue;
-
+export const MatchCell = ({ getValue }: CellContext<any, any>) => {
+  const value = getValue() ?? false;
   return (
     <Tag size="medium" status={value ? "done" : "doing"}>
       {`${value}`}
@@ -61,10 +61,12 @@ export const SubList = (value: any[] = []) => {
   );
 };
 
-export const Expander = ({ row, setSubRows, value: inputValue }: any) => {
-  const { onClick, ...rest } = row.getToggleRowExpandedProps() as any;
-
-  const value = inputValue || [];
+export const Expander = ({ row, setSubRows, getValue}: {
+  row: Row<any>;
+  setSubRows: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  getValue: () => any[];
+}) => {
+  const value = getValue() || [];
 
   const handleClick = (event: MouseEvent) => {
     event.stopPropagation();
@@ -79,18 +81,20 @@ export const Expander = ({ row, setSubRows, value: inputValue }: any) => {
         [row.id]: SubList(value),
       };
     });
-    onClick();
+    row.toggleExpanded();
   };
 
   return (
-    <Button onClick={handleClick} {...rest}>
-      {row.isExpanded ? `(${value.length}) 👇` : `(${value.length}) 👉`}
+    <Button onClick={handleClick}>
+      {row.getIsExpanded() ? `(${value.length}) 👇` : `(${value.length}) 👉`}
     </Button>
   );
 };
-export const CheckBoxCell = ({ value, onChange }: any) => {
+export const CheckBoxCell = ({ getValue, table, row, column }: CellContext<any, any>) => {
+  const value = getValue();
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange?.(event.target.checked); // Call the onChange handler if provided
+    table.options.meta?.onCheckboxChange?.(row, column.id, event.target.checked);
   };
 
   return (
@@ -109,10 +113,10 @@ export const CELL_COMPONENTS_TYPES = {
 };
 
 export const getCellComponent = (
-  cell: Cell<{}>,
+  cell: CellContext<any, any>,
   type: MetaToViewItem["type"]
 ) => {
-  const { value } = cell;
+  const value = cell.getValue();
 
   console.log("getCellComponent called with:", value, type, cell);
 
