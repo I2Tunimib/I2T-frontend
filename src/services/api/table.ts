@@ -139,20 +139,31 @@ const tableAPI = {
       console.log(
         `Adding headers for tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`
       );
+
+      // Clean values to remove BOM and other problematic characters
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+      const cleanColumnName = columnName
+        ? columnName.replace(/\uFEFF/g, "").trim()
+        : "";
+
       headers[
         "X-Table-Dataset-Info"
-      ] = `tableId:${tableId};datasetId:${datasetId}${
-        columnName ? `;columnName:${columnName}` : ""
+      ] = `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
+        cleanColumnName ? `;columnName:${cleanColumnName}` : ""
       }`;
     }
     console.log("Reconciliation request headers:", headers);
-    console.log("Full reconcile URL:", `/reconciliators${baseUrl}`);
+
+    // Clean baseUrl to remove BOM characters
+    const cleanBaseUrl = baseUrl.replace(/\uFEFF/g, "").trim();
+    console.log("Full reconcile URL:", `/reconciliators${cleanBaseUrl}`);
     console.log("Reconcile request config:", {
       headers,
       clearCacheEntry: true,
     });
 
-    return apiClient.post(`/reconciliators${baseUrl}`, data, {
+    return apiClient.post(`/reconciliators${cleanBaseUrl}`, data, {
       headers,
       clearCacheEntry: true, // Bypass cache for this request
     });
@@ -173,18 +184,29 @@ const tableAPI = {
       console.log(
         `Adding headers for extend: tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`
       );
+
+      // Clean values to remove BOM and other problematic characters
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+      const cleanColumnName = columnName
+        ? columnName.replace(/\uFEFF/g, "").trim()
+        : "";
+
       headers[
         "X-Table-Dataset-Info"
-      ] = `tableId:${tableId};datasetId:${datasetId}${
-        columnName ? `;columnName:${columnName}` : ""
+      ] = `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
+        cleanColumnName ? `;columnName:${cleanColumnName}` : ""
       }`;
     }
     console.log("Extension request headers:", headers);
-    console.log("Extension request URL:", `extenders${baseUrl}`);
+
+    // Clean baseUrl to remove BOM characters
+    const cleanBaseUrl = baseUrl.replace(/\uFEFF/g, "").trim();
+    console.log("Extension request URL:", `extenders${cleanBaseUrl}`);
     console.log("Extension request data:", data);
     console.log("Extend request config:", { headers, clearCacheEntry: true });
 
-    return apiClient.post(`extenders${baseUrl}`, data, {
+    return apiClient.post(`extenders${cleanBaseUrl}`, data, {
       headers,
       clearCacheEntry: true, // Bypass cache for this request
     });
@@ -197,6 +219,12 @@ const tableAPI = {
     apiClient.get(
       `/tables/challenge/datasets/${datasetName}/tables/${tableName}`
     ),
+  trackTable: (datasetId: string, tableId: string, metadataToTrack: any) =>
+    apiClient.post(`/dataset/track/${datasetId}/${tableId}`, metadataToTrack, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }),
 };
 
 export default tableAPI;

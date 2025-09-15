@@ -10,6 +10,7 @@ export interface SvgPathCoordinatorProps
   shouldRedraw?: () => boolean;
   onPathMouseEnter?: (id: string) => void;
   onPathMouseLeave?: () => void;
+  showRelationTooltips?: boolean;
 }
 
 const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
@@ -24,6 +25,7 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
         alfa: 30,
       },
     });
+
 
     // Store scrollLeft to adjust viewBox
     const [containerScrollLeft, setContainerScrollLeft] = useState(0);
@@ -76,7 +78,6 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
         draw();
       }
     }, [paths]);
-
     return (
       <svg ref={ref} {...props}>
         {processedPaths && processedPaths.map((path: any, index: number) => (

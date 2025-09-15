@@ -1,16 +1,21 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { ID } from '@store/interfaces/store';
+import { ID } from "@store/interfaces/store";
 import {
-  ChangeEvent, FC, KeyboardEvent,
-  useState, MouseEvent, useRef,
-  FocusEvent, useEffect
-} from 'react';
-import styled from '@emotion/styled';
-import EditableCell from '../EditableCell';
-import { TableCell, TableColumn, TableRow } from '../interfaces/table';
-import NormalCell from '../NormalCell';
+  ChangeEvent,
+  FC,
+  KeyboardEvent,
+  useState,
+  MouseEvent,
+  useRef,
+  FocusEvent,
+  useEffect,
+} from "react";
+import styled from "@emotion/styled";
+import EditableCell from "../EditableCell";
+import { TableCell, TableColumn, TableRow } from "../interfaces/table";
+import NormalCell from "../NormalCell";
 
 interface TableRowCellProps extends TableCell {
   column: TableColumn;
@@ -21,11 +26,15 @@ interface TableRowCellProps extends TableCell {
   matching: boolean;
   dense: boolean;
   highlightState: any;
-  settings: any,
+  settings: any;
   searchHighlightState: any;
   handleSelectedRowChange: (event: MouseEvent<any>, id: string) => void;
   handleSelectedCellChange: (event: MouseEvent<any>, id: string) => void;
-  handleCellRightClick: (event: MouseEvent<any>, type: string, id: string) => void;
+  handleCellRightClick: (
+    event: MouseEvent<any>,
+    type: string,
+    id: string
+  ) => void;
   updateTableData: (cellId: ID, value: string) => any;
 }
 
@@ -34,26 +43,24 @@ const Td = styled.td<{
   columnId: string;
   highlightState: any;
   searchHighlight: boolean;
-}>(({
-  selected, highlightState,
-  searchHighlight, columnId
-}) => ({
-  position: 'relative',
-  textAlign: 'center',
-  verticalAlign: 'middle',
-  cursor: 'default',
-  backgroundColor: 'inherit',
-  borderRight: '1px solid #ededed',
-  borderBottom: '1px solid #ededed',
-  ...(highlightState && highlightState.columns.includes(columnId) && {
-    backgroundColor: `${highlightState.color}0d`
-  }),
+}>(({ selected, highlightState, searchHighlight, columnId }) => ({
+  position: "relative",
+  textAlign: "center",
+  verticalAlign: "middle",
+  cursor: "default",
+  backgroundColor: "inherit",
+  borderRight: "1px solid #ededed",
+  borderBottom: "1px solid #ededed",
+  ...(highlightState &&
+    highlightState.columns.includes(columnId) && {
+      backgroundColor: `${highlightState.color}0d`,
+    }),
   ...(selected && {
-    backgroundColor: 'var(--brand-color-one-transparent)'
+    backgroundColor: "var(--brand-color-one-transparent)",
   }),
   ...(searchHighlight && {
-    backgroundColor: '#FFFCE8'
-  })
+    backgroundColor: "#FFFCE8",
+  }),
 }));
 
 /**
@@ -74,37 +81,45 @@ const TableRowCell: FC<TableRowCellProps> = ({
   handleSelectedRowChange,
   handleCellRightClick,
   handleSelectedCellChange,
-  updateTableData
+  updateTableData,
 }) => {
-  const [cellValue, setCellValue] = useState<string>(columnId === 'index' ? '' : value.label);
+  console.log("row cell value", value);
+
+  // Simple check: if value is not defined, use placeholder
+  const displayValue = value?.label || "N/A";
+
+  const [cellValue, setCellValue] = useState<string>(
+    columnId === "index" ? "" : displayValue
+  );
 
   // If value is changed externally, sync it up with local state
   useEffect(() => {
-    if (value) {
-      if (value.label !== cellValue) {
-        setCellValue(value.label);
-      }
+    const newDisplayValue = value?.label || "N/A";
+    if (newDisplayValue !== cellValue) {
+      setCellValue(newDisplayValue);
     }
-  }, [value]);
+  }, [value, cellValue]);
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setCellValue(event.target.value);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+    if (event.key === "Enter" && value?.rowId) {
       const cellId = `${value.rowId}$${columnId}`;
       updateTableData(cellId, (event.target as HTMLInputElement).value);
     }
   };
 
   const onBlur = (event: FocusEvent<HTMLInputElement>) => {
-    const cellId = `${value.rowId}$${columnId}`;
-    updateTableData(cellId, event.target.value);
+    if (value?.rowId) {
+      const cellId = `${value.rowId}$${columnId}`;
+      updateTableData(cellId, event.target.value);
+    }
   };
 
   const handleSelectCell = (event: MouseEvent<HTMLElement>) => {
-    if (columnId === 'index') {
+    if (columnId === "index") {
       handleSelectedRowChange(event, rowId);
     } else {
       handleSelectedCellChange(event, `${rowId}$${columnId}`);
@@ -112,10 +127,10 @@ const TableRowCell: FC<TableRowCellProps> = ({
   };
 
   const handleOnContextMenu = (event: MouseEvent<HTMLElement>) => {
-    if (columnId === 'index') {
-      handleCellRightClick(event, 'row', rowId);
+    if (columnId === "index") {
+      handleCellRightClick(event, "row", rowId);
     } else {
-      handleCellRightClick(event, 'cell', `${rowId}$${columnId}`);
+      handleCellRightClick(event, "cell", `${rowId}$${columnId}`);
     }
   };
 
@@ -124,12 +139,16 @@ const TableRowCell: FC<TableRowCellProps> = ({
       columnId={columnId}
       selected={selected}
       highlightState={highlightState}
-      searchHighlight={`${rowId}$${columnId}` in searchHighlightState}
+      searchHighlight={
+        value?.rowId ? `${rowId}$${columnId}` in searchHighlightState : false
+      }
       role="gridcell"
       onClick={(event) => handleSelectCell(event)}
       onContextMenu={handleOnContextMenu}
     >
-      {columnId === 'index' ? children : (
+      {columnId === "index" ? (
+        children
+      ) : (
         <>
           {editable ? (
             <EditableCell

@@ -51,8 +51,8 @@ import DynamicExtensionForm from "@components/core/DynamicForm/DynamicForm";
 const Transition = forwardRef(
   (
     props: TransitionProps & { children?: ReactElement<any, any> },
-    ref: Ref<unknown>
-  ) => <Slide direction="down" ref={ref} {...props} />
+    ref: Ref<unknown>,
+  ) => <Slide direction="down" ref={ref} {...props} />,
 );
 
 const Content = styled.div({
@@ -104,13 +104,13 @@ const DialogInnerContent = () => {
     dispatch(
       updateUI({
         openExtensionDialog: false,
-      })
+      }),
     );
   };
 
   const handleChange = (event: SelectChangeEvent<string>) => {
     const val = extensionServices.find(
-      (service) => service.id === event.target.value
+      (service) => service.id === event.target.value,
     );
     if (val) {
       console.log("current service", val);
@@ -124,7 +124,7 @@ const DialogInnerContent = () => {
         extend({
           extender: currentService,
           formValues: formState,
-        })
+        }),
       )
         .unwrap()
         .then(({ data }) => {
@@ -168,7 +168,7 @@ const DialogInnerContent = () => {
           }}
           renderValue={(selected) => {
             const selectedService = extensionServices.find(
-              (service) => service.id === selected
+              (service) => service.id === selected,
             );
             return selectedService ? selectedService.name : "";
           }}
