@@ -148,18 +148,16 @@ export const filterTable = createAsyncThunk(
     const { table } = getState() as RootState;
     const { rows, columns } = table.entities;
 
+    const searchValue = value.toLowerCase();
+
     const allLabels = Array.from(
       new Set(LABELS_FN[tag as keyof typeof LABELS_FN]({ rows, columns })),
     );
 
     return allLabels
-      .map((label) => ({
-        distance: levDistance(value, label),
-        label,
-      }))
-      .filter((item) => item.distance < 0.9)
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 10);
+      .filter((label) => (label.toLowerCase().startsWith(searchValue)))
+      .slice(0, 10) // max 10 suggestions
+      .map((label) => ({ label }));
   },
 );
 

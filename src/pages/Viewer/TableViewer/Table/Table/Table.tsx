@@ -91,17 +91,17 @@ const Table: FC<TableProps> = ({
   /**
  * Returns row which have at least a cell with label.
  */
-  const filterAll = useCallback((rows: Row<any>[], colIds: string[], searchValue: string) => {
-    const filteredRows = rows.filter((row) => colIds
-      .some((colId) => {
-        const cellValue = row.getValue(colId)?.label?.toLowerCase();
-        return cellValue?.startsWith(searchValue);
-      }));
+  const filterAll = useCallback((rows: Array<Row>, colIds: Array<string>, regex: RegExp) => {
+    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+
+    const filteredRows = rows.filter((row) =>
+      colIds.some((colId) => regex.test(normalize(row.getValue(colId)?.label || ''))));
 
     filteredRows.forEach((row) => {
       colIds.forEach((colId) => {
-        const cellValue = row.getValue(colId)?.label?.toLowerCase();
-        if (cellValue?.startsWith(searchValue)) {
+        const match = regex.test(normalize(row.getValue(colId)?.label || ''));
+
+        if (match) {
           setSearchHighlight((oldState) => ({
             ...oldState,
             [`${row.id}$${colId}`]: true
@@ -115,15 +115,17 @@ const Table: FC<TableProps> = ({
   /**
    * Returns row which have at least a cell with metadata name.
    */
-  const filterMetaName = useCallback((rows: Row<any>[], colIds: string[], searchValue: string) => {
-    const filteredRows = rows.filter((row) => colIds
-      .some((colId) => row.getValue(colId)?.metadata?.some((item: BaseMetadata) =>
-        item.name.value.toLowerCase().startsWith(searchValue))));
+  const filterMetaName = useCallback((rows: Row<any>[], colIds: string[], regex: RegExp) => {
+    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+
+    const filteredRows = rows.filter((row) =>
+      colIds.some((colId) => row.getValue(colId)?.metadata?.some((item: BaseMetadata) =>
+        regex.test(normalize(item.name.value)))));
 
     filteredRows.forEach((row) => {
       colIds.forEach((colId) => {
         row.getValue(colId)?.metadata?.forEach((item: BaseMetadata) => {
-          if (item.name.value.toLowerCase().startsWith(searchValue)) {
+          if (regex.test(normalize(item.name.value))) {
             setSearchHighlight((oldState) => ({
               ...oldState,
               [`${row.id}$${colId}`]: true
@@ -138,16 +140,19 @@ const Table: FC<TableProps> = ({
   /**
    * Returns row which have at least a cell with metadata type.
    */
-  const filterMetaType = useCallback((rows: Row<any>[], colIds: string[], searchValue: string) => {
-    const filteredRows = rows.filter((row) => colIds
-      .some((colId) => row.getValue(colId)?.metadata?.some((item: any) =>
-        item.type?.some((type: any) => type.name.toLowerCase().startsWith(searchValue)))));
+  const filterMetaType = useCallback((rows: Row<any>[], colIds: string[], regex: RegExp) => {
+    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+
+    const filteredRows = rows.filter((row) =>
+      colIds.some((colId) =>
+        row.getValue(colId)?.metadata?.some((item: any) =>
+          item.type?.some((type: any) => regex.test(normalize(type.name))))));
 
     filteredRows.forEach((row) => {
       colIds.forEach((colId) => {
         row.getValue(colId)?.metadata?.forEach((item: any) => {
           item.type?.forEach((type: any) => {
-            if (type.name.toLowerCase().startsWith(searchValue)) {
+            if (regex.test(normalize(type.name))) {
               setSearchHighlight((oldState) => ({
                 ...oldState,
                 [`${row.id}$${colId}`]: true
@@ -180,18 +185,18 @@ const Table: FC<TableProps> = ({
     const { value, filter } = filterValue as TableGlobalFilter;
     if (!value) return true;
 
-    const searchValue = value.toLowerCase();
+    const regex = new RegExp(`^${value}`, 'i');
     const colIds = row.getAllCells().map((cell) => cell.column.id);
 
     switch (filter) {
       case 'label':
-        return filterAll([row], colIds, searchValue).length > 0;
+        return filterAll([row], colIds, regex).length > 0;
       case 'metaName':
-        return filterMetaName([row], colIds, searchValue).length > 0;
+        return filterMetaName([row], colIds, regex).length > 0;
       case 'metaType':
-        return filterMetaType([row], colIds, searchValue).length > 0;
+        return filterMetaType([row], colIds, regex).length > 0;
       default:
-        return filterAll([row], colIds, searchValue).length > 0;
+        return filterAll([row], colIds, regex).length > 0;
     }
   }, [filterAll, filterMetaName, filterMetaType]);
 
@@ -312,23 +317,23 @@ const Table: FC<TableProps> = ({
 
     if (!searchFilter?.value) return;
 
-    const searchValue = searchFilter.value.toLowerCase();
+    const regex = new RegExp(`^${searchFilter.value}`, 'i');
     const colIds = allColumns.map((col) => col.id);
 
     let filteredRows: Row<any>[] = table.getRowModel().rows;
 
     switch (searchFilter.filter) {
       case 'label':
-        filteredRows = filterAll(filteredRows, colIds, searchValue);
+        filteredRows = filterAll(filteredRows, colIds, regex);
         break;
       case 'metaName':
-        filteredRows = filterMetaName(filteredRows, colIds, searchValue);
+        filteredRows = filterMetaName(filteredRows, colIds, regex);
         break;
       case 'metaType':
-        filteredRows = filterMetaType(filteredRows, colIds, searchValue);
+        filteredRows = filterMetaType(filteredRows, colIds, regex);
         break;
       default:
-        filteredRows = filterAll(filteredRows, colIds, searchValue);
+        filteredRows = filterAll(filteredRows, colIds, regex);
     }
   }, [searchFilter?.value, searchFilter?.filter, table.getRowModel().rows]);
 
