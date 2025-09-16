@@ -94,34 +94,31 @@ const TableRowCell: FC<TableRowCellProps> = ({
   // Simple check: if value is not defined, use placeholder
   const displayValue = cell.getValue()?.label || "N/A";
 
-  const [cellValue, setCellValue] = useState<string>(
-    columnId === "index" ? "" : displayValue
-  );
+  const [cellValue, setCellValue] = useState<string>(columnId === "index" ? "" : displayValue);
 
   // If value is changed externally, sync it up with local state
   useEffect(() => {
-    const newDisplayValue = cell.getValue()?.label || "N/A";
-    if (newDisplayValue !== cellValue) {
-      setCellValue(newDisplayValue);
+    if (value) {
+      if (value.label !== cellValue) {
+        setCellValue(displayValue);
+      }
     }
-  }, [value, cellValue]);
+  }, [displayValue]);
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setCellValue(event.target.value);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" && value?.rowId) {
+    if (event.key === "Enter") {
       const cellId = `${rowId}$${columnId}`;
       updateTableData(cellId, (event.target as HTMLInputElement).value);
     }
   };
 
   const onBlur = (event: FocusEvent<HTMLInputElement>) => {
-    if (value?.rowId) {
-      const cellId = `${rowId}$${columnId}`;
-      updateTableData(cellId, event.target.value);
-    }
+    const cellId = `${rowId}$${columnId}`;
+    updateTableData(cellId, event.target.value);
   };
 
   const handleSelectCell = (event: MouseEvent<HTMLElement>) => {
@@ -165,7 +162,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
             />
           ) : (
             <NormalCell
-              label={cell.getValue()?.label}
+              label={displayValue}
               settings={settings}
               expanded={expanded}
               value={cell.getValue()}
