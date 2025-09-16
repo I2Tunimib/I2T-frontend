@@ -1,7 +1,6 @@
 /* eslint-disable indent */
 import {
   Row,
-  ColumnDef,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -9,7 +8,7 @@ import {
   useReactTable,
   flexRender,
   FilterFn,
-  RowData,
+  SortingState,
 } from '@tanstack/react-table';
 import {
   FC, useCallback,
@@ -53,14 +52,6 @@ interface HighlightState {
   color: string;
   columns: string[];
 }
-
-const findMatchingMetadata = (metadata: BaseMetadata[]) => {
-  if (!metadata || metadata.length === 0) {
-    return null;
-  }
-
-  return metadata.find((metaItem) => metaItem.match);
-};
 
 // default prop getter for when it is not provided
 const defaultPropGetter = () => ({});
@@ -186,7 +177,7 @@ const Table: FC<TableProps> = ({
     columnIds,
     filterValue
   ) => {
-    const { globalFilter, value, filter } = filterValue as TableGlobalFilter;
+    const { value, filter } = filterValue as TableGlobalFilter;
     if (!value) return true;
 
     const searchValue = value.toLowerCase();
@@ -290,8 +281,16 @@ const Table: FC<TableProps> = ({
     pageSize: 17,
   });
 
+  const filteredData = useMemo(() => {
+    if (!searchFilter?.globalFilter || searchFilter.globalFilter.length === 3) {
+      return data;
+    }
+    const colIds = allColumns.map((col) => col.id);
+    return initialFilter(data, colIds, searchFilter.globalFilter);
+  }, [data, allColumns, searchFilter?.globalFilter, initialFilter]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns: allColumns,
     getRowId,
     getCoreRowModel: getCoreRowModel(),
@@ -373,31 +372,31 @@ const Table: FC<TableProps> = ({
                   // Loop over the headers in each row
                   headerGroup.headers.map((header) => (
                     // Apply the header cell props
-                      <TableHeaderCell
-                        key={header.id}
-                        ref={(el: any) => {
-                          columnRefs.current[header.id] = el;
-                        }}
-                        header={header}
-                        data={header.column.columnDef}
-                        highlightState={highlightState}
-                        sortType={sortType}
-                        setSortType={setSortType}
-                        setSorting={setSorting}
-                        {...getHeaderProps(header)}
-                      >
-                        {// Render the header
-                          flexRender(header.column.columnDef.header, header.getContext())
-                        }
-                      </TableHeaderCell>
-                     ))}
+                    <TableHeaderCell
+                      key={header.id}
+                      ref={(el: any) => {
+                        columnRefs.current[header.id] = el;
+                      }}
+                      header={header}
+                      data={header.column.columnDef}
+                      highlightState={highlightState}
+                      sortType={sortType}
+                      setSortType={setSortType}
+                      setSorting={setSorting}
+                      {...getHeaderProps(header)}
+                    >
+                      {// Render the header
+                        flexRender(header.column.columnDef.header, header.getContext())
+                      }
+                    </TableHeaderCell>
+                   ))}
               </TableRow>
             ))}
         </TableHead>
         {/* Apply the table body props */}
         <tbody>
           {// Loop over the table rows
-            table.getPaginationRowModel().rows.map((row) =>
+            table.getPaginationRowModel().rows.map((row) => (
               // Prepare the row for display
               <TableRow key={row.id}>
                 {// Loop over the rows cells
@@ -416,7 +415,7 @@ const Table: FC<TableProps> = ({
                     </TableRowCell>
                   ))}
               </TableRow>
-            )}
+            ))}
         </tbody>
       </TableRoot>
       <TableFooter
