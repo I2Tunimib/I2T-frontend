@@ -37,6 +37,8 @@ interface TableProps {
   tableSettings: any;
   searchFilter?: TableGlobalFilter;
   dense?: boolean;
+  columnVisibility: Record<string, boolean>;
+  setColumnVisibility: (visible: Record<string, boolean>) => void;
   getGlobalProps: () => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
@@ -63,6 +65,8 @@ const Table: FC<TableProps> = ({
   headerExpanded,
   tableSettings,
   dense,
+  columnVisibility,
+  setColumnVisibility,
   getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
@@ -200,86 +204,19 @@ const Table: FC<TableProps> = ({
     }
   }, [filterAll, filterMetaName, filterMetaType]);
 
-  // const sortByMetadata = useCallback(
-  //   (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
-  //     console.log(rowA);
-  //     if (!rowA.values[columnId].annotationMeta
-  //       || !rowA.values[columnId].annotationMeta.match.value) {
-  //       return -1;
-  //     }
-
-  //     if (!rowB.values[columnId].annotationMeta
-  //       || !rowB.values[columnId].annotationMeta.match.value) {
-  //       return 1;
-  //     }
-
-  //     const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
-  //     if (!matchingA) {
-  //       return -1;
-  //     }
-
-  //     const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
-  //     if (!matchingB) {
-  //       return 1;
-  //     }
-
-  //     return matchingA.score - matchingB.score;
-  //   },
-  //   []
-  // );
-
-  // const sortText = useCallback(
-  //   (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
-  //     return rowA.values[columnId].label.localeCompare(rowB.values[columnId].label);
-  //     // if (!rowA.values[columnId].annotationMeta
-  //     //   || !rowA.values[columnId].annotationMeta.match.value) {
-  //     //   return -1;
-  //     // }
-
-  //     // if (!rowB.values[columnId].annotationMeta
-  //     //   || !rowB.values[columnId].annotationMeta.match.value) {
-  //     //   return 1;
-  //     // }
-
-  //     // const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
-  //     // if (!matchingA) {
-  //     //   return -1;
-  //     // }
-
-  //     // const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
-  //     // if (!matchingB) {
-  //     //   return 1;
-  //     // }
-
-  //     // return matchingA.score - matchingB.score;
-  //   },
-  //   []
-  // );
-
-  // const test = useCallback(() => {
-  //   if (sortFn === 'metadata') {
-  //     return sortByMetadata;
-  //   }
-  //   return sortText;
-  //   // } else if (sortfn === 'text') {
-  //   //   return testSort;
-  //   // }
-  // }, [sortFn]);
-
-  // const sortTypes = useMemo(() => ({ sortByMetadata: test() }), [test]);
-
-  const allColumns = useMemo(() => ([
-    {
-      id: 'index',
-      header: '',
-      accessorFn: (_row, index) => index,
-      enableSorting: true,
-      cell: ({ row }) => (
-        <div>{row.index + 1}</div>
-      ),
-    },
-    ...columns,
-  ]), [columns]);
+  const allColumns = useMemo(() => {
+    const hasVisibleColumns = Object.values(columnVisibility).some((visible) => visible);
+    const indexColumn = hasVisibleColumns
+      ? [{
+          id: 'index',
+          header: '',
+          accessorFn: (_row, index) => index,
+          enableSorting: true,
+          cell: ({ row }) => <div>{row.index + 1}</div>,
+      }]
+      : [];
+    return [...indexColumn, ...columns];
+  }, [columns, columnVisibility]);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -306,10 +243,12 @@ const Table: FC<TableProps> = ({
     state: {
       globalFilter: searchFilter,
       pagination,
-      sorting
+      sorting,
+      columnVisibility,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
   });
 
   useEffect(() => {

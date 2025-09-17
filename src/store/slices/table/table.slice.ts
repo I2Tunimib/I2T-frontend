@@ -128,6 +128,7 @@ const initialState: TableState = {
       filter: "all",
       value: "",
     },
+    columnVisibility: {},
     denseView: true,
     // viewOnly: false,
     headerExpanded: false,
@@ -1603,6 +1604,12 @@ export const tableSlice = createSliceWithRequests({
             draft.ui.deletedColumnsIds[colId] = columnToDelete.label || colId;
           }
           deleteOneColumn(draft, colId);
+          // Update columns'list
+          delete draft.entities.columns.byId[colId];
+          draft.entities.columns.allIds = draft.entities.columns.allIds.filter(id => id !== colId);
+          Object.values(draft.entities.rows.byId).forEach((row) => {
+            delete row.cells[colId];
+          });
         },
         (draft) => {
           draft.ui.selectedColumnsIds = {};
@@ -1681,6 +1688,12 @@ export const tableSlice = createSliceWithRequests({
         draft.entities.tableInstance.lastModifiedDate =
           new Date().toISOString();
       });
+    },
+    updateColumnVisibility: (
+        state,
+        action: PayloadAction<{ id: string; isVisible: boolean }>
+    ) => {
+      state.ui.columnVisibility[action.payload.id] = action.payload.isVisible;
     },
   },
   extraRules: (builder) =>
@@ -1944,6 +1957,7 @@ export const tableSlice = createSliceWithRequests({
                 );
 
                 if (!draft.entities.columns.allIds.includes(newColId)) {
+                  /*
                   const index = draft.entities.columns.allIds.findIndex(
                     (originalColId) => originalColId === meta[newColId],
                   );
@@ -1955,8 +1969,9 @@ export const tableSlice = createSliceWithRequests({
                       newColId,
                     );
                   } else {
+                  */
                     draft.entities.columns.allIds.push(newColId);
-                  }
+                  //}
                 }
               });
               updateNumberOfReconciliatedCells(draft);
@@ -2070,6 +2085,7 @@ export const {
   pasteCell,
   undo,
   redo,
+  updateColumnVisibility,
 } = tableSlice.actions;
 
 export default tableSlice.reducer;

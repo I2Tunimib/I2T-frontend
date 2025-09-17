@@ -24,7 +24,8 @@ const TableFooter = ({
   table,
   pageIndex,
 }: TableFooterProps) => {
-  const pageCount = table.getPageCount();
+  const visibleColumnCount = Object.values(table.getState().columnVisibility).filter(Boolean).length;
+  const pageCount = visibleColumnCount === 0 ? 0 : table.getPageCount();
   const { nCells = 0, nCellsReconciliated = 0 } = useAppSelector(selectCurrentTable);
   const columnAnnotationPercentages = useAppSelector(selectColumnsAnnotationPercentages);
 

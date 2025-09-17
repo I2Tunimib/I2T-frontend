@@ -995,3 +995,23 @@ export const selectReconciliatioContextColumnIds = createSelector(
   selectSelectedColumnIds,
   (entities, ids) => entities.columns.allIds.filter((id) => !(id in ids))
 );
+
+export const selectColumnsTable = createSelector(
+  selectColumnsState,
+  (columnsState) => {
+    if (!columnsState || !Array.isArray(columnsState.allIds)) return [];
+    return columnsState.allIds
+      .map((id) => {
+        const col = columnsState.byId[id];
+          if (!col) return undefined;
+          return {
+            header: col.label,
+            accessorKey: col.id,
+            sortType: "customSort",
+            id: col.id,
+            data: { ...col },
+          };
+        })
+      .filter(Boolean);
+  }
+);

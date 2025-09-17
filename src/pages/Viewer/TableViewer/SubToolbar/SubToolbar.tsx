@@ -10,6 +10,7 @@ import ReorderRoundedIcon from "@mui/icons-material/ReorderRounded";
 import ArrowRightAltRoundedIcon from "@mui/icons-material/ArrowRightAltRounded";
 import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
   addTutorialBox,
   deleteSelected,
@@ -17,6 +18,7 @@ import {
   undo,
   updateSelectedCellExpanded,
   updateUI,
+  updateColumnVisibility,
 } from "@store/slices/table/table.slice";
 import { Searchbar, ToolbarActions } from "@components/kit";
 import {
@@ -123,7 +125,11 @@ const filters = [
 /**
  * Sub toolbar for common and contextual actions
  */
-const SubToolbar = () => {
+const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
+  columns: any[];
+  columnVisibility: Record<string, boolean>;
+  setColumnVisibility: (v: Record<string, boolean>) => void;
+}) => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [autoMatchingAnchor, setAutoMatchingAnchor] =
@@ -133,6 +139,8 @@ const SubToolbar = () => {
   >([]);
   const [anchorElMenuFilter, setAnchorElMenuFilter] =
     useState<null | HTMLElement>(null);
+  const [anchorElMenuColumns, setAnchorElMenuColumns] =
+      useState<null | HTMLElement>(null);
   const params = useParams<{ datasetId: string; tableId: string }>();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const { status: isMetadataButtonEnabled, type: metadataAction } =
@@ -270,6 +278,31 @@ const SubToolbar = () => {
     );
   }, [searchFilter]);
 
+  const openColumnsMenu = Boolean(anchorElMenuColumns);
+
+  const handleColumnsMenuClick = (event: MouseEvent<HTMLButtonElement>) => {
+    setAnchorElMenuColumns(event.currentTarget);
+  };
+  const handleCloseColumnsMenu = () => {
+    setAnchorElMenuColumns(null);
+  };
+
+  const handleColumnVisibilityChange = (selected: string[]) => {
+    const newVisibility: Record<string, boolean> = {};
+    columns.forEach((col) => {
+      const isVisible = selected.includes(col.id);
+      newVisibility[col.id] = isVisible;
+      dispatch(updateColumnVisibility({ id: col.id, isVisible }));
+    });
+    setColumnVisibility(newVisibility);
+  };
+
+  const memoColumns = columns.map((col) => ({
+    label: col.header?.toString().trim(),
+    value: col.id,
+    checked: columnVisibility[col.id] ?? true,
+  }));
+
   return (
     <>
       <ToolbarActions>
@@ -318,8 +351,7 @@ const SubToolbar = () => {
           <IconButtonTooltip
             tooltipText="Expand header"
             Icon={UnfoldMoreRoundedIcon}
-            onClick={() =>
-              dispatch(updateUI({ headerExpanded: !isHeaderExpanded }))
+            onClick={() => dispatch(updateUI({ headerExpanded: !isHeaderExpanded }))
             }
           />
         </ActionGroup>
@@ -338,9 +370,7 @@ const SubToolbar = () => {
               }}
               color="primary"
               disabled={!isCellSelected}
-              onClick={() =>
-                dispatch(updateUI({ openReconciliateDialog: true }))
-              }
+              onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
               variant="contained"
             >
               Reconcile
@@ -352,8 +382,9 @@ const SubToolbar = () => {
               }}
               disabled={!isExtendButtonEnabled}
               onClick={() => {
-                if (isExtendButtonEnabled && cellReconciliated)
-                  dispatch(updateUI({ openExtensionDialog: true }));
+                if (isExtendButtonEnabled && cellReconciliated) {
+                  dispatch(updateUI({openExtensionDialog: true}));
+                }
               }}
               variant="contained"
             >
@@ -362,6 +393,24 @@ const SubToolbar = () => {
           </ActionGroup>
         )}
         <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
+          <IconButtonTooltip
+            tooltipText="Show/hide columns"
+            Icon={VisibilityIcon}
+            onClick={handleColumnsMenuClick}
+          />
+          <Menu
+            id="column-menu"
+            anchorEl={anchorElMenuColumns}
+            open={openColumnsMenu}
+            keepMounted
+            onClose={handleCloseColumnsMenu}
+          >
+            <CheckboxGroup
+              key={columns.map((col) => col.id).join(',')}
+              items={memoColumns}
+              onChange={handleColumnVisibilityChange}
+            />
+          </Menu>
           <IconButtonTooltip
             tooltipText="Filter rows"
             Icon={FilterAltOutlinedIcon}

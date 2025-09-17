@@ -23,7 +23,8 @@ import {
   selectIsHeaderExpanded, selectExpandedCellsIds,
   selectExpandedColumnsIds, selectEditableCellsIds,
   selectSelectedColumnCellsIds,
-  selectCurrentTable, selectSettingsDialogStatus, selectSettings
+  selectCurrentTable, selectSettingsDialogStatus, selectSettings,
+  selectColumnsTable,
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { saveTable } from '@store/slices/table/table.thunk';
@@ -277,13 +278,27 @@ const TableViewer = () => {
     dense: isDenseView
   }), [isDenseView]);
 
-  const columnsTable = useMemo(() => columns, [columns]);
+  const columnsTable = useAppSelector(selectColumnsTable);
   const rowsTable = useMemo(() => rows, [rows]);
   const searchFilterTable = useMemo(() => searchFilter, [searchFilter]);
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setColumnVisibility((prev) => {
+      const newVisibility: Record<string, boolean> = {};
+      columnsTable.forEach((col) => {
+        newVisibility[col.id] = prev[col.id] ?? true;
+      });
+      return newVisibility;
+    });
+  }, [columnsTable]);
 
   return (
     <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
-      <SubToolbar />
+      <SubToolbar
+        columns={columnsTable}
+        columnVisibility={columnVisibility}
+        setColumnVisibility={setColumnVisibility} />
       <div className={clsx(
         styles.TableContainer,
         {
@@ -295,6 +310,8 @@ const TableViewer = () => {
           columns={columnsTable}
           tableSettings={settings}
           searchFilter={searchFilterTable}
+          columnVisibility={columnVisibility}
+          setColumnVisibility={setColumnVisibility}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}
           dense={isDenseView}
