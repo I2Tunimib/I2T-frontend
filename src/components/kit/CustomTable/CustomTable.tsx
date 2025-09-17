@@ -58,7 +58,8 @@ export interface TableProperties<T extends Record<string, unknown>> {
 export function Footer<T>({ table }: { table: ReturnType<typeof useReactTable<T>>}) {
   const rowCount = table.getRowModel().rows.length;
   const pageCount = table.getPageCount();
-  const pageIndex = table.getState().pagination.pageIndex;
+  const { pagination } = table.getState();
+  const { pageIndex } = pagination;
 
   const handleChange = (_: any, page: number) => {
     table.setPageIndex(page - 1);
@@ -259,44 +260,44 @@ export default function CustomTable<T extends Record<string, unknown>>(
                         // Loop over the headers in each row
                         headerGroup.headers.map((header) => (
                           <TableHeaderCell key={header.id}>
-                          {header.id !== "selection" ? (
-                            <Stack
-                              direction="row"
-                              overflow="hidden"
-                              whiteSpace="nowrap"
-                              textOverflow="ellipsis"
-                              gap="10px"
-                              alignItems="center"
-                            >
-                              {
-                                // Render the header
-                                flexRender(header.column.columnDef.header, header.getContext())
-                              }
-                            <IconButton
-                              sx={{
-                                width: "25px",
-                                height: "25px",
-                              }}
-                              size="small"
-                            >
-                              {header.column.getCanSort() ? (
-                                header.column.getIsSorted() === "desc" ? (
-                                  <ArrowDownwardRoundedIcon fontSize="small" />
-                                ) : (
-                                  <ArrowUpwardRoundedIcon fontSize="small" />
-                                )
-                              ) : (
-                                <ArrowUpwardRoundedIcon
-                                  sx={{ color: "#d4d4d4" }}
-                                  fontSize="small"
-                                />
-                              )}
-                              </IconButton>
-                            </Stack>
-                        ) : (
-                          flexRender(header.column.columnDef.header, header.getContext())
-                        )}
-                        </TableHeaderCell>
+                            {header.id !== "selection" ? (
+                              <Stack
+                                direction="row"
+                                overflow="hidden"
+                                whiteSpace="nowrap"
+                                textOverflow="ellipsis"
+                                gap="10px"
+                                alignItems="center"
+                              >
+                                {
+                                  // Render the header
+                                  flexRender(header.column.columnDef.header, header.getContext())
+                                }
+                                <IconButton
+                                  sx={{
+                                    width: "25px",
+                                    height: "25px",
+                                  }}
+                                  size="small"
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {header.column.getCanSort() ? (
+                                    header.column.getIsSorted() === "desc" ? (
+                                      <ArrowDownwardRoundedIcon fontSize="small" />
+                                    ) : header.column.getIsSorted() === "asc" ? (
+                                      <ArrowUpwardRoundedIcon fontSize="small" />
+                                    ) : (
+                                      <ArrowUpwardRoundedIcon sx={{ color: "#d4d4d4" }} fontSize="small" />
+                                    )
+                                  ) : (
+                                    <ArrowUpwardRoundedIcon sx={{ color: "#d4d4d4" }} fontSize="small" />
+                                  )}
+                                </IconButton>
+                              </Stack>
+                            ) : (
+                              flexRender(header.column.columnDef.header, header.getContext())
+                            )}
+                          </TableHeaderCell>
                     ))}
                     </TableRow>
                 ))}
@@ -311,8 +312,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
                       <TableRow
                         onClick={() => handleRowClick(row)}
                       >
-                          {/* Cella per checkBox */}
-                          {/* <TableCell
+                        {/* Cella per checkBox */}
+                        {/* <TableCell
                             padding="checkbox"
                             sx={{
                               width: "50px",
@@ -320,8 +321,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               maxWidth: "50px",
                             }} // Set fixed width
                           > */}
-                          {/* Material UI checkbox */}
-                          {/* <Checkbox
+                        {/* Material UI checkbox */}
+                        {/* <Checkbox
                               disabled={showCheckbox}
                               checked={checkedRows.includes(row.id)}
                               onChange={(event) => {
@@ -329,43 +330,43 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               }}
                             />
                           </TableCell> */}
-                          {
-                            // Loop over the rows cells
-                            row.getVisibleCells().map((cell) => (
-                              // Apply the cell props
-                              <TableRowCell
-                                key={cell.id}
-                                title={`${cell.getValue()}`}
-                              >
-                                {
-                                  // Render the cell contents
-                                  flexRender(cell.column.columnDef.cell, {
-                                    ...cell.getContext(),
-                                    setSubRows,
-                                  })
-                                }
-                              </TableRowCell>
-                            ))}
-                        </TableRow>
-                        {row.getIsExpanded() ? (
-                          <TableSubRow key={`${row.id}-expanded`}>
+                        {
+                          // Loop over the rows cells
+                          row.getVisibleCells().map((cell) => (
+                            // Apply the cell props
                             <TableRowCell
-                              style={{
-                                width: "100%",
-                                maxWidth: "100%",
-                                padding: "12px",
-                              }}
-                              colSpan={
-                                row.getVisibleCells().length + 1
-                              } /* +1 for the delete button column */
+                              key={cell.id}
+                              title={`${cell.getValue()}`}
                             >
-                              <div className="expanded-content">
-                                {subRows[row.id]}
-                              </div>
+                              {
+                                // Render the cell contents
+                                flexRender(cell.column.columnDef.cell, {
+                                  ...cell.getContext(),
+                                  setSubRows,
+                                })
+                              }
                             </TableRowCell>
-                          </TableSubRow>
-                        ) : null}
-                      </Fragment>
+                          ))}
+                      </TableRow>
+                      {row.getIsExpanded() ? (
+                        <TableSubRow key={`${row.id}-expanded`}>
+                          <TableRowCell
+                            style={{
+                              width: "100%",
+                              maxWidth: "100%",
+                              padding: "12px",
+                            }}
+                            colSpan={
+                              row.getVisibleCells().length + 1
+                            } /* +1 for the delete button column */
+                          >
+                            <div className="expanded-content">
+                              {subRows[row.id]}
+                            </div>
+                          </TableRowCell>
+                        </TableSubRow>
+                      ) : null}
+                    </Fragment>
                       // <TableRow
                       //   onClick={() => handleRowClick(row)}
                       //   {...row.getRowProps()}>
