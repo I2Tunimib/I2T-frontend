@@ -41,18 +41,16 @@ const COLORS = [
 
 const getPoint = (
   element: HTMLElement,
-  { top: svgTop = 0 }: Partial<DOMRect>
+  { top: svgTop = 0 }: Partial<DOMRect>,
+  fullWidth: number,
+  visibleWidth: number,
+  scrollLeft: number = 0
 ) => {
   // Get element position relative to viewport
   const { left, top, width } = element.getBoundingClientRect();
 
-  // We no longer need to add scrollLeft here because we're adjusting the SVG viewBox instead
-  // This returns the position as seen in the viewport
-  let correctedLeft = left;
-  if (correctedLeft < 0) {
-    correctedLeft = -correctedLeft;
-    correctedLeft = correctedLeft - width;
-  }
+  // Add scroll position to get correct coordinate
+  const correctedLeft = left + scrollLeft;
   const x = correctedLeft + width / 2;
   const y = top - svgTop;
   //log all parameters
@@ -62,6 +60,9 @@ const getPoint = (
     left,
     top,
     width,
+    fullWidth,
+    visibleWidth,
+    scrollLeft,
     correctedLeft,
     x,
     y,
@@ -72,10 +73,25 @@ const getPoint = (
 const calcPointsDistances = (
   el1: HTMLElement,
   el2: HTMLElement,
-  svgBoundingClientRect: DOMRect
+  svgBoundingClientRect: DOMRect,
+  fullWidth: number,
+  visibleWidth: number,
+  scrollLeft: number = 0
 ) => {
-  const [x1, y1] = getPoint(el1, svgBoundingClientRect);
-  const [x2, y2] = getPoint(el2, svgBoundingClientRect);
+  const [x1, y1] = getPoint(
+    el1,
+    svgBoundingClientRect,
+    fullWidth,
+    visibleWidth,
+    scrollLeft
+  );
+  const [x2, y2] = getPoint(
+    el2,
+    svgBoundingClientRect,
+    fullWidth,
+    visibleWidth,
+    scrollLeft
+  );
 
   // draw always in the same direction [left - right] so that
   // labels aren't flipped
@@ -96,7 +112,11 @@ const calcPointsDistances = (
   };
 };
 
-const useSvgCoordinator = ({ svgRef, paths, options }: UseSvgCoordinatorProps) => {
+const useSvgCoordinator = ({
+  svgRef,
+  paths,
+  options,
+}: UseSvgCoordinatorProps) => {
   const { minimumDistance, alfa } = { ...DEFAULT_OPTIONS, ...options };
 
   const [processedPaths, setProcessedPaths] = useState<any>();
@@ -167,10 +187,20 @@ const useSvgCoordinator = ({ svgRef, paths, options }: UseSvgCoordinatorProps) =
 
   const draw = useCallback(() => {
     if (paths && !isEmptyObject(paths) && svgRef && svgRef.current) {
+      console.log("*** current paths ***", paths);
       // get svg bounding box to compute relative measures
       const svgBB = svgRef.current.getBoundingClientRect();
+      const container = svgRef.current.parentElement;
+
+      const fullWidth = container?.scrollWidth || svgRef.current.scrollWidth;
+      const scrollLeft = container?.scrollLeft || 0;
       // height of svg container
       const { height } = svgBB;
+      console.log("Container info:", {
+        visibleWidth: svgBB.width,
+        fullWidth,
+        scrollLeft,
+      });
       // keep track of number of paths to draw
       // iterate on each group
       // each group contains a set of paths from the same source
@@ -183,7 +213,10 @@ const useSvgCoordinator = ({ svgRef, paths, options }: UseSvgCoordinatorProps) =
               const results = calcPointsDistances(
                 startElement,
                 endElement,
-                svgBB
+                svgBB,
+                fullWidth,
+                svgBB.width,
+                scrollLeft
               );
               return {
                 id,
