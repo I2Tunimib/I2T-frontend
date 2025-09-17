@@ -6,11 +6,15 @@ import { MenuList } from '@mui/material';
 import styled from '@emotion/styled';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import { deleteSelected, updateColumnEditable } from '@store/slices/table/table.slice';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+import { deleteSelected, updateColumnEditable, updateColumnVisibility } from '@store/slices/table/table.slice';
 import { useCallback, FC } from 'react';
 
 interface ContextMenuColumnProps extends MenuBaseProps {
   data?: any;
+  columns: any[];
+  columnVisibility: Record<string, boolean>;
+  setColumnVisibility: (v: Record<string, boolean>) => void;
 }
 
 /*
@@ -28,6 +32,9 @@ const StyledMenuList = styled(MenuList)`
 const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
   data: { id },
   handleClose,
+  columns,
+  columnVisibility,
+  setColumnVisibility,
   ...props
 }) => {
   //const classes = useMenuStyles();
@@ -42,6 +49,16 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
     }, [handleClose]);
 
   /**
+   * Handle hide column action.
+   */
+  const handleHideColumn = useCallback(() => {
+    const newVisibility = { ...columnVisibility, [id]: false };
+    setColumnVisibility(newVisibility);
+    dispatch(updateColumnVisibility({ id, isVisible: false }));
+    handleClose();
+  }, [id, columnVisibility, setColumnVisibility, dispatch, handleClose]);
+
+  /**
    * Handle delete column action.
    */
   const handleDeleteColumn = useCallback(() => {
@@ -53,10 +70,15 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
     <MenuBase handleClose={handleClose} {...props}>
       <StyledMenuList autoFocus //className={classes.list}
       >
-      <MenuItemIconLabel
+        <MenuItemIconLabel
+          onClick={handleHideColumn}
+          Icon={VisibilityOffRoundedIcon}>
+          Hide column
+        </MenuItemIconLabel>
+        <MenuItemIconLabel
           onClick={editColumn}
           Icon={EditRoundedIcon}>
-          Edit
+          Edit column
         </MenuItemIconLabel>
         <MenuItemIconLabel
           onClick={handleDeleteColumn}

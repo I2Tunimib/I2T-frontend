@@ -3,6 +3,7 @@ import { floor } from "@services/utils/math";
 import { RootState } from "@store";
 import { getRequestStatus } from "@store/enhancers/requests";
 import { ID } from "@store/interfaces/store";
+import { property } from "lodash";
 import {
   selectAppConfig,
   selectReconciliators,
@@ -15,7 +16,6 @@ import {
   getMinMaxScore,
 } from "./utils/table.reconciliation-utils";
 import { getIdsFromCell } from "./utils/table.utils";
-import { property } from "lodash";
 
 // Input selectors
 const selectTableState = (state: RootState) => state.table;
@@ -39,8 +39,8 @@ const selectColumnContexts = (state: RootState, { data }: any) => {
 
 // LOADING SELECTORS
 export const selectGetTableStatus = createSelector(selectRequests, (requests) =>
-  getRequestStatus(requests, TableThunkActions.GET_TABLE)
-);
+  getRequestStatus(requests, TableThunkActions.GET_TABLE));
+
 export const selectGetChallengeTableStatus = createSelector(
   selectRequests,
   (requests) =>
@@ -208,11 +208,10 @@ export const selectSelectedCellsIdsAsArray = createSelector(
 export const selectSelectedCells = createSelector(
   selectSelectedCellsIdsAsArray,
   selectRowsState,
-  (selectedCellsIds, rows) =>
-    selectedCellsIds.map((cellId) => {
-      const [rowId, colId] = getIdsFromCell(cellId);
-      return rows.byId[rowId].cells[colId];
-    })
+  (selectedCellsIds, rows) => selectedCellsIds.map((cellId) => {
+    const [rowId, colId] = getIdsFromCell(cellId);
+    return rows.byId[rowId].cells[colId];
+  })
 );
 /**
  * Check if AT LEAST a cell is selected.
@@ -395,12 +394,9 @@ export const selectCanDelete = createSelector(
   selectSelectedColumnIds,
   selectSelectedRowIds,
   selectSelectedCellsIdsAsArray,
-  (colIds, rowIds, cellIds) =>
-    cellIds.length > 0 &&
+  (colIds, rowIds, cellIds) => cellIds.length > 0 &&
     cellIds.every(
-      (cellId) =>
-        getIdsFromCell(cellId)[0] in rowIds ||
-        getIdsFromCell(cellId)[1] in colIds
+      (cellId) => getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
     )
 );
 
@@ -410,8 +406,7 @@ export const selectCanDelete = createSelector(
  */
 export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
-  (selectedCells) =>
-    selectedCells.length > 0 &&
+  (selectedCells) => selectedCells.length > 0 &&
     !selectedCells.some((cell) => cell && cell.metadata.length === 0)
 );
 
@@ -526,8 +521,7 @@ export const selectDataTableFormat = createSelector(
             rowId,
           },
         };
-      }, {})
-    );
+      }, {}));
     return { columns, rows };
   }
 );
@@ -761,8 +755,8 @@ export const selectColumnTypes = createSelector(
     }, {} as Record<string, { id: string; count: number; label: string }>);
     console.log("test map", map);
     // add current type
-    let currentColType: any[] = [];
-    let currentTypesIds = [];
+    const currentColType: any[] = [];
+    const currentTypesIds = [];
     let additionalTypes = [];
     if (
       columnsState.byId[colIds[0]] &&
@@ -809,11 +803,11 @@ export const selectColumnTypes = createSelector(
     );
 
     //TODO: transform into an array
-    let selectedType: any[] = [];
+    const selectedType: any[] = [];
 
     console.log("additional types", additionalTypes, currentTypesIds);
     console.log("currentmap", map);
-    let allTypes = Object.keys(map)
+    const allTypes = Object.keys(map)
       .map((key) => {
         const item = {
           ...map[key],
@@ -946,10 +940,9 @@ export const selectSelectedCellsTypes = createSelector(
           cell.metadata.forEach((metaItem) => {
             if (metaItem.type) {
               metaItem.type.forEach((typeItem) => {
-                if (typeItem.name)
-                  types.push(
-                    (typeItem.name as unknown as string).toLowerCase()
-                  );
+                if (typeItem.name) {
+                  types.push((typeItem.name as unknown as string).toLowerCase());
+                }
               });
             }
           });
@@ -969,10 +962,9 @@ export const selectSelectedCellsTypes = createSelector(
               column.metadata[0].entity.forEach((metaItem) => {
                 if (metaItem.type) {
                   metaItem.type.forEach((typeItem) => {
-                    if (typeItem.name)
-                      types.push(
-                        (typeItem.name as unknown as string).toLowerCase()
-                      );
+                    if (typeItem.name) {
+                      types.push((typeItem.name as unknown as string).toLowerCase());
+                    }
                   });
                 }
               });
@@ -994,24 +986,4 @@ export const selectReconciliatioContextColumnIds = createSelector(
   selectEntitiesState,
   selectSelectedColumnIds,
   (entities, ids) => entities.columns.allIds.filter((id) => !(id in ids))
-);
-
-export const selectColumnsTable = createSelector(
-  selectColumnsState,
-  (columnsState) => {
-    if (!columnsState || !Array.isArray(columnsState.allIds)) return [];
-    return columnsState.allIds
-      .map((id) => {
-        const col = columnsState.byId[id];
-          if (!col) return undefined;
-          return {
-            header: col.label,
-            accessorKey: col.id,
-            sortType: "customSort",
-            id: col.id,
-            data: { ...col },
-          };
-        })
-      .filter(Boolean);
-  }
 );

@@ -10,7 +10,8 @@ import {
   updateColumnCellsSelection,
   updateColumnSelection,
   updateRowSelection,
-  updateUI
+  updateUI,
+  updateColumnVisibility,
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { HotKeys } from 'react-hotkeys';
@@ -24,7 +25,6 @@ import {
   selectExpandedColumnsIds, selectEditableCellsIds,
   selectSelectedColumnCellsIds,
   selectCurrentTable, selectSettingsDialogStatus, selectSettings,
-  selectColumnsTable,
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { saveTable } from '@store/slices/table/table.thunk';
@@ -79,6 +79,9 @@ const TableViewer = () => {
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const settings = useAppSelector(selectSettings);
+  const columnVisibilityRedux = useAppSelector(
+      (state) => state.table.ui.columnVisibility
+  );
 
   useEffect(() => {
     if (currentTable && currentTable.mantisStatus === 'PENDING') {
@@ -278,27 +281,35 @@ const TableViewer = () => {
     dense: isDenseView
   }), [isDenseView]);
 
-  const columnsTable = useAppSelector(selectColumnsTable);
+  const columnsTable = useMemo(() => columns, [columns]);
   const rowsTable = useMemo(() => rows, [rows]);
   const searchFilterTable = useMemo(() => searchFilter, [searchFilter]);
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    setColumnVisibility((prev) => {
-      const newVisibility: Record<string, boolean> = {};
-      columnsTable.forEach((col) => {
-        newVisibility[col.id] = prev[col.id] ?? true;
-      });
-      return newVisibility;
+    const visibility: Record<string, boolean> = {};
+    columns.forEach((col) => {
+      visibility[col.id] = columnVisibilityRedux[col.id] ?? true;
     });
-  }, [columnsTable]);
+    setColumnVisibility(visibility);
+  }, [columns, columnVisibilityRedux]);
+
+  const handleColumnVisibilityChange = useCallback(
+      (newVisibility: Record<string, boolean>) => {
+        setColumnVisibility(newVisibility);
+        Object.entries(newVisibility).forEach(([id, isVisible]) => {
+          dispatch(updateColumnVisibility({ id, isVisible }));
+        });
+      },
+      [dispatch]
+  );
 
   return (
     <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
       <SubToolbar
         columns={columnsTable}
         columnVisibility={columnVisibility}
-        setColumnVisibility={setColumnVisibility} />
+        setColumnVisibility={handleColumnVisibilityChange} />
       <div className={clsx(
         styles.TableContainer,
         {
@@ -311,7 +322,7 @@ const TableViewer = () => {
           tableSettings={settings}
           searchFilter={searchFilterTable}
           columnVisibility={columnVisibility}
-          setColumnVisibility={setColumnVisibility}
+          setColumnVisibility={handleColumnVisibilityChange}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}
           dense={isDenseView}
@@ -335,6 +346,9 @@ const TableViewer = () => {
           anchorElement={anchorEl}
           handleClose={handleMenuClose}
           data={menuState.data}
+          columns={columnsTable}
+          columnVisibility={columnVisibility}
+          setColumnVisibility={handleColumnVisibilityChange}
         />
         <ContextMenuRow
           open={menuState.status.row}

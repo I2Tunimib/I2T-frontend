@@ -12,6 +12,9 @@ import {
   produceWithPatch,
 } from "@store/enhancers/undo";
 import { ID, Payload } from "@store/interfaces/store";
+import { property } from "lodash";
+import { a } from "react-spring";
+import axios from "axios";
 import {
   selectReconciliators,
   selectReconciliatorsAsArray,
@@ -110,10 +113,7 @@ import {
   removeObject,
   toggleObject,
 } from "./utils/table.utils";
-import { property } from "lodash";
-import { a } from "react-spring";
 import { annotate } from "../datasets/datasets.thunk";
-import axios from "axios";
 
 const initialState: TableState = {
   entities: {
@@ -338,7 +338,7 @@ export const tableSlice = createSliceWithRequests({
               match: isMatching,
               name: {
                 value: name,
-                uri: uri,
+                uri,
               },
             };
           } else {
@@ -348,9 +348,9 @@ export const tableSlice = createSliceWithRequests({
                   (item) => ({ ...item, match: false }),
                 );
             }
-            if (id.startsWith(prefix)) {
-            }
-            let annotationMetaMatching =
+            //if (id.startsWith(prefix)) {
+            //}
+            const annotationMetaMatching =
               draft.entities.rows.byId[rowId].cells[colId].annotationMeta.match;
             if (!annotationMetaMatching.value && isMatching) {
               draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
@@ -367,7 +367,7 @@ export const tableSlice = createSliceWithRequests({
               match: isMatching,
               name: {
                 value: name,
-                uri: uri,
+                uri,
               },
               ...rest,
             };
@@ -482,7 +482,7 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<Payload<AddCellMetadataPayload>>,
     ) => {
       const { metadataId, cellId, value, undoable = true } = action.payload;
-      const currentMatchVal = value.match === "true" ? true : false;
+      const currentMatchVal = !!value.match;
       console.log("received propagation ids", metadataId, cellId, value);
       const [rowId, colId] = getIdsFromCell(cellId);
       const { metadata } = getCell(state, rowId, colId);
@@ -498,10 +498,10 @@ export const tableSlice = createSliceWithRequests({
             const cellContext = getCellContext(cell);
             const wasReconciliated = isCellReconciliated(cell);
             const currentMetadata = cell.metadata.find(
-              (metadata) => metadata.id === metadataId,
+              (m) => m.id === metadataId,
             );
             console.log("currentMetadata", current(currentMetadata));
-            let rowsIds = draft.entities.rows.allIds;
+            const rowsIds = draft.entities.rows.allIds;
             if (currentMetadata) {
               //this is the metadata object to be sent to the tracking endpoint
               const metadataToTrack = {
@@ -525,9 +525,9 @@ export const tableSlice = createSliceWithRequests({
                   draft.entities.rows.byId[currentRowId].cells[colId];
                 const currentCellName = currentCell.label;
                 if (currentCellName === cellLabel) {
-                  let correspondingMetadataIndex =
+                  const correspondingMetadataIndex =
                     currentCell.metadata.findIndex(
-                      (metadata) => metadata.id === metadataId,
+                      (m) => m.id === metadataId,
                     );
                   if (correspondingMetadataIndex !== -1) {
                     // Flip the matching status instead of setting it to true
@@ -634,7 +634,7 @@ export const tableSlice = createSliceWithRequests({
             let matched = false;
             cell.metadata.forEach((metaItem) => {
               if (metaItem.id === metadataId) {
-                metaItem.match = match ? match : !metaItem.match;
+                metaItem.match = match || !metaItem.match;
                 matched = metaItem.match;
               } else {
                 metaItem.match = false;
@@ -657,7 +657,7 @@ export const tableSlice = createSliceWithRequests({
               cell.annotationMeta = {
                 ...cell.annotationMeta,
                 match: {
-                  value: match ? match : matched,
+                  value: match || matched,
                 },
               };
             } else if (!wasReconciliated && isCellReconciliated(cell)) {
@@ -756,7 +756,7 @@ export const tableSlice = createSliceWithRequests({
                   match: isMatching,
                   name: {
                     value: name,
-                    uri: uri,
+                    uri,
                   },
                   ...rest,
                 };
@@ -821,7 +821,7 @@ export const tableSlice = createSliceWithRequests({
                   id: `${id}`,
                   obj: value.obj,
                   match: isMatching,
-                  name: name,
+                  name,
                   ...rest,
                 };
 
@@ -1606,7 +1606,7 @@ export const tableSlice = createSliceWithRequests({
           deleteOneColumn(draft, colId);
           // Update columns'list
           delete draft.entities.columns.byId[colId];
-          draft.entities.columns.allIds = draft.entities.columns.allIds.filter(id => id !== colId);
+          draft.entities.columns.allIds = draft.entities.columns.allIds.filter((id) => id !== colId);
           Object.values(draft.entities.rows.byId).forEach((row) => {
             delete row.cells[colId];
           });
@@ -1696,8 +1696,7 @@ export const tableSlice = createSliceWithRequests({
       state.ui.columnVisibility[action.payload.id] = action.payload.isVisible;
     },
   },
-  extraRules: (builder) =>
-    builder
+  extraRules: (builder) => builder
       .addCase(
         getTable.fulfilled,
         (state, action: PayloadAction<GetTableResponse>) => {
@@ -1947,8 +1946,9 @@ export const tableSlice = createSliceWithRequests({
                     };
                   }
                   draft.entities.rows.byId[rowId].cells[newColId] = newCell;
-                  if (newCell.metadata.length > 0)
+                  if (newCell.metadata.length > 0) {
                     updateContext(draft, newCell);
+                  }
                 });
 
                 draft.entities.columns.byId[newColId].status = getColumnStatus(

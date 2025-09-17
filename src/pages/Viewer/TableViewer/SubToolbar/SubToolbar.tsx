@@ -18,7 +18,6 @@ import {
   undo,
   updateSelectedCellExpanded,
   updateUI,
-  updateColumnVisibility,
 } from "@store/slices/table/table.slice";
 import { Searchbar, ToolbarActions } from "@components/kit";
 import {
@@ -271,12 +270,12 @@ const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
   const memoFilters = useMemo(() => {
     const { globalFilter } = searchFilter;
 
-    return filters.map((filter) =>
-      globalFilter.includes(filter.value)
+    return filters.map((filter) => {
+      return globalFilter.includes(filter.value)
         ? { ...filter, checked: true }
-        : filter
-    );
-  }, [searchFilter]);
+        : filter;
+    });
+  });
 
   const openColumnsMenu = Boolean(anchorElMenuColumns);
 
@@ -287,21 +286,21 @@ const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
     setAnchorElMenuColumns(null);
   };
 
-  const handleColumnVisibilityChange = (selected: string[]) => {
-    const newVisibility: Record<string, boolean> = {};
-    columns.forEach((col) => {
-      const isVisible = selected.includes(col.id);
-      newVisibility[col.id] = isVisible;
-      dispatch(updateColumnVisibility({ id: col.id, isVisible }));
+  const handleColumnToggle = (selectedIds: string[]) => {
+    setColumnVisibility((prev) => {
+      const newVisibility: Record<string, boolean> = {};
+      columns.forEach((col) => {
+        newVisibility[col.id] = selectedIds.includes(col.id);
+      });
+      return newVisibility;
     });
-    setColumnVisibility(newVisibility);
   };
 
-  const memoColumns = columns.map((col) => ({
+  const memoColumns = useMemo(() => columns.map((col) => ({
     label: col.header?.toString().trim(),
     value: col.id,
-    checked: columnVisibility[col.id] ?? true,
-  }));
+    checked: columnVisibility[col.id] ?? true
+  })), [columns, columnVisibility]);
 
   return (
     <>
@@ -383,7 +382,7 @@ const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
               disabled={!isExtendButtonEnabled}
               onClick={() => {
                 if (isExtendButtonEnabled && cellReconciliated) {
-                  dispatch(updateUI({openExtensionDialog: true}));
+                  dispatch(updateUI({ openExtensionDialog: true }));
                 }
               }}
               variant="contained"
@@ -406,9 +405,9 @@ const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
             onClose={handleCloseColumnsMenu}
           >
             <CheckboxGroup
-              key={columns.map((col) => col.id).join(',')}
+              key={Object.values(columnVisibility).join(',')}
               items={memoColumns}
-              onChange={handleColumnVisibilityChange}
+              onChange={handleColumnToggle}
             />
           </Menu>
           <IconButtonTooltip
