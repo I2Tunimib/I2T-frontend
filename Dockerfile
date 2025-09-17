@@ -8,7 +8,7 @@ COPY package.json .
 COPY . .
 
 RUN npm cache clean --force
-RUN npm install --legacy-peer-deps
+RUN npm install
 # Rebuild native dependencies to ensure compatibility
 RUN npm rebuild
 # Build the app
