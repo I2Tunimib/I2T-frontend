@@ -5,6 +5,8 @@ import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlin
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import PushPinIcon from '@mui/icons-material/PushPin';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
 import clsx from "clsx";
 import { ButtonShortcut } from "@components/kit";
@@ -68,6 +70,8 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       sortType,
       setSortType,
       setSorting,
+      columnPinning,
+      setColumnPinning,
       data,
       settings,
       style,
@@ -166,6 +170,22 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         <div className={styles.TableHeaderContent}>
           {id !== "index" ? (
             <>
+              {header.column.getCanPin() && (
+                <IconButton
+                  onClick={() => {
+                    const currentPin = header.column.getIsPinned();
+                    header.column.pin(currentPin ? false : 'left');
+                  }}
+                  size="small"
+                  className={styles.PinButton}
+                >
+                  {header.column.getIsPinned() ? (
+                    <PushPinIcon fontSize="small" />
+                  ) : (
+                    <PushPinOutlinedIcon fontSize="small" />
+                  )}
+                </IconButton>
+              )}
               <IconButton
                 onClick={handleSelectColumn}
                 size="small"
@@ -295,7 +315,8 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             style={{
               cursor: header.column.getIsResizing() ? 'col-resize' : 'ew-resize',
             }}
-          ></div>
+          >
+          </div>
         )}
       </th>
     );

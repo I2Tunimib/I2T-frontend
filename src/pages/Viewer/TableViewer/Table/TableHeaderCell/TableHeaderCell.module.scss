@@ -56,6 +56,18 @@
     width: 38px;
   }
 
+  .PinButton {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 10;
+    visibility: hidden;
+  }
+
+  :hover .PinButton {
+    visibility: visible;
+  }
+
   // &.Selected {
   //   background-color: var(--brand-color-one-transparent-dark);
   //   border-top: 2px solid var(--brand-color-one-base)

@@ -41,6 +41,8 @@ interface TableProps {
   setColumnVisibility: (v: Record<string, boolean>) => void;
   columnSizing: Record<string, number>;
   setColumnSizing: (v: Record<string, number>) => void;
+  columnPinning: { left: string[] };
+  setColumnPinning: (v: { left: string[] }) => void;
   getGlobalProps: () => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
@@ -71,6 +73,8 @@ const Table: FC<TableProps> = ({
   setColumnVisibility,
   columnSizing,
   setColumnSizing,
+  columnPinning,
+  setColumnPinning,
   getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
@@ -217,10 +221,12 @@ const Table: FC<TableProps> = ({
           accessorFn: (_row, index) => index,
           enableSorting: true,
           enableResizing: false,
+          enableColumnPinning: false,
           size: 24,
           minSize: 24,
           maxSize: 24,
           cell: ({ row }) => <div>{row.index + 1}</div>,
+          getIsPinned: () => 'left',
       }]
       : [];
     return [...indexColumn, ...columns];
@@ -254,13 +260,16 @@ const Table: FC<TableProps> = ({
       sorting,
       columnVisibility,
       columnSizing,
+      columnPinning,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibsailityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
     columnResizeMode: 'onChange',
     enableResizing: true,
+    onColumnPinningChange: setColumnPinning,
+    enableColumnPinning: true,
   });
 
   useEffect(() => {
@@ -340,6 +349,8 @@ const Table: FC<TableProps> = ({
                       setSortType={setSortType}
                       setSorting={setSorting}
                       style={{ width: header.getSize() }}
+                      columnPinning={columnPinning}
+                      setColumnPinning={setColumnPinning}
                       {...getHeaderProps(header)}
                     >
                       {// Render the header

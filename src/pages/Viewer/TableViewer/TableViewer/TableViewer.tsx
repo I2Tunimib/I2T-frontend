@@ -286,6 +286,7 @@ const TableViewer = () => {
   const searchFilterTable = useMemo(() => searchFilter, [searchFilter]);
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
+  const [columnPinning, setColumnPinning] = useState<{ left: string[] }>({ left: ['index'] });
 
   useEffect(() => {
     const visibility: Record<string, boolean> = {};
@@ -342,6 +343,8 @@ const TableViewer = () => {
           setColumnVisibility={handleColumnVisibilityChange}
           columnSizing={columnSizing}
           setColumnSizing={setColumnSizing}
+          columnPinning={columnPinning}
+          setColumnPinning={setColumnPinning}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}
           dense={isDenseView}
@@ -368,6 +371,8 @@ const TableViewer = () => {
           columns={columnsTable}
           columnVisibility={columnVisibility}
           setColumnVisibility={handleColumnVisibilityChange}
+          columnPinning={columnPinning}
+          setColumnPinning={setColumnPinning}
         />
         <ContextMenuRow
           open={menuState.status.row}
