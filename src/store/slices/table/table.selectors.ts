@@ -496,13 +496,17 @@ export const selectDataTableFormat = createSelector(
   selectReconciliatorsAsObject,
   (entities, reconciliators) => {
     const columns = entities.columns.allIds.map((colId) => {
-      const { label, id, ...rest } = entities.columns.byId[colId];
+      const { label, id, width, minWidth, maxWidth, ...rest } = entities.columns.byId[colId];
       return {
         header: label,
         accessorKey: colId,
         sortType: "customSort",
         id,
         data: { ...rest },
+        size: width ?? 150,
+        minSize: minWidth ?? 80,
+        maxSize: maxWidth ?? 500,
+        enableResizing: true,
       };
     });
 

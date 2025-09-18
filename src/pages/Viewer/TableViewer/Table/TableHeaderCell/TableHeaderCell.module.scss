@@ -7,7 +7,22 @@
   border-right: 1px solid #ededed;
   border-top: 2px solid transparent;
 
+  .ResizeHandle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 12px;
+    height: 100%;
+    cursor: ew-resize;
+    z-index: 99;
+    background-color: rgba(0, 0, 0, 0.02);
+    user-select: none;
+    touch-action: none;
+  }
 
+  &.Resizing {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 
   .Role {
     position: absolute;

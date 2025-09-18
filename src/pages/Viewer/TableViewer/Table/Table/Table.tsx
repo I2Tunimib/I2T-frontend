@@ -38,7 +38,9 @@ interface TableProps {
   searchFilter?: TableGlobalFilter;
   dense?: boolean;
   columnVisibility: Record<string, boolean>;
-  setColumnVisibility: (visible: Record<string, boolean>) => void;
+  setColumnVisibility: (v: Record<string, boolean>) => void;
+  columnSizing: Record<string, number>;
+  setColumnSizing: (v: Record<string, number>) => void;
   getGlobalProps: () => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
@@ -67,6 +69,8 @@ const Table: FC<TableProps> = ({
   dense,
   columnVisibility,
   setColumnVisibility,
+  columnSizing,
+  setColumnSizing,
   getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
@@ -205,13 +209,17 @@ const Table: FC<TableProps> = ({
   }, [filterAll, filterMetaName, filterMetaType]);
 
   const allColumns = useMemo(() => {
-    const hasVisibleColumns = Object.values(columnVisibility).some((visible) => visible);
+    const hasVisibleColumns = Object.values(columnVisibility).some((v) => v);
     const indexColumn = hasVisibleColumns
       ? [{
           id: 'index',
           header: '',
           accessorFn: (_row, index) => index,
           enableSorting: true,
+          enableResizing: false,
+          size: 24,
+          minSize: 24,
+          maxSize: 24,
           cell: ({ row }) => <div>{row.index + 1}</div>,
       }]
       : [];
@@ -245,10 +253,14 @@ const Table: FC<TableProps> = ({
       pagination,
       sorting,
       columnVisibility,
+      columnSizing,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnSizingChange: setColumnSizing,
+    columnResizeMode: 'onChange',
+    enableResizing: true,
   });
 
   useEffect(() => {
@@ -327,6 +339,7 @@ const Table: FC<TableProps> = ({
                       sortType={sortType}
                       setSortType={setSortType}
                       setSorting={setSorting}
+                      style={{ width: header.getSize() }}
                       {...getHeaderProps(header)}
                     >
                       {// Render the header
@@ -349,6 +362,7 @@ const Table: FC<TableProps> = ({
                       key={cell.id}
                       cell={cell}
                       dense={dense}
+                      style={{ width: cell.column.getSize() }}
                       highlightState={highlightState}
                       searchHighlightState={searchHighlightState}
                       {...getCellProps(cell)}

@@ -21,6 +21,7 @@ interface NormalCellProps {
   label: string;
   value: any;
   dense: boolean;
+  columnSize: number;
   expanded: boolean;
   reconciliator: string;
   settings: any;
@@ -32,6 +33,7 @@ const NormalCell: FC<NormalCellProps> = ({
   settings,
   reconciliator,
   dense,
+  columnSize,
   expanded,
 }) => {
   const dispatch = useAppDispatch();
@@ -70,36 +72,32 @@ const NormalCell: FC<NormalCellProps> = ({
     return "warn";
   };
 
-  const limitLabel = (labelToLimit: any) => {
-    if (labelToLimit.length > 50) {
-      return labelToLimit.slice(0, 50).concat(" ...");
-    }
-    return labelToLimit;
-  };
+  const maxChars = columnSize > 200 ? Math.floor(columnSize / 7) : 50;
+  const truncatedLabel = label.length > maxChars ? (label.slice(0, maxChars - 3) + "…") : (label);
 
   const getLabel = useCallback(() => {
     // Check if value and metadata exist before accessing
     if (!value || !value.metadata) {
-      return limitLabel(label);
+      return truncatedLabel;
     }
 
     const match = value.metadata.find((meta: BaseMetadata) => meta.match);
     if (match) {
       return (
-        <Link href={match.url} target="_blank">
-          {limitLabel(label)}
+        <Link href={match.url} target="_blank" title={label}>
+          {truncatedLabel}
         </Link>
       );
     }
     if (label === "null") {
       return (
-        <Typography component="span" color="textSecondary" lineHeight="0">
-          {limitLabel(label)}
+        <Typography component="span" color="textSecondary" lineHeight="0" title={label}>
+          {truncatedLabel}
         </Typography>
       );
     }
-    return limitLabel(label);
-  }, [value, label]);
+    return truncatedLabel;
+  }, [value, label, truncatedLabel]);
 
   const getItems = useCallback(
     (start: number, finish: number): any[] => {
@@ -129,12 +127,10 @@ const NormalCell: FC<NormalCellProps> = ({
         )}
         <div className={styles.TextLabel}>{getLabel()}</div>
         <IconButton
-          onClick={() =>
-            dispatch(
-              updateUI({
-                openMetadataDialog: true,
-              })
-            )
+          onClick={() => dispatch(
+            updateUI({
+              openMetadataDialog: true,
+            }))
           }
           size="small"
           className={styles.ActionButton}

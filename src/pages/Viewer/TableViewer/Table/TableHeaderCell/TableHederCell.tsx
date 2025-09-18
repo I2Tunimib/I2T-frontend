@@ -2,6 +2,7 @@
 import { Box, IconButton, Stack } from "@mui/material";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
@@ -17,7 +18,7 @@ import { IconButtonTooltip, StatusBadge } from "@components/core";
 import styled from "@emotion/styled";
 import styles from "./TableHeaderCell.module.scss";
 import TableHeaderCellExpanded from "./TableHeaderCellExpanded";
-import { sortFunctions } from "../Table/sort/sortFns"
+import { sortFunctions } from "../Table/sort/sortFns";
 
 const SortButton = styled(IconButton)({});
 
@@ -81,11 +82,11 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         header.column.columnDef.sortingFn = sortFunctions[type];
         const currentSort = header.column.getIsSorted();
         if (!currentSort) {
-            header.column.toggleSorting(false); // A → Z
+            header.column.toggleSorting(false);// A → Z
         } else if (currentSort === 'asc') {
-            header.column.toggleSorting(true);  // Z → A
+            header.column.toggleSorting(true);// Z → A
         } else if (currentSort === 'desc') {
-            header.column.clearSorting();       // ordine originale
+            header.column.clearSorting();// ordine originale
         }
       setSortType(type);
     };
@@ -158,6 +159,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
           {
             [styles.Selected]: selected,
             [styles.TableHeaderIndex]: id === "index",
+            [styles.Resizing]: header.column.getIsResizing(),
           },
         ])}
       >
@@ -170,7 +172,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                 className={styles.ColumnSelectionButton}
                 sx={{ marginBottom: 15 }}
               >
-                <CheckCircleOutlineRoundedIcon fontSize="medium" />
+                {selected ?
+                  <CheckCircleRoundedIcon fontSize="medium" />
+                :
+                  <CheckCircleOutlineRoundedIcon fontSize="medium" />}
               </IconButton>
               <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
@@ -283,6 +288,15 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             <>{children}</>
           )}
         </div>
+        {header.column.getCanResize() && (
+          <div
+            onMouseDown={header.getResizeHandler()}
+            className={styles.ResizeHandle}
+            style={{
+              cursor: header.column.getIsResizing() ? 'col-resize' : 'ew-resize',
+            }}
+          ></div>
+        )}
       </th>
     );
   }

@@ -285,6 +285,7 @@ const TableViewer = () => {
   const rowsTable = useMemo(() => rows, [rows]);
   const searchFilterTable = useMemo(() => searchFilter, [searchFilter]);
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const visibility: Record<string, boolean> = {};
@@ -304,12 +305,28 @@ const TableViewer = () => {
       [dispatch]
   );
 
+  useEffect(() => {
+    const savedSizing = localStorage.getItem("columnSizing");
+    if (savedSizing) {
+      const parsed = JSON.parse(savedSizing);
+      setColumnSizing(parsed);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Object.keys(columnSizing).length > 0) {
+      localStorage.setItem("columnSizing", JSON.stringify(columnSizing));
+    }
+  }, [columnSizing]);
   return (
     <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
       <SubToolbar
         columns={columnsTable}
         columnVisibility={columnVisibility}
-        setColumnVisibility={handleColumnVisibilityChange} />
+        setColumnVisibility={handleColumnVisibilityChange}
+        columnSizing={columnSizing}
+        setColumnSizing={setColumnSizing}
+      />
       <div className={clsx(
         styles.TableContainer,
         {
@@ -323,6 +340,8 @@ const TableViewer = () => {
           searchFilter={searchFilterTable}
           columnVisibility={columnVisibility}
           setColumnVisibility={handleColumnVisibilityChange}
+          columnSizing={columnSizing}
+          setColumnSizing={setColumnSizing}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}
           dense={isDenseView}

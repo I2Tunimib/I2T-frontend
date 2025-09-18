@@ -11,6 +11,7 @@ import ArrowRightAltRoundedIcon from "@mui/icons-material/ArrowRightAltRounded";
 import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import {
   addTutorialBox,
   deleteSelected,
@@ -124,10 +125,18 @@ const filters = [
 /**
  * Sub toolbar for common and contextual actions
  */
-const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
+const SubToolbar = ({
+  columns,
+  columnVisibility,
+  setColumnVisibility,
+  columnSizing,
+  setColumnSizing,
+}: {
   columns: any[];
   columnVisibility: Record<string, boolean>;
   setColumnVisibility: (v: Record<string, boolean>) => void;
+  columnVisibility: Record<string, number>;
+  setColumnSizing: (v: Record<string, number>) => void;
 }) => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
@@ -302,6 +311,13 @@ const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
     checked: columnVisibility[col.id] ?? true
   })), [columns, columnVisibility]);
 
+  const hasResizedColumns = Object.keys(columnSizing).length > 0;
+
+  const handleResetColumnSizes = () => {
+    setColumnSizing({});
+    localStorage.removeItem("columnSizing");
+  };
+
   return (
     <>
       <ToolbarActions>
@@ -392,6 +408,13 @@ const SubToolbar = ({ columns, columnVisibility, setColumnVisibility }: {
           </ActionGroup>
         )}
         <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
+          {hasResizedColumns && (
+            <IconButtonTooltip
+              tooltipText="Reset column sizes"
+              Icon={RestartAltRoundedIcon}
+              onClick={handleResetColumnSizes}
+            />
+          )}
           <IconButtonTooltip
             tooltipText="Show/hide columns"
             Icon={VisibilityIcon}

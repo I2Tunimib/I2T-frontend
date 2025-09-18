@@ -147,6 +147,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
       onClick={(event) => handleSelectCell(event)}
       onContextMenu={handleOnContextMenu}
       dense={dense}
+      style={{ width: cell.column.getSize() }}
     >
       {columnId === "index" ? (
         children
@@ -167,6 +168,7 @@ const TableRowCell: FC<TableRowCellProps> = ({
               expanded={expanded}
               value={cell.getValue()}
               dense={dense}
+              columnSize={cell.column.getSize()}
             />
           )}
         </>
