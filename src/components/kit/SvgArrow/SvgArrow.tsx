@@ -54,7 +54,7 @@ const SvgArrow: FC<SvgArrowProps> = ({
           point.x = e.clientX;
           point.y = e.clientY;
           const transformedPoint = point.matrixTransform(
-            svg.getScreenCTM()?.inverse(),
+            svg.getScreenCTM()?.inverse()
           );
           setCursorPosition({
             x: transformedPoint.x + 15,
@@ -106,19 +106,16 @@ const SvgArrow: FC<SvgArrowProps> = ({
             <g
               className={styles.TooltipContainer}
               transform={`translate(${cursorPosition.x}, ${cursorPosition.y})`}
+              style={{ zIndex: 9999 }}
             >
-              {/* Tooltip pointer triangle */}
+              {/* Tooltip background */}
               <rect
                 className={styles.TooltipBackground}
-                x="-120"
+                x="-150"
                 y="0"
-                width="240"
-                height="60"
+                width="300"
+                height="80"
                 rx="4"
-              />
-              <path
-                className={styles.TooltipPointer}
-                d="M-5,0 L-15,-15 L5,-15 Z"
               />
               <text
                 key={`tooltip-${id}`}

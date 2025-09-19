@@ -2,6 +2,7 @@ import useWindowDimension from "@hooks/resize/useWindowResize";
 import Path from "@services/classes";
 import { bezierCurve, drawTo } from "@services/classes/PathOperators";
 import { isEmptyObject } from "@services/utils/objects-utils";
+import { current } from "immer";
 import { useCallback, useEffect, useRef, useState, RefObject } from "react";
 
 export interface UseSvgCoordinatorProps {
@@ -36,7 +37,21 @@ const COLORS = [
   "#7b439e",
   "#ff8a00",
   "#3682db",
-  "#2fad96",
+  "#e74c3c",
+  "#9b59b6",
+  "#1abc9c",
+  "#f39c12",
+  "#34495e",
+  "#16a085",
+  "#8e44ad",
+  "#e67e22",
+  "#95a5a6",
+  "#27ae60",
+  "#d35400",
+  "#2c3e50",
+  "#f1c40f",
+  "#3498db",
+  "#e91e63",
 ];
 
 const getPoint = (
@@ -123,13 +138,31 @@ const useSvgCoordinator = ({
   const { windowWidth } = useWindowDimension();
 
   const calcPaths = useCallback(
-    (distancesObjects: any[], offset: number) => {
+    (groupedPaths: any[], offset: number) => {
       let previousGroup = {
         group: "",
         horizontalOffset: 0,
       };
 
-      return distancesObjects.map(({ p1, p2, ...rest }, index) => {
+      // Flatten the grouped paths to individual paths for drawing
+      const individualPaths: any[] = [];
+
+      groupedPaths.forEach(({ p1, p2, properties, ...rest }, groupIndex) => {
+        const currentGroup = rest.group;
+
+        properties.forEach((property: any, propIndex: number) => {
+          individualPaths.push({
+            ...rest,
+            p1,
+            p2,
+            ...property, // id, label, link
+            groupIndex,
+            propertyIndex: propIndex,
+          });
+        });
+      });
+
+      return individualPaths.map(({ p1, p2, ...rest }, index) => {
         const currentGroup = rest.group;
         const path = new Path(
           rest.direction === "end"
@@ -150,25 +183,31 @@ const useSvgCoordinator = ({
           horizontalOffset,
         };
 
+        // Add jitter to prevent overlapping arrows
+        // Use a deterministic jitter based on path properties for consistency
+        const jitterSeed = rest.id.length + index;
+        const horizontalJitter = Math.sin(jitterSeed * 1.5) * 15; // ±15px horizontal jitter
+        const verticalJitter = Math.cos(jitterSeed * 2.3) * 25; // ±25px vertical jitter
+
         // Calculate more adaptive control point values
         // Limit the maximum Y offset to prevent arrows from getting too high
         const maxYOffset = 300;
         const yOffset1 = Math.min(
-          offsetPath - 0.9 * horizontalOffset,
+          offsetPath - 0.9 * horizontalOffset + verticalJitter,
           maxYOffset
         );
         const yOffset2 = Math.min(
-          offsetPath - 0.9 * horizontalOffset,
+          offsetPath - 0.9 * horizontalOffset + verticalJitter * 0.8,
           maxYOffset
         );
 
         path.pipe(
           bezierCurve(
-            // first control point
-            p1.x + horizontalOffset,
+            // first control point with horizontal jitter
+            p1.x + horizontalOffset + horizontalJitter,
             p1.y - yOffset1,
-            // second control point
-            p2.x,
+            // second control point with different jitter
+            p2.x + horizontalJitter * 0.6,
             p2.y - yOffset2
           ),
           drawTo(
@@ -184,7 +223,6 @@ const useSvgCoordinator = ({
     },
     [alfa]
   );
-
   const draw = useCallback(() => {
     if (paths && !isEmptyObject(paths) && svgRef && svgRef.current) {
       console.log("*** current paths ***", paths);
@@ -204,37 +242,74 @@ const useSvgCoordinator = ({
       // keep track of number of paths to draw
       // iterate on each group
       // each group contains a set of paths from the same source
-      const distances = Object.keys(paths).reduce((acc, groupKey, index) => {
-        // iterate on each path of a group
-        return [
-          ...acc,
-          ...paths[groupKey].map(
-            ({ id, startElement, endElement, ...rest }) => {
-              const results = calcPointsDistances(
-                startElement,
-                endElement,
-                svgBB,
-                fullWidth,
-                svgBB.width,
-                scrollLeft
-              );
-              return {
-                id,
-                group: groupKey,
-                color: COLORS[index],
-                ...rest,
-                ...results,
-              };
-            }
-          ),
-        ];
-      }, [] as any[]);
+      interface PathItem {
+        properties: Array<{
+          id: string;
+          label?: string;
+          link?: string;
+        }>;
+        id: string;
+        color: string;
+        group: string;
+        p1: { x: number; y: number };
+        p2: { x: number; y: number };
+        distance: number;
+        direction: string;
+      }
 
-      // // compute offset heights based on svg height and number of paths to draw
-      const offset = height / distances.length - minimumDistance;
-      // order distances in ascending order
-      distances.sort((el1, el2) => (el2.distance < el1.distance ? 1 : -1));
-      setProcessedPaths(calcPaths(distances, offset));
+      let resultingMap: Record<string, PathItem> = {};
+
+      // Build the resulting map by grouping paths with same start-end elements
+      Object.keys(paths).forEach((groupKey, groupIndex) => {
+        const currentElement = paths[groupKey];
+        for (const item of currentElement) {
+          const pathKey = `${item.startElementLabel}-${item.endElementLabel}`;
+          console.log("*** Current Key ***", pathKey);
+
+          if (pathKey in resultingMap) {
+            // Add to existing path group
+            resultingMap[pathKey].properties.push({
+              id: item.id,
+              label: item.label,
+              link: item.link,
+            });
+          } else {
+            // Create new path group
+            const results = calcPointsDistances(
+              item.startElement,
+              item.endElement,
+              svgBB,
+              fullWidth,
+              svgBB.width,
+              scrollLeft
+            );
+            resultingMap[pathKey] = {
+              id: pathKey,
+              color: COLORS[groupIndex],
+              group: pathKey,
+              properties: [
+                {
+                  id: item.id,
+                  label: item.label,
+                  link: item.link,
+                },
+              ],
+              ...results,
+            };
+          }
+        }
+      });
+
+      // Convert resultingMap to array for processing
+      const groupedPaths = Object.values(resultingMap);
+
+      // Compute offset heights based on svg height and number of path groups to draw
+      const offset = height / groupedPaths.length - minimumDistance;
+
+      // Order paths in ascending order by distance
+      groupedPaths.sort((el1, el2) => (el2.distance < el1.distance ? 1 : -1));
+
+      setProcessedPaths(calcPaths(groupedPaths, offset));
     }
   }, [paths, svgRef, windowWidth, minimumDistance, calcPaths]);
 

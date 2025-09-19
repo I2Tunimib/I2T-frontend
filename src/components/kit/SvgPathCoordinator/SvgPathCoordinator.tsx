@@ -88,20 +88,27 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
     return (
       <svg ref={ref} {...props}>
         {processedPaths &&
-          processedPaths.map((path: any, index: number) => (
-            <SvgArrow
-              key={`${path.id}_${index}`}
-              id={`${path.id}_${index}`}
-              d={path.path.draw()}
-              arrowId={`${index}`}
-              direction={path.direction}
-              color={path.color}
-              label={path.label}
-              link={path.link}
-              onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
-              onMouseLeave={onPathMouseLeave}
-            />
-          ))}
+          processedPaths.map((path: any, index: number) => {
+            // Extract start and end element labels from the group key
+            const [startElementLabel, endElementLabel] = path.group.split("-");
+
+            return (
+              <SvgArrow
+                key={`${path.id}_${index}`}
+                id={`${path.id}_${index}`}
+                d={path.path.draw()}
+                arrowId={`${index}`}
+                direction={path.direction}
+                color={path.color}
+                label={path.label}
+                link={path.link}
+                startElementLabel={startElementLabel}
+                endElementLabel={endElementLabel}
+                onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
+                onMouseLeave={onPathMouseLeave}
+              />
+            );
+          })}
       </svg>
     );
   }
