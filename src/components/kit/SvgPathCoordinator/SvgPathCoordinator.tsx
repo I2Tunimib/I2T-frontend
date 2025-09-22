@@ -1,7 +1,14 @@
 import useSvgCoordinator, {
   UseSvgCoordinatorProps,
 } from "@hooks/svg/useSvgCoordinator";
-import { FC, useEffect, useState, HTMLAttributes, forwardRef, Ref } from "react";
+import {
+  FC,
+  useEffect,
+  useState,
+  HTMLAttributes,
+  forwardRef,
+  Ref,
+} from "react";
 import SvgArrow from "../SvgArrow";
 
 export interface SvgPathCoordinatorProps
@@ -16,8 +23,9 @@ export interface SvgPathCoordinatorProps
 const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
   (
     { paths, shouldRedraw, onPathMouseEnter, onPathMouseLeave, ...props },
-      ref
+    ref
   ) => {
+    console.log("*** SVG paths ***", paths);
     const { processedPaths, draw } = useSvgCoordinator({
       svgRef: ref,
       paths,
@@ -25,7 +33,6 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
         alfa: 30,
       },
     });
-
 
     // Store scrollLeft to adjust viewBox
     const [containerScrollLeft, setContainerScrollLeft] = useState(0);
@@ -61,7 +68,7 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
       // Small delay to ensure DOM is fully rendered
       const timeoutId = setTimeout(() => {
         draw();
-      }, 0);
+      }, 100);
       return () => clearTimeout(timeoutId);
     }, []);
 
@@ -80,20 +87,28 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
     }, [paths]);
     return (
       <svg ref={ref} {...props}>
-        {processedPaths && processedPaths.map((path: any, index: number) => (
-        <SvgArrow
-          key={`${path.id}_${index}`}
-          id={`${path.id}_${index}`}
-          d={path.path.draw()}
-          arrowId={`${index}`}
-          direction={path.direction}
-          color={path.color}
-          label={path.label}
-          link={path.link}
-          onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
-          onMouseLeave={onPathMouseLeave}
-        />
-        ))}
+        {processedPaths &&
+          processedPaths.map((path: any, index: number) => {
+            // Extract start and end element labels from the group key
+            const [startElementLabel, endElementLabel] = path.group.split("-");
+
+            return (
+              <SvgArrow
+                key={`${path.id}_${index}`}
+                id={`${path.id}_${index}`}
+                d={path.path.draw()}
+                arrowId={`${index}`}
+                direction={path.direction}
+                color={path.color}
+                label={path.label}
+                link={path.link}
+                startElementLabel={startElementLabel}
+                endElementLabel={endElementLabel}
+                onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
+                onMouseLeave={onPathMouseLeave}
+              />
+            );
+          })}
       </svg>
     );
   }

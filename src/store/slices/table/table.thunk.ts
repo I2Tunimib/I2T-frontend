@@ -48,7 +48,7 @@ export const getTable = createAsyncThunk(
   async (params: Record<string, string | number>) => {
     const response = await tableAPI.getTable(params);
     return response.data;
-  },
+  }
 );
 
 export const exportTable = createAsyncThunk(
@@ -62,7 +62,7 @@ export const exportTable = createAsyncThunk(
   }) => {
     const response = await tableAPI.exportTable(format, params);
     return response.data;
-  },
+  }
 );
 
 export const getChallengeTable = createAsyncThunk(
@@ -76,14 +76,14 @@ export const getChallengeTable = createAsyncThunk(
   }) => {
     const response = await tableAPI.getChallengeTable(datasetName, tableName);
     return response.data;
-  },
+  }
 );
 
 export const saveTable = createAsyncThunk(
   `${ACTION_PREFIX}/saveTable`,
   async (
     params: Record<string, string | number> = {},
-    { getState, dispatch },
+    { getState, dispatch }
   ) => {
     const { table } = getState() as RootState;
     const { entities } = table;
@@ -94,20 +94,91 @@ export const saveTable = createAsyncThunk(
     const deletedColumnsList = Object.values(deletedColumns) as string[];
 
     console.log("Save operation - deleted columns:", deletedColumnsList);
-
-    const response = await tableAPI.saveTable(
-      table.entities,
-      params,
+    console.log("Save operation - column order:", entities.columns.allIds);
+    console.log(
+      "Save operation - tableId:",
       tableInstance.id,
-      tableInstance.idDataset,
-      deletedColumnsList, // Pass deleted columns to the API
+      "datasetId:",
+      tableInstance.idDataset
     );
 
-    // Clear deleted columns after successful save
-    dispatch({ type: "table/clearDeletedColumns" });
+    // Check for non-ASCII characters in IDs
+    if (tableInstance.id && /[^\x00-\xFF]/.test(tableInstance.id)) {
+      console.warn("TableId contains non-ASCII characters:", tableInstance.id);
+    }
+    if (
+      tableInstance.idDataset &&
+      /[^\x00-\xFF]/.test(tableInstance.idDataset)
+    ) {
+      console.warn(
+        "DatasetId contains non-ASCII characters:",
+        tableInstance.idDataset
+      );
+    }
 
-    return response.data;
-  },
+    // Check deleted columns for non-ASCII characters
+    deletedColumnsList.forEach((col, index) => {
+      if (/[^\x00-\xFF]/.test(col)) {
+        console.warn(
+          `Deleted column ${index} contains non-ASCII characters:`,
+          col
+        );
+      }
+    });
+
+    console.log("Save operation - sending data structure:", {
+      hasTableInstance: !!entities.tableInstance,
+      hasColumns: !!entities.columns,
+      hasRows: !!entities.rows,
+      columnsCount: Object.keys(entities.columns?.byId || {}).length,
+    });
+
+    try {
+      // Include column order in the data being saved
+      const dataToSave = {
+        ...entities,
+        columnOrder: entities.columns.allIds, // Add column order to preserve frontend ordering
+      };
+
+      console.log(
+        "DEBUG: Saving table with columnOrder:",
+        entities.columns.allIds
+      );
+      console.log("DEBUG: Data structure being saved:", {
+        hasTableInstance: !!dataToSave.tableInstance,
+        hasColumns: !!dataToSave.columns,
+        hasRows: !!dataToSave.rows,
+        hasColumnOrder: !!dataToSave.columnOrder,
+        columnOrder: dataToSave.columnOrder,
+      });
+
+      const response = await tableAPI.saveTable(
+        dataToSave, // Send entities with column order
+        params,
+        tableInstance.id,
+        tableInstance.idDataset,
+        deletedColumnsList // Pass deleted columns to the API
+      );
+
+      console.log("Save operation - response received:", {
+        status: response?.status,
+        hasData: !!response?.data,
+        dataKeys: response?.data ? Object.keys(response.data) : "no data",
+      });
+
+      // Clear deleted columns after successful save
+      dispatch({ type: "table/clearDeletedColumns" });
+
+      return response.data;
+    } catch (error) {
+      console.error("Save operation - error occurred:", {
+        error,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+        errorResponse: (error as any)?.response,
+      });
+      throw error;
+    }
+  }
 );
 
 type GetLabelsProps = {
@@ -126,7 +197,7 @@ const LABELS_FN = {
     rows.allIds.flatMap((rowId) => {
       return columns.allIds.flatMap((colId) => {
         return rows.byId[rowId].cells[colId].metadata.map(
-          (metaItem) => metaItem.name.value,
+          (metaItem) => metaItem.name.value
         );
       });
     }),
@@ -151,7 +222,7 @@ export const filterTable = createAsyncThunk(
     const searchValue = value.toLowerCase();
 
     const allLabels = Array.from(
-      new Set(LABELS_FN[tag as keyof typeof LABELS_FN]({ rows, columns })),
+      new Set(LABELS_FN[tag as keyof typeof LABELS_FN]({ rows, columns }))
     );
 
     return allLabels
@@ -159,85 +230,68 @@ export const filterTable = createAsyncThunk(
       .slice(0, 10) // max 10 suggestions
       .map((label) => ({ label }));
   },
+
 );
 
 const getContextColumns = (ids: string[], rows: RowState) => {
-  return ids.reduce(
-    (acc, colId) => {
-      acc[colId] = rows.allIds.reduce(
-        (accInn, rowId) => {
-          const cell = rows.byId[rowId].cells[colId];
-          const [r, c] = getIdsFromCell(cell.id);
-          accInn[r] = cell;
-          return accInn;
-        },
-        {} as Record<string, Cell>,
-      );
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
+  return ids.reduce((acc, colId) => {
+    acc[colId] = rows.allIds.reduce((accInn, rowId) => {
+      const cell = rows.byId[rowId].cells[colId];
+      const [r, c] = getIdsFromCell(cell.id);
+      accInn[r] = cell;
+      return accInn;
+    }, {} as Record<string, Cell>);
+    return acc;
+  }, {} as Record<string, any>);
 };
 
 const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-      if (trueMeta) {
-        // eslint-disable-next-line prefer-destructuring
-        acc[rowId] = trueMeta.id;
-      }
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+    if (trueMeta) {
+      // eslint-disable-next-line prefer-destructuring
+      acc[rowId] = trueMeta.id;
+    }
+    return acc;
+  }, {} as Record<string, any>);
 };
 
 // New helper for extension services like llmClassifier
 const getColumnMetaObjects = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-      if (trueMeta) {
-        acc[rowId] = {
-          kbId: trueMeta.id,
-          value: cell.label,
-          matchingType: trueMeta.match ? "exact" : "fuzzy", // Adjust logic if needed
-        };
-      }
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+    if (trueMeta) {
+      acc[rowId] = {
+        kbId: trueMeta.id,
+        value: cell.label,
+        matchingType: trueMeta.match ? "exact" : "fuzzy", // Adjust logic if needed
+      };
+    }
+    return acc;
+  }, {} as Record<string, any>);
 };
 
 const getColumnValues = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      acc[rowId] = [cell.label, cell.metadata, colId];
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    acc[rowId] = [cell.label, cell.metadata, colId];
+    return acc;
+  }, {} as Record<string, any>);
 };
 const getMultipleColumnsValues = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      acc[rowId] = [cell.label, cell.metadata, colId];
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
+  return rowEntities.allIds.reduce((acc, rowId) => {
+    const cell = rowEntities.byId[rowId].cells[colId];
+    acc[rowId] = [cell.label, cell.metadata, colId];
+    return acc;
+  }, {} as Record<string, any>);
 };
 const getRequestFormValuesExtension = (
   formParams: FormInputParams[],
   formValues: Record<string, any>,
   table: TableState,
-  extender?: Extender,
+  extender?: Extender
 ) => {
   if (!formParams) {
     return {};
@@ -252,22 +306,16 @@ const getRequestFormValuesExtension = (
   // Use getColumnMetaObjects only for llmClassifier, otherwise use getColumnMetaIds
   if (extender && extender.id === "llmClassifier") {
     console.log("intercepted llmClassifier");
-    requestParams.items = selectedColumnsIds.reduce(
-      (acc, key) => {
-        acc[key] = getColumnMetaObjects(key, rows);
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+      acc[key] = getColumnMetaObjects(key, rows);
+      return acc;
+    }, {} as Record<string, any>);
   } else {
     // fallback: if extender is undefined or not llmClassifier, use KB id logic
-    requestParams.items = selectedColumnsIds.reduce(
-      (acc, key) => {
-        acc[key] = getColumnMetaIds(key, rows);
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+      acc[key] = getColumnMetaIds(key, rows);
+      return acc;
+    }, {} as Record<string, any>);
   }
 
   formParams.forEach(({ id, inputType }) => {
@@ -291,7 +339,7 @@ const getRequestFormValuesExtension = (
 const getRequestFormValuesReconciliation = (
   formParams: FormInputParams[],
   formValues: Record<string, any>,
-  table: TableState,
+  table: TableState
 ) => {
   if (!formParams) {
     return {};
@@ -331,7 +379,7 @@ export const reconcile = createAsyncThunk(
       reconciliator: Reconciliator;
       formValues: Record<string, any>;
     },
-    { getState },
+    { getState }
   ) => {
     const { table } = getState() as RootState;
     const { relativeUrl, formParams, id } = reconciliator;
@@ -346,7 +394,7 @@ export const reconcile = createAsyncThunk(
     const params = getRequestFormValuesReconciliation(
       formParams,
       formValues,
-      table,
+      table
     );
 
     console.log("reconcile", { items, reconciliator, formValues, params });
@@ -363,13 +411,13 @@ export const reconcile = createAsyncThunk(
       data,
       tableInstance.id,
       tableInstance.idDataset,
-      columnName,
+      columnName
     );
     return {
       data: response.data,
       reconciliator,
     };
-  },
+  }
 );
 
 type AutomaticAnnotationThunkInputProps = {
@@ -458,6 +506,7 @@ interface Property {
 
 export type ExtendThunkResponseProps = {
   extender: Extender;
+  selectedColumnId: string;
   data: {
     columns: Record<string, ExtendedColumn>;
     meta: Record<string, string>;
@@ -491,7 +540,7 @@ export const extend = createAsyncThunk<
     formParams,
     formValues,
     table,
-    extender,
+    extender
   );
   const response = await tableAPI.extend(
     relativeUrl,
@@ -501,11 +550,12 @@ export const extend = createAsyncThunk<
     },
     tableInstance.id,
     tableInstance.idDataset,
-    columnName,
+    columnName
   );
   return {
     data: response.data,
     extender,
+    selectedColumnId,
   };
 });
 
@@ -519,7 +569,15 @@ export const updateTableSocket = createAsyncThunk(
 
     if (!isEmptyObject(tableInstance) && table.id === tableInstance.id) {
       console.log("update table socket called");
-      dispatch(updateTable(inputProps));
+
+      // Preserve the current column order when updating from socket
+      const currentColumnOrder = state.table.entities.columns.allIds;
+      const updatedProps = {
+        ...inputProps,
+        columnOrder: currentColumnOrder, // Preserve existing column order
+      };
+
+      dispatch(updateTable(updatedProps));
       dispatch(
         updateUI({
           settings: {
@@ -527,8 +585,8 @@ export const updateTableSocket = createAsyncThunk(
             isViewOnly: false,
             scoreLowerBound: (table.maxMetaScore - table.minMetaScore) / 3,
           },
-        }),
+        })
       );
     }
-  },
+  }
 );

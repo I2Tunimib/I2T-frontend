@@ -89,8 +89,6 @@ const TableRowCell: FC<TableRowCellProps> = ({
   handleSelectedCellChange,
   updateTableData,
 }) => {
-  console.log("row cell value", cell.getValue()?.label);
-
   // Simple check: if value is not defined, use placeholder
   const displayValue = cell.getValue()?.label || "N/A";
 

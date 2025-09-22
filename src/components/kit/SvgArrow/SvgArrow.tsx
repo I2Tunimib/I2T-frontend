@@ -1,6 +1,7 @@
 import { FC, HTMLAttributes, useState, useRef, useEffect } from "react";
 import { ArrowHead } from "../SvgComponents";
 import styles from "./SvgArrow.module.scss";
+import TooltipPortal from "./TooltipPortal";
 
 interface SvgArrowProps {
   id: string;
@@ -46,22 +47,21 @@ const SvgArrow: FC<SvgArrowProps> = ({
     }
 
     animationFrameRef.current = requestAnimationFrame(() => {
-      // Get cursor position relative to the SVG element
-      if (pathRef.current) {
-        const svg = pathRef.current.ownerSVGElement;
-        if (svg) {
-          const point = svg.createSVGPoint();
-          point.x = e.clientX;
-          point.y = e.clientY;
-          const transformedPoint = point.matrixTransform(
-            svg.getScreenCTM()?.inverse(),
-          );
-          setCursorPosition({
-            x: transformedPoint.x + 15,
-            y: transformedPoint.y - 75,
-          });
-        }
-      }
+      // Calculate tooltip position relative to the viewport/document
+      const newPosition = {
+        x: e.clientX + 15, // Offset from cursor
+        y: e.clientY - 40, // Position above cursor
+      };
+
+      console.log("SvgArrow - Mouse move position:", {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        calculatedPosition: newPosition,
+        arrowId: id,
+        label: label,
+      });
+
+      setCursorPosition(newPosition);
     });
   };
 
@@ -82,11 +82,19 @@ const SvgArrow: FC<SvgArrowProps> = ({
       <g
         className={styles.Arrow}
         onMouseEnter={() => {
+          console.log("SvgArrow - Mouse enter:", {
+            id,
+            label,
+            showTooltip,
+            startElementLabel,
+            endElementLabel,
+          });
           setIsHovering(true);
           onMouseEnter &&
             onMouseEnter({ id, label, startElementLabel, endElementLabel });
         }}
         onMouseLeave={() => {
+          console.log("SvgArrow - Mouse leave:", { id, label });
           setIsHovering(false);
           onMouseLeave && onMouseLeave();
         }}
@@ -102,41 +110,6 @@ const SvgArrow: FC<SvgArrowProps> = ({
             </text>
           )}
 
-          {label && showTooltip && isHovering && (
-            <g
-              className={styles.TooltipContainer}
-              transform={`translate(${cursorPosition.x}, ${cursorPosition.y})`}
-            >
-              {/* Tooltip pointer triangle */}
-              <rect
-                className={styles.TooltipBackground}
-                x="-120"
-                y="0"
-                width="240"
-                height="60"
-                rx="4"
-              />
-              <path
-                className={styles.TooltipPointer}
-                d="M-5,0 L-15,-15 L5,-15 Z"
-              />
-              <text
-                key={`tooltip-${id}`}
-                className={styles.Tooltip}
-                textAnchor="middle"
-                dominantBaseline="middle"
-              >
-                <tspan x="0" dy="20">
-                  Relation: {label}
-                </tspan>
-                {startElementLabel && endElementLabel && (
-                  <tspan x="0" dy="24">
-                    {startElementLabel} → {endElementLabel}
-                  </tspan>
-                )}
-              </text>
-            </g>
-          )}
           <path
             id={id}
             ref={pathRef}
@@ -171,6 +144,33 @@ const SvgArrow: FC<SvgArrowProps> = ({
           />
         </a>
       </g>
+
+      {/* Tooltip rendered outside SVG using portal */}
+      {label && showTooltip && isHovering && (
+        <TooltipPortal>
+          <div
+            className={styles.PortalTooltip}
+            style={{
+              position: "fixed",
+              left: cursorPosition.x,
+              top: cursorPosition.y,
+              zIndex: 10000,
+              pointerEvents: "none",
+            }}
+          >
+            <div className={styles.TooltipBackground}>
+              <div className={styles.TooltipContent}>
+                <div className={styles.TooltipText}>Relation: {label}</div>
+                {startElementLabel && endElementLabel && (
+                  <div className={styles.TooltipText}>
+                    {startElementLabel} → {endElementLabel}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </TooltipPortal>
+      )}
     </>
   );
 };

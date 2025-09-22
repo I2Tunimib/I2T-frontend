@@ -17,7 +17,7 @@
     visibility: hidden;
     pointer-events: none;
     transition: opacity 100ms ease-out;
-    z-index: 1000;
+    z-index: 9999;
     filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
   }
 
@@ -30,6 +30,7 @@
 
   .TooltipBackground {
     fill: white;
+    fill-opacity: 1;
     stroke: #ddd;
     stroke-width: 1px;
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.15));
@@ -61,5 +62,36 @@
       will-change: transform;
       transition: none;
     }
+  }
+}
+
+// Portal-based tooltip styles
+.PortalTooltip {
+  pointer-events: none;
+  user-select: none;
+  z-index: 10000;
+
+  .TooltipBackground {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 8px 12px;
+    max-width: 300px;
+    word-wrap: break-word;
+  }
+
+  .TooltipContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .TooltipText {
+    color: #333;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin: 0;
   }
 }
