@@ -17,6 +17,19 @@ import {
   useState,
   useMemo
 } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import clsx from 'clsx';
 import TableHead from '../TableHead';
@@ -43,6 +56,8 @@ interface TableProps {
   setColumnSizing: (v: Record<string, number>) => void;
   columnPinning: { left: string[] };
   setColumnPinning: (v: { left: string[] }) => void;
+  columnOrder: string[];
+  setColumnOrder: (order: string[]) => void;
   getGlobalProps: () => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
@@ -75,6 +90,8 @@ const Table: FC<TableProps> = ({
   setColumnSizing,
   columnPinning,
   setColumnPinning,
+  columnOrder,
+  setColumnOrder,
   getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
@@ -85,6 +102,8 @@ const Table: FC<TableProps> = ({
   const { sortType, setSortType } = useTableSort();
   const [highlightState, setHighlightState] = useState<HighlightState | null>(null);
   const [searchHighlightState, setSearchHighlight] = useState<Record<string, boolean>>({});
+  const sensors = useSensors(useSensor(PointerSensor));
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
 
   const {
     lowerBound: {
@@ -261,15 +280,17 @@ const Table: FC<TableProps> = ({
       columnVisibility,
       columnSizing,
       columnPinning,
+      columnOrder,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
-    onColumnVisibsailityChange: setColumnVisibility,
+    onColumnVisibilityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
     columnResizeMode: 'onChange',
     enableResizing: true,
     onColumnPinningChange: setColumnPinning,
     enableColumnPinning: true,
+    onColumnOrderChange: setColumnOrder,
   });
 
   useEffect(() => {
@@ -309,6 +330,9 @@ const Table: FC<TableProps> = ({
     setHighlightState(null);
   }, []);
 
+  const draggableColumns = columnOrder.filter((id) =>
+    !columnPinning.left.includes(id) && id !== 'index');
+
   return (
     <>
       {headerExpanded && (
@@ -320,73 +344,123 @@ const Table: FC<TableProps> = ({
           onPathMouseEnter={handlePathMouseEnter}
           onPathMouseLeave={handlePathMouseLeave} />
       )}
-      <TableRoot
-        className={clsx(
-          styles.Table,
-          {
-            [styles.HeaderExpanded]: headerExpanded
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={(event) => {
+          setActiveColumnId(event.active.id as string);
+          document.body.classList.add('dnd-grabbing');
+        }}
+        onDragEnd={({ active, over }) => {
+          document.body.classList.remove('dnd-grabbing');
+          setActiveColumnId(null);
+          if (over && active.id !== over.id) {
+            const overPinned = columnPinning.left.includes(over.id as string);
+            if (overPinned) return;
+            const oldIndex = columnOrder.indexOf(active.id as string);
+            const newIndex = columnOrder.indexOf(over.id as string);
+            const newOrder = arrayMove(columnOrder, oldIndex, newIndex);
+            setColumnOrder(newOrder);
           }
-        )}
+        }}
+        onDragCancel={() => {
+          document.body.classList.remove('dnd-grabbing');
+          setActiveColumnId(null);
+        }}
       >
-        <TableHead>
-          {// Loop over the header rows
-            table.getHeaderGroups().map((headerGroup) => (
-              // Apply the header row props
-              <TableRow key={headerGroup.id}>
+        <SortableContext
+          items={draggableColumns}
+          strategy={horizontalListSortingStrategy}
+        >
+          <DragOverlay>
+            {activeColumnId ? (
+              <div
+                style={{
+                  width: columnRefs.current[activeColumnId]?.offsetWidth,
+                  height: columnRefs.current[activeColumnId]?.offsetHeight,
+                  background: '#f0f0f0',
+                  boxShadow: '0 0 5px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 {
-                  // Loop over the headers in each row
-                  headerGroup.headers.map((header) => (
-                    // Apply the header cell props
-                    <TableHeaderCell
-                      key={header.id}
-                      ref={(el: any) => {
-                        columnRefs.current[header.id] = el;
-                      }}
-                      header={header}
-                      data={header.column.columnDef}
-                      highlightState={highlightState}
-                      sortType={sortType}
-                      setSortType={setSortType}
-                      setSorting={setSorting}
-                      style={{ width: header.getSize() }}
-                      columnPinning={columnPinning}
-                      setColumnPinning={setColumnPinning}
-                      {...getHeaderProps(header)}
-                    >
-                      {// Render the header
-                        flexRender(header.column.columnDef.header, header.getContext())
-                      }
-                    </TableHeaderCell>
-                   ))}
-              </TableRow>
-            ))}
-        </TableHead>
-        {/* Apply the table body props */}
-        <tbody>
-          {// Loop over the table rows
-            table.getPaginationRowModel().rows.map((row) => (
-              // Prepare the row for display
-              <TableRow key={row.id}>
-                {// Loop over the rows cells
-                  row.getVisibleCells().map((cell) => (
-                    <TableRowCell
-                      key={cell.id}
-                      cell={cell}
-                      dense={dense}
-                      style={{ width: cell.column.getSize() }}
-                      highlightState={highlightState}
-                      searchHighlightState={searchHighlightState}
-                      {...getCellProps(cell)}
-                    >
-                      {// Render the cell contents
-                        flexRender(cell.column.columnDef.cell, cell.getContext())
-                      }
-                    </TableRowCell>
-                  ))}
-              </TableRow>
-            ))}
-        </tbody>
-      </TableRoot>
+                  flexRender(allColumns.find((col) => col.id === activeColumnId)?.header, {})
+                }
+              </div>
+            ) : null}
+          </DragOverlay>
+          <TableRoot
+            className={clsx(
+              styles.Table,
+              {
+                [styles.HeaderExpanded]: headerExpanded
+              }
+            )}
+          >
+            <TableHead>
+              {// Loop over the header rows
+                table.getHeaderGroups().map((headerGroup) => (
+                  // Apply the header row props
+                  <TableRow key={headerGroup.id}>
+                    {// Loop over the headers in each row
+                      headerGroup.headers.map((header) => (
+                        // Apply the header cell props
+                        <TableHeaderCell
+                          key={header.id}
+                          id={header.id}
+                          ref={(el: any) => {
+                            columnRefs.current[header.id] = el;
+                          }}
+                          header={header}
+                          data={header.column.columnDef}
+                          highlightState={highlightState}
+                          sortType={sortType}
+                          setSortType={setSortType}
+                          setSorting={setSorting}
+                          style={{ width: header.getSize() }}
+                          columnPinning={columnPinning}
+                          setColumnPinning={setColumnPinning}
+                          settings={tableSettings}
+                          {...getHeaderProps(header)}
+                        >
+                          {// Render the header
+                            flexRender(header.column.columnDef.header, header.getContext())
+                          }
+                        </TableHeaderCell>
+                       ))}
+                  </TableRow>
+                ))}
+            </TableHead>
+            {/* Apply the table body props */}
+            <tbody>
+              {// Loop over the table rows
+                table.getPaginationRowModel().rows.map((row) => (
+                  // Prepare the row for display
+                  <TableRow key={row.id}>
+                    {// Loop over the rows cells
+                      row.getVisibleCells().map((cell) => (
+                        <TableRowCell
+                          key={cell.id}
+                          cell={cell}
+                          dense={dense}
+                          style={{ width: cell.column.getSize() }}
+                          highlightState={highlightState}
+                          searchHighlightState={searchHighlightState}
+                          {...getCellProps(cell)}
+                        >
+                          {// Render the cell contents
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          }
+                        </TableRowCell>
+                      ))}
+                  </TableRow>
+                ))}
+            </tbody>
+          </TableRoot>
+        </SortableContext>
+      </DndContext>
       <TableFooter
         rows={table.getFilteredRowModel().rows}
         columns={columns}

@@ -68,6 +68,20 @@
     visibility: visible;
   }
 
+  .DragHandle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    cursor: grab;
+    user-select: none;
+    opacity: 0.6;
+  }
+
+  :hover .DragHandle {
+    opacity: 1;
+  }
+
   // &.Selected {
   //   background-color: var(--brand-color-one-transparent-dark);
   //   border-top: 2px solid var(--brand-color-one-base)

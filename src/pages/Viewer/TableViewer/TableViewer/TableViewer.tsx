@@ -287,6 +287,7 @@ const TableViewer = () => {
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
   const [columnPinning, setColumnPinning] = useState<{ left: string[] }>({ left: ['index'] });
+  const [columnOrder, setColumnOrder] = useState<string[]>(columnsTable.map((col) => (col.id)));
 
   useEffect(() => {
     const visibility: Record<string, boolean> = {};
@@ -306,19 +307,8 @@ const TableViewer = () => {
       [dispatch]
   );
 
-  useEffect(() => {
-    const savedSizing = localStorage.getItem("columnSizing");
-    if (savedSizing) {
-      const parsed = JSON.parse(savedSizing);
-      setColumnSizing(parsed);
-    }
-  }, []);
+  useEffect(() => setColumnOrder(columnsTable.map((col) => col.id)), [columnsTable]);
 
-  useEffect(() => {
-    if (Object.keys(columnSizing).length > 0) {
-      localStorage.setItem("columnSizing", JSON.stringify(columnSizing));
-    }
-  }, [columnSizing]);
   return (
     <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
       <SubToolbar
@@ -345,6 +335,8 @@ const TableViewer = () => {
           setColumnSizing={setColumnSizing}
           columnPinning={columnPinning}
           setColumnPinning={setColumnPinning}
+          columnOrder={columnOrder}
+          setColumnOrder={setColumnOrder}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}
           dense={isDenseView}

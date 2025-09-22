@@ -8,6 +8,7 @@ import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import PushPinIcon from '@mui/icons-material/PushPin';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import clsx from "clsx";
 import { ButtonShortcut } from "@components/kit";
 import { ColumnStatus } from "@store/slices/table/interfaces/table";
@@ -17,6 +18,8 @@ import { selectColumnReconciliators } from "@store/slices/table/table.selectors"
 import { forwardRef, MouseEvent, useCallback, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
 import { IconButtonTooltip, StatusBadge } from "@components/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import styled from "@emotion/styled";
 import styles from "./TableHeaderCell.module.scss";
 import TableHeaderCellExpanded from "./TableHeaderCellExpanded";
@@ -81,6 +84,16 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     const [hover, setHover] = useState<boolean>(false);
     const { lowerBound } = settings;
     const columnData = header.column.columnDef.data;
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+    } = useSortable({ id, disabled: id === "index" || header.column.getIsPinned() });
+    const dragStyle = header.column.getIsPinned()
+      ? { transform: 'none', transition: 'none' }
+      : { transform: CSS.Transform.toString(transform), transition };
 
     const handleSortByClick = (event: any, type: string) => {
         header.column.columnDef.sortingFn = sortFunctions[type];
@@ -142,7 +155,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
     return (
       <th
-        ref={ref}
+        ref={(el) => {
+          ref?.(el as any);
+          setNodeRef(el);
+        }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={(e) => handleSelectedColumnCellChange(e, id)}
@@ -156,7 +172,11 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             highlightState && highlightState.columns.includes(id)
               ? `${highlightState.color}10`
               : "",
-          ...(id !== "index" && style),
+          transform: transform ? `translate3d(${transform.x}px, 0, 0)` : undefined,
+          transition,
+          cursor: id === "index" ? "default" : "grab",
+          ...(id !== "index" && { ...style, width: style?.width ?? 100, }),
+          ...dragStyle,
         }}
         className={clsx([
           styles.TableHeaderCell,
@@ -170,6 +190,17 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         <div className={styles.TableHeaderContent}>
           {id !== "index" ? (
             <>
+              {!header.column.getIsPinned() && (
+                <span
+                  className={styles.DragHandle}
+                  {...attributes}
+                  {...listeners}
+                  aria-label="Drag column"
+                  role="button"
+                >
+                  <DragIndicatorIcon fontSize="small" />
+                </span>
+              )}
               {header.column.getCanPin() && (
                 <IconButton
                   onClick={() => {
@@ -315,8 +346,9 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             style={{
               cursor: header.column.getIsResizing() ? 'col-resize' : 'ew-resize',
             }}
-          >
-          </div>
+            role="separator"
+            aria-orientation="horizontal"
+          />
         )}
       </th>
     );
