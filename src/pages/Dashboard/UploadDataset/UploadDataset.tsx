@@ -6,11 +6,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import { HelpOutline } from "@mui/icons-material";
 import {
+  selectIsHelpDialogOpen,
   selectIsUploadDatasetDialogOpen,
   selectUploadDatasetStatus,
 } from "@store/slices/datasets/datasets.selectors";
@@ -18,6 +21,7 @@ import { updateUI } from "@store/slices/datasets/datasets.slice";
 //import { LoadingButton } from "@mui/lab";
 import { ChangeEvent, useState, FocusEvent, useRef } from "react";
 import { uploadDataset } from "@store/slices/datasets/datasets.thunk";
+import HelpDialog from "../HelpDialog/HelpDialog";
 
 type ErrorState = Record<string, string>;
 
@@ -31,6 +35,8 @@ const UploadDataset = () => {
 
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectIsUploadDatasetDialogOpen);
+  const helpDialogOpen = useAppSelector(selectIsHelpDialogOpen);
+
   const { loading, error: uploadError } = useAppSelector(
     selectUploadDatasetStatus
   );
@@ -80,10 +86,29 @@ const UploadDataset = () => {
 
   return (
     <Dialog open={isOpen} onClose={handleClose}>
-      <DialogTitle>Add dataset</DialogTitle>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        Add dataset
+        <IconButton
+          onClick={() => dispatch(updateUI({ helpDialogOpen: true }))}
+          size="small"
+          sx={{ ml: 1 }}
+        >
+          <HelpOutline />
+        </IconButton>
+      </DialogTitle>
+
       <DialogContent>
         <DialogContentText>
-          <p>Select a dataset to upload (.zip).</p>
+          <p>
+            Select a dataset to upload (.zip) or insert a <b>Dataset Name</b> to
+            create an empty one.
+          </p>
           <p>
             Each dataset should contain one or more tables. Please refer to the
             <b> (?) </b>
@@ -137,6 +162,10 @@ const UploadDataset = () => {
           Confirm
         </Button>
       </DialogActions>
+      <HelpDialog
+        open={helpDialogOpen}
+        onClose={() => dispatch(updateUI({ helpDialogOpen: false }))}
+      />
     </Dialog>
   );
 };
