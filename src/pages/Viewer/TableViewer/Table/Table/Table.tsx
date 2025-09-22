@@ -1,8 +1,15 @@
 /* eslint-disable indent */
 import {
-  Row, useGlobalFilter,
-  usePagination, useSortBy, useTable
-} from 'react-table';
+  Row,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  flexRender,
+  FilterFn,
+  SortingState,
+} from '@tanstack/react-table';
 import {
   FC, useCallback,
   useEffect,
@@ -10,6 +17,19 @@ import {
   useState,
   useMemo
 } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import clsx from 'clsx';
 import TableHead from '../TableHead';
@@ -30,6 +50,14 @@ interface TableProps {
   tableSettings: any;
   searchFilter?: TableGlobalFilter;
   dense?: boolean;
+  columnVisibility: Record<string, boolean>;
+  setColumnVisibility: (v: Record<string, boolean>) => void;
+  columnSizing: Record<string, number>;
+  setColumnSizing: (v: Record<string, number>) => void;
+  columnPinning: { left: string[] };
+  setColumnPinning: (v: { left: string[] }) => void;
+  columnOrder: string[];
+  setColumnOrder: (order: string[]) => void;
   getGlobalProps: () => any;
   getHeaderProps: (col: any) => any;
   getCellProps: (cell: any) => any;
@@ -46,14 +74,6 @@ interface HighlightState {
   columns: string[];
 }
 
-const findMatchingMetadata = (metadata: BaseMetadata[]) => {
-  if (!metadata || metadata.length === 0) {
-    return null;
-  }
-
-  return metadata.find((metaItem) => metaItem.match);
-};
-
 // default prop getter for when it is not provided
 const defaultPropGetter = () => ({});
 
@@ -63,16 +83,27 @@ const Table: FC<TableProps> = ({
   searchFilter,
   headerExpanded,
   tableSettings,
-  dense = false,
+  dense,
+  columnVisibility,
+  setColumnVisibility,
+  columnSizing,
+  setColumnSizing,
+  columnPinning,
+  setColumnPinning,
+  columnOrder,
+  setColumnOrder,
   getGlobalProps = defaultPropGetter,
   getHeaderProps = defaultPropGetter,
   getCellProps = defaultPropGetter
 }) => {
   const columnRefs = useRef<Record<any, HTMLElement>>({});
   // const [sortFn, setSortFn] = useState<string>('metadata');
-  const { sortType, setSortType, sortTypes } = useTableSort();
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const { sortType, setSortType } = useTableSort();
   const [highlightState, setHighlightState] = useState<HighlightState | null>(null);
   const [searchHighlightState, setSearchHighlight] = useState<Record<string, boolean>>({});
+  const sensors = useSensors(useSensor(PointerSensor));
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
 
   const {
     lowerBound: {
@@ -91,16 +122,15 @@ const Table: FC<TableProps> = ({
   /**
  * Returns row which have at least a cell with label.
  */
-  const filterAll = useCallback((
-    rows: Array<Row>, colIds: Array<string>, regex: RegExp
-  ) => {
-    const filteredRows = rows.filter((row) => colIds
-      .some((colId) => regex.test(row.values[colId].label
-        .toLowerCase())));
+  const filterAll = useCallback((rows: Array<Row>, colIds: Array<string>, regex: RegExp) => {
+    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+
+    const filteredRows = rows.filter((row) =>
+      colIds.some((colId) => regex.test(normalize(row.getValue(colId)?.label || ''))));
 
     filteredRows.forEach((row) => {
       colIds.forEach((colId) => {
-        const match = regex.test(row.values[colId].label.toLowerCase());
+        const match = regex.test(normalize(row.getValue(colId)?.label || ''));
 
         if (match) {
           setSearchHighlight((oldState) => ({
@@ -116,24 +146,23 @@ const Table: FC<TableProps> = ({
   /**
    * Returns row which have at least a cell with metadata name.
    */
-  const filterMetaName = useCallback((
-    rows: Array<Row>, colIds: Array<string>, regex: RegExp
-  ) => {
-    const filteredRows = rows.filter((row) => colIds
-      .some((colId) => row.values[colId].metadata
-        .some((item: BaseMetadata) => regex.test(item.name.value.toLowerCase()))));
+  const filterMetaName = useCallback((rows: Row<any>[], colIds: string[], regex: RegExp) => {
+    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+
+    const filteredRows = rows.filter((row) =>
+      colIds.some((colId) => row.getValue(colId)?.metadata?.some((item: BaseMetadata) =>
+        regex.test(normalize(item.name.value)))));
 
     filteredRows.forEach((row) => {
       colIds.forEach((colId) => {
-        const match = row.values[colId].metadata
-          .some((item: BaseMetadata) => regex.test(item.name.value.toLowerCase()));
-
-        if (match) {
-          setSearchHighlight((oldState) => ({
-            ...oldState,
-            [`${row.id}$${colId}`]: true
-          }));
-        }
+        row.getValue(colId)?.metadata?.forEach((item: BaseMetadata) => {
+          if (regex.test(normalize(item.name.value))) {
+            setSearchHighlight((oldState) => ({
+              ...oldState,
+              [`${row.id}$${colId}`]: true
+            }));
+          }
+        });
       });
     });
     return filteredRows;
@@ -142,26 +171,26 @@ const Table: FC<TableProps> = ({
   /**
    * Returns row which have at least a cell with metadata type.
    */
-  const filterMetaType = useCallback((
-    rows: Array<Row>, colIds: Array<string>, regex: RegExp
-  ) => {
-    const filteredRows = rows.filter((row) => colIds
-      .some((colId) => row.values[colId].metadata
-        .some((item: any) => item.type && item.type
-          .some((type: any) => regex.test(type.name.toLowerCase())))));
+  const filterMetaType = useCallback((rows: Row<any>[], colIds: string[], regex: RegExp) => {
+    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+
+    const filteredRows = rows.filter((row) =>
+      colIds.some((colId) =>
+        row.getValue(colId)?.metadata?.some((item: any) =>
+          item.type?.some((type: any) => regex.test(normalize(type.name))))));
 
     filteredRows.forEach((row) => {
       colIds.forEach((colId) => {
-        const match = row.values[colId].metadata
-          .some((item: any) => item.type && item.type
-            .some((type: any) => regex.test(type.name.toLowerCase())));
-
-        if (match) {
-          setSearchHighlight((oldState) => ({
-            ...oldState,
-            [`${row.id}$${colId}`]: true
-          }));
-        }
+        row.getValue(colId)?.metadata?.forEach((item: any) => {
+          item.type?.forEach((type: any) => {
+            if (regex.test(normalize(type.name))) {
+              setSearchHighlight((oldState) => ({
+                ...oldState,
+                [`${row.id}$${colId}`]: true
+              }));
+            }
+          });
+        });
       });
     });
     return filteredRows;
@@ -179,169 +208,115 @@ const Table: FC<TableProps> = ({
     return pipeFilters(rows, colIds, globalFilter, scoreLowerBound);
   }, [scoreLowerBound]);
 
-  const customGlobalFilter = useCallback((
-    rows: Array<Row>,
-    [index, ...colIds]: Array<string>,
-    { globalFilter, filter, value }: TableGlobalFilter
+  const customGlobalFilter: FilterFn<any> = useCallback((
+    row,
+    columnIds,
+    filterValue
   ) => {
-    setSearchHighlight({});
-    const regex = new RegExp(value.toLowerCase().replace(/[^a-zA-Z0-9]/g, '\\$&'));
-    const filteredRows = initialFilter(rows, colIds, globalFilter);
-    // return all rows if value is empty
-    if (value === '') {
-      return filteredRows;
-    }
+    const { value, filter } = filterValue as TableGlobalFilter;
+    if (!value) return true;
+
+    const regex = new RegExp(`^${value}`, 'i');
+    const colIds = row.getAllCells().map((cell) => cell.column.id);
 
     switch (filter) {
       case 'label':
-        return filterAll(filteredRows, colIds, regex);
+        return filterAll([row], colIds, regex).length > 0;
       case 'metaName':
-        return filterMetaName(filteredRows, colIds, regex);
+        return filterMetaName([row], colIds, regex).length > 0;
       case 'metaType':
-        return filterMetaType(filteredRows, colIds, regex);
+        return filterMetaType([row], colIds, regex).length > 0;
       default:
-        return filterAll(filteredRows, colIds, regex);
+        return filterAll([row], colIds, regex).length > 0;
     }
-  }, []);
+  }, [filterAll, filterMetaName, filterMetaType]);
 
-  // const sortByMetadata = useCallback(
-  //   (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
-  //     console.log(rowA);
-  //     if (!rowA.values[columnId].annotationMeta
-  //       || !rowA.values[columnId].annotationMeta.match.value) {
-  //       return -1;
-  //     }
-
-  //     if (!rowB.values[columnId].annotationMeta
-  //       || !rowB.values[columnId].annotationMeta.match.value) {
-  //       return 1;
-  //     }
-
-  //     const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
-  //     if (!matchingA) {
-  //       return -1;
-  //     }
-
-  //     const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
-  //     if (!matchingB) {
-  //       return 1;
-  //     }
-
-  //     return matchingA.score - matchingB.score;
-  //   },
-  //   []
-  // );
-
-  // const sortText = useCallback(
-  //   (rowA: Row, rowB: Row, columnId: string, desc: boolean | undefined) => {
-  //     return rowA.values[columnId].label.localeCompare(rowB.values[columnId].label);
-  //     // if (!rowA.values[columnId].annotationMeta
-  //     //   || !rowA.values[columnId].annotationMeta.match.value) {
-  //     //   return -1;
-  //     // }
-
-  //     // if (!rowB.values[columnId].annotationMeta
-  //     //   || !rowB.values[columnId].annotationMeta.match.value) {
-  //     //   return 1;
-  //     // }
-
-  //     // const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
-  //     // if (!matchingA) {
-  //     //   return -1;
-  //     // }
-
-  //     // const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
-  //     // if (!matchingB) {
-  //     //   return 1;
-  //     // }
-
-  //     // return matchingA.score - matchingB.score;
-  //   },
-  //   []
-  // );
-
-  // const test = useCallback(() => {
-  //   if (sortFn === 'metadata') {
-  //     return sortByMetadata;
-  //   }
-  //   return sortText;
-  //   // } else if (sortfn === 'text') {
-  //   //   return testSort;
-  //   // }
-  // }, [sortFn]);
-
-  // const sortTypes = useMemo(() => ({ sortByMetadata: test() }), [test]);
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    columns: tableColumns,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize },
-    prepareRow,
-    setGlobalFilter
-  } = useTable({
-    columns,
-    data,
-    getRowId,
-    sortTypes,
-    globalFilter: customGlobalFilter,
-    initialState: { pageSize: 30 },
-    autoResetGlobalFilter: false
-  },
-    useGlobalFilter,
-    useSortBy,
-    usePagination,
-    (hooks) => {
-      // push a column for the index
-      hooks.visibleColumns.push((cols) => [
-        {
+  const allColumns = useMemo(() => {
+    const hasVisibleColumns = Object.values(columnVisibility).some((v) => v);
+    const indexColumn = hasVisibleColumns
+      ? [{
           id: 'index',
-          Header: '0',
-          // eslint-disable-next-line react/prop-types
-          Cell: ({ row, flatRows, ...rest }) => {
-            return (
-              // eslint-disable-next-line react/prop-types
-              <div>{flatRows.indexOf(row) + 1}</div>
-            );
-          }
-        },
-        ...cols
-      ]);
-    });
+          header: '',
+          accessorFn: (_row, index) => index,
+          enableSorting: true,
+          enableResizing: false,
+          enableColumnPinning: false,
+          size: 24,
+          minSize: 24,
+          maxSize: 24,
+          cell: ({ row }) => <div>{row.index + 1}</div>,
+          getIsPinned: () => 'left',
+      }]
+      : [];
+    return [...indexColumn, ...columns];
+  }, [columns, columnVisibility]);
 
-  const paginatorProps = {
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    pageIndex,
-    pageSize,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize
-  };
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 17,
+  });
 
-  useEffect(() => {
-    if (searchFilter) {
-      setGlobalFilter(searchFilter);
+  const filteredData = useMemo(() => {
+    if (!searchFilter?.globalFilter || searchFilter.globalFilter.length === 3) {
+      return data;
     }
-  }, [searchFilter]);
+    const colIds = allColumns.map((col) => col.id);
+    return initialFilter(data, colIds, searchFilter.globalFilter);
+  }, [data, allColumns, searchFilter?.globalFilter, initialFilter]);
+
+  const table = useReactTable({
+    data: filteredData,
+    columns: allColumns,
+    getRowId,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: customGlobalFilter,
+    state: {
+      globalFilter: searchFilter,
+      pagination,
+      sorting,
+      columnVisibility,
+      columnSizing,
+      columnPinning,
+      columnOrder,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    onColumnSizingChange: setColumnSizing,
+    columnResizeMode: 'onChange',
+    enableResizing: true,
+    onColumnPinningChange: setColumnPinning,
+    enableColumnPinning: true,
+    onColumnOrderChange: setColumnOrder,
+  });
 
   useEffect(() => {
-    // console.log(searchHighlightState);
-  }, [searchHighlightState]);
+    setSearchHighlight({});
+
+    if (!searchFilter?.value) return;
+
+    const regex = new RegExp(`^${searchFilter.value}`, 'i');
+    const colIds = allColumns.map((col) => col.id);
+
+    let filteredRows: Row<any>[] = table.getRowModel().rows;
+
+    switch (searchFilter.filter) {
+      case 'label':
+        filteredRows = filterAll(filteredRows, colIds, regex);
+        break;
+      case 'metaName':
+        filteredRows = filterMetaName(filteredRows, colIds, regex);
+        break;
+      case 'metaType':
+        filteredRows = filterMetaType(filteredRows, colIds, regex);
+        break;
+      default:
+        filteredRows = filterAll(filteredRows, colIds, regex);
+    }
+  }, [searchFilter?.value, searchFilter?.filter, table.getRowModel().rows]);
 
   const handlePathMouseEnter = useCallback((path: any) => {
     const { startElementLabel, endElementLabel, color } = path;
@@ -355,6 +330,9 @@ const Table: FC<TableProps> = ({
     setHighlightState(null);
   }, []);
 
+  const draggableColumns = columnOrder.filter((id) =>
+    !columnPinning.left.includes(id) && id !== 'index');
+
   return (
     <>
       {headerExpanded && (
@@ -366,84 +344,129 @@ const Table: FC<TableProps> = ({
           onPathMouseEnter={handlePathMouseEnter}
           onPathMouseLeave={handlePathMouseLeave} />
       )}
-      <TableRoot
-        className={clsx(
-          styles.Table,
-          {
-            [styles.HeaderExpanded]: headerExpanded
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={(event) => {
+          setActiveColumnId(event.active.id as string);
+          document.body.classList.add('dnd-grabbing');
+        }}
+        onDragEnd={({ active, over }) => {
+          document.body.classList.remove('dnd-grabbing');
+          setActiveColumnId(null);
+          if (over && active.id !== over.id) {
+            const overPinned = columnPinning.left.includes(over.id as string);
+            if (overPinned) return;
+            const oldIndex = columnOrder.indexOf(active.id as string);
+            const newIndex = columnOrder.indexOf(over.id as string);
+            const newOrder = arrayMove(columnOrder, oldIndex, newIndex);
+            setColumnOrder(newOrder);
           }
-        )}
-        {...getTableProps([getGlobalProps()])}>
-        <TableHead>
-          {// Loop over the header rows
-            headerGroups.map((headerGroup, jj) => {
-              // Apply the header row props
-              const {key: headerGroupKey, ...headerGroupProps} = headerGroup.getHeaderGroupProps([getGlobalProps()]);
-              return (
-                  <TableRow key={headerGroupKey} {...headerGroupProps}>
+        }}
+        onDragCancel={() => {
+          document.body.classList.remove('dnd-grabbing');
+          setActiveColumnId(null);
+        }}
+      >
+        <SortableContext
+          items={draggableColumns}
+          strategy={horizontalListSortingStrategy}
+        >
+          <DragOverlay>
+            {activeColumnId ? (
+              <div
+                style={{
+                  width: columnRefs.current[activeColumnId]?.offsetWidth,
+                  height: columnRefs.current[activeColumnId]?.offsetHeight,
+                  background: '#f0f0f0',
+                  boxShadow: '0 0 5px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {
+                  flexRender(allColumns.find((col) => col.id === activeColumnId)?.header, {})
+                }
+              </div>
+            ) : null}
+          </DragOverlay>
+          <TableRoot
+            className={clsx(
+              styles.Table,
+              {
+                [styles.HeaderExpanded]: headerExpanded
+              }
+            )}
+          >
+            <TableHead>
+              {// Loop over the header rows
+                table.getHeaderGroups().map((headerGroup) => (
+                  // Apply the header row props
+                  <TableRow key={headerGroup.id}>
                     {// Loop over the headers in each row
-                      headerGroup.headers.map((column, index) => {
-                        const {key: headerKey, ...headerProps} = column.getHeaderProps([
-                          getHeaderProps(column),
-                          getGlobalProps(),
-                          {
-                            index,
-                            highlightState,
-                            sortType,
-                            setSortType,
-                            sortByProps: column.getSortByToggleProps(),
-                            isSorted: column.isSorted,
-                            isSortedDesc: column.isSortedDesc
+                      headerGroup.headers.map((header) => (
+                        // Apply the header cell props
+                        <TableHeaderCell
+                          key={header.id}
+                          id={header.id}
+                          ref={(el: any) => {
+                            columnRefs.current[header.id] = el;
+                          }}
+                          header={header}
+                          data={header.column.columnDef}
+                          highlightState={highlightState}
+                          sortType={sortType}
+                          setSortType={setSortType}
+                          setSorting={setSorting}
+                          style={{ width: header.getSize() }}
+                          columnPinning={columnPinning}
+                          setColumnPinning={setColumnPinning}
+                          settings={tableSettings}
+                          {...getHeaderProps(header)}
+                        >
+                          {// Render the header
+                            flexRender(header.column.columnDef.header, header.getContext())
                           }
-                        ]);
-                        return (
-                            // Apply the header cell props
-                            <TableHeaderCell key={headerKey}
-                                             ref={(el: any) => {
-                                               columnRefs.current[column.id] = el;
-                                             }}
-                                             {...headerProps}>
-                              {// Render the header
-                                column.render('Header')
-                              }
-                            </TableHeaderCell>
-                        );
-                      })}
+                        </TableHeaderCell>
+                       ))}
                   </TableRow>
-              );
-            })}
-        </TableHead>
-        {/* Apply the table body props */}
-        <tbody {...getTableBodyProps()}>
-          {// Loop over the table rows
-            page.map((row) => {
-              // Prepare the row for display
-              prepareRow(row);
-              const { key: rowKey, ...rowProps } = row.getRowProps(getGlobalProps());
-              return (
-                // Apply the row props
-                <TableRow key={rowKey} {...rowProps}>
-                  {// Loop over the rows cells
-                    row.cells.map((cell) => {
-                      const {key: cellKey, ...cellProps} = cell.getCellProps([
-                        getCellProps(cell),
-                        getGlobalProps(),
-                        {highlightState, searchHighlightState}
-                      ]) as any;
-                      return (
-                          // Apply the cell prop
-                          <TableRowCell key={cellKey} {...cellProps}>
-                            {// Render the cell contents
-                              cell.render('Cell')}
-                          </TableRowCell>
-                      );
-                    })}
-                </TableRow>
-              );
-            })}
-        </tbody>
-      </TableRoot>
-      <TableFooter rows={rows} columns={tableColumns} paginatorProps={paginatorProps} />
+                ))}
+            </TableHead>
+            {/* Apply the table body props */}
+            <tbody>
+              {// Loop over the table rows
+                table.getPaginationRowModel().rows.map((row) => (
+                  // Prepare the row for display
+                  <TableRow key={row.id}>
+                    {// Loop over the rows cells
+                      row.getVisibleCells().map((cell) => (
+                        <TableRowCell
+                          key={cell.id}
+                          cell={cell}
+                          dense={dense}
+                          style={{ width: cell.column.getSize() }}
+                          highlightState={highlightState}
+                          searchHighlightState={searchHighlightState}
+                          {...getCellProps(cell)}
+                        >
+                          {// Render the cell contents
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          }
+                        </TableRowCell>
+                      ))}
+                  </TableRow>
+                ))}
+            </tbody>
+          </TableRoot>
+        </SortableContext>
+      </DndContext>
+      <TableFooter
+        rows={table.getFilteredRowModel().rows}
+        columns={columns}
+        table={table}
+        pageIndex={table.getState().pagination.pageIndex}
+      />
     </>
   );
 };

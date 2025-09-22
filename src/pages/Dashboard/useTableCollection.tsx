@@ -4,7 +4,7 @@ import {
   useEffect,
   useMemo, useState
 } from 'react';
-import { Cell, Column } from 'react-table';
+import { ColumnDef, CellContext } from '@tanstack/react-table';
 import { CELL_COMPONENTS_TYPES } from './cellComponentsConfig';
 
 export type MakeDataProps<T> = GetCollectionResult<T> & {
@@ -22,36 +22,35 @@ export function makeData<T extends {}>({
   options = {
     sortFunctions: {}
   }
-}: MakeDataProps<T>): { columns: Column[]; data: T[] } {
+}: MakeDataProps<T>): { columns: ColumnDef<T>[]; data: T[] } {
   const { sortFunctions } = options;
 
-  const columns = collection.length ? Object.keys(meta).reduce((acc, key) => {
+  const columns: ColumnDef<T>[] = collection.length ? Object.keys(meta).reduce((acc, key) => {
     const metaItem = meta[key as keyof typeof meta];
 
     if (key !== 'id') {
       return [
         ...acc, {
-          Header: metaItem && metaItem.label,
-          accessor: key,
+          header: metaItem && metaItem.label,
+          accessorKey: key,
           ...((sortFunctions && sortFunctions[key]) && { sortType: sortFunctions[key] }),
           ...(metaItem && metaItem.type && {
             ...(CELL_COMPONENTS_TYPES[metaItem.type].sortFn && {
-              [key]: CELL_COMPONENTS_TYPES[metaItem.type].sortFn
+              sortType: CELL_COMPONENTS_TYPES[metaItem.type].sortFn
             }),
-            Cell: ({ row, value }: Cell<T>) => {
-              if (metaItem.type) {
-                return CELL_COMPONENTS_TYPES[metaItem.type].component(row, {
-                  value,
-                  props: metaItem.props
-                });
-              }
+            cell: (cell: CellContext<T, any>) => {
+              const value = cell.getValue();
+              return CELL_COMPONENTS_TYPES[metaItem.type].component(cell, {
+                value,
+                props: metaItem.props
+              });
             }
           })
         }
       ];
     }
     return acc;
-  }, [] as Column[]) : [];
+  }, [] as ColumnDef<T>[]) : [];
 
   return {
     columns,
@@ -62,11 +61,11 @@ export function makeData<T extends {}>({
 export type CollectionSelector<T> = (state: any) => GetCollectionResult<T>
 
 type TableState<T> = {
-  columns: Column[];
+  columns: ColumnDef<T>[];
   data: T[];
 }
 
-const defaultTableState = {
+const defaultTableState: TableState<any> = {
   columns: [],
   data: []
 };

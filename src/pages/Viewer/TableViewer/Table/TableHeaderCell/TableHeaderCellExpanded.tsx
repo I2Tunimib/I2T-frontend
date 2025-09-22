@@ -159,7 +159,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
       >
         <ExpandableListHeader>
           {getItems(0, 3).map((item, index) => (
-            <ExpandableListItem key={`${item.id}`}>
+            <ExpandableListItem key={`${item.id}-${index}`}>
               <div className={styles.Item}>
                 {item.match ? (
                   <CheckRoundedIcon className={styles.Icon} />
@@ -182,7 +182,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
         </ExpandableListHeader>
         <ExpandableListBody>
           {getItems(3, nEntities).map((item, index) => (
-            <ExpandableListItem key={`${item.id}`}>
+            <ExpandableListItem key={`${item.id}-${index}`}>
               <div className={styles.Item}>
                 {item.match ? (
                   <CheckRoundedIcon className={styles.Icon} />

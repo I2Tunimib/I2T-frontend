@@ -71,6 +71,13 @@ const PopperItem = styled.button({
   }
 });
 
+const PopperItemText = styled.div({
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  maxWidth: "250px",
+});
+
 const SearchIcon = styled(SearchRoundedIcon)({
   padding: '10px',
   transform: 'scale(0.9)',
@@ -248,7 +255,9 @@ const TaggedSearch: FC<TaggedSearchProps> = ({
                 <PopperItem
                   key={key}
                   onClick={() => handleAutocompleteClick(autocompleteMapFnItem(item))}>
-                  {autocompleteMapFnItem(item)}
+                  <PopperItemText>
+                    {autocompleteMapFnItem(item)}
+                  </PopperItemText>
                 </PopperItem>
               ))}
             </>

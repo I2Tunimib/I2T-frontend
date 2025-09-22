@@ -1,6 +1,6 @@
 import { Link } from '@mui/material';
 import { FC } from 'react';
-import { Cell } from 'react-table';
+import { CellContext } from '@tanstack/react-table';
 
 interface TableCellProps {
   value: {
@@ -10,7 +10,7 @@ interface TableCellProps {
   }
 }
 
-const TableCell: FC<Cell<TableCellProps>> = ({
+const TableCell: FC<CellContext<any, TableCellProps>> = ({
   value: {
     label,
     isLink,

@@ -10,7 +10,8 @@ import {
   updateColumnCellsSelection,
   updateColumnSelection,
   updateRowSelection,
-  updateUI
+  updateUI,
+  updateColumnVisibility,
 } from '@store/slices/table/table.slice';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { HotKeys } from 'react-hotkeys';
@@ -23,7 +24,7 @@ import {
   selectIsHeaderExpanded, selectExpandedCellsIds,
   selectExpandedColumnsIds, selectEditableCellsIds,
   selectSelectedColumnCellsIds,
-  selectCurrentTable, selectSettingsDialogStatus, selectSettings
+  selectCurrentTable, selectSettingsDialogStatus, selectSettings,
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { saveTable } from '@store/slices/table/table.thunk';
@@ -78,6 +79,9 @@ const TableViewer = () => {
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const settings = useAppSelector(selectSettings);
+  const columnVisibilityRedux = useAppSelector(
+      (state) => state.table.ui.columnVisibility
+  );
 
   useEffect(() => {
     if (currentTable && currentTable.mantisStatus === 'PENDING') {
@@ -224,17 +228,13 @@ const TableViewer = () => {
   /**
    * Properties to pass to each header.
    */
-  const getHeaderProps = useCallback(({
-    id,
-    data,
-    ...colTableProps
-  }: TableColumn) => {
+  const getHeaderProps = useCallback((header: any) => {
     return {
-      id,
-      selected: !!selectedColumns[id] || !!selectedColumnCells[id],
-      expanded: !!expandedColumnsIds[id],
+      id: header.id,
+      selected: !!selectedColumns[header.id] || !!selectedColumnCells[header.id],
+      expanded: !!expandedColumnsIds[header.id],
       settings,
-      data,
+      data: header.column.columnDef,
       handleCellRightClick,
       handleSelectedColumnChange,
       handleSelectedColumnCellChange
@@ -284,10 +284,40 @@ const TableViewer = () => {
   const columnsTable = useMemo(() => columns, [columns]);
   const rowsTable = useMemo(() => rows, [rows]);
   const searchFilterTable = useMemo(() => searchFilter, [searchFilter]);
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
+  const [columnPinning, setColumnPinning] = useState<{ left: string[] }>({ left: ['index'] });
+  const [columnOrder, setColumnOrder] = useState<string[]>(columnsTable.map((col) => (col.id)));
+
+  useEffect(() => {
+    const visibility: Record<string, boolean> = {};
+    columns.forEach((col) => {
+      visibility[col.id] = columnVisibilityRedux[col.id] ?? true;
+    });
+    setColumnVisibility(visibility);
+  }, [columns, columnVisibilityRedux]);
+
+  const handleColumnVisibilityChange = useCallback(
+      (newVisibility: Record<string, boolean>) => {
+        setColumnVisibility(newVisibility);
+        Object.entries(newVisibility).forEach(([id, isVisible]) => {
+          dispatch(updateColumnVisibility({ id, isVisible }));
+        });
+      },
+      [dispatch]
+  );
+
+  useEffect(() => setColumnOrder(columnsTable.map((col) => col.id)), [columnsTable]);
 
   return (
     <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
-      <SubToolbar />
+      <SubToolbar
+        columns={columnsTable}
+        columnVisibility={columnVisibility}
+        setColumnVisibility={handleColumnVisibilityChange}
+        columnSizing={columnSizing}
+        setColumnSizing={setColumnSizing}
+      />
       <div className={clsx(
         styles.TableContainer,
         {
@@ -299,10 +329,24 @@ const TableViewer = () => {
           columns={columnsTable}
           tableSettings={settings}
           searchFilter={searchFilterTable}
+          columnVisibility={columnVisibility}
+          setColumnVisibility={handleColumnVisibilityChange}
+          columnSizing={columnSizing}
+          setColumnSizing={setColumnSizing}
+          columnPinning={columnPinning}
+          setColumnPinning={setColumnPinning}
+          columnOrder={columnOrder}
+          setColumnOrder={setColumnOrder}
           headerExpanded={isHeaderExpanded}
           getGlobalProps={getGlobalProps}
+          dense={isDenseView}
           // getFirstHeaderProps={getFirstHeaderProps}
-          getHeaderProps={getHeaderProps}
+          getHeaderProps={(col) => ({
+            ...getHeaderProps(col),
+            handleCellRightClick,
+            handleSelectedColumnChange,
+            handleSelectedColumnCellChange,
+          })}
           getCellProps={getCellProps}
         />
         <ContextMenuCell
@@ -316,6 +360,11 @@ const TableViewer = () => {
           anchorElement={anchorEl}
           handleClose={handleMenuClose}
           data={menuState.data}
+          columns={columnsTable}
+          columnVisibility={columnVisibility}
+          setColumnVisibility={handleColumnVisibilityChange}
+          columnPinning={columnPinning}
+          setColumnPinning={setColumnPinning}
         />
         <ContextMenuRow
           open={menuState.status.row}

@@ -1,25 +1,25 @@
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
 import { ReactNode } from 'react';
-import { Cell, ColumnInstance, Row } from 'react-table';
+import { Column, Row } from '@tanstack/react-table';
 
 /**
  * A column of the table
  */
 export interface IColumn {
-  Header: string | ReactNode; // What to render inside a header cell
-  accessor: string; // id of column
+  header: string | ReactNode; // What to render inside a header cell
+  accessorKey: string; // id of column
   selected: boolean; // if a column is selected
   reconciliator?: string; // if a column is reconciliated
   extension?: string; // if a column is the result of an extension
-  Cell?: (prop: any) => string | ReactNode; // What to render inside a cell
+  cell?: (prop: any) => string | ReactNode; // What to render inside a cell
 }
 
-export interface TableColumn extends ColumnInstance {
+export interface TableColumn<TData = any, TValue = unknown> extends Column<TData, TValue> {
   reconciliator: string;
   extension: string;
 }
 
-export interface TableRow extends Row {}
+export interface TableRow<TData = any> extends Row<TData> {}
 
 export interface TableCell extends Cell {
   value: {

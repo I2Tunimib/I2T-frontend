@@ -2,9 +2,13 @@
 import { Box, IconButton, Stack } from "@mui/material";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import PushPinIcon from '@mui/icons-material/PushPin';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import clsx from "clsx";
 import { ButtonShortcut } from "@components/kit";
 import { ColumnStatus } from "@store/slices/table/interfaces/table";
@@ -14,9 +18,12 @@ import { selectColumnReconciliators } from "@store/slices/table/table.selectors"
 import { forwardRef, MouseEvent, useCallback, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
 import { IconButtonTooltip, StatusBadge } from "@components/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import styled from "@emotion/styled";
 import styles from "./TableHeaderCell.module.scss";
 import TableHeaderCellExpanded from "./TableHeaderCellExpanded";
+import { sortFunctions } from "../Table/sort/sortFns";
 
 const SortButton = styled(IconButton)({});
 
@@ -54,6 +61,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
   (
     {
       id,
+      header,
       selected,
       expanded,
       children,
@@ -64,23 +72,40 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       highlightState,
       sortType,
       setSortType,
-      sortByProps,
+      setSorting,
+      columnPinning,
+      setColumnPinning,
       data,
       settings,
-      isSorted,
-      isSortedDesc,
       style,
     }: any,
     ref
   ) => {
     const [hover, setHover] = useState<boolean>(false);
-    const { onClick: sortBy, ...restSortByProps } = sortByProps;
-
     const { lowerBound } = settings;
+    const columnData = header.column.columnDef.data;
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+    } = useSortable({ id, disabled: id === "index" || header.column.getIsPinned() });
+    const dragStyle = header.column.getIsPinned()
+      ? { transform: 'none', transition: 'none' }
+      : { transform: CSS.Transform.toString(transform), transition };
 
     const handleSortByClick = (event: any, type: string) => {
+        header.column.columnDef.sortingFn = sortFunctions[type];
+        const currentSort = header.column.getIsSorted();
+        if (!currentSort) {
+            header.column.toggleSorting(false);// A → Z
+        } else if (currentSort === 'asc') {
+            header.column.toggleSorting(true);// Z → A
+        } else if (currentSort === 'desc') {
+            header.column.clearSorting();// ordine originale
+        }
       setSortType(type);
-      sortBy(event);
     };
 
     const handleSelectColumn = (event: MouseEvent) => {
@@ -130,7 +155,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
     return (
       <th
-        ref={ref}
+        ref={(el) => {
+          ref?.(el as any);
+          setNodeRef(el);
+        }}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={(e) => handleSelectedColumnCellChange(e, id)}
@@ -144,33 +172,68 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             highlightState && highlightState.columns.includes(id)
               ? `${highlightState.color}10`
               : "",
-          ...(id !== "index" && style),
+          transform: transform ? `translate3d(${transform.x}px, 0, 0)` : undefined,
+          transition,
+          cursor: id === "index" ? "default" : "grab",
+          ...(id !== "index" && { ...style, width: style?.width ?? 100, }),
+          ...dragStyle,
         }}
         className={clsx([
           styles.TableHeaderCell,
           {
             [styles.Selected]: selected,
             [styles.TableHeaderIndex]: id === "index",
+            [styles.Resizing]: header.column.getIsResizing(),
           },
         ])}
       >
         <div className={styles.TableHeaderContent}>
           {id !== "index" ? (
             <>
+              {!header.column.getIsPinned() && (
+                <span
+                  className={styles.DragHandle}
+                  {...attributes}
+                  {...listeners}
+                  aria-label="Drag column"
+                  role="button"
+                >
+                  <DragIndicatorIcon fontSize="small" />
+                </span>
+              )}
+              {header.column.getCanPin() && (
+                <IconButton
+                  onClick={() => {
+                    const currentPin = header.column.getIsPinned();
+                    header.column.pin(currentPin ? false : 'left');
+                  }}
+                  size="small"
+                  className={styles.PinButton}
+                >
+                  {header.column.getIsPinned() ? (
+                    <PushPinIcon fontSize="small" />
+                  ) : (
+                    <PushPinOutlinedIcon fontSize="small" />
+                  )}
+                </IconButton>
+              )}
               <IconButton
                 onClick={handleSelectColumn}
                 size="small"
                 className={styles.ColumnSelectionButton}
                 sx={{ marginBottom: 15 }}
               >
-                <CheckCircleOutlineRoundedIcon fontSize="medium" />
+                {selected ?
+                  <CheckCircleRoundedIcon fontSize="medium" />
+                :
+                  <CheckCircleOutlineRoundedIcon fontSize="medium" />}
               </IconButton>
               <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
                   <div className={styles.Row}>
-                    {data.annotationMeta && data.annotationMeta.annotated && (
+                    {columnData.annotationMeta && columnData.annotationMeta.annotated && (
                       <StatusBadge
-                        status={getBadgeStatus(data)}
+                        status={getBadgeStatus(columnData)}
                         size="small"
                         marginRight="5px"
                       />
@@ -196,15 +259,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         onClick={(e) => handleSortByClick(e, "sortByText")}
                         sx={{
                           visibility:
-                            hover || (isSorted && sortType === "sortByText")
+                            hover || (header.column.getIsSorted() && sortType === "sortByText")
                               ? "visible"
                               : "hidden",
-                          ...((!isSorted || sortType !== "sortByText") && {
+                          ...((!header.column.getIsSorted() || sortType !== "sortByText") && {
                             color: "rgba(0, 0, 0, 0.377)",
                           }),
                         }}
                         size="small"
-                        {...restSortByProps}
                         title=""
                       >
                         <SortByAlphaIcon fontSize="small" />
@@ -213,37 +275,36 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         onClick={(e) => handleSortByClick(e, "sortByMetadata")}
                         sx={{
                           visibility:
-                            hover || (isSorted && sortType === "sortByMetadata")
+                            hover || (header.column.getIsSorted() && sortType === "sortByMetadata")
                               ? "visible"
                               : "hidden",
-                          ...((!isSorted || sortType !== "sortByMetadata") && {
+                          ...((!header.column.getIsSorted() || sortType !== "sortByMetadata") && {
                             color: "rgba(0, 0, 0, 0.377)",
                           }),
                         }}
                         size="small"
-                        {...restSortByProps}
                         title=""
                       >
-                        {sortType === "sortByMetadata" && isSortedDesc ? (
+                        {sortType === "sortByMetadata" && header.column.getIsSorted() === "desc" ? (
                           <ArrowDownwardRoundedIcon fontSize="small" />
                         ) : (
                           <ArrowUpwardRoundedIcon fontSize="small" />
                         )}
                       </SortButton>
                     </Stack>
-                    {data.kind && getKind(data.kind)}
-                    {data.role && (
+                    {columnData.kind && getKind(columnData.kind)}
+                    {columnData.role && (
                       <ButtonShortcut
                         className={styles.SubjectLabel}
-                        tooltipText={capitalize(data.role)}
-                        text={data.role[0].toUpperCase()}
+                        tooltipText={capitalize(columnData.role)}
+                        text={columnData.role[0].toUpperCase()}
                         variant="flat"
                         color="darkblue"
                         size="xs"
                       />
                     )}
                   </div>
-                  {data.status === ColumnStatus.RECONCILIATED ? (
+                  {columnData.status === ColumnStatus.RECONCILIATED ? (
                     <Stack
                       sx={{
                         fontSize: "12px",
@@ -253,11 +314,11 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                       alignItems="center"
                     >
                       <LinkRoundedIcon />
-                      {reconciliators
+                      {reconciliators && reconciliators.length > 0
                         ? reconciliators.join(" | ")
                         : data.reconciliator}
                     </Stack>
-                  ) : data.status === ColumnStatus.PENDING ? (
+                  ) : columnData.status === ColumnStatus.PENDING ? (
                     <Stack
                       sx={{
                         fontSize: "12px",
@@ -271,21 +332,33 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     </Stack>
                   ) : null}
                 </div>
-                {expanded && <TableHeaderCellExpanded {...data} />}
+                {expanded && <TableHeaderCellExpanded {...columnData} />}
               </div>
             </>
           ) : (
             <>{children}</>
           )}
         </div>
+        {header.column.getCanResize() && (
+          <div
+            onMouseDown={header.getResizeHandler()}
+            className={styles.ResizeHandle}
+            style={{
+              cursor: header.column.getIsResizing() ? 'col-resize' : 'ew-resize',
+            }}
+            role="separator"
+            aria-orientation="horizontal"
+          />
+        )}
       </th>
     );
   }
 );
 
 const mapStateToProps = (state: RootState, props: any) => {
+  const columnData = props.header?.column?.columnDef?.data;
   return {
-    reconciliators: selectColumnReconciliators(state, props),
+    reconciliators: selectColumnReconciliators(state, { data: columnData }),
   };
 };
 

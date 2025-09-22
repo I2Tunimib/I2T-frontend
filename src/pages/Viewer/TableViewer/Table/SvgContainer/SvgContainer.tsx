@@ -91,7 +91,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
   useEffect(() => {
     if (columns && columnRefs && columnRefs.current) {
       const paths = columns.reduce((acc, column) => {
-        const id = column.Header;
+        const id = column.header;
         const { metadata, context } = column.data;
         const { property } = metadata[0] || [];
 

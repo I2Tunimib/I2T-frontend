@@ -20,19 +20,19 @@ import {
 } from "react";
 import {
   Row,
-  TableOptions,
-  useBlockLayout,
-  useExpanded,
-  useFlexLayout,
-  usePagination,
-  useResizeColumns,
-  useSortBy,
-  useTable,
-} from "react-table";
+  ColumnDef,
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getExpandedRowModel,
+  flexRender,
+} from "@tanstack/react-table";
 import Empty from "@components/kit/Empty";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import { CheckBox } from "@mui/icons-material";
 import {
   Table,
   TableHead,
@@ -43,10 +43,10 @@ import {
   TableSubRow,
 } from "./CustomTableStyles";
 import ColumnHide from "./ColumnHide";
-import { CheckBox } from "@mui/icons-material";
 
-export interface TableProperties<T extends Record<string, unknown>>
-  extends TableOptions<T> {
+export interface TableProperties<T extends Record<string, unknown>> {
+  columns: ColumnDef<T>[];
+  data: any[];
   onSelectedRowChange: (row: T | null) => void;
   onSelectedRowDeleteRequest: (row: T | null) => void;
   showCheckbox?: boolean;
@@ -55,23 +55,14 @@ export interface TableProperties<T extends Record<string, unknown>>
   loading?: boolean;
 }
 
-interface FooterProps<T extends Record<string, unknown>> {
-  rows: Row<T>[];
-  pageIndex: number;
-  pageCount: number;
-  gotoPage: (index: number) => void;
-  nextPage: () => void;
-  previousPage: () => void;
-}
+export function Footer<T>({ table }: { table: ReturnType<typeof useReactTable<T>>}) {
+  const rowCount = table.getRowModel().rows.length;
+  const pageCount = table.getPageCount();
+  const { pagination } = table.getState();
+  const { pageIndex } = pagination;
 
-export function Footer<T extends Record<string, unknown>>(
-  props: PropsWithChildren<FooterProps<T>>
-) {
-  const { rows, pageIndex, pageCount, gotoPage, nextPage, previousPage } =
-    props;
-
-  const handleChange = (event: any, page: number) => {
-    gotoPage(page - 1);
+  const handleChange = (_: any, page: number) => {
+    table.setPageIndex(page - 1);
   };
 
   return (
@@ -88,7 +79,7 @@ export function Footer<T extends Record<string, unknown>>(
       }}
     >
       <Typography color="textSecondary" variant="body2">
-        {`Total candidates: ${rows.length}`}
+        {`Total candidates: ${rowCount}`}
       </Typography>
       <Pagination
         sx={{
@@ -135,15 +126,6 @@ const RadioCell = forwardRef(
   }
 );
 
-const defaultHooks = [
-  useSortBy,
-  useExpanded,
-  usePagination,
-  useResizeColumns,
-  useBlockLayout,
-  // useRowSelect
-];
-
 const defaultPropGetter = () => ({ prova: "ok" });
 
 export default function CustomTable<T extends Record<string, unknown>>(
@@ -162,52 +144,9 @@ export default function CustomTable<T extends Record<string, unknown>>(
     showCheckbox = false,
     checkedRows = [],
   } = props;
-  const tableInstance = useTable<T>(
-    {
-      columns,
-      data,
-      initialState: {
-        pageSize: 20,
-      },
-      autoResetExpanded: false,
-      autoResetSortBy: false,
-      autoResetPage: false,
-    },
-    ...defaultHooks
-  );
-
-  const [subRows, setSubRows] = useState<Record<string, any>>({});
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    rows,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    allColumns,
-    visibleColumns,
-    getToggleHideAllColumnsProps,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    // toggleRowSelected,
-    // selectedFlatRows,
-    state: { pageIndex, selectedRowIds },
-  } = tableInstance;
-
-  const paginationProps = {
-    rows,
-    pageIndex,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-  };
+  const [expanded, setExpanded] = useState({});
+  const [sorting, setSorting] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
 
   const handleRowClick = (row: Row<T>) => {
     console.log("Row clicked:", row);
@@ -216,6 +155,66 @@ export default function CustomTable<T extends Record<string, unknown>>(
 
   const handleDeleteRow = (row: Row<T>) => {
     onSelectedRowDeleteRequest(row.original);
+  };
+
+  const deleteColumn = {
+    id: "delete",
+    header: "",
+    enableHiding: true,
+    cell: ({ row }) => (
+      <IconButton
+        disabled={disableDelete}
+        color="error"
+        onClick={(event) => {
+          event.stopPropagation();
+          handleDeleteRow(row);
+        }}
+      >
+        <DeleteIcon />
+      </IconButton>
+    ),
+  };
+  const table = useReactTable(
+    {
+      columns: [deleteColumn, ...columns],
+      data,
+      state: {
+        columnVisibility,
+        expanded,
+        sorting,
+      },
+      onColumnVisibilityChange: setColumnVisibility,
+      onExpandedChange: setExpanded,
+      onSortingChange: setSorting,
+      getCoreRowModel: getCoreRowModel(),
+      getExpandedRowModel: getExpandedRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+    }
+  );
+
+  const [subRows, setSubRows] = useState<Record<string, any>>({});
+
+  const allColumnsWithToggleProps = table.getAllLeafColumns()
+    .filter((col) => col.id !== "delete")
+    .map((col) => ({
+      ...col,
+        getToggleHiddenProps: () => ({
+        checked: col.getIsVisible(),
+        onChange: () => col.toggleVisibility(),
+      }),
+    Header: col.columnDef.header,
+  }));
+
+  const toggleAllProps = {
+    checked: table.getAllLeafColumns().every((col) => col.getIsVisible()),
+    indeterminate:
+      table.getAllLeafColumns().some((col) => col.getIsVisible()) &&
+      !table.getAllLeafColumns().every((col) => col.getIsVisible()),
+    onChange: () => {
+      const allVisible = table.getAllLeafColumns().every((col) => col.getIsVisible());
+      table.getAllLeafColumns().forEach((col) => col.toggleVisibility(!allVisible));
+    },
   };
 
   return (
@@ -227,7 +226,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
       )}
       <Box padding="5px 16px" marginTop="12px" borderTop="1px solid #f0f0f0">
         <ColumnHide
-          {...{ indeterminate: getToggleHideAllColumnsProps(), allColumns }}
+          indeterminate={toggleAllProps}
+          allColumns={allColumnsWithToggleProps}
         />
       </Box>
       <Box
@@ -249,28 +249,18 @@ export default function CustomTable<T extends Record<string, unknown>>(
           }}
         >
           {data.length > 0 ? (
-            <Table {...getTableProps()}>
+            <Table>
               <TableHead stickyHeaderTop={stickyHeaderTop}>
                 {
                   // Loop over the header rows
-                  headerGroups.map((headerGroup) => {
+                  table.getHeaderGroups().map((headerGroup) => (
                     // Apply the header row props
-                    const { key: headerGroupKey, ...headerGroupRest } = headerGroup.getHeaderGroupProps();
-                    return (
-                    <TableRow key={headerGroupKey} {...headerGroupRest}>
-                      <TableHeaderCell sorted={false} />
+                    <TableRow key={headerGroup.id}>
                       {
                         // Loop over the headers in each row
-                        headerGroup.headers.map((column) => {
-                          // Apply the header cell props
-                          const { key: columnKey, ...columnRest } = column.getHeaderProps(column.getSortByToggleProps());
-                          return (
-                          <TableHeaderCell
-                            key={columnKey}
-                            sorted={column.isSorted}
-                            {...columnRest}
-                          >
-                            {column.id !== "selection" ? (
+                        headerGroup.headers.map((header) => (
+                          <TableHeaderCell key={header.id}>
+                            {header.id !== "selection" ? (
                               <Stack
                                 direction="row"
                                 overflow="hidden"
@@ -281,7 +271,7 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               >
                                 {
                                   // Render the header
-                                  column.render("Header")
+                                  flexRender(header.column.columnDef.header, header.getContext())
                                 }
                                 <IconButton
                                   sx={{
@@ -289,48 +279,41 @@ export default function CustomTable<T extends Record<string, unknown>>(
                                     height: "25px",
                                   }}
                                   size="small"
+                                  onClick={header.column.getToggleSortingHandler()}
                                 >
-                                  {column.isSorted ? (
-                                    column.isSortedDesc ? (
+                                  {header.column.getCanSort() ? (
+                                    header.column.getIsSorted() === "desc" ? (
                                       <ArrowDownwardRoundedIcon fontSize="small" />
-                                    ) : (
+                                    ) : header.column.getIsSorted() === "asc" ? (
                                       <ArrowUpwardRoundedIcon fontSize="small" />
+                                    ) : (
+                                      <ArrowUpwardRoundedIcon sx={{ color: "#d4d4d4" }} fontSize="small" />
                                     )
                                   ) : (
-                                    <ArrowUpwardRoundedIcon
-                                      sx={{ color: "#d4d4d4" }}
-                                      fontSize="small"
-                                    />
+                                    <ArrowUpwardRoundedIcon sx={{ color: "#d4d4d4" }} fontSize="small" />
                                   )}
                                 </IconButton>
                               </Stack>
                             ) : (
-                              column.render("Header")
+                              flexRender(header.column.columnDef.header, header.getContext())
                             )}
                           </TableHeaderCell>
-                        );
-                      })}
+                    ))}
                     </TableRow>
-                  );
-                })}
+                ))}
               </TableHead>
               {/* Apply the table body props */}
-              <tbody {...getTableBodyProps()}>
+              <tbody>
                 {
                   // Loop over the table rows
-                  page.map((row) => {
-                    // Prepare the row for display
-                    prepareRow(row);
-                    const { key: rowKey, ...rowRest } = row.getRowProps();
-                      return (
+                  table.getRowModel().rows.map((row) => (
                       // Apply the row props
-                      <Fragment key={rowKey}>
-                          <TableRow
-                              onClick={() => handleRowClick(row)}
-                              {...rowRest}
-                          >
-                          {/* Cella per checkBox */}
-                          {/* <TableCell
+                    <Fragment key={row.id}>
+                      <TableRow
+                        onClick={() => handleRowClick(row)}
+                      >
+                        {/* Cella per checkBox */}
+                        {/* <TableCell
                             padding="checkbox"
                             sx={{
                               width: "50px",
@@ -338,8 +321,8 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               maxWidth: "50px",
                             }} // Set fixed width
                           > */}
-                          {/* Material UI checkbox */}
-                          {/* <Checkbox
+                        {/* Material UI checkbox */}
+                        {/* <Checkbox
                               disabled={showCheckbox}
                               checked={checkedRows.includes(row.id)}
                               onChange={(event) => {
@@ -347,73 +330,43 @@ export default function CustomTable<T extends Record<string, unknown>>(
                               }}
                             />
                           </TableCell> */}
-
-                          {/* Cella per l'icona di eliminazione */}
-                          <TableCell /*padding="checkbox"*/
-                            style={{
-                              width: "50px",
-                              minWidth: "50px",
-                              maxWidth: "50px",
-                            }}
-                            sx={{
-                              width: "50px",
-                              minWidth: "50px",
-                              maxWidth: "50px",
-                            }} // Set fixed width
-                          >
-                            <IconButton
-                              disabled={disableDelete}
-                              color="error"
-                              onClick={(event) => {
-                                event.stopPropagation(); // Previene l'attivazione di handleRowClick
-                                handleDeleteRow(row);
-                              }}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </TableCell>
-                          {
-                            // Loop over the rows cells
-                            row.cells.map((cell) => {
-                              // Apply the cell props
-                                const { key: cellKey, ...cellRest } = cell.getCellProps();
-                              return (
-                                <TableRowCell
-                                  key={cellKey}
-                                  title={`${cell.value}`}
-                                  {...cellRest}
-                                >
-                                  {
-                                    // Render the cell contents
-                                    cell.render("Cell", { setSubRows })
-                                  }
-                                </TableRowCell>
-                              );
-                            })
-                          }
-                        </TableRow>
-                        {row.isExpanded ? (
-                          <TableSubRow
-                            {...rowProps}
-                            key={`${rowProps.key}-expanded`}
-                          >
+                        {
+                          // Loop over the rows cells
+                          row.getVisibleCells().map((cell) => (
+                            // Apply the cell props
                             <TableRowCell
-                              style={{
-                                width: "100%",
-                                maxWidth: "100%",
-                                padding: "12px",
-                              }}
-                              colSpan={
-                                visibleColumns.length + 1
-                              } /* +1 for the delete button column */
+                              key={cell.id}
+                              title={`${cell.getValue()}`}
                             >
-                              <div className="expanded-content">
-                                {subRows[row.id]}
-                              </div>
+                              {
+                                // Render the cell contents
+                                flexRender(cell.column.columnDef.cell, {
+                                  ...cell.getContext(),
+                                  setSubRows,
+                                })
+                              }
                             </TableRowCell>
-                          </TableSubRow>
-                        ) : null}
-                      </Fragment>
+                          ))}
+                      </TableRow>
+                      {row.getIsExpanded() ? (
+                        <TableSubRow key={`${row.id}-expanded`}>
+                          <TableRowCell
+                            style={{
+                              width: "100%",
+                              maxWidth: "100%",
+                              padding: "12px",
+                            }}
+                            colSpan={
+                              row.getVisibleCells().length + 1
+                            } /* +1 for the delete button column */
+                          >
+                            <div className="expanded-content">
+                              {subRows[row.id]}
+                            </div>
+                          </TableRowCell>
+                        </TableSubRow>
+                      ) : null}
+                    </Fragment>
                       // <TableRow
                       //   onClick={() => handleRowClick(row)}
                       //   {...row.getRowProps()}>
@@ -428,16 +381,14 @@ export default function CustomTable<T extends Record<string, unknown>>(
                       //       );
                       //     })}
                       // </TableRow>
-                    );
-                  })
-                }
+                    ))}
               </tbody>
             </Table>
           ) : (
             <Empty />
           )}
         </Box>
-        <Footer {...paginationProps} />
+        <Footer table={table} />
       </Box>
     </Stack>
   );

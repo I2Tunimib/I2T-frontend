@@ -25,9 +25,10 @@ export type CellComponent = 'date' | 'tag' | 'percentage' | 'link';
  */
 export const CELL_COMPONENTS_TYPES: Record<CellComponent, CellComponentProps> = {
   link: {
-    component: (row, { value, props }) => {
+    component: (cell, { props }) => {
+      const value = cell.getValue();
+      const original = cell.row?.original;
       const { url: rawUrl, queryParams } = props;
-      const { original } = row;
       let url = rawUrl.split('/').map((split: string) => {
         if (split.startsWith(':')) {
           const [_, param] = split.split(':');
@@ -42,26 +43,29 @@ export const CELL_COMPONENTS_TYPES: Record<CellComponent, CellComponentProps> = 
     }
   },
   date: {
-    component: (row, { value }) => <TimeAgo title="" date={value} />
+    component: (cell) => {
+      const value = cell.getValue();
+      return <TimeAgo title="" date={value} />;
+    },
   },
   tag: {
-    component: (row, { status, value }) => <Tag status={status}>{value}</Tag>
+    component: (cell, { status }) => {
+      const value = cell.getValue();
+      return <Tag status={status}>{value}</Tag>;
+    },
   },
   percentage: {
-    component: (row, props) => {
-      const { total, value } = props.value;
+    component: (cell) => {
+      const { total, value } = cell.getValue() as PercentageComponentProps;
       return (
         <Tooltip
           arrow
-          title={(
+          title={
             <Stack>
-              {Object.keys(props.value).map((key, index) => (
-                <span key={index}>
-                  {`${key}: ${props.value[key as keyof typeof props.value]}`}
-                </span>
-              ))}
+              <span>Total: {total}</span>
+              <span>Value: {value}</span>
             </Stack>
-          )}
+          }
           placement="left">
           <Stack direction="row" gap="18px">
             <Battery value={(value / total) * 100} />
@@ -74,8 +78,8 @@ export const CELL_COMPONENTS_TYPES: Record<CellComponent, CellComponentProps> = 
       columnId: string,
       desc: boolean
     ) => {
-      const { totalA, valueA } = rowA.values[columnId];
-      const { totalB, valueB } = rowB.values[columnId];
+      const { totalA, valueA } = rowA.getValue(columnId);
+      const { totalB, valueB } = rowB.getValue(columnId);
       return (valueA / totalA) < (totalB / valueB) ? -1 : 1;
     }
   }

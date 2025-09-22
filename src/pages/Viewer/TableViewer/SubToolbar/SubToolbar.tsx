@@ -10,6 +10,8 @@ import ReorderRoundedIcon from "@mui/icons-material/ReorderRounded";
 import ArrowRightAltRoundedIcon from "@mui/icons-material/ArrowRightAltRounded";
 import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import {
   addTutorialBox,
   deleteSelected,
@@ -123,7 +125,19 @@ const filters = [
 /**
  * Sub toolbar for common and contextual actions
  */
-const SubToolbar = () => {
+const SubToolbar = ({
+  columns,
+  columnVisibility,
+  setColumnVisibility,
+  columnSizing,
+  setColumnSizing,
+}: {
+  columns: any[];
+  columnVisibility: Record<string, boolean>;
+  setColumnVisibility: (v: Record<string, boolean>) => void;
+  columnVisibility: Record<string, number>;
+  setColumnSizing: (v: Record<string, number>) => void;
+}) => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [autoMatchingAnchor, setAutoMatchingAnchor] =
@@ -133,6 +147,8 @@ const SubToolbar = () => {
   >([]);
   const [anchorElMenuFilter, setAnchorElMenuFilter] =
     useState<null | HTMLElement>(null);
+  const [anchorElMenuColumns, setAnchorElMenuColumns] =
+      useState<null | HTMLElement>(null);
   const params = useParams<{ datasetId: string; tableId: string }>();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const { status: isMetadataButtonEnabled, type: metadataAction } =
@@ -263,12 +279,44 @@ const SubToolbar = () => {
   const memoFilters = useMemo(() => {
     const { globalFilter } = searchFilter;
 
-    return filters.map((filter) =>
-      globalFilter.includes(filter.value)
+    return filters.map((filter) => {
+      return globalFilter.includes(filter.value)
         ? { ...filter, checked: true }
-        : filter
-    );
-  }, [searchFilter]);
+        : filter;
+    });
+  });
+
+  const openColumnsMenu = Boolean(anchorElMenuColumns);
+
+  const handleColumnsMenuClick = (event: MouseEvent<HTMLButtonElement>) => {
+    setAnchorElMenuColumns(event.currentTarget);
+  };
+  const handleCloseColumnsMenu = () => {
+    setAnchorElMenuColumns(null);
+  };
+
+  const handleColumnToggle = (selectedIds: string[]) => {
+    setColumnVisibility((prev) => {
+      const newVisibility: Record<string, boolean> = {};
+      columns.forEach((col) => {
+        newVisibility[col.id] = selectedIds.includes(col.id);
+      });
+      return newVisibility;
+    });
+  };
+
+  const memoColumns = useMemo(() => columns.map((col) => ({
+    label: col.header?.toString().trim(),
+    value: col.id,
+    checked: columnVisibility[col.id] ?? true
+  })), [columns, columnVisibility]);
+
+  const hasResizedColumns = Object.keys(columnSizing).length > 0;
+
+  const handleResetColumnSizes = () => {
+    setColumnSizing({});
+    localStorage.removeItem("columnSizing");
+  };
 
   return (
     <>
@@ -318,8 +366,7 @@ const SubToolbar = () => {
           <IconButtonTooltip
             tooltipText="Expand header"
             Icon={UnfoldMoreRoundedIcon}
-            onClick={() =>
-              dispatch(updateUI({ headerExpanded: !isHeaderExpanded }))
+            onClick={() => dispatch(updateUI({ headerExpanded: !isHeaderExpanded }))
             }
           />
         </ActionGroup>
@@ -338,9 +385,7 @@ const SubToolbar = () => {
               }}
               color="primary"
               disabled={!isCellSelected}
-              onClick={() =>
-                dispatch(updateUI({ openReconciliateDialog: true }))
-              }
+              onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
               variant="contained"
             >
               Reconcile
@@ -352,8 +397,9 @@ const SubToolbar = () => {
               }}
               disabled={!isExtendButtonEnabled}
               onClick={() => {
-                if (isExtendButtonEnabled && cellReconciliated)
+                if (isExtendButtonEnabled && cellReconciliated) {
                   dispatch(updateUI({ openExtensionDialog: true }));
+                }
               }}
               variant="contained"
             >
@@ -362,6 +408,31 @@ const SubToolbar = () => {
           </ActionGroup>
         )}
         <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
+          {hasResizedColumns && (
+            <IconButtonTooltip
+              tooltipText="Reset column sizes"
+              Icon={RestartAltRoundedIcon}
+              onClick={handleResetColumnSizes}
+            />
+          )}
+          <IconButtonTooltip
+            tooltipText="Show/hide columns"
+            Icon={VisibilityIcon}
+            onClick={handleColumnsMenuClick}
+          />
+          <Menu
+            id="column-menu"
+            anchorEl={anchorElMenuColumns}
+            open={openColumnsMenu}
+            keepMounted
+            onClose={handleCloseColumnsMenu}
+          >
+            <CheckboxGroup
+              key={Object.values(columnVisibility).join(',')}
+              items={memoColumns}
+              onChange={handleColumnToggle}
+            />
+          </Menu>
           <IconButtonTooltip
             tooltipText="Filter rows"
             Icon={FilterAltOutlinedIcon}
