@@ -64,3 +64,34 @@
     }
   }
 }
+
+// Portal-based tooltip styles
+.PortalTooltip {
+  pointer-events: none;
+  user-select: none;
+  z-index: 10000;
+
+  .TooltipBackground {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 8px 12px;
+    max-width: 300px;
+    word-wrap: break-word;
+  }
+
+  .TooltipContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .TooltipText {
+    color: #333;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    margin: 0;
+  }
+}

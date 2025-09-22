@@ -12,6 +12,7 @@ export interface GetTableResponse {
   table: TableInstance;
   columns: Record<ID, Column>;
   rows: Record<ID, Row>;
+  columnOrder?: string[]; // Optional field for preserving column order
 }
 
 export interface ChallengeTableDataset {
@@ -80,19 +81,60 @@ const tableAPI = {
 
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
+      // Clean the values to ensure they only contain ISO-8859-1 characters
+      const cleanTableId = tableId.replace(/[^\x00-\xFF]/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/[^\x00-\xFF]/g, "").trim();
+      const cleanDeletedColumns = deletedColumns
+        ? deletedColumns.map((col) => col.replace(/[^\x00-\xFF]/g, "").trim())
+        : [];
+
       console.log(
-        `Adding headers for saveTable: tableId: ${tableId}, datasetId: ${datasetId}`
+        `Adding headers for saveTable: tableId: ${cleanTableId}, datasetId: ${cleanDatasetId}, deletedColumns: ${cleanDeletedColumns}`
       );
-      headers[
-        "X-Table-Dataset-Info"
-      ] = `tableId:${tableId};datasetId:${datasetId};deletedColumns:${
-        deletedColumns ? deletedColumns.join("|-|") : "NO_DELETED"
+
+      const headerValue = `tableId:${cleanTableId};datasetId:${cleanDatasetId};deletedColumns:${
+        cleanDeletedColumns.length > 0
+          ? cleanDeletedColumns.join("|-|")
+          : "NO_DELETED"
       }`;
+
+      // Double-check the header value is clean
+      const cleanHeaderValue = headerValue.replace(/[^\x00-\xFF]/g, "");
+      console.log("Clean header value:", cleanHeaderValue);
+
+      headers["X-Table-Dataset-Info"] = cleanHeaderValue;
     }
 
     // Add deleted columns information ONLY for save operations
 
     console.log("Save table request headers:", headers);
+
+    // Validate all headers for ISO-8859-1 compliance
+    Object.entries(headers).forEach(([key, value]) => {
+      const hasNonISO = /[^\x00-\xFF]/.test(value);
+      if (hasNonISO) {
+        console.warn(
+          `Header ${key} contains non-ISO-8859-1 characters:`,
+          value
+        );
+        console.warn(
+          "Non-ASCII characters found:",
+          value.match(/[^\x00-\xFF]/g)
+        );
+      }
+    });
+
+    console.log(
+      "Save table request data keys:",
+      data ? Object.keys(data) : "no data"
+    );
+    console.log("Save table request data structure:", {
+      hasTableInstance: data?.tableInstance ? "yes" : "no",
+      hasColumns: data?.columns ? "yes" : "no",
+      hasRows: data?.rows ? "yes" : "no",
+      hasColumnOrder: data?.columnOrder ? "yes" : "no",
+      columnOrderLength: data?.columnOrder?.length || "none",
+    });
 
     return apiClient.put<any>(
       apiEndpoint({

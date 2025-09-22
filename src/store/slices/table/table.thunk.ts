@@ -94,19 +94,90 @@ export const saveTable = createAsyncThunk(
     const deletedColumnsList = Object.values(deletedColumns) as string[];
 
     console.log("Save operation - deleted columns:", deletedColumnsList);
-
-    const response = await tableAPI.saveTable(
-      table.entities,
-      params,
+    console.log("Save operation - column order:", entities.columns.allIds);
+    console.log(
+      "Save operation - tableId:",
       tableInstance.id,
-      tableInstance.idDataset,
-      deletedColumnsList // Pass deleted columns to the API
+      "datasetId:",
+      tableInstance.idDataset
     );
 
-    // Clear deleted columns after successful save
-    dispatch({ type: "table/clearDeletedColumns" });
+    // Check for non-ASCII characters in IDs
+    if (tableInstance.id && /[^\x00-\xFF]/.test(tableInstance.id)) {
+      console.warn("TableId contains non-ASCII characters:", tableInstance.id);
+    }
+    if (
+      tableInstance.idDataset &&
+      /[^\x00-\xFF]/.test(tableInstance.idDataset)
+    ) {
+      console.warn(
+        "DatasetId contains non-ASCII characters:",
+        tableInstance.idDataset
+      );
+    }
 
-    return response.data;
+    // Check deleted columns for non-ASCII characters
+    deletedColumnsList.forEach((col, index) => {
+      if (/[^\x00-\xFF]/.test(col)) {
+        console.warn(
+          `Deleted column ${index} contains non-ASCII characters:`,
+          col
+        );
+      }
+    });
+
+    console.log("Save operation - sending data structure:", {
+      hasTableInstance: !!entities.tableInstance,
+      hasColumns: !!entities.columns,
+      hasRows: !!entities.rows,
+      columnsCount: Object.keys(entities.columns?.byId || {}).length,
+    });
+
+    try {
+      // Include column order in the data being saved
+      const dataToSave = {
+        ...entities,
+        columnOrder: entities.columns.allIds, // Add column order to preserve frontend ordering
+      };
+
+      console.log(
+        "DEBUG: Saving table with columnOrder:",
+        entities.columns.allIds
+      );
+      console.log("DEBUG: Data structure being saved:", {
+        hasTableInstance: !!dataToSave.tableInstance,
+        hasColumns: !!dataToSave.columns,
+        hasRows: !!dataToSave.rows,
+        hasColumnOrder: !!dataToSave.columnOrder,
+        columnOrder: dataToSave.columnOrder,
+      });
+
+      const response = await tableAPI.saveTable(
+        dataToSave, // Send entities with column order
+        params,
+        tableInstance.id,
+        tableInstance.idDataset,
+        deletedColumnsList // Pass deleted columns to the API
+      );
+
+      console.log("Save operation - response received:", {
+        status: response?.status,
+        hasData: !!response?.data,
+        dataKeys: response?.data ? Object.keys(response.data) : "no data",
+      });
+
+      // Clear deleted columns after successful save
+      dispatch({ type: "table/clearDeletedColumns" });
+
+      return response.data;
+    } catch (error) {
+      console.error("Save operation - error occurred:", {
+        error,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+        errorResponse: (error as any)?.response,
+      });
+      throw error;
+    }
   }
 );
 
@@ -499,7 +570,15 @@ export const updateTableSocket = createAsyncThunk(
 
     if (!isEmptyObject(tableInstance) && table.id === tableInstance.id) {
       console.log("update table socket called");
-      dispatch(updateTable(inputProps));
+
+      // Preserve the current column order when updating from socket
+      const currentColumnOrder = state.table.entities.columns.allIds;
+      const updatedProps = {
+        ...inputProps,
+        columnOrder: currentColumnOrder, // Preserve existing column order
+      };
+
+      dispatch(updateTable(updatedProps));
       dispatch(
         updateUI({
           settings: {

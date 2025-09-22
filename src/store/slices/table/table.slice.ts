@@ -192,17 +192,47 @@ export const tableSlice = createSliceWithRequests({
       state.entities.tableInstance.lastModifiedDate = new Date().toISOString();
     },
     updateTable: (state, action: PayloadAction<Payload<GetTableResponse>>) => {
-      const { table, columns, rows } = action.payload;
+      const { table, columns, rows, columnOrder } = action.payload;
       let tableInstance = {} as TableInstance;
       tableInstance = { ...table };
       state.ui.lastSaved = tableInstance.lastModifiedDate;
       // Clear deleted columns when loading a new table
       state.ui.deletedColumnsIds = {};
+
+      console.log("DEBUG: updateTable called with columnOrder:", columnOrder);
+      console.log("DEBUG: available columns:", Object.keys(columns));
+
+      // Use saved column order if available, otherwise fall back to Object.keys
+      let allIds: string[];
+      if (columnOrder && Array.isArray(columnOrder)) {
+        console.log("DEBUG: Using saved columnOrder:", columnOrder);
+        // Start with the saved order, but only include columns that actually exist
+        allIds = columnOrder.filter((id) => columns[id]);
+
+        // Add any new columns that weren't in the saved order (edge case)
+        const existingColumns = Object.keys(columns);
+        const missingColumns = existingColumns.filter(
+          (id) => !allIds.includes(id)
+        );
+        allIds = [...allIds, ...missingColumns];
+      } else {
+        console.log("DEBUG: No columnOrder found, using Object.keys fallback");
+        // Fallback to Object.keys if no saved order
+        allIds = Object.keys(columns);
+      }
+
+      console.log("Table load - using column order:", allIds);
+      console.log(
+        "Table load - available columnOrder from backend:",
+        columnOrder
+      );
+      console.log("Table load - available columns:", Object.keys(columns));
+
       state.entities = {
         tableInstance,
         columns: {
           byId: columns,
-          allIds: Object.keys(columns),
+          allIds,
         },
         rows: {
           byId: rows,
@@ -1688,15 +1718,40 @@ export const tableSlice = createSliceWithRequests({
       .addCase(
         getTable.fulfilled,
         (state, action: PayloadAction<GetTableResponse>) => {
-          const { table, columns, rows } = action.payload;
+          const { table, columns, rows, columnOrder } = action.payload;
           let tableInstance = {} as TableInstance;
           tableInstance = { ...table };
           state.ui.lastSaved = tableInstance.lastModifiedDate;
+
+          // Use saved column order if available, otherwise fall back to Object.keys
+          let allIds: string[];
+          if (columnOrder && Array.isArray(columnOrder)) {
+            console.log(
+              "DEBUG: getTable.fulfilled - Using saved columnOrder:",
+              columnOrder
+            );
+            // Start with the saved order, but only include columns that actually exist
+            allIds = columnOrder.filter((id) => columns[id]);
+
+            // Add any new columns that weren't in the saved order (edge case)
+            const existingColumns = Object.keys(columns);
+            const missingColumns = existingColumns.filter(
+              (id) => !allIds.includes(id)
+            );
+            allIds = [...allIds, ...missingColumns];
+          } else {
+            console.log(
+              "DEBUG: getTable.fulfilled - No columnOrder found, using Object.keys fallback"
+            );
+            // Fallback to Object.keys if no saved order
+            allIds = Object.keys(columns);
+          }
+
           state.entities = {
             tableInstance,
             columns: {
               byId: columns,
-              allIds: Object.keys(columns),
+              allIds,
             },
             rows: {
               byId: rows,
