@@ -311,7 +311,11 @@ const SubToolbar = ({
     checked: columnVisibility[col.id] ?? true
   })), [columns, columnVisibility]);
 
-  const hasResizedColumns = Object.keys(columnSizing).length > 0;
+  const hasResizedColumns = Object.entries(columnSizing).some(([colId, size]) => {
+    const col = columns.find((c) => c.id === colId);
+    const defaultSize = col?.column?.columnDef?.size ?? 100;
+    return Math.abs(size - defaultSize) > 1;
+  });
 
   const handleResetColumnSizes = () => {
     setColumnSizing({});
