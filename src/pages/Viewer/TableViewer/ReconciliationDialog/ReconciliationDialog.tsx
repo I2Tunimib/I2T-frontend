@@ -45,7 +45,10 @@ import { updateUI } from "@store/slices/table/table.slice";
 import { selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
 //import { LoadingButton } from "@mui/lab";
 import { SquaredBox } from "@components/core";
-import {Extender, Reconciliator} from "@store/slices/config/interfaces/config";
+import {
+  Extender,
+  Reconciliator,
+} from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import {
   ExpandLess,
@@ -58,7 +61,9 @@ import { selectIsHelpDialogOpen } from "@store/slices/datasets/datasets.selector
 
 const Transition = forwardRef(
   (
-    props: TransitionProps & { children?: ReactElement<any, any> },
+    props: TransitionProps & {
+      children: ReactElement<any, any>;
+    },
     ref: Ref<unknown>
   ) => <Slide direction="down" ref={ref} {...props} />
 );
@@ -111,7 +116,8 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     const uniqueGroupNamesSet = new Set<string>();
 
     const uniqueReconciliators = reconciliators.filter(
-        (reconciliator, index, self) => index === self.findIndex((r) => r.id === reconciliator.id)
+      (reconciliator, index, self) =>
+        index === self.findIndex((r) => r.id === reconciliator.id)
     );
 
     for (const reconciliator of uniqueReconciliators) {
@@ -158,7 +164,9 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
 
   const handleServiceChange = (event: SelectChangeEvent<string>) => {
     const serviceId = event.target.value;
-    const selectedService = reconciliators.find((recon) => recon.id === serviceId);
+    const selectedService = reconciliators.find(
+      (recon) => recon.id === serviceId
+    );
     setCurrentService(selectedService || null);
   };
 
@@ -211,7 +219,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
       });
   };
 
-  const handleHeaderClick = (e, uri) => {
+  const handleHeaderClick = (e: React.MouseEvent, uri: string) => {
     e.stopPropagation(); // Prevent the Select from closing
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
@@ -231,11 +239,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
         open={helpDialogOpen}
         onClose={() => dispatch(updateUI({ helpDialogOpen: false }))}
       /> */}
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Reconciliation</DialogTitle>
         <IconButton
           sx={{
@@ -262,6 +266,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 value={selectedGroup || ""}
                 onChange={handleGroupChange}
                 variant="outlined"
+                displayEmpty
                 MenuProps={{
                   PaperProps: {
                     style: {
@@ -269,11 +274,24 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                     },
                   },
                 }}
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                        Choose a service group...
+                      </em>
+                    );
+                  }
+                  return selected;
+                }}
               >
+                <MenuItem disabled value="">
+                  <em>Choose a service group...</em>
+                </MenuItem>
                 {uniqueGroupNames.map((groupName) => (
-                    <MenuItem key={groupName} value={groupName}>
-                      {groupName}
-                    </MenuItem>
+                  <MenuItem key={groupName} value={groupName}>
+                    {groupName}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -291,6 +309,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 value={currentService?.id || ""}
                 onChange={handleServiceChange}
                 variant="outlined"
+                displayEmpty
                 MenuProps={{
                   PaperProps: {
                     style: {
@@ -298,15 +317,28 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                     },
                   },
                 }}
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                        Choose a reconciliation service...
+                      </em>
+                    );
+                  }
+                  const selectedService = selectedServices.find(
+                    (service) => service.id === selected
+                  );
+                  return selectedService ? selectedService.name : "";
+                }}
               >
+                <MenuItem disabled value="">
+                  <em>Choose a reconciliation service...</em>
+                </MenuItem>
                 {selectedServices.map((reconciliator) => (
-                  <MenuItem
-                    key={reconciliator.id}
-                    value={reconciliator.id}
-                  >
+                  <MenuItem key={reconciliator.id} value={reconciliator.id}>
                     {reconciliator.name}
-                   </MenuItem>
-                 ))}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             {error && <Typography color="error">{error.message}</Typography>}

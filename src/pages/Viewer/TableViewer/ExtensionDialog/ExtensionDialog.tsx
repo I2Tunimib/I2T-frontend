@@ -50,7 +50,9 @@ import DynamicExtensionForm from "@components/core/DynamicForm/DynamicForm";
 
 const Transition = forwardRef(
   (
-    props: TransitionProps & { children?: ReactElement<any, any> },
+    props: TransitionProps & {
+      children: ReactElement<any, any>;
+    },
     ref: Ref<unknown>
   ) => <Slide direction="down" ref={ref} {...props} />
 );
@@ -149,7 +151,7 @@ const DialogInnerContent = () => {
   const toggleGroup = (uri: string) => {
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
-  const handleHeaderClick = (e, uri) => {
+  const handleHeaderClick = (e: React.MouseEvent, uri: string) => {
     e.stopPropagation(); // Prevent the Select from closing
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
@@ -190,7 +192,7 @@ const DialogInnerContent = () => {
               key={extender.id}
               value={extender.id}
               sx={{ pl: 4 }}
-              onClick={() => handleChange({ target: { value: extender.id } })}
+              onClick={() => setCurrentService(extender)}
             >
               {extender.name}
             </MenuItem>
