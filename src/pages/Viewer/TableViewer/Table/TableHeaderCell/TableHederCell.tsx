@@ -1,5 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
-import { Box, IconButton, Stack } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
@@ -90,6 +90,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       setNodeRef,
       transform,
       transition,
+      isDragging,
     } = useSortable({ id, disabled: id === "index" || header.column.getIsPinned() });
     const dragStyle = header.column.getIsPinned()
       ? { transform: 'none', transition: 'none' }
@@ -153,6 +154,21 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       [lowerBound]
     );
 
+    const getSortTooltipText = (column: any, type: string) => {
+      const currentSort = column.getIsSorted();
+      if (type === "sortByText") {
+        if (!currentSort) return "Sort A → Z";
+        if (currentSort === "asc") return "Sort Z → A";
+        return "Reset order";
+      }
+      if (type === "sortByMetadata") {
+        if (!currentSort) return "Sort by score: Low → High";
+        if (currentSort === "asc") return "Sort by score: High → Low";
+        return "Reset order";
+      }
+      return "";
+    };
+
     return (
       <th
         ref={(el) => {
@@ -174,7 +190,6 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
               : "",
           transform: transform ? `translate3d(${transform.x}px, 0, 0)` : undefined,
           transition,
-          cursor: id === "index" ? "default" : "grab",
           ...(id !== "index" && { ...style, width: style?.width ?? 100, }),
           ...dragStyle,
         }}
@@ -190,44 +205,58 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         <div className={styles.TableHeaderContent}>
           {id !== "index" ? (
             <>
+              {/* Drag and Drop */}
               {!header.column.getIsPinned() && (
-                <span
-                  className={styles.DragHandle}
-                  {...attributes}
-                  {...listeners}
-                  aria-label="Drag column"
-                  role="button"
-                >
-                  <DragIndicatorIcon fontSize="small" />
-                </span>
+                <Tooltip title="Grab to reorder columns" arrow>
+                  <span
+                    className={styles.DragHandle}
+                    {...attributes}
+                    {...listeners}
+                    aria-label="Drag column"
+                    role="button"
+                  >
+                    <DragIndicatorIcon
+                      fontSize="small"
+                      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+                    />
+                  </span>
+                </Tooltip>
               )}
+              {/* Pin and Unpin */}
               {header.column.getCanPin() && (
-                <IconButton
-                  onClick={() => {
-                    const currentPin = header.column.getIsPinned();
-                    header.column.pin(currentPin ? false : 'left');
-                  }}
-                  size="small"
-                  className={styles.PinButton}
+                <Tooltip
+                  key={header.column.getIsPinned() ? 'pinned' : 'unpinned'}
+                  title={header.column.getIsPinned() ? "Unpin column" : "Pin column to left"}
+                  arrow
                 >
-                  {header.column.getIsPinned() ? (
-                    <PushPinIcon fontSize="small" />
-                  ) : (
-                    <PushPinOutlinedIcon fontSize="small" />
-                  )}
-                </IconButton>
+                  <IconButton
+                    onClick={() => {
+                      const currentPin = header.column.getIsPinned();
+                      header.column.pin(currentPin ? false : 'left');
+                    }}
+                    size="small"
+                    className={styles.PinButton}
+                  >
+                    {header.column.getIsPinned()
+                      ? <PushPinIcon fontSize="small" />
+                      : <PushPinOutlinedIcon fontSize="small" />}
+                  </IconButton>
+                </Tooltip>
               )}
-              <IconButton
-                onClick={handleSelectColumn}
-                size="small"
-                className={styles.ColumnSelectionButton}
-                sx={{ marginBottom: 15 }}
-              >
-                {selected ?
-                  <CheckCircleRoundedIcon fontSize="medium" />
-                :
-                  <CheckCircleOutlineRoundedIcon fontSize="medium" />}
-              </IconButton>
+              {/* Select Column */}
+              <Tooltip title="Select to enable Reconcile and Expand functions" arrow>
+                <IconButton
+                  onClick={handleSelectColumn}
+                  className={styles.ColumnSelectionButton}
+                  sx={{ marginBottom: 15 }}
+                  size="small"
+                  title=""
+                >
+                  {selected
+                    ? <CheckCircleRoundedIcon fontSize="medium" />
+                    : <CheckCircleOutlineRoundedIcon fontSize="medium" />}
+                </IconButton>
+              </Tooltip>
               <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
                   <div className={styles.Row}>
@@ -255,42 +284,50 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                       >
                         {children}
                       </Box>
-                      <SortButton
-                        onClick={(e) => handleSortByClick(e, "sortByText")}
-                        sx={{
-                          visibility:
-                            hover || (header.column.getIsSorted() && sortType === "sortByText")
-                              ? "visible"
-                              : "hidden",
-                          ...((!header.column.getIsSorted() || sortType !== "sortByText") && {
-                            color: "rgba(0, 0, 0, 0.377)",
-                          }),
-                        }}
-                        size="small"
-                        title=""
+                      <Tooltip
+                        title={getSortTooltipText(header.column, "sortByText")}
+                        arrow
                       >
-                        <SortByAlphaIcon fontSize="small" />
-                      </SortButton>
-                      <SortButton
-                        onClick={(e) => handleSortByClick(e, "sortByMetadata")}
-                        sx={{
-                          visibility:
-                            hover || (header.column.getIsSorted() && sortType === "sortByMetadata")
-                              ? "visible"
-                              : "hidden",
-                          ...((!header.column.getIsSorted() || sortType !== "sortByMetadata") && {
-                            color: "rgba(0, 0, 0, 0.377)",
-                          }),
-                        }}
-                        size="small"
-                        title=""
+                        <SortButton
+                          onClick={(e) => handleSortByClick(e, "sortByText")}
+                          sx={{
+                            visibility:
+                              hover || (header.column.getIsSorted() && sortType === "sortByText")
+                                ? "visible"
+                                : "hidden",
+                            ...((!header.column.getIsSorted() || sortType !== "sortByText") && {
+                              color: "rgba(0, 0, 0, 0.377)",
+                            }),
+                          }}
+                          size="small"
+                          title=""
+                        >
+                          <SortByAlphaIcon fontSize="small" />
+                        </SortButton>
+                      </Tooltip>
+                      <Tooltip
+                        title={getSortTooltipText(header.column, "sortByMetadata")}
+                        arrow
                       >
-                        {sortType === "sortByMetadata" && header.column.getIsSorted() === "desc" ? (
-                          <ArrowDownwardRoundedIcon fontSize="small" />
-                        ) : (
-                          <ArrowUpwardRoundedIcon fontSize="small" />
-                        )}
-                      </SortButton>
+                        <SortButton
+                          onClick={(e) => handleSortByClick(e, "sortByMetadata")}
+                          sx={{
+                            visibility:
+                              hover || (header.column.getIsSorted() && sortType === "sortByMetadata")
+                                ? "visible"
+                                : "hidden",
+                            ...((!header.column.getIsSorted() || sortType !== "sortByMetadata") && {
+                              color: "rgba(0, 0, 0, 0.377)",
+                            }),
+                          }}
+                          size="small"
+                          title=""
+                        >
+                          {sortType === "sortByMetadata" && header.column.getIsSorted() === "desc"
+                            ? <ArrowDownwardRoundedIcon fontSize="small" />
+                            : <ArrowUpwardRoundedIcon fontSize="small" />}
+                        </SortButton>
+                      </Tooltip>
                     </Stack>
                     {columnData.kind && getKind(columnData.kind)}
                     {columnData.role && (

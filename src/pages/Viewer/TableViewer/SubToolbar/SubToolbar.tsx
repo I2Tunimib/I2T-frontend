@@ -1,4 +1,4 @@
-import { Button, Menu, Stack, Typography } from "@mui/material";
+import { Button, Menu, Stack, Typography, Tooltip } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 import RedoRoundedIcon from "@mui/icons-material/RedoRounded";
@@ -135,7 +135,7 @@ const SubToolbar = ({
   columns: any[];
   columnVisibility: Record<string, boolean>;
   setColumnVisibility: (v: Record<string, boolean>) => void;
-  columnVisibility: Record<string, number>;
+  columnSizing: Record<string, number>;
   setColumnSizing: (v: Record<string, number>) => void;
 }) => {
   const dispatch = useAppDispatch();
@@ -379,32 +379,53 @@ const SubToolbar = ({
         </ActionGroup>
         {!isViewOnly && (
           <ActionGroup>
-            <Button
-              sx={{
-                textTransform: "none",
-              }}
-              color="primary"
-              disabled={!isCellSelected}
-              onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
-              variant="contained"
+            {/* Reconcile */}
+            <Tooltip
+              title={!isCellSelected ? "Select a column to enable Reconcile function" : "Reconcile selected column(s)"}
+              arrow
             >
-              Reconcile
-            </Button>
-            <Button
-              {...(!cellReconciliated && { color: "info" })}
-              sx={{
-                textTransform: "none",
-              }}
-              disabled={!isExtendButtonEnabled}
-              onClick={() => {
-                if (isExtendButtonEnabled && cellReconciliated) {
-                  dispatch(updateUI({ openExtensionDialog: true }));
-                }
-              }}
-              variant="contained"
+              <span>
+                <Button
+                  sx={{
+                    textTransform: "none",
+                  }}
+                  color="primary"
+                  disabled={!isCellSelected}
+                  onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
+                  variant="contained"
+                >
+                  Reconcile
+                </Button>
+              </span>
+            </Tooltip>
+            {/* Extend */}
+            <Tooltip
+              title={!isCellSelected
+                ? "Select a column to enable Extend function"
+                : !cellReconciliated
+                  ? "Reconcile data to enable Extend function"
+                  : "Extend selected column(s)"
+              }
+              arrow
             >
-              Extend
-            </Button>
+              <span>
+                <Button
+                  {...(!cellReconciliated && { color: "info" })}
+                  sx={{
+                    textTransform: "none",
+                  }}
+                  disabled={!isExtendButtonEnabled || !isCellSelected || !cellReconciliated}
+                  onClick={() => {
+                    if (isExtendButtonEnabled && cellReconciliated) {
+                      dispatch(updateUI({ openExtensionDialog: true }));
+                    }
+                  }}
+                  variant="contained"
+                >
+                  Extend
+                </Button>
+              </span>
+            </Tooltip>
           </ActionGroup>
         )}
         <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
