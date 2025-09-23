@@ -2024,23 +2024,14 @@ export const tableSlice = createSliceWithRequests({
 
                 // Insert the new column right after the selected column
                 if (!draft.entities.columns.allIds.includes(newColId)) {
-                  /*
-                  const index = draft.entities.columns.allIds.findIndex(
-                    (originalColId) => originalColId === meta[newColId],
+                  // Calculate insert position: right after the selected column + existing extended columns
+                  const insertIndex = selectedColumnIndex + 1 + newColIndex;
+                  
+                  draft.entities.columns.allIds.splice(
+                    insertIndex,
+                    0,
+                    newColId
                   );
-
-                  if (index !== -1) {
-
-                    draft.entities.columns.allIds.splice(
-                      insertIndex,
-                      0,
-                      newColId
-                    );
-                  } else {
-                  */
-
-                    draft.entities.columns.allIds.push(newColId);
-                  //}
                 }
               });
               updateNumberOfReconciliatedCells(draft);
