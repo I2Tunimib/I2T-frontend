@@ -127,7 +127,7 @@ const TableViewer = () => {
    * Handle selection of a cell.
    */
   const handleSelectedCellChange = useCallback((event: MouseEvent, id: ID) => {
-    if (event.ctrlKey) {
+    if (event.ctrlKey || event.metaKey) {
       dispatch(updateCellSelection({ id, multi: true }));
     } else {
       dispatch(updateCellSelection({ id }));
@@ -135,7 +135,7 @@ const TableViewer = () => {
   }, []);
 
   const handleSelectedRowChange = useCallback((event: MouseEvent, id: ID) => {
-    if (event.ctrlKey) {
+    if (event.ctrlKey || event.metaKey) {
       dispatch(updateRowSelection({ id, multi: true }));
     } else {
       dispatch(updateRowSelection({ id }));
@@ -147,7 +147,7 @@ const TableViewer = () => {
    */
   const handleSelectedColumnChange = useCallback((event: MouseEvent, id: ID) => {
     if (id !== 'index') {
-      if (event.ctrlKey) {
+      if (event.ctrlKey || event.metaKey) {
         dispatch(updateColumnSelection({ id, multi: true }));
       } else {
         dispatch(updateColumnSelection({ id }));
@@ -157,7 +157,7 @@ const TableViewer = () => {
 
   const handleSelectedColumnCellChange = useCallback((event: MouseEvent, id: ID) => {
     if (id !== 'index') {
-      if (event.ctrlKey) {
+      if (event.ctrlKey || event.metaKey) {
         dispatch(updateColumnCellsSelection({ id, multi: true }));
       } else {
         dispatch(updateColumnCellsSelection({ id }));

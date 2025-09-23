@@ -203,10 +203,21 @@ export const selectOneColumnCell = (state: Draft<TableState>, colId: ID) => {
  * and select only that column.
  */
 export const selectOneColumn = (state: Draft<TableState>, colId: ID) => {
-  state.ui.selectedColumnsIds = {};
-  state.ui.selectedColumnCellsIds = {};
-  state.ui.selectedRowsIds = {};
-  selectColumnWithCells(state, colId);
+  const isAlreadySelected = !!state.ui.selectedColumnsIds[colId];
+  if (isAlreadySelected) {
+    // deselect if already selected
+    state.ui.selectedColumnsIds = {};
+    state.ui.selectedColumnCellsIds = {};
+    state.ui.selectedCellIds = {};
+    state.ui.selectedRowsIds = {};
+  } else {
+    // select just colId column
+    state.ui.selectedColumnsIds = {};
+    state.ui.selectedColumnCellsIds = {};
+    state.ui.selectedCellIds = {};
+    state.ui.selectedRowsIds = {};
+    selectColumnWithCells(state, colId);
+  }
 };
 
 /**

@@ -244,7 +244,19 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                 </Tooltip>
               )}
               {/* Select Column */}
-              <Tooltip title="Select to enable Reconcile and Expand functions" arrow>
+              {!selected ? (
+                <Tooltip title="Select to enable Reconcile and Expand functions" arrow>
+                  <IconButton
+                    onClick={handleSelectColumn}
+                    className={styles.ColumnSelectionButton}
+                    sx={{ marginBottom: 15 }}
+                    size="small"
+                    title=""
+                >
+                    <CheckCircleOutlineRoundedIcon fontSize="medium" />
+                  </IconButton>
+                </Tooltip>
+              ) : (
                 <IconButton
                   onClick={handleSelectColumn}
                   className={styles.ColumnSelectionButton}
@@ -252,11 +264,9 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   size="small"
                   title=""
                 >
-                  {selected
-                    ? <CheckCircleRoundedIcon fontSize="medium" />
-                    : <CheckCircleOutlineRoundedIcon fontSize="medium" />}
+                  <CheckCircleRoundedIcon fontSize="medium" />
                 </IconButton>
-              </Tooltip>
+              )}
               <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
                   <div className={styles.Row}>
