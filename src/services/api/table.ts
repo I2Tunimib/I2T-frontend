@@ -199,13 +199,13 @@ const tableAPI = {
 
     // Clean baseUrl to remove BOM characters
     const cleanBaseUrl = baseUrl.replace(/\uFEFF/g, "").trim();
-    console.log("Full reconcile URL:", `/reconciliators${cleanBaseUrl}`);
+    console.log("Full reconcile URL:", `/reconcilers${cleanBaseUrl}`);
     console.log("Reconcile request config:", {
       headers,
       clearCacheEntry: true,
     });
 
-    return apiClient.post(`/reconciliators${cleanBaseUrl}`, data, {
+    return apiClient.post(`/reconcilers${cleanBaseUrl}`, data, {
       headers,
       clearCacheEntry: true, // Bypass cache for this request
     });

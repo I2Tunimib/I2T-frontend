@@ -51,8 +51,8 @@ import DynamicExtensionForm from "@components/core/DynamicForm/DynamicForm";
 const Transition = forwardRef(
   (
     props: TransitionProps & { children?: ReactElement<any, any> },
-    ref: Ref<unknown>,
-  ) => <Slide direction="down" ref={ref} {...props} />,
+    ref: Ref<unknown>
+  ) => <Slide direction="down" ref={ref} {...props} />
 );
 
 const Content = styled.div({
@@ -76,7 +76,8 @@ const DialogInnerContent = () => {
   async function groupServices() {
     const groupedServsMap = new Map();
     const uniqueExtensionServices = extensionServices.filter(
-        (service, index, self) => index === self.findIndex((s) => s.id === service.id)
+      (service, index, self) =>
+        index === self.findIndex((s) => s.id === service.id)
     );
 
     setUniqueServices(uniqueExtensionServices);
@@ -104,13 +105,13 @@ const DialogInnerContent = () => {
     dispatch(
       updateUI({
         openExtensionDialog: false,
-      }),
+      })
     );
   };
 
   const handleChange = (event: SelectChangeEvent<string>) => {
     const val = extensionServices.find(
-      (service) => service.id === event.target.value,
+      (service) => service.id === event.target.value
     );
     if (val) {
       console.log("current service", val);
@@ -124,7 +125,7 @@ const DialogInnerContent = () => {
         extend({
           extender: currentService,
           formValues: formState,
-        }),
+        })
       )
         .unwrap()
         .then(({ data }) => {
@@ -159,6 +160,7 @@ const DialogInnerContent = () => {
           value={currentService ? currentService.id : ""}
           onChange={handleChange}
           variant="outlined"
+          displayEmpty
           MenuProps={{
             PaperProps: {
               style: {
@@ -167,12 +169,22 @@ const DialogInnerContent = () => {
             },
           }}
           renderValue={(selected) => {
+            if (!selected) {
+              return (
+                <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                  Choose an extension service...
+                </em>
+              );
+            }
             const selectedService = extensionServices.find(
-              (service) => service.id === selected,
+              (service) => service.id === selected
             );
             return selectedService ? selectedService.name : "";
           }}
         >
+          <MenuItem disabled value="">
+            <em>Choose an extension service...</em>
+          </MenuItem>
           {uniqueServices.map((extender) => (
             <MenuItem
               key={extender.id}
@@ -220,11 +232,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
 
   return (
     <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Extension</DialogTitle>
 
         <IconButton
