@@ -83,6 +83,10 @@ const datasetAPI = {
     );
   },
   uploadDataset: (formData: FormData) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
     return apiClient.post(
       apiEndpoint({
         endpoint: 'UPLOAD_DATASET'
@@ -90,7 +94,7 @@ const datasetAPI = {
       formData,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${token}`
         }
       }
     );
