@@ -73,13 +73,14 @@
     align-items: center;
     justify-content: center;
     margin-right: 8px;
-    cursor: grab;
+    cursor: default;
     user-select: none;
     opacity: 0.6;
   }
 
   :hover .DragHandle {
     opacity: 1;
+    cursor: grab;
   }
 
   // &.Selected {
