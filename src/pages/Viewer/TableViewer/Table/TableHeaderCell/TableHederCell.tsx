@@ -16,17 +16,17 @@ import { RootState } from "@store";
 import { connect } from "react-redux";
 import { selectColumnReconciliators } from "@store/slices/table/table.selectors";
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { forwardRef, MouseEvent, useCallback, useState, useEffect } from "react";
+import { forwardRef, MouseEvent, useCallback, useState, useEffect, ChangeEvent, KeyboardEvent, FocusEvent } from "react";
 import { capitalize } from "@services/utils/text-utils";
-import { IconButtonTooltip, StatusBadge } from "@components/core";
+import { StatusBadge } from "@components/core";
+import { updateColumnLabel } from "@store/slices/table/table.slice";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import styled from "@emotion/styled";
 import styles from "./TableHeaderCell.module.scss";
 import TableHeaderCellExpanded from "./TableHeaderCellExpanded";
 import { sortFunctions } from "../Table/sort/sortFns";
-import { updateColumnLabel } from "../../../../../store/slices/table/table.slice.ts";
-import EditableCell from "../EditableCell/EditableCell"
+import EditableCell from "../EditableCell/EditableCell";
 
 const SortButton = styled(IconButton)({});
 
@@ -104,16 +104,18 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     const isEditing = editableColumns[id];
     const [colValue, setColValue] = useState<string>(children);
 
-    const onChange = (e: ChangeEvent<HTMLInputElement>) => setColValue(e.target.value);
+    const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+      setColValue(e.target.value);
+    };
 
-    const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        dispatch(updateColumnLabel({ colId: id, value: colValue }));
+    const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === "Enter") {
+        dispatch(updateColumnLabel({ colId: id, value: event.target.value }));
       }
     };
 
-    const onBlur = (e: FocusEvent<HTMLInputElement>) => {
-      dispatch(updateColumnLabel({ colId: id, value: colValue }));
+    const onBlur = (event: FocusEvent<HTMLInputElement>) => {
+      dispatch(updateColumnLabel({ colId: id, value: event.target.value }));
     };
 
     const handleSortByClick = (event: any, type: string) => {
@@ -189,10 +191,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       return "";
     };
 
-    const columns = useAppSelector(state => state.table.entities.columns.byId);
+    const columns = useAppSelector((state) => state.table.entities.columns.byId);
 
     useEffect(() => {
-      console.log("[All columns in component]:", Object.values(columns).map(c => ({ id: c.id, label: c.label })));
+      console.log("[All columns in component]:", Object.values(columns).map((c) => ({ id: c.id, label: c.label })));
     }, [columns]);
 
     return (
@@ -244,7 +246,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     >
                       <DragIndicatorIcon
                         fontSize="small"
-                        style={{cursor: isDragging ? "grabbing" : "grab"}}
+                        style={{ cursor: isDragging ? "grabbing" : "grab" }}
                       />
                     </span>
                   </Tooltip>
@@ -265,8 +267,8 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                       className={styles.PinButton}
                     >
                       {header.column.getIsPinned()
-                        ? <PushPinIcon fontSize="small"/>
-                        : <PushPinOutlinedIcon fontSize="small"/>}
+                        ? <PushPinIcon fontSize="small" />
+                        : <PushPinOutlinedIcon fontSize="small" />}
                     </IconButton>
                   </Tooltip>
                 )}
@@ -276,138 +278,138 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     <IconButton
                       onClick={handleSelectColumn}
                       className={styles.ColumnSelectionButton}
-                      sx={{marginBottom: 15}}
+                      sx={{ marginBottom: 15 }}
                       size="small"
                       title=""
                     >
-                    <CheckCircleOutlineRoundedIcon fontSize="medium"/>
+                      <CheckCircleOutlineRoundedIcon fontSize="medium" />
                     </IconButton>
                   </Tooltip>
                 ) : (
                   <IconButton
                     onClick={handleSelectColumn}
                     className={styles.ColumnSelectionButton}
-                    sx={{marginBottom: 15}}
+                    sx={{ marginBottom: 15 }}
                     size="small"
                     title=""
                   >
-                    <CheckCircleRoundedIcon fontSize="medium"/>
+                    <CheckCircleRoundedIcon fontSize="medium" />
                   </IconButton>
                 )}
-                  <div style={{marginTop: 20}} className={styles.Row}>
-                    <div className={styles.Column}>
-                      <div className={styles.Row}>
-                        {columnData.annotationMeta && columnData.annotationMeta.annotated && (
-                          <StatusBadge
-                            status={getBadgeStatus(columnData)}
-                            size="small"
-                            marginRight="5px"
-                          />
-                        )}
-                        <Stack
+                <div style={{ marginTop: 20 }} className={styles.Row}>
+                  <div className={styles.Column}>
+                    <div className={styles.Row}>
+                      {columnData.annotationMeta && columnData.annotationMeta.annotated && (
+                        <StatusBadge
+                          status={getBadgeStatus(columnData)}
+                          size="small"
+                          marginRight="5px"
+                        />
+                      )}
+                      <Stack
+                        sx={{
+                          flex: "1 1 auto",
+                          marginRight: "10px",
+                        }}
+                        alignItems="center"
+                        direction="row"
+                      >
+                        <Box
                           sx={{
-                            flex: "1 1 auto",
-                            marginRight: "10px",
+                            textOverflow: "ellipsis",
+                            overflow: "hidden",
+                            whiteSpace: "nowrap",
                           }}
-                          alignItems="center"
-                          direction="row"
                         >
-                          <Box
+                          {children}
+                        </Box>
+                        <Tooltip
+                          title={getSortTooltipText(header.column, "sortByText")}
+                          arrow
+                        >
+                          <SortButton
+                            onClick={(e) => handleSortByClick(e, "sortByText")}
                             sx={{
-                              textOverflow: "ellipsis",
-                              overflow: "hidden",
-                              whiteSpace: "nowrap",
+                              visibility:
+                                hover || (header.column.getIsSorted() && sortType === "sortByText")
+                                  ? "visible"
+                                  : "hidden",
+                              ...((!header.column.getIsSorted() || sortType !== "sortByText") && {
+                                color: "rgba(0, 0, 0, 0.377)",
+                              }),
                             }}
-                            >
-                                {children}
-                            </Box>
-                            <Tooltip
-                              title={getSortTooltipText(header.column, "sortByText")}
-                              arrow
-                            >
-                              <SortButton
-                                onClick={(e) => handleSortByClick(e, "sortByText")}
-                                sx={{
-                                  visibility:
-                                    hover || (header.column.getIsSorted() && sortType === "sortByText")
-                                      ? "visible"
-                                      : "hidden",
-                                  ...((!header.column.getIsSorted() || sortType !== "sortByText") && {
-                                    color: "rgba(0, 0, 0, 0.377)",
-                                  }),
-                                }}
-                                size="small"
-                                title=""
-                              >
-                                <SortByAlphaIcon fontSize="small"/>
-                              </SortButton>
-                            </Tooltip>
-                            <Tooltip
-                              title={getSortTooltipText(header.column, "sortByMetadata")}
-                              arrow
-                            >
-                              <SortButton
-                                onClick={(e) => handleSortByClick(e, "sortByMetadata")}
-                                sx={{
-                                  visibility:
-                                    hover || (header.column.getIsSorted() && sortType === "sortByMetadata")
-                                      ? "visible"
-                                      : "hidden",
-                                  ...((!header.column.getIsSorted() || sortType !== "sortByMetadata") && {
-                                    color: "rgba(0, 0, 0, 0.377)",
-                                  }),
-                                }}
-                                size="small"
-                                title=""
-                              >
-                                {sortType === "sortByMetadata" && header.column.getIsSorted() === "desc"
-                                  ? <ArrowDownwardRoundedIcon fontSize="small"/>
-                                  : <ArrowUpwardRoundedIcon fontSize="small"/>}
-                              </SortButton>
-                            </Tooltip>
-                        </Stack>
-                        {columnData.kind && getKind(columnData.kind)}
-                        {columnData.role && (
-                          <ButtonShortcut
-                            className={styles.SubjectLabel}
-                            tooltipText={capitalize(columnData.role)}
-                            text={columnData.role[0].toUpperCase()}
-                            variant="flat"
-                            color="darkblue"
-                            size="xs"
-                          />
-                        )}
-                      </div>
-                      {columnData.status === ColumnStatus.RECONCILIATED ? (
-                        <Stack
-                          sx={{
-                            fontSize: "12px",
-                          }}
-                          direction="row"
-                          gap="5px"
-                          alignItems="center"
+                            size="small"
+                            title=""
+                          >
+                            <SortByAlphaIcon fontSize="small" />
+                          </SortButton>
+                        </Tooltip>
+                        <Tooltip
+                          title={getSortTooltipText(header.column, "sortByMetadata")}
+                          arrow
                         >
-                          <LinkRoundedIcon/>
-                            {reconciliators && reconciliators.length > 0
-                              ? reconciliators.join(" | ")
-                              : data.reconciliator}
-                        </Stack>
-                      ) : columnData.status === ColumnStatus.PENDING ? (
-                        <Stack
-                          sx={{
-                            fontSize: "12px",
-                          }}
-                          direction="row"
-                          gap="5px"
-                          alignItems="center"
-                        >
-                          <LinkRoundedIcon />
-                          Partial annotation
-                        </Stack>
-                      ) : null}
+                          <SortButton
+                            onClick={(e) => handleSortByClick(e, "sortByMetadata")}
+                            sx={{
+                              visibility:
+                                hover || (header.column.getIsSorted() && sortType === "sortByMetadata")
+                                  ? "visible"
+                                  : "hidden",
+                                ...((!header.column.getIsSorted() || sortType !== "sortByMetadata") && {
+                                  color: "rgba(0, 0, 0, 0.377)",
+                              }),
+                            }}
+                            size="small"
+                            title=""
+                          >
+                            {sortType === "sortByMetadata" && header.column.getIsSorted() === "desc"
+                              ? <ArrowDownwardRoundedIcon fontSize="small" />
+                              : <ArrowUpwardRoundedIcon fontSize="small" />}
+                          </SortButton>
+                        </Tooltip>
+                      </Stack>
+                      {columnData.kind && getKind(columnData.kind)}
+                      {columnData.role && (
+                        <ButtonShortcut
+                          className={styles.SubjectLabel}
+                          tooltipText={capitalize(columnData.role)}
+                          text={columnData.role[0].toUpperCase()}
+                          variant="flat"
+                          color="darkblue"
+                          size="xs"
+                        />
+                      )}
                     </div>
-                    {expanded && <TableHeaderCellExpanded {...columnData} />}
+                    {columnData.status === ColumnStatus.RECONCILIATED ? (
+                      <Stack
+                        sx={{
+                          fontSize: "12px",
+                        }}
+                        direction="row"
+                        gap="5px"
+                        alignItems="center"
+                      >
+                        <LinkRoundedIcon />
+                        {reconciliators && reconciliators.length > 0
+                          ? reconciliators.join(" | ")
+                          : data.reconciliator}
+                      </Stack>
+                    ) : columnData.status === ColumnStatus.PENDING ? (
+                      <Stack
+                        sx={{
+                          fontSize: "12px",
+                        }}
+                        direction="row"
+                        gap="5px"
+                        alignItems="center"
+                      >
+                        <LinkRoundedIcon />
+                        Partial annotation
+                      </Stack>
+                    ) : null}
                   </div>
+                  {expanded && <TableHeaderCellExpanded {...columnData} />}
+                </div>
               </>
             ) : (
               <Box
