@@ -104,9 +104,9 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
    * Handle edit column action.
    */
   const editColumn = useCallback(() => {
-    dispatch(updateColumnEditable({ colId: id }));
+    dispatch(updateColumnEditable({ colId: id, editable: true }));
     handleClose();
-  }, [handleClose]);
+  }, [dispatch, id, handleClose]);
 
   /**
    * Handle hide column action.
@@ -150,13 +150,11 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
           Icon={VisibilityOffRoundedIcon}>
           Hide column
         </MenuItemIconLabel>
-        {/*
         <MenuItemIconLabel
           onClick={editColumn}
           Icon={EditRoundedIcon}>
           Edit column
         </MenuItemIconLabel>
-        */}
         <MenuItemIconLabel
           onClick={handleDeleteColumn}
           Icon={DeleteOutlineRoundedIcon}>

@@ -339,6 +339,36 @@ export const tableSlice = createSliceWithRequests({
         cellId
       );
     },
+    /**
+     * Handle update of column label.
+     * --UNDOABLE ACTION--
+     */
+    updateColumnLabel: (
+        state,
+        action: PayloadAction<Payload<{ colId: string; value: string; undoable?: boolean }>>
+    ) => {
+      const { colId, value, undoable = true } = action.payload;
+
+      console.log("[updateColumnLabel] dispatched", { colId, value, undoable });
+      console.log("[updateColumnLabel] current value", state.entities.columns.byId[colId]?.label);
+
+      if (state.entities.columns.byId[colId] && state.entities.columns.byId[colId].label !== value) {
+        return produceWithPatch(
+            state,
+            undoable,
+            (draft) => {
+              draft.entities.columns.byId[colId].label = value;
+              console.log("[updateColumnLabel] updated value in draft", draft.entities.columns.byId[colId].label);
+            },
+            (draft) => {
+              draft.ui.editableCellsIds = removeObject(draft.ui.editableCellsIds, colId);
+              draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
+            }
+        );
+      }
+      state.ui.editableCellsIds = removeObject(state.ui.editableCellsIds, colId);
+      console.log("[updateColumnLabel] exited edit mode", state.ui.editableCellsIds);
+    },
     addCellMetadata: (
       state,
       action: PayloadAction<Payload<AddCellMetadataPayload>>
@@ -2125,6 +2155,7 @@ export const {
   updateColumnEditable,
   updateCellEditable,
   updateCellLabel,
+  updateColumnLabel,
   addColumnMetadata,
   deleteColumnMetadata,
   addCellMetadata,
