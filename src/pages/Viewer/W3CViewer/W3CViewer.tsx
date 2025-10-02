@@ -2,7 +2,8 @@ import useIsMounted from "@hooks/is-mounted/useIsMounted";
 import { useAppDispatch } from "@hooks/store";
 import { exportTable } from "@store/slices/table/table.thunk";
 import { useEffect, useState } from "react";
-import ReactJson from "react18-json-view";
+import JsonView from "react18-json-view";
+import "react18-json-view/src/style.css";
 import { useParams } from "react-router-dom";
 import styles from "./W3CViewer.module.scss";
 
@@ -42,7 +43,7 @@ const W3CViewer = () => {
   }
   return (
     <div className={styles.Container}>
-      <ReactJson
+      <JsonView
         src={data}
         enableClipboard={false}
         shouldCollapse={({ name, src, type, namespace }) => {
