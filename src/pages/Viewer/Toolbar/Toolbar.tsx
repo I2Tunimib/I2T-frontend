@@ -1,6 +1,5 @@
 import {
-  Button, FormControlLabel, FormGroup, IconButton, Stack,
-  Switch,
+  Button, IconButton, Stack,
   ToggleButton, ToggleButtonGroup, Tooltip
 } from '@mui/material';
 import { InlineInput } from '@components/kit';
@@ -33,8 +32,8 @@ import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { automaticAnnotation, saveTable } from '@store/slices/table/table.thunk';
 import { useQuery } from '@hooks/router';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
-import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
-import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
+//import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
+//import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { IconButtonTooltip } from '@components/core';
 import UserAvatar from '@components/kit/UserAvatar';
@@ -188,7 +187,7 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="graph" aria-label="right aligned">
-              <Tooltip title="Graph view">
+              <Tooltip title="Graph view (coming soon)">
                 <BubbleChartRoundedIcon fontSize="small" />
               </Tooltip>
             </ToggleButton>

@@ -31,7 +31,6 @@ import {
   selectIsViewOnly,
   selectReconcileRequestStatus,
   selectSettings,
-  selectHelpDialogStatus,
 } from "@store/slices/table/table.selectors";
 import {
   selectAppConfig,
@@ -43,7 +42,7 @@ import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import { getCellContext } from "@store/slices/table/utils/table.reconciliation-utils";
 import CustomTable from "@components/kit/CustomTable/CustomTable";
 import deferMounting from "@components/HOC";
-import { reconcile } from "@store/slices/table/table.thunk";
+//import { reconcile } from "@store/slices/table/table.thunk";
 import { Cell } from "@tanstack/react-table";
 import {
   BaseMetadata,
@@ -54,10 +53,10 @@ import {
   StatusBadge,
   IconButtonTooltip,
 } from "@components/core";
+//import { initial } from "lodash";
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
-import HelpDialog from "../../HelpDialog/HelpDialog";
-import { initial } from "lodash";
+//import HelpDialog from "../../HelpDialog/HelpDialog";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -188,8 +187,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
-  const uniqueReconciliators = Array.from(new Set(reconciliators.map(r => r.prefix)))
-      .map(prefix => reconciliators.find(r => r.prefix === prefix));
+  const uniqueReconciliators = Array.from(new Set(reconciliators.map((r) => r.prefix)))
+      .map((prefix) => reconciliators.find((r) => r.prefix === prefix));
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -324,6 +323,19 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     }
   };
 
+  const handleDeleteRow = (original: any) => {
+    console.log("original Id", original.id);
+    if (cell) {
+      console.log();
+      dispatch(
+          deleteCellMetadata({
+            cellId: cell.id,
+            metadataId: original.id.label || original.id,
+          })
+      );
+    }
+  };
+
   const handleSelectedRowDelete = useCallback((row: any) => {
     handleDeleteRow(row);
     setMetasToDelete((prev) => {
@@ -343,9 +355,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     (row: any) => {
       if (row) {
         setState(({ columns: colState, data: dataState }) => {
-          // Check if the row is already matched (selected)
-          const isCurrentlyMatched = row.match;
-
           const newData = dataState.map((item: any) => {
             if (item.id === row.id) {
               const match = !item.match;
@@ -420,7 +429,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
               return {
                 ...item,
-                match: match,
+                match,
                 selected: match,
               };
             }
@@ -440,19 +449,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     },
     [initialMatching]
   );
-
-  const handleDeleteRow = (original: any) => {
-    console.log("original Id", original.id);
-    if (cell) {
-      console.log();
-      dispatch(
-        deleteCellMetadata({
-          cellId: cell.id,
-          metadataId: original.id.label || original.id,
-        })
-      );
-    }
-  };
 
   const onSubmitNewMetadata = (formState: FormState) => {
     if (cell) {
@@ -647,9 +643,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             )}
             <IconButtonTooltip
               tooltipText="Help"
-              onClick={() =>
-                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 8 }))
-              }
+              onClick={() => dispatch(updateUI({ openHelpDialog: true, tutorialStep: 13 }))}
               Icon={HelpOutlineRoundedIcon}
             />
           </Stack>
@@ -675,7 +669,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 variant="outlined"
               >
                 {uniqueReconciliators &&
-                    uniqueReconciliators.map((reconciliator) => (
+                  uniqueReconciliators.map((reconciliator) => (
                     <MenuItem
                       key={reconciliator.prefix}
                       value={reconciliator.prefix}
