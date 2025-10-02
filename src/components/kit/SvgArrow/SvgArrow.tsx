@@ -116,7 +116,7 @@ const SvgArrow: FC<SvgArrowProps> = ({
             d={d}
             fill="none"
             stroke={color}
-            strokeWidth="2"
+            strokeWidth="10"
             {...(direction === "end"
               ? {
                   markerEnd: `url(#${arrowId})`,
@@ -130,7 +130,7 @@ const SvgArrow: FC<SvgArrowProps> = ({
             d={d}
             fill="none"
             stroke="transparent"
-            strokeWidth="10"
+            strokeWidth="30"
             style={{ cursor: "pointer" }}
             onMouseEnter={() =>
               onMouseEnter &&
