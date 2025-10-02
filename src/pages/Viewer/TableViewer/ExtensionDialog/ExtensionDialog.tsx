@@ -53,8 +53,8 @@ const Transition = forwardRef(
     props: TransitionProps & {
       children: ReactElement<any, any>;
     },
-    ref: Ref<unknown>
-  ) => <Slide direction="down" ref={ref} {...props} />
+    ref: Ref<unknown>,
+  ) => <Slide direction="down" ref={ref} {...props} />,
 );
 
 const Content = styled.div({
@@ -79,7 +79,7 @@ const DialogInnerContent = () => {
     const groupedServsMap = new Map();
     const uniqueExtensionServices = extensionServices.filter(
       (service, index, self) =>
-        index === self.findIndex((s) => s.id === service.id)
+        index === self.findIndex((s) => s.id === service.id),
     );
 
     setUniqueServices(uniqueExtensionServices);
@@ -107,13 +107,13 @@ const DialogInnerContent = () => {
     dispatch(
       updateUI({
         openExtensionDialog: false,
-      })
+      }),
     );
   };
 
   const handleChange = (event: SelectChangeEvent<string>) => {
     const val = extensionServices.find(
-      (service) => service.id === event.target.value
+      (service) => service.id === event.target.value,
     );
     if (val) {
       console.log("current service", val);
@@ -123,12 +123,16 @@ const DialogInnerContent = () => {
 
   const handleSubmit = (formState: Record<string, any>, reset?: Function) => {
     if (currentService) {
-      dispatch(
+      const req = dispatch(
         extend({
           extender: currentService,
           formValues: formState,
-        })
-      )
+        }),
+      );
+      // expose the dispatched request on window so the parent dialog close handler
+      // can abort it if needed (keeps the change local to the client)
+      (window as any).__extensionRequest = req;
+      req
         .unwrap()
         .then(({ data }) => {
           if (reset) reset();
@@ -145,6 +149,12 @@ const DialogInnerContent = () => {
               horizontal: "center",
             },
           });
+        })
+        .finally(() => {
+          // clear the global reference if it's still pointing to this request
+          if ((window as any).__extensionRequest === req) {
+            (window as any).__extensionRequest = null;
+          }
         });
     }
   };
@@ -179,7 +189,7 @@ const DialogInnerContent = () => {
               );
             }
             const selectedService = extensionServices.find(
-              (service) => service.id === selected
+              (service) => service.id === selected,
             );
             return selectedService ? selectedService.name : "";
           }}
@@ -215,7 +225,17 @@ const DialogInnerContent = () => {
           <DynamicExtensionForm
             loading={loading}
             onSubmit={handleSubmit}
-            onCancel={handleClose}
+            onCancel={() => {
+              // abort any in-flight extension request when user cancels the modal form
+              if (
+                (window as any).__extensionRequest &&
+                (window as any).__extensionRequest.abort
+              ) {
+                (window as any).__extensionRequest.abort();
+                (window as any).__extensionRequest = null;
+              }
+              handleClose();
+            }}
             service={currentService}
           />
         </>
@@ -232,8 +252,24 @@ export type ExtensionDialogProps = {
 const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
   const dispatch = useAppDispatch();
 
+  const handleDialogClose = () => {
+    // abort any in-flight extension request when dialog is closed
+    if (
+      (window as any).__extensionRequest &&
+      (window as any).__extensionRequest.abort
+    ) {
+      (window as any).__extensionRequest.abort();
+      (window as any).__extensionRequest = null;
+    }
+    handleClose();
+  };
+
   return (
-    <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
+    <Dialog
+      open={open}
+      TransitionComponent={Transition}
+      onClose={handleDialogClose}
+    >
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Extension</DialogTitle>
 

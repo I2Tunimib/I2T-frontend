@@ -1,3 +1,4 @@
+import axios from "axios";
 import tableAPI, { GetTableResponse } from "@services/api/table";
 import { createAsyncThunk, current } from "@reduxjs/toolkit";
 import { RootState } from "@store";
@@ -48,7 +49,7 @@ export const getTable = createAsyncThunk(
   async (params: Record<string, string | number>) => {
     const response = await tableAPI.getTable(params);
     return response.data;
-  }
+  },
 );
 
 export const exportTable = createAsyncThunk(
@@ -62,7 +63,7 @@ export const exportTable = createAsyncThunk(
   }) => {
     const response = await tableAPI.exportTable(format, params);
     return response.data;
-  }
+  },
 );
 
 export const getChallengeTable = createAsyncThunk(
@@ -76,14 +77,14 @@ export const getChallengeTable = createAsyncThunk(
   }) => {
     const response = await tableAPI.getChallengeTable(datasetName, tableName);
     return response.data;
-  }
+  },
 );
 
 export const saveTable = createAsyncThunk(
   `${ACTION_PREFIX}/saveTable`,
   async (
     params: Record<string, string | number> = {},
-    { getState, dispatch }
+    { getState, dispatch },
   ) => {
     const { table } = getState() as RootState;
     const { entities } = table;
@@ -99,7 +100,7 @@ export const saveTable = createAsyncThunk(
       "Save operation - tableId:",
       tableInstance.id,
       "datasetId:",
-      tableInstance.idDataset
+      tableInstance.idDataset,
     );
 
     // Check for non-ASCII characters in IDs
@@ -112,7 +113,7 @@ export const saveTable = createAsyncThunk(
     ) {
       console.warn(
         "DatasetId contains non-ASCII characters:",
-        tableInstance.idDataset
+        tableInstance.idDataset,
       );
     }
 
@@ -121,7 +122,7 @@ export const saveTable = createAsyncThunk(
       if (/[^\x00-\xFF]/.test(col)) {
         console.warn(
           `Deleted column ${index} contains non-ASCII characters:`,
-          col
+          col,
         );
       }
     });
@@ -142,7 +143,7 @@ export const saveTable = createAsyncThunk(
 
       console.log(
         "DEBUG: Saving table with columnOrder:",
-        entities.columns.allIds
+        entities.columns.allIds,
       );
       console.log("DEBUG: Data structure being saved:", {
         hasTableInstance: !!dataToSave.tableInstance,
@@ -157,7 +158,7 @@ export const saveTable = createAsyncThunk(
         params,
         tableInstance.id,
         tableInstance.idDataset,
-        deletedColumnsList // Pass deleted columns to the API
+        deletedColumnsList, // Pass deleted columns to the API
       );
 
       console.log("Save operation - response received:", {
@@ -178,7 +179,7 @@ export const saveTable = createAsyncThunk(
       });
       throw error;
     }
-  }
+  },
 );
 
 type GetLabelsProps = {
@@ -197,7 +198,7 @@ const LABELS_FN = {
     rows.allIds.flatMap((rowId) => {
       return columns.allIds.flatMap((colId) => {
         return rows.byId[rowId].cells[colId].metadata.map(
-          (metaItem) => metaItem.name.value
+          (metaItem) => metaItem.name.value,
         );
       });
     }),
@@ -222,76 +223,93 @@ export const filterTable = createAsyncThunk(
     const searchValue = value.toLowerCase();
 
     const allLabels = Array.from(
-      new Set(LABELS_FN[tag as keyof typeof LABELS_FN]({ rows, columns }))
+      new Set(LABELS_FN[tag as keyof typeof LABELS_FN]({ rows, columns })),
     );
 
     return allLabels
-      .filter((label) => (label.toLowerCase().startsWith(searchValue)))
+      .filter((label) => label.toLowerCase().startsWith(searchValue))
       .slice(0, 10) // max 10 suggestions
       .map((label) => ({ label }));
   },
-
 );
 
 const getContextColumns = (ids: string[], rows: RowState) => {
-  return ids.reduce((acc, colId) => {
-    acc[colId] = rows.allIds.reduce((accInn, rowId) => {
-      const cell = rows.byId[rowId].cells[colId];
-      const [r, c] = getIdsFromCell(cell.id);
-      accInn[r] = cell;
-      return accInn;
-    }, {} as Record<string, Cell>);
-    return acc;
-  }, {} as Record<string, any>);
+  return ids.reduce(
+    (acc, colId) => {
+      acc[colId] = rows.allIds.reduce(
+        (accInn, rowId) => {
+          const cell = rows.byId[rowId].cells[colId];
+          const [r, c] = getIdsFromCell(cell.id);
+          accInn[r] = cell;
+          return accInn;
+        },
+        {} as Record<string, Cell>,
+      );
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
 };
 
 const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce((acc, rowId) => {
-    const cell = rowEntities.byId[rowId].cells[colId];
-    const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-    if (trueMeta) {
-      // eslint-disable-next-line prefer-destructuring
-      acc[rowId] = trueMeta.id;
-    }
-    return acc;
-  }, {} as Record<string, any>);
+  return rowEntities.allIds.reduce(
+    (acc, rowId) => {
+      const cell = rowEntities.byId[rowId].cells[colId];
+      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+      if (trueMeta) {
+        // eslint-disable-next-line prefer-destructuring
+        acc[rowId] = trueMeta.id;
+      }
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
 };
 
 // New helper for extension services like llmClassifier
 const getColumnMetaObjects = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce((acc, rowId) => {
-    const cell = rowEntities.byId[rowId].cells[colId];
-    const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-    if (trueMeta) {
-      acc[rowId] = {
-        kbId: trueMeta.id,
-        value: cell.label,
-        matchingType: trueMeta.match ? "exact" : "fuzzy", // Adjust logic if needed
-      };
-    }
-    return acc;
-  }, {} as Record<string, any>);
+  return rowEntities.allIds.reduce(
+    (acc, rowId) => {
+      const cell = rowEntities.byId[rowId].cells[colId];
+      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+      if (trueMeta) {
+        acc[rowId] = {
+          kbId: trueMeta.id,
+          value: cell.label,
+          matchingType: trueMeta.match ? "exact" : "fuzzy", // Adjust logic if needed
+        };
+      }
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
 };
 
 const getColumnValues = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce((acc, rowId) => {
-    const cell = rowEntities.byId[rowId].cells[colId];
-    acc[rowId] = [cell.label, cell.metadata, colId];
-    return acc;
-  }, {} as Record<string, any>);
+  return rowEntities.allIds.reduce(
+    (acc, rowId) => {
+      const cell = rowEntities.byId[rowId].cells[colId];
+      acc[rowId] = [cell.label, cell.metadata, colId];
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
 };
 const getMultipleColumnsValues = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce((acc, rowId) => {
-    const cell = rowEntities.byId[rowId].cells[colId];
-    acc[rowId] = [cell.label, cell.metadata, colId];
-    return acc;
-  }, {} as Record<string, any>);
+  return rowEntities.allIds.reduce(
+    (acc, rowId) => {
+      const cell = rowEntities.byId[rowId].cells[colId];
+      acc[rowId] = [cell.label, cell.metadata, colId];
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
 };
 const getRequestFormValuesExtension = (
   formParams: FormInputParams[],
   formValues: Record<string, any>,
   table: TableState,
-  extender?: Extender
+  extender?: Extender,
 ) => {
   if (!formParams) {
     return {};
@@ -306,16 +324,22 @@ const getRequestFormValuesExtension = (
   // Use getColumnMetaObjects only for llmClassifier, otherwise use getColumnMetaIds
   if (extender && extender.id === "llmClassifier") {
     console.log("intercepted llmClassifier");
-    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
-      acc[key] = getColumnMetaObjects(key, rows);
-      return acc;
-    }, {} as Record<string, any>);
+    requestParams.items = selectedColumnsIds.reduce(
+      (acc, key) => {
+        acc[key] = getColumnMetaObjects(key, rows);
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
   } else {
     // fallback: if extender is undefined or not llmClassifier, use KB id logic
-    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
-      acc[key] = getColumnMetaIds(key, rows);
-      return acc;
-    }, {} as Record<string, any>);
+    requestParams.items = selectedColumnsIds.reduce(
+      (acc, key) => {
+        acc[key] = getColumnMetaIds(key, rows);
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
   }
 
   formParams.forEach(({ id, inputType }) => {
@@ -339,7 +363,7 @@ const getRequestFormValuesExtension = (
 const getRequestFormValuesReconciliation = (
   formParams: FormInputParams[],
   formValues: Record<string, any>,
-  table: TableState
+  table: TableState,
 ) => {
   if (!formParams) {
     return {};
@@ -379,7 +403,7 @@ export const reconcile = createAsyncThunk(
       reconciliator: Reconciliator;
       formValues: Record<string, any>;
     },
-    { getState }
+    { getState, signal },
   ) => {
     const { table } = getState() as RootState;
     const { relativeUrl, formParams, id } = reconciliator;
@@ -394,7 +418,7 @@ export const reconcile = createAsyncThunk(
     const params = getRequestFormValuesReconciliation(
       formParams,
       formValues,
-      table
+      table,
     );
 
     console.log("reconcile", { items, reconciliator, formValues, params });
@@ -406,18 +430,31 @@ export const reconcile = createAsyncThunk(
       columnName,
       ...params,
     };
+
+    // Create axios CancelToken source and wire it to the thunk abort signal
+    const source = axios.CancelToken.source();
+    if (signal.aborted) {
+      source.cancel("Aborted before request");
+      throw new Error("Aborted");
+    }
+    signal.addEventListener("abort", () => {
+      source.cancel("Aborted by user");
+    });
+
     const response = await tableAPI.reconcile(
       relativeUrl,
       data,
       tableInstance.id,
       tableInstance.idDataset,
-      columnName
+      columnName,
+      // pass axios cancel token so the request is cancelled on abort
+      source.token,
     );
     return {
       data: response.data,
       reconciliator,
     };
-  }
+  },
 );
 
 type AutomaticAnnotationThunkInputProps = {
@@ -457,7 +494,7 @@ export type SuggestThunkOutputProps = {
 export const suggest = createAsyncThunk<
   SuggestThunkOutputProps,
   SuggestThunkInputProps
->(`${ACTION_PREFIX}/suggest`, async (inputProps, { getState }) => {
+>(`${ACTION_PREFIX}/suggest`, async (inputProps, { getState, signal }) => {
   const { suggester } = inputProps;
   const { table } = getState() as RootState;
   const { ui, entities } = table;
@@ -474,7 +511,22 @@ export const suggest = createAsyncThunk<
       }
     })
     .filter((meta) => meta !== null);
-  const response = await tableAPI.suggest(suggester, rowsMetadata);
+
+  // Create axios CancelToken source and wire it to the thunk abort signal
+  const source = axios.CancelToken.source();
+  if (signal.aborted) {
+    source.cancel("Aborted before request");
+    throw new Error("Aborted");
+  }
+  signal.addEventListener("abort", () => {
+    source.cancel("Aborted by user");
+  });
+
+  const response = await tableAPI.suggest(
+    suggester,
+    rowsMetadata,
+    source.token,
+  );
   let currentDataResponse = response.data.data;
   console.log("suggest", currentDataResponse);
   return {
@@ -523,7 +575,7 @@ export type ExtendThunkResponseProps = {
 export const extend = createAsyncThunk<
   ExtendThunkResponseProps,
   ExtendThunkInputProps
->(`${ACTION_PREFIX}/extend`, async (inputProps, { getState }) => {
+>(`${ACTION_PREFIX}/extend`, async (inputProps, { getState, signal }) => {
   const { extender, formValues } = inputProps;
   // get root table states
   const { table } = getState() as RootState;
@@ -540,8 +592,19 @@ export const extend = createAsyncThunk<
     formParams,
     formValues,
     table,
-    extender
+    extender,
   );
+
+  // Create axios CancelToken source and wire it to the thunk abort signal
+  const source = axios.CancelToken.source();
+  if (signal.aborted) {
+    source.cancel("Aborted before request");
+    throw new Error("Aborted");
+  }
+  signal.addEventListener("abort", () => {
+    source.cancel("Aborted by user");
+  });
+
   const response = await tableAPI.extend(
     relativeUrl,
     {
@@ -550,7 +613,9 @@ export const extend = createAsyncThunk<
     },
     tableInstance.id,
     tableInstance.idDataset,
-    columnName
+    columnName,
+    // pass axios cancel token so the request is cancelled on abort
+    source.token,
   );
   return {
     data: response.data,
@@ -585,8 +650,8 @@ export const updateTableSocket = createAsyncThunk(
             isViewOnly: false,
             scoreLowerBound: (table.maxMetaScore - table.minMetaScore) / 3,
           },
-        })
+        }),
       );
     }
-  }
+  },
 );
