@@ -1,60 +1,68 @@
-import useScroll from '@hooks/scroll/useScroll';
+import useScroll from "@hooks/scroll/useScroll";
 import {
   Box,
   CircularProgress,
   IconButton,
-  Pagination, Paper,
+  Pagination,
+  Paper,
+  Checkbox,
   Radio,
-  Stack, Typography
-} from '@mui/material';
+  Stack,
+  TableCell,
+  Typography,
+} from "@mui/material";
 import {
-  forwardRef, Fragment, PropsWithChildren,
-  useRef, useState
-} from 'react';
+  forwardRef,
+  Fragment,
+  PropsWithChildren,
+  useRef,
+  useState,
+} from "react";
 import {
-  Row, TableOptions,
-  useExpanded,
-  usePagination, useSortBy, useTable
-} from 'react-table';
-import Empty from '@components/kit/Empty';
-import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
-import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+  Row,
+  ColumnDef,
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getExpandedRowModel,
+  flexRender,
+} from "@tanstack/react-table";
+import Empty from "@components/kit/Empty";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
+import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import { CheckBox } from "@mui/icons-material";
 import {
-  Table, TableHead, TableHeaderCell,
+  Table,
+  TableHead,
+  TableHeaderCell,
   TableLoadingOverlay,
-  TableRow, TableRowCell, TableSubRow
-} from './CustomTableStyles';
-import ColumnHide from './ColumnHide';
+  TableRow,
+  TableRowCell,
+  TableSubRow,
+} from "./CustomTableStyles";
+import ColumnHide from "./ColumnHide";
 
-export interface TableProperties<T extends Record<string, unknown>> extends TableOptions<T> {
+export interface TableProperties<T extends Record<string, unknown>> {
+  columns: ColumnDef<T>[];
+  data: any[];
   onSelectedRowChange: (row: T | null) => void;
+  onSelectedRowDeleteRequest: (row: T | null) => void;
+  showCheckbox?: boolean;
+  onRowCheck: (rowId: string) => void;
   stickyHeaderTop?: string;
   loading?: boolean;
 }
 
-interface FooterProps<T extends Record<string, unknown>> {
-  rows: Row<T>[];
-  pageIndex: number;
-  pageCount: number;
-  gotoPage: (index: number) => void;
-  nextPage: () => void;
-  previousPage: () => void;
-}
+export function Footer<T>({ table }: { table: ReturnType<typeof useReactTable<T>>}) {
+  const rowCount = table.getRowModel().rows.length;
+  const pageCount = table.getPageCount();
+  const { pagination } = table.getState();
+  const { pageIndex } = pagination;
 
-export function Footer<T extends Record<string, unknown>>(
-  props: PropsWithChildren<FooterProps<T>>
-) {
-  const {
-    rows,
-    pageIndex,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage
-  } = props;
-
-  const handleChange = (event: any, page: number) => {
-    gotoPage(page - 1);
+  const handleChange = (_: any, page: number) => {
+    table.setPageIndex(page - 1);
   };
 
   return (
@@ -64,35 +72,32 @@ export function Footer<T extends Record<string, unknown>>(
       direction="row"
       alignItems="center"
       sx={{
-        backgroundColor: '#FFF',
-        borderTop: '1px solid rgb(224, 224, 224)',
-        marginTop: 'auto',
-        padding: '6px 16px'
-      }}>
+        backgroundColor: "#FFF",
+        borderTop: "1px solid rgb(224, 224, 224)",
+        marginTop: "auto",
+        padding: "6px 16px",
+      }}
+    >
       <Typography color="textSecondary" variant="body2">
-        {`Total candidates: ${rows.length}`}
+        {`Total candidates: ${rowCount}`}
       </Typography>
       <Pagination
         sx={{
-          marginLeft: 'auto'
+          marginLeft: "auto",
         }}
         size="small"
         onChange={handleChange}
         count={pageCount}
         page={pageIndex + 1}
         showFirstButton
-        showLastButton />
+        showLastButton
+      />
     </Stack>
   );
 }
 
 const RadioCell = forwardRef(
-  ({
-    indeterminate,
-    checked,
-    onChange,
-    ...rest
-  }: any, ref) => {
+  ({ indeterminate, checked, onChange, ...rest }: any, ref) => {
     const defaultRef = useRef();
     const resolvedRef = ref || defaultRef;
 
@@ -113,7 +118,7 @@ const RadioCell = forwardRef(
           checked={checked}
           inputRef={resolvedRef}
           inputProps={{
-            ...rest
+            ...rest,
           }}
         />
       </>
@@ -121,14 +126,7 @@ const RadioCell = forwardRef(
   }
 );
 
-const defaultHooks = [
-  useSortBy,
-  useExpanded,
-  usePagination
-  // useRowSelect
-];
-
-const defaultPropGetter = () => ({ prova: 'ok' });
+const defaultPropGetter = () => ({ prova: "ok" });
 
 export default function CustomTable<T extends Record<string, unknown>>(
   props: PropsWithChildren<TableProperties<T>>
@@ -137,59 +135,86 @@ export default function CustomTable<T extends Record<string, unknown>>(
     columns,
     data,
     onSelectedRowChange,
-    stickyHeaderTop = '0px',
+    onSelectedRowDeleteRequest,
+    onRowCheck,
+    stickyHeaderTop = "0px",
+    disableDelete = false,
     loading = false,
-    showRadio = true
+    showRadio = true,
+    showCheckbox = false,
+    checkedRows = [],
   } = props;
-  const tableInstance = useTable<T>(
+  const [expanded, setExpanded] = useState({});
+  const [sorting, setSorting] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+
+  const handleRowClick = (row: Row<T>) => {
+    console.log("Row clicked:", row);
+    onSelectedRowChange(row.original);
+  };
+
+  const handleDeleteRow = (row: Row<T>) => {
+    onSelectedRowDeleteRequest(row.original);
+  };
+
+  const deleteColumn = {
+    id: "delete",
+    header: "",
+    enableHiding: true,
+    cell: ({ row }) => (
+      <IconButton
+        disabled={disableDelete}
+        color="error"
+        onClick={(event) => {
+          event.stopPropagation();
+          handleDeleteRow(row);
+        }}
+      >
+        <DeleteIcon />
+      </IconButton>
+    ),
+  };
+  const table = useReactTable(
     {
-      columns,
+      columns: [deleteColumn, ...columns],
       data,
-      initialState: {
-        pageSize: 20
+      state: {
+        columnVisibility,
+        expanded,
+        sorting,
       },
-      autoResetExpanded: false,
-      autoResetSortBy: false,
-      autoResetPage: false
-    },
-    ...defaultHooks
+      onColumnVisibilityChange: setColumnVisibility,
+      onExpandedChange: setExpanded,
+      onSortingChange: setSorting,
+      getCoreRowModel: getCoreRowModel(),
+      getExpandedRowModel: getExpandedRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+    }
   );
 
   const [subRows, setSubRows] = useState<Record<string, any>>({});
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    rows,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    allColumns,
-    visibleColumns,
-    getToggleHideAllColumnsProps,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    // toggleRowSelected,
-    // selectedFlatRows,
-    state: { pageIndex, selectedRowIds }
-  } = tableInstance;
+  const allColumnsWithToggleProps = table.getAllLeafColumns()
+    .filter((col) => col.id !== "delete")
+    .map((col) => ({
+      ...col,
+        getToggleHiddenProps: () => ({
+        checked: col.getIsVisible(),
+        onChange: () => col.toggleVisibility(),
+      }),
+    Header: col.columnDef.header,
+  }));
 
-  const paginationProps = {
-    rows,
-    pageIndex,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage
-  };
-
-  const handleRowClick = (row: Row<T>) => {
-    onSelectedRowChange(row.original);
+  const toggleAllProps = {
+    checked: table.getAllLeafColumns().every((col) => col.getIsVisible()),
+    indeterminate:
+      table.getAllLeafColumns().some((col) => col.getIsVisible()) &&
+      !table.getAllLeafColumns().every((col) => col.getIsVisible()),
+    onChange: () => {
+      const allVisible = table.getAllLeafColumns().every((col) => col.getIsVisible());
+      table.getAllLeafColumns().forEach((col) => col.toggleVisibility(!allVisible));
+    },
   };
 
   return (
@@ -200,97 +225,148 @@ export default function CustomTable<T extends Record<string, unknown>>(
         </TableLoadingOverlay>
       )}
       <Box padding="5px 16px" marginTop="12px" borderTop="1px solid #f0f0f0">
-        <ColumnHide {...{ indeterminate: getToggleHideAllColumnsProps(), allColumns }} />
+        <ColumnHide
+          indeterminate={toggleAllProps}
+          allColumns={allColumnsWithToggleProps}
+        />
       </Box>
-      <Box sx={{
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1
-      }}>
+      <Box
+        sx={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          flexGrow: 1,
+        }}
+      >
         <Box
           sx={{
             flexGrow: 1,
             ...(data.length === 0 && {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            })
-          }}>
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }),
+          }}
+        >
           {data.length > 0 ? (
-            <Table {...getTableProps()}>
+            <Table>
               <TableHead stickyHeaderTop={stickyHeaderTop}>
-                {// Loop over the header rows
-                  headerGroups.map((headerGroup) => (
+                {
+                  // Loop over the header rows
+                  table.getHeaderGroups().map((headerGroup) => (
                     // Apply the header row props
-                    <TableRow {...headerGroup.getHeaderGroupProps()}>
-                      {// Loop over the headers in each row
-                        headerGroup.headers.map((column) => (
-                          // Apply the header cell props
-                          <TableHeaderCell
-                            sorted={column.isSorted}
-                            {...column.getHeaderProps(column.getSortByToggleProps())}>
-                            {column.id !== 'selection' ? (
+                    <TableRow key={headerGroup.id}>
+                      {
+                        // Loop over the headers in each row
+                        headerGroup.headers.map((header) => (
+                          <TableHeaderCell key={header.id}>
+                            {header.id !== "selection" ? (
                               <Stack
                                 direction="row"
                                 overflow="hidden"
                                 whiteSpace="nowrap"
                                 textOverflow="ellipsis"
                                 gap="10px"
-                                alignItems="center">
-                                {// Render the header
-                                  column.render('Header')}
+                                alignItems="center"
+                              >
+                                {
+                                  // Render the header
+                                  flexRender(header.column.columnDef.header, header.getContext())
+                                }
                                 <IconButton
                                   sx={{
-                                    width: '25px',
-                                    height: '25px'
+                                    width: "25px",
+                                    height: "25px",
                                   }}
-                                  size="small">
-                                  {column.isSorted
-                                    ? column.isSortedDesc
-                                      ? <ArrowDownwardRoundedIcon fontSize="small" />
-                                      : <ArrowUpwardRoundedIcon fontSize="small" />
-                                    : <ArrowUpwardRoundedIcon sx={{ color: '#d4d4d4' }} fontSize="small" />}
+                                  size="small"
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {header.column.getCanSort() ? (
+                                    header.column.getIsSorted() === "desc" ? (
+                                      <ArrowDownwardRoundedIcon fontSize="small" />
+                                    ) : header.column.getIsSorted() === "asc" ? (
+                                      <ArrowUpwardRoundedIcon fontSize="small" />
+                                    ) : (
+                                      <ArrowUpwardRoundedIcon sx={{ color: "#d4d4d4" }} fontSize="small" />
+                                    )
+                                  ) : (
+                                    <ArrowUpwardRoundedIcon sx={{ color: "#d4d4d4" }} fontSize="small" />
+                                  )}
                                 </IconButton>
                               </Stack>
-                            ) : column.render('Header')}
+                            ) : (
+                              flexRender(header.column.columnDef.header, header.getContext())
+                            )}
                           </TableHeaderCell>
-                        ))}
+                    ))}
                     </TableRow>
-                  ))}
+                ))}
               </TableHead>
               {/* Apply the table body props */}
-              <tbody {...getTableBodyProps()}>
-                {// Loop over the table rows
-                  page.map((row) => {
-                    // Prepare the row for display
-                    prepareRow(row);
-                    const rowProps = row.getRowProps();
-                    return (
+              <tbody>
+                {
+                  // Loop over the table rows
+                  table.getRowModel().rows.map((row) => (
                       // Apply the row props
-                      <Fragment key={rowProps.key}>
-                        <TableRow
-                          onClick={() => handleRowClick(row)}
-                          {...rowProps}>
-                          {// Loop over the rows cells
-                            row.cells.map((cell) => {
-                              // Apply the cell props
-                              return (
-                                <TableRowCell title={`${cell.value}`} {...cell.getCellProps()}>
-                                  {// Render the cell contents
-                                    cell.render('Cell', { setSubRows })}
-                                </TableRowCell>
-                              );
-                            })}
-                        </TableRow>
-                        {row.isExpanded ? (
-                          <TableSubRow {...rowProps} key={`${rowProps.key}-expanded`}>
-                            <TableRowCell colSpan={visibleColumns.length}>
-                              {subRows[row.id]}
+                    <Fragment key={row.id}>
+                      <TableRow
+                        onClick={() => handleRowClick(row)}
+                      >
+                        {/* Cella per checkBox */}
+                        {/* <TableCell
+                            padding="checkbox"
+                            sx={{
+                              width: "50px",
+                              minWidth: "50px",
+                              maxWidth: "50px",
+                            }} // Set fixed width
+                          > */}
+                        {/* Material UI checkbox */}
+                        {/* <Checkbox
+                              disabled={showCheckbox}
+                              checked={checkedRows.includes(row.id)}
+                              onChange={(event) => {
+                                onRowCheck(row.id);
+                              }}
+                            />
+                          </TableCell> */}
+                        {
+                          // Loop over the rows cells
+                          row.getVisibleCells().map((cell) => (
+                            // Apply the cell props
+                            <TableRowCell
+                              key={cell.id}
+                              title={`${cell.getValue()}`}
+                            >
+                              {
+                                // Render the cell contents
+                                flexRender(cell.column.columnDef.cell, {
+                                  ...cell.getContext(),
+                                  setSubRows,
+                                })
+                              }
                             </TableRowCell>
-                          </TableSubRow>
-                        ) : null}
-                      </Fragment>
+                          ))}
+                      </TableRow>
+                      {row.getIsExpanded() ? (
+                        <TableSubRow key={`${row.id}-expanded`}>
+                          <TableRowCell
+                            style={{
+                              width: "100%",
+                              maxWidth: "100%",
+                              padding: "12px",
+                            }}
+                            colSpan={
+                              row.getVisibleCells().length + 1
+                            } /* +1 for the delete button column */
+                          >
+                            <div className="expanded-content">
+                              {subRows[row.id]}
+                            </div>
+                          </TableRowCell>
+                        </TableSubRow>
+                      ) : null}
+                    </Fragment>
                       // <TableRow
                       //   onClick={() => handleRowClick(row)}
                       //   {...row.getRowProps()}>
@@ -305,15 +381,14 @@ export default function CustomTable<T extends Record<string, unknown>>(
                       //       );
                       //     })}
                       // </TableRow>
-                    );
-                  })}
+                    ))}
               </tbody>
             </Table>
           ) : (
             <Empty />
           )}
         </Box>
-        <Footer {...paginationProps} />
+        <Footer table={table} />
       </Box>
     </Stack>
   );

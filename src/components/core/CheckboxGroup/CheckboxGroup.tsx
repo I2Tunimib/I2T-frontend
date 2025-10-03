@@ -84,10 +84,10 @@ const CheckboxGroup: FC<CheckboxGroupProps> = ({
           <ListItemText primary="All" />
         </ListItemButton>
       </ListItem>
-      {state.map((checkboxItem) => {
+      {state.map((checkboxItem, index) => {
         return (
           <ListItem
-            key={checkboxItem.value}
+            key={`${checkboxItem.value}-${index}`}
             disablePadding>
             <ListItemButton
               sx={{

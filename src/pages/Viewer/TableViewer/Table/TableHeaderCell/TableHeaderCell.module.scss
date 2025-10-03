@@ -7,7 +7,22 @@
   border-right: 1px solid #ededed;
   border-top: 2px solid transparent;
 
+  .ResizeHandle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 12px;
+    height: 100%;
+    cursor: ew-resize;
+    z-index: 99;
+    background-color: rgba(0, 0, 0, 0.02);
+    user-select: none;
+    touch-action: none;
+  }
 
+  &.Resizing {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 
   .Role {
     position: absolute;
@@ -39,6 +54,33 @@
 
   &.TableHeaderIndex {
     width: 38px;
+  }
+
+  .PinButton {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 10;
+    visibility: hidden;
+  }
+
+  :hover .PinButton {
+    visibility: visible;
+  }
+
+  .DragHandle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    cursor: default;
+    user-select: none;
+    opacity: 0.6;
+  }
+
+  :hover .DragHandle {
+    opacity: 1;
+    cursor: grab;
   }
 
   // &.Selected {

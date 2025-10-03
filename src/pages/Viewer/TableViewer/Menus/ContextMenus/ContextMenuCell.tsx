@@ -1,7 +1,8 @@
 import { MenuBase, MenuDivider, MenuItemIconLabel } from '@components/core';
 import { MenuBaseProps } from '@components/core/MenuBase';
 import { MenuList } from '@mui/material';
-import makeStyles from '@mui/styles/makeStyles';
+//import makeStyles from '@mui/styles/makeStyles';
+import styled from '@emotion/styled';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRounded';
@@ -18,18 +19,24 @@ interface ContextMenuCellProps extends MenuBaseProps {
   data?: any;
 }
 
+/*
 const useMenuStyles = makeStyles({
   list: {
     outline: 0
   }
 });
+*/
+
+const StyledMenuList = styled(MenuList)`
+  outline: 0;
+`;
 
 const ContextMenuCell: FC<ContextMenuCellProps> = ({
   data: { id },
   handleClose,
   ...props
 }) => {
-  const classes = useMenuStyles();
+  //const classes = useMenuStyles();
   const dispatch = useAppDispatch();
 
   /**
@@ -77,7 +84,8 @@ const ContextMenuCell: FC<ContextMenuCellProps> = ({
       handleClose={handleClose}
       {...props}
     >
-      <MenuList autoFocus className={classes.list}>
+      <StyledMenuList autoFocus //className={classes.list}
+      >
         <MenuItemIconLabel
           onClick={editCell}
           Icon={EditRoundedIcon}>
@@ -104,7 +112,7 @@ const ContextMenuCell: FC<ContextMenuCellProps> = ({
           Icon={DeleteOutlineRoundedIcon}>
           Delete row
         </MenuItemIconLabel>
-      </MenuList>
+      </StyledMenuList>
     </MenuBase>
   );
 };

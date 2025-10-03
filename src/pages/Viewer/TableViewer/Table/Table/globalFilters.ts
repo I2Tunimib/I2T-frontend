@@ -1,30 +1,24 @@
 import partition from '@services/utils/partition';
-import { Row } from 'react-table';
+import { Row } from '@tanstack/react-table';
 
-const filterMatches = (rows: Array<Row>, colIds: Array<string>, scoreLowerBound: number) => {
+const filterMatches = (rows: Array<Row>, colIds: Array<string>) => {
   return partition(rows, (row) => colIds
-    .some((colId) => row.values[colId].annotationMeta
-      && row.values[colId].annotationMeta.match.value));
+    .some((colId) => row[colId]?.annotationMeta?.annotated
+      && row[colId].annotationMeta.match?.value));
 };
 
 const filterPending = (rows: Array<Row>, colIds: Array<string>, scoreLowerBound: number) => {
   return partition(rows, (row) => colIds
-    .some((colId) => {
-      const cell = row.values[colId];
-      return cell.annotationMeta
-        && !cell.annotationMeta.match.value
-        && cell.annotationMeta.highestScore >= scoreLowerBound;
-    }));
+    .some((colId) => row[colId]?.annotationMeta?.annotated
+      && !row[colId].annotationMeta.match?.value
+      && (row[colId].annotationMeta.highestScore ?? 0) >= scoreLowerBound));
 };
 
 const filterMiss = (rows: Array<Row>, colIds: Array<string>, scoreLowerBound: number) => {
   return partition(rows, (row) => colIds
-    .some((colId) => {
-      const cell = row.values[colId];
-      return cell.annotationMeta
-        && !cell.annotationMeta.match.value
-        && cell.annotationMeta.highestScore < scoreLowerBound;
-    }));
+    .some((colId) => row[colId]?.annotationMeta?.annotated
+      && !row[colId].annotationMeta.match?.value
+      && (row[colId].annotationMeta.highestScore ?? 0) < scoreLowerBound));
 };
 
 const filters = {

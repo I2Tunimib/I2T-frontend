@@ -1,12 +1,16 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import authAPI, { MeParams, SignInParams } from '@services/api/auth';
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import authAPI, {
+  MeParams,
+  SignInParams,
+  VerifyParams,
+} from "@services/api/auth";
 
-const ACTION_PREFIX = 'config';
+const ACTION_PREFIX = "config";
 
 export enum AuthThunkActions {
-  AUTH_SIGNIN = 'signIn',
-  AUTH_ME = 'me',
-  AUTH_LOGOUT = 'logout'
+  AUTH_SIGNIN = "signIn",
+  AUTH_ME = "me",
+  AUTH_LOGOUT = "logout",
 }
 
 export const authSignIn = createAsyncThunk(
@@ -17,7 +21,7 @@ export const authSignIn = createAsyncThunk(
       const responseMe = await authAPI.me({ token: responseSignIn.data.token });
 
       if (responseMe.data.loggedIn) {
-        localStorage.setItem('token', responseSignIn.data.token);
+        localStorage.setItem("token", responseSignIn.data.token);
       }
 
       return responseMe.data;
@@ -26,28 +30,35 @@ export const authSignIn = createAsyncThunk(
     }
   }
 );
-
-export const authMe = createAsyncThunk(
-  `${ACTION_PREFIX}/me`,
-  async () => {
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      return {
-        loggedIn: false
-      };
+export const authVerify = createAsyncThunk(
+  `${ACTION_PREFIX}/verify`,
+  async (params: VerifyParams, { rejectWithValue }) => {
+    try {
+      const response = await authAPI.verify(params);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
     }
-
-    const responseMe = await authAPI.me({ token });
-
-    return responseMe.data;
   }
 );
+export const authMe = createAsyncThunk(`${ACTION_PREFIX}/me`, async () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return {
+      loggedIn: false,
+    };
+  }
+
+  const responseMe = await authAPI.me({ token });
+
+  return responseMe.data;
+});
 
 export const authLogout = createAsyncThunk(
   `${ACTION_PREFIX}/logout`,
   async () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     return null;
   }
 );

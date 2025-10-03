@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, FormControl, FormHelperText, Slider, Stack, styled, SwitchUnstyled, switchUnstyledClasses, TextField, Tooltip, Typography } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, FormControl, FormHelperText, Slider, Stack, styled, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { FC, useState, useEffect, ChangeEvent, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -15,12 +15,12 @@ const Root = styled('span')`
   margin: 10px;
   cursor: pointer;
 
-  &.${switchUnstyledClasses.disabled} {
+  &.Mui-disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
 
-  & .${switchUnstyledClasses.track} {
+  & .MuiSwitch-track {
     background: #b3c3d3;
     border-radius: 10px;
     display: block;
@@ -29,7 +29,7 @@ const Root = styled('span')`
     position: absolute;
   }
 
-  & .${switchUnstyledClasses.thumb} {
+  & .MuiSwitch-thumb {
     display: block;
     width: 19px;
     height: 14px;
@@ -41,24 +41,24 @@ const Root = styled('span')`
     transition: all 200ms ease;
   }
 
-  &.${switchUnstyledClasses.focusVisible} .${switchUnstyledClasses.thumb} {
+  &.Mui-focusVisible .MuiSwitch-thumb {
     background-color: rgba(255, 255, 255, 1);
     box-shadow: 0 0 1px 8px rgba(0, 0, 0, 0.25);
   }
 
-  &.${switchUnstyledClasses.checked} {
-    .${switchUnstyledClasses.thumb} {
+  &.Mui-checked {
+    .MuiSwitch-thumb {
       left: 14px;
       top: 3px;
       background-color: #fff;
     }
 
-    .${switchUnstyledClasses.track} {
+    .MuiSwitch-track {
       background: #007fff;
     }
   }
 
-  & .${switchUnstyledClasses.input} {
+  & .MuiSwitch-input {
     cursor: inherit;
     position: absolute;
     width: 100%;
@@ -71,20 +71,22 @@ const Root = styled('span')`
   }
 `;
 
+
 type TmpSettingsState = {
   isViewOnly: boolean;
   scoreLowerBoundEnabled: boolean;
   scoreLowerBound: number;
-}
+};
 
 type DialogSettingsContentProps = {
-  onFormChange: (state: TmpSettingsState | null) => void
-}
+  onFormChange: (state: TmpSettingsState | null) => void;
+};
 
 const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
-  onFormChange
+  onFormChange,
 }) => {
-  const [tmpSettingsState, setTmpSettingsState] = useState<TmpSettingsState | null>(null);
+  const [tmpSettingsState, setTmpSettingsState] =
+    useState<TmpSettingsState | null>(null);
   const settings = useAppSelector(selectSettings);
   const currentTable = useAppSelector(selectCurrentTable);
 
@@ -95,16 +97,19 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
         isScoreLowerBoundEnabled,
         minMetaScore = 0,
         maxMetaScore = 0,
-        scoreLowerBound = 0
-      }
+        scoreLowerBound = 0,
+      },
     } = settings;
 
     setTmpSettingsState({
       isViewOnly: !!isViewOnly,
       scoreLowerBoundEnabled: !!isScoreLowerBoundEnabled,
-      scoreLowerBound: Number((scoreLowerBound === 0
-        ? (maxMetaScore - minMetaScore) / 3
-        : scoreLowerBound).toFixed(2))
+      scoreLowerBound: Number(
+        (scoreLowerBound === 0
+          ? (maxMetaScore - minMetaScore) / 3
+          : scoreLowerBound
+        ).toFixed(2)
+      ),
     });
   }, [settings]);
 
@@ -130,7 +135,9 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
     });
   };
 
-  const handleLowerBoundScoreChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleLowerBoundScoreChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     setTmpSettingsState((old) => {
       if (old) {
         return { ...old, scoreLowerBound: Number(event.target.value) };
@@ -144,33 +151,55 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Stack direction="row" alignItems="center" gap="10px">
           <Typography sx={{ flexShrink: 0 }}>Enable changes</Typography>
-          <Tooltip arrow placement="right" title="Enable or disable changes to the table. Changes are disabled by default if an automatic annotation process is in progress.">
+          <Tooltip
+            arrow
+            placement="right"
+            title="Enable or disable changes to the table. Changes are disabled by default if an automatic annotation process is in progress."
+          >
             <HelpOutlineRoundedIcon color="disabled" />
           </Tooltip>
         </Stack>
-        <SwitchUnstyled
+        <Switch
           component={Root}
+
           checked={!tmpSettingsState.isViewOnly}
-          disabled={currentTable.mantisStatus === 'PENDING'}
-          onChange={handleViewOnlyChange} />
+          disabled={currentTable.mantisStatus === "PENDING"}
+          onChange={handleViewOnlyChange}
+        />
       </Stack>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Stack direction="row" alignItems="center" gap="10px">
-          <Typography sx={{ flexShrink: 0 }}>Enable metadata score lower bound</Typography>
-          <Tooltip arrow placement="right" title="By enabling the metadata score lower bound you can set minimum acceptance threshold for a metadata score.">
+          <Typography sx={{ flexShrink: 0 }}>
+            Enable metadata score lower bound
+          </Typography>
+          <Tooltip
+            arrow
+            placement="right"
+            title="By enabling the metadata score lower bound you can set minimum acceptance threshold for a metadata score."
+          >
             <HelpOutlineRoundedIcon color="disabled" />
           </Tooltip>
         </Stack>
-        <SwitchUnstyled
+        <Switch
           component={Root}
+
           checked={tmpSettingsState.scoreLowerBoundEnabled}
-          onChange={handleLowerBoundToggleChange} />
+          onChange={handleLowerBoundToggleChange}
+        />
       </Stack>
       {tmpSettingsState.scoreLowerBoundEnabled ? (
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Stack direction="row" alignItems="center" gap="10px">
             <Typography sx={{ flexShrink: 0 }}>Min. score threshold</Typography>
-            <Tooltip arrow placement="right" title="Set the lower bound score for choosing a match metadata for a cell. Cells with metadata scores LOWER than this threshold are marked in RED.">
+            <Tooltip
+              arrow
+              placement="right"
+              title="Set the lower bound score for choosing a match metadata for a cell. Cells with metadata scores LOWER than this threshold are marked in RED."
+            >
               <HelpOutlineRoundedIcon color="disabled" />
             </Tooltip>
           </Stack>
@@ -181,9 +210,12 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
               label="Threshold"
               variant="outlined"
               onChange={handleLowerBoundScoreChange}
-              value={Number(tmpSettingsState.scoreLowerBound)} />
+              value={Number(tmpSettingsState.scoreLowerBound)}
+            />
             <FormHelperText>
-              {`Min is ${settings.lowerBound.minMetaScore?.toFixed(2)}, Max is ${settings.lowerBound.maxMetaScore?.toFixed(2)}`}
+              {`Min is ${settings.lowerBound.minMetaScore?.toFixed(
+                2
+              )}, Max is ${settings.lowerBound.maxMetaScore?.toFixed(2)}`}
             </FormHelperText>
           </FormControl>
         </Stack>
@@ -192,9 +224,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
   ) : null;
 };
 
-const SettingsDialog: FC<DialogProps> = ({
-  ...props
-}) => {
+const SettingsDialog: FC<DialogProps> = ({ ...props }) => {
   const [state, setState] = useState<TmpSettingsState | null>();
   const dispatch = useAppDispatch();
 
@@ -203,22 +233,23 @@ const SettingsDialog: FC<DialogProps> = ({
   };
 
   const handleConfirm = () => {
-    dispatch(updateUI({
-      settingsDialog: false,
-      ...(state && {
-        settings: {
-          isViewOnly: state.isViewOnly,
-          isScoreLowerBoundEnabled: state.scoreLowerBoundEnabled,
-          scoreLowerBound: state.scoreLowerBound
-        }
+    dispatch(
+      updateUI({
+        settingsDialog: false,
+        ...(state && {
+          settings: {
+            isViewOnly: state.isViewOnly,
+            isScoreLowerBoundEnabled: state.scoreLowerBoundEnabled,
+            scoreLowerBound: state.scoreLowerBound,
+          },
+        }),
       })
-    }));
+    );
   };
 
   return (
-    <Dialog
-      {...props}>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <Dialog {...props}>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
         Table settings
         <SettingsIcon color="disabled" />
       </DialogTitle>

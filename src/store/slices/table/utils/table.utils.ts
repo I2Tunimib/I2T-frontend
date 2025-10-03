@@ -1,23 +1,28 @@
-import { ID } from '@store/interfaces/store';
-import { store } from '@store';
-import { Draft } from '@reduxjs/toolkit';
+import { ID } from "@store/interfaces/store";
+import { store } from "@store";
+import { Draft } from "@reduxjs/toolkit";
 import {
-  BaseMetadata, Cell,
-  ColumnMetadata, TableState
-} from '../interfaces/table';
+  BaseMetadata,
+  Cell,
+  ColumnMetadata,
+  TableState,
+} from "../interfaces/table";
 
 /**
  * Add a property to another object given old and new object.
  */
 export const addObject = <T, K>(oldObject: T, newObject: T): T => ({
   ...oldObject,
-  ...newObject
+  ...newObject,
 });
 
 /**
  * Remove property of an object given the property
  */
-export const removeObject = <T, K extends keyof T>(object: T, property: K): Omit<T, K> => {
+export const removeObject = <T, K extends keyof T>(
+  object: T,
+  property: K
+): Omit<T, K> => {
   const { [property]: omit, ...rest } = object;
   return rest;
 };
@@ -36,22 +41,23 @@ export const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
 /**
  * Get rowId and colId from cellId.
  */
-export const getIdsFromCell = (cellId: ID) => cellId.split('$') as [ID, ID];
-export const getContextPrefix = (metadata: BaseMetadata | ColumnMetadata) => metadata.id.split(':')[0];
+export const getIdsFromCell = (cellId: ID) => cellId.split("$") as [ID, ID];
+export const getContextPrefix = (metadata: BaseMetadata) => {
+  console.log("metadata", metadata.id.split(":")[0]);
+  if (metadata.id) return metadata.id.split(":")[0];
+  else {
+    console.log("empty string", metadata);
+    return "";
+  }
+};
 
 const getTableState = () => store.getState().table;
-export const getColumn = (
-  state: Draft<TableState>,
-  colId: ID
-) => state.entities.columns.byId[colId];
-export const getRow = (
-  state: Draft<TableState>,
-  rowId: ID
-) => state.entities.rows.byId[rowId];
-export const getRowCells = (
-  state: Draft<TableState>,
-  rowId: ID
-) => getRow(state, rowId).cells;
+export const getColumn = (state: Draft<TableState>, colId: ID) =>
+  state.entities.columns.byId[colId];
+export const getRow = (state: Draft<TableState>, rowId: ID) =>
+  state.entities.rows.byId[rowId];
+export const getRowCells = (state: Draft<TableState>, rowId: ID) =>
+  getRow(state, rowId).cells;
 
 export const getCell = (
   state: Draft<TableState>,

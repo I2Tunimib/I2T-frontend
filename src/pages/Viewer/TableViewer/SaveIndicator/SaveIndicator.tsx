@@ -8,9 +8,10 @@ import LoopRoundedIcon from '@mui/icons-material/LoopRounded';
 import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import {
   Button, IconButton,
-  Theme, Tooltip, Typography
+  Theme, Tooltip, Typography, tooltipClasses
 } from '@mui/material';
-import withStyles from '@mui/styles/withStyles';
+//import withStyles from '@mui/styles/withStyles';
+import styled from '@emotion/styled';
 import clsx from 'clsx';
 import { useAppSelector } from '@hooks/store';
 import TimeAgo from 'react-timeago';
@@ -32,6 +33,7 @@ interface TooltipContentProps extends HTMLAttributes<HTMLDivElement> {
   status: TooltipStatus;
 }
 
+/*
 const LightTooltip = withStyles((theme: Theme) => ({
   tooltip: {
     backgroundColor: theme.palette.common.white,
@@ -41,6 +43,19 @@ const LightTooltip = withStyles((theme: Theme) => ({
     padding: 0
   }
 }))(Tooltip);
+*/
+
+const LightTooltip = styled(({ className, ...props }) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+  [`& .${tooltipClasses.tooltip}`]: {
+    backgroundColor: theme.palette.common.white,
+    color: 'rgba(0, 0, 0, 0.87)',
+    boxShadow: theme.shadows[1],
+    fontSize: 11,
+    padding: 0,
+  },
+}));
 
 const TooltipContent: FC<TooltipContentProps> = ({
   status

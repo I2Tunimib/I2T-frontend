@@ -1,14 +1,16 @@
-import { createSelector } from '@reduxjs/toolkit';
-import { RootState } from '@store';
-import { getRequestStatus } from '@store/enhancers/requests';
-import { ConfigEndpoints } from './config.thunk';
+import { createSelector } from "@reduxjs/toolkit";
+import { RootState } from "@store";
+import { getRequestStatus } from "@store/enhancers/requests";
+import { ConfigEndpoints } from "./config.thunk";
 
 // select slice state
 export const selectConfig = (state: RootState) => state.config.entities;
 // select reconciliators
-export const selectReconciliators = (state: RootState) => state.config.entities.reconciliators;
+export const selectReconciliators = (state: RootState) =>
+  state.config.entities.reconciliators;
 // select extenders
-export const selectExtenders = (state: RootState) => state.config.entities.extenders;
+export const selectExtenders = (state: RootState) =>
+  state.config.entities.extenders;
 // select requests
 export const selectRequests = (state: RootState) => state.config._requests;
 export const selectStoreConfig = (state: RootState) => state.config;
@@ -40,7 +42,10 @@ export const selectExtendersAsObject = createSelector(
 
 export const selectExtendersAsArray = createSelector(
   selectExtenders,
-  (extenders) => extenders.allIds.map((id) => extenders.byId[id])
+  (extenders) =>
+    extenders.allIds
+      .map((id) => extenders.byId[id])
+      .sort((a, b) => a.name.localeCompare(b.name))
 );
 
 // Loading selectors

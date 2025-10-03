@@ -1,10 +1,10 @@
-import styled from '@emotion/styled';
+import styled from "@emotion/styled";
 
 export const Table = styled.table`
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background-color: #FFF;
+  background-color: #fff;
   border-top: 1px solid #f0f0f0;
   border-left: 1px solid #f0f0f0;
   border-right: 1px solid #f0f0f0;
@@ -13,7 +13,7 @@ export const Table = styled.table`
 
 type TableHeadProps = {
   stickyHeaderTop: string;
-}
+};
 
 export const TableHead = styled.thead<TableHeadProps>`
   position: sticky;
@@ -30,7 +30,7 @@ export const TableRow = styled.tr`
 `;
 
 export const TableSubRow = styled(TableRow)`
-  background-color: #F9F9F9
+  background-color: #f9f9f9;
 `;
 
 export const TableHeaderCell = styled.th<{ sorted: boolean }>`
@@ -50,7 +50,7 @@ export const TableHeaderCell = styled.th<{ sorted: boolean }>`
   }
 
   svg {
-    ${({ sorted }) => (sorted ? 'visibility: visible' : 'visibility: hidden')}
+    ${({ sorted }) => (sorted ? "visibility: visible" : "visibility: hidden")}
   }
 
   &:last-child {
@@ -66,7 +66,7 @@ export const TableHeaderCell = styled.th<{ sorted: boolean }>`
       height: 1.6em;
       background-color: #0000000f;
       transform: translateY(-50%);
-      transition: background-color .3s;
+      transition: background-color 0.3s;
       content: "";
     }
   }
@@ -81,9 +81,43 @@ export const TableRowCell = styled.td`
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
-  
-  .MuiRadio-root{
+
+  .MuiRadio-root {
     padding: 0;
+  }
+
+  /* Style for expandable row content - allows horizontal scrolling */
+  &[colspan] {
+    white-space: normal;
+    overflow-x: auto;
+    max-width: none;
+
+    /* Make the content scrollable horizontally */
+    .expanded-content {
+      display: block;
+      min-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 6px;
+
+      /* Add a subtle scrollbar style */
+      &::-webkit-scrollbar {
+        height: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+      }
+    }
   }
 `;
 

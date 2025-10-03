@@ -1,5 +1,5 @@
 import { BaseMetadata } from '@store/slices/table/interfaces/table';
-import { Row } from 'react-table';
+import { Row } from '@tanstack/react-table';
 
 const findMatchingMetadata = (metadata: BaseMetadata[]) => {
   if (!metadata || metadata.length === 0) {
@@ -10,30 +10,21 @@ const findMatchingMetadata = (metadata: BaseMetadata[]) => {
 };
 
 export const sortByMetadata = (
-  rowA: Row,
-  rowB: Row,
+  rowA: Row<any>,
+  rowB: Row<any>,
   columnId: string,
-  desc: boolean | undefined
 ) => {
-  if (!rowA.values[columnId].annotationMeta
-    || !rowA.values[columnId].annotationMeta.match.value) {
-    return -1;
-  }
+  const valueA = rowA.getValue(columnId) as any;
+  const valueB = rowB.getValue(columnId) as any;
 
-  if (!rowB.values[columnId].annotationMeta
-    || !rowB.values[columnId].annotationMeta.match.value) {
-    return 1;
-  }
+  if (!valueA?.annotationMeta.match.value) return -1;
+  if (!valueB?.annotationMeta.match.value) return 1;
 
-  const matchingA = findMatchingMetadata(rowA.values[columnId].metadata);
-  if (!matchingA) {
-    return -1;
-  }
+  const matchA = findMatchingMetadata(valueA.metadata);
+  const matchB = findMatchingMetadata(valueB.metadata);
 
-  const matchingB = findMatchingMetadata(rowB.values[columnId].metadata);
-  if (!matchingB) {
-    return 1;
-  }
+  if (!matchA) return -1;
+  if (!matchB) return 1;
 
-  return matchingA.score - matchingB.score;
+  return matchA.score - matchB.score;
 };

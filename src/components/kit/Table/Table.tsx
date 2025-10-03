@@ -2,27 +2,31 @@ import { IconButton, Radio } from '@mui/material';
 import {
   FC, forwardRef,
   useEffect,
+  useState,
   useRef
 } from 'react';
 import {
-  Column, Row,
-  useRowSelect, useTable
-} from 'react-table';
+  ColumnDef,
+  Row,
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from '@tanstack/react-table';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import clsx from 'clsx';
 import TableCell from './TableCell';
 import styles from './Table.module.scss';
 
-interface TableProps {
-  columns: Column[];
-  data: Row[];
+interface TableProps<TData extends object> {
+  columns: ColumnDef<any, any>[];
+  data: any[];
   onSelectedRowChange: (row: any) => void;
   onDeleteRow: (row: any) => void;
   tableHeaderClass?: any;
 }
 
 const defaultColumn = {
-  Cell: TableCell
+  cell: TableCell
 };
 
 const RadioCell = forwardRef(
@@ -66,119 +70,98 @@ const Table: FC<TableProps> = ({
   onSelectedRowChange,
   onDeleteRow
 }) => {
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    selectedFlatRows,
-    prepareRow,
-    toggleAllRowsSelected,
-    toggleRowSelected,
-    state: { selectedRowIds }
-  } = useTable(
-    {
-      columns,
-      data,
-      defaultColumn,
-      manualRowSelectedKey: 'none',
-      stateReducer: (newState, action) => {
-        if (action.type === 'toggleRowSelected') {
-          if (action.value) {
-            newState.selectedRowIds = {
-              [action.id]: true
-            };
-          } else {
-            newState.selectedRowIds = {};
-          }
-        }
-        return newState;
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const table = useReactTable({
+    data,
+    columns: [
+      ...columns,
+      {
+        id: 'delete',
+        cell: ({ row }) => (
+          <IconButton size="small" onClick={() => onDeleteRow(row)}>
+            <DeleteOutlineRoundedIcon />
+          </IconButton>
+        ),
+      },
+      {
+        id: 'selection',
+        cell: ({ row }) => (
+          <div>
+            <RadioCell
+              checked={row.getIsSelected()}
+              onChange={() => setRowSelection({ [row.id]: true })} />
+          </div>
+        ),
+      },
+    ],
+    getCoreRowModel: getCoreRowModel(),
+    defaultColumn,
+    state: { rowSelection },
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      const newSelection = typeof updater === "function" ? updater(rowSelection) : updater;
+      // Enforce single selection
+      const onlyOne: Record<string, boolean> = {};
+      const firstId = Object.keys(newSelection)[0];
+      if (firstId) {
+        onlyOne[firstId] = true;
+      } else {
+        setRowSelection(onlyOne);
       }
     },
-    useRowSelect,
-    (hooks) => {
-      hooks.visibleColumns.push((cols) => [
-        ...cols,
-        {
-          id: 'delete',
-          Cell: ({ row }) => (
-            <IconButton size="small" onClick={() => onDeleteRow(row)}>
-              <DeleteOutlineRoundedIcon />
-            </IconButton>
-          )
-        },
-        {
-          id: 'selection',
-          Cell: ({ row }) => (
-            <div>
-              <RadioCell {...row.getToggleRowSelectedProps()} />
-            </div>
-          )
-        }
-      ]);
-    }
-  );
+  });
 
   useEffect(() => {
-    // treting selection as radio selection,
-    // only one row at a time
-    if (selectedFlatRows[0]) {
-      onSelectedRowChange(selectedFlatRows[0].original);
+    const selectedRows = table.getSelectedRowModel().flatRows;
+    if (selectedRows[0]) {
+      onSelectedRowChange(selectedRows[0].original);
     }
-  }, [selectedFlatRows]);
+  }, [rowSelection]);
 
   useEffect(() => {
-    rows.forEach(({ id, original }) => {
-      if ((original as any).isSelected) {
-        toggleRowSelected(id, true);
+    data.forEach((row, id) => {
+      if (row.isSelected) {
+        setRowSelection({ [id.toString()]: true });
       }
     });
-  }, [rows, toggleRowSelected]);
+  }, [data]);
 
-  const handleRowClick = ({ id }: Row) => {
-    if (id in selectedRowIds) {
-      toggleRowSelected(id, false);
-    } else {
-      toggleRowSelected(id, true);
-    }
+  const handleRowClick = (row: Row<any>) => {
+    const isSelected = row.getIsSelected();
+    setRowSelection(isSelected ? {} : { [row.id]: true });
   };
 
   return (
-    <table {...getTableProps()} className={styles.TableRoot}>
+    <table className={styles.TableRoot}>
       <thead className={clsx(styles.TableHeader, tableHeaderClass)}>
-        {headerGroups.map((headerGroup) => (
-          <tr {...headerGroup.getHeaderGroupProps()} className={styles.TableRow}>
-            {headerGroup.headers.map((column) => (
-              <th {...column.getHeaderProps()} className={styles.TableHeaderCell}>
-                {column.render('Header')}
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id} className={styles.TableRow}>
+            {headerGroup.headers.map((header) => (
+              <th key={header.id} className={styles.TableHeaderCell}>
+                {flexRender(header.column.columnDef.header, header.getContext())}
               </th>
             ))}
           </tr>
         ))}
       </thead>
-      <tbody {...getTableBodyProps()}>
-        {rows.map((row) => {
-          prepareRow(row);
-          return (
-            <tr
-              onClick={() => handleRowClick(row)}
-              {...row.getRowProps()}
-              className={clsx(
-                styles.TableRow,
-                {
-                  [styles.Selected]: row.isSelected
-                }
-              )}>
-              {row.cells.map((cell) => {
-                return (
-                  <td {...cell.getCellProps()} className={styles.TableRowCell}>
-                    {cell.render('Cell')}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })}
+      <tbody>
+        {table.getRowModel().rows.map((row) => (
+          <tr
+            key={row.id}
+            onClick={() => handleRowClick(row)}
+            className={clsx(
+              styles.TableRow,
+              {
+                [styles.Selected]: row.getIsSelected()
+              }
+            )}>
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id} className={styles.TableRowCell}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+              ))}
+          </tr>
+        ))}
       </tbody>
     </table>
   );

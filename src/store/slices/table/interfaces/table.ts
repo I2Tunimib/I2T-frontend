@@ -1,8 +1,8 @@
-import { ItemsToMatch } from '@pages/Viewer/TableViewer/RefineMatching/TypeRefineMatching';
-import { RequestEnhancedState } from '@store/enhancers/requests';
-import { UndoEnhancedState } from '@store/enhancers/undo';
-import { ID, BaseState } from '@store/interfaces/store';
-import { Reconciliator } from '@store/slices/config/interfaces/config';
+import { ItemsToMatch } from "@pages/Viewer/TableViewer/RefineMatching/TypeRefineMatching";
+import { RequestEnhancedState } from "@store/enhancers/requests";
+import { UndoEnhancedState } from "@store/enhancers/undo";
+import { ID, BaseState } from "@store/interfaces/store";
+import { Reconciliator } from "@store/slices/config/interfaces/config";
 
 /**
  * Table slice state.
@@ -13,11 +13,11 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
     tableInstance: Partial<CurrentTableState>;
     columns: ColumnState;
     rows: RowState;
-  },
+  };
   ui: TableUIState;
 }
 
-export interface CurrentTableState extends TableInstance{}
+export interface CurrentTableState extends TableInstance {}
 
 export interface TableInstance {
   id: ID;
@@ -30,7 +30,7 @@ export interface TableInstance {
   nCellsReconciliated: number;
   minMetaScore: number;
   maxMetaScore: number;
-  mantisStatus?: 'PENDING' | 'DONE';
+  mantisStatus?: "PENDING" | "DONE";
 }
 
 /**
@@ -48,7 +48,7 @@ export interface TableUIState {
   settingsDialog: boolean;
   settings: Partial<Settings>;
   headerExpanded: boolean;
-  view: 'table' | 'graph' | 'raw';
+  view: "table" | "graph" | "raw";
   selectedColumnCellsIds: Record<ID, boolean>;
   selectedColumnsIds: Record<ID, boolean>;
   selectedRowsIds: Record<ID, boolean>;
@@ -56,9 +56,11 @@ export interface TableUIState {
   expandedColumnsIds: Record<ID, boolean>;
   expandedCellsIds: Record<ID, boolean>;
   editableCellsIds: Record<ID, boolean>;
+  deletedColumnsIds: Record<ID, string>; // Track deleted columns with their names/labels
   lastSaved: string;
   tmpCell: Cell | null;
   tutorialBBoxes: Record<string, BBox>;
+  tutorialStep: number;
 }
 
 export interface Settings {
@@ -82,15 +84,15 @@ export interface ColumnState extends BaseState<Column> {}
 export interface RowState extends BaseState<Row> {}
 
 export enum ColumnStatus {
-  RECONCILIATED='reconciliated',
-  PENDING='pending',
-  EMPTY='empty'
+  RECONCILIATED = "reconciliated",
+  PENDING = "pending",
+  EMPTY = "empty",
 }
 
 export enum CsvSeparator {
-  TAB='\t',
-  COMMA=',',
-  SEMICOLON=';'
+  TAB = "\t",
+  COMMA = ",",
+  SEMICOLON = ";",
 }
 
 /**
@@ -111,7 +113,7 @@ export interface Column {
  */
 export interface Row {
   id: ID;
-  cells: Record<ID, Cell>
+  cells: Record<ID, Cell>;
 }
 /**
  * A cell instance.
@@ -127,7 +129,7 @@ export interface AnnotationMeta {
   annotated?: boolean;
   match: {
     value: boolean;
-    reason?: 'reconciliator' | 'manual' | 'refinement'
+    reason?: "reconciliator" | "manual" | "refinement";
   };
   highestScore: number;
   lowestScore: number;
@@ -141,13 +143,16 @@ export interface Context {
 
 export interface BaseMetadata {
   id: ID;
-  name: {
-    value: string;
-    uri: string;
-  };
+  name:
+    | {
+        value: string;
+        uri: string | undefined;
+      }
+    | string;
   match: boolean;
   score: number;
   type?: BaseMetadata[];
+  additionalTypes?: BaseMetadata[];
 }
 
 export interface ColumnMetadata extends BaseMetadata {
@@ -175,7 +180,7 @@ export interface UpdateSelectedCellsPayload {
 export interface AutomaticAnnotationPayload {
   datasetId: string;
   tableId: string;
-  mantisStatus: 'PENDING';
+  mantisStatus: "PENDING";
 }
 
 export interface UpdateSelectedRowPayload {
@@ -190,49 +195,76 @@ export interface UpdateSelectedColumnPayload {
 
 export interface ReconciliationFulfilledPayload {
   data: {
-    id: ID,
-    metadata: BaseMetadata[]
-  }[],
+    id: ID;
+    metadata: BaseMetadata[];
+  }[];
   reconciliator: Reconciliator & { id: ID };
 }
 
 export interface ExtendFulfilledPayload {
-  columns: ColumnState['byId']
-  rows: RowState['byId']
+  columns: ColumnState["byId"];
+  rows: RowState["byId"];
 }
 
 export interface AddCellMetadataPayload {
   cellId: ID;
+  metadataId: string;
   prefix: string;
   value: {
     id: string;
     name: string;
     score: number;
     match: string;
-  }
+    uri: string;
+  };
+}
+
+export interface AddColumnMetadataPayload {
+  colId: ID;
+  type: "type" | "property" | "entity";
+  prefix?: string;
+  value: {
+    id: string;
+    name: string;
+    uri?: string;
+    score: number;
+    match: string;
+    obj?: string;
+  };
+}
+
+export interface DeleteColumnMetadataPayload {
+  metadataId: ID;
+  colId: ID;
+  type: "type" | "property" | "entity";
 }
 
 export interface UpdateCellMetadataPayload {
-  metadataId: ID,
-  cellId: ID
+  metadataId: ID;
+  cellId: ID;
+  match?: boolean;
 }
 export interface UpdateColumnMetadataPayload {
-  metadataId: ID,
-  colId: ID
+  metadataId: ID;
+  colId: ID;
 }
 
 export interface DeleteCellMetadataPayload {
-  metadataId: ID,
-  cellId: ID
+  metadataId: ID;
+  cellId: ID;
 }
 
 export interface UpdateCellLabelPayload {
-  cellId: ID,
-  value: string
+  cellId: ID;
+  value: string;
+}
+
+export interface UpdateColumnEditablePayload {
+  colId: ID;
 }
 
 export interface UpdateCellEditablePayload {
-  cellId: ID
+  cellId: ID;
 }
 
 export interface AutoMatchingPayload {
@@ -240,12 +272,22 @@ export interface AutoMatchingPayload {
 }
 
 export interface RefineMatchingPayload {
-  changes: ItemsToMatch[]
+  changes: ItemsToMatch[];
 }
 
 export interface UpdateColumnTypePayload {
   id: ID;
   name: string;
+}
+
+export interface UpdateColumnTypeMatchesPayload {
+  typeIds: string[];
+}
+
+export interface AddColumnTypePayload {
+  id: string;
+  name: string;
+  uri?: string;
 }
 
 export interface UpdateCurrentTablePayload extends Partial<TableInstance> {}
@@ -268,18 +310,18 @@ export interface PasteCellPayload {
 }
 
 export enum TableType {
-  RAW = 'raw',
-  ANNOTATED = 'annotated',
-  CHALLENGE = 'challenge',
-  DATA = 'data',
-  CEA = 'cea',
-  CTA = 'cta',
-  CPA = 'cpa'
+  RAW = "raw",
+  ANNOTATED = "annotated",
+  CHALLENGE = "challenge",
+  DATA = "data",
+  CEA = "cea",
+  CTA = "cta",
+  CPA = "cpa",
 }
 
 export enum FileFormat {
-  CSV = 'csv',
-  JSON = 'json'
+  CSV = "csv",
+  JSON = "json",
 }
 
 export interface MetaFile {
@@ -292,5 +334,5 @@ export interface TableFile {
   name: string;
   type: TableType;
   original?: File | string;
-  meta: MetaFile
+  meta: MetaFile;
 }
