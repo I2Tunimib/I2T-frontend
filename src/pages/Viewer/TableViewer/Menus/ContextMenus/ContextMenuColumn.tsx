@@ -2,16 +2,14 @@ import { MenuBase, MenuItemIconLabel } from '@components/core';
 import { MenuBaseProps } from '@components/core/MenuBase';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import { MenuList } from '@mui/material';
-//import makeStyles from '@mui/styles/makeStyles';
 import styled from '@emotion/styled';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import { deleteSelected, updateColumnEditable, updateColumnVisibility, updateUI } from '@store/slices/table/table.slice';
+import { deleteSelected, updateColumnVisibility, updateUI } from '@store/slices/table/table.slice';
 import { useCallback, FC } from 'react';
 import { selectAreCellReconciliated, selectIsCellSelected } from '@store/slices/table/table.selectors';
 import { useSnackbar } from 'notistack';
@@ -24,14 +22,6 @@ interface ContextMenuColumnProps extends MenuBaseProps {
   columnPinning: { left: string[] };
   setColumnPinning: (v: { left: string[] }) => void;
 }
-
-/*
-const useMenuStyles = makeStyles({
-  list: {
-    outline: 0
-  }
-});
-*/
 
 const StyledMenuList = styled(MenuList)`
   outline: 0;
@@ -47,7 +37,6 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
   setColumnPinning,
   ...props
 }) => {
-  //const classes = useMenuStyles();
   const dispatch = useAppDispatch();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
@@ -101,14 +90,6 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
   }, [isPinned, id, columnPinning, setColumnPinning, dispatch, handleClose]);
 
   /**
-   * Handle edit column action.
-   */
-  const editColumn = useCallback(() => {
-    dispatch(updateColumnEditable({ colId: id, editable: true }));
-    handleClose();
-  }, [dispatch, id, handleClose]);
-
-  /**
    * Handle hide column action.
    */
   const handleHideColumn = useCallback(() => {
@@ -149,11 +130,6 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
           onClick={handleHideColumn}
           Icon={VisibilityOffRoundedIcon}>
           Hide column
-        </MenuItemIconLabel>
-        <MenuItemIconLabel
-          onClick={editColumn}
-          Icon={EditRoundedIcon}>
-          Edit column
         </MenuItemIconLabel>
         <MenuItemIconLabel
           onClick={handleDeleteColumn}

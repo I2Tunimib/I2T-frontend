@@ -1,10 +1,10 @@
-import { useAppSelector } from "@hooks/store";
+//import { useAppSelector } from "@hooks/store";
 import { current, PayloadAction } from "@reduxjs/toolkit";
 import tableAPI, { GetTableResponse } from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
 import { buildURI } from "@services/utils/uri-utils";
-import { RootState, store } from "@store";
+//import { RootState, store } from "@store";
 import { createSliceWithRequests } from "@store/enhancers/requests";
 import {
   applyRedoPatches,
@@ -13,12 +13,12 @@ import {
 } from "@store/enhancers/undo";
 import { ID, Payload } from "@store/interfaces/store";
 import { property } from "lodash";
-import { a } from "react-spring";
-import axios from "axios";
-import {
-  selectReconciliators,
-  selectReconciliatorsAsArray,
-} from "../config/config.selectors";
+//import { a } from "react-spring";
+//import axios from "axios";
+//import {
+//  selectReconciliators,
+//  selectReconciliatorsAsArray,
+//} from "../config/config.selectors";
 import {
   AddCellMetadataPayload,
   AddColumnMetadataPayload,
@@ -32,15 +32,15 @@ import {
   DeleteColumnPayload,
   DeleteRowPayload,
   DeleteSelectedPayload,
-  ExtendFulfilledPayload,
-  FileFormat,
+  //ExtendFulfilledPayload,
+  //FileFormat,
   PasteCellPayload,
   ReconciliationFulfilledPayload,
   RefineMatchingPayload,
-  RowState,
+  //RowState,
   TableInstance,
   TableState,
-  TableType,
+  //TableType,
   TableUIState,
   UpdateCellEditablePayload,
   UpdateCellLabelPayload,
@@ -71,10 +71,10 @@ import {
 } from "./utils/table.delete-utils";
 import {
   createCell,
-  getAnnotationMeta,
+  //getAnnotationMeta,
   getColumnAnnotationMeta,
   getColumnMetadata,
-  getMetadata,
+  //getMetadata,
   updateContext,
 } from "./utils/table.extension-utils";
 import {
@@ -95,7 +95,7 @@ import {
 import {
   areOnlyRowsSelected,
   areRowsColumnsSelected,
-  selectColumnCell,
+  //selectColumnCell,
   selectOneCell,
   selectOneColumn,
   selectOneColumnCell,
@@ -109,11 +109,11 @@ import {
   getCell,
   getColumn,
   getIdsFromCell,
-  getRowCells,
+  //getRowCells,
   removeObject,
   toggleObject,
 } from "./utils/table.utils";
-import { annotate } from "../datasets/datasets.thunk";
+//import { annotate } from "../datasets/datasets.thunk";
 
 const initialState: TableState = {
   entities: {
@@ -338,36 +338,6 @@ export const tableSlice = createSliceWithRequests({
         state.ui.editableCellsIds,
         cellId
       );
-    },
-    /**
-     * Handle update of column label.
-     * --UNDOABLE ACTION--
-     */
-    updateColumnLabel: (
-        state,
-        action: PayloadAction<Payload<{ colId: string; value: string; undoable?: boolean }>>
-    ) => {
-      const { colId, value, undoable = true } = action.payload;
-
-      console.log("[updateColumnLabel] dispatched", { colId, value, undoable });
-      console.log("[updateColumnLabel] current value", state.entities.columns.byId[colId]?.label);
-
-      if (state.entities.columns.byId[colId] && state.entities.columns.byId[colId].label !== value) {
-        return produceWithPatch(
-            state,
-            undoable,
-            (draft) => {
-              draft.entities.columns.byId[colId].label = value;
-              console.log("[updateColumnLabel] updated value in draft", draft.entities.columns.byId[colId].label);
-            },
-            (draft) => {
-              draft.ui.editableCellsIds = removeObject(draft.ui.editableCellsIds, colId);
-              draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
-            }
-        );
-      }
-      state.ui.editableCellsIds = removeObject(state.ui.editableCellsIds, colId);
-      console.log("[updateColumnLabel] exited edit mode", state.ui.editableCellsIds);
     },
     addCellMetadata: (
       state,
@@ -2155,7 +2125,6 @@ export const {
   updateColumnEditable,
   updateCellEditable,
   updateCellLabel,
-  updateColumnLabel,
   addColumnMetadata,
   deleteColumnMetadata,
   addCellMetadata,
