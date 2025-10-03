@@ -84,7 +84,7 @@ const IndexContainer = styled(Box)({
 
 const ContentContainer = styled(Box)({
   padding: "16px",
-  height: "100%",
+  height: "auto",
   width: "100%",
   overflow: "auto",
 }) as typeof Box;
@@ -320,20 +320,23 @@ const steps: Step[] = [
             keep a column fixed on the left while scrolling.
           </li>
           <li>
+            <b>Manage metadata: </b>
+            view or edit metadata of the column.
+          </li>
+          <li>
             <b>Drag & drop: </b>
             reorder columns freely by dragging their headers.
           </li>
           <li>
             <b>Resize column: </b>
-            adjust the column width manually by dragging the edge. The
+            drag the edge manually to adjust width. The reset button
             <RestartAltRoundedIcon
               sx={{
                 margin: "0px 3px",
                 verticalAlign: "middle",
               }}
             />
-            button appears in the Subtoolbar only after a column has been resized
-            and restores the default widths.
+            appears in the Subtoolbar only after resizing to restore default widths.
           </li>
           <li>
             <b>Sort alphabetically: </b>

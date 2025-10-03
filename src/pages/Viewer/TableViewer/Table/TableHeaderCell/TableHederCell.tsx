@@ -1,20 +1,21 @@
 /* eslint-disable react/destructuring-assignment */
 import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
-import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import PushPinIcon from '@mui/icons-material/PushPin';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import clsx from "clsx";
 import { ButtonShortcut } from "@components/kit";
 import { ColumnStatus } from "@store/slices/table/interfaces/table";
 import { RootState } from "@store";
 import { connect } from "react-redux";
 import { selectColumnReconciliators } from "@store/slices/table/table.selectors";
+import { updateUI } from "@store/slices/table/table.slice";
+import { useAppDispatch } from "@hooks/store";
 import { forwardRef, MouseEvent, useCallback, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
 import { StatusBadge } from "@components/core";
@@ -81,6 +82,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     }: any,
     ref
   ) => {
+    const dispatch = useAppDispatch();
     const [hover, setHover] = useState<boolean>(false);
     const { lowerBound } = settings;
     const columnData = header.column.columnDef.data;
@@ -169,6 +171,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       return "";
     };
 
+    const handleMetadataDialogAction = () => {
+      dispatch(updateUI({ openMetadataColumnDialog: true }));
+    };
+
     return (
       <th
         ref={(el) => {
@@ -243,30 +249,17 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   </IconButton>
                 </Tooltip>
               )}
-              {/* Select Column */}
-              {!selected ? (
-                <Tooltip title="Select to enable Reconcile and Expand functions" arrow>
-                  <IconButton
-                    onClick={handleSelectColumn}
-                    className={styles.ColumnSelectionButton}
-                    sx={{ marginBottom: 15 }}
-                    size="small"
-                    title=""
-                  >
-                    <CheckCircleOutlineRoundedIcon fontSize="medium" />
-                  </IconButton>
-                </Tooltip>
-              ) : (
+              <Tooltip title="Manage metadata" arrow>
                 <IconButton
-                  onClick={handleSelectColumn}
-                  className={styles.ColumnSelectionButton}
+                  onClick={handleMetadataDialogAction}
+                  className={styles.ColumnManageButton}
                   sx={{ marginBottom: 15 }}
                   size="small"
                   title=""
                 >
-                  <CheckCircleRoundedIcon fontSize="medium" />
+                  <SettingsEthernetRoundedIcon fontSize="medium" />
                 </IconButton>
-              )}
+              </Tooltip>
               <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
                   <div className={styles.Row}>
