@@ -214,11 +214,24 @@ const DialogInnerContent = () => {
           <SquaredBox
             dangerouslySetInnerHTML={{ __html: currentService.description }}
           />
-          {!cellReconciliated && (
+          {!cellReconciliated && !currentService.skipFiltering && (
             <Alert severity="warning">
               The selected column does not have reconciliated cells, the result
               of the extension will be
               <b> null</b>
+            </Alert>
+          )}
+          {!cellReconciliated && currentService.skipFiltering && (
+            <Alert severity="info">
+              This service will process all rows, including non-reconciled ones.
+              Non-matched rows will be sent with empty knowledge base
+              identifiers.
+            </Alert>
+          )}
+          {cellReconciliated && currentService.skipFiltering && (
+            <Alert severity="info">
+              This service will process all rows, including any non-reconciled
+              ones that may exist in your table.
             </Alert>
           )}
           <Divider />

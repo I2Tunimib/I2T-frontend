@@ -36,6 +36,7 @@ export interface Extender extends Record<string, any> {
   relativeUrl: string;
   description: string;
   formParams: FormInputParams[];
+  skipFiltering?: boolean;
 }
 
 export interface FormInputParams {

@@ -285,6 +285,51 @@ const getColumnMetaObjects = (colId: string, rowEntities: RowState) => {
   );
 };
 
+// Helper functions to get ALL column items without filtering
+const getAllColumnMetaIds = (colId: string, rowEntities: RowState) => {
+  return rowEntities.allIds.reduce(
+    (acc, rowId) => {
+      const cell = rowEntities.byId[rowId].cells[colId];
+      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+      // Always include every row - use matched metadata if available, otherwise include row with empty/null value
+      if (trueMeta) {
+        acc[rowId] = trueMeta.id;
+      } else {
+        // Include row even without matching metadata - use empty string instead of null
+        acc[rowId] = "";
+      }
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
+};
+
+const getAllColumnMetaObjects = (colId: string, rowEntities: RowState) => {
+  return rowEntities.allIds.reduce(
+    (acc, rowId) => {
+      const cell = rowEntities.byId[rowId].cells[colId];
+      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+      // Always include every row - use matched metadata if available, otherwise include with null kbId
+      if (trueMeta) {
+        acc[rowId] = {
+          kbId: trueMeta.id,
+          value: cell.label,
+          matchingType: trueMeta.match ? "exact" : "fuzzy",
+        };
+      } else {
+        // Include row even without matching metadata - use empty string instead of null
+        acc[rowId] = {
+          kbId: "",
+          value: cell.label,
+          matchingType: "none",
+        };
+      }
+      return acc;
+    },
+    {} as Record<string, any>,
+  );
+};
+
 const getColumnValues = (colId: string, rowEntities: RowState) => {
   return rowEntities.allIds.reduce(
     (acc, rowId) => {
@@ -321,25 +366,51 @@ const getRequestFormValuesExtension = (
   console.log("getting request form values", extender);
   const requestParams = {} as Record<string, any>;
 
-  // Use getColumnMetaObjects only for llmClassifier, otherwise use getColumnMetaIds
-  if (extender && extender.id === "llmClassifier") {
-    console.log("intercepted llmClassifier");
-    requestParams.items = selectedColumnsIds.reduce(
-      (acc, key) => {
-        acc[key] = getColumnMetaObjects(key, rows);
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
+  // Check if skipFiltering is enabled
+  const shouldSkipFiltering = extender?.skipFiltering === true;
+
+  if (shouldSkipFiltering) {
+    // Skip filtering - include all rows regardless of reconciliation status
+    if (extender && extender.id === "llmClassifier") {
+      console.log("intercepted llmClassifier with skipFiltering enabled");
+      requestParams.items = selectedColumnsIds.reduce(
+        (acc, key) => {
+          acc[key] = getAllColumnMetaObjects(key, rows);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+    } else {
+      // fallback: use all KB ids (including null for non-reconciled items)
+      requestParams.items = selectedColumnsIds.reduce(
+        (acc, key) => {
+          acc[key] = getAllColumnMetaIds(key, rows);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+    }
   } else {
-    // fallback: if extender is undefined or not llmClassifier, use KB id logic
-    requestParams.items = selectedColumnsIds.reduce(
-      (acc, key) => {
-        acc[key] = getColumnMetaIds(key, rows);
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
+    // Use existing filtering logic - only include reconciled items
+    if (extender && extender.id === "llmClassifier") {
+      console.log("intercepted llmClassifier");
+      requestParams.items = selectedColumnsIds.reduce(
+        (acc, key) => {
+          acc[key] = getColumnMetaObjects(key, rows);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+    } else {
+      // fallback: if extender is undefined or not llmClassifier, use KB id logic
+      requestParams.items = selectedColumnsIds.reduce(
+        (acc, key) => {
+          acc[key] = getColumnMetaIds(key, rows);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+    }
   }
 
   formParams.forEach(({ id, inputType }) => {

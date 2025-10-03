@@ -1,4 +1,4 @@
-import { FC, HTMLAttributes, useState, useRef, useEffect } from "react";
+import { FC, useState, useRef, useEffect } from "react";
 import { ArrowHead } from "../SvgComponents";
 import styles from "./SvgArrow.module.scss";
 import TooltipPortal from "./TooltipPortal";
