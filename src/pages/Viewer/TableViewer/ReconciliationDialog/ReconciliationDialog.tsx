@@ -1,22 +1,22 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
-  Box,
-  Button,
-  Checkbox,
-  Collapse,
+  //Box,
+  //Button,
+  //Checkbox,
+  //Collapse,
   Dialog,
-  DialogActions,
+  //DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
   Divider,
   FormControl,
   IconButton,
-  InputLabel,
-  ListItemText,
-  ListSubheader,
+  //InputLabel,
+  //ListItemText,
+  //ListSubheader,
   MenuItem,
-  OutlinedInput,
+  //OutlinedInput,
   Select,
   SelectChangeEvent,
   Stack,
@@ -35,25 +35,24 @@ import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import { reconcile } from "@store/slices/table/table.thunk";
 import {
-  selectReconcileDialogStatus,
+  //selectReconcileDialogStatus,
   selectReconciliationCells,
   selectReconcileRequestStatus,
   selectReconciliatioContextColumnIds,
-  selectSelectedColumnIds,
+  //selectSelectedColumnIds,
 } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
-//import { LoadingButton } from "@mui/lab";
 import { SquaredBox } from "@components/core";
-import {Extender, Reconciliator} from "@store/slices/config/interfaces/config";
+import { Reconciliator } from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import {
-  ExpandLess,
-  ExpandMore,
+  //ExpandLess,
+  //ExpandMore,
   HelpOutlineRounded,
 } from "@mui/icons-material";
 import { getGroupFromUri } from "@services/utils/kg-info";
-import HelpDialog from "@pages/Viewer/HelpDialog/HelpDialog";
+//import HelpDialog from "@pages/Viewer/HelpDialog/HelpDialog";
 import { selectIsHelpDialogOpen } from "@store/slices/datasets/datasets.selectors";
 
 const Transition = forwardRef(
@@ -90,22 +89,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading, error } = useAppSelector(selectReconcileRequestStatus);
   const selectRef = React.useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    // Log the value of reconciliators
 
-    // set initial value of select
-    if (reconciliators) {
-      // setCurrentService(reconciliators[0]);
-      groupReconciliators();
-    }
-  }, [reconciliators]);
-
-  function handleServiceSelectOpen() {
-    setServiceSelectOpen(true);
-  }
-  function handleServiceSelectClose() {
-    setServiceSelectOpen(false);
-  }
   async function groupReconciliators() {
     const mappedReconciliators = new Map<string, Reconciliator[]>();
     const uniqueGroupNamesSet = new Set<string>();
@@ -127,6 +111,23 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     }
     setReconciliatorsGroups(mappedReconciliators);
     setUniqueGroupNames(Array.from(uniqueGroupNamesSet));
+  }
+
+  useEffect(() => {
+    // Log the value of reconciliators
+
+    // set initial value of select
+    if (reconciliators) {
+      // setCurrentService(reconciliators[0]);
+      groupReconciliators();
+    }
+  }, [reconciliators]);
+
+  function handleServiceSelectOpen() {
+    setServiceSelectOpen(true);
+  }
+  function handleServiceSelectClose() {
+    setServiceSelectOpen(false);
   }
 
   const selectedServices = reconciliatorsGroups.get(selectedGroup || "") || [];
@@ -243,7 +244,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 3 }));
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 8 }));
           }}
         >
           <HelpOutlineRounded />
@@ -271,9 +272,9 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 }}
               >
                 {uniqueGroupNames.map((groupName) => (
-                    <MenuItem key={groupName} value={groupName}>
-                      {groupName}
-                    </MenuItem>
+                  <MenuItem key={groupName} value={groupName}>
+                    {groupName}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -305,7 +306,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                     value={reconciliator.id}
                   >
                     {reconciliator.name}
-                   </MenuItem>
+                  </MenuItem>
                  ))}
               </Select>
             </FormControl>
