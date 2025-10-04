@@ -16,7 +16,7 @@ import { connect } from "react-redux";
 import { selectColumnReconciliators } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { useAppDispatch } from "@hooks/store";
-import { forwardRef, MouseEvent, useCallback, useState } from "react";
+import { forwardRef, useCallback, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
 import { StatusBadge } from "@components/core";
 import { useSortable } from "@dnd-kit/sortable";
@@ -109,11 +109,6 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             header.column.clearSorting();// ordine originale
         }
       setSortType(type);
-    };
-
-    const handleSelectColumn = (event: MouseEvent) => {
-      event.stopPropagation();
-      handleSelectedColumnChange(event, id);
     };
 
     const getBadgeStatus = useCallback(
@@ -251,7 +246,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
               )}
               <Tooltip title="Manage metadata" arrow>
                 <IconButton
-                  onClick={handleMetadataDialogAction}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMetadataDialogAction();
+                  }}
                   className={styles.ColumnManageButton}
                   sx={{ marginBottom: 15 }}
                   size="small"
