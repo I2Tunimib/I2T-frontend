@@ -3,7 +3,6 @@ import { floor } from "@services/utils/math";
 import { RootState } from "@store";
 import { getRequestStatus } from "@store/enhancers/requests";
 import { ID } from "@store/interfaces/store";
-import { property } from "lodash";
 import {
   selectAppConfig,
   selectReconciliators,
@@ -622,9 +621,9 @@ export const selectCellMetadataTableFormat = createSelector(
     return undefined;
   }
 );
-
+export const selectMetadataColumnDialogColId = (state: RootState) => state.table.ui.metadataColumnDialogColId;
 export const selectColumnCellMetadataTableFormat = createSelector(
-  selectCurrentColCellId,
+  selectMetadataColumnDialogColId,
   selectReconciliators,
   selectColumnsState,
   (colId, reconciliators, cols) => {
@@ -695,11 +694,13 @@ export const selectColumnForExtension = createSelector(
 );
 export const selectColumnKind = createSelector(
   selectSelectedColumnCellsIds,
+  selectMetadataColumnDialogColId,
   selectRowsState,
   selectColumnsState,
-  (selectedColumnCells, rowsState, columnsState) => {
+  (selectedColumnCells, dialogColId, rowsState, columnsState) => {
     const colIds = Object.keys(selectedColumnCells);
-    return columnsState.byId[colIds[0]].kind;
+    const colId = dialogColId ?? colIds[0];
+    return columnsState.byId[colId]?.kind;
   }
 );
 export const selecteSelectedColumnId = createSelector(
@@ -713,26 +714,30 @@ export const selecteSelectedColumnId = createSelector(
 );
 export const selectColumnRole = createSelector(
   selectSelectedColumnCellsIds,
+  selectMetadataColumnDialogColId,
   selectRowsState,
   selectColumnsState,
-  (selectedColumnCells, rowsState, columnsState) => {
+  (selectedColumnCells, dialogColId, rowsState, columnsState) => {
     const colIds = Object.keys(selectedColumnCells);
-    return columnsState.byId[colIds[0]].role;
+    const colId = dialogColId ?? colIds[0];
+    return columnsState.byId[colId]?.role;
   }
 );
 export const selectColumnTypes = createSelector(
   selectSelectedColumnCellsIds,
+  selectMetadataColumnDialogColId,
   selectRowsState,
   selectColumnsState,
-  (selectedColumnCells, rowsState, columnsState) => {
+  (selectedColumnCells, dialogColId, rowsState, columnsState) => {
     const colIds = Object.keys(selectedColumnCells);
+    const colId = dialogColId ?? colIds[0];
 
-    if (colIds.length !== 1) {
+    if (!colId) {
       return null;
     }
 
     const map = rowsState.allIds.reduce((acc, rowId) => {
-      const { metadata } = rowsState.byId[rowId].cells[colIds[0]];
+      const { metadata } = rowsState.byId[rowId].cells[colId];
 
       metadata.forEach((metaItem) => {
         if (metaItem.type && metaItem.match) {
@@ -763,19 +768,19 @@ export const selectColumnTypes = createSelector(
     const currentTypesIds = [];
     let additionalTypes = [];
     if (
-      columnsState.byId[colIds[0]] &&
-      columnsState.byId[colIds[0]].metadata &&
-      columnsState.byId[colIds[0]].metadata[0]
+      columnsState.byId[colId] &&
+      columnsState.byId[colId].metadata &&
+      columnsState.byId[colId].metadata[0]
     ) {
       additionalTypes =
-        columnsState.byId[colIds[0]].metadata[0].additionalTypes ?? [];
+        columnsState.byId[colId].metadata[0].additionalTypes ?? [];
     }
-    if (columnsState.byId[colIds[0]].metadata.length > 0) {
+    if (columnsState.byId[colId].metadata.length > 0) {
       if (
-        columnsState.byId[colIds[0]].metadata[0] &&
-        columnsState.byId[colIds[0]].metadata[0].type
+        columnsState.byId[colId].metadata[0] &&
+        columnsState.byId[colId].metadata[0].type
       ) {
-        const metaItem = columnsState.byId[colIds[0]].metadata[0];
+        const metaItem = columnsState.byId[colId].metadata[0];
         console.log("current meta item", metaItem);
         if (metaItem.type) {
           for (let i = 0; i < metaItem.type.length; i++) {

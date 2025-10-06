@@ -136,6 +136,7 @@ const initialState: TableState = {
     openExtensionDialog: false,
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
+    metadataColumnDialogColId: null,
     openExportDialog: false,
     openHelpDialog: false,
     settingsDialog: false,

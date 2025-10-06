@@ -166,8 +166,8 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       return "";
     };
 
-    const handleMetadataDialogAction = () => {
-      dispatch(updateUI({ openMetadataColumnDialog: true }));
+    const handleMetadataDialogAction = (colId: string) => {
+      dispatch(updateUI({ openMetadataColumnDialog: true, metadataColumnDialogColId: colId }));
     };
 
     return (
@@ -248,7 +248,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMetadataDialogAction();
+                    handleMetadataDialogAction(header.column.id);
                   }}
                   className={styles.ColumnManageButton}
                   sx={{ marginBottom: 15 }}

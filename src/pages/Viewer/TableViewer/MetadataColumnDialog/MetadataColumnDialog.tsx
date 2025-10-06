@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Dialog,
   DialogProps,
@@ -10,21 +9,18 @@ import {
   Stack,
   Tab,
   Tabs,
-  Typography,
 } from "@mui/material";
-import { FC, ReactNode, SyntheticEvent, useEffect, useState } from "react";
+import { FC, ReactNode, SyntheticEvent, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
   selectColumnKind,
   selectColumnRole,
-  selecteSelectedColumnId,
   selectIsViewOnly,
+  selectMetadataColumnDialogColId,
 } from "@store/slices/table/table.selectors";
-import { set } from "lodash";
 import {
-  undo,
   updateColumnKind,
   updateColumnRole,
   updateUI,
@@ -72,7 +68,7 @@ const Content = () => {
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const kind = useAppSelector(selectColumnKind);
-  const currentColId = useAppSelector(selecteSelectedColumnId);
+  const currentColId = useAppSelector(selectMetadataColumnDialogColId);
   const [currentKind, setCurrentKind] = useState(kind);
   const role = useAppSelector(selectColumnRole);
   const [currentRole, setCurrentRole] = useState(role);
@@ -174,7 +170,10 @@ const Content = () => {
     <Stack>
       <Stack direction="row" alignItems="center" marginTop="15px" gap="10px">
         <InputLabel style={{ marginLeft: 15 }} id="kind-select-label">
-          <b style={{ marginRight: 25 }}> {currentColId}</b>Column Kind:
+          <b style={{ marginRight: 25 }}>
+            {currentColId}
+          </b>
+          Column Kind:
         </InputLabel>
         <Select
           labelId="kind-select-label"

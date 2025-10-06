@@ -20,7 +20,7 @@ import {
   updateSelectedCellExpanded,
   updateUI,
 } from "@store/slices/table/table.slice";
-import { Searchbar, ToolbarActions } from "@components/kit";
+import { ToolbarActions } from "@components/kit";
 import {
   ActionGroup,
   CheckboxGroup,
@@ -33,7 +33,6 @@ import {
   useState,
   useRef,
   useEffect,
-  ChangeEvent,
   useMemo,
 } from "react";
 import {
@@ -55,6 +54,7 @@ import {
   selectSearchStatus,
   selectAreCellReconciliated,
   selectReconcileDialogStatus,
+  selecteSelectedColumnId,
 } from "@store/slices/table/table.selectors";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
@@ -175,6 +175,7 @@ const SubToolbar = ({
   const currenTable = useAppSelector(selectCurrentTable);
   const searchFilter = useAppSelector(selectSearchStatus);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
+  const selectedColId = useAppSelector(selecteSelectedColumnId);
 
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -204,7 +205,11 @@ const SubToolbar = ({
     if (metadataAction === "cell") {
       dispatch(updateUI({ openMetadataDialog: true }));
     } else if (metadataAction === "column") {
-      dispatch(updateUI({ openMetadataColumnDialog: true }));
+      if (!selectedColId) return;
+      dispatch(updateUI({
+        openMetadataColumnDialog: true,
+        metadataColumnDialogColId: selectedColId,
+      }));
     }
   };
   const handleDelete = () => {
@@ -405,7 +410,7 @@ const SubToolbar = ({
             {/* Extend */}
             <Tooltip
               title={!isCellSelected
-                ? "Select a column to enable Extend function"
+                ? "Select a column reconciled to enable Extend function"
                 : !cellReconciliated
                   ? "Reconcile data to enable Extend function"
                   : "Extend selected column(s)"
