@@ -7,19 +7,19 @@ import {
   FormControl,
   FormControlLabel,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Radio,
-  RadioGroup,
-  Select,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { getPrefixIfAvailable, KG_INFO } from "@services/utils/kg-info";
+import { getPrefixIfAvailable } from "@services/utils/kg-info";
+import { createWikidataURI } from "@services/utils/uri-utils";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
+import { isValidWikidataId } from "@services/utils/regexs";
+import { BaseMetadata } from "@store/slices/table/interfaces/table";
+import deferMounting from "@components/HOC";
+import CustomTable from "@components/kit/CustomTable/CustomTable";
 import {
   selectColumnCellMetadataTableFormat,
   selectColumnTypes,
@@ -32,15 +32,11 @@ import {
   updateUI,
 } from "@store/slices/table/table.slice";
 import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { getCellComponent } from "../MetadataDialog/componentsConfig";
+import { useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
-import { BaseMetadata } from "@store/slices/table/interfaces/table";
+import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
-import deferMounting from "@components/HOC";
-import CustomTable from "@components/kit/CustomTable/CustomTable";
-import { isValidWikidataId } from "@services/utils/regexs";
-import { createWikidataURI } from "@services/utils/uri-utils";
+
 const DeferredTable = deferMounting(CustomTable);
 
 const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
@@ -146,6 +142,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const isViewOnly = useAppSelector(selectIsViewOnly);
+  const colId = useAppSelector((state) => state.table.ui.metadataColumnDialogColId);
 
   const {
     handleSubmit: handleSubmitNewType,
@@ -214,22 +211,33 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   from Entity Datamodel
   COULD HAVE SAME DATAMODEL? IN THIS CASE, IT NEEDS TO MAKE A CHANGE IN THE BACKEND APPLICATION
   */
-    const newMetadata = types.allTypes
+    const allColumnTypes = [
+      ...(types.allTypes || []),
+      ...(column.metadata[0]?.additionalTypes || [])
+    ];
+
+    const uniqueTypesMap: Record<string, any> = {};
+    allColumnTypes.forEach((type) => {
+      uniqueTypesMap[type.id] = type;
+    });
+    const allTypes = Object.values(uniqueTypesMap);
+
+    const newMetadata = allTypes
       .map((type) => {
         console.log(
           "mapped types",
           type,
           selected,
-          selected.some((item) => item.id === type.id)
+          selected.some((item) => item.id === type.id) || column.metadata[0]?.additionalTypes?.some((t: any) => t.id === type.id),
         );
         return {
-          selected: selected.some((item) => item.id === type.id),
+          selected: selected.some((item) => item.id === type.id) || column.metadata[0]?.additionalTypes?.some((t: any) => t.id === type.id),
           id: isValidWikidataId(type.id) ? "wd:" + type.id : type.id,
           name: {
-            value: type.label,
+            value: type.label || type.name,
             uri: createWikidataURI(type.id),
           },
-          percentage: Number(type.percentage).toFixed(0) + "%",
+          percentage: Number(type.percentage || 100).toFixed(0) + "%",
           // match: "",
         };
       })
@@ -281,7 +289,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   } = usePrepareTable({
     selector: selectColumnCellMetadataTableFormat,
     makeData,
-    dependencies: [selected, types],
+    dependencies: [selected, types, colId],
   });
   const onSubmitNewMetadata = (formState: NewMetadata) => {
     if (formState.uri) {
@@ -292,9 +300,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           name: formState.name,
           uri: formState.uri,
         };
-        dispatch(addColumnType([newType]));
-
-        // dispatch(addNewType(newType));
+        dispatch(addColumnType({ colId, newTypes: [newType] }));
       }
     }
   };

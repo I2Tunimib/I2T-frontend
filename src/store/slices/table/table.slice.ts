@@ -1368,16 +1368,16 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<AddColumnTypePayload[]>>
     ) => {
-      const { selectedColumnCellsIds } = state.ui;
+      const { selectedColumnCellsIds, metadataColumnDialogColId } = state.ui;
       const undoable = true;
-      const colId = Object.keys(selectedColumnCellsIds)[0];
+      const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
       const columns = state.entities;
       const nextState = produceWithPatch(
         state,
         undoable,
         (draft) => {
           const { columns } = draft.entities;
-          const newTypes = action.payload.map((type) => ({
+          const newTypes = action.payload.newTypes.map((type) => ({
             ...type,
             match: true,
             score: 100,
@@ -1441,9 +1441,9 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<Payload<UpdateColumnTypePayload[]>>
     ) => {
       // const { undoable = true, ...type } = action.payload;
-      const { selectedColumnCellsIds } = state.ui;
+      const { selectedColumnCellsIds, metadataColumnDialogColId } = state.ui;
       const undoable = true;
-      const colId = Object.keys(selectedColumnCellsIds)[0];
+      const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
 
       const nextState = produceWithPatch(
         state,
@@ -1483,10 +1483,10 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<UpdateColumnTypeMatchesPayload>>
     ) => {
-      const { selectedColumnCellsIds } = state.ui;
+      const { selectedColumnCellsIds, metadataColumnDialogColId } = state.ui;
       const { typeIds, undoable = true } = action.payload;
       console.log("updateColumnTypeMatches", action.payload);
-      const colId = Object.keys(selectedColumnCellsIds)[0];
+      const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
 
       return produceWithPatch(
         state,

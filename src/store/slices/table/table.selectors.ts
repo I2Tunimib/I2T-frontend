@@ -753,15 +753,15 @@ export const selectColumnTypes = createSelector(
               acc[id] = {
                 id,
                 label: name as any,
-
                 count: 1,
+                match: metaItem.match
               };
             }
           });
         }
       });
       return acc;
-    }, {} as Record<string, { id: string; count: number; label: string }>);
+    }, {} as Record<string, { id: string; count: number; label: string; match?: any }>);
     console.log("test map", map);
     // add current type
     const currentColType: any[] = [];
