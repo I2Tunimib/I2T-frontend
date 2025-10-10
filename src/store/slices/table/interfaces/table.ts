@@ -41,6 +41,7 @@ export interface TableUIState {
   denseView: boolean;
   openReconciliateDialog: boolean;
   openExtensionDialog: boolean;
+  openModifyDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
   openMetadataColumnDialog: boolean;

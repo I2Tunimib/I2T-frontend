@@ -47,6 +47,7 @@ import {
   selectIsViewOnly,
   selectMetadataDialogStatus,
   selectExtensionDialogStatus,
+  selectModifyDialogStatus,
   selectIsMetadataButtonEnabled,
   selectMetadataColumnDialogStatus,
   selectAutomaticAnnotationStatus,
@@ -70,6 +71,7 @@ import MetadataDialog from "../MetadataDialog";
 import ExtensionDialog from "../ExtensionDialog";
 import MetadataColumnDialog from "../MetadataColumnDialog/MetadataColumnDialog";
 import RefineMatchingDialog from "../RefineMatching/RefineMatchingDialog";
+import ModifyDialog from "../ModifyDialog/ModifyDialog";
 
 const tags = [
   {
@@ -172,6 +174,7 @@ const SubToolbar = ({
   );
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
   const openReconciliationDialog = useAppSelector(selectReconcileDialogStatus);
+  const openModifyDialog = useAppSelector(selectModifyDialogStatus);
   const currenTable = useAppSelector(selectCurrentTable);
   const searchFilter = useAppSelector(selectSearchStatus);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
@@ -388,6 +391,25 @@ const SubToolbar = ({
         </ActionGroup>
         {!isViewOnly && (
           <ActionGroup>
+            {/* Modify */}
+            <Tooltip
+              title={!isCellSelected ? "Select a column to enable Modify function" : "Modify selected column(s)"}
+              arrow
+            >
+              <span>
+                <Button
+                  sx={{
+                    textTransform: "none",
+                  }}
+                  color="primary"
+                  disabled={!isCellSelected}
+                  onClick={() => dispatch(updateUI({ openModifyDialog: true }))}
+                  variant="contained"
+                >
+                  Modify
+                </Button>
+              </span>
+            </Tooltip>
             {/* Reconcile */}
             <Tooltip
               title={!isCellSelected ? "Select a column to enable Reconcile function" : "Reconcile selected column(s)"}
@@ -501,6 +523,10 @@ const SubToolbar = ({
       <ExtensionDialog
         open={openExtensionDialog}
         handleClose={() => handleExtensionClose("openExtensionDialog")}
+      />
+      <ModifyDialog
+        open={openModifyDialog}
+        handleClose={() => handleExtensionClose("openModifyDialog")}
       />
       <RefineMatchingDialog
         open={isAutoMatching}

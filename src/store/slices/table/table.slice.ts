@@ -134,6 +134,7 @@ const initialState: TableState = {
     headerExpanded: false,
     openReconciliateDialog: false,
     openExtensionDialog: false,
+    openModifyDialog: false,
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
@@ -338,6 +339,34 @@ export const tableSlice = createSliceWithRequests({
       state.ui.editableCellsIds = removeObject(
         state.ui.editableCellsIds,
         cellId
+      );
+    },
+    /**
+     * Handle update of cell label of a column.
+     * --UNDOABLE ACTION--
+     */
+    updateColumnCellsLabels: (
+      state,
+      action: PayloadAction<Payload<{ updates: { cellId: ID; value: string }[] }>>
+    ) => {
+      const { updates, undoable = true } = action.payload;
+
+      return produceWithPatch(
+        state,
+        undoable,
+        (draft) => {
+          updates.forEach(({ cellId, value }) => {
+            const [rowId, colId] = getIdsFromCell(cellId);
+            const cell = getCell(draft, rowId, colId);
+            if (cell) {
+              cell.label = value;
+            }
+          });
+        },
+        (draft) => {
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        }
       );
     },
     addCellMetadata: (
@@ -1368,10 +1397,8 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<AddColumnTypePayload[]>>
     ) => {
-      const { selectedColumnCellsIds, metadataColumnDialogColId } = state.ui;
       const undoable = true;
       const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
-      const columns = state.entities;
       const nextState = produceWithPatch(
         state,
         undoable,
@@ -1441,7 +1468,6 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<Payload<UpdateColumnTypePayload[]>>
     ) => {
       // const { undoable = true, ...type } = action.payload;
-      const { selectedColumnCellsIds, metadataColumnDialogColId } = state.ui;
       const undoable = true;
       const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
 
@@ -1483,7 +1509,6 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<UpdateColumnTypeMatchesPayload>>
     ) => {
-      const { selectedColumnCellsIds, metadataColumnDialogColId } = state.ui;
       const { typeIds, undoable = true } = action.payload;
       console.log("updateColumnTypeMatches", action.payload);
       const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
@@ -2126,6 +2151,7 @@ export const {
   updateColumnEditable,
   updateCellEditable,
   updateCellLabel,
+  updateColumnCellsLabels,
   addColumnMetadata,
   deleteColumnMetadata,
   addCellMetadata,

@@ -348,6 +348,13 @@ export const selectExtensionDialogStatus = createSelector(
   (ui) => ui.openExtensionDialog
 );
 /**
+ * Get modify dialog status.
+ */
+export const selectModifyDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openModifyDialog
+);
+/**
  * Get metadata dialog status.
  */
 export const selectMetadataDialogStatus = createSelector(
