@@ -24,7 +24,8 @@ import {
   selectIsHeaderExpanded, selectExpandedCellsIds,
   selectExpandedColumnsIds, selectEditableCellsIds,
   selectSelectedColumnCellsIds,
-  selectCurrentTable, selectSettingsDialogStatus, selectSettings,
+  selectCurrentTable,
+  selectSettings,
 } from '@store/slices/table/table.selectors';
 import { useHistory, useParams } from 'react-router-dom';
 import { saveTable } from '@store/slices/table/table.thunk';
@@ -34,7 +35,7 @@ import clsx from 'clsx';
 import { Table } from '../Table';
 // import Toolbar from '../../Viewer/Toolbar';
 import styles from './TableViewer.module.scss';
-import { TableCell, TableColumn } from '../Table/interfaces/table';
+import { TableCell } from '../Table/interfaces/table';
 import { ContextMenuCell, ContextMenuColumn, ContextMenuRow } from '../Menus/ContextMenus';
 import SubToolbar from '../SubToolbar';
 
@@ -147,10 +148,12 @@ const TableViewer = () => {
    */
   const handleSelectedColumnChange = useCallback((event: MouseEvent, id: ID) => {
     if (id !== 'index') {
-      if (event.ctrlKey || event.metaKey) {
-        dispatch(updateColumnSelection({ id, multi: true }));
-      } else {
-        dispatch(updateColumnSelection({ id }));
+      if (event.type !== 'contextmenu') {
+        if (event.ctrlKey || event.metaKey) {
+          dispatch(updateColumnSelection({ id, multi: true }));
+        } else {
+          dispatch(updateColumnSelection({ id }));
+        }
       }
     }
   }, []);
@@ -197,7 +200,9 @@ const TableViewer = () => {
       } else if (type === 'row') {
         dispatch(updateRowSelection({ id }));
       } else {
-        dispatch(updateColumnSelection({ id }));
+        if (!selectedColumns[id]) {
+          dispatch(updateColumnSelection({ id }));
+        }
       }
 
       const status = Object.keys(menuState.status).reduce((acc, key) => ({

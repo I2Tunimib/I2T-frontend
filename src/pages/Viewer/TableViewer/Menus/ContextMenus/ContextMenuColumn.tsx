@@ -9,6 +9,7 @@ import PushPinIcon from '@mui/icons-material/PushPin';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import TransformIcon from '@mui/icons-material/Transform';
 import { deleteSelected, updateColumnVisibility, updateUI } from '@store/slices/table/table.slice';
 import { useCallback, FC } from 'react';
 import { selectAreCellReconciliated, selectIsCellSelected } from '@store/slices/table/table.selectors';
@@ -41,6 +42,15 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
 
+  /**
+   * Handle modify column action.
+   */
+  const handleModify = useCallback(() => {
+    if (isCellSelected) {
+      dispatch(updateUI({ openModifyDialog: true }));
+      handleClose();
+    }
+  }, [isCellSelected, dispatch, handleClose]);
   /**
    * Handle reconcile column action.
    */
@@ -111,6 +121,11 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
     <MenuBase handleClose={handleClose} {...props}>
       <StyledMenuList autoFocus //className={classes.list}
       >
+        <MenuItemIconLabel
+          onClick={handleModify}
+          Icon={TransformIcon}>
+          Modify column
+        </MenuItemIconLabel>
         <MenuItemIconLabel
           onClick={handleReconcile}
           Icon={LinkRoundedIcon}>
