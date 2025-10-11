@@ -203,7 +203,11 @@ const steps: Step[] = [
               readability.
             </li>
             <li>
-              <b>Reconciliation, Refinement, and Extension: </b>
+              <b>Modify column(s): </b>
+              apply transformation functions to the selected column(s), such as date formatting.
+            </li>
+            <li>
+              <b>Reconciliation, Refinement and Extension: </b>
               part of the enrichment process, covered later in this tutorial.
             </li>
           </List>

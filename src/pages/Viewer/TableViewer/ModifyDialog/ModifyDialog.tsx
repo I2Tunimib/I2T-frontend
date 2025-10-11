@@ -95,7 +95,7 @@ const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 15 }));
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 3 }));
           }}>
           <HelpOutlineRounded />
         </IconButton>
