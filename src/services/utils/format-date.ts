@@ -3,6 +3,7 @@ import { parse, parseISO, format, isValid } from "date-fns";
 type DateFormatResult = {
   value: string | null;
   error?: string;
+  errorType?: "column" | "pattern";
 };
 
 /**
@@ -45,18 +46,18 @@ export function toFormattedDate(value: string, pattern?: string): DateFormatResu
       }
     }
     if (!isValid(date)) {
-      return { value: null, error: "Column(s) contains invalid date values" };
+      return { value: null, error: "Column(s) contains invalid date values", errorType: "column" };
     }
     const outputPattern = pattern || "yyyy-MM-dd";
     // Custom pattern must contain dd, MM and yyyy
     if (!outputPattern.includes("dd") || !outputPattern.includes("MM") || !outputPattern.includes("yyyy")) {
-      return { value: null, error: "Invalid custom format pattern, it must include dd, MM, and yyyy" };
+      return { value: null, error: "Invalid custom format pattern, it must include dd, MM, and yyyy", errorType: "pattern" };
     }
     try {
       const formatted = format(date, outputPattern);
       return { value: formatted };
     } catch (err) {
-      return { value: null, error: "Invalid custom format pattern" };
+      return { value: null, error: "Invalid custom format pattern", errorType: "pattern" };
     }
   } catch (err) {
     return { value: null, error: "Unknown error parsing date" };

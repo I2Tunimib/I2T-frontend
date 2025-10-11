@@ -46,11 +46,13 @@ const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
   const [formatType, setFormatType] = useState("iso");
   const [customPattern, setCustomPattern] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<"column" | "pattern" | null>(null);
 
   useEffect(() => {
     setSelectedColumnsLocal(selectedColumns || []);
     setCustomPattern("");
     setError(null);
+    setErrorType(null);
   }, [selectedColumns]);
 
   const handleApply = () => {
@@ -66,6 +68,7 @@ const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
           const result = toFormattedDate(cell.label, pattern);
           if (result.error) {
             setError(`Error: ${result.error}`);
+            setErrorType(result.errorType || null);
             return;
           }
           updates.push({ cellId: `${rowId}$${colId}`, value: result.value! });
@@ -151,7 +154,7 @@ const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
                     onChange={(e) => setSelectedColumnsLocal(e.target.value as string[])}
                     renderValue={(selected) => selected.join(", ")}
                     displayEmpty
-                    variant="contained"
+                    variant="outlined"
                   >
                     {Object.keys(tableRows.byId[tableRows.allIds[0]]?.cells || {}).map(
                       (columnId) => (
@@ -183,19 +186,17 @@ const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
                   control={(
                     <Checkbox
                       checked={formatType === "custom"}
-                      onChange={() => {
-                        if (!error) setFormatType("custom");
-                      }}
-                      disabled={!!error}
+                      onChange={() => setFormatType("custom")}
+                      disabled={errorType === "column"}
                     />
                   )}
                   label={
-                    error
+                    errorType === "column"
                       ? "Custom pattern (Not available, resolve error)"
                       : "Custom pattern"
                   }
                 />
-                {formatType === "custom" && (
+                {formatType === "custom" && errorType !== "column" && (
                   <Stack style={{ paddingTop: "10px" }}>
                     <FormControl>
                       <Typography sx={{ mb: 1 }}>
@@ -206,7 +207,6 @@ const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
                         placeholder="e.g. dd/MM/yyyy"
                         value={customPattern}
                         onChange={(e) => setCustomPattern(e.target.value)}
-                        disabled={!!error}
                       />
                     </FormControl>
                   </Stack>
