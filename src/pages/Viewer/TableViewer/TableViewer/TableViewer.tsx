@@ -221,7 +221,7 @@ const TableViewer = () => {
       };
       setAnchorEl(virtualElement);
     }
-  }, []);
+  }, [selectedColumns, dispatch]);
 
   /**
    * Close contextual menu.
