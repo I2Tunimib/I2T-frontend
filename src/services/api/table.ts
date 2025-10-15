@@ -4,7 +4,7 @@ import {
   Row,
   TableInstance,
 } from "@store/slices/table/interfaces/table";
-import { CancelToken } from "axios";
+//import { CancelToken } from "axios";
 import { apiEndpoint } from "../../configHelpers";
 import apiClient from "./config/config";
 
@@ -249,6 +249,49 @@ const tableAPI = {
     console.log("Extend request config:", { headers, clearCacheEntry: true });
 
     return apiClient.post(`extenders${cleanBaseUrl}`, data, {
+      headers,
+      clearCacheEntry: true, // Bypass cache for this request
+    });
+  },
+  modify: (
+    baseUrl: string,
+    data: any,
+    tableId?: string,
+    datasetId?: string,
+    columnName?: string
+  ) => {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    };
+
+    // Add table and dataset headers if provided
+    if (tableId && datasetId) {
+      console.log(
+        `Adding headers for modify: tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`
+      );
+
+      // Clean values to remove BOM and other problematic characters
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+      const cleanColumnName = columnName
+        ? columnName.replace(/\uFEFF/g, "").trim()
+        : "";
+
+      headers[
+        "X-Table-Dataset-Info"
+        ] = `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
+        cleanColumnName ? `;columnName:${cleanColumnName}` : ""
+      }`;
+    }
+    console.log("Modification request headers:", headers);
+
+    // Clean baseUrl to remove BOM characters
+    const cleanBaseUrl = baseUrl.replace(/\uFEFF/g, "").trim();
+    console.log("Modification request URL:", `modifiers${cleanBaseUrl}`);
+    console.log("Modification request data:", data);
+    console.log("Modify request config:", { headers, clearCacheEntry: true });
+
+    return apiClient.post(`modifiers${cleanBaseUrl}`, data, {
       headers,
       clearCacheEntry: true, // Bypass cache for this request
     });

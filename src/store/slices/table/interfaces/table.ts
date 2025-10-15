@@ -41,7 +41,7 @@ export interface TableUIState {
   denseView: boolean;
   openReconciliateDialog: boolean;
   openExtensionDialog: boolean;
-  openModifyDialog: boolean;
+  openModificationDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
   openMetadataColumnDialog: boolean;
@@ -204,6 +204,11 @@ export interface ReconciliationFulfilledPayload {
 }
 
 export interface ExtendFulfilledPayload {
+  columns: ColumnState["byId"];
+  rows: RowState["byId"];
+}
+
+export interface ModifyFulfilledPayload {
   columns: ColumnState["byId"];
   rows: RowState["byId"];
 }

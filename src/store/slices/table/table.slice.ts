@@ -61,6 +61,7 @@ import {
   ExtendThunkResponseProps,
   getTable,
   reconcile,
+  modify,
   saveTable,
 } from "./table.thunk";
 import {
@@ -134,7 +135,7 @@ const initialState: TableState = {
     headerExpanded: false,
     openReconciliateDialog: false,
     openExtensionDialog: false,
-    openModifyDialog: false,
+    openModificationDialog: false,
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
@@ -2138,6 +2139,104 @@ export const tableSlice = createSliceWithRequests({
           // }, (draft) => {
           //   draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
           // });
+        }
+      )
+      .addCase(
+        modify.fulfilled,
+        (state, action: PayloadAction<Payload<ExtendThunkResponseProps>>) => {
+          const {
+            data,
+            modifier,
+            selectedColumnId,
+            undoable = true,
+          } = action.payload;
+
+          const { columns, meta, originalColMeta } = data;
+          const newColumnsIds = Object.keys(columns);
+          return produceWithPatch(
+            state,
+            undoable,
+            (draft) => {
+              // Find the index of the selected column that was modified
+              const selectedColumnIndex =
+                draft.entities.columns.allIds.findIndex(
+                  (colId) => colId === selectedColumnId
+                );
+
+              newColumnsIds.forEach((newColId, newColIndex) => {
+                const {
+                  metadata: columnMetadata,
+                  cells,
+                  label,
+                  ...rest
+                } = columns[newColId];
+
+                // add new column
+                draft.entities.columns.byId[newColId] = {
+                  id: newColId,
+                  label,
+                  metadata: getColumnMetadata(columnMetadata),
+                  status: ColumnStatus.EMPTY,
+                  context: {},
+                  ...getColumnAnnotationMeta(columnMetadata),
+                  ...rest,
+                };
+
+                // add rows
+
+                draft.entities.rows.allIds.forEach((rowId) => {
+                  const newCell = createCell(rowId, newColId, cells[rowId]);
+                  if (newCell.metadata.length === 0) {
+                    newCell.annotationMeta = {
+                      annotated: false,
+                      match: {
+                        value: false,
+                      },
+                    };
+                  }
+                  draft.entities.rows.byId[rowId].cells[newColId] = newCell;
+                  if (newCell.metadata.length > 0) {
+                    updateContext(draft, newCell);
+                  }
+                });
+
+                draft.entities.columns.byId[newColId].status = getColumnStatus(
+                  draft,
+                  newColId
+                );
+
+                // Insert the new column right after the selected column
+                if (!draft.entities.columns.allIds.includes(newColId)) {
+                  draft.entities.columns.allIds.push(newColId);
+                }
+              });
+              updateNumberOfReconciliatedCells(draft);
+              //add additional meta if needed (up to now only properties)
+              if (originalColMeta && originalColMeta.originalColName) {
+                if (
+                  draft.entities.columns.byId[originalColMeta.originalColName]
+                    .metadata[0].property
+                ) {
+                  draft.entities.columns.byId[
+                    originalColMeta.originalColName
+                  ].metadata[0].property = [
+                    ...draft.entities.columns.byId[
+                      originalColMeta.originalColName
+                    ].metadata[0].property,
+                    ...originalColMeta.properties,
+                  ];
+                } else {
+                  draft.entities.columns.byId[
+                    originalColMeta.originalColName
+                  ].metadata[0].property = originalColMeta.properties;
+                }
+              }
+            },
+            (draft) => {
+              draft.entities.tableInstance.lastModifiedDate =
+                new Date().toISOString();
+            }
+          );
         }
       ),
 });

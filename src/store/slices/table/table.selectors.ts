@@ -54,6 +54,10 @@ export const selectExtendRequestStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.EXTEND)
 );
+export const selectModifyRequestStatus = createSelector(
+  selectRequests,
+  (requests) => getRequestStatus(requests, TableThunkActions.MODIFY)
+);
 export const selectSaveTableStatus = createSelector(
   selectRequests,
   (requests) => getRequestStatus(requests, TableThunkActions.SAVE_TABLE)
@@ -348,11 +352,11 @@ export const selectExtensionDialogStatus = createSelector(
   (ui) => ui.openExtensionDialog
 );
 /**
- * Get modify dialog status.
+ * Get modification dialog status.
  */
-export const selectModifyDialogStatus = createSelector(
+export const selectModificationDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openModifyDialog
+  (ui) => ui.openModificationDialog
 );
 /**
  * Get metadata dialog status.
@@ -440,6 +444,24 @@ export const selectIsExtendButtonEnabled = createSelector(
     //   });
     // }
     // return false;
+  }
+);
+
+export const selectIsModifyButtonEnabled = createSelector(
+  selectUIState,
+  selectColumnsState,
+  ({ selectedColumnsIds, selectedCellIds }, columns) => {
+    const colIds = Object.keys(selectedColumnsIds);
+    const cellIds = Object.keys(selectedCellIds);
+    if (colIds.length === 0) {
+      return false;
+    }
+    const onlyColsSelected = !cellIds.some((cellId) => {
+      const [_, colId] = getIdsFromCell(cellId);
+      return !(colId in selectedColumnsIds);
+    });
+
+    return onlyColsSelected;
   }
 );
 
@@ -698,6 +720,27 @@ export const selectColumnForExtension = createSelector(
     }
     return [];
   }
+);
+export const selectColumnForModification = createSelector(
+    selectIsModifyButtonEnabled,
+    selectSelectedColumnIds,
+    selectRowsState,
+    (isModificationEnabled, selectedColumns, rowEntities) => {
+      if (isModificationEnabled) {
+        const colId = Object.keys(selectedColumns)[0];
+
+        return rowEntities.allIds.reduce((acc, rowId) => {
+          const cell = rowEntities.byId[rowId].cells[colId];
+          const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+          if (trueMeta) {
+            // eslint-disable-next-line prefer-destructuring
+            acc[rowId] = trueMeta.id;
+          }
+          return acc;
+        }, {} as Record<string, any>);
+      }
+      return [];
+    }
 );
 export const selectColumnKind = createSelector(
   selectSelectedColumnCellsIds,

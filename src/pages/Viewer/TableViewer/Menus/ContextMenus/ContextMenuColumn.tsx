@@ -47,7 +47,7 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
    */
   const handleModify = useCallback(() => {
     if (isCellSelected) {
-      dispatch(updateUI({ openModifyDialog: true }));
+      dispatch(updateUI({ openModificationDialog: true }));
       handleClose();
     }
   }, [isCellSelected, dispatch, handleClose]);

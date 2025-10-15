@@ -1,28 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { forwardRef, Ref, ReactElement, useState, useEffect, FC } from "react";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogContentText,
-  Stack,
-  Select,
-  MenuItem,
-  FormControl,
-  TextField,
+  DialogTitle,
   Divider,
-  Button,
-  Typography,
+  FormControl,
   IconButton,
-  FormControlLabel,
-  Checkbox,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Stack,
+  Slide,
+  Typography,
 } from "@mui/material";
+import { TransitionProps } from "@mui/material/transitions";
 import { HelpOutlineRounded } from "@mui/icons-material";
-import { SquaredBox } from "@components/core";
+import { selectModifyRequestStatus } from "@store/slices/table/table.selectors";
+import { updateUI } from "@store/slices/table/table.slice";
+import { selectModifiersAsArray } from "@store/slices/config/config.selectors";
+import { Modifier } from "@store/slices/config/interfaces/config";
 import styled from "@emotion/styled";
-import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { updateUI, updateColumnCellsLabels } from "@store/slices/table/table.slice";
-import { selectSelectedColumnCellsIdsAsArray } from "@store/slices/table/table.selectors";
-import { toFormattedDate } from "@services/utils/format-date";
+import { modify } from "@store/slices/table/table.thunk";
+import { useSnackbar } from "notistack";
+import { SquaredBox } from "@components/core";
+import DynamicModificationForm from "@components/core/DynamicForm/DynamicForm";
+
+const Transition = forwardRef(
+  (
+    props: TransitionProps & { children?: ReactElement<any, any> },
+    ref: Ref<unknown>,
+  ) => <Slide direction="down" ref={ref} {...props} />,
+);
 
 const Content = styled.div({
   display: "flex",
@@ -30,76 +40,174 @@ const Content = styled.div({
   gap: "20px",
 });
 
-type ModifyDialogProps = {
+const DialogInnerContent = () => {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [uniqueServices, setUniqueServices] = useState<Modifier[]>([]);
+  const [currentService, setCurrentService] = useState<Modifier>();
+  const [groupedServices, setGroupedServices] =
+    useState<Map<string, Modifier[]>>();
+  const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
+  const modificationServices = useAppSelector(selectModifiersAsArray);
+  const { loading, error } = useAppSelector(selectModifyRequestStatus);
+
+  async function groupServices() {
+    const groupedServsMap = new Map();
+    const uniqueModificationServices = modificationServices.filter(
+      (service, index, self) => index === self.findIndex((s) => s.id === service.id)
+    );
+
+    setUniqueServices(uniqueModificationServices);
+
+    for (const service of uniqueModificationServices) {
+      const currentUri = service.uri ?? "other";
+      if (groupedServsMap.has(currentUri)) {
+        groupedServsMap.get(currentUri).push(service);
+      } else {
+        groupedServsMap.set(currentUri, [service]);
+      }
+    }
+    setGroupedServices(groupedServsMap);
+  }
+
+  useEffect(() => {
+    if (modificationServices) {
+      groupServices();
+    }
+  }, [modificationServices]);
+
+  const handleClose = () => {
+    // Reset selected service when dialog is closed
+    setCurrentService(undefined);
+    dispatch(
+      updateUI({
+        openModificationDialog: false,
+      }),
+    );
+  };
+
+  const handleChange = (event: SelectChangeEvent<string>) => {
+    const val = modificationServices.find(
+      (service) => service.id === event.target.value,
+    );
+    if (val) {
+      console.log("current service", val);
+      setCurrentService(val);
+    }
+  };
+
+  const handleSubmit = async (formState: Record<string, any>, reset?: Function) => {
+    if (!currentService) return;
+    try {
+      const { data } = await dispatch(
+          modify({
+            modifier: currentService,
+            formValues: formState,
+          })
+      ).unwrap();
+      if (reset) reset();
+      setCurrentService(undefined);
+      dispatch(updateUI({ openModificationDialog: false }));
+      const nColumns = Object.keys(data.columns).length;
+      const infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} added`;
+      enqueueSnackbar(infoText, {
+        autoHideDuration: 3000,
+        anchorOrigin: { vertical: "bottom", horizontal: "center" },
+      });
+      return data;
+    } catch (err: any) {
+      enqueueSnackbar(err.message || "An error occurred while formatting dates.", {
+        variant: "error",
+        autoHideDuration: 4000,
+        anchorOrigin: { vertical: "bottom", horizontal: "center" },
+      });
+      throw err;
+    }
+  };
+  const toggleGroup = (uri: string) => {
+    setExpandedGroup((prev) => (prev === uri ? null : uri));
+  };
+  const handleHeaderClick = (e, uri) => {
+    e.stopPropagation(); // Prevent the Select from closing
+    setExpandedGroup((prev) => (prev === uri ? null : uri));
+  };
+  return (
+    <>
+      <FormControl className="field">
+        <Select
+          value={currentService ? currentService.id : ""}
+          onChange={handleChange}
+          variant="outlined"
+          MenuProps={{
+            PaperProps: {
+              style: {
+                maxHeight: "400px",
+              },
+            },
+          }}
+          renderValue={(selected) => {
+            const selectedService = modificationServices.find(
+              (service) => service.id === selected,
+            );
+            return selectedService ? selectedService.name : "";
+          }}
+        >
+          {uniqueServices.map((modifier) => (
+            <MenuItem
+              key={modifier.id}
+              value={modifier.id}
+              sx={{ pl: 4 }}
+              onClick={() => handleChange({ target: { value: modifier.id } })}
+            >
+              {modifier.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      {currentService && (
+        <>
+          <SquaredBox
+            dangerouslySetInnerHTML={{ __html: currentService.description }}
+          />
+          {error && <Typography color="error">{error.message}</Typography>}
+          <Divider />
+          <DynamicModificationForm
+            loading={loading}
+            onSubmit={handleSubmit}
+            onCancel={handleClose}
+            service={currentService}
+          />
+        </>
+      )}
+    </>
+  );
+};
+
+export type ModifyDialogProps = {
   open: boolean;
   handleClose: () => void;
 };
 
-const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
+const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
   const dispatch = useAppDispatch();
-  const tableRows = useAppSelector((state) => state.table.entities.rows);
-
-  const selectedColumns = useAppSelector(selectSelectedColumnCellsIdsAsArray);
-  const [selectedColumnsLocal, setSelectedColumnsLocal] = useState<string[]>(selectedColumns || []);
-
-  const [selectedTransformation, setSelectedTransformation] = useState("");
-  const [formatType, setFormatType] = useState("iso");
-  const [customPattern, setCustomPattern] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [errorType, setErrorType] = useState<"column" | "pattern" | null>(null);
-
-  useEffect(() => {
-    setSelectedColumnsLocal(selectedColumns || []);
-    setCustomPattern("");
-    setError(null);
-    setErrorType(null);
-  }, [selectedColumns]);
-
-  const handleApply = () => {
-    if (!selectedColumnsLocal.length || selectedTransformation !== "date" || !tableRows?.allIds?.length) return;
-
-    const pattern = formatType === "iso" ? "yyyy-MM-dd" : customPattern;
-    const updates: { cellId: string; value: string }[] = [];
-
-    for (const colId of selectedColumnsLocal) {
-      for (const rowId of tableRows.allIds) {
-        const cell = tableRows.byId[rowId]?.cells[colId];
-        if (cell?.label != null) {
-          const result = toFormattedDate(cell.label, pattern);
-          if (result.error) {
-            setError(`Error: ${result.error}`);
-            setErrorType(result.errorType || null);
-            return;
-          }
-          updates.push({ cellId: `${rowId}$${colId}`, value: result.value! });
-        }
-      }
-    }
-    setError(null);
-    if (updates.length > 0) {
-      dispatch(updateColumnCellsLabels({ updates }));
-      handleClose();
-    }
-  };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
+    <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
       >
-        <DialogTitle>
-          Modify Column
-        </DialogTitle>
+        <DialogTitle>Modify</DialogTitle>
         <IconButton
           sx={{
             color: "rgba(0, 0, 0, 0.54)",
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 3 }));
-          }}>
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 15 }));
+          }}
+        >
           <HelpOutlineRounded />
         </IconButton>
       </Stack>
@@ -108,122 +216,7 @@ const ModifyDialog: React.FC<ModifyDialogProps> = ({ open, handleClose }) => {
           Select a transformation function to modify with:
         </DialogContentText>
         <Content>
-          <Stack>
-            {/* Select trasformation function */}
-            <FormControl className="field">
-              <Select
-                labelId="modifier-label"
-                value={selectedTransformation}
-                onChange={(e) => setSelectedTransformation(e.target.value)}
-                variant="outlined"
-                MenuProps={{
-                  PaperProps: {
-                    style: {
-                      maxHeight: "400px",
-                    },
-                  },
-                }}
-              >
-                <MenuItem value="date">
-                  Date formatter (ISO 8601, custom pattern)
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-          {/* Transformation options */}
-          {selectedTransformation === "date" && selectedColumns && (
-            <>
-              <SquaredBox>
-                <Typography component="span">
-                  A transformation function that converts date-like values in the selected column(s) into
-                  a standardized or custom date format, using
-                  <i> date-fns </i>
-                  library for date parsing and formatting.
-                </Typography>
-              </SquaredBox>
-              {error && <Typography color="error">{error}</Typography>}
-              <Divider />
-              <Stack>
-                <FormControl style={{ paddingBottom: "10px" }}>
-                  <Typography sx={{ mb: 1 }}>
-                    Select columns to transform:
-                  </Typography>
-                  <Select
-                    multiple
-                    value={selectedColumnsLocal}
-                    onChange={(e) => setSelectedColumnsLocal(e.target.value as string[])}
-                    renderValue={(selected) => selected.join(", ")}
-                    displayEmpty
-                    variant="outlined"
-                  >
-                    {Object.keys(tableRows.byId[tableRows.allIds[0]]?.cells || {}).map(
-                      (columnId) => (
-                        <MenuItem
-                          key={columnId}
-                          value={columnId}
-                          disabled={selectedColumns.includes(columnId)}
-                        >
-                          {columnId}
-                          {selectedColumns.includes(columnId) && " (selected)"}
-                        </MenuItem>
-                      )
-                    )}
-                  </Select>
-                </FormControl>
-                <Typography sx={{ mb: 1 }}>
-                  Select the date format:
-                </Typography>
-                <FormControlLabel
-                  control={(
-                    <Checkbox
-                      checked={formatType === "iso"}
-                      onChange={() => setFormatType("iso")}
-                    />
-                  )}
-                  label="ISO 8601 (yyyy-MM-dd)"
-                />
-                <FormControlLabel
-                  control={(
-                    <Checkbox
-                      checked={formatType === "custom"}
-                      onChange={() => setFormatType("custom")}
-                      disabled={errorType === "column"}
-                    />
-                  )}
-                  label={
-                    errorType === "column"
-                      ? "Custom pattern (Not available, resolve error)"
-                      : "Custom pattern"
-                  }
-                />
-                {formatType === "custom" && errorType !== "column" && (
-                  <Stack style={{ paddingTop: "10px" }}>
-                    <FormControl>
-                      <Typography sx={{ mb: 1 }}>
-                        Define your custom format pattern:
-                      </Typography>
-                      <TextField
-                        label="Custom format pattern"
-                        placeholder="e.g. dd/MM/yyyy"
-                        value={customPattern}
-                        onChange={(e) => setCustomPattern(e.target.value)}
-                      />
-                    </FormControl>
-                  </Stack>
-                )}
-              </Stack>
-              <Stack direction="row" justifyContent="flex-end" spacing={2}>
-                <Button onClick={handleClose}>Cancel</Button>
-                <Button
-                  variant="outlined"
-                  onClick={handleApply}
-                  disabled={formatType === "custom" && !customPattern}
-                >
-                  Apply transformation
-                </Button>
-              </Stack>
-            </>
-          )}
+          <DialogInnerContent />
         </Content>
       </DialogContent>
     </Dialog>

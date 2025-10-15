@@ -11,6 +11,9 @@ export const selectReconciliators = (state: RootState) =>
 // select extenders
 export const selectExtenders = (state: RootState) =>
   state.config.entities.extenders;
+// select modifiers
+export const selectModifiers = (state: RootState) =>
+  state.config.entities.modifiers;
 // select requests
 export const selectRequests = (state: RootState) => state.config._requests;
 export const selectStoreConfig = (state: RootState) => state.config;
@@ -45,6 +48,19 @@ export const selectExtendersAsArray = createSelector(
   (extenders) =>
     extenders.allIds
       .map((id) => extenders.byId[id])
+      .sort((a, b) => a.name.localeCompare(b.name))
+);
+
+export const selectModifiersAsObject = createSelector(
+  selectModifiers,
+  (modifiers) => modifiers.byId
+);
+
+export const selectModifiersAsArray = createSelector(
+  selectModifiers,
+  (modifiers) =>
+    modifiers.allIds
+      .map((id) => modifiers.byId[id])
       .sort((a, b) => a.name.localeCompare(b.name))
 );
 

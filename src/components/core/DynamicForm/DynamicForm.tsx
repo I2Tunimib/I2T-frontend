@@ -10,23 +10,22 @@ import {
 import {
   Extender,
   Reconciliator,
+  Modifier,
 } from "@store/slices/config/interfaces/config";
-import { FC, useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-//import LoadingButton from "@mui/lab/LoadingButton";
+import React, { FC, useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useAppDispatch } from "@hooks/store";
-import { updateUI } from "@store/slices/table/table.slice";
+import { suggest } from "@store/slices/table/table.thunk";
 import {
   FORM_COMPONENTS,
   getDefaultValues,
   getRules,
   prepareFormInput,
 } from "./componentsConfig";
-import { suggest } from "@store/slices/table/table.thunk";
 
 export type DynamicFormProps = {
   loading: boolean | undefined;
-  service: Extender | Reconciliator;
+  service: Extender | Reconciliator | Modifier;
   onSubmit: (formState: Record<string, any>, reset?: Function) => void;
   onCancel: () => void;
 };
@@ -82,7 +81,16 @@ const DynamicForm: FC<DynamicFormProps> = ({
   return (
     <Stack component="form" gap="20px" onSubmit={handleSubmit(onSubmit)}>
       {formParams &&
-        formParams.map(({ id, inputType, ...inputProps }) => {
+        formParams.map(({ id, inputType, conditional, ...inputProps }) => {
+          if (conditional) {
+            const fieldValue = useWatch({
+              control,
+              name: conditional.field,
+            });
+            if (fieldValue !== conditional.value) {
+              return;
+            }
+          }
           const FormComponent = FORM_COMPONENTS[inputType];
           return (
             <Controller
@@ -124,7 +132,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
               id="suggestion"
               variant="outlined"
               labelId="suggestion-label"
-              label={"Suggestion list"}
+              label="Suggestion list"
               value={selectedSuggestion}
               MenuProps={{
                 PaperProps: {
@@ -165,7 +173,8 @@ const DynamicForm: FC<DynamicFormProps> = ({
             >
               {suggestions.map((option) => (
                 <MenuItem key={option.id} value={option.id}>
-                  {option.label}{" "}
+                  {option.label}
+                  {" "}
                   {Number.isInteger(option.percentage)
                     ? option.percentage + "%"
                     : option.percentage.toFixed(2) + "%"}

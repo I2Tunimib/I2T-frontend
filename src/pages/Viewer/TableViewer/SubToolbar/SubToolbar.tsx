@@ -47,7 +47,7 @@ import {
   selectIsViewOnly,
   selectMetadataDialogStatus,
   selectExtensionDialogStatus,
-  selectModifyDialogStatus,
+  selectModificationDialogStatus,
   selectIsMetadataButtonEnabled,
   selectMetadataColumnDialogStatus,
   selectAutomaticAnnotationStatus,
@@ -174,7 +174,7 @@ const SubToolbar = ({
   );
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
   const openReconciliationDialog = useAppSelector(selectReconcileDialogStatus);
-  const openModifyDialog = useAppSelector(selectModifyDialogStatus);
+  const openModificationDialog = useAppSelector(selectModificationDialogStatus);
   const currenTable = useAppSelector(selectCurrentTable);
   const searchFilter = useAppSelector(selectSearchStatus);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
@@ -403,7 +403,7 @@ const SubToolbar = ({
                   }}
                   color="primary"
                   disabled={!isCellSelected}
-                  onClick={() => dispatch(updateUI({ openModifyDialog: true }))}
+                  onClick={() => dispatch(updateUI({ openModificationDialog: true }))}
                   variant="contained"
                 >
                   Modify
@@ -525,8 +525,8 @@ const SubToolbar = ({
         handleClose={() => handleExtensionClose("openExtensionDialog")}
       />
       <ModifyDialog
-        open={openModifyDialog}
-        handleClose={() => handleExtensionClose("openModifyDialog")}
+        open={openModificationDialog}
+        handleClose={() => handleExtensionClose("openModificationDialog")}
       />
       <RefineMatchingDialog
         open={isAutoMatching}
