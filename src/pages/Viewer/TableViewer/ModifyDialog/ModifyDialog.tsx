@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { HelpOutlineRounded } from "@mui/icons-material";
-import { selectModifyRequestStatus } from "@store/slices/table/table.selectors";
+import { selectModifyRequestStatus, selectSelectedColumnIds } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectModifiersAsArray } from "@store/slices/config/config.selectors";
 import { Modifier } from "@store/slices/config/interfaces/config";
@@ -50,6 +50,9 @@ const DialogInnerContent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const modificationServices = useAppSelector(selectModifiersAsArray);
   const { loading, error } = useAppSelector(selectModifyRequestStatus);
+  const selectedColumns = useAppSelector(selectSelectedColumnIds);
+  const selectedColumn = Object.keys(selectedColumns)[0];
+  console.log("selectedColumn", selectedColumn);
 
   async function groupServices() {
     const groupedServsMap = new Map();
@@ -131,6 +134,13 @@ const DialogInnerContent = () => {
     e.stopPropagation(); // Prevent the Select from closing
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
+  const serviceWithDescription = React.useMemo(() => {
+    if (!currentService) return undefined;
+    return {
+      ...currentService,
+      description: `${currentService.description || ""}<br><br><b>Input selected column:</b> ${selectedColumn || "None"}`,
+    };
+  }, [currentService, selectedColumn]);
   return (
     <>
       <FormControl className="field">
@@ -164,18 +174,16 @@ const DialogInnerContent = () => {
           ))}
         </Select>
       </FormControl>
-      {currentService && (
+      {serviceWithDescription && (
         <>
-          <SquaredBox
-            dangerouslySetInnerHTML={{ __html: currentService.description }}
-          />
+          <SquaredBox dangerouslySetInnerHTML={{ __html: serviceWithDescription.description }} />
           {error && <Typography color="error">{error.message}</Typography>}
           <Divider />
           <DynamicModificationForm
             loading={loading}
             onSubmit={handleSubmit}
             onCancel={handleClose}
-            service={currentService}
+            service={serviceWithDescription}
           />
         </>
       )}
