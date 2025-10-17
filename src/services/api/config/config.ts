@@ -49,6 +49,10 @@ apiClient.interceptors.response.use(
       error.response?.status,
       error.response?.data,
     );
+    // Show snackbar for API errors with error message
+    if (error.response?.data?.error) {
+      window.enqueueSnackbar?.(error.response.data.error, { variant: "error" });
+    }
     return Promise.reject(error);
   },
 );
