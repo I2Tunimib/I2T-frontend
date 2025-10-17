@@ -33,7 +33,7 @@ const RadioGroupComponent = forwardRef<HTMLInputElement, RadioGroupProps>(
         <InputDescription description={description} infoText={infoText} />
         <FormControl error={error}>
           <RadioGroup value={value} onChange={(e) => onChange(e.target.value)}>
-            {options.map(({ id, label }) => (
+            {options.map(({ id, label, value }) => (
               <FormControlLabel
                 key={id}
                 value={value}

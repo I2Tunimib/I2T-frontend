@@ -84,6 +84,13 @@ const DynamicForm: FC<DynamicFormProps> = ({
     <Stack component="form" gap="20px" onSubmit={handleSubmit(onSubmit)}>
       {formParams &&
         formParams.map(({ id, inputType, conditional, ...inputProps }) => {
+          if (
+              service.id === "dateFormatter" &&
+              selectedColumns.length > 1 &&
+              id === "outputMode"
+          ) {
+            return null;
+          }
           if (conditional) {
             const fieldValue = useWatch({
               control,
