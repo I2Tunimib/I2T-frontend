@@ -6,6 +6,8 @@ import {
   InputLabel,
   Chip,
   FormControl,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import {
   Extender,
@@ -40,6 +42,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<any[]>([]);
+  const selectedColumns = service.selectedColumns || [];
   const { control, handleSubmit, reset, setValue, formState } = useForm({
     defaultValues: getDefaultValues(service),
   });
@@ -52,8 +55,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const { formParams } = service;
 
   const onSubmit = (formValue: any) => {
-    onSubmitCallback(formValue, () => reset(getDefaultValues(service)));
-    // reset(getDefaultValues(service));
+    onSubmitCallback({ ...formValue, selectedColumns }, () => reset(getDefaultValues(service)));
   };
 
   const onCancel = () => {
@@ -112,6 +114,19 @@ const DynamicForm: FC<DynamicFormProps> = ({
             />
           );
         })}
+      {service.id === "dateFormatter" && selectedColumns.length > 1 && (
+        <Controller
+          name="joinColumns"
+          control={control}
+          defaultValue={false}
+          render={({ field }) => (
+            <FormControlLabel
+              control={<Checkbox {...field} checked={field.value} />}
+              label="Join selected columns"
+            />
+          )}
+        />
+      )}
       {service.id === "wikidataPropertySPARQL" && (
         <Button
           variant="outlined"

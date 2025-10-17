@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { HelpOutlineRounded } from "@mui/icons-material";
-import { selectModifyRequestStatus, selectSelectedColumnIds } from "@store/slices/table/table.selectors";
+import { selectModifyRequestStatus, selectSelectedColumnIdsAsArray } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectModifiersAsArray } from "@store/slices/config/config.selectors";
 import { Modifier } from "@store/slices/config/interfaces/config";
@@ -50,9 +50,8 @@ const DialogInnerContent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const modificationServices = useAppSelector(selectModifiersAsArray);
   const { loading, error } = useAppSelector(selectModifyRequestStatus);
-  const selectedColumns = useAppSelector(selectSelectedColumnIds);
-  const selectedColumn = Object.keys(selectedColumns)[0];
-  console.log("selectedColumn", selectedColumn);
+  const selectedColumnsArray = useAppSelector(selectSelectedColumnIdsAsArray);
+  const [joinColumns, setJoinColumns] = useState(false);
 
   async function groupServices() {
     const groupedServsMap = new Map();
@@ -102,11 +101,17 @@ const DialogInnerContent = () => {
   const handleSubmit = async (formState: Record<string, any>, reset?: Function) => {
     if (!currentService) return;
     try {
+      const payload = {
+        ...formState,
+        joinColumns: formState.joinColumns ?? false,
+        selectedColumns: formState.joinColumns ? selectedColumnsArray : undefined,
+      };
+      console.log("payload", payload);
       const { data } = await dispatch(
-          modify({
-            modifier: currentService,
-            formValues: formState,
-          })
+        modify({
+          modifier: currentService,
+          formValues: payload,
+        })
       ).unwrap();
       if (reset) reset();
       setCurrentService(undefined);
@@ -136,11 +141,13 @@ const DialogInnerContent = () => {
   };
   const serviceWithDescription = React.useMemo(() => {
     if (!currentService) return undefined;
+    const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
     return {
       ...currentService,
-      description: `${currentService.description || ""}<br><br><b>Input selected column:</b> ${selectedColumn || "None"}`,
+      description: `${currentService.description || ""}<br><br><b>Input selected column(s):</b> ${colsText}`,
+      joinColumns,
     };
-  }, [currentService, selectedColumn]);
+  }, [currentService, selectedColumnsArray, joinColumns]);
   return (
     <>
       <FormControl className="field">
@@ -183,7 +190,7 @@ const DialogInnerContent = () => {
             loading={loading}
             onSubmit={handleSubmit}
             onCancel={handleClose}
-            service={serviceWithDescription}
+            service={{ ...serviceWithDescription, selectedColumns: selectedColumnsArray }}
           />
         </>
       )}

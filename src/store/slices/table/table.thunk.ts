@@ -626,7 +626,11 @@ export const modify = createAsyncThunk<
   const selectedColumnId = selectedColumnIds[0];
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
-  const params = getRequestFormValuesModification(formParams, formValues, table);
+  const params = {
+    ...getRequestFormValuesModification(formParams, formValues, table),
+    joinColumns: formValues.joinColumns,
+    selectedColumns: formValues.joinColumns ? formValues.selectedColumns : undefined,
+  };
 
   const response = await tableAPI.modify(
     relativeUrl,
