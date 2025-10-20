@@ -1,11 +1,12 @@
 import axios from "axios";
 import tableAPI, { GetTableResponse } from "@services/api/table";
-import { createAsyncThunk, current } from "@reduxjs/toolkit";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "@store";
-import { levDistance } from "@services/utils/lev-distance";
+//import { levDistance } from "@services/utils/lev-distance";
 import { isEmptyObject } from "@services/utils/objects-utils";
 import {
   Extender,
+  Modifier,
   FormInputParams,
   Reconciliator,
 } from "../config/interfaces/config";
@@ -30,6 +31,7 @@ export enum TableThunkActions {
   AUTOMATIC_ANNOTATION = "automaticAnnotation",
   UPDATE_TABLE_SOCKET = "updateTableSocket",
   EXTEND = "extend",
+  MODIFY = "modify",
   SUGGEST = "suggest",
   CONVER_W3C = "convertToW3C",
   EXPORT_TABLE = "exportTable",
@@ -462,6 +464,45 @@ const getRequestFormValuesReconciliation = (
   return requestParams;
 };
 
+const getRequestFormValuesModification = (
+    formParams: FormInputParams[],
+    formValues: Record<string, any>,
+    table: TableState,
+    modifier?: Modifier
+) => {
+  if (!formParams) {
+    return {};
+  }
+
+  const { ui, entities } = table;
+  const { rows } = entities;
+  const selectedColumnsIds = Object.keys(table.ui.selectedColumnsIds);
+  console.log("getting request form values", modifier);
+  const requestParams = {} as Record<string, any>;
+
+  requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+    acc[key] = getColumnValues(key, rows);
+    return acc;
+  }, {} as Record<string, any>);
+
+  formParams.forEach(({ id, inputType }) => {
+    if (formValues[id]) {
+      if (inputType === "selectColumns") {
+        requestParams[id] = getColumnValues(formValues[id], rows);
+      } else if (inputType === "multipleColumnSelect") {
+        requestParams[id] = {};
+        for (const colId of formValues[id]) {
+          requestParams[id][colId] = getColumnValues(colId, rows);
+        }
+      } else {
+        requestParams[id] = formValues[id];
+      }
+    }
+  });
+
+  return requestParams;
+};
+
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,
   async (
@@ -691,6 +732,56 @@ export const extend = createAsyncThunk<
   return {
     data: response.data,
     extender,
+    selectedColumnId,
+  };
+});
+
+export type ModifyThunkInputProps = {
+  modifier: Modifier;
+  formValues: Record<string, any>;
+};
+
+export type ModifyThunkResponseProps = {
+  modifier: Modifier;
+  selectedColumnId: string;
+  data: any;
+};
+
+export const modify = createAsyncThunk<
+  ModifyThunkResponseProps,
+  ModifyThunkInputProps
+>(`${ACTION_PREFIX}/modify`, async (inputProps, { getState }) => {
+  const { modifier, formValues } = inputProps;
+
+  const { table } = getState() as RootState;
+  const { relativeUrl, formParams, id } = modifier;
+  const { entities, ui } = table;
+  const { tableInstance, columns } = entities;
+
+  const selectedColumnIds = Object.keys(ui.selectedColumnsIds);
+  const selectedColumnId = selectedColumnIds[0];
+  const columnName = columns.byId[selectedColumnId]?.label || "";
+
+  const params = {
+    ...getRequestFormValuesModification(formParams, formValues, table),
+    joinColumns: formValues.joinColumns,
+    selectedColumns: formValues.joinColumns ? formValues.selectedColumns : undefined,
+  };
+
+  const response = await tableAPI.modify(
+    relativeUrl,
+    {
+      serviceId: id,
+      ...params,
+    },
+    tableInstance.id,
+    tableInstance.idDataset,
+    columnName
+  );
+
+  return {
+    data: response.data,
+    modifier,
     selectedColumnId,
   };
 });

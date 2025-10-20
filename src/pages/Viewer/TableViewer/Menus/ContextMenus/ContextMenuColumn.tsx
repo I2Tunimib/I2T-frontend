@@ -36,14 +36,6 @@ interface ContextMenuColumnProps extends MenuBaseProps {
   setColumnPinning: (v: { left: string[] }) => void;
 }
 
-/*
-const useMenuStyles = makeStyles({
-  list: {
-    outline: 0
-  }
-});
-*/
-
 const StyledMenuList = styled(MenuList)`
   outline: 0;
 `;
@@ -58,12 +50,20 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
   setColumnPinning,
   ...props
 }) => {
-  //const classes = useMenuStyles();
   const dispatch = useAppDispatch();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
   const extensionServices = useAppSelector(selectExtendersAsArray);
 
+  /**
+   * Handle modify column action.
+   */
+  const handleModify = useCallback(() => {
+    if (isCellSelected) {
+      dispatch(updateUI({ openModificationDialog: true }));
+      handleClose();
+    }
+  }, [isCellSelected, dispatch, handleClose]);
   /**
    * Handle reconcile column action.
    */
@@ -120,14 +120,6 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
     setColumnPinning(newPinning);
     handleClose();
   }, [isPinned, id, columnPinning, setColumnPinning, dispatch, handleClose]);
-
-  /**
-   * Handle edit column action.
-   */
-  const editColumn = useCallback(() => {
-    dispatch(updateColumnEditable({ colId: id }));
-    handleClose();
-  }, [handleClose]);
 
   /**
    * Handle hide column action.
@@ -207,7 +199,14 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
       <StyledMenuList
         autoFocus //className={classes.list}
       >
-        <MenuItemIconLabel onClick={handleReconcile} Icon={LinkRoundedIcon}>
+        <MenuItemIconLabel
+          onClick={handleModify}
+          Icon={TransformIcon}>
+          Modify column
+        </MenuItemIconLabel>
+        <MenuItemIconLabel
+          onClick={handleReconcile}
+          Icon={LinkRoundedIcon}>
           Reconcile column
         </MenuItemIconLabel>
         <MenuItemIconLabel onClick={handleExtend} Icon={AddRoundedIcon}>
@@ -228,13 +227,6 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
         >
           Hide column
         </MenuItemIconLabel>
-        {/*
-        <MenuItemIconLabel
-          onClick={editColumn}
-          Icon={EditRoundedIcon}>
-          Edit column
-        </MenuItemIconLabel>
-        */}
         <MenuItemIconLabel
           onClick={handleDeleteColumn}
           Icon={DeleteOutlineRoundedIcon}

@@ -15,6 +15,9 @@ import { updateUI } from "@store/slices/table/table.slice";
 import { selectTutorialStep } from "@store/slices/table/table.selectors";
 import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import PlaylistAddCheckRoundedIcon from "@mui/icons-material/PlaylistAddCheckRounded";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import {
   FC,
   useState,
@@ -31,6 +34,9 @@ import refineMatchingManual from "../../../assets/refine-matching-manual.gif";
 import refineMatchingAutomatic from "../../../assets/refine-matching-automatic.gif";
 import extension from "../../../assets/extension.gif";
 import search from "../../../assets/search.gif";
+import globalActions from "../../../assets/global-actions.png";
+import contextualActions from "../../../assets/contextual-actions.png";
+import columnHeader from "../../../assets/column-header.png";
 
 type HelpDialogProps = DialogProps;
 
@@ -51,9 +57,9 @@ const Img = styled.img({
 
 const ButtonText = styled.span({
   borderRadius: "6px",
-  backgroundColor: "#f6f6f6",
-  padding: "3px 4px",
-  margin: "0 2px",
+  backgroundColor: "#ebebeb",
+  padding: "3px 10px",
+  margin: "0 6px",
   boxShadow: "inset 0 -2px #ebefff",
 });
 
@@ -71,13 +77,14 @@ const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
 const IndexContainer = styled(Box)({
   padding: "16px",
   borderRight: "1px solid rgba(0, 0, 0, 0.12)",
-  height: "100%",
+  height: "auto",
   minWidth: "250px",
+  overflowY: "auto",
 }) as typeof Box;
 
 const ContentContainer = styled(Box)({
   padding: "16px",
-  height: "100%",
+  height: "auto",
   width: "100%",
   overflow: "auto",
 }) as typeof Box;
@@ -95,36 +102,304 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "The enrichment process",
+    label: "Introduction",
+    Description: () => (
+      <Stack gap="10px">
+        <Typography>
+          SemTUI is a framework that makes tabular data more informative by
+          integrating it with external knowledge sources. It provides an
+          intuitive interface to explore tables, manage annotations, and
+          enrich data with additional context.
+          <br />
+          <br />
+          In this tutorial, you will learn how to use the
+          <b> Table Viewer and its main features</b>
+          , as well as how the
+          <b> enrichment process </b>
+          works — from reconciling data with external datasets to extending it with new information.
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    label: "Table Viewer: Global Actions",
+    Description: () => (
+      <Stack>
+        <Typography>
+          It is the main component of SemTUI. It allows users to efficiently
+          visualize a table and perform various kinds of action on it.
+          <Box display="flex" justifyContent="center" my={1}>
+            <Img src={globalActions} style={{ width: "90%" }} />
+          </Box>
+          Starting from the top, the Toolbar contains
+          <b> global actions </b>
+          that affect the entire
+          table. From here, users can:
+          <List>
+            <li>
+              <b>Switch </b>
+              between different table views: tabular, raw JSON and graph, still under development.
+            </li>
+            <li>
+              Run an
+              <b> automatic annotation </b>
+              for the whole table.
+            </li>
+            <li>
+              <b>Export </b>
+              the table in different formats: JSON, CSV, Python pipeline and Jupyter notebook pipeline.
+            </li>
+            <li>
+              <b>Save changes </b>
+              to the server.
+            </li>
+            <li>
+              Open the
+              <b> settings </b>
+              panel.
+            </li>
+            <li>
+              Access this
+              <b> tutorial</b>
+              .
+            </li>
+          </List>
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    label: "Contextual Actions",
+    Description: () => (
+      <Stack>
+        <Typography>
+          They are part of the SubToolbar and are enabled when one or
+          more table elements (cells, columns, or rows) are selected. They apply only
+          to what is selected and may require specific conditions.
+          <Box display="flex" justifyContent="center" my={1}>
+            <Img src={contextualActions} style={{ width: "70%" }} />
+          </Box>
+          The main options are:
+          <List>
+            <li>
+              <b>Delete column(s): </b>
+              remove the selected column(s).
+            </li>
+            <li>
+              <b>Manage metadata: </b>
+              view or edit metadata of the selected column or cells.
+            </li>
+            <li>
+              <b>Expand cell: </b>
+              open a detailed view with reconciled data and linked information.
+            </li>
+            <li>
+              <b>Expand header: </b>
+              show relationships between reconciled entities in the column header.
+            </li>
+            <li>
+              <b>Toggle dense/accessible view: </b>
+              switch the display style of selected columns to improve
+              readability.
+            </li>
+            <li>
+              <b>Modify column(s): </b>
+              apply transformation functions to the selected column(s), such as date formatting.
+            </li>
+            <li>
+              <b>Reconciliation, Refinement and Extension: </b>
+              part of the enrichment process, covered later in this tutorial.
+            </li>
+          </List>
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    label: "Search and Navigation",
+    Description: () => (
+      <Stack gap="10px">
+        <Typography>
+          A search and filtering feature is available at the top-right corner.
+          <br />
+          It enables row filtering based on cell
+          <b> labels</b>
+          ,
+          {" "}
+          <b> metadata names</b>
+          , and
+          <b> types</b>
+          .
+          <br />
+          The search bar provides suggestions while typing, making it faster to locate
+          specific entities or annotations. Cells that match the search criteria
+          are highlighted, while rows without matches are hidden from the table view.
+        </Typography>
+        <Img src={search} />
+      </Stack>
+    ),
+  },
+  {
+    label: "Filtering and Column Visibility",
+    Description: () => (
+      <Stack gap="10px">
+        <Typography>
+          Filtering options allow users to focus on specific subsets of data based on their match status
+          using the
+          <FilterAltOutlinedIcon
+            sx={{
+              margin: "0px 3px",
+              verticalAlign: "middle",
+            }}
+          />
+          icon:
+        </Typography>
+        <Stack gap="10px">
+          <Stack direction="row">
+            <StatusBadge
+              sx={{
+                marginTop: "6px",
+                marginRight: "16px",
+              }}
+              status="match-reconciliator"
+            />
+            <Typography>
+              <b>Matches: </b>
+              cells that have been successfully reconciled.
+            </Typography>
+          </Stack>
+          <Stack direction="row">
+            <StatusBadge
+              sx={{
+                marginTop: "6px",
+                marginRight: "16px",
+              }}
+              status="warn"
+            />
+            <Typography>
+              <b>Ambiguous: </b>
+              cells with multiple possible reconciliation candidates,
+              none of which has a perfect score, so the correct reconciliation is unclear.
+            </Typography>
+          </Stack>
+          <Stack direction="row">
+            <StatusBadge
+              sx={{
+                marginTop: "6px",
+                marginRight: "16px",
+              }}
+              status="miss"
+            />
+            <Typography>
+              <b>Miss matches: </b>
+              cells that could not be reconciled or have no match.
+            </Typography>
+          </Stack>
+        </Stack>
+        <Typography>
+          <br />
+          Users can also toggle the visibility of columns via a dynamic list, which
+          automatically updates when columns are added or removed, using the
+          <VisibilityIcon
+            sx={{
+              margin: "0px 3px",
+              verticalAlign: "middle",
+            }}
+          />
+          icon.
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    label: "Column Header Actions",
+    Description: () => (
+      <Stack gap="10px">
+        <Typography>
+          Each column header provides actions to manage the column efficiently:
+        </Typography>
+        <List>
+          <li>
+            <b>Pin/unpin column: </b>
+            keep a column fixed on the left while scrolling.
+          </li>
+          <li>
+            <b>Manage metadata: </b>
+            view or edit metadata of the column.
+          </li>
+          <li>
+            <b>Drag & drop: </b>
+            reorder columns freely by dragging their headers.
+          </li>
+          <li>
+            <b>Resize column: </b>
+            drag the edge manually to adjust width. The reset button
+            <RestartAltRoundedIcon
+              sx={{
+                margin: "0px 3px",
+                verticalAlign: "middle",
+              }}
+            />
+            appears in the Subtoolbar only after resizing to restore default widths.
+          </li>
+          <li>
+            <b>Sort alphabetically: </b>
+            arrange cell values in ascending or descending order.
+          </li>
+          <li>
+            <b>Sort by match score: </b>
+            cells with fully reconciled entities appear first, followed by ambiguous or unmatched cells.
+          </li>
+        </List>
+        <Typography>
+          Column headers also indicate the
+          <b> type </b>
+          of data contained, such as Named Entity tag for a reconciled
+          entity, and the
+          <b> Reconciliation service </b>
+          status showing whether the cell was fully, partially, or not reconciled.
+        </Typography>
+        <Box display="flex" justifyContent="center" my={1}>
+          <Img src={columnHeader} style={{ width: "30%" }} />
+        </Box>
+      </Stack>
+    ),
+  },
+  {
+    label: "Enrichment process",
     Description: () => (
       <Stack>
         The enrichment process involves linking entities in the original data to external datasets (e.g., Wikidata, DBpedia) and consists of two main steps:
         <List>
           <li>
-            <b>Reconciliation:</b> Match entities in the original data with entities in a target dataset.
+            <b>Reconciliation: </b>
+            Matching entities in the original data with entities in a target dataset.
           </li>
           <li>
-            <b>Extension:</b> Retrieve additional information from the target dataset using the reconciled entities.
+            <b>Extension: </b>
+            Retrieving additional information from the target dataset using the reconciled entities.
           </li>
         </List>
         SemTUI supports both steps by providing integrated access to reconciliation and extension services.
-      </Stack>    ),
+      </Stack>
+    ),
   },
   {
     label: "Reconciliation",
     Description: () => (
       <Stack>
-        SemTUI offers access to manual and automatic entity reconciliation
+        SemTUI provides access to manual and automatic entity reconciliation
         services:
         <List>
           <li>
-            <b>Manual reconciliation: </b>A column or a cell can be reconciled by activating one of the
+            <b>Manual reconciliation: </b>
+            A column or a cell can be reconciled by activating one of the
             reconciliation services available for the selected dataset or knowledge graph.
           </li>
           <li>
-            <b>Automatic reconciliation: </b>A semantic table interpretation
-            (STI) service can be activated to automatically reconcile cells and
-            annotate headers with predicates and types to Wikidata.
+            <b>Automatic reconciliation: </b>
+            A Semantic Table Interpretation (STI) service can be activated to automatically
+            reconcile cells and annotate headers with predicates and types from Wikidata.
           </li>
         </List>
       </Stack>
@@ -136,9 +411,10 @@ const steps: Step[] = [
       <Stack gap="10px">
         <Typography>
           Select a column or some cells to reconcile and click on the
-          <ButtonText>Reconcile</ButtonText>
-          button in the application toolbar. <br/>Choose a reconciliation service
-          from the list.
+          <ButtonText> Reconcile </ButtonText>
+          button in the application toolbar.
+          <br />
+          Then, choose a reconciliation service from the list.
         </Typography>
         <Img src={manualAnnotation} />
       </Stack>
@@ -149,13 +425,11 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Activate the automatic annotation service for the whole table by
-          pressing the
+          Activate the automatic annotation service for the entire table by pressing the
           <ButtonText>Automatic annotation</ButtonText>
-          button in the top right corner. The annotation process is a
-          long-running asynchronous process that allows users to work on other
-          tables. When the annotation process is completed, a notification will
-          pop up.
+          button in the top right corner. It is a long-running asynchronous,
+          allowing users to continue working on other tables. Once the process
+          is completed, a notification will appear as a pop-up in the bottom left.
         </Typography>
         <Img src={automaticAnnotation} />
       </Stack>
@@ -166,92 +440,83 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Colors and shapes of icons in front of reconciled entities provide
-          visual feedback on the reconciliation process result.
+          The colors and shapes of the icons in front of reconciled entities provide
+          visual feedback on the outcome of the reconciliation process.
         </Typography>
         <Stack gap="10px">
           <Stack direction="row">
             <StatusBadge
               sx={{
                 marginTop: "6px",
-                marginRight: "6px",
+                marginRight: "16px",
               }}
               status="match-reconciliator"
             />
             <Typography>
-              Successful reconciliation: The cell is annotated with an entity
-              automatically assigned by the reconciliation service.
+              <b>Successful reconciliation:</b>
+              The cell is annotated with an entity automatically assigned by the
+              <i> reconciliation service</i>
+              .
             </Typography>
           </Stack>
           <Stack direction="row">
             <StatusBadge
               sx={{
                 marginTop: "6px",
-                marginRight: "6px",
+                marginRight: "20px",
               }}
               status="match-refinement"
             />
             <Typography>
-              Successful reconciliation: An entity has been assigned by the
-              column refinement feature.
+              <b>Successful reconciliation: </b>
+              An entity has been assigned by the
+              <i> column refinement feature</i>
+              .
             </Typography>
           </Stack>
           <Stack direction="row">
             <StatusBadge
               sx={{
                 marginTop: "6px",
-                marginRight: "6px",
+                marginRight: "16px",
               }}
               status="match-manual"
             />
             <Typography>
-              Successful reconciliation: An entity has been manually assigned to
-              the cell.
+              <b>Successful reconciliation: </b>
+              An entity has been
+              <i> manually </i>
+              assigned to the cell.
             </Typography>
           </Stack>
           <Stack direction="row">
             <StatusBadge
               sx={{
                 marginTop: "6px",
-                marginRight: "6px",
+                marginRight: "16px",
               }}
               status="warn"
             />
             <Typography>
-              Uncertain reconciliation: There are candidate entities above the threshold,
-              but none have been selected for the cell because multiple candidates have similar scores.
+              <b>Uncertain reconciliation: </b>
+              There are candidate entities above the threshold, but none have been
+              selected for the cell because multiple candidates have similar scores.
             </Typography>
           </Stack>
           <Stack direction="row">
             <StatusBadge
               sx={{
                 marginTop: "6px",
-                marginRight: "6px",
+                marginRight: "16px",
               }}
               status="miss"
             />
             <Typography>
-              Unsuccessful reconciliation: No candidate entities have been
-              found, or none have scores above the threshold.
+              <b>Unsuccessful reconciliation: </b>
+              No candidate entities have been found, or none have scores above the threshold.
             </Typography>
           </Stack>
         </Stack>
-      </Stack>
-    ),
-  },
-  {
-    label: "Table search and navigation",
-    Description: () => (
-      <Stack gap="10px">
-        <Typography>
-          A search and filtering feature is available at the top right.
-          <br />
-          It enables row filtering based on cell <b>labels</b>,{" "}
-          <b>metadata names</b>, and <b>types</b>. <br />
-          Cells matching the search criteria are highlighted, and rows without
-          matches are excluded from the table view.
-        </Typography>
-        <Img src={search} />
       </Stack>
     ),
   },
@@ -262,19 +527,25 @@ const steps: Step[] = [
         SemTUI supports two types of matching refinement:
         <List>
           <li>
-            <b>Single cell refinement: </b>The user can assign true to one of the candidates associated with a
-            single cell and optionally propagate the choice to identical cells in the same column.
+            <b>Single cell refinement: </b>
+            The user can assign the
+            <i> true </i>
+            tag to one of the candidate entities
+            for a single cell and optionally propagate the choice to identical cells in the same column.
           </li>
           <li>
-            <b>Group of cells refinement: </b>The user can select a column (or multiple cells within it) and
-            refine the matching using the “Refine Matching” feature.
+            <b>Group of cells refinement: </b>
+            The user can select a column (or multiple cells within it) and
+            refine the matching using the
+            <i> Refine Matching </i>
+            feature.
           </li>
         </List>
       </Stack>
     ),
   },
   {
-    label: "Refine matching - single cell",
+    label: "Single cell Refinement",
     Description: () => (
       <Stack gap="10px">
         <Typography>
@@ -286,7 +557,7 @@ const steps: Step[] = [
               verticalAlign: "middle",
             }}
           />
-          icon to view the metadata of a selected cell. The user can click on candidate names to view their
+          icon to view the metadata of a selected cell. Users can click on candidate names to view their
           corresponding entities and browse the associated types to select the correct match.
         </Typography>
         <Img src={refineMatchingManual} />
@@ -294,23 +565,31 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "Refine matching - group of cells",
+    label: "Group of cells Refinement",
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          The matching of a group of cells can be refined by (i) selecting
-          a column or a subset of its cells, and (ii) refining by type—choosing
-          from the types associated with the selected cells (<q>Type refine matching</q>)—
-          or by applying a score threshold (<q>Score refine matching</q>).
           The
           <PlaylistAddCheckRoundedIcon
             sx={{
               margin: "0px 3px",
               verticalAlign: "middle",
             }}
-          />
-          icon provides access to these options.
-        </Typography>        <Img src={refineMatchingAutomatic} />
+        />
+          icon provides access to the refinement options for a group of cells.
+          First, select a column or a subset of its cells. Then, refine either by:
+          <List>
+            <li>
+              Type, choosing from the types associated with the selected cells -
+              <b> Type refine matching</b>
+            </li>
+            <li>
+              Applying a score threshold -
+              <b> Score refine matching</b>
+            </li>
+          </List>
+        </Typography>
+        <Img src={refineMatchingAutomatic} />
       </Stack>
     ),
   },
@@ -319,10 +598,10 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography>
-          Once a column has been reconciled, its matched entities can be used to extend the table
-          by selecting the column, clicking the
+          Once a column has been reconciled, its matched entities can be used to extend the table.
+          Simply select the column, click the
           <ButtonText>Extend</ButtonText>
-          button in the toolbar, and choosing one of the available extension services.
+          button in the toolbar, and then choose one of the available extension services.
         </Typography>
         <Img src={extension} />
       </Stack>
@@ -340,7 +619,8 @@ const steps: Step[] = [
       >
         <Typography variant="h4">Tutorial completed!</Typography>
         <Typography>
-          These are the core steps to start working with SemTUI. <br />
+          These are the core steps to start working with SemTUI.
+          <br />
           Explore further to make the most of its features.
         </Typography>
       </Stack>
@@ -363,31 +643,46 @@ const TutorialIndex: FC<{
           1. Introduction
         </IndexButton>
         <IndexButton active={activeStep === 2} onClick={() => onStepSelect(2)}>
-          2. Reconciliation
+          2. Table Viewer: Global Actions
         </IndexButton>
         <IndexButton active={activeStep === 3} onClick={() => onStepSelect(3)} sx={{ pl: 3 }}>
-          2.1 Manual Annotation
+          2.1 Contextual Actions
         </IndexButton>
         <IndexButton active={activeStep === 4} onClick={() => onStepSelect(4)} sx={{ pl: 3 }}>
-          2.2 Automatic Annotation
+          2.2 Search and Navigation
         </IndexButton>
         <IndexButton active={activeStep === 5} onClick={() => onStepSelect(5)} sx={{ pl: 3 }}>
-          2.3 Annotation Symbols
+          2.3 Filter and Column Visibility
         </IndexButton>
-        <IndexButton active={activeStep === 6} onClick={() => onStepSelect(6)}>
-          3. Table Search and Navigation
+        <IndexButton active={activeStep === 6} onClick={() => onStepSelect(6)} sx={{ pl: 3 }}>
+          2.4 Column Header Actions
         </IndexButton>
         <IndexButton active={activeStep === 7} onClick={() => onStepSelect(7)}>
-          4. Matching Refinement
+          3. Enrichment Process
         </IndexButton>
-        <IndexButton active={activeStep === 8} onClick={() => onStepSelect(8)} sx={{ pl: 3 }}>
-          4.1 Single cell refinement
+        <IndexButton active={activeStep === 8} onClick={() => onStepSelect(8)}>
+          4. Reconciliation
         </IndexButton>
         <IndexButton active={activeStep === 9} onClick={() => onStepSelect(9)} sx={{ pl: 3 }}>
-          4.2 Group of cells refinement
+          4.1 Manual Annotation
         </IndexButton>
-        <IndexButton active={activeStep === 10} onClick={() => onStepSelect(10)}>
-          5. Extension
+        <IndexButton active={activeStep === 10} onClick={() => onStepSelect(10)} sx={{ pl: 3 }}>
+          4.2 Automatic Annotation
+        </IndexButton>
+        <IndexButton active={activeStep === 11} onClick={() => onStepSelect(11)} sx={{ pl: 3 }}>
+          4.3 Annotation Symbols
+        </IndexButton>
+        <IndexButton active={activeStep === 12} onClick={() => onStepSelect(12)}>
+          5. Matching Refinement
+        </IndexButton>
+        <IndexButton active={activeStep === 13} onClick={() => onStepSelect(13)} sx={{ pl: 3 }}>
+          5.1 Single cell Refinement
+        </IndexButton>
+        <IndexButton active={activeStep === 14} onClick={() => onStepSelect(14)} sx={{ pl: 3 }}>
+          5.2 Group of cells Refinement
+        </IndexButton>
+        <IndexButton active={activeStep === 15} onClick={() => onStepSelect(15)}>
+          6. Extension
         </IndexButton>
       </Stack>
     </IndexContainer>
@@ -493,16 +788,21 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
   useEffect(() => {
     // If a specific tutorial step is set (greater than 1),
     // automatically start the tutorial
-    if (tutorialStep > 1) {
+    if (tutorialStep && tutorialStep > 1) {
       setStart(true);
+    } else {
+      setStart(false); // welcome
+      // reset of tutorialStep in redux
+      dispatch(updateUI({ tutorialStep: 1 }));
     }
-  }, [tutorialStep]);
+  }, [tutorialStep, dispatch]);
 
   const handleOnClose = (
     event: {},
     reason: "backdropClick" | "escapeKeyDown"
   ) => {
     setStart(false);
+    dispatch(updateUI({ tutorialStep: 1 })); // reset
     if (onClose) {
       onClose(event, reason);
     }
@@ -510,7 +810,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
 
   const handleOnDone = () => {
     setStart(false);
-    dispatch(updateUI({ openHelpDialog: false }));
+    dispatch(updateUI({ openHelpDialog: false, tutorialStep: 1 }));
   };
 
   return (
@@ -526,11 +826,10 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
             <DialogContent>
               <Stack gap="10px">
                 SemTUI is a framework for the semantic enrichment of tabular data.
-                <br /> Enrichment involves augmenting or extending existing data with
-                additional information from external sources.
                 <br />
-                SemTUI simplifies the enrichment process, making it accessible
-                even to less experienced users.
+                It helps users enhance tables by linking cells and columns to external
+                knowledge sources, adding context and extra information.
+                <br />
                 <Button
                   onClick={() => setStart(true)}
                   sx={{

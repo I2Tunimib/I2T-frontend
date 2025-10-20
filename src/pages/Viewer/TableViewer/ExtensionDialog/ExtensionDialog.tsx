@@ -1,9 +1,9 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Alert,
-  Box,
-  Button,
-  Collapse,
+  //Box,
+  //Button,
+  //Collapse,
   Dialog,
   DialogContent,
   DialogContentText,
@@ -11,13 +11,13 @@ import {
   Divider,
   FormControl,
   IconButton,
-  ListItemText,
-  ListSubheader,
+  //ListItemText,
+  //ListSubheader,
   MenuItem,
   Select,
   SelectChangeEvent,
   Stack,
-  Typography,
+  //Typography,
 } from "@mui/material";
 import React, {
   forwardRef,
@@ -30,9 +30,9 @@ import React, {
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import {
-  ExpandLess,
-  ExpandMore,
-  HelpCenterRounded,
+  //ExpandLess,
+  //ExpandMore,
+  //HelpCenterRounded,
   HelpOutlineRounded,
 } from "@mui/icons-material";
 import {
@@ -292,7 +292,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 10 }));
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 15 }));
           }}
         >
           <HelpOutlineRounded />

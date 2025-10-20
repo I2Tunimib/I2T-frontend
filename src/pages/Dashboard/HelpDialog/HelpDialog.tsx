@@ -1,21 +1,21 @@
 import { useAppDispatch } from '@hooks/store';
-import { Box, Button, Dialog, DialogContent, DialogProps, DialogTitle, MobileStepper, Stack, Typography } from '@mui/material';
-import { FC, FunctionComponent, ReactNode, useCallback, useState } from 'react';
+import { Box, Button, Dialog, DialogContent, DialogProps, DialogTitle, MobileStepper } from '@mui/material';
+import { FC, useState } from 'react';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import { updateUI } from '@store/slices/table/table.slice';
+//import { updateUI } from '@store/slices/table/table.slice';
 
 const steps = [
   {
     label: 'Upload a dataset',
-    description: `To start using SemTUI, you first have to upload a dataset. 
-                  A dataset is a set of tables. The dataset has to be a zip file containing one or more tables.
-                  The currently available supported table formats are CSV, JSON and W3C-JSON.`
+    description: `To start using SemTUI, you first need to upload a dataset. 
+                  A dataset is a collection of tables and must be provided as a ZIP file containing one or more tables.
+                  The currently available supported table formats are CSV, JSON, and W3C-JSON.`
   },
   {
     label: 'Upload a table',
     description:
-      `You can also upload a new table to an existing dataset. Select a dataset and upload a table in one of the supported formats CSV, JSON and W3C-JSON.
-      This time the table must not be uploaded as a zip file.`
+      `You can also upload a new table to an existing dataset. Select a dataset and upload a table in one of the supported formats: CSV, JSON, or W3C-JSON.
+      In this case, the table must not be uploaded as a ZIP file.`
   }
 ];
 
@@ -47,7 +47,7 @@ const HelpDialog: FC<DialogProps> = ({
 
   const maxSteps = steps.length;
 
-  const dispatch = useAppDispatch();
+  //const dispatch = useAppDispatch();
 
   const handleOnClose = (event: {}, reason: 'backdropClick' | 'escapeKeyDown') => {
     setActiveStep(0);

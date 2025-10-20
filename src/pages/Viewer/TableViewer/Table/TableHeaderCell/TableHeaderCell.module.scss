@@ -31,7 +31,7 @@
   }
 
   &:hover {
-    .ColumnSelectionButton {
+    .ColumnManageButton {
       visibility: visible;
     }
 
@@ -40,7 +40,7 @@
     }
   }
 
-  .ColumnSelectionButton {
+  .ColumnManageButton {
     position: absolute;
     top: 5px;
     right: 5px;

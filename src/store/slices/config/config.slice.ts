@@ -9,6 +9,7 @@ const initialState: IConfigState = {
   entities: {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] },
+    modifiers: { byId: {}, allIds: [] },
   },
   _requests: { byId: {}, allIds: [] },
 };
@@ -32,6 +33,7 @@ export const configSlice = createSliceWithRequests({
       const reconciliators =
         payload.reconciliators || payload.reconcilers || payload.services || [];
       const extenders = payload.extenders || payload.extensions || [];
+      const modifiers = payload.modifiers || payload.extensions || [];
 
       console.log("Config slice - found data:", {
         reconciliators: {
@@ -43,6 +45,11 @@ export const configSlice = createSliceWithRequests({
           type: typeof extenders,
           isArray: Array.isArray(extenders),
           length: extenders?.length,
+        },
+        modifiers: {
+          type: typeof modifiers,
+          isArray: Array.isArray(modifiers),
+          length: modifiers?.length,
         },
       });
 
@@ -67,6 +74,16 @@ export const configSlice = createSliceWithRequests({
         });
       } else {
         console.warn("Config slice - extenders not found or not an array");
+      }
+
+      // Process modifiers if they exist and are an array
+      if (Array.isArray(modifiers)) {
+        modifiers.forEach((modifier) => {
+          state.entities.modifiers.byId[modifier.id] = modifier;
+          state.entities.modifiers.allIds.push(modifier.id);
+        });
+      } else {
+        console.warn("Config slice - modifiers not found or not an array");
       }
     }),
 });

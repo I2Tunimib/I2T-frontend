@@ -1,10 +1,10 @@
-import { useAppSelector } from "@hooks/store";
+//import { useAppSelector } from "@hooks/store";
 import { current, PayloadAction } from "@reduxjs/toolkit";
 import tableAPI, { GetTableResponse } from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
 import { buildURI } from "@services/utils/uri-utils";
-import { RootState, store } from "@store";
+//import { RootState, store } from "@store";
 import { createSliceWithRequests } from "@store/enhancers/requests";
 import {
   applyRedoPatches,
@@ -13,12 +13,12 @@ import {
 } from "@store/enhancers/undo";
 import { ID, Payload } from "@store/interfaces/store";
 import { property } from "lodash";
-import { a } from "react-spring";
-import axios from "axios";
-import {
-  selectReconciliators,
-  selectReconciliatorsAsArray,
-} from "../config/config.selectors";
+//import { a } from "react-spring";
+//import axios from "axios";
+//import {
+//  selectReconciliators,
+//  selectReconciliatorsAsArray,
+//} from "../config/config.selectors";
 import {
   AddCellMetadataPayload,
   AddColumnMetadataPayload,
@@ -32,15 +32,15 @@ import {
   DeleteColumnPayload,
   DeleteRowPayload,
   DeleteSelectedPayload,
-  ExtendFulfilledPayload,
-  FileFormat,
+  //ExtendFulfilledPayload,
+  //FileFormat,
   PasteCellPayload,
   ReconciliationFulfilledPayload,
   RefineMatchingPayload,
-  RowState,
+  //RowState,
   TableInstance,
   TableState,
-  TableType,
+  //TableType,
   TableUIState,
   UpdateCellEditablePayload,
   UpdateCellLabelPayload,
@@ -61,6 +61,7 @@ import {
   ExtendThunkResponseProps,
   getTable,
   reconcile,
+  modify,
   saveTable,
 } from "./table.thunk";
 import {
@@ -71,10 +72,10 @@ import {
 } from "./utils/table.delete-utils";
 import {
   createCell,
-  getAnnotationMeta,
+  //getAnnotationMeta,
   getColumnAnnotationMeta,
   getColumnMetadata,
-  getMetadata,
+  //getMetadata,
   updateContext,
 } from "./utils/table.extension-utils";
 import {
@@ -95,7 +96,7 @@ import {
 import {
   areOnlyRowsSelected,
   areRowsColumnsSelected,
-  selectColumnCell,
+  //selectColumnCell,
   selectOneCell,
   selectOneColumn,
   selectOneColumnCell,
@@ -109,11 +110,11 @@ import {
   getCell,
   getColumn,
   getIdsFromCell,
-  getRowCells,
+  //getRowCells,
   removeObject,
   toggleObject,
 } from "./utils/table.utils";
-import { annotate } from "../datasets/datasets.thunk";
+//import { annotate } from "../datasets/datasets.thunk";
 
 const initialState: TableState = {
   entities: {
@@ -134,8 +135,10 @@ const initialState: TableState = {
     headerExpanded: false,
     openReconciliateDialog: false,
     openExtensionDialog: false,
+    openModificationDialog: false,
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
+    metadataColumnDialogColId: null,
     openExportDialog: false,
     openHelpDialog: false,
     settingsDialog: false,
@@ -337,6 +340,34 @@ export const tableSlice = createSliceWithRequests({
       state.ui.editableCellsIds = removeObject(
         state.ui.editableCellsIds,
         cellId,
+      );
+    },
+    /**
+     * Handle update of cell label of a column.
+     * --UNDOABLE ACTION--
+     */
+    updateColumnCellsLabels: (
+      state,
+      action: PayloadAction<Payload<{ updates: { cellId: ID; value: string }[] }>>
+    ) => {
+      const { updates, undoable = true } = action.payload;
+
+      return produceWithPatch(
+        state,
+        undoable,
+        (draft) => {
+          updates.forEach(({ cellId, value }) => {
+            const [rowId, colId] = getIdsFromCell(cellId);
+            const cell = getCell(draft, rowId, colId);
+            if (cell) {
+              cell.label = value;
+            }
+          });
+        },
+        (draft) => {
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        }
       );
     },
     addCellMetadata: (
@@ -1366,16 +1397,14 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<AddColumnTypePayload[]>>,
     ) => {
-      const { selectedColumnCellsIds } = state.ui;
       const undoable = true;
-      const colId = Object.keys(selectedColumnCellsIds)[0];
-      const columns = state.entities;
+      const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
       const nextState = produceWithPatch(
         state,
         undoable,
         (draft) => {
           const { columns } = draft.entities;
-          const newTypes = action.payload.map((type) => ({
+          const newTypes = action.payload.newTypes.map((type) => ({
             ...type,
             match: true,
             score: 100,
@@ -1439,9 +1468,8 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<Payload<UpdateColumnTypePayload[]>>,
     ) => {
       // const { undoable = true, ...type } = action.payload;
-      const { selectedColumnCellsIds } = state.ui;
       const undoable = true;
-      const colId = Object.keys(selectedColumnCellsIds)[0];
+      const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
 
       const nextState = produceWithPatch(
         state,
@@ -1481,10 +1509,9 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<UpdateColumnTypeMatchesPayload>>,
     ) => {
-      const { selectedColumnCellsIds } = state.ui;
       const { typeIds, undoable = true } = action.payload;
       console.log("updateColumnTypeMatches", action.payload);
-      const colId = Object.keys(selectedColumnCellsIds)[0];
+      const colId = state.ui.metadataColumnDialogColId || Object.keys(state.ui.selectedColumnCellsIds)[0];
 
       return produceWithPatch(
         state,
@@ -2109,7 +2136,105 @@ export const tableSlice = createSliceWithRequests({
           // }, (draft) => {
           //   draft.entities.tableInstance.lastModifiedDate = new Date().toISOString();
           // });
-        },
+        }
+      )
+      .addCase(
+        modify.fulfilled,
+        (state, action: PayloadAction<Payload<ExtendThunkResponseProps>>) => {
+          const {
+            data,
+            modifier,
+            selectedColumnId,
+            undoable = true,
+          } = action.payload;
+
+          const { columns, meta, originalColMeta } = data;
+          const newColumnsIds = Object.keys(columns);
+          return produceWithPatch(
+            state,
+            undoable,
+            (draft) => {
+              // Find the index of the selected column that was modified
+              const selectedColumnIndex =
+                draft.entities.columns.allIds.findIndex(
+                  (colId) => colId === selectedColumnId
+                );
+
+              newColumnsIds.forEach((newColId, newColIndex) => {
+                const {
+                  metadata: columnMetadata,
+                  cells,
+                  label,
+                  ...rest
+                } = columns[newColId];
+
+                // add new column
+                draft.entities.columns.byId[newColId] = {
+                  id: newColId,
+                  label,
+                  metadata: getColumnMetadata(columnMetadata),
+                  status: ColumnStatus.EMPTY,
+                  context: {},
+                  ...getColumnAnnotationMeta(columnMetadata),
+                  ...rest,
+                };
+
+                // add rows
+
+                draft.entities.rows.allIds.forEach((rowId) => {
+                  const newCell = createCell(rowId, newColId, cells[rowId]);
+                  if (newCell.metadata.length === 0) {
+                    newCell.annotationMeta = {
+                      annotated: false,
+                      match: {
+                        value: false,
+                      },
+                    };
+                  }
+                  draft.entities.rows.byId[rowId].cells[newColId] = newCell;
+                  if (newCell.metadata.length > 0) {
+                    updateContext(draft, newCell);
+                  }
+                });
+
+                draft.entities.columns.byId[newColId].status = getColumnStatus(
+                  draft,
+                  newColId
+                );
+
+                // Insert the new column right after the selected column
+                if (!draft.entities.columns.allIds.includes(newColId)) {
+                  draft.entities.columns.allIds.push(newColId);
+                }
+              });
+              updateNumberOfReconciliatedCells(draft);
+              //add additional meta if needed (up to now only properties)
+              if (originalColMeta && originalColMeta.originalColName) {
+                if (
+                  draft.entities.columns.byId[originalColMeta.originalColName]
+                    .metadata[0].property
+                ) {
+                  draft.entities.columns.byId[
+                    originalColMeta.originalColName
+                  ].metadata[0].property = [
+                    ...draft.entities.columns.byId[
+                      originalColMeta.originalColName
+                    ].metadata[0].property,
+                    ...originalColMeta.properties,
+                  ];
+                } else {
+                  draft.entities.columns.byId[
+                    originalColMeta.originalColName
+                  ].metadata[0].property = originalColMeta.properties;
+                }
+              }
+            },
+            (draft) => {
+              draft.entities.tableInstance.lastModifiedDate =
+                new Date().toISOString();
+            }
+          );
+        }
       ),
 });
 
@@ -2122,6 +2247,7 @@ export const {
   updateColumnEditable,
   updateCellEditable,
   updateCellLabel,
+  updateColumnCellsLabels,
   addColumnMetadata,
   deleteColumnMetadata,
   addCellMetadata,

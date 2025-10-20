@@ -191,10 +191,23 @@ export const deselectColumnCell = (state: Draft<TableState>, colId: ID) => {
 };
 
 export const selectOneColumnCell = (state: Draft<TableState>, colId: ID) => {
-  state.ui.selectedColumnsIds = {};
-  state.ui.selectedColumnCellsIds = {};
-  state.ui.selectedCellIds = {};
-  state.ui.selectedColumnCellsIds[colId] = true;
+  const isAlreadySelected = !!state.ui.selectedColumnCellsIds[colId];
+  if (isAlreadySelected) {
+    // deselect if already selected
+    state.ui.selectedColumnsIds = {};
+    state.ui.selectedColumnCellsIds = {};
+    state.ui.selectedCellIds = {};
+    state.ui.selectedRowsIds = {};
+  } else {
+    // select header + cells
+    state.ui.selectedColumnsIds = {};
+    state.ui.selectedColumnCellsIds = {};
+    state.ui.selectedCellIds = {};
+    state.ui.selectedRowsIds = {};
+
+    selectColumnWithCells(state, colId);
+    state.ui.selectedColumnCellsIds[colId] = true;
+  }
 };
 
 /**
@@ -275,10 +288,14 @@ export const toggleColumnSelection = (state: Draft<TableState>, colId: ID) => {
   }
 };
 export const toggleColumnCellsSelection = (state: Draft<TableState>, colId: ID) => {
+  // already selected then deselect header + cells
   if (colId in state.ui.selectedColumnCellsIds) {
-    deselectColumnCell(state, colId);
+    deselectColumnWithCells(state, colId);
+    state.ui.selectedColumnCellsIds = removeObject(state.ui.selectedColumnCellsIds, colId);
   } else {
-    selectColumnCell(state, colId);
+    // select header + cells
+    selectColumnWithCells(state, colId);
+    state.ui.selectedColumnCellsIds[colId] = true;
   }
 };
 /**
