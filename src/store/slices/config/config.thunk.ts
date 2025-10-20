@@ -12,5 +12,5 @@ export const getConfig = createAsyncThunk(
   async () => {
     const response = await configAPI.getConfig();
     return response.data;
-  }
+  },
 );

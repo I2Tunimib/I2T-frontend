@@ -50,7 +50,9 @@ import DynamicExtensionForm from "@components/core/DynamicForm/DynamicForm";
 
 const Transition = forwardRef(
   (
-    props: TransitionProps & { children?: ReactElement<any, any> },
+    props: TransitionProps & {
+      children: ReactElement<any, any>;
+    },
     ref: Ref<unknown>,
   ) => <Slide direction="down" ref={ref} {...props} />,
 );
@@ -76,7 +78,8 @@ const DialogInnerContent = () => {
   async function groupServices() {
     const groupedServsMap = new Map();
     const uniqueExtensionServices = extensionServices.filter(
-        (service, index, self) => index === self.findIndex((s) => s.id === service.id)
+      (service, index, self) =>
+        index === self.findIndex((s) => s.id === service.id),
     );
 
     setUniqueServices(uniqueExtensionServices);
@@ -120,12 +123,16 @@ const DialogInnerContent = () => {
 
   const handleSubmit = (formState: Record<string, any>, reset?: Function) => {
     if (currentService) {
-      dispatch(
+      const req = dispatch(
         extend({
           extender: currentService,
           formValues: formState,
         }),
-      )
+      );
+      // expose the dispatched request on window so the parent dialog close handler
+      // can abort it if needed (keeps the change local to the client)
+      (window as any).__extensionRequest = req;
+      req
         .unwrap()
         .then(({ data }) => {
           if (reset) reset();
@@ -142,13 +149,19 @@ const DialogInnerContent = () => {
               horizontal: "center",
             },
           });
+        })
+        .finally(() => {
+          // clear the global reference if it's still pointing to this request
+          if ((window as any).__extensionRequest === req) {
+            (window as any).__extensionRequest = null;
+          }
         });
     }
   };
   const toggleGroup = (uri: string) => {
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
-  const handleHeaderClick = (e, uri) => {
+  const handleHeaderClick = (e: React.MouseEvent, uri: string) => {
     e.stopPropagation(); // Prevent the Select from closing
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
@@ -159,6 +172,7 @@ const DialogInnerContent = () => {
           value={currentService ? currentService.id : ""}
           onChange={handleChange}
           variant="outlined"
+          displayEmpty
           MenuProps={{
             PaperProps: {
               style: {
@@ -167,18 +181,28 @@ const DialogInnerContent = () => {
             },
           }}
           renderValue={(selected) => {
+            if (!selected) {
+              return (
+                <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                  Choose an extension service...
+                </em>
+              );
+            }
             const selectedService = extensionServices.find(
               (service) => service.id === selected,
             );
             return selectedService ? selectedService.name : "";
           }}
         >
+          <MenuItem disabled value="">
+            <em>Choose an extension service...</em>
+          </MenuItem>
           {uniqueServices.map((extender) => (
             <MenuItem
               key={extender.id}
               value={extender.id}
               sx={{ pl: 4 }}
-              onClick={() => handleChange({ target: { value: extender.id } })}
+              onClick={() => setCurrentService(extender)}
             >
               {extender.name}
             </MenuItem>
@@ -190,18 +214,41 @@ const DialogInnerContent = () => {
           <SquaredBox
             dangerouslySetInnerHTML={{ __html: currentService.description }}
           />
-          {!cellReconciliated && (
+          {!cellReconciliated && !currentService.skipFiltering && (
             <Alert severity="warning">
               The selected column does not have reconciliated cells, the result
               of the extension will be
               <b> null</b>
             </Alert>
           )}
+          {!cellReconciliated && currentService.skipFiltering && (
+            <Alert severity="info">
+              This service will process all rows, including non-reconciled ones.
+              Non-matched rows will be sent with empty knowledge base
+              identifiers.
+            </Alert>
+          )}
+          {cellReconciliated && currentService.skipFiltering && (
+            <Alert severity="info">
+              This service will process all rows, including any non-reconciled
+              ones that may exist in your table.
+            </Alert>
+          )}
           <Divider />
           <DynamicExtensionForm
             loading={loading}
             onSubmit={handleSubmit}
-            onCancel={handleClose}
+            onCancel={() => {
+              // abort any in-flight extension request when user cancels the modal form
+              if (
+                (window as any).__extensionRequest &&
+                (window as any).__extensionRequest.abort
+              ) {
+                (window as any).__extensionRequest.abort();
+                (window as any).__extensionRequest = null;
+              }
+              handleClose();
+            }}
             service={currentService}
           />
         </>
@@ -218,13 +265,25 @@ export type ExtensionDialogProps = {
 const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
   const dispatch = useAppDispatch();
 
+  const handleDialogClose = () => {
+    // abort any in-flight extension request when dialog is closed
+    if (
+      (window as any).__extensionRequest &&
+      (window as any).__extensionRequest.abort
+    ) {
+      (window as any).__extensionRequest.abort();
+      (window as any).__extensionRequest = null;
+    }
+    handleClose();
+  };
+
   return (
-    <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-      >
+    <Dialog
+      open={open}
+      TransitionComponent={Transition}
+      onClose={handleDialogClose}
+    >
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Extension</DialogTitle>
 
         <IconButton

@@ -19,7 +19,7 @@ import {
 } from "@store/slices/datasets/datasets.selectors";
 import { updateUI } from "@store/slices/datasets/datasets.slice";
 //import { LoadingButton } from "@mui/lab";
-import { ChangeEvent, useState, FocusEvent, useRef } from "react";
+import { ChangeEvent, useState, FocusEvent, useRef, useEffect } from "react";
 import { uploadDataset } from "@store/slices/datasets/datasets.thunk";
 import HelpDialog from "../HelpDialog/HelpDialog";
 
@@ -41,7 +41,24 @@ const UploadDataset = () => {
     selectUploadDatasetStatus
   );
 
+  const resetForm = () => {
+    setDatasetName("");
+    setDatasetFile(undefined);
+    setError({});
+    if (ref && ref.current) {
+      ref.current.value = "";
+    }
+  };
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
   const handleClose = () => {
+    resetForm();
     dispatch(updateUI({ uploadDatasetDialogOpen: false }));
   };
 
@@ -57,6 +74,7 @@ const UploadDataset = () => {
       dispatch(uploadDataset({ formData }))
         .unwrap()
         .then(() => {
+          resetForm();
           handleClose();
         });
     }

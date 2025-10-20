@@ -81,7 +81,7 @@ const CONFIG: AppConfig = {
         path: "/dataset/:datasetId/table/:tableId",
       },
       AUTOMATIC_ANNOTATION: {
-        path: "/reconciliators/mantis/dataset/:datasetId/table/:tableId",
+        path: "/reconcilers/mantis/dataset/:datasetId/table/:tableId",
       },
       PROCESS_START: [
         {
