@@ -35,6 +35,7 @@ import { selectAppConfig } from '@store/slices/config/config.selectors';
 //import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 //import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import { IconButtonTooltip } from '@components/core';
 import UserAvatar from '@components/kit/UserAvatar';
 import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
@@ -192,6 +193,18 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
+          <>
+            <Button
+              onClick={() => dispatch(updateUI({ openExportDialog: true }))}
+              variant="contained"
+              color="primary"
+              size="medium"
+              startIcon={<AssignmentTurnedInOutlinedIcon />}
+            >
+              Compliance
+            </Button>
+            <ExportDialog />
+          </>
           <Button
             color="primary"
             disabled={loadingAutomaticAnnotation || (currentTable && currentTable.mantisStatus === 'PENDING')}
