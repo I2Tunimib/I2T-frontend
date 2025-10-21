@@ -373,8 +373,11 @@ const getRequestFormValuesExtension = (
 
   if (shouldSkipFiltering) {
     // Skip filtering - include all rows regardless of reconciliation status
-    if (extender && extender.id === "llmClassifier") {
-      console.log("intercepted llmClassifier with skipFiltering enabled");
+    if (extender && (extender.id === "llmClassifier" || extender.allValues)) {
+      console.log(
+        "intercepted extender with rich objects and skipFiltering enabled",
+        extender.id,
+      );
       requestParams.items = selectedColumnsIds.reduce(
         (acc, key) => {
           acc[key] = getAllColumnMetaObjects(key, rows);
@@ -394,8 +397,8 @@ const getRequestFormValuesExtension = (
     }
   } else {
     // Use existing filtering logic - only include reconciled items
-    if (extender && extender.id === "llmClassifier") {
-      console.log("intercepted llmClassifier");
+    if (extender && (extender.id === "llmClassifier" || extender.allValues)) {
+      console.log("intercepted extender with rich objects", extender.id);
       requestParams.items = selectedColumnsIds.reduce(
         (acc, key) => {
           acc[key] = getColumnMetaObjects(key, rows);
@@ -404,7 +407,7 @@ const getRequestFormValuesExtension = (
         {} as Record<string, any>,
       );
     } else {
-      // fallback: if extender is undefined or not llmClassifier, use KB id logic
+      // fallback: if extender is undefined or doesn't need rich objects, use KB id logic
       requestParams.items = selectedColumnsIds.reduce(
         (acc, key) => {
           acc[key] = getColumnMetaIds(key, rows);
