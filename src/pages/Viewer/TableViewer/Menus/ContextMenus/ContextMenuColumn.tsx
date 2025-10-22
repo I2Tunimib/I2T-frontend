@@ -199,14 +199,10 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
       <StyledMenuList
         autoFocus //className={classes.list}
       >
-        <MenuItemIconLabel
-          onClick={handleModify}
-          Icon={TransformIcon}>
+        <MenuItemIconLabel onClick={handleModify} Icon={EditRoundedIcon}>
           Modify column
         </MenuItemIconLabel>
-        <MenuItemIconLabel
-          onClick={handleReconcile}
-          Icon={LinkRoundedIcon}>
+        <MenuItemIconLabel onClick={handleReconcile} Icon={LinkRoundedIcon}>
           Reconcile column
         </MenuItemIconLabel>
         <MenuItemIconLabel onClick={handleExtend} Icon={AddRoundedIcon}>
