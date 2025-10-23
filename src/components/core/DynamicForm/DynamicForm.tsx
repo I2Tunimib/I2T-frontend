@@ -8,6 +8,7 @@ import {
   FormControl,
   FormControlLabel,
   Checkbox,
+  TextField,
 } from "@mui/material";
 import {
   Extender,
@@ -18,6 +19,7 @@ import React, { FC, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useAppDispatch } from "@hooks/store";
 import { suggest } from "@store/slices/table/table.thunk";
+import { filterDetailLevelOptions } from "@services/utils/date-formatter-utils";
 import {
   FORM_COMPONENTS,
   getDefaultValues,
@@ -43,9 +45,16 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<any[]>([]);
   const selectedColumns = service.selectedColumns || [];
-  const { control, handleSubmit, reset, setValue, formState } = useForm({
+  const { control, handleSubmit, reset, setValue, formState, watch } = useForm({
     defaultValues: getDefaultValues(service),
   });
+  const formatType = watch("formatType");
+  const selectedColumnTypes = selectedColumns.map((col, index) => service.columnType[index]);
+  const hasDate = selectedColumnTypes.filter((type) => type === "date");
+  const hasTime = selectedColumnTypes.filter((type) => type === "time");
+  const hasDatetime = selectedColumnTypes.filter((type) => type === "datetime");
+  const isJoinInvalid = hasDate.length > 1 || hasTime.length > 1 || selectedColumns.length > 2 ||
+    (hasDatetime && (hasDate || hasTime));
 
   useEffect(() => {
     // rest form to selected extender values
@@ -55,7 +64,10 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const { formParams } = service;
 
   const onSubmit = (formValue: any) => {
-    onSubmitCallback({ ...formValue, selectedColumns }, () => reset(getDefaultValues(service)));
+    onSubmitCallback(
+      { ...formValue, selectedColumns, columnType: service.columnType },
+      () => reset(getDefaultValues(service))
+    );
   };
 
   const onCancel = () => {
@@ -80,26 +92,93 @@ const DynamicForm: FC<DynamicFormProps> = ({
     setValue("properties", value.join(" "));
   };
 
+  const modifiedFormParams = React.useMemo(() => {
+    if (!service.formParams) return [];
+
+    return service.formParams.map((param) => {
+      if (param.id === "detailLevel") {
+        return {
+          ...param,
+          options: filterDetailLevelOptions(param.options || [], service.columnType, formatType),
+        };
+      }
+      return param;
+    });
+  }, [service.formParams, service.columnType, formatType]);
+
   return (
     <Stack component="form" gap="20px" onSubmit={handleSubmit(onSubmit)}>
-      {formParams &&
-        formParams.map(({ id, inputType, conditional, ...inputProps }) => {
-          if (
-              service.id === "dateFormatter" &&
-              selectedColumns.length > 1 &&
-              id === "outputMode"
-          ) {
-            return null;
-          }
-          if (conditional) {
-            const fieldValue = useWatch({
-              control,
-              name: conditional.field,
-            });
-            if (fieldValue !== conditional.value) {
-              return;
+      {service.id === "dateFormatter" && (isJoinInvalid ? (
+        <div style={{ color: "red", marginTop: 8 }}>
+          Please select either
+          <b> one date column </b>
+          and
+          <b> one time column </b>
+          to create a datetime column, or
+          <b> only date </b>
+          or
+          <b> only time column </b>
+          .
+        </div>
+      ) : (
+        <>
+          {modifiedFormParams.map(({ id, inputType, conditional, ...inputProps }) => {
+            if (service.id === "dateFormatter") {
+              if (selectedColumns.length > 1 && id === "outputMode") return null;
+              if (id === "detailLevel" && formatType === "custom") return null;
             }
-          }
+            if (conditional) {
+              const fieldValue = useWatch({ control, name: conditional.field });
+              if (fieldValue !== conditional.value) return;
+            }
+            const FormComponent = FORM_COMPONENTS[inputType];
+            return (
+              <Controller
+                key={id}
+                defaultValue=""
+                rules={getRules(inputProps.rules)}
+                render={({ field }) => (
+                  <FormComponent
+                    id={id}
+                    formState={formState}
+                    reset={reset}
+                    setValue={setValue}
+                    {...field}
+                    {...(prepareFormInput(inputProps) as any)}
+                  />
+                )}
+                name={id}
+                control={control}
+              />
+            );
+          })}
+          {selectedColumns.length > 1 && (
+            <Controller
+              name="joinColumns"
+              control={control}
+              defaultValue={false}
+              render={({ field }) => (
+                <>
+                  <FormControlLabel
+                    control={<Checkbox {...field} checked={field.value} />}
+                    label="Join selected columns"
+                  />
+                  {field.value && service.columnType !== "datetime" && (
+                    <Controller
+                      name="separator"
+                      control={control}
+                      defaultValue="; "
+                      render={({ field }) => <TextField {...field} label="Separator" />}
+                    />
+                  )}
+                </>
+              )}
+            />
+          )}
+        </>
+      ))}
+      {service.id !== "dateFormatter" && formParams &&
+        formParams.map(({ id, inputType, ...inputProps }) => {
           const FormComponent = FORM_COMPONENTS[inputType];
           return (
             <Controller
@@ -120,20 +199,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
               control={control}
             />
           );
-        })}
-      {service.id === "dateFormatter" && selectedColumns.length > 1 && (
-        <Controller
-          name="joinColumns"
-          control={control}
-          defaultValue={false}
-          render={({ field }) => (
-            <FormControlLabel
-              control={<Checkbox {...field} checked={field.value} />}
-              label="Join selected columns"
-            />
-          )}
-        />
-      )}
+      })}
       {service.id === "wikidataPropertySPARQL" && (
         <Button
           variant="outlined"
@@ -208,7 +274,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
       )}
       <Stack direction="row" justifyContent="flex-end" spacing={2}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="outlined" type="submit" loading={loading}>
+        <Button variant="outlined" type="submit" loading={loading} disabled={service.id === "dateFormatter" && isJoinInvalid}>
           Confirm
         </Button>
       </Stack>

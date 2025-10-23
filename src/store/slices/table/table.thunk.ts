@@ -630,6 +630,8 @@ export const modify = createAsyncThunk<
     ...getRequestFormValuesModification(formParams, formValues, table),
     joinColumns: formValues.joinColumns,
     selectedColumns: formValues.joinColumns ? formValues.selectedColumns : undefined,
+    columnType: formValues.columnType,
+    separator: formValues.joinColumns ? formValues.separator : undefined,
   };
 
   const response = await tableAPI.modify(

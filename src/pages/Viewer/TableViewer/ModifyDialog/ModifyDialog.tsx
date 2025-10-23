@@ -26,6 +26,8 @@ import { modify } from "@store/slices/table/table.thunk";
 import { useSnackbar } from "notistack";
 import { SquaredBox } from "@components/core";
 import DynamicModificationForm from "@components/core/DynamicForm/DynamicForm";
+import { dateFormatterUtils } from "@services/utils/date-formatter-utils";
+import { RootState } from "@store";
 
 const Transition = forwardRef(
   (
@@ -52,6 +54,33 @@ const DialogInnerContent = () => {
   const { loading, error } = useAppSelector(selectModifyRequestStatus);
   const selectedColumnsArray = useAppSelector(selectSelectedColumnIdsAsArray);
   const [joinColumns, setJoinColumns] = useState(false);
+  const rows = useAppSelector((state: RootState) => state.table.entities.rows);
+
+  const sampledValues = React.useMemo(() => {
+    if (!rows || selectedColumnsArray.length === 0) return [];
+    const values: string[] = [];
+    const maxSample = 10;
+
+    selectedColumnsArray.forEach((colId) => {
+      for (let i = 0; i < Math.min(rows.allIds.length, maxSample); i++) {
+        const rowId = rows.allIds[i];
+        const cell = rows.byId[rowId].cells[colId];
+        if (cell?.label != null) {
+          values.push(String(cell.label).trim());
+        }
+      }
+    });
+
+    return values;
+  }, [rows, selectedColumnsArray]);
+
+  const serviceWithColumnType = React.useMemo(() => {
+    if (!currentService) return undefined;
+    return {
+      ...currentService,
+      columnType: dateFormatterUtils(sampledValues),
+    };
+  }, [currentService, sampledValues]);
 
   async function groupServices() {
     const groupedServsMap = new Map();
@@ -190,7 +219,7 @@ const DialogInnerContent = () => {
             loading={loading}
             onSubmit={handleSubmit}
             onCancel={handleClose}
-            service={{ ...serviceWithDescription, selectedColumns: selectedColumnsArray }}
+            service={{ ...serviceWithDescription, ...serviceWithColumnType, selectedColumns: selectedColumnsArray }}
           />
         </>
       )}
