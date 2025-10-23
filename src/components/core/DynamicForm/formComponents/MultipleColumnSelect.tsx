@@ -6,8 +6,10 @@ import {
   MenuItem,
   Select as SelectMaterial,
   Stack,
+  Button,
+  Box,
 } from "@mui/material";
-import { forwardRef, useEffect } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { useAppSelector } from "@hooks/store";
 import { selectColumnsAsSelectOptions } from "@store/slices/table/table.selectors";
 import { SelectInputProps } from "@mui/material/Select/SelectInput";
@@ -37,7 +39,6 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       infoText,
       options,
       defaultValue,
-      children,
       formState,
       reset,
       setValue,
@@ -49,8 +50,18 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
     ref
   ) => {
     const { errors } = formState;
+    const [open, setOpen] = useState(false);
 
     const error = Boolean(errors[id]);
+
+    const handleClose = () => {
+      setOpen(false);
+    };
+
+    const handleConfirm = () => {
+      setOpen(false);
+    };
+
     return (
       <Stack gap="10px">
         <InputDescription description={description} infoText={infoText} />
@@ -63,6 +74,31 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
             labelId="select-match"
             label={label}
             value={Array.isArray(value) ? value : [value]}
+            open={open}
+            onOpen={() => setOpen(true)}
+            onClose={handleClose}
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  maxHeight: 300,
+                },
+                sx: {
+                  "& .MuiList-root": {
+                    paddingBottom: 0,
+                  },
+                  display: "flex",
+                  flexDirection: "column",
+                },
+              },
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "left",
+              },
+              transformOrigin: {
+                vertical: "top",
+                horizontal: "left",
+              },
+            }}
             {...props}
           >
             {options.map((option) => (
@@ -70,8 +106,34 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
                 {option.label}
               </MenuItem>
             ))}
+            <Box
+              component="div"
+              sx={{
+                p: 1,
+                borderTop: 1,
+                borderColor: "divider",
+                backgroundColor: "background.paper",
+                position: "sticky",
+                bottom: 0,
+                zIndex: 1,
+                margin: 0,
+              }}
+              onClick={(e) => e.stopPropagation()} // Prevent menu from closing when clicking the box
+            >
+              <Button
+                variant="contained"
+                size="small"
+                fullWidth
+                onClick={handleConfirm}
+                onMouseDown={(e) => e.stopPropagation()} // Prevent menu item selection behavior
+              >
+                Confirm
+              </Button>
+            </Box>
           </SelectMaterial>
-          {error && <FormHelperText>{errors[id].message}</FormHelperText>}
+          {error && (
+            <FormHelperText>{String(errors[id]?.message || "")}</FormHelperText>
+          )}
         </FormControl>
       </Stack>
     );

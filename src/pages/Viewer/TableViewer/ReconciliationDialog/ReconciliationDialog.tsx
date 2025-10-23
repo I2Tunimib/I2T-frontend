@@ -44,7 +44,10 @@ import {
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
 import { SquaredBox } from "@components/core";
-import { Reconciliator } from "@store/slices/config/interfaces/config";
+import {
+  Extender,
+  Reconciliator,
+} from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import {
   //ExpandLess,
@@ -57,9 +60,11 @@ import { selectIsHelpDialogOpen } from "@store/slices/datasets/datasets.selector
 
 const Transition = forwardRef(
   (
-    props: TransitionProps & { children?: ReactElement<any, any> },
-    ref: Ref<unknown>
-  ) => <Slide direction="down" ref={ref} {...props} />
+    props: TransitionProps & {
+      children: ReactElement<any, any>;
+    },
+    ref: Ref<unknown>,
+  ) => <Slide direction="down" ref={ref} {...props} />,
 );
 
 export type ReconciliationDialogProps = {
@@ -89,13 +94,24 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading, error } = useAppSelector(selectReconcileRequestStatus);
   const selectRef = React.useRef<HTMLDivElement>(null);
+  const reconcileRequestRef = React.useRef<any>(null);
+  useEffect(() => {
+    // Log the value of reconciliators
+
+    // set initial value of select
+    if (reconciliators) {
+      // setCurrentService(reconciliators[0]);
+      groupReconciliators();
+    }
+  }, [reconciliators]);
 
   async function groupReconciliators() {
     const mappedReconciliators = new Map<string, Reconciliator[]>();
     const uniqueGroupNamesSet = new Set<string>();
 
     const uniqueReconciliators = reconciliators.filter(
-        (reconciliator, index, self) => index === self.findIndex((r) => r.id === reconciliator.id)
+      (reconciliator, index, self) =>
+        index === self.findIndex((r) => r.id === reconciliator.id),
     );
 
     for (const reconciliator of uniqueReconciliators) {
@@ -159,7 +175,9 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
 
   const handleServiceChange = (event: SelectChangeEvent<string>) => {
     const serviceId = event.target.value;
-    const selectedService = reconciliators.find((recon) => recon.id === serviceId);
+    const selectedService = reconciliators.find(
+      (recon) => recon.id === serviceId,
+    );
     setCurrentService(selectedService || null);
   };
 
@@ -170,13 +188,13 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
       reconciliators,
       reconciliators.find((recon) => {
         return recon.id === event.target.value;
-      })
+      }),
     );
     if (event.target.value) {
       setCurrentService(
         reconciliators.find((recon) => {
           return recon.id === event.target.value;
-        })
+        }),
       );
       handleServiceSelectClose();
     }
@@ -192,13 +210,16 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const handleSubmit = (formState: Record<string, any>, reset?: Function) => {
     if (!currentService) return;
     console.log("formState", formState);
-    dispatch(
+    const req = dispatch(
       reconcile({
         items: selectedCells,
         reconciliator: currentService,
         formValues: formState,
-      })
-    )
+      }),
+    );
+    // store the dispatched promise-like object so we can abort it if needed
+    reconcileRequestRef.current = req;
+    req
       .unwrap()
       .then((result) => {
         if (reset) reset();
@@ -207,12 +228,15 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
         dispatch(
           updateUI({
             openReconciliateDialog: false,
-          })
+          }),
         );
+      })
+      .finally(() => {
+        reconcileRequestRef.current = null;
       });
   };
 
-  const handleHeaderClick = (e, uri) => {
+  const handleHeaderClick = (e: React.MouseEvent, uri: string) => {
     e.stopPropagation(); // Prevent the Select from closing
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
@@ -223,6 +247,11 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
       TransitionComponent={Transition}
       keepMounted
       onClose={() => {
+        // abort any in-flight reconcile request when dialog is closed
+        if (reconcileRequestRef.current && reconcileRequestRef.current.abort) {
+          reconcileRequestRef.current.abort();
+          reconcileRequestRef.current = null;
+        }
         handleClose();
         setCurrentService(null);
         setExpandedGroup(null);
@@ -232,11 +261,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
         open={helpDialogOpen}
         onClose={() => dispatch(updateUI({ helpDialogOpen: false }))}
       /> */}
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Reconciliation</DialogTitle>
         <IconButton
           sx={{
@@ -263,6 +288,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 value={selectedGroup || ""}
                 onChange={handleGroupChange}
                 variant="outlined"
+                displayEmpty
                 MenuProps={{
                   PaperProps: {
                     style: {
@@ -270,7 +296,20 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                     },
                   },
                 }}
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                        Choose a service group...
+                      </em>
+                    );
+                  }
+                  return selected;
+                }}
               >
+                <MenuItem disabled value="">
+                  <em>Choose a service group...</em>
+                </MenuItem>
                 {uniqueGroupNames.map((groupName) => (
                   <MenuItem key={groupName} value={groupName}>
                     {groupName}
@@ -292,6 +331,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 value={currentService?.id || ""}
                 onChange={handleServiceChange}
                 variant="outlined"
+                displayEmpty
                 MenuProps={{
                   PaperProps: {
                     style: {
@@ -299,15 +339,28 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                     },
                   },
                 }}
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                        Choose a reconciliation service...
+                      </em>
+                    );
+                  }
+                  const selectedService = selectedServices.find(
+                    (service) => service.id === selected,
+                  );
+                  return selectedService ? selectedService.name : "";
+                }}
               >
+                <MenuItem disabled value="">
+                  <em>Choose a reconciliation service...</em>
+                </MenuItem>
                 {selectedServices.map((reconciliator) => (
-                  <MenuItem
-                    key={reconciliator.id}
-                    value={reconciliator.id}
-                  >
+                  <MenuItem key={reconciliator.id} value={reconciliator.id}>
                     {reconciliator.name}
                   </MenuItem>
-                 ))}
+                ))}
               </Select>
             </FormControl>
             {error && <Typography color="error">{error.message}</Typography>}
@@ -330,6 +383,14 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                   loading={loading}
                   onSubmit={handleSubmit}
                   onCancel={() => {
+                    // abort any in-flight reconcile request when user cancels the modal form
+                    if (
+                      reconcileRequestRef.current &&
+                      reconcileRequestRef.current.abort
+                    ) {
+                      reconcileRequestRef.current.abort();
+                      reconcileRequestRef.current = null;
+                    }
                     handleClose();
                     setCurrentService(null);
                     setSelectedGroup(null);
