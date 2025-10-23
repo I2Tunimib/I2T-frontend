@@ -13,6 +13,7 @@ const timeFormats = [
 ];
 
 export function dateFormatterUtils(values: string[]): "date" | "time" | "datetime" | "unknown" {
+  const columnTypes: ("date" | "time" | "datetime" | "unknown")[] = [];
   let hasDate = false;
   let hasTime = false;
 
@@ -22,16 +23,29 @@ export function dateFormatterUtils(values: string[]): "date" | "time" | "datetim
       const [datePart, timePart] = str.split(/[\sT]/);
       if (dateFormats.some((fmt) => isValid(parse(datePart, fmt, new Date())))) hasDate = true;
       if (timePart && timeFormats.some((fmt) => isValid(parse(timePart, fmt, new Date())))) hasTime = true;
+      if (hasDate && hasTime) columnTypes.push("datetime");
+      else if (hasDate) columnTypes.push("date");
+      else if (hasTime) columnTypes.push("time");
+      else columnTypes.push("unknown");
     } else {
-      if (dateFormats.some((fmt) => isValid(parse(str, fmt, new Date())))) hasDate = true;
-      if (timeFormats.some((fmt) => isValid(parse(str, fmt, new Date())))) hasTime = true;
+      if (dateFormats.some((fmt) => isValid(parse(str, fmt, new Date())))) columnTypes.push("date");
+      else if (timeFormats.some((fmt) => isValid(parse(str, fmt, new Date())))) columnTypes.push("time");
+      else columnTypes.push("unknown");
     }
   }
-
-  if (hasDate && hasTime) return "datetime";
-  if (hasDate) return "date";
-  if (hasTime) return "time";
-  return "unknown";
+  const dateCount = columnTypes.filter((type) => type === "date").length;
+  const timeCount = columnTypes.filter((type) => type === "time").length;
+  const datetimeCount = columnTypes.filter((type) => type === "datetime").length;
+  const unknownCount = columnTypes.filter((type) => type === "unknown").length;
+  if (unknownCount > 0 || (datetimeCount > 0 && (dateCount > 0 || timeCount > 0))
+    || (dateCount !== timeCount && dateCount > 0 && timeCount > 0)) return "unknown";
+  if ((dateCount === 1 && timeCount === 1 && columnTypes.length === 2) ||
+      (dateCount === 0 && timeCount === 0 && datetimeCount === 1)) {
+    return "datetime";
+  }
+  if (dateCount === columnTypes.length) return "date";
+  if (timeCount === columnTypes.length) return "time";
+  return "unknwon";
 }
 
 export function filterDetailLevelOptions(

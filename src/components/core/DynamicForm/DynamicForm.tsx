@@ -49,12 +49,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
     defaultValues: getDefaultValues(service),
   });
   const formatType = watch("formatType");
-  const selectedColumnTypes = selectedColumns.map((col, index) => service.columnType[index]);
-  const hasDate = selectedColumnTypes.filter((type) => type === "date");
-  const hasTime = selectedColumnTypes.filter((type) => type === "time");
-  const hasDatetime = selectedColumnTypes.filter((type) => type === "datetime");
-  const isJoinInvalid = hasDate.length > 1 || hasTime.length > 1 || selectedColumns.length > 2 ||
-    (hasDatetime && (hasDate || hasTime));
+  const isJoinInvalid = service.columnType === "unknown";
 
   useEffect(() => {
     // rest form to selected extender values

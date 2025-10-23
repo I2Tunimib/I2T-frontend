@@ -59,15 +59,12 @@ const DialogInnerContent = () => {
   const sampledValues = React.useMemo(() => {
     if (!rows || selectedColumnsArray.length === 0) return [];
     const values: string[] = [];
-    const maxSample = 10;
 
     selectedColumnsArray.forEach((colId) => {
-      for (let i = 0; i < Math.min(rows.allIds.length, maxSample); i++) {
-        const rowId = rows.allIds[i];
-        const cell = rows.byId[rowId].cells[colId];
-        if (cell?.label != null) {
-          values.push(String(cell.label).trim());
-        }
+      const rowId = rows.allIds[0];
+      const cell = rows.byId[rowId].cells[colId];
+      if (cell?.label != null) {
+        values.push(String(cell.label).trim());
       }
     });
 
