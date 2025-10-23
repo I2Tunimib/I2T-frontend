@@ -117,7 +117,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
           to create a datetime column, or
           <b> only date </b>
           or
-          <b> only time column </b>
+          <b> only time column</b>
           .
         </div>
       ) : (
