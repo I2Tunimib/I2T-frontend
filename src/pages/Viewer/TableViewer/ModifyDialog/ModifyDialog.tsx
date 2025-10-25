@@ -130,7 +130,7 @@ const DialogInnerContent = () => {
       const payload = {
         ...formState,
         joinColumns: formState.joinColumns ?? false,
-        selectedColumns: formState.joinColumns ? selectedColumnsArray : undefined,
+        selectedColumns: selectedColumnsArray,
       };
       console.log("payload", payload);
       const { data } = await dispatch(

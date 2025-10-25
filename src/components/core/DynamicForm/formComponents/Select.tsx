@@ -7,7 +7,7 @@ import {
   Select as SelectMaterial,
   Stack,
 } from "@mui/material";
-import { forwardRef, useEffect } from "react";
+import { forwardRef } from "react";
 import { useAppSelector } from "@hooks/store";
 import { selectColumnsAsSelectOptions } from "@store/slices/table/table.selectors";
 import { SelectInputProps } from "@mui/material/Select/SelectInput";
@@ -42,6 +42,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       reset,
       setValue,
       onChange,
+      selectedColumns,
       ...props
     },
     ref
@@ -63,7 +64,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
             {...props}
           >
             {options.map((option) => (
-              <MenuItem key={option.id} value={option.value}>
+              <MenuItem key={option.id} value={option.value} disabled={option.disabled}>
                 {option.label}
               </MenuItem>
             ))}
@@ -80,18 +81,19 @@ export type SelectColumnProps = Omit<SelectProps, "options">;
 /**
  * Select component where the options are the columns of the table
  */
-export const SelectColumns = forwardRef<HTMLInputElement, SelectColumnProps>(
+export const SelectColumns = forwardRef<HTMLInputElement, SelectColumnProps & { selectedColumns?: string[] }>(
   (props, ref) => {
-    const { id, setValue } = props;
-
+    const { id, setValue, selectedColumns = [] } = props;
     const options = useAppSelector(selectColumnsAsSelectOptions);
 
-    // useEffect(() => {
-    //   if (options && options.length > 0) {
-    //     setValue(id, options[0].value);
-    //   }
-    // }, [setValue, options]);
-
-    return <Select ref={ref} options={options} {...props} />;
+    const modifiedOptions = options.map((option) => {
+      const isSelected = selectedColumns.includes(option.value);
+      return {
+        ...option,
+        label: isSelected ? `${option.label} (selected)` : option.label,
+        disabled: isSelected,
+      };
+    });
+    return <Select ref={ref} options={modifiedOptions} {...props} />;
   }
 );

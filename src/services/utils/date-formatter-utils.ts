@@ -61,18 +61,24 @@ export function filterDetailLevelOptions(
   }
   switch (formatType) {
     case "iso":
-      filtered = filtered.filter((dl) => !["year", "monthYear", "monthNumber", "monthText", "day", "hourMinutes12",
-        "seconds12", "timezoneAbbr"].includes(dl.id));
+      filtered = filtered.filter((dl) => !["year", "monthYear", "monthNumber",
+        "monthText", "day", "hourMinutes12", "seconds12", "timezoneAbbr"].includes(dl.id));
       break;
     case "european":
-      filtered = filtered.filter((dl) => !["hourMinutes12", "seconds12", "timezone"].includes(dl.id));
+      filtered = filtered.filter((dl) => !["hourMinutes12", "seconds12",
+        "timezone"].includes(dl.id));
       break;
     case "us":
-      filtered = filtered.filter((dl) => !["hourMinutes", "seconds", "timezone"].includes(dl.id));
+      filtered = filtered.filter((dl) => !["hourMinutes", "seconds",
+        "timezone"].includes(dl.id));
       break;
     case "custom":
     default:
       break;
+  }
+  if (columnType === "datetime") {
+    filtered = filtered.filter((dl) => !["year", "monthYear", "monthNumber",
+      "monthText", "day", "dateOnly"].includes(dl.id));
   }
   return filtered;
 }

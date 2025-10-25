@@ -17,9 +17,10 @@ import {
 } from "@store/slices/config/interfaces/config";
 import React, { FC, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { useAppDispatch } from "@hooks/store";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { suggest } from "@store/slices/table/table.thunk";
-import { filterDetailLevelOptions } from "@services/utils/date-formatter-utils";
+import { filterDetailLevelOptions, dateFormatterUtils } from "@services/utils/date-formatter-utils";
+import { RootState } from "@store";
 import {
   FORM_COMPONENTS,
   getDefaultValues,
@@ -44,12 +45,15 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<any[]>([]);
-  const selectedColumns = service.selectedColumns || [];
+  const selectedColumns = service.selectedColumns;
+  const rows = useAppSelector((state: RootState) => state.table.entities.rows);
   const { control, handleSubmit, reset, setValue, formState, watch } = useForm({
     defaultValues: getDefaultValues(service),
   });
   const formatType = watch("formatType");
+  const columnToJoin = watch("columnToJoin");
   const isJoinInvalid = service.columnType === "unknown";
+  let finalType = "";
 
   useEffect(() => {
     // rest form to selected extender values
@@ -87,19 +91,37 @@ const DynamicForm: FC<DynamicFormProps> = ({
     setValue("properties", value.join(" "));
   };
 
+  if (columnToJoin && selectedColumns.length === 1) {
+    const columns = [...selectedColumns, columnToJoin];
+    const values = [];
+    columns.forEach((colId) => {
+      const rowId = rows.allIds[0];
+      const cell = rows.byId[rowId].cells[colId];
+      if (cell?.label != null) {
+        values.push(String(cell.label).trim());
+      }
+    });
+    finalType = dateFormatterUtils(values);
+  }
+
   const modifiedFormParams = React.useMemo(() => {
     if (!service.formParams) return [];
 
     return service.formParams.map((param) => {
       if (param.id === "detailLevel") {
+        let options = filterDetailLevelOptions(param.options, service.columnType, formatType);
+        if (selectedColumns.length === 1 && columnToJoin && service.columnType !== "datetime" && finalType === "datetime") {
+          options = options.filter((dl) => !["year", "monthYear", "monthNumber",
+            "monthText", "day", "dateOnly"].includes(dl.id));
+        }
         return {
           ...param,
-          options: filterDetailLevelOptions(param.options || [], service.columnType, formatType),
+          options,
         };
       }
       return param;
     });
-  }, [service.formParams, service.columnType, formatType]);
+  }, [service.formParams, service.columnType, formatType, columnToJoin, finalType, selectedColumns]);
 
   return (
     <Stack component="form" gap="20px" onSubmit={handleSubmit(onSubmit)}>
@@ -119,8 +141,9 @@ const DynamicForm: FC<DynamicFormProps> = ({
         <>
           {modifiedFormParams.map(({ id, inputType, conditional, ...inputProps }) => {
             if (service.id === "dateFormatter") {
-              if (selectedColumns.length > 1 && id === "outputMode") return null;
+              if (id === "outputMode" && selectedColumns.length > 1) return null;
               if (id === "detailLevel" && formatType === "custom") return null;
+              if (id === "columnToJoin" && (selectedColumns.length > 1 || service.columnType === "datetime")) return null;
             }
             if (conditional) {
               const fieldValue = useWatch({ control, name: conditional.field });
@@ -138,6 +161,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
                     formState={formState}
                     reset={reset}
                     setValue={setValue}
+                    selectedColumns={selectedColumns}
                     {...field}
                     {...(prepareFormInput(inputProps) as any)}
                   />
@@ -168,6 +192,14 @@ const DynamicForm: FC<DynamicFormProps> = ({
                   )}
                 </>
               )}
+            />
+          )}
+          {selectedColumns.length === 1 && columnToJoin && service.columnType !== "datetime" && finalType !== "datetime" && (
+            <Controller
+              name="separator"
+              control={control}
+              defaultValue="; "
+              render={({ field }) => <TextField {...field} label="Separator" />}
             />
           )}
         </>
