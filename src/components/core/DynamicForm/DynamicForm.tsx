@@ -52,6 +52,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
   });
   const formatType = watch("formatType");
   const columnToJoin = watch("columnToJoin");
+  const splitDatetime = watch("splitDatetime");
   const isJoinInvalid = service.columnType === "unknown";
   let finalType = "";
 
@@ -64,8 +65,11 @@ const DynamicForm: FC<DynamicFormProps> = ({
 
   const onSubmit = (formValue: any) => {
     onSubmitCallback(
-      { ...formValue, selectedColumns, columnType: service.columnType },
-      () => reset(getDefaultValues(service))
+      { ...formValue,
+        selectedColumns,
+        columnType: service.columnType,
+        splitDatetime: formValue.splitDatetime,
+      }, () => reset(getDefaultValues(service))
     );
   };
 
@@ -141,7 +145,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
         <>
           {modifiedFormParams.map(({ id, inputType, conditional, ...inputProps }) => {
             if (service.id === "dateFormatter") {
-              if (id === "outputMode" && selectedColumns.length > 1) return null;
+              if (id === "outputMode" && (selectedColumns.length > 1 || splitDatetime)) return null;
               if (id === "detailLevel" && formatType === "custom") return null;
               if (id === "columnToJoin" && (selectedColumns.length > 1 || service.columnType === "datetime")) return null;
             }
@@ -200,6 +204,19 @@ const DynamicForm: FC<DynamicFormProps> = ({
               control={control}
               defaultValue="; "
               render={({ field }) => <TextField {...field} label="Separator" />}
+            />
+          )}
+          {service.columnType === "datetime" && selectedColumns.length === 1 && (
+            <Controller
+              name="splitDatetime"
+              control={control}
+              defaultValue={false}
+              render={({ field }) => (
+                <FormControlLabel
+                  control={<Checkbox {...field} checked={field.value} />}
+                  label="Split datetime into a column date and a column time"
+                />
+              )}
             />
           )}
         </>

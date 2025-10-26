@@ -768,6 +768,7 @@ export const modify = createAsyncThunk<
     selectedColumns: formValues.selectedColumns,
     columnType: formValues.columnType,
     separator: formValues.separator,
+    splitDatetime: formValues.splitDatetime,
   };
 
   const response = await tableAPI.modify(
