@@ -8,7 +8,7 @@ const dateFormats = [
 ];
 
 const timeFormats = [
-  "HH:mm", "hh:mm a", "HH:mm:ss", "hh:mm:ss a",
+  "HH:mm", "hh:mm a", "HH:mm:ss", "HH:mm:ss'Z'", "hh:mm:ss a",
   "HH:mm:ss.SSS", "HH:mm:ss.SSS XXX", "HH:mm:ss z"
 ];
 
@@ -56,8 +56,8 @@ export function filterDetailLevelOptions(
   if (!allOptions) return [];
   let filtered = allOptions;
   if (columnType === "time") {
-    filtered = filtered.filter((dl) => ["hourMinutes", "hourMinutes12", "seconds", "seconds12", "milliseconds",
-      "timezone", "timezoneAbbr"].includes(dl.id));
+    filtered = filtered.filter((dl) => ["hourMinutes", "hourMinutes12", "seconds",
+      "seconds12", "secondsUTC", "milliseconds", "timezone", "timezoneAbbr"].includes(dl.id));
   }
   switch (formatType) {
     case "iso":
@@ -66,11 +66,11 @@ export function filterDetailLevelOptions(
       break;
     case "european":
       filtered = filtered.filter((dl) => !["hourMinutes12", "seconds12",
-        "timezone"].includes(dl.id));
+        "secondsUTC", "timezone"].includes(dl.id));
       break;
     case "us":
       filtered = filtered.filter((dl) => !["hourMinutes", "seconds",
-        "timezone"].includes(dl.id));
+        "secondsUTC", "timezone"].includes(dl.id));
       break;
     case "custom":
     default:
