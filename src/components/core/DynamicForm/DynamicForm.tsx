@@ -16,7 +16,7 @@ import {
   Modifier,
 } from "@store/slices/config/interfaces/config";
 import React, { FC, useEffect, useState } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { suggest } from "@store/slices/table/table.thunk";
 import { filterDetailLevelOptions, dateFormatterUtils } from "@services/utils/date-formatter-utils";
@@ -53,6 +53,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const formatType = watch("formatType");
   const columnToJoin = watch("columnToJoin");
   const splitDatetime = watch("splitDatetime");
+  const operationType = watch("operationType");
   const isJoinInvalid = service.columnType === "unknown";
   let finalType = "";
 
@@ -131,27 +132,17 @@ const DynamicForm: FC<DynamicFormProps> = ({
     <Stack component="form" gap="20px" onSubmit={handleSubmit(onSubmit)}>
       {service.id === "dateFormatter" && (isJoinInvalid ? (
         <div style={{ color: "red", marginTop: 8 }}>
-          Please select either
-          <b> one date column </b>
-          and
-          <b> one time column </b>
-          to create a datetime column, or
-          <b> only date </b>
-          or
-          <b> only time column</b>
-          .
+          Please select either <b> one date column </b> and <b> one time column </b> to create a datetime column, or
+          <b> only date </b> or <b> only time column</b>.
         </div>
       ) : (
         <>
-          {modifiedFormParams.map(({ id, inputType, conditional, ...inputProps }) => {
+          {modifiedFormParams.map(({ id, inputType, ...inputProps }) => {
             if (service.id === "dateFormatter") {
+              if (id === "customPattern" && formatType !== "custom") return null;
               if (id === "outputMode" && (selectedColumns.length > 1 || splitDatetime)) return null;
               if (id === "detailLevel" && formatType === "custom") return null;
               if (id === "columnToJoin" && (selectedColumns.length > 1 || service.columnType === "datetime")) return null;
-            }
-            if (conditional) {
-              const fieldValue = useWatch({ control, name: conditional.field });
-              if (fieldValue !== conditional.value) return;
             }
             const FormComponent = FORM_COMPONENTS[inputType];
             return (
@@ -159,15 +150,15 @@ const DynamicForm: FC<DynamicFormProps> = ({
                 key={id}
                 defaultValue=""
                 rules={getRules(inputProps.rules)}
-                render={({ field }) => (
+                render={({ field: { selectedColumns: _, ...fieldProps } }) => (
                   <FormComponent
                     id={id}
                     formState={formState}
                     reset={reset}
                     setValue={setValue}
-                    selectedColumns={selectedColumns}
-                    {...field}
+                    {...fieldProps}
                     {...(prepareFormInput(inputProps) as any)}
+                    {...(inputType === "selectColumns" ? { selectedColumns } : {})}
                   />
                 )}
                 name={id}
@@ -223,20 +214,25 @@ const DynamicForm: FC<DynamicFormProps> = ({
       ))}
       {service.id !== "dateFormatter" && formParams &&
         formParams.map(({ id, inputType, ...inputProps }) => {
+          if (service.id === "textColumnsTransformer") {
+            if (id === "columnToJoinSplit" && operationType !== "joinOp") return null;
+            if (id === "renameNewColumn" && (!operationType || operationType === "splitOp")) return null;
+          }
           const FormComponent = FORM_COMPONENTS[inputType];
           return (
             <Controller
               key={id}
               defaultValue=""
               rules={getRules(inputProps.rules)}
-              render={({ field }) => (
+              render={({ field: { selectedColumns: _, ...fieldProps } }) => (
                 <FormComponent
                   id={id}
                   formState={formState}
                   reset={reset}
                   setValue={setValue}
-                  {...field}
+                  {...fieldProps}
                   {...(prepareFormInput(inputProps) as any)}
+                  {...(inputType === "multipleColumnSelect" ? { selectedColumns } : {})}
                 />
               )}
               name={id}
@@ -244,6 +240,12 @@ const DynamicForm: FC<DynamicFormProps> = ({
             />
           );
       })}
+      {service.id === "textColumnsTransformer" && operationType === "splitOp" && (
+        <div>
+          <b>Note: </b>the new columns created after splitting will be named automatically as
+          <code> columnName_1</code>,<code> columnName_2</code>,etc.
+        </div>
+      )}
       {service.id === "wikidataPropertySPARQL" && (
         <Button
           variant="outlined"
