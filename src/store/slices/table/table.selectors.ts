@@ -31,51 +31,52 @@ const selectReconciliatorById = (state: RootState, { value }: any) => {
 const selectColumnContexts = (state: RootState, { data }: any) => {
   return data
     ? Object.keys(data.context).filter(
-        (context: ID) => data.context[context].reconciliated > 0
+        (context: ID) => data.context[context].reconciliated > 0,
       )
     : [];
 };
 
 // LOADING SELECTORS
 export const selectGetTableStatus = createSelector(selectRequests, (requests) =>
-  getRequestStatus(requests, TableThunkActions.GET_TABLE));
+  getRequestStatus(requests, TableThunkActions.GET_TABLE),
+);
 
 export const selectGetChallengeTableStatus = createSelector(
   selectRequests,
   (requests) =>
-    getRequestStatus(requests, TableThunkActions.GET_CHALLENGE_TABLE)
+    getRequestStatus(requests, TableThunkActions.GET_CHALLENGE_TABLE),
 );
 export const selectReconcileRequestStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.RECONCILE)
+  (requests) => getRequestStatus(requests, TableThunkActions.RECONCILE),
 );
 
 export const selectExtendRequestStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.EXTEND)
+  (requests) => getRequestStatus(requests, TableThunkActions.EXTEND),
 );
 export const selectModifyRequestStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.MODIFY)
+  (requests) => getRequestStatus(requests, TableThunkActions.MODIFY),
 );
 export const selectSaveTableStatus = createSelector(
   selectRequests,
-  (requests) => getRequestStatus(requests, TableThunkActions.SAVE_TABLE)
+  (requests) => getRequestStatus(requests, TableThunkActions.SAVE_TABLE),
 );
 export const selectAutomaticAnnotationStatus = createSelector(
   selectRequests,
   (requests) =>
-    getRequestStatus(requests, TableThunkActions.AUTOMATIC_ANNOTATION)
+    getRequestStatus(requests, TableThunkActions.AUTOMATIC_ANNOTATION),
 );
 
 // UNDO SELECTORS
 export const selectCanUndo = createSelector(
   selectDraftState,
-  (draft) => draft.undoPointer > -1
+  (draft) => draft.undoPointer > -1,
 );
 export const selectCanRedo = createSelector(
   selectDraftState,
-  (draft) => draft.redoPointer > -1
+  (draft) => draft.redoPointer > -1,
 );
 
 /**
@@ -83,7 +84,7 @@ export const selectCanRedo = createSelector(
  */
 export const selectCurrentTable = createSelector(
   selectEntitiesState,
-  (entities) => entities.tableInstance
+  (entities) => entities.tableInstance,
 );
 
 export const selectUISettings = createSelector(selectUIState, (ui) => {
@@ -105,7 +106,7 @@ export const selectSettings = createSelector(
       },
       ...rest,
     };
-  }
+  },
 );
 
 export const selectColumnReconciliators = createSelector(
@@ -113,28 +114,28 @@ export const selectColumnReconciliators = createSelector(
   selectReconciliatorsAsObject,
   selectAppConfig,
   (contexts, reconciliators, config) => {
-    return contexts.map((context: ID) => reconciliators[context].name);
-  }
+    return contexts.map((context: ID) => reconciliators[context]?.name || "");
+  },
 );
 
 export const selectReconciliatorCell = createSelector(
   selectReconciliatorById,
-  (reconciliator) => "" // (reconciliator ? reconciliator.name : '')
+  (reconciliator) => "", // (reconciliator ? reconciliator.name : '')
 );
 
 export const selectExpandedCellsIds = createSelector(
   selectUIState,
-  (ui) => ui.expandedCellsIds
+  (ui) => ui.expandedCellsIds,
 );
 
 export const selectExpandedColumnsIds = createSelector(
   selectUIState,
-  (ui) => ui.expandedColumnsIds
+  (ui) => ui.expandedColumnsIds,
 );
 
 export const selectEditableCellsIds = createSelector(
   selectUIState,
-  (ui) => ui.editableCellsIds
+  (ui) => ui.editableCellsIds,
 );
 
 export const selectColumnsAsSelectOptions = createSelector(
@@ -148,7 +149,7 @@ export const selectColumnsAsSelectOptions = createSelector(
         value: id,
       };
     });
-  }
+  },
 );
 
 /**
@@ -156,15 +157,15 @@ export const selectColumnsAsSelectOptions = createSelector(
  */
 export const selectSelectedColumnIds = createSelector(
   selectUIState,
-  (ui) => ui.selectedColumnsIds
+  (ui) => ui.selectedColumnsIds,
 );
 export const selectSelectedColumnCellsIds = createSelector(
   selectUIState,
-  (ui) => ui.selectedColumnCellsIds
+  (ui) => ui.selectedColumnCellsIds,
 );
 export const selectSelectedColumnCellsIdsAsArray = createSelector(
   selectUIState,
-  (ui) => Object.keys(ui.selectedColumnCellsIds)
+  (ui) => Object.keys(ui.selectedColumnCellsIds),
 );
 /**
  * Get selected columns ids as array.
@@ -173,7 +174,7 @@ export const selectSelectedColumnIdsAsArray = createSelector(
   selectSelectedColumnIds,
   (colIds) => {
     return Object.keys(colIds);
-  }
+  },
 );
 
 /**
@@ -181,28 +182,28 @@ export const selectSelectedColumnIdsAsArray = createSelector(
  */
 export const selectSelectedRowIds = createSelector(
   selectUIState,
-  (ui) => ui.selectedRowsIds
+  (ui) => ui.selectedRowsIds,
 );
 /**
  * Get selected rows ids as array.
  */
 export const selectSelectedRowIdsAsArray = createSelector(
   selectSelectedRowIds,
-  (rowIds) => Object.keys(rowIds)
+  (rowIds) => Object.keys(rowIds),
 );
 /**
  * Get selected cells ids as object.
  */
 export const selectSelectedCellIds = createSelector(
   selectUIState,
-  (ui) => ui.selectedCellIds
+  (ui) => ui.selectedCellIds,
 );
 /**
  * Get selected cells ids as array.
  */
 export const selectSelectedCellsIdsAsArray = createSelector(
   selectSelectedCellIds,
-  (cellIds) => Object.keys(cellIds)
+  (cellIds) => Object.keys(cellIds),
 );
 /**
  * Get selected cells.
@@ -211,10 +212,11 @@ export const selectSelectedCellsIdsAsArray = createSelector(
 export const selectSelectedCells = createSelector(
   selectSelectedCellsIdsAsArray,
   selectRowsState,
-  (selectedCellsIds, rows) => selectedCellsIds.map((cellId) => {
-    const [rowId, colId] = getIdsFromCell(cellId);
-    return rows.byId[rowId].cells[colId];
-  })
+  (selectedCellsIds, rows) =>
+    selectedCellsIds.map((cellId) => {
+      const [rowId, colId] = getIdsFromCell(cellId);
+      return rows.byId[rowId].cells[colId];
+    }),
 );
 /**
  * Check if AT LEAST a cell is selected.
@@ -224,14 +226,14 @@ export const selectIsCellSelected = createSelector(
   selectSelectedColumnCellsIdsAsArray,
   selectSelectedColumnIdsAsArray,
   (cellIds, cellColIds, colIds) =>
-    cellIds.length > 0 || cellColIds.length > 0 || colIds.length > 0
+    cellIds.length > 0 || cellColIds.length > 0 || colIds.length > 0,
 );
 /**
  * Check if ONLY ONE cell is selected.
  */
 export const selectIsOnlyOneCellSelected = createSelector(
   selectSelectedCellsIdsAsArray,
-  (cellIds) => cellIds.length === 1
+  (cellIds) => cellIds.length === 1,
 );
 /**
  * Get cell id if only one is selected.
@@ -244,7 +246,7 @@ export const selectCellIdIfOneSelected = createSelector(
       return "";
     }
     return cellIds[0];
-  }
+  },
 );
 
 export const selectCurrentColCellId = createSelector(
@@ -254,7 +256,7 @@ export const selectCurrentColCellId = createSelector(
       return null;
     }
     return colIds[0];
-  }
+  },
 );
 
 export const selectCurrentCol = createSelector(
@@ -265,7 +267,7 @@ export const selectCurrentCol = createSelector(
       return cols.byId[colId];
     }
     return undefined;
-  }
+  },
 );
 
 export const selectCurrentCell = createSelector(
@@ -277,7 +279,7 @@ export const selectCurrentCell = createSelector(
       return rows.byId[rowId].cells[colId];
     }
     return undefined;
-  }
+  },
 );
 
 // SELECTORS FOR UI STATUS
@@ -293,12 +295,12 @@ export const selectIsMetadataButtonEnabled = createSelector(
       return { status: true, type: "column" };
     }
     return { status: false, type: null };
-  }
+  },
 );
 
 export const selectLastSaved = createSelector(
   selectUIState,
-  (ui) => ui.lastSaved
+  (ui) => ui.lastSaved,
 );
 
 export const selectIsUnsaved = createSelector(
@@ -309,24 +311,24 @@ export const selectIsUnsaved = createSelector(
       return true;
     }
     return new Date(lastSaved) < new Date(lastModifiedDate);
-  }
+  },
 );
 
 export const selectCurrentView = createSelector(selectUIState, (ui) => ui.view);
 
 export const selectIsDenseView = createSelector(
   selectUIState,
-  (ui) => ui.denseView
+  (ui) => ui.denseView,
 );
 
 export const selectSettingsDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.settingsDialog
+  (ui) => ui.settingsDialog,
 );
 
 export const selectHelpDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openHelpDialog
+  (ui) => ui.openHelpDialog,
 );
 
 /**
@@ -334,7 +336,7 @@ export const selectHelpDialogStatus = createSelector(
  */
 export const selectTutorialStep = createSelector(
   selectUIState,
-  (ui) => ui.tutorialStep || 1
+  (ui) => ui.tutorialStep || 1,
 );
 
 /**
@@ -342,56 +344,56 @@ export const selectTutorialStep = createSelector(
  */
 export const selectReconcileDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openReconciliateDialog
+  (ui) => ui.openReconciliateDialog,
 );
 /**
  * Get extension dialog status.
  */
 export const selectExtensionDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openExtensionDialog
+  (ui) => ui.openExtensionDialog,
 );
 /**
  * Get modification dialog status.
  */
 export const selectModificationDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openModificationDialog
+  (ui) => ui.openModificationDialog,
 );
 /**
  * Get metadata dialog status.
  */
 export const selectMetadataDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openMetadataDialog
+  (ui) => ui.openMetadataDialog,
 );
 export const selectMetadataColumnDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openMetadataColumnDialog
+  (ui) => ui.openMetadataColumnDialog,
 );
 export const selectExportDialogStatus = createSelector(
   selectUIState,
-  (ui) => ui.openExportDialog
+  (ui) => ui.openExportDialog,
 );
 
 export const selectSearchStatus = createSelector(
   selectUIState,
-  (ui) => ui.search
+  (ui) => ui.search,
 );
 
 export const selectIsHeaderExpanded = createSelector(
   selectUIState,
-  (ui) => ui.headerExpanded
+  (ui) => ui.headerExpanded,
 );
 
 export const selectTutorialBBoxes = createSelector(
   selectUIState,
-  (ui) => ui.tutorialBBoxes
+  (ui) => ui.tutorialBBoxes,
 );
 
 export const selectIsViewOnly = createSelector(
   selectUIState,
-  (ui) => ui.settings.isViewOnly
+  (ui) => ui.settings.isViewOnly,
 );
 
 // SELECTORS TO CHECK IF AN ACTION IS ENABLED
@@ -404,10 +406,13 @@ export const selectCanDelete = createSelector(
   selectSelectedColumnIds,
   selectSelectedRowIds,
   selectSelectedCellsIdsAsArray,
-  (colIds, rowIds, cellIds) => cellIds.length > 0 &&
+  (colIds, rowIds, cellIds) =>
+    cellIds.length > 0 &&
     cellIds.every(
-      (cellId) => getIdsFromCell(cellId)[0] in rowIds || getIdsFromCell(cellId)[1] in colIds
-    )
+      (cellId) =>
+        getIdsFromCell(cellId)[0] in rowIds ||
+        getIdsFromCell(cellId)[1] in colIds,
+    ),
 );
 
 /**
@@ -416,8 +421,9 @@ export const selectCanDelete = createSelector(
  */
 export const selectIsAutoMatchingEnabled = createSelector(
   selectSelectedCells,
-  (selectedCells) => selectedCells.length > 0 &&
-    !selectedCells.some((cell) => cell && cell.metadata.length === 0)
+  (selectedCells) =>
+    selectedCells.length > 0 &&
+    !selectedCells.some((cell) => cell && cell.metadata.length === 0),
 );
 
 export const selectIsExtendButtonEnabled = createSelector(
@@ -444,7 +450,7 @@ export const selectIsExtendButtonEnabled = createSelector(
     //   });
     // }
     // return false;
-  }
+  },
 );
 
 export const selectIsModifyButtonEnabled = createSelector(
@@ -462,7 +468,7 @@ export const selectIsModifyButtonEnabled = createSelector(
     });
 
     return onlyColsSelected;
-  }
+  },
 );
 
 export const selectAreCellReconciliated = createSelector(
@@ -476,13 +482,13 @@ export const selectAreCellReconciliated = createSelector(
         const { context } = columns.byId[colId];
         const totalReconciliated = Object.keys(context).reduce(
           (acc, ctx) => acc + context[ctx].reconciliated,
-          0
+          0,
         );
         return totalReconciliated > 0;
       }
       return false;
     });
-  }
+  },
 );
 
 // DATA TRANSFORMATION SELECTORS
@@ -524,7 +530,8 @@ export const selectDataTableFormat = createSelector(
   selectReconciliatorsAsObject,
   (entities, reconciliators) => {
     const columns = entities.columns.allIds.map((colId) => {
-      const { label, id, width, minWidth, maxWidth, ...rest } = entities.columns.byId[colId];
+      const { label, id, width, minWidth, maxWidth, ...rest } =
+        entities.columns.byId[colId];
       return {
         header: label,
         accessorKey: colId,
@@ -553,9 +560,10 @@ export const selectDataTableFormat = createSelector(
             rowId,
           },
         };
-      }, {}));
+      }, {}),
+    );
     return { columns, rows };
-  }
+  },
 );
 
 /**
@@ -576,7 +584,7 @@ export const selectReconciliationCells = createSelector(
         uniqueColIds.map((colId) => ({
           id: colId,
           label: cols.byId[colId].label,
-        }))
+        })),
       );
     }
     return ids.concat(
@@ -586,9 +594,9 @@ export const selectReconciliationCells = createSelector(
           id: cellId,
           label: rows.byId[rowId].cells[colId].label,
         };
-      })
+      }),
     );
-  }
+  },
 );
 
 /**
@@ -607,7 +615,7 @@ export const selectAutoMatchingCells = createSelector(
             maxScoreAcc: maxScoreAcc > max ? maxScoreAcc : max,
           };
         },
-        { minScoreAcc: 500, maxScoreAcc: 0 }
+        { minScoreAcc: 500, maxScoreAcc: 0 },
       );
     return {
       selectedCells,
@@ -615,7 +623,7 @@ export const selectAutoMatchingCells = createSelector(
       minScore: floor(minScore),
       maxScore: floor(maxScore),
     };
-  }
+  },
 );
 
 /**
@@ -648,9 +656,10 @@ export const selectCellMetadataTableFormat = createSelector(
       }
     }
     return undefined;
-  }
+  },
 );
-export const selectMetadataColumnDialogColId = (state: RootState) => state.table.ui.metadataColumnDialogColId;
+export const selectMetadataColumnDialogColId = (state: RootState) =>
+  state.table.ui.metadataColumnDialogColId;
 export const selectColumnCellMetadataTableFormat = createSelector(
   selectMetadataColumnDialogColId,
   selectReconciliators,
@@ -697,7 +706,7 @@ export const selectColumnCellMetadataTableFormat = createSelector(
       };
     }
     return null;
-  }
+  },
 );
 
 export const selectColumnForExtension = createSelector(
@@ -708,28 +717,8 @@ export const selectColumnForExtension = createSelector(
     if (isExtensionEnabled) {
       const colId = Object.keys(selectedColumns)[0];
 
-      return rowEntities.allIds.reduce((acc, rowId) => {
-        const cell = rowEntities.byId[rowId].cells[colId];
-        const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-        if (trueMeta) {
-          // eslint-disable-next-line prefer-destructuring
-          acc[rowId] = trueMeta.id;
-        }
-        return acc;
-      }, {} as Record<string, any>);
-    }
-    return [];
-  }
-);
-export const selectColumnForModification = createSelector(
-    selectIsModifyButtonEnabled,
-    selectSelectedColumnIds,
-    selectRowsState,
-    (isModificationEnabled, selectedColumns, rowEntities) => {
-      if (isModificationEnabled) {
-        const colId = Object.keys(selectedColumns)[0];
-
-        return rowEntities.allIds.reduce((acc, rowId) => {
+      return rowEntities.allIds.reduce(
+        (acc, rowId) => {
           const cell = rowEntities.byId[rowId].cells[colId];
           const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
           if (trueMeta) {
@@ -737,10 +726,36 @@ export const selectColumnForModification = createSelector(
             acc[rowId] = trueMeta.id;
           }
           return acc;
-        }, {} as Record<string, any>);
-      }
-      return [];
+        },
+        {} as Record<string, any>,
+      );
     }
+    return [];
+  },
+);
+export const selectColumnForModification = createSelector(
+  selectIsModifyButtonEnabled,
+  selectSelectedColumnIds,
+  selectRowsState,
+  (isModificationEnabled, selectedColumns, rowEntities) => {
+    if (isModificationEnabled) {
+      const colId = Object.keys(selectedColumns)[0];
+
+      return rowEntities.allIds.reduce(
+        (acc, rowId) => {
+          const cell = rowEntities.byId[rowId].cells[colId];
+          const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
+          if (trueMeta) {
+            // eslint-disable-next-line prefer-destructuring
+            acc[rowId] = trueMeta.id;
+          }
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+    }
+    return [];
+  },
 );
 export const selectColumnKind = createSelector(
   selectSelectedColumnCellsIds,
@@ -751,7 +766,7 @@ export const selectColumnKind = createSelector(
     const colIds = Object.keys(selectedColumnCells);
     const colId = dialogColId ?? colIds[0];
     return columnsState.byId[colId]?.kind;
-  }
+  },
 );
 export const selecteSelectedColumnId = createSelector(
   selectSelectedColumnCellsIds,
@@ -760,7 +775,7 @@ export const selecteSelectedColumnId = createSelector(
   (selectedColumnCells, rowsState, columnsState) => {
     const colIds = Object.keys(selectedColumnCells);
     return colIds[0];
-  }
+  },
 );
 export const selectColumnRole = createSelector(
   selectSelectedColumnCellsIds,
@@ -771,7 +786,7 @@ export const selectColumnRole = createSelector(
     const colIds = Object.keys(selectedColumnCells);
     const colId = dialogColId ?? colIds[0];
     return columnsState.byId[colId]?.role;
-  }
+  },
 );
 export const selectColumnTypes = createSelector(
   selectSelectedColumnCellsIds,
@@ -786,32 +801,38 @@ export const selectColumnTypes = createSelector(
       return null;
     }
 
-    const map = rowsState.allIds.reduce((acc, rowId) => {
-      const { metadata } = rowsState.byId[rowId].cells[colId];
+    const map = rowsState.allIds.reduce(
+      (acc, rowId) => {
+        const { metadata } = rowsState.byId[rowId].cells[colId];
 
-      metadata.forEach((metaItem) => {
-        if (metaItem.type && metaItem.match) {
-          console.log("metaItem", metaItem);
-          metaItem.type.forEach(({ id, name }) => {
-            console.log("name in forEach", name);
-            if (acc[id]) {
-              acc[id] = {
-                ...acc[id],
-                count: ++acc[id].count,
-              };
-            } else {
-              acc[id] = {
-                id,
-                label: name as any,
-                count: 1,
-                match: metaItem.match
-              };
-            }
-          });
-        }
-      });
-      return acc;
-    }, {} as Record<string, { id: string; count: number; label: string; match?: any }>);
+        metadata.forEach((metaItem) => {
+          if (metaItem.type && metaItem.match) {
+            console.log("metaItem", metaItem);
+            metaItem.type.forEach(({ id, name }) => {
+              console.log("name in forEach", name);
+              if (acc[id]) {
+                acc[id] = {
+                  ...acc[id],
+                  count: ++acc[id].count,
+                };
+              } else {
+                acc[id] = {
+                  id,
+                  label: name as any,
+                  count: 1,
+                  match: metaItem.match,
+                };
+              }
+            });
+          }
+        });
+        return acc;
+      },
+      {} as Record<
+        string,
+        { id: string; count: number; label: string; match?: any }
+      >,
+    );
     console.log("test map", map);
     // add current type
     const currentColType: any[] = [];
@@ -854,11 +875,11 @@ export const selectColumnTypes = createSelector(
       }
     }
     additionalTypes = additionalTypes.filter(
-      (type) => !currentTypesIds.includes(type.id)
+      (type) => !currentTypesIds.includes(type.id),
     );
     const totalCount = Object.keys(map).reduce(
       (acc, key) => acc + map[key].count,
-      0
+      0,
     );
 
     //TODO: transform into an array
@@ -886,7 +907,7 @@ export const selectColumnTypes = createSelector(
           label: type.name,
           count: 0,
           percentage: "0.00",
-        }))
+        })),
       )
       .sort((a, b) => b.count - a.count);
 
@@ -894,7 +915,7 @@ export const selectColumnTypes = createSelector(
       allTypes,
       selectedType,
     };
-  }
+  },
 );
 
 export const selectColumnsAnnotationPercentages = createSelector(
@@ -949,7 +970,7 @@ export const selectColumnsAnnotationPercentages = createSelector(
       };
     }
     return null;
-  }
+  },
 );
 
 export const selectCellRefinement = createSelector(
@@ -977,9 +998,9 @@ export const selectCellRefinement = createSelector(
         matchingReconciliator: [] as Cell[],
         matchingRefinement: [] as Cell[],
         notMatching: [] as Cell[],
-      }
+      },
     );
-  }
+  },
 );
 
 export const selectSelectedCellsTypes = createSelector(
@@ -1000,7 +1021,9 @@ export const selectSelectedCellsTypes = createSelector(
             if (metaItem.type) {
               metaItem.type.forEach((typeItem) => {
                 if (typeItem.name) {
-                  types.push((typeItem.name as unknown as string).toLowerCase());
+                  types.push(
+                    (typeItem.name as unknown as string).toLowerCase(),
+                  );
                 }
               });
             }
@@ -1022,7 +1045,9 @@ export const selectSelectedCellsTypes = createSelector(
                 if (metaItem.type) {
                   metaItem.type.forEach((typeItem) => {
                     if (typeItem.name) {
-                      types.push((typeItem.name as unknown as string).toLowerCase());
+                      types.push(
+                        (typeItem.name as unknown as string).toLowerCase(),
+                      );
                     }
                   });
                 }
@@ -1038,11 +1063,11 @@ export const selectSelectedCellsTypes = createSelector(
     }
 
     return types;
-  }
+  },
 );
 
 export const selectReconciliatioContextColumnIds = createSelector(
   selectEntitiesState,
   selectSelectedColumnIds,
-  (entities, ids) => entities.columns.allIds.filter((id) => !(id in ids))
+  (entities, ids) => entities.columns.allIds.filter((id) => !(id in ids)),
 );
