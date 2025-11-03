@@ -1830,7 +1830,12 @@ export const tableSlice = createSliceWithRequests({
             undoable,
             (draft) => {
               console.log("*** reconciliation data ***", action.payload);
-              data.forEach(({ id: cellId, metadata }) => {
+              const rawArray = Array.isArray(data) ? data : Object.values(data);
+              const dataArray = rawArray.filter((item) => item != null) as {
+                id: string;
+                metadata: any[];
+              }[];
+              dataArray.forEach(({ id: cellId, metadata }) => {
                 if (cellId.includes("$")) {
                   const [rowId, colId] = getIdsFromCell(cellId);
                   // get column

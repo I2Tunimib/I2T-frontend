@@ -39,6 +39,7 @@ export interface Extender extends Record<string, any> {
   description: string;
   formParams: FormInputParams[];
   skipFiltering?: boolean;
+  allValues?: boolean;
 }
 
 export interface Modifier extends Record<string, any> {

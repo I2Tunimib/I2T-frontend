@@ -54,6 +54,18 @@ const tableAPI = {
     format: string,
     params: Record<string, string | number> = {},
   ) => {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    };
+    if (params.tableId && params.datasetId) {
+      const tableId = String(params.tableId);
+      const datasetId = String(params.datasetId);
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+
+      headers["X-Table-Dataset-Info"] =
+        `tableId:${cleanTableId};datasetId:${cleanDatasetId}`;
+    }
     return apiClient.get<any>(
       apiEndpoint({
         endpoint: "EXPORT",
@@ -61,9 +73,7 @@ const tableAPI = {
         paramsValue: params,
       }),
       {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        headers,
       },
     );
   },
@@ -264,7 +274,7 @@ const tableAPI = {
     data: any,
     tableId?: string,
     datasetId?: string,
-    columnName?: string
+    columnName?: string,
   ) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -273,7 +283,7 @@ const tableAPI = {
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
       console.log(
-        `Adding headers for modify: tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`
+        `Adding headers for modify: tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`,
       );
 
       // Clean values to remove BOM and other problematic characters
@@ -283,11 +293,10 @@ const tableAPI = {
         ? columnName.replace(/\uFEFF/g, "").trim()
         : "";
 
-      headers[
-        "X-Table-Dataset-Info"
-        ] = `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
-        cleanColumnName ? `;columnName:${cleanColumnName}` : ""
-      }`;
+      headers["X-Table-Dataset-Info"] =
+        `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
+          cleanColumnName ? `;columnName:${cleanColumnName}` : ""
+        }`;
     }
     console.log("Modification request headers:", headers);
 

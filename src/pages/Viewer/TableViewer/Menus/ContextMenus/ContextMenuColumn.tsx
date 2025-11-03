@@ -1,20 +1,28 @@
-import { MenuBase, MenuItemIconLabel } from '@components/core';
-import { MenuBaseProps } from '@components/core/MenuBase';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { MenuList } from '@mui/material';
-import styled from '@emotion/styled';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
-import PushPinIcon from '@mui/icons-material/PushPin';
-import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
-import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import { MenuBase, MenuItemIconLabel } from "@components/core";
+import { MenuBaseProps } from "@components/core/MenuBase";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import { MenuList } from "@mui/material";
+import styled from "@emotion/styled";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
+import PushPinIcon from "@mui/icons-material/PushPin";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
+import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import SecurityIcon from "@mui/icons-material/Security";
-import TransformIcon from '@mui/icons-material/Transform';
-import { deleteSelected, updateColumnVisibility, updateUI } from '@store/slices/table/table.slice';
-import { useCallback, FC } from 'react';
-import { selectAreCellReconciliated, selectIsCellSelected } from '@store/slices/table/table.selectors';
-import { useSnackbar } from 'notistack';
+import TransformIcon from "@mui/icons-material/Transform";
+import {
+  deleteSelected,
+  updateColumnVisibility,
+  updateUI,
+} from "@store/slices/table/table.slice";
+import { useCallback, FC } from "react";
+import {
+  selectAreCellReconciliated,
+  selectIsCellSelected,
+} from "@store/slices/table/table.selectors";
+import { useSnackbar } from "notistack";
 import { selectExtendersAsArray } from "@store/slices/config/config.selectors";
 import { extend } from "@store/slices/table/table.thunk";
 
@@ -72,13 +80,22 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
 
   const handleExtend = useCallback(() => {
     if (!cellReconciliated) {
-      enqueueSnackbar("The column must be reconciled to extend it", { variant: "info", autoHideDuration: 3000 });
+      enqueueSnackbar("The column must be reconciled to extend it", {
+        variant: "info",
+        autoHideDuration: 3000,
+      });
       handleClose();
     } else {
       dispatch(updateUI({ openExtensionDialog: true }));
       handleClose();
     }
-  }, [isCellSelected, cellReconciliated, dispatch, handleClose, enqueueSnackbar]);
+  }, [
+    isCellSelected,
+    cellReconciliated,
+    dispatch,
+    handleClose,
+    enqueueSnackbar,
+  ]);
 
   /**
    * Handle pin/unpin column action.
@@ -181,14 +198,10 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
       <StyledMenuList
         autoFocus //className={classes.list}
       >
-        <MenuItemIconLabel
-          onClick={handleModify}
-          Icon={TransformIcon}>
+        <MenuItemIconLabel onClick={handleModify} Icon={EditRoundedIcon}>
           Modify column
         </MenuItemIconLabel>
-        <MenuItemIconLabel
-          onClick={handleReconcile}
-          Icon={LinkRoundedIcon}>
+        <MenuItemIconLabel onClick={handleReconcile} Icon={LinkRoundedIcon}>
           Reconcile column
         </MenuItemIconLabel>
         <MenuItemIconLabel onClick={handleExtend} Icon={AddRoundedIcon}>
@@ -201,7 +214,7 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
           onClick={togglePinColumn}
           Icon={isPinned ? PushPinIcon : PushPinOutlinedIcon}
         >
-          {isPinned ? 'Unpin column' : 'Pin column'}
+          {isPinned ? "Unpin column" : "Pin column"}
         </MenuItemIconLabel>
         <MenuItemIconLabel
           onClick={handleHideColumn}

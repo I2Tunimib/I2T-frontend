@@ -11,6 +11,14 @@ export const KG_INFO = {
     uri: "https://www.wikidata.org/wiki/",
     groupName: "Wikidata",
   },
+  wdL: {
+    uri: "https://www.wikidata.org/wiki/",
+    groupName: "Wikidata",
+  },
+  wdA: {
+    uri: "https://www.wikidata.org/wiki/",
+    groupName: "Wikidata",
+  },
   wiki: {
     uri: "https://www.wikidata.org/wiki/",
     groupName: "Wikidata",

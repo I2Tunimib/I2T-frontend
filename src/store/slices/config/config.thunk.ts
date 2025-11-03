@@ -11,6 +11,7 @@ export const getConfig = createAsyncThunk(
   `${ACTION_PREFIX}/getConfig`,
   async () => {
     const response = await configAPI.getConfig();
+    console.log("*** get config response *** ", response.data);
     return response.data;
   },
 );
