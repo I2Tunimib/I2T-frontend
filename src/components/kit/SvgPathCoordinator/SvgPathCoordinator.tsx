@@ -23,7 +23,7 @@ export interface SvgPathCoordinatorProps
 const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
   (
     { paths, shouldRedraw, onPathMouseEnter, onPathMouseLeave, ...props },
-    ref
+    ref,
   ) => {
     console.log("*** SVG paths ***", paths);
     const { processedPaths, draw } = useSvgCoordinator({
@@ -102,6 +102,8 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
                 color={path.color}
                 label={path.label}
                 link={path.link}
+                showLabel={true}
+                showTooltip={false}
                 startElementLabel={startElementLabel}
                 endElementLabel={endElementLabel}
                 onMouseEnter={() => onPathMouseEnter && onPathMouseEnter(path)}
@@ -111,7 +113,7 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
           })}
       </svg>
     );
-  }
+  },
 );
 
 export default SvgPathCoordinator;

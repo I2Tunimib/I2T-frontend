@@ -17,7 +17,7 @@ export interface CoordinatorPath {
   endElementLabel: string;
   startElement: HTMLElement;
   endElement: HTMLElement;
-  label?: string;
+  label?: string | string[];
   link?: string;
 }
 
@@ -59,7 +59,7 @@ const getPoint = (
   { top: svgTop = 0 }: Partial<DOMRect>,
   fullWidth: number,
   visibleWidth: number,
-  scrollLeft: number = 0
+  scrollLeft: number = 0,
 ) => {
   // Get element position relative to viewport
   const { left, top, width } = element.getBoundingClientRect();
@@ -91,21 +91,21 @@ const calcPointsDistances = (
   svgBoundingClientRect: DOMRect,
   fullWidth: number,
   visibleWidth: number,
-  scrollLeft: number = 0
+  scrollLeft: number = 0,
 ) => {
   const [x1, y1] = getPoint(
     el1,
     svgBoundingClientRect,
     fullWidth,
     visibleWidth,
-    scrollLeft
+    scrollLeft,
   );
   const [x2, y2] = getPoint(
     el2,
     svgBoundingClientRect,
     fullWidth,
     visibleWidth,
-    scrollLeft
+    scrollLeft,
   );
 
   // draw always in the same direction [left - right] so that
@@ -144,30 +144,12 @@ const useSvgCoordinator = ({
         horizontalOffset: 0,
       };
 
-      // Flatten the grouped paths to individual paths for drawing
-      const individualPaths: any[] = [];
-
-      groupedPaths.forEach(({ p1, p2, properties, ...rest }, groupIndex) => {
-        const currentGroup = rest.group;
-
-        properties.forEach((property: any, propIndex: number) => {
-          individualPaths.push({
-            ...rest,
-            p1,
-            p2,
-            ...property, // id, label, link
-            groupIndex,
-            propertyIndex: propIndex,
-          });
-        });
-      });
-
-      return individualPaths.map(({ p1, p2, ...rest }, index) => {
+      return groupedPaths.map(({ p1, p2, properties, ...rest }, index) => {
         const currentGroup = rest.group;
         const path = new Path(
           rest.direction === "end"
             ? { x: p1.x, y: p1.y }
-            : { x: p1.x - 5, y: p1.y - 5 }
+            : { x: p1.x - 5, y: p1.y - 5 },
         );
         // offset between each path
         const offsetPath = offset * (index + 1);
@@ -194,11 +176,11 @@ const useSvgCoordinator = ({
         const maxYOffset = 300;
         const yOffset1 = Math.min(
           offsetPath - 0.9 * horizontalOffset + verticalJitter,
-          maxYOffset
+          maxYOffset,
         );
         const yOffset2 = Math.min(
           offsetPath - 0.9 * horizontalOffset + verticalJitter * 0.8,
-          maxYOffset
+          maxYOffset,
         );
 
         path.pipe(
@@ -208,20 +190,23 @@ const useSvgCoordinator = ({
             p1.y - yOffset1,
             // second control point with different jitter
             p2.x + horizontalJitter * 0.6,
-            p2.y - yOffset2
+            p2.y - yOffset2,
           ),
           drawTo(
             rest.direction === "end" ? p2.x + 5 : p2.x,
-            rest.direction === "end" ? p2.y - 5 : p2.y
-          )
+            rest.direction === "end" ? p2.y - 5 : p2.y,
+          ),
         );
         return {
           ...rest,
           path,
+          label: properties.map((p: any) => p.label),
+          link: properties[0]?.link, // Use first link or handle multiple
+          id: properties[0]?.id, // Use first id
         };
       });
     },
-    [alfa]
+    [alfa],
   );
   const draw = useCallback(() => {
     if (paths && !isEmptyObject(paths) && svgRef && svgRef.current) {
@@ -281,7 +266,7 @@ const useSvgCoordinator = ({
               svgBB,
               fullWidth,
               svgBB.width,
-              scrollLeft
+              scrollLeft,
             );
             resultingMap[pathKey] = {
               id: pathKey,
