@@ -29,6 +29,7 @@ import { useParams } from "react-router-dom";
 interface ExportDialogProps {}
 
 const ExportDialog: FC<ExportDialogProps> = () => {
+  const [type, setType] = useState<string>("");
   const [format, setFormat] = useState<string>("");
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectExportDialogStatus);
@@ -46,12 +47,22 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   };
 
   useEffect(() => {
-    if (API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0) {
-      setFormat(API.ENDPOINTS.EXPORT[0].name || "");
-    }
-  }, [API]);
+    setFormat("");
+    setType("");
+  }, [API, isOpen]);
 
-  const handleChange = (event: SelectChangeEvent<string>) => {
+  const filteredFormats = API.ENDPOINTS.EXPORT.filter(({ name }) => {
+    if (type === "table") return !name.toLowerCase().includes("pipeline");
+    if (type === "pipeline") return name.toLowerCase().includes("pipeline");
+    return true;
+  });
+
+  const handleTypeChange = (event: SelectChangeEvent<string>) => {
+    setType(event.target.value);
+    setFormat("");
+  };
+
+  const handleFormatChange = (event: SelectChangeEvent<string>) => {
     const newFormat = event.target.value;
 
     // Check if the selected format is a pipeline and we have unsaved changes
@@ -144,21 +155,40 @@ const ExportDialog: FC<ExportDialogProps> = () => {
 
   return (
     <Dialog open={isOpen} onClose={handleClose}>
-      <DialogTitle>Export table</DialogTitle>
+      <DialogTitle>Export</DialogTitle>
       <DialogContent>
+        <DialogContentText>
+          Choose what to export:
+        </DialogContentText>
+        <FormControl fullWidth sx={{ marginTop: "20px", marginBottom: "20px", }}>
+          <InputLabel id="type-label">Export type</InputLabel>
+          <Select
+            labelId="type-label"
+            id="export-type-select"
+            value={type}
+            label="Export type"
+            onChange={handleTypeChange}
+            variant="outlined"
+          >
+            <MenuItem value="table">Table</MenuItem>
+            <MenuItem value="pipeline">Pipeline</MenuItem>
+          </Select>
+        </FormControl>
         <DialogContentText>
           Choose an export format from those available:
         </DialogContentText>
         <FormControl fullWidth sx={{ marginTop: "20px" }}>
-          <InputLabel id="export-label">Export format</InputLabel>
+          <InputLabel id="export-label" disabled={!type}>Export format</InputLabel>
           <Select
             labelId="export-label"
             id="export-select"
             value={format}
             label="Export format"
-            onChange={handleChange}
+            onChange={handleFormatChange}
+            disabled={!type}
+            variant="outlined"
           >
-            {API.ENDPOINTS.EXPORT.map(({ name, path }) => {
+            {filteredFormats.map(({ name, path }) => {
               // Disable pipeline options if there are unsaved changes
               const isPipeline =
                 name === "Python pipeline" ||
@@ -179,7 +209,8 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                         disabled={isDisabled}
                         sx={{ color: "text.disabled", fontStyle: "italic" }}
                       >
-                        {name} (save required)
+                        {name}
+                        (save required)
                       </MenuItem>
                     </span>
                   </Tooltip>
