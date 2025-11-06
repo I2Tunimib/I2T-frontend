@@ -55,30 +55,56 @@ export function filterDetailLevelOptions(
 ) {
   if (!allOptions) return [];
   let filtered = allOptions;
-  if (columnType === "time") {
-    filtered = filtered.filter((dl) => ["hourMinutes", "hourMinutes12", "seconds",
-      "seconds12", "secondsUTC", "milliseconds", "timezone", "timezoneAbbr"].includes(dl.id));
-  }
-  switch (formatType) {
-    case "iso":
-      filtered = filtered.filter((dl) => !["year", "monthYear", "monthNumber",
-        "monthText", "day", "hourMinutes12", "seconds12", "timezoneAbbr"].includes(dl.id));
-      break;
-    case "european":
-      filtered = filtered.filter((dl) => !["hourMinutes12", "seconds12",
-        "secondsUTC", "timezone"].includes(dl.id));
-      break;
-    case "us":
-      filtered = filtered.filter((dl) => !["hourMinutes", "seconds",
-        "secondsUTC", "timezone"].includes(dl.id));
-      break;
-    case "custom":
-    default:
-      break;
-  }
-  if (columnType === "datetime") {
-    filtered = filtered.filter((dl) => !["year", "monthYear", "monthNumber",
-      "monthText", "day", "dateOnly"].includes(dl.id));
+  const EXCLUSIONS = {
+    time: ["year", "monthYear", "monthNumber", "monthText", "day"],
+    iso: ["year", "monthYear", "monthNumber", "monthText", "day", "hour", "hour12", "minutes", "seconds", "milliseconds", "hourMinutes12", "hourSeconds12", "timezoneAbbr"],
+    european: ["hour12", "hourMinutes12", "hourSeconds12", "hourSecondsUTC", "timezone"],
+    us: ["hour", "hourMinutes", "hourSeconds", "hourSecondsUTC", "hourMilliseconds", "timezone", "timezoneAbbr"],
+    datetime: ["year", "monthYear", "monthNumber", "monthText", "day", "dateOnly"],
+  };
+  if (columnType === "time") filtered = filtered.filter((dl) => !EXCLUSIONS.time.includes(dl.id));
+  filtered = filtered.filter((dl) => !EXCLUSIONS[formatType]?.includes(dl.id));
+  if (columnType === "datetime") filtered = filtered.filter((dl) => !EXCLUSIONS.datetime.includes(dl.id));
+
+  if (columnType === "date" || columnType === "datetime") {
+    const datePrefix =
+      formatType === "iso"
+        ? "yyyy-MM-dd" : formatType === "european"
+        ? "dd/MM/yyyy" : formatType === "us"
+        ? "MM/dd/yyyy" : "";
+
+    const separator = formatType === "iso" ? "'T'" : " ";
+
+    filtered = filtered.map((dl) => {
+      switch (dl.id) {
+        case "dateOnly":
+          return {
+            ...dl,
+            label: formatType === "iso"
+              ? "Date only (yyyy-MM-dd)" : formatType === "european"
+              ? "Date only (dd/MM/yyyy)" : formatType === "us"
+              ? "Date only (MM/dd/yyyy)" : dl.label,
+          };
+        case "hourMinutes":
+          return { ...dl, label: `Hour and minutes (${datePrefix}${separator}HH:mm)` };
+        case "hourMinutes12":
+          return { ...dl, label: `Hour and minutes 12h (${datePrefix}${separator}hh:mm a)` };
+        case "hourSeconds":
+          return { ...dl, label: `Hour with seconds (${datePrefix}${separator}HH:mm:ss)` };
+        case "hourSecondsUTC":
+          return { ...dl, label: `Hour with seconds UTC (${datePrefix}${separator}HH:mm:ss'Z')` };
+        case "hourSeconds12":
+          return { ...dl, label: `Hour with seconds 12h (${datePrefix}${separator}hh:mm:ss a)` };
+        case "hourMilliseconds":
+          return { ...dl, label: `Hour with milliseconds (${datePrefix}${separator}HH:mm:ss.SSS)` };
+        case "timezone":
+          return { ...dl, label: `Hour with timezone and offset (${datePrefix}${separator}HH:mm:ssXXX) [e.g., +02:00]` };
+        case "timezoneAbbr":
+          return { ...dl, label: `Hour with timezone GMT (${datePrefix}${separator}HH:mm:ss z) [e.g., GMT+2]` };
+        default:
+          return dl;
+      }
+    });
   }
   return filtered;
 }

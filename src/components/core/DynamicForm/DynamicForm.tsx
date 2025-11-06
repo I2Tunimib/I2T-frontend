@@ -140,6 +140,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
           {modifiedFormParams.map(({ id, inputType, ...inputProps }) => {
             if (service.id === "dateFormatter") {
               if (id === "customPattern" && formatType !== "custom") return null;
+              if (id === "detailLevel" && !formatType) return null;
               if (id === "outputMode" && (selectedColumns.length > 1 || splitDatetime)) return null;
               if (id === "detailLevel" && formatType === "custom") return null;
               if (id === "columnToJoin" && (selectedColumns.length > 1 || service.columnType === "datetime")) return null;
@@ -232,7 +233,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
                   setValue={setValue}
                   {...fieldProps}
                   {...(prepareFormInput(inputProps) as any)}
-                  {...(inputType === "multipleColumnSelect" ? { selectedColumns } : {})}
+                  {...(["multipleColumnSelect", "selectColumns"].includes(inputType) ? { selectedColumns } : {})}
                 />
               )}
               name={id}
