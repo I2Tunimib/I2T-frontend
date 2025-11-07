@@ -55,6 +55,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const splitDatetime = watch("splitDatetime");
   const operationType = watch("operationType");
   const isJoinInvalid = service.columnType === "unknown";
+  const granularity = watch("granularity");
   let finalType = "";
 
   useEffect(() => {
@@ -218,6 +219,10 @@ const DynamicForm: FC<DynamicFormProps> = ({
           if (service.id === "textColumnsTransformer") {
             if (id === "columnToJoinSplit" && operationType !== "joinOp") return null;
             if (id === "renameNewColumn" && (!operationType || operationType === "splitOp")) return null;
+          }
+          if (service.id === "meteoPropertiesOpenMeteo") {
+            if (id === "weatherParams_daily" && granularity !== "daily") return null;
+            if (id === "weatherParams_hourly" && granularity !== "hourly") return null;
           }
           const FormComponent = FORM_COMPONENTS[inputType];
           return (
