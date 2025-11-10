@@ -168,12 +168,12 @@ const useSvgCoordinator = ({
         // Add jitter to prevent overlapping arrows
         // Use a deterministic jitter based on path properties for consistency
         const jitterSeed = rest.id.length + index;
-        const horizontalJitter = Math.sin(jitterSeed * 1.5) * 15; // ±15px horizontal jitter
+        const horizontalJitter = Math.sin(jitterSeed * 2) * 15; // ±15px horizontal jitter
         const verticalJitter = Math.cos(jitterSeed * 2.3) * 25; // ±25px vertical jitter
 
         // Calculate more adaptive control point values
         // Limit the maximum Y offset to prevent arrows from getting too high
-        const maxYOffset = 300;
+        const maxYOffset = 150;
         const yOffset1 = Math.min(
           offsetPath - 0.9 * horizontalOffset + verticalJitter,
           maxYOffset,

@@ -17,6 +17,8 @@ interface SvgArrowProps {
   endElementLabel?: string;
   onMouseEnter?: (data: any) => void;
   onMouseLeave?: () => void;
+  adjustedLabelPosition?: { x: number; y: number };
+  onLabelRef?: (id: string, element: SVGTextElement | null) => void;
 }
 
 const SvgArrow: FC<SvgArrowProps> = ({
@@ -33,6 +35,8 @@ const SvgArrow: FC<SvgArrowProps> = ({
   endElementLabel,
   onMouseEnter,
   onMouseLeave,
+  adjustedLabelPosition,
+  onLabelRef,
 }) => {
   const pathRef = useRef<SVGPathElement>(null);
   const textRef = useRef<SVGTextElement>(null);
@@ -72,14 +76,35 @@ const SvgArrow: FC<SvgArrowProps> = ({
     });
   };
 
-  // Calculate label position at midpoint of path
+  // Calculate label position at the highest point of the curve
   useEffect(() => {
     if (pathRef.current) {
       const totalLength = pathRef.current.getTotalLength();
-      const midPoint = pathRef.current.getPointAtLength(totalLength / 2);
-      setLabelPosition({ x: midPoint.x, y: midPoint.y - 15 }); // 15px above
+
+      // Use adjusted position if provided, otherwise calculate the highest point
+      if (adjustedLabelPosition) {
+        setLabelPosition({
+          x: adjustedLabelPosition.x,
+          y: adjustedLabelPosition.y,
+        });
+      } else {
+        // Sample points along the curve to find the highest (minimum y) point
+        let highestPoint = pathRef.current.getPointAtLength(0);
+        const sampleCount = 50;
+
+        for (let i = 0; i <= sampleCount; i++) {
+          const point = pathRef.current.getPointAtLength(
+            (i / sampleCount) * totalLength,
+          );
+          if (point.y < highestPoint.y) {
+            highestPoint = point;
+          }
+        }
+
+        setLabelPosition({ x: highestPoint.x, y: highestPoint.y - 10 }); // 10px above highest point
+      }
     }
-  }, [d]); // Recalculate when path changes
+  }, [d, adjustedLabelPosition]); // Recalculate when path or adjusted position changes
 
   // Calculate label viewport position for tooltip
   useEffect(() => {
@@ -161,9 +186,12 @@ const SvgArrow: FC<SvgArrowProps> = ({
         {/* Show label at the top of the arrow */}
         {label && showLabel && (
           <text
-            ref={textRef}
+            ref={(el) => {
+              textRef.current = el;
+              onLabelRef && onLabelRef(id, el);
+            }}
             key={`label-${id}`}
-            x={labelPosition.x}
+            x={labelPosition.x + 15}
             y={labelPosition.y}
             textAnchor="middle"
             style={{ cursor: "pointer", fontSize: "12px", fill: "black" }}
