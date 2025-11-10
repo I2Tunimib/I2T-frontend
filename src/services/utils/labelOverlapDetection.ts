@@ -22,7 +22,7 @@ export interface AdjustedLabel {
  * Checks if two bounding boxes overlap
  */
 export const checkOverlap = (a: LabelBounds, b: LabelBounds): boolean => {
-  const padding = 4; // Add padding for better readability
+  const padding = 12; // Increased padding for better separation
   return !(
     a.x + a.width + padding < b.x ||
     b.x + b.width + padding < a.x ||
@@ -70,8 +70,8 @@ const calculateRepulsionForce = (
 
   // Prefer vertical movement (downward) to stack labels when they overlap
   return {
-    dx: (dx / distance) * force * 0.3, // Reduced horizontal force
-    dy: (dy / distance) * force * 2.5, // Increased vertical force to push labels down
+    dx: (dx / distance) * force * 0.2, // Minimal horizontal force
+    dy: (dy / distance) * force * 4.0, // Strong vertical force to push labels down
   };
 };
 
@@ -261,17 +261,17 @@ export const smartAdjustLabels = (
     const verticallyAdjusted = sortedLabels.map((label, index) => {
       const workingLabel = { ...label };
 
-      // Check for labels with similar x positions (within 80px)
+      // Check for labels with similar x positions (within 100px)
       const nearbyLabels = sortedLabels.filter(
         (other, otherIndex) =>
           otherIndex < index &&
-          Math.abs(other.x - label.x) < 80 &&
+          Math.abs(other.x - label.x) < 100 &&
           checkOverlap(workingLabel, other),
       );
 
       if (nearbyLabels.length > 0) {
         // Stack vertically with spacing - move DOWN by adding to Y
-        const spacing = 10;
+        const spacing = 20; // Increased spacing between stacked labels
         const lowestY = Math.max(
           ...nearbyLabels.map((l) => l.y + l.height + spacing),
         );
@@ -294,7 +294,13 @@ export const smartAdjustLabels = (
         maxY: svgBounds ? svgBounds.height - label.height - 10 : undefined,
       }));
 
-      const adjusted = adjustLabelPositions(constrainedLabels, 40, 0.5, 30, 80);
+      const adjusted = adjustLabelPositions(
+        constrainedLabels,
+        50,
+        0.5,
+        30,
+        120,
+      );
       result.push(...adjusted);
     } else {
       // Vertical stacking resolved all overlaps

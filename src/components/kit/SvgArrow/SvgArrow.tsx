@@ -12,6 +12,7 @@ interface SvgArrowProps {
   label?: string | string[];
   link?: string;
   showLabel?: boolean;
+  showArrow?: boolean;
   showTooltip?: boolean;
   startElementLabel?: string;
   endElementLabel?: string;
@@ -19,6 +20,8 @@ interface SvgArrowProps {
   onMouseLeave?: () => void;
   adjustedLabelPosition?: { x: number; y: number };
   onLabelRef?: (id: string, element: SVGTextElement | null) => void;
+  isHighlighted?: boolean;
+  onLabelHover?: (hovered: boolean) => void;
 }
 
 const SvgArrow: FC<SvgArrowProps> = ({
@@ -30,6 +33,7 @@ const SvgArrow: FC<SvgArrowProps> = ({
   label,
   link,
   showLabel = true,
+  showArrow = true,
   showTooltip = false,
   startElementLabel,
   endElementLabel,
@@ -37,6 +41,8 @@ const SvgArrow: FC<SvgArrowProps> = ({
   onMouseLeave,
   adjustedLabelPosition,
   onLabelRef,
+  isHighlighted = false,
+  onLabelHover,
 }) => {
   const pathRef = useRef<SVGPathElement>(null);
   const textRef = useRef<SVGTextElement>(null);
@@ -149,40 +155,54 @@ const SvgArrow: FC<SvgArrowProps> = ({
         }}
         onMouseMove={handleMouseMove}
       >
-        <a href={link} target="_blank" rel="noreferrer">
+        {showArrow && (
+          <a href={link} target="_blank" rel="noreferrer">
+            <path
+              id={id}
+              ref={pathRef}
+              d={d}
+              fill="none"
+              stroke={color}
+              strokeWidth={isHighlighted ? "3" : "0.5"}
+              opacity={isHighlighted ? "1" : "0.5"}
+              {...(direction === "end"
+                ? {
+                    markerEnd: `url(#${arrowId})`,
+                  }
+                : {
+                    markerStart: `url(#${arrowId})`,
+                  })}
+            />
+            {/* Invisible wider path on top for easier hovering/clicking */}
+            <path
+              d={d}
+              fill="none"
+              stroke="transparent"
+              strokeWidth="10"
+              style={{ cursor: "pointer" }}
+              onMouseEnter={() =>
+                onMouseEnter &&
+                onMouseEnter({ id, label, startElementLabel, endElementLabel })
+              }
+              onMouseLeave={() => {
+                setIsHovering(false);
+                onMouseLeave && onMouseLeave();
+              }}
+              onMouseMove={handleMouseMove}
+            />
+          </a>
+        )}
+        {/* Hidden path for label position calculation when showArrow is false */}
+        {!showArrow && (
           <path
-            id={id}
             ref={pathRef}
             d={d}
             fill="none"
-            stroke={color}
-            strokeWidth="1"
-            {...(direction === "end"
-              ? {
-                  markerEnd: `url(#${arrowId})`,
-                }
-              : {
-                  markerStart: `url(#${arrowId})`,
-                })}
-          />
-          {/* Invisible wider path on top for easier hovering/clicking */}
-          <path
-            d={d}
-            fill="none"
             stroke="transparent"
-            strokeWidth="1"
-            style={{ cursor: "pointer" }}
-            onMouseEnter={() =>
-              onMouseEnter &&
-              onMouseEnter({ id, label, startElementLabel, endElementLabel })
-            }
-            onMouseLeave={() => {
-              setIsHovering(false);
-              onMouseLeave && onMouseLeave();
-            }}
-            onMouseMove={handleMouseMove}
+            strokeWidth="0"
+            pointerEvents="none"
           />
-        </a>
+        )}
         {/* Show label at the top of the arrow */}
         {label && showLabel && (
           <text
@@ -194,9 +214,19 @@ const SvgArrow: FC<SvgArrowProps> = ({
             x={labelPosition.x + 15}
             y={labelPosition.y}
             textAnchor="middle"
-            style={{ cursor: "pointer", fontSize: "12px", fill: "black" }}
-            onMouseEnter={() => setLabelHovering(true)}
-            onMouseLeave={() => setLabelHovering(false)}
+            style={{
+              cursor: "pointer",
+              fontSize: "14px",
+              fill: "black",
+            }}
+            onMouseEnter={() => {
+              setLabelHovering(true);
+              onLabelHover && onLabelHover(true);
+            }}
+            onMouseLeave={() => {
+              setLabelHovering(false);
+              onLabelHover && onLabelHover(false);
+            }}
           >
             {Array.isArray(label) ? label[0] : label}
           </text>

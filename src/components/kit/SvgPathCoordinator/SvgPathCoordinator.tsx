@@ -58,6 +58,11 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
     // Refs to track label elements
     const labelRefs = useRef<Record<string, SVGTextElement | null>>({});
 
+    // Track which arrow is highlighted by label hover
+    const [highlightedArrowId, setHighlightedArrowId] = useState<string | null>(
+      null,
+    );
+
     // Update scroll position whenever visible
     useEffect(() => {
       const updateScrollPosition = () => {
@@ -200,44 +205,83 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
     }, [processedPaths, adjustLabels]);
     return (
       <svg ref={forwardedRef} {...props}>
-        {processedPaths &&
-          processedPaths.map((path: any, index: number) => {
-            // Extract start and end element labels from the group key
-            const [startElementLabel, endElementLabel] = path.group.split("-");
-            const labelId = `${path.id}_${index}`;
+        {/* Render all arrow paths first */}
+        <g className="arrows-layer">
+          {processedPaths &&
+            processedPaths.map((path: any, index: number) => {
+              // Extract start and end element labels from the group key
+              const [startElementLabel, endElementLabel] =
+                path.group.split("-");
+              const labelId = `${path.id}_${index}`;
 
-            return (
-              <g key={labelId}>
-                <path
-                  id={`${labelId}_path`}
-                  d={path.path.draw()}
-                  fill="none"
-                  stroke="transparent"
-                  strokeWidth="0"
-                  pointerEvents="none"
-                />
+              return (
+                <g key={labelId}>
+                  <path
+                    id={`${labelId}_path`}
+                    d={path.path.draw()}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth="0"
+                    pointerEvents="none"
+                  />
+                  <SvgArrow
+                    id={labelId}
+                    d={path.path.draw()}
+                    arrowId={`${index}`}
+                    direction={path.direction}
+                    color={path.color}
+                    label={path.label}
+                    link={path.link}
+                    showLabel={false}
+                    showArrow={true}
+                    showTooltip={false}
+                    startElementLabel={startElementLabel}
+                    endElementLabel={endElementLabel}
+                    onMouseEnter={() =>
+                      onPathMouseEnter && onPathMouseEnter(path)
+                    }
+                    onMouseLeave={onPathMouseLeave}
+                    adjustedLabelPosition={adjustedLabels[labelId]}
+                    onLabelRef={handleLabelRef}
+                    isHighlighted={highlightedArrowId === labelId}
+                  />
+                </g>
+              );
+            })}
+        </g>
+
+        {/* Render all labels on top */}
+        <g className="labels-layer">
+          {processedPaths &&
+            processedPaths.map((path: any, index: number) => {
+              const labelId = `${path.id}_${index}`;
+              const [startElementLabel, endElementLabel] =
+                path.group.split("-");
+
+              return (
                 <SvgArrow
-                  id={labelId}
+                  key={`${labelId}-label`}
+                  id={`${labelId}-label`}
                   d={path.path.draw()}
-                  arrowId={`${index}`}
+                  arrowId={`${index}-label`}
                   direction={path.direction}
                   color={path.color}
                   label={path.label}
                   link={path.link}
-                  showLabel
+                  showLabel={true}
+                  showArrow={false}
                   showTooltip={false}
                   startElementLabel={startElementLabel}
                   endElementLabel={endElementLabel}
-                  onMouseEnter={() =>
-                    onPathMouseEnter && onPathMouseEnter(path)
-                  }
-                  onMouseLeave={onPathMouseLeave}
                   adjustedLabelPosition={adjustedLabels[labelId]}
                   onLabelRef={handleLabelRef}
+                  onLabelHover={(hovered) => {
+                    setHighlightedArrowId(hovered ? labelId : null);
+                  }}
                 />
-              </g>
-            );
-          })}
+              );
+            })}
+        </g>
       </svg>
     );
   },
