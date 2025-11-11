@@ -144,43 +144,10 @@ const useSvgCoordinator = ({
         horizontalOffset: 0,
       };
 
-      // Each arrow gets a guaranteed height based on its position in the sorted array
-      // Farthest arrows (index 0) get the highest arc, closest arrows (last index) get the lowest
-      // This ensures proper vertical stacking where longer arrows always go over shorter ones
+      // Total number of arrows for height calculation
       const totalArrows = groupedPaths.length;
 
-      // Detect bidirectional arrows (A→B and B→A) for special handling
-      const bidirectionalPairs = new Map<string, number>();
-      const processedGroups = new Set<string>();
-
-      groupedPaths.forEach((path, idx) => {
-        const [start, end] = path.group.split("-");
-        const reverseGroup = `${end}-${start}`;
-
-        // Check if the reverse path exists
-        const reverseIndex = groupedPaths.findIndex(
-          (p) => p.group === reverseGroup,
-        );
-
-        if (reverseIndex !== -1 && !processedGroups.has(path.group)) {
-          // Mark both directions as bidirectional
-          bidirectionalPairs.set(path.group, 0);
-          bidirectionalPairs.set(reverseGroup, 1);
-          processedGroups.add(path.group);
-          processedGroups.add(reverseGroup);
-        }
-      });
-
-      // Also group by distance for other cases
-      const distanceGroups = new Map<number, number>();
-      groupedPaths.forEach((path) => {
-        const roundedDistance = Math.round(path.distance / 10) * 10; // Round to nearest 10px
-        distanceGroups.set(
-          roundedDistance,
-          (distanceGroups.get(roundedDistance) || 0) + 1,
-        );
-      });
-
+      // Track how many arrows we've seen at each distance for small offset
       const distanceCounters = new Map<number, number>();
 
       return groupedPaths.map(({ p1, p2, properties, ...rest }, index) => {
@@ -191,36 +158,29 @@ const useSvgCoordinator = ({
             : { x: p1.x - 5, y: p1.y - 5 },
         );
 
-        // Calculate height based on index position to ensure proper vertical layering
-        // Index 0 (farthest) = maximum height, last index (closest) = minimum height
-        // Use a progressive scale with enough separation to prevent intersections
-        const minHeight = 40;
-        const maxHeight = 200;
-        const heightStep =
-          (maxHeight - minHeight) / Math.max(1, totalArrows - 1);
+        // SIMPLE GUARANTEED HEIGHT ORDERING:
+        // Longest distance (index 0) = HIGHEST arc
+        // Shortest distance (last index) = LOWEST arc
+        // Strict descending order, no exceptions
 
-        // Reverse the index so farthest (index 0) gets maxHeight
+        const minHeight = 20;
+        const maxHeight = 230;
+        const heightRange = maxHeight - minHeight;
+
+        // Each arrow gets a guaranteed height based ONLY on its index
+        // Larger index = shorter distance = lower height
+        const heightStep = heightRange / Math.max(1, totalArrows - 1);
         let baseHeight = maxHeight - index * heightStep;
 
-        // Check if this is a bidirectional arrow
-        if (bidirectionalPairs.has(rest.group)) {
-          const bidirOffset = bidirectionalPairs.get(rest.group)!;
-          // Give bidirectional pairs very clear separation: 50px difference
-          baseHeight = baseHeight + bidirOffset * 50;
-        } else {
-          // Add additional offset for arrows with the same distance (non-bidirectional)
-          const roundedDistance = Math.round(rest.distance / 10) * 10;
-          const sameDistanceCount = distanceGroups.get(roundedDistance) || 1;
+        // For arrows at same distance (bidirectional or duplicates), add tiny jitter
+        // Max ±3px so it NEVER breaks the ordering between different distances
+        const distanceKey = Math.round(rest.distance);
+        const countAtDistance = distanceCounters.get(distanceKey) || 0;
+        distanceCounters.set(distanceKey, countAtDistance + 1);
 
-          if (sameDistanceCount > 1) {
-            const currentCount = distanceCounters.get(roundedDistance) || 0;
-            distanceCounters.set(roundedDistance, currentCount + 1);
-
-            // Add progressive offset for each arrow with the same distance
-            const sameDistanceOffset = currentCount * 35; // 35px offset per duplicate
-            baseHeight = baseHeight + sameDistanceOffset;
-          }
-        }
+        // Small jitter: alternate +3, -3, +3, -3... for same-distance arrows
+        const jitter = countAtDistance % 2 === 0 ? 3 : -3;
+        baseHeight = baseHeight + jitter;
 
         // offset between each path (for arrows with same distance)
         const offsetPath = offset * (index + 1);
@@ -241,20 +201,14 @@ const useSvgCoordinator = ({
         // Use a deterministic jitter based on path properties for consistency
         const jitterSeed = rest.id.length + index;
         const horizontalJitter = Math.sin(jitterSeed * 2) * 15; // ±15px horizontal jitter
-        const verticalJitter = Math.cos(jitterSeed * 2.3) * 10; // Reduced vertical jitter
+        const verticalJitter = Math.cos(jitterSeed * 2.3) * 8; // Small vertical jitter
 
-        // Calculate control point Y offsets - each arrow uses its own baseHeight as the maximum
-        // NO global maxHeight clamp - each arrow has its own individual maximum height
-        const yOffset1 =
-          baseHeight +
-          offsetPath * 0.2 -
-          0.9 * horizontalOffset +
-          verticalJitter;
+        // Calculate control point Y offsets using baseHeight
+        // baseHeight is already calculated based on distance ordering
+        // Longest distance = highest baseHeight, shortest = lowest baseHeight
+        const yOffset1 = baseHeight - 0.9 * horizontalOffset + verticalJitter;
         const yOffset2 =
-          baseHeight +
-          offsetPath * 0.2 -
-          0.9 * horizontalOffset +
-          verticalJitter * 0.8;
+          baseHeight - 0.9 * horizontalOffset + verticalJitter * 0.8;
 
         path.pipe(
           bezierCurve(
