@@ -1,11 +1,7 @@
 export const KG_INFO = {
-  geo: {
-    uri: "http://www.geonames.org/",
-    groupName: "GeoNames",
-  },
-  dbp: {
-    uri: "https://dbpedia.org/page/",
-    groupName: "dbPedia",
+  cr: {
+    uri: "",
+    groupName: "In-Table Column Reconciler",
   },
   wd: {
     uri: "https://www.wikidata.org/wiki/",
@@ -22,6 +18,14 @@ export const KG_INFO = {
   wiki: {
     uri: "https://www.wikidata.org/wiki/",
     groupName: "Wikidata",
+  },
+  dbp: {
+    uri: "https://dbpedia.org/page/",
+    groupName: "dbPedia",
+  },
+  geo: {
+    uri: "http://www.geonames.org/",
+    groupName: "GeoNames",
   },
   geoCoord: {
     uri: "http://20.8.170.217:3002/geocoords",

@@ -1823,7 +1823,14 @@ export const tableSlice = createSliceWithRequests({
         ) => {
           const { data, reconciliator, undoable = true } = action.payload;
           console.log("reconcile data", data);
-          const { prefix, uri } = reconciliator;
+
+          //if columnReconciler, use the reconciliator with the corresponding selected prefix
+          const effectiveReconciliator =
+            (data as any).reconciliator && reconciliator.id === "columnReconciler"
+              ? (data as any).reconciliator
+              : reconciliator;
+
+          const { prefix, uri } = effectiveReconciliator;
 
           return produceWithPatch(
             state,
@@ -1861,7 +1868,7 @@ export const tableSlice = createSliceWithRequests({
                       name: {
                         value: name as unknown as string,
                         //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                        uri: buildURI(reconciliator.uri, metaId),
+                        uri: buildURI(effectiveReconciliator.uri, metaId),
                       },
                       ...rest,
                     };
@@ -1888,7 +1895,7 @@ export const tableSlice = createSliceWithRequests({
                   // get column
                   const column = getColumn(draft, cellId);
 
-                  if (column.metadata.length > 0) {
+                  if (column && Array.isArray(column.metadata) && column.metadata.length > 0) {
                     column.metadata[0].entity = metadata.map(
                       ({ id, name, ...rest }) => {
                         const [_, metaId] = id.split(":");
@@ -1897,7 +1904,7 @@ export const tableSlice = createSliceWithRequests({
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(reconciliator.uri, metaId),
+                            uri: buildURI(effectiveReconciliator.uri, metaId),
                           },
                           ...rest,
                         };
@@ -1934,7 +1941,7 @@ export const tableSlice = createSliceWithRequests({
                         return [];
                       });
                     }
-                  } else {
+                  } else if (column && Array.isArray(column.metadata)) {
                     column.metadata[0] = {
                       id: "None:",
                       match: true,
@@ -1964,18 +1971,18 @@ export const tableSlice = createSliceWithRequests({
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(reconciliator.uri, metaId),
+                            uri: buildURI(effectiveReconciliator.uri, metaId),
                           },
                           ...rest,
                         };
                       }),
                     };
-                  }
 
-                  column.annotationMeta = {
-                    annotated: true,
-                    ...computeColumnAnnotationStats(column),
-                  };
+                    column.annotationMeta = {
+                      annotated: true,
+                      ...computeColumnAnnotationStats(column),
+                    };
+                  }
                 }
               });
               updateNumberOfReconciliatedCells(draft);
