@@ -110,6 +110,14 @@ const CONFIG: AppConfig = {
           },
         },
         {
+          path: "/dataset/:datasetId/table/:tableId/export?format=rdf",
+          name: "RDF",
+          params: {
+            extension: "ttl",
+            postDownload: (data: any) => data,
+          },
+        },
+        {
           path: "/dataset/:datasetId/table/:tableId/code?format=python",
           name: "Python pipeline",
           params: {

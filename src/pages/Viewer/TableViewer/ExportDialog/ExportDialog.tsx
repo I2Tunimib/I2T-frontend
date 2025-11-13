@@ -1,17 +1,24 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  TextField,
   FormControl,
+  FormControlLabel,
+  FormHelperText,
   InputLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
   Select,
   SelectChangeEvent,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
@@ -31,6 +38,14 @@ interface ExportDialogProps {}
 const ExportDialog: FC<ExportDialogProps> = () => {
   const [type, setType] = useState<string>("");
   const [format, setFormat] = useState<string>("");
+  const [csvDelimiter, setCsvDelimiter] = useState<string>(",");
+  const [csvQuote, setCsvQuote] = useState<string>('"');
+  const [csvDecimalSeparator, setCsvDecimalSeparator] = useState<string>(".");
+  const [csvIncludeHeader, setCsvIncludeHeader] = useState<"yes" | "no" | "">("");
+  const [rdfFormat, setRdfFormat] = useState<string>("");
+  const [baseUri, setBaseUri] = useState<string>("");
+  const [matchValue, setMatchValue] = useState<string>("");
+  const [scoreValue, setScoreValue] = useState<number>(0);
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectExportDialogStatus);
   const { datasetId, tableId } = useParams<{
@@ -49,6 +64,14 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   useEffect(() => {
     setFormat("");
     setType("");
+    setCsvDelimiter(",");
+    setCsvQuote('"');
+    setCsvDecimalSeparator(".");
+    setCsvIncludeHeader();
+    setRdfFormat("");
+    setBaseUri("");
+    setScoreValue(0);
+    setMatchValue("");
   }, [API, isOpen]);
 
   const filteredFormats = API.ENDPOINTS.EXPORT.filter(({ name }) => {
@@ -160,7 +183,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
         <DialogContentText>
           Choose what to export:
         </DialogContentText>
-        <FormControl fullWidth sx={{ marginTop: "20px", marginBottom: "20px", }}>
+        <FormControl fullWidth sx={{ marginTop: "20px", marginBottom: "20px" }}>
           <InputLabel id="type-label">Export type</InputLabel>
           <Select
             labelId="type-label"
@@ -226,6 +249,157 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             })}
           </Select>
         </FormControl>
+        {format === "CSV" && (
+          <>
+            <DialogContentText sx={{ marginTop: "20px" }}>
+              Configuration parameters
+            </DialogContentText>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <InputLabel id="csv-sep">Field separator</InputLabel>
+              <Select
+                labelId="csv-sep"
+                id="csv-sep-select"
+                value={csvDelimiter}
+                label="Field separator"
+                onChange={(e) => setCsvDelimiter(e.target.value)}
+                variant="outlined"
+                required
+              >
+                <MenuItem value=",">Comma (,)</MenuItem>
+                <MenuItem value=";">Semicolon (;)</MenuItem>
+                <MenuItem value="\t">Tab (\t)</MenuItem>
+              </Select>
+              <FormHelperText>
+                Character used to separate fields (default: comma).
+              </FormHelperText>
+            </FormControl>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <InputLabel id="csv-quote">Quote character</InputLabel>
+              <Select
+                labelId="csv-quote"
+                id="csv-quote-select"
+                value={csvQuote}
+                label="Quote character"
+                onChange={(e) => setCsvQuote(e.target.value)}
+                variant="outlined"
+                required
+              >
+                <MenuItem value='"'>Double quote (")</MenuItem>
+                <MenuItem value="'">Single quote (')</MenuItem>
+              </Select>
+              <FormHelperText>
+                Character used to quote text fields (default: ").
+              </FormHelperText>
+            </FormControl>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <InputLabel id="csv-dec-sep">Decimal separator</InputLabel>
+              <Select
+                labelId="csv-dec-sep"
+                id="csv-dec-sep-select"
+                value={csvDecimalSeparator}
+                label="Decimal separator"
+                onChange={(e) => setCsvDecimalSeparator(e.target.value)}
+                variant="outlined"
+                required
+              >
+                <MenuItem value=".">Dot (.)</MenuItem>
+                <MenuItem value=",">Comma (,)</MenuItem>
+              </Select>
+              <FormHelperText>
+                Character used to seperate decimal values (default: .).
+              </FormHelperText>
+            </FormControl>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Typography variant="body1">Include header row</Typography>
+                <RadioGroup
+                  row
+                  value={csvIncludeHeader}
+                  onChange={(e) => setCsvIncludeHeader(e.target.value as "yes" | "no")}
+                  required
+                >
+                  <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                  <FormControlLabel value="no" control={<Radio />} label="No" />
+                </RadioGroup>
+              </Box>
+            </FormControl>
+          </>
+        )}
+        {format === "RDF" && (
+          <>
+            <DialogContentText sx={{ marginTop: "20px" }}>
+              Choose an export RDF format:
+            </DialogContentText>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <InputLabel id="rdf-format">Output RDF format</InputLabel>
+              <Select
+                labelId="rdf-format"
+                id="rdf-format-select"
+                value={rdfFormat}
+                label="Output RDF format"
+                onChange={(e) => setRdfFormat(e.target.value)}
+                variant="outlined"
+                required
+              >
+                <MenuItem value="TURTLE">Turtle (.ttl)</MenuItem>
+                <MenuItem value="XML">XML (.xml)</MenuItem>
+                <MenuItem value="JSON">JSON (.json)</MenuItem>
+                <MenuItem value="TRIG">TriG (.trig)</MenuItem>
+                <MenuItem value="TRIX">TriX (.trix)</MenuItem>
+                <MenuItem value="NQUADS">N-Quads (.nq)</MenuItem>
+                <MenuItem value="NTRIPLES">N-Triples (.nt)</MenuItem>
+              </Select>
+            </FormControl>
+            <DialogContentText sx={{ marginTop: "20px" }}>
+              Configuration parameters
+            </DialogContentText>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <TextField
+                id="rdf-uri-text"
+                value={baseUri}
+                placeholder="http://example.org/"
+                label="@base URI"
+                onChange={(e) => setBaseUri(e.target.value)}
+                variant="outlined"
+                required
+                helperText="URI to resolve relative URIs."
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <TextField
+                id="rdf-score-text"
+                inputProps={{ min: 0, max: 1, step: 0.01 }}
+                value={scoreValue}
+                label="Score value"
+                onChange={(e) => setScoreValue(Number(e.target.value))}
+                variant="outlined"
+                required
+                helperText="Defines the minimum threshold score for filtering results; only entries with scores equal to
+                or above this value are included."
+              />
+            </FormControl>
+            <FormControl fullWidth sx={{ marginTop: "20px" }}>
+              <Typography variant="body1">Match value</Typography>
+              <RadioGroup
+                value={matchValue}
+                onChange={(e) => setMatchValue(e.target.value)}
+                row
+                required
+              >
+                <FormControlLabel
+                  value="all"
+                  control={<Radio />}
+                  label="All (Including all matching results.)"
+                />
+                <FormControlLabel
+                  value="only_true"
+                  control={<Radio />}
+                  label="Only true (Including only results explicitly marked as true.)"
+                />
+              </RadioGroup>
+            </FormControl>
+          </>
+        )}
         {/* <FormControlLabel
           control={<Checkbox checked={keepMatching} onChange={handleChange} />}
           label="Keep only matching metadata"
