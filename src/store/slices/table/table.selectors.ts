@@ -540,7 +540,7 @@ export const selectDataTableFormat = createSelector(
         data: { ...rest },
         size: width ?? 150,
         minSize: minWidth ?? 80,
-        maxSize: maxWidth ?? 500,
+        maxSize: maxWidth ?? 800,
         enableResizing: true,
       };
     });
