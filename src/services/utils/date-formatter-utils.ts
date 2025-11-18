@@ -56,7 +56,7 @@ export function filterDetailLevelOptions(
   if (!allOptions) return [];
   let filtered = allOptions;
   const EXCLUSIONS = {
-    time: ["year", "monthYear", "monthNumber", "monthText", "day"],
+    time: ["year", "monthYear", "monthNumber", "monthText", "day", "dateOnly"],
     iso: ["year", "monthYear", "monthNumber", "monthText", "day", "hour", "hour12", "minutes", "seconds", "milliseconds", "hourMinutes12", "hourSeconds12", "timezoneAbbr"],
     european: ["hour12", "hourMinutes12", "hourSeconds12", "hourSecondsUTC", "timezone"],
     us: ["hour", "hourMinutes", "hourSeconds", "hourSecondsUTC", "hourMilliseconds", "timezone", "timezoneAbbr"],
