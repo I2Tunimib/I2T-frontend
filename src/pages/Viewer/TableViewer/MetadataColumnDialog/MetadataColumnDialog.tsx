@@ -25,7 +25,6 @@ import {
   updateColumnRole,
   updateUI,
 } from "@store/slices/table/table.slice";
-import EntityTab from "./EntityTab";
 import TypeTab from "./TypeTab";
 import PropertyTab from "./PropertyTab";
 
@@ -224,7 +223,6 @@ const Content = () => {
       >
         <Tab label="Column types" {...a11yProps(0)} />
         <Tab label="Column properties" {...a11yProps(1)} />
-        <Tab label="Cell entities" {...a11yProps(2)} />
       </Tabs>
       <Stack minHeight="600px">
         <TabPanel value={value} index={0}>
@@ -232,9 +230,6 @@ const Content = () => {
         </TabPanel>
         <TabPanel value={value} index={1}>
           <PropertyTab addEdit={handleAddEdit} />
-        </TabPanel>
-        <TabPanel value={value} index={2}>
-          <EntityTab addEdit={handleAddEdit} />
         </TabPanel>
       </Stack>
     </Stack>
