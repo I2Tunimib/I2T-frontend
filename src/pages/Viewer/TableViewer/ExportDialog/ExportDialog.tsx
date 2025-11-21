@@ -41,7 +41,9 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const [csvDelimiter, setCsvDelimiter] = useState<string>(",");
   const [csvQuote, setCsvQuote] = useState<string>('"');
   const [csvDecimalSeparator, setCsvDecimalSeparator] = useState<string>(".");
-  const [csvIncludeHeader, setCsvIncludeHeader] = useState<"yes" | "no" | "">("");
+  const [csvIncludeHeader, setCsvIncludeHeader] = useState<"yes" | "no" | "">(
+    "",
+  );
   const [rdfFormat, setRdfFormat] = useState<string>("");
   const [baseUri, setBaseUri] = useState<string>("");
   const [matchValue, setMatchValue] = useState<string>("");
@@ -67,7 +69,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
     setCsvDelimiter(",");
     setCsvQuote('"');
     setCsvDecimalSeparator(".");
-    setCsvIncludeHeader();
+    setCsvIncludeHeader("");
     setRdfFormat("");
     setBaseUri("");
     setScoreValue(0);
@@ -142,10 +144,35 @@ const ExportDialog: FC<ExportDialogProps> = () => {
 
     const { params } = exportEndpoint;
 
+    // RDF extension mapping
+    const rdfExtensions: Record<string, string> = {
+      TURTLE: "ttl",
+      XML: "rdf",
+      JSON: "jsonld",
+      TRIG: "trig",
+      TRIX: "trix",
+      NQUADS: "nq",
+      NTRIPLES: "nt",
+    };
+
+    // Build API params
+    const apiParams: Record<string, string | number> = {
+      tableId: tableId!,
+      datasetId: datasetId!,
+    };
+
+    // Add RDF-specific params if this is an RDF export
+    if (format === "RDF") {
+      apiParams.serialization = rdfFormat;
+      apiParams.baseUri = baseUri;
+      apiParams.score = scoreValue;
+      apiParams.match = matchValue;
+    }
+
     dispatch(
       exportTable({
         format,
-        params: { tableId, datasetId },
+        params: apiParams,
       }),
     )
       .unwrap()
@@ -158,7 +185,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
         });
 
         if (params) {
-          const { postDownload, extension } = params;
+          const { postDownload } = params;
           const processedData = postDownload ? postDownload(data) : data;
 
           console.log("Processed data for download:", {
@@ -170,6 +197,12 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 : processedData,
           });
 
+          // Determine the file extension
+          const extension =
+            format === "RDF"
+              ? rdfExtensions[rdfFormat] || "ttl"
+              : params.extension || "txt";
+
           fileDownload(processedData, `${tableName}.${extension}`);
         }
       });
@@ -180,9 +213,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
     <Dialog open={isOpen} onClose={handleClose}>
       <DialogTitle>Export</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Choose what to export:
-        </DialogContentText>
+        <DialogContentText>Choose what to export:</DialogContentText>
         <FormControl fullWidth sx={{ marginTop: "20px", marginBottom: "20px" }}>
           <InputLabel id="type-label">Export type</InputLabel>
           <Select
@@ -201,7 +232,9 @@ const ExportDialog: FC<ExportDialogProps> = () => {
           Choose an export format from those available:
         </DialogContentText>
         <FormControl fullWidth sx={{ marginTop: "20px" }}>
-          <InputLabel id="export-label" disabled={!type}>Export format</InputLabel>
+          <InputLabel id="export-label" disabled={!type}>
+            Export format
+          </InputLabel>
           <Select
             labelId="export-label"
             id="export-select"
@@ -232,8 +265,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                         disabled={isDisabled}
                         sx={{ color: "text.disabled", fontStyle: "italic" }}
                       >
-                        {name}
-                        (save required)
+                        {name} (save required)
                       </MenuItem>
                     </span>
                   </Tooltip>
@@ -315,10 +347,15 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 <RadioGroup
                   row
                   value={csvIncludeHeader}
-                  onChange={(e) => setCsvIncludeHeader(e.target.value as "yes" | "no")}
-                  required
+                  onChange={(e) =>
+                    setCsvIncludeHeader(e.target.value as "yes" | "no")
+                  }
                 >
-                  <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio />}
+                    label="Yes"
+                  />
                   <FormControlLabel value="no" control={<Radio />} label="No" />
                 </RadioGroup>
               </Box>
@@ -342,8 +379,8 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 required
               >
                 <MenuItem value="TURTLE">Turtle (.ttl)</MenuItem>
-                <MenuItem value="XML">XML (.xml)</MenuItem>
-                <MenuItem value="JSON">JSON (.json)</MenuItem>
+                <MenuItem value="XML">XML (.rdf)</MenuItem>
+                <MenuItem value="JSON">JSON-LD (.jsonld)</MenuItem>
                 <MenuItem value="TRIG">TriG (.trig)</MenuItem>
                 <MenuItem value="TRIX">TriX (.trix)</MenuItem>
                 <MenuItem value="NQUADS">N-Quads (.nq)</MenuItem>
@@ -368,14 +405,14 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             <FormControl fullWidth sx={{ marginTop: "20px" }}>
               <TextField
                 id="rdf-score-text"
+                type="number"
                 inputProps={{ min: 0, max: 1, step: 0.01 }}
                 value={scoreValue}
                 label="Score value"
                 onChange={(e) => setScoreValue(Number(e.target.value))}
                 variant="outlined"
                 required
-                helperText="Defines the minimum threshold score for filtering results; only entries with scores equal to
-                or above this value are included."
+                helperText="Defines the minimum threshold score for filtering results; only entries with scores equal to or above this value are included."
               />
             </FormControl>
             <FormControl fullWidth sx={{ marginTop: "20px" }}>
@@ -384,7 +421,6 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 value={matchValue}
                 onChange={(e) => setMatchValue(e.target.value)}
                 row
-                required
               >
                 <FormControlLabel
                   value="all"
@@ -400,10 +436,6 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             </FormControl>
           </>
         )}
-        {/* <FormControlLabel
-          control={<Checkbox checked={keepMatching} onChange={handleChange} />}
-          label="Keep only matching metadata"
-        /> */}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
