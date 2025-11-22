@@ -231,7 +231,12 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   arrow
                 >
                   <IconButton
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const isAlreadySelected = !!selected;
+                      if (!isAlreadySelected) {
+                        handleSelectedColumnCellChange(e, id);
+                      }
                       const currentPin = header.column.getIsPinned();
                       header.column.pin(currentPin ? false : 'left');
                     }}
@@ -248,6 +253,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
+                    const isAlreadySelected = !!selected;
+                    if (!isAlreadySelected) {
+                      handleSelectedColumnCellChange(e, id);
+                    }
                     handleMetadataDialogAction(header.column.id);
                   }}
                   className={styles.ColumnManageButton}
@@ -290,7 +299,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
-                          onClick={(e) => handleSortByClick(e, "sortByText")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const isAlreadySelected = !!selected;
+                            if (!isAlreadySelected) {
+                              handleSelectedColumnCellChange(e, id);
+                            }
+                            handleSortByClick(e, "sortByText");
+                          }}
                           sx={{
                             visibility:
                               hover || (header.column.getIsSorted() && sortType === "sortByText")
@@ -311,7 +327,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
-                          onClick={(e) => handleSortByClick(e, "sortByMetadata")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const isAlreadySelected = !!selected;
+                            if (!isAlreadySelected) {
+                              handleSelectedColumnCellChange(e, id);
+                            }
+                            handleSortByClick(e, "sortByMetadata");
+                          }}
                           sx={{
                             visibility:
                               hover || (header.column.getIsSorted() && sortType === "sortByMetadata")
