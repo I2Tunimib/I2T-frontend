@@ -236,6 +236,7 @@ export interface AddColumnMetadataPayload {
     uri?: string;
     score: number;
     match: string;
+    description: string;
     obj?: string;
   };
 }

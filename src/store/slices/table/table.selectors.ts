@@ -142,10 +142,11 @@ export const selectColumnsAsSelectOptions = createSelector(
   selectColumnsState,
   ({ byId, allIds }) => {
     return allIds.map((colId) => {
-      const { id, label } = byId[colId];
+      const { id, label, kind } = byId[colId];
       return {
         id,
         label,
+        kind,
         value: id,
       };
     });
