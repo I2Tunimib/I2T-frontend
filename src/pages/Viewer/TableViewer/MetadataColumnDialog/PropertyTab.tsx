@@ -47,11 +47,13 @@ import { getCellContext } from "@store/slices/table/utils/table.reconciliation-u
 import { FC, useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
-import { getCellComponent } from "../MetadataDialog/componentsConfig";
-import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { SelectColumns } from "@components/core/DynamicForm/formComponents/Select";
-import { getPrefixIfAvailable } from "@services/utils/kg-info";
+import { fetchTypeAndDescription } from "@services/utils/kg-info";
+import { Property } from "@store/slices/table"
+import { getCellComponent } from "../MetadataDialog/componentsConfig";
+import usePrepareTable from "../MetadataDialog/usePrepareTable";
+import AddMetadataForm from "./AddMetadataForm";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -112,13 +114,16 @@ const makeData = (
           ...item,
           selected: item.match,
           name: { value: item.name, uri: `${resourceContext.uri}${id}` },
+          description: item.description || "",
         };
-      } else
+      } else {
         return {
           ...item,
           selected: item.match,
           name: { value: item.name, uri: "" },
+          description: item.description || "",
         };
+      }
     }
     return item;
   });
@@ -186,6 +191,7 @@ interface NewMetadata {
   id?: string;
   name: string;
   obj: string;
+  description: string;
   score: number;
   match: string;
   uri: string;
@@ -208,7 +214,6 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   });
 
   const [selectedMetadata, setSelectedMetadata] = useState<string>("");
-  const [currentService, setCurrentService] = useState<string>();
   const [undoSteps, setUndoSteps] = useState(0);
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
@@ -216,26 +221,19 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   const { loading } = useAppSelector(selectReconcileRequestStatus);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
+  const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
+  const currentService = rawData?.service?.prefix || "";
 
   const options = useAppSelector(selectColumnsAsSelectOptions);
+  const currentColumnId = column?.id;
+  const otherColumns = options.filter((opt) => opt.value !== currentColumnId);
   type Item = { id: string; label: string; value: string };
-  const [otherColumns, setOtherColumns] = useState<Item[]>([]);
-
-  useEffect(() => {
-    // set initial value of select
-    if (reconciliators) {
-      setCurrentService(reconciliators[0].prefix);
-    }
-    if (column && options && options.length > 0) {
-      setOtherColumns(options.filter((item) => item.id !== column.id));
-    }
-  }, [reconciliators]);
 
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
-      score: 1,
+      score: 1.00,
       match: "false",
     },
   });
@@ -407,56 +405,42 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     }
   };
 
-  const handleChangeService = (event: SelectChangeEvent<string>) => {
-    const newService = event.target.value;
-    if (newService) {
-      setCurrentService(newService);
-      fetchMetadata(newService);
-    }
-  };
-
-  const onSubmitNewMetadata = (formState: NewMetadata) => {
-    if (column) {
-      if (
-        column.metadata /*&& column.metadata.length > 0 && column.metadata[0].property*/
-      ) {
-        let prefix = getPrefixIfAvailable(formState.uri, formState.id || "");
-        /* const { property } = column.metadata[0];
-        const previousMatch = property.find((meta) => meta.match);
-        if (!previousMatch || (previousMatch.id !== selectedMetadata)) {*/
-        addEdit(
-          addColumnMetadata({
-            colId: column.id,
-            type: "property",
-            prefix: prefix,
-            value: { ...formState },
-          }),
-          true
-        );
-        // dispatch(
-        //   addColumnMetadata({
-        //     colId: column.id,
-        //     type: "property",
-        //     prefix: /*getCellContext(column),*/ "None:",
-        //     value: { ...formState },
-        //   })
-        // );
-        // setUndoSteps(undoSteps + 1);
-        reset();
-        setShowAdd(false);
-        //}
+  const onSubmitNewMetadata = async (formState: Property) => {
+    if (!column) return;
+    if (column.metadata) {
+      const { prefix } = formState;
+      let idFromUri = "";
+      try {
+        const url = new URL(formState.uri);
+        console.log("url", url);
+        if (prefix.startsWith("wd")) {
+          // es. https://www.wikidata.org/wiki/Property:P286
+          idFromUri = url.pathname.split("/").pop().split(":")[1];
+        }
+      } catch (err) {
+        console.log("Invalid URI, fallback to id", err);
       }
-    }
 
-    /*if (cell) {
-      dispatch(addCellMetadata({
-        cellId: cell.id,
-        prefix: getCellContext(cell),
-        value: { ...formState }
-      }));
+      let description = "";
+      try {
+        const result = await fetchTypeAndDescription(prefix.replace(/:$/, ""), idFromUri, formState.name);
+        description = result.description || "";
+      } catch (err) {
+        console.error("Error fetching metadata info:", err);
+      }
+
+      dispatch(
+        addColumnMetadata({
+          colId: column.id,
+          type: "property",
+          prefix,
+          value: { ...formState, id: `${prefix}:${idFromUri}`, description },
+        }),
+        true
+      );
       reset();
       setShowAdd(false);
-    }*/
+    }
   };
 
   const { lowerBound } = settings;
@@ -494,227 +478,52 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
 
   return (
     <>
-      <Stack position="sticky" top="0" zIndex={10} bgcolor="#FFF">
-        <Stack
-          direction="row"
-          gap="10px"
-          alignItems="center"
-          padding="12px 16px"
-        >
-          <Stack direction="row" alignItems="center" gap={1}>
-            {column &&
-              column.annotationMeta &&
-              column.annotationMeta.annotated && (
-                <StatusBadge status={getBadgeStatus(column)} />
-              )}
-            <Typography variant="h5">{column?.label}</Typography>
-            <Typography color="textSecondary">(Cell label)</Typography>
-          </Stack>
-          {/* <Stack direction="row" marginLeft="auto" gap="10px">
-            <Button onClick={handleCancel}>
-              {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
-            </Button>
-            {API.ENDPOINTS.SAVE && !isViewOnly && (
-              <Button onClick={handleConfirm} variant="outlined">
-                Confirm
-              </Button>
-            )}
-          </Stack> */}
-        </Stack>
-        <Divider orientation="horizontal" flexItem />
-      </Stack>
-      <Box paddingLeft="16px" paddingBottom="12px" marginTop="20px">
-        {currentService && (
-          <FormControl
-            sx={{
-              maxWidth: "200px",
-            }}
-            fullWidth
-            size="small"
-          >
-            <InputLabel variant="outlined" id="reconciliator-label">
-              Reconciliator service
-            </InputLabel>
-            <Select
-              labelId="reconciliator-label"
-              label="Reconciliator service"
-              value={currentService}
-              onChange={(e) => handleChangeService(e)}
-              variant="outlined"
-            >
-              {reconciliators &&
-                reconciliators.map((reconciliator) => (
-                  <MenuItem
-                    key={reconciliator.prefix}
-                    value={reconciliator.prefix}
-                  >
-                    {reconciliator.name}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-        )}
-      </Box>
       {
         /*data.length > 0 && */ API.ENDPOINTS.SAVE && !isViewOnly && (
           <Stack
             position="relative"
-            direction="row"
-            alignItems="center"
-            alignSelf="flex-start"
-            padding="0px 12px"
+            direction="column"
+            alignItems="flex-start"
+            flexWrap="wrap"
+            padding="0px 16px"
+            gap={1}
           >
-            <Tooltip open={showTooltip} title="Add metadata" placement="right">
-              <IconButton
+            <Tooltip open={showTooltip} title="Add property" placement="right">
+              <Button
+                variant="outlined"
                 color="primary"
                 onMouseLeave={handleTooltipClose}
                 onMouseEnter={handleTooltipOpen}
                 onClick={handleShowAdd}
+                sx={{
+                  textTransform: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1
+                }}
               >
+                Add column property
                 <AddRoundedIcon
                   sx={{
                     transition: "transform 150ms ease-out",
                     transform: showAdd ? "rotate(45deg)" : "rotate(0)",
                   }}
                 />
-              </IconButton>
+              </Button>
             </Tooltip>
             <Box
               sx={{
-                position: "absolute",
-                left: "100%",
-                top: "50%",
-                padding: "12px 16px",
-                borderRadius: "6px",
-                transition: "all 150ms ease-out",
-                opacity: showAdd ? 1 : 0,
-                transform: showAdd
-                  ? "translateY(-50%) translateX(0)"
-                  : "translateY(-50%) translateX(-20px)",
+                width: "100%",
+                paddingTop: "5px",
+                display: showAdd ? "block" : "none",
               }}
             >
-              <Stack
-                component="form"
-                direction="row"
-                gap="10px"
-                onSubmit={handleSubmit(onSubmitNewMetadata)}
-              >
-                <Tooltip
-                  title="Enter a complete id, like wd:P937"
-                  arrow
-                  placement="top"
-                >
-                  <TextField
-                    sx={{ minWidth: "100px" }}
-                    size="small"
-                    label="Id"
-                    variant="outlined"
-                    placeholder="wd:"
-                    {...register("id")}
-                  />
-                </Tooltip>
-                <Tooltip
-                  title="Enter a name, like work location"
-                  arrow
-                  placement="top"
-                >
-                  <TextField
-                    sx={{ minWidth: "200px" }}
-                    size="small"
-                    label="Name"
-                    variant="outlined"
-                    required
-                    {...register("name")}
-                  />
-                </Tooltip>
-                <Tooltip
-                  title="Select the referenced column"
-                  arrow
-                  placement="top"
-                >
-                  <FormControl
-                    sx={{
-                      maxWidth: "200px",
-                    }}
-                    fullWidth
-                    size="small"
-                  >
-                    <InputLabel
-                      variant="outlined"
-                      id="obj-label"
-                    >
-                      Obj
-                    </InputLabel>
-                    <Select
-                      id="obj-select"
-                      labelId="obj-label"
-                      label="Obj"
-                      variant="outlined"
-                      sx={{ minWidth: "200px" }}
-                      required
-                      defaultValue="" // Placeholder iniziale
-                      {...register("obj", { required: "Seleziona un valore" })}
-                    >
-                      <MenuItem disabled value="">
-                        <em>Select an option</em>
-                      </MenuItem>
-                      {otherColumns && otherColumns.length > 0 ? (
-                        otherColumns.map((col) => (
-                          <MenuItem key={col.id} value={col.value}>
-                            {col.label}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No options available</MenuItem>
-                      )}
-                    </Select>
-                  </FormControl>
-                </Tooltip>
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Uri"
-                  required
-                  variant="outlined"
-                  {...register("uri")}
-                />
-                <Tooltip
-                  title="Enter the score value, from 0.00 to 1.00"
-                  arrow
-                  placement="top"
-                >
-                  <TextField
-                    sx={{ minWidth: "50px" }}
-                    size="small"
-                    label="Score"
-                    variant="outlined"
-                    required
-                    type="number"
-                    inputProps={{ step: "0.01" }} // Consente 2 decimali
-                    {...register("score")}
-                  />
-                </Tooltip>
-                <FormControl size="small" sx={{ width: "200px" }}>
-                  <InputLabel>Match</InputLabel>
-                  <Controller
-                    render={({ field }) => (
-                      <Select {...field} labelId="select-match" label="Match">
-                        <MenuItem value="true">true</MenuItem>
-                        <MenuItem value="false">false</MenuItem>
-                      </Select>
-                    )}
-                    name="match"
-                    control={control}
-                  />
-                </FormControl>
-                <Button
-                  type="submit"
-                  size="small"
-                  sx={{ textTransform: "none" }}
-                >
-                  Add
-                </Button>
-              </Stack>
+              <AddMetadataForm
+                currentService={currentService}
+                onSubmit={onSubmitNewMetadata}
+                otherColumns={otherColumns || []}
+                context="propertyTab"
+              />
             </Box>
           </Stack>
         )

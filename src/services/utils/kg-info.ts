@@ -66,8 +66,8 @@ export const getGroupFromUri = (uri: string): string => {
 };
 
 export const getPrefixIfAvailable = (uri: string, id: string): string => {
-  let prefixSplit = id.split(":");
-  let prefix = null;
+  const prefixSplit = id.split(":");
+  let prefix;
   if (prefixSplit.length > 1) {
     prefix = prefixSplit[0];
   } else {
@@ -101,3 +101,30 @@ export const getPrefixIfAvailable = (uri: string, id: string): string => {
     return prefix;
   }
 };
+
+export async function fetchTypeAndDescription(prefix: string, id: string, label?: string) {
+  const base = import.meta.env.VITE_BACKEND_API_URL;
+  let res;
+  try {
+    if (prefix === "wd" || prefix === "wdA") {
+      res = await fetch(`${base}/metadata/wikidata?id=${id}`);
+      return await res.json();
+    }
+    if (prefix === "wdL") {
+      res = await fetch(`${base}/metadata/lionlinker?id=${id}&label=${encodeURIComponent(label || "")}`);
+      return await res.json();
+    }
+    if (prefix === "geo") {
+      res = await fetch(`${base}/metadata/geonames?id=${id}`);
+      return await res.json();
+    }
+    if (prefix === "geoCoord") {
+      res = await fetch(`${base}/metadata/geonamesCoordinates?id=${id}`);
+      return await res.json();
+    }
+    return { description: "", type: [] };
+  } catch (err) {
+    console.error("fetchTypeAndDescription frontend error:", err);
+    return { description: "", type: [] };
+  }
+}

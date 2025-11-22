@@ -13,7 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { getPrefixIfAvailable } from "@services/utils/kg-info";
+import { fetchTypeAndDescription } from "@services/utils/kg-info";
 import { createWikidataURI } from "@services/utils/uri-utils";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import { isValidWikidataId } from "@services/utils/regexs";
@@ -36,6 +36,7 @@ import { useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
+import AddMetadataForm from "./AddMetadataForm";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -51,7 +52,7 @@ const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
 
 const SquaredBox = styled.div({
   borderRadius: "7px",
-  padding: "10px",
+  padding: "8px",
   boxShadow: "inset 0 0 0 1px rgb(0 0 0 / 10%)",
 });
 
@@ -66,7 +67,7 @@ type RadioLabelProps = {
 const RadioLabel: FC<RadioLabelProps> = ({ percentage, label, checked }) => {
   return (
     <Stack>
-      <Stack direction="row" gap="10px">
+      <Stack direction="row" gap="8px">
         {label}
         <Typography fontSize="14px">{`(${percentage}%)`}</Typography>
       </Stack>
@@ -143,6 +144,8 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const colId = useAppSelector((state) => state.table.ui.metadataColumnDialogColId);
+  const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
+  const currentService = rawData?.service?.prefix || "";
 
   const {
     handleSubmit: handleSubmitNewType,
@@ -293,10 +296,32 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   });
   const onSubmitNewMetadata = (formState: NewMetadata) => {
     if (formState.uri) {
-      let prefix = getPrefixIfAvailable(formState.uri, formState.id);
+      const prefix = formState?.prefix;
+      //console.log("onSubmitNewMetadata prefix", prefix);
+      let idFromUri = "";
+
+      try {
+        const url = new URL(formState.uri);
+        console.log("url", url);
+        if (prefix.startsWith("wd")) {
+          // es. https://www.wikidata.org/wiki/Q18711
+          idFromUri = url.pathname.split("/").pop();
+        } else if (prefix === "geo") {
+          // es. https://www.geonames.org/3117735/madrid.html
+          idFromUri = url.pathname.split("/")[1];
+        } else if (prefix === "geoCoord") {
+          // es. https://www.google.com/maps/place/lat,long
+          const parts = url.pathname.split("/").pop()?.split(",") || [];
+          idFromUri = parts.join(",");
+        }
+      } catch (err) {
+        console.log("Invalid URI, fallback to id", err);
+      }
+      const finalId = idFromUri.includes(":") ? idFromUri : `${prefix}:${idFromUri}`;
+
       if (prefix) {
         const newType = {
-          id: prefix + formState.id,
+          id: finalId,
           name: formState.name,
           uri: formState.uri,
         };
@@ -402,135 +427,61 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   };
 
   return types ? (
-    <Stack gap="10px" padding="10px">
-      <Stack direction="row">
-        <Typography variant="h6">Column types</Typography>
-        {/* <Stack direction="row" gap="10px" marginLeft="auto">
-          <Button variant="outlined" onClick={handleCancel}>Cancel</Button>
-          <Button variant="outlined" onClick={handleConfirm}>Confirm</Button>
-        </Stack> */}
+    <Stack position="sticky" top="0" zIndex={10} bgcolor="#FFF">
+      <Stack
+        direction="column"
+        paddingLeft="16px"
+        paddingBottom="10px"
+      >
+        <Typography color="textSecondary">
+          In the following list is shown the frequency of the types which are present in the column
+        </Typography>
       </Stack>
-      <Typography color="textSecondary">
-        In the following list is shown the frequency of the types which are
-        present in the column
-      </Typography>
-      {false && selected && (
-        <Box
-          marginLeft="-10px"
-          marginRight="-10px"
-          padding="10px"
-          position="sticky"
-          top="47px"
-          zIndex={10}
-          bgcolor="#FFF"
-        >
-          <Stack component={SquaredBox}>
-            <Typography variant="h6" fontSize="14px">
-              Current selection
-            </Typography>
-            {selected.map((type) => (
-              <div style={{ marginBottom: "10px" }}>
-                <RadioLabel checked {...type} />
-              </div>
-            ))}
-            {/* <RadioLabel checked {...selected[0]} /> */}
-          </Stack>
-        </Box>
-      )}
       {
         /*data.length > 0 && */ API.ENDPOINTS.SAVE && (
           <Stack
             position="relative"
-            direction="row"
-            alignItems="center"
-            alignSelf="flex-start"
-            padding="0px 0px"
+            direction="column"
+            alignItems="flex-start"
+            flexWrap="wrap"
+            padding="0px 16px"
+            gap={1}
           >
-            <Tooltip
-              open={showTooltip}
-              title="Add metadata"
-              placement="right"
-              style={{ zIndex: 100 }}
-            >
-              <IconButton
+            <Tooltip open={showTooltip} title="Add type" placement="right">
+              <Button
+                variant="outlined"
                 color="primary"
                 onMouseLeave={handleTooltipClose}
                 onMouseEnter={handleTooltipOpen}
                 onClick={handleShowAdd}
+                sx={{
+                  textTransform: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1
+                }}
               >
+                Add column type
                 <AddRoundedIcon
                   sx={{
                     transition: "transform 150ms ease-out",
                     transform: showAdd ? "rotate(45deg)" : "rotate(0)",
                   }}
                 />
-              </IconButton>
+              </Button>
             </Tooltip>
             <Box
               sx={{
-                position: "absolute",
-                left: "100%",
-                top: "50%",
-                padding: "12px 16px",
-                borderRadius: "6px",
-                transition: "all 150ms ease-out",
-                opacity: showAdd ? 1 : 0,
-                transform: showAdd
-                  ? "translateY(-50%) translateX(0)"
-                  : "translateY(-50%) translateX(-20px)",
+                width: "100%",
+                paddingTop: "5px",
+                display: showAdd ? "block" : "none",
               }}
             >
-              <Stack
-                component="form"
-                direction="row"
-                gap="10px"
-                onSubmit={handleSubmitNewType(onSubmitNewMetadata)}
-              >
-                <Tooltip
-                  title="Enter a complete id, like wd:Q215627"
-                  arrow
-                  placement="top"
-                >
-                  <TextField
-                    sx={{ minWidth: "200px" }}
-                    size="small"
-                    label="Id"
-                    variant="outlined"
-                    placeholder="wd:"
-                    {...register("id")}
-                  />
-                </Tooltip>
-                <Tooltip
-                  title="Enter a name, like person"
-                  arrow
-                  placement="top"
-                >
-                  <TextField
-                    sx={{ minWidth: "200px" }}
-                    size="small"
-                    label="Name"
-                    variant="outlined"
-                    required
-                    {...register("name")}
-                  />
-                </Tooltip>
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Uri"
-                  variant="outlined"
-                  required
-                  {...register("uri")}
-                />
-
-                <Button
-                  type="submit"
-                  size="small"
-                  sx={{ textTransform: "none" }}
-                >
-                  Add
-                </Button>
-              </Stack>
+              <AddMetadataForm
+                currentService={currentService}
+                onSubmit={onSubmitNewMetadata}
+                context="typeTab"
+              />
             </Box>
           </Stack>
         )

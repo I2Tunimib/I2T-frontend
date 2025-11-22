@@ -9,16 +9,17 @@ import {
   Stack,
   Tab,
   Tabs,
+  Typography,
 } from "@mui/material";
 import { FC, ReactNode, SyntheticEvent, useState } from "react";
-
 import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
+import { selectAppConfig, selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
 import {
   selectColumnKind,
   selectColumnRole,
   selectIsViewOnly,
   selectMetadataColumnDialogColId,
+  selectColumnCellMetadataTableFormat,
 } from "@store/slices/table/table.selectors";
 import {
   updateColumnKind,
@@ -71,6 +72,9 @@ const Content = () => {
   const [currentKind, setCurrentKind] = useState(kind);
   const role = useAppSelector(selectColumnRole);
   const [currentRole, setCurrentRole] = useState(role);
+  const metadata = useAppSelector(selectColumnCellMetadataTableFormat);
+  const currentService = metadata?.service?.prefix || null;
+  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const dispatch = useAppDispatch();
   const handleChange = (event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -167,11 +171,15 @@ const Content = () => {
   };
   return (
     <Stack>
-      <Stack direction="row" alignItems="center" marginTop="15px" gap="10px">
-        <InputLabel style={{ marginLeft: 15 }} id="kind-select-label">
-          <b style={{ marginRight: 25 }}>
-            {currentColId}
-          </b>
+      <Stack direction="row" alignItems="center" marginTop="16px" gap="8px">
+        <Stack flexWrap="wrap">
+          <InputLabel style={{ marginLeft: 16 }} id="column-label">
+            <Typography variant="h5">
+              {currentColId}
+            </Typography>
+          </InputLabel>
+        </Stack>
+        <InputLabel style={{ marginLeft: 16 }} id="kind-select-label">
           Column Kind:
         </InputLabel>
         <Select
@@ -185,7 +193,7 @@ const Content = () => {
           <MenuItem value="literal">Literal</MenuItem>
           <MenuItem value="none">Undefined</MenuItem>
         </Select>
-        <InputLabel style={{ marginLeft: 15 }} id="role-select-label">
+        <InputLabel style={{ marginLeft: 8 }} id="role-select-label">
           Column Role:
         </InputLabel>
 
@@ -225,6 +233,25 @@ const Content = () => {
         <Tab label="Column properties" {...a11yProps(1)} />
       </Tabs>
       <Stack minHeight="600px">
+        <Stack position="sticky" top={0} zIndex={10} bgcolor="#FFF">
+          <Stack paddingLeft="16px" paddingTop="16px" paddingBottom="8px">
+            {currentService ? (
+              <Typography color="text.secondary">
+                Reconciliation service:{" "}
+                <Typography component="span" color="primary" sx={{ fontWeight: 500 }}>
+                  {currentService === "manual"
+                    ? "manual"
+                    : reconciliators.find((r) => r.prefix === currentService)?.name ||
+                    currentService}
+                </Typography>
+              </Typography>
+            ) : (
+              <Typography color="text.secondary">
+                This column has not been reconciled yet
+              </Typography>
+            )}
+          </Stack>
+        </Stack>
         <TabPanel value={value} index={0}>
           <TypeTab addEdit={handleAddEdit} />
         </TabPanel>
