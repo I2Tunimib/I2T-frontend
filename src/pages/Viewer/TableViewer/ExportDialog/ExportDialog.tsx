@@ -370,7 +370,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 id="rdf-score-text"
                 inputProps={{ min: 0, max: 1, step: 0.01 }}
                 value={scoreValue}
-                label="Score value"
+                label="Threshold score to filter exported entities"
                 onChange={(e) => setScoreValue(Number(e.target.value))}
                 variant="outlined"
                 required
