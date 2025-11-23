@@ -444,6 +444,31 @@ export const tableSlice = createSliceWithRequests({
             };
           }
 
+          const column = draft.entities.columns.byId[colId];
+
+          if (!column.context || column.context.length === 0) {
+            column.context = {};
+          }
+          column.context = {
+            prefix: `${prefix}:`,
+            uri: uri || "",
+            total: column.metadata.length,
+            reconciliated: 1,
+          };
+
+          if (!column.metadata || column.metadata.length === 0) {
+            column.metadata = [{ type: [], property: [] }];
+          }
+
+          if (value.type && value.type.length > 0) {
+            column.metadata[0].type = [...value.type.map((t) => ({ ...t, match: true }))];
+          }
+
+          if (value.property && value.property.length > 0) {
+            column.metadata[0].property = [
+              ...value.property.map((p) => ({ ...p, match: true }))
+            ];
+          }
           //draft.entities.rows.byId[rowId].cells[colId].metadata = [];
         },
         (draft) => {

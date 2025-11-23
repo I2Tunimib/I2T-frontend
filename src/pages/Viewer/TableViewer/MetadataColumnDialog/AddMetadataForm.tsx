@@ -27,10 +27,10 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({ currentService, onSubmit, c
     <Stack component="form" direction="row" gap={1} onSubmit={handleSubmit(onSubmit)}>
       <Tooltip
         title={
-          !!currentService && currentService !== "manual"
+          !!currentService
             ? context === "propertyTab"
               ? "Fixed: only Wikidata prefix allowed for properties"
-              : "Fixed with Reconciliation services used"
+              : "Fixed with Reconciliation service used"
             : "Select a prefix from the available ones"
         }
         arrow
@@ -56,7 +56,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({ currentService, onSubmit, c
                   minWidth: 100,
                   flex: context === "typeTab" ? "1 1 20px" : "1 1 50px",
                 }}
-                disabled={!!currentService && currentService !== "manual"}
+                disabled={!!currentService}
                 {...field}
               />
             )}

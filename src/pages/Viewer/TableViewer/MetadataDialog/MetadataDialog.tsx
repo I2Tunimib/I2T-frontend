@@ -168,6 +168,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     dependencies: [toUpdate],
   });
   const [currentService, setCurrentService] = useState<string>();
+  const [isManualMatch, setIsManualMatch] = useState(false);
   const [selectedMetadata, setSelectedMetadata] = useState<FormState | null>(
     null
   );
@@ -190,8 +191,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
-  const uniqueReconciliators = Array.from(new Set(reconciliators.map((r) => r.prefix)))
-      .map((prefix) => reconciliators.find((r) => r.prefix === prefix));
+  const columnsState = useAppSelector((state) => state.table.entities.columns);
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -203,15 +203,27 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     if (isCellReconciled) {
       const reason = cell?.annotationMeta?.match?.reason;
       if (reason === "manual") {
-        setCurrentService("manual");
+        setIsManualMatch(true);
       } else {
         const prefix = cell?.metadata[0].id.split(":")[0];
+        setIsManualMatch(false);
         setCurrentService(prefix);
       }
     } else {
+      setIsManualMatch(false);
       setCurrentService("");
     }
   }, [cell, reconciliators]);
+
+  useEffect(() => {
+    //When a cell has been reconciliated manually, the other ones can be reconciled using the same prefix
+    const [rowId, colKey] = cell.id.split("$");
+    const column = columnsState.byId[colKey];
+    if (column.status === "empty" && column.context?.prefix) {
+      const prefix = column.context.prefix.replace(":", "");
+      setCurrentService(prefix);
+    }
+  }, [columnsState]);
 
   useEffect(() => {
     //this useEffect is used to track the initial selected metadata in order to not show the propagation if not needed
@@ -655,7 +667,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         </Stack>
         <Divider orientation="horizontal" flexItem />
         <Box padding="16px">
-          {currentService ? (
+          {(currentService || isManualMatch) ? (
             <Typography color="text.secondary">
               Reconciliation service:{" "}
               <Typography
@@ -663,9 +675,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 color="primary"
                 sx={{ fontWeight: 500 }}
               >
-                {currentService === "manual"
+                {isManualMatch
                   ? "manual"
-                  : `${reconciliators.find((rec) => rec.prefix === currentService).name}`}
+                  : currentService
+                    ? `${reconciliators.find((rec) => rec.prefix === currentService).name}`
+                    : ""}
               </Typography>
             </Typography>
           ) : (
