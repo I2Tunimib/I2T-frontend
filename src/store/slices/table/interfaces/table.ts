@@ -47,6 +47,7 @@ export interface TableUIState {
   openMetadataColumnDialog: boolean;
   metadataColumnDialogColId: string | null;
   openHelpDialog: boolean;
+  helpStart: "rec" | "ext" | "tutorial";
   settingsDialog: boolean;
   settings: Partial<Settings>;
   headerExpanded: boolean;

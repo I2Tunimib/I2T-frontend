@@ -292,16 +292,24 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 15 }));
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 15 }));
           }}
         >
           <HelpOutlineRounded />
         </IconButton>
       </Stack>
       <DialogContent>
-        <DialogContentText paddingBottom="10px">
-          Select an extension service:
-        </DialogContentText>
+        <Stack direction="row" alignItems="center">
+          <DialogContentText>Select an extension service:</DialogContentText>
+          <IconButton
+            size="small"
+            onClick={() => {
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "ext" }));
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+        </Stack>
         <Content>
           <DialogInnerContent />
         </Content>

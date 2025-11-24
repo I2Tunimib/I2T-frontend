@@ -52,7 +52,7 @@ type Step = {
 const DiscoverExtIndex: FC<{
   activeStep: number;
   onStepSelect: (step: number) => void;
-  extenders:  Record<string, { id: string; name: string; description: string; title: string }[]>;
+  extenders: Record<string, { id: string; name: string; description: string; title: string }[]>;
 }> = ({ activeStep, onStepSelect, extenders }) => {
   return (
     <IndexContainer>
@@ -119,9 +119,9 @@ const DiscoverExtStepper: FC<DiscoverExtStepperProps> = ({ onDone, onBackToWelco
       label: "Introduction",
       Description: () => (
         <Typography>
-          Services that add complementary data or attributes to existing resources by fetching related information
-          from external systems. Extenders typically operate on columns that have been previously reconciled, enriching
-          them with new metadata or values.
+          Extenders are services responsible for adding complementary data or attributes to existing resources by
+          fetching related information from external systems. Extenders typically operate on columns that have been
+          previously reconciled, enriching them with new metadata or values.
         </Typography>
       ),
     },
