@@ -339,6 +339,21 @@ export const selectTutorialStep = createSelector(
   selectUIState,
   (ui) => ui.tutorialStep || 1,
 );
+/**
+ * Get discover reconcilers step.
+ */
+export const selectDiscoverRecStep = createSelector(
+  selectUIState,
+  (ui) => ui.discoverRecStep || 1,
+);
+
+/**
+ * Get discover extenders step.
+ */
+export const selectDiscoverExtStep = createSelector(
+  selectUIState,
+  (ui) => ui.discoverExtStep || 1,
+);
 
 /**
  * Get reconciliation dialog status.

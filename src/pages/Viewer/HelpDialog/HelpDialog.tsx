@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { updateUI } from "@store/slices/table/table.slice";
-import { selectTutorialStep } from "@store/slices/table/table.selectors";
+import { selectTutorialStep, selectDiscoverRecStep, selectDiscoverExtStep } from "@store/slices/table/table.selectors";
 import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import PlaylistAddCheckRoundedIcon from "@mui/icons-material/PlaylistAddCheckRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -28,6 +28,8 @@ import {
   useEffect,
 } from "react";
 import { StatusBadge } from "@components/core";
+import DiscoverRecStepper from "./DiscoverRecStepper";
+import DiscoverExtStepper from "./DiscoverExtStepper";
 import manualAnnotation from "../../../assets/manual-reconciliation.gif";
 import automaticAnnotation from "../../../assets/automatic-annotation.gif";
 import refineMatchingManual from "../../../assets/refine-matching-manual.gif";
@@ -64,7 +66,7 @@ const ButtonText = styled.span({
 });
 
 const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
-      prop !== 'active' })(({ active }: { active?: boolean }) => ({
+    prop !== 'active' })(({ active }: { active?: boolean }) => ({
   textTransform: "none",
   justifyContent: "flex-start",
   fontWeight: active ? "bold" : "normal",
@@ -707,9 +709,10 @@ const TutorialStep: FC<TutorialStepProps> = ({ label, Description }) => {
 
 type TutorialStepperProps = {
   onDone: () => void;
+  onBackToWelcome: () => void;
 };
 
-const TutorialStepper: FC<TutorialStepperProps> = ({ onDone }) => {
+const TutorialStepper: FC<TutorialStepperProps> = ({ onDone, onBackToWelcome }) => {
   const tutorialStep = useAppSelector(selectTutorialStep);
   const [activeStep, setActiveStep] = useState(tutorialStep);
 
@@ -731,7 +734,11 @@ const TutorialStepper: FC<TutorialStepperProps> = ({ onDone }) => {
   };
 
   const handleBack = () => {
-    setActiveStep((prevActiveStep) => Math.max(1, prevActiveStep - 1));
+    if (activeStep === 1) {
+      onBackToWelcome();
+    } else {
+      setActiveStep((prevActiveStep) => Math.max(1, prevActiveStep - 1));
+    }
   };
 
   const handleStepSelect = useCallback((step: number) => {
@@ -760,7 +767,7 @@ const TutorialStepper: FC<TutorialStepperProps> = ({ onDone }) => {
           justifyContent: "space-between",
         }}
       >
-        <Button size="small" onClick={handleBack} disabled={activeStep <= 1}>
+        <Button size="small" onClick={handleBack}>
           <KeyboardArrowLeft />
           Back
         </Button>
@@ -780,29 +787,32 @@ const TutorialStepper: FC<TutorialStepperProps> = ({ onDone }) => {
 };
 
 const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
-  const [start, setStart] = useState(false);
+  const [start, setStart] = useState<false | "tutorial" | "rec" | "ext">(false);
   const refWrapper = useRef<HTMLDivElement | null>(null);
   const dispatch = useAppDispatch();
   const tutorialStep = useAppSelector(selectTutorialStep);
+  const discoverRecStep = useAppSelector(selectDiscoverRecStep);
+  const discoverExtStep = useAppSelector(selectDiscoverExtStep);
 
   useEffect(() => {
     // If a specific tutorial step is set (greater than 1),
     // automatically start the tutorial
     if (tutorialStep && tutorialStep > 1) {
-      setStart(true);
+      setStart("tutorial");
+    } else if (discoverRecStep && discoverRecStep > 1) {
+      setStart("rec");
+    } else if (discoverExtStep && discoverExtStep > 1) {
+      setStart("ext");
     } else {
       setStart(false); // welcome
-      // reset of tutorialStep in redux
-      dispatch(updateUI({ tutorialStep: 1 }));
     }
-  }, [tutorialStep, dispatch]);
+  }, [tutorialStep, discoverRecStep, discoverExtStep, dispatch]);
 
   const handleOnClose = (
     event: {},
     reason: "backdropClick" | "escapeKeyDown"
   ) => {
     setStart(false);
-    dispatch(updateUI({ tutorialStep: 1 })); // reset
     if (onClose) {
       onClose(event, reason);
     }
@@ -810,7 +820,6 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
 
   const handleOnDone = () => {
     setStart(false);
-    dispatch(updateUI({ openHelpDialog: false, tutorialStep: 1 }));
   };
 
   return (
@@ -830,20 +839,34 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
                 It helps users enhance tables by linking cells and columns to external
                 knowledge sources, adding context and extra information.
                 <br />
-                <Button
-                  onClick={() => setStart(true)}
-                  sx={{
-                    alignSelf: "center",
-                  }}
-                >
-                  Start tutorial
-                </Button>
+                <Stack alignSelf="center" direction="row" gap="16px" marginTop="16px">
+                  <Button
+                    onClick={() => setStart("tutorial")}
+                    variant="outlined"
+                  >
+                    Start tutorial
+                  </Button>
+                  <Button
+                    onClick={() => setStart("rec")}
+                    variant="outlined"
+                  >
+                    Discover reconcilers
+                  </Button>
+                  <Button
+                    onClick={() => setStart("ext")}
+                    variant="outlined"
+                  >
+                    Discover extenders
+                  </Button>
+                </Stack>
               </Stack>
             </DialogContent>
           </>
         ) : (
-          <DialogContent sx={{ p: 0, overflow: "hidden" }}>
-            <TutorialStepper onDone={handleOnDone} />
+          <DialogContent sx={{ p: 0 }}>
+            {start === "rec" && <DiscoverRecStepper onDone={handleOnDone} onBackToWelcome={() => setStart(false)} />}
+            {start === "ext" && <DiscoverExtStepper onDone={handleOnDone} onBackToWelcome={() => setStart(false)} />}
+            {start === "tutorial" && <TutorialStepper onDone={handleOnDone} onBackToWelcome={() => setStart(false)} />}
           </DialogContent>
         )}
       </Box>
