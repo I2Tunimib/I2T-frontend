@@ -667,6 +667,7 @@ interface Property {
   id: string; // Wikidata property ID (e.g., "wd:P31")
   obj: string; // Column name that this property maps to
   name: string; // Human-readable name of the property
+  description: string;
   match: boolean; // Whether this is a matched property
   score: number; // Match confidence score (1 = exact match)
 }

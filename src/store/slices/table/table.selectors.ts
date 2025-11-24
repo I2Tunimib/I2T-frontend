@@ -142,10 +142,11 @@ export const selectColumnsAsSelectOptions = createSelector(
   selectColumnsState,
   ({ byId, allIds }) => {
     return allIds.map((colId) => {
-      const { id, label } = byId[colId];
+      const { id, label, kind } = byId[colId];
       return {
         id,
         label,
+        kind,
         value: id,
       };
     });
@@ -337,6 +338,21 @@ export const selectHelpDialogStatus = createSelector(
 export const selectTutorialStep = createSelector(
   selectUIState,
   (ui) => ui.tutorialStep || 1,
+);
+/**
+ * Get discover reconcilers step.
+ */
+export const selectDiscoverRecStep = createSelector(
+  selectUIState,
+  (ui) => ui.discoverRecStep || 1,
+);
+
+/**
+ * Get discover extenders step.
+ */
+export const selectDiscoverExtStep = createSelector(
+  selectUIState,
+  (ui) => ui.discoverExtStep || 1,
 );
 
 /**

@@ -385,6 +385,12 @@ export const tableSlice = createSliceWithRequests({
 
           const isMatching = match === "true";
           const cell = draft.entities.rows.byId[rowId].cells[colId];
+          if (!cell.annotationMeta) {
+            cell.annotationMeta = {
+              match: { value: false, reason: "" },
+              annotated: false,
+            };
+          }
           const existingMetadata = cell.metadata.findIndex(
             (metaItem) => metaItem.id === id,
           );
@@ -411,8 +417,7 @@ export const tableSlice = createSliceWithRequests({
             }
             //if (id.startsWith(prefix)) {
             //}
-            const annotationMetaMatching =
-              draft.entities.rows.byId[rowId].cells[colId].annotationMeta.match;
+            const annotationMetaMatching = cell.annotationMeta.match;
             if (!annotationMetaMatching.value && isMatching) {
               draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
                 ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
@@ -424,7 +429,7 @@ export const tableSlice = createSliceWithRequests({
             }
             console.log("annotationMetaMatching", annotationMetaMatching);
             const newMeta = {
-              id: id.startsWith(prefix) ? id : `${prefix}:${id}`,
+              id,
               match: isMatching,
               name: {
                 value: name,
@@ -436,10 +441,34 @@ export const tableSlice = createSliceWithRequests({
             draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
               ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
               annotated: true,
-              match: annotationMetaMatching,
             };
           }
 
+          const column = draft.entities.columns.byId[colId];
+
+          if (!column.context || column.context.length === 0) {
+            column.context = {};
+          }
+          column.context = {
+            prefix: `${prefix}:`,
+            uri: uri || "",
+            total: column.metadata.length,
+            reconciliated: 1,
+          };
+
+          if (!column.metadata || column.metadata.length === 0) {
+            column.metadata = [{ type: [], property: [] }];
+          }
+
+          if (value.type && value.type.length > 0) {
+            column.metadata[0].type = [...value.type.map((t) => ({ ...t, match: true }))];
+          }
+
+          if (value.property && value.property.length > 0) {
+            column.metadata[0].property = [
+              ...value.property.map((p) => ({ ...p, match: true }))
+            ];
+          }
           //draft.entities.rows.byId[rowId].cells[colId].metadata = [];
         },
         (draft) => {
@@ -844,18 +873,12 @@ export const tableSlice = createSliceWithRequests({
           break;
         }
         case "property": {
-          if (
-            column.metadata /*.length > 0
-            && column.metadata[0].property*/
-            /*&& column.metadata[0].property.length > 0*/
-          ) {
             return produceWithPatch(
               state,
               undoable,
               (draft) => {
                 const columnToUpdate = getColumn(draft, colId);
-
-                const { id, match, name, uri, obj, ...rest } = value;
+                const { id, match, name, uri, obj, description, ...rest } = value;
                 const isMatching = match === "true";
 
                 if (
@@ -882,6 +905,7 @@ export const tableSlice = createSliceWithRequests({
                   obj: value.obj,
                   match: isMatching,
                   name,
+                  description: value.description,
                   ...rest,
                 };
 
@@ -904,7 +928,6 @@ export const tableSlice = createSliceWithRequests({
                   new Date().toISOString();
               },
             );
-          }
           break;
         }
       }

@@ -27,6 +27,7 @@ import {
 } from "@store/slices/table/table.slice";
 import {
   selectCellMetadataTableFormat,
+  selectColumnCellMetadataTableFormat,
   selectCurrentCell,
   selectIsViewOnly,
   selectReconcileRequestStatus,
@@ -53,9 +54,11 @@ import {
   StatusBadge,
   IconButtonTooltip,
 } from "@components/core";
+import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
 //import { initial } from "lodash";
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
+import AddMetadataForm from "../MetadataColumnDialog/AddMetadataForm";
 //import HelpDialog from "../../HelpDialog/HelpDialog";
 
 const DeferredTable = deferMounting(CustomTable);
@@ -165,6 +168,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     dependencies: [toUpdate],
   });
   const [currentService, setCurrentService] = useState<string>();
+  const [isManualMatch, setIsManualMatch] = useState(false);
   const [selectedMetadata, setSelectedMetadata] = useState<FormState | null>(
     null
   );
@@ -176,7 +180,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
-      score: 1,
+      score: 1.00,
       match: "true",
     },
   });
@@ -187,19 +191,39 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
-  const uniqueReconciliators = Array.from(new Set(reconciliators.map((r) => r.prefix)))
-      .map((prefix) => reconciliators.find((r) => r.prefix === prefix));
+  const columnsState = useAppSelector((state) => state.table.entities.columns);
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
   } = settings;
 
   useEffect(() => {
-    // set initial value of select
-    if (reconciliators) {
-      setCurrentService(reconciliators[0].prefix);
+    if (!cell) return;
+    const isCellReconciled = cell?.annotationMeta?.annotated;
+    if (isCellReconciled) {
+      const reason = cell?.annotationMeta?.match?.reason;
+      if (reason === "manual") {
+        setIsManualMatch(true);
+      } else {
+        const prefix = cell?.metadata[0].id.split(":")[0];
+        setIsManualMatch(false);
+        setCurrentService(prefix);
+      }
+    } else {
+      setIsManualMatch(false);
+      setCurrentService("");
     }
-  }, [reconciliators]);
+  }, [cell, reconciliators]);
+
+  useEffect(() => {
+    //When a cell has been reconciliated manually, the other ones can be reconciled using the same prefix
+    const [rowId, colKey] = cell.id.split("$");
+    const column = columnsState.byId[colKey];
+    if (column.status === "empty" && column.context?.prefix) {
+      const prefix = column.context.prefix.replace(":", "");
+      setCurrentService(prefix);
+    }
+  }, [columnsState]);
 
   useEffect(() => {
     //this useEffect is used to track the initial selected metadata in order to not show the propagation if not needed
@@ -450,52 +474,68 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     [initialMatching]
   );
 
-  const onSubmitNewMetadata = (formState: FormState) => {
-    if (cell) {
-      let tempPrefix = getCellContext(cell);
-      if (formState.id.split(":").length > 1) {
-        tempPrefix = formState.id.split(":")[0];
-      } else {
-        if (
-          tempPrefix === "" ||
-          (tempPrefix.startsWith("r0$") && cell.id.split(":").length > 1)
-        ) {
-          tempPrefix = cell.id.split(":")[0];
-        }
+  const onSubmitNewMetadata = async (formState: FormState) => {
+    if (!cell) return;
+    const { prefix } = formState;
+    let idFromUri = "";
+    try {
+      const url = new URL(formState.uri);
+      console.log("url", url);
+      if (prefix.startsWith("wd")) {
+        // es. https://www.wikidata.org/wiki/Q18711
+        idFromUri = url.pathname.split("/").pop();
+      } else if (prefix === "geo") {
+        // es. https://www.geonames.org/3117735/madrid.html
+        idFromUri = url.pathname.split("/")[1];
+      } else if (prefix === "geoCoord") {
+        // es. https://www.google.com/maps/place/lat,long
+        const parts = url.pathname.split("/").pop()?.split(",") || [];
+        idFromUri = parts.join(",");
       }
-
-      console.log(
-        "prefix",
-        getCellContext(cell) !== ""
-          ? getCellContext(cell)
-          : cell.id.split(":")[0]
-      );
-
-      dispatch(
-        addCellMetadata({
-          cellId: cell.id,
-          prefix: tempPrefix,
-          value: { ...formState },
-        })
-      );
-      let newMetadata = {
-        ...formState,
-        id: formState.id.startsWith(tempPrefix)
-          ? formState.id
-          : tempPrefix + ":" + formState.id,
-      };
-      setSelectedMetadata(newMetadata);
-      if (formState.match === "true") {
-        setSelectedMetadata(newMetadata);
-        setShowPropagate(true);
-      }
-      setShowPropagate(true);
-
-      reset();
-      setNewMetaMatching(formState.match === "true");
-      setShowAdd(false);
-      setToUpdate(!toUpdate);
+    } catch (err) {
+      console.log("Invalid URI, fallback to id", err);
     }
+
+    const finalId = idFromUri.includes(":") ? idFromUri : `${prefix}:${idFromUri}`;
+    let description = "";
+    let type: any[] = [];
+    try {
+      const context = "cell";
+      const result = await fetchTypeAndDescription(prefix, idFromUri, formState.name, context);
+      description = result.description || "";
+      type = result.type || [];
+    } catch (err) {
+      console.error("Error fetching metadata info:", err);
+    }
+
+    const newMetadata = {
+      id: finalId,
+      name: formState.name,
+      uri: formState.uri,
+      score: formState.score,
+      match: formState.match,
+      description,
+      type,
+    };
+
+    dispatch(
+      addCellMetadata({
+        cellId: cell.id,
+        prefix,
+        value: newMetadata,
+      })
+    );
+    setSelectedMetadata(newMetadata);
+    if (formState.match === "true") {
+      setSelectedMetadata(newMetadata);
+      setShowPropagate(true);
+    }
+    setShowPropagate(true);
+
+    reset();
+    setNewMetaMatching(formState.match === "true");
+    setShowAdd(false);
+    setToUpdate(!toUpdate);
   };
 
   const handleTooltipOpen = () => {
@@ -537,22 +577,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     return "warn";
   };
 
-  const fetchMetadata = (service: string) => {
-    const reconciliator = reconciliators.find(
-      (recon) => recon.prefix === service
-    );
-    if (reconciliator && cell) {
-      // dispatch(reconcile({
-      //   baseUrl: reconciliator.relativeUrl,
-      //   items: [{
-      //     id: cell.id,
-      //     label: cell.label
-      //   }],
-      //   reconciliator,
-      //   contextColumns: []
-      // }));
-    }
-  };
   const handlePropagate = () => {
     try {
       if (cell && selectedMetadata) {
@@ -575,13 +599,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       handleClose();
     } catch (error) {}
   };
-  const handleChangeService = (event: SelectChangeEvent<string>) => {
-    const newService = event.target.value;
-    if (newService) {
-      setCurrentService(newService);
-      fetchMetadata(newService);
-    }
-  };
 
   // Add a handler for row checking
   const handleRowCheck = useCallback((rowId: string) => {
@@ -595,15 +612,15 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       <Stack height="100%" minHeight="600px">
         <Stack
           direction="row"
-          gap="10px"
+          gap="8px"
           alignItems="center"
-          padding="12px 16px"
+          padding="16px"
         >
           <Stack direction="row" alignItems="center" gap={1}>
             {cell.annotationMeta && cell.annotationMeta.annotated && (
               <StatusBadge status={getBadgeStatus(cell)} />
             )}
-            <Typography variant="h5">{cell?.label}</Typography>
+            <Typography variant="h5">{cell?.label || "N/A"}</Typography>
             <Typography color="textSecondary">(Cell label)</Typography>
           </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
@@ -649,157 +666,72 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           </Stack>
         </Stack>
         <Divider orientation="horizontal" flexItem />
-        <Box paddingLeft="16px" paddingBottom="12px" marginTop="20px">
-          {currentService && (
-            <FormControl
-              sx={{
-                maxWidth: "200px",
-              }}
-              fullWidth
-              size="small"
-            >
-              <InputLabel variant="outlined" id="reconciliator-label">
-                Reconciliator service
-              </InputLabel>
-              <Select
-                labelId="reconciliator-label"
-                label="Reconciliator service"
-                value={currentService}
-                onChange={(e) => handleChangeService(e)}
-                variant="outlined"
+        <Box padding="16px">
+          {(currentService || isManualMatch) ? (
+            <Typography color="text.secondary">
+              Reconciliation service:{" "}
+              <Typography
+                component="span"
+                color="primary"
+                sx={{ fontWeight: 500 }}
               >
-                {uniqueReconciliators &&
-                  uniqueReconciliators.map((reconciliator) => (
-                    <MenuItem
-                      key={reconciliator.prefix}
-                      value={reconciliator.prefix}
-                    >
-                      {reconciliator.name}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
+                {isManualMatch
+                  ? "manual"
+                  : currentService
+                    ? `${reconciliators.find((rec) => rec.prefix === currentService).name}`
+                    : ""}
+              </Typography>
+            </Typography>
+          ) : (
+            <Typography color="text.secondary">
+              This cell has not been reconciled yet
+            </Typography>
           )}
         </Box>
-        <Typography
-          sx={{
-            display: showAdd ? "block" : "none",
-            opacity: showAdd ? 1 : 0,
-            transition: "opacity 300ms ease-out",
-            marginLeft: "27px",
-          }}
-          variant="body2"
-        >
-          * required fields
-        </Typography>
         {API.ENDPOINTS.SAVE && !isViewOnly && (
           <Stack
             position="relative"
-            direction="row"
-            alignItems="center"
-            alignSelf="flex-start"
-            padding="0px 12px"
+            direction="column"
+            alignItems="flex-start"
+            padding="0px 16px"
+            gap={1}
           >
-            <Typography
-              sx={{
-                display: !showAdd ? "block" : "none",
-                opacity: !showAdd ? 1 : 0,
-                transition: "opacity 300ms ease-out",
-              }}
-              variant="body2"
-            >
-              Add Metadata
-            </Typography>
-
             <Tooltip open={showTooltip} title="Add metadata" placement="right">
-              <IconButton
+              <Button
+                variant="outlined"
                 color="primary"
                 onMouseLeave={handleTooltipClose}
                 onMouseEnter={handleTooltipOpen}
                 onClick={handleShowAdd}
+                sx={{
+                  textTransform: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1
+                }}
               >
+                Add metadata
                 <AddRoundedIcon
                   sx={{
                     transition: "transform 150ms ease-out",
                     transform: showAdd ? "rotate(45deg)" : "rotate(0)",
                   }}
                 />
-              </IconButton>
+              </Button>
             </Tooltip>
 
             <Box
               sx={{
-                position: "absolute",
-                left: "100%",
-                top: "50%",
-                padding: "12px 16px",
-                borderRadius: "6px",
-                transition: "all 150ms ease-out",
+                width: "100%",
+                paddingTop: "8px",
                 display: showAdd ? "block" : "none",
-                opacity: showAdd ? 1 : 0,
-                transform: showAdd
-                  ? "translateY(-50%) translateX(0)"
-                  : "translateY(-50%) translateX(-20px)",
               }}
             >
-              <Stack
-                component="form"
-                direction="row"
-                gap="10px"
-                onSubmit={handleSubmit(onSubmitNewMetadata)}
-              >
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Id"
-                  required
-                  variant="outlined"
-                  {...register("id")}
-                />
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Name"
-                  required
-                  variant="outlined"
-                  {...register("name")}
-                />
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Uri"
-                  variant="outlined"
-                  required
-                  {...register("uri")}
-                />
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Score"
-                  variant="outlined"
-                  {...register("score")}
-                />
-                <FormControl size="small" sx={{ width: "200px" }}>
-                  <InputLabel>Match</InputLabel>
-                  <Controller
-                    render={({ field }) => (
-                      <Select {...field} labelId="select-match" label="Match">
-                        <MenuItem value="true">true</MenuItem>
-                        <MenuItem value="false">false</MenuItem>
-                      </Select>
-                    )}
-                    name="match"
-                    control={control}
-                  />
-                </FormControl>
-                <Button
-                  type="submit"
-                  size="small"
-                  sx={{ textTransform: "none" }}
-                >
-                  Add
-                </Button>
-              </Stack>
+              <AddMetadataForm
+                currentService={currentService}
+                onSubmit={onSubmitNewMetadata}
+                context="metadataDialog"
+              />
             </Box>
           </Stack>
         )}
