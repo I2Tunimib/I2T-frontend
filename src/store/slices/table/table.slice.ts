@@ -141,6 +141,7 @@ const initialState: TableState = {
     metadataColumnDialogColId: null,
     openExportDialog: false,
     openHelpDialog: false,
+    helpStart: false,
     settingsDialog: false,
     settings: {
       isViewOnly: false,
@@ -1618,6 +1619,9 @@ export const tableSlice = createSliceWithRequests({
         selectOneRow(state, rowId);
       }
     },
+    setHelpStart: (state, action: PayloadAction<boolean | "tutorial" | "rec" | "ext">) => {
+      state.ui.helpStart = action.payload;
+    },
     /**
      * Merges parameters of the UI to the current state.
      */
@@ -2302,6 +2306,7 @@ export const {
   updateColumnType,
   updateColumnTypeMatches,
   addColumnType,
+  setHelpStart,
   updateUI,
   addTutorialBox,
   deleteColumn,

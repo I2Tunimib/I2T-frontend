@@ -158,12 +158,12 @@ type DiscoverRecStepperProps = {
 const DiscoverRecStepper: FC<DiscoverRecStepperProps> = ({ onDone, onBackToWelcome }) => {
   const discoverRecStep = useAppSelector(selectDiscoverRecStep);
   const [activeStep, setActiveStep] = useState(discoverRecStep);
-  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
-  const uniqueReconciliators = reconciliators.filter(
+  const reconcilers = useAppSelector(selectReconciliatorsAsArray);
+  const uniqueReconcilers = reconcilers.filter(
     (reconciler, index, self) => index === self.findIndex((recon) => recon.id === reconciler.id),
   );
 
-  const categories = uniqueReconciliators.reduce<Record<string, { id: string; name: string; description: string; title: string }[]>>((acc, service) => {
+  const categories = uniqueReconcilers.reduce<Record<string, { id: string; name: string; description: string; title: string }[]>>((acc, service) => {
     const [category, title] = service.name.split(":").map((s) => s.trim());
     if (!acc[category]) acc[category] = [];
     acc[category].push({ ...service, title: title || category });

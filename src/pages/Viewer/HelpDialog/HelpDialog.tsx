@@ -11,7 +11,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { updateUI } from "@store/slices/table/table.slice";
+import { updateUI, setHelpStart } from "@store/slices/table/table.slice";
 import { selectTutorialStep, selectDiscoverRecStep, selectDiscoverExtStep } from "@store/slices/table/table.selectors";
 import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import PlaylistAddCheckRoundedIcon from "@mui/icons-material/PlaylistAddCheckRounded";
@@ -787,24 +787,28 @@ const TutorialStepper: FC<TutorialStepperProps> = ({ onDone, onBackToWelcome }) 
 };
 
 const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
-  const [start, setStart] = useState<false | "tutorial" | "rec" | "ext">(false);
+  const start = useAppSelector((state) => state.table.ui.helpStart);
   const refWrapper = useRef<HTMLDivElement | null>(null);
   const dispatch = useAppDispatch();
   const tutorialStep = useAppSelector(selectTutorialStep);
   const discoverRecStep = useAppSelector(selectDiscoverRecStep);
   const discoverExtStep = useAppSelector(selectDiscoverExtStep);
 
+  const handleStart = (value: boolean | "tutorial" | "rec" | "ext") => {
+    dispatch(updateUI({ ui: { helpStart: value } }));
+  };
+
   useEffect(() => {
     // If a specific tutorial step is set (greater than 1),
     // automatically start the tutorial
     if (tutorialStep && tutorialStep > 1) {
-      setStart("tutorial");
+      handleStart("tutorial");
     } else if (discoverRecStep && discoverRecStep > 1) {
-      setStart("rec");
+      handleStart("rec");
     } else if (discoverExtStep && discoverExtStep > 1) {
-      setStart("ext");
+      handleStart("ext");
     } else {
-      setStart(false); // welcome
+      handleStart(false); // welcome
     }
   }, [tutorialStep, discoverRecStep, discoverExtStep, dispatch]);
 
@@ -812,14 +816,14 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
     event: {},
     reason: "backdropClick" | "escapeKeyDown"
   ) => {
-    setStart(false);
+    handleStart(false);
     if (onClose) {
       onClose(event, reason);
     }
   };
 
   const handleOnDone = () => {
-    setStart(false);
+    handleStart(false);
   };
 
   return (
@@ -841,19 +845,19 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
                 <br />
                 <Stack alignSelf="center" direction="row" gap="16px" marginTop="16px">
                   <Button
-                    onClick={() => setStart("tutorial")}
+                    onClick={() => handleStart("tutorial")}
                     variant="outlined"
                   >
                     Start tutorial
                   </Button>
                   <Button
-                    onClick={() => setStart("rec")}
+                    onClick={() => handleStart("rec")}
                     variant="outlined"
                   >
                     Discover reconcilers
                   </Button>
                   <Button
-                    onClick={() => setStart("ext")}
+                    onClick={() => handleStart("ext")}
                     variant="outlined"
                   >
                     Discover extenders
@@ -864,9 +868,9 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
           </>
         ) : (
           <DialogContent sx={{ p: 0 }}>
-            {start === "rec" && <DiscoverRecStepper onDone={handleOnDone} onBackToWelcome={() => setStart(false)} />}
-            {start === "ext" && <DiscoverExtStepper onDone={handleOnDone} onBackToWelcome={() => setStart(false)} />}
-            {start === "tutorial" && <TutorialStepper onDone={handleOnDone} onBackToWelcome={() => setStart(false)} />}
+            {start === "rec" && <DiscoverRecStepper onDone={handleOnDone} onBackToWelcome={() => handleStart(false)} />}
+            {start === "ext" && <DiscoverExtStepper onDone={handleOnDone} onBackToWelcome={() => handleStart(false)} />}
+            {start === "tutorial" && <TutorialStepper onDone={handleOnDone} onBackToWelcome={() => handleStart(false)} />}
           </DialogContent>
         )}
       </Box>

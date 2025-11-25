@@ -269,16 +269,24 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 8 }));
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 8 }));
           }}
         >
           <HelpOutlineRounded />
         </IconButton>
       </Stack>
       <DialogContent>
-        <DialogContentText paddingBottom="10px">
-          Select a group of service to reconcile with:
-        </DialogContentText>
+        <Stack direction="row" alignItems="center">
+          <DialogContentText>Select a group of service to reconcile with:</DialogContentText>
+          <IconButton
+            size="small"
+            onClick={() => {
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "rec" }));
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+        </Stack>
         <Stack gap="10px">
           <Stack gap="10px">
             {/* Select reconciliator group */}
