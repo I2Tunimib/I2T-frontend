@@ -74,6 +74,7 @@ const tableAPI = {
       }),
       {
         headers,
+        params,
       },
     );
   },

@@ -11,7 +11,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { updateUI, setHelpStart } from "@store/slices/table/table.slice";
+import { setHelpStart } from "@store/slices/table/table.slice";
 import { selectTutorialStep, selectDiscoverRecStep, selectDiscoverExtStep } from "@store/slices/table/table.selectors";
 import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import PlaylistAddCheckRoundedIcon from "@mui/icons-material/PlaylistAddCheckRounded";
@@ -795,7 +795,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
   const discoverExtStep = useAppSelector(selectDiscoverExtStep);
 
   const handleStart = (value: boolean | "tutorial" | "rec" | "ext") => {
-    dispatch(updateUI({ ui: { helpStart: value } }));
+    dispatch(setHelpStart(value));
   };
 
   useEffect(() => {

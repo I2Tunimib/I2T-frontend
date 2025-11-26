@@ -41,9 +41,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const [csvDelimiter, setCsvDelimiter] = useState<string>(",");
   const [csvQuote, setCsvQuote] = useState<string>('"');
   const [csvDecimalSeparator, setCsvDecimalSeparator] = useState<string>(".");
-  const [csvIncludeHeader, setCsvIncludeHeader] = useState<"yes" | "no" | "">(
-    "",
-  );
+  const [csvIncludeHeader, setCsvIncludeHeader] = useState<string>("true");
   const [rdfFormat, setRdfFormat] = useState<string>("");
   const [baseUri, setBaseUri] = useState<string>("");
   const [matchValue, setMatchValue] = useState<string>("");
@@ -161,6 +159,14 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       datasetId: datasetId!,
     };
 
+    // Add CSV-specific params if this is an RDF export
+    if (format === "CSV") {
+      apiParams.delimiter = csvDelimiter;
+      apiParams.quote = csvQuote;
+      apiParams.decimalSeparator = csvDecimalSeparator;
+      apiParams.includeHeader = csvIncludeHeader;
+    }
+
     // Add RDF-specific params if this is an RDF export
     if (format === "RDF") {
       apiParams.serialization = rdfFormat;
@@ -179,6 +185,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       .then((data) => {
         console.log("Export data received:", {
           format,
+          params,
           dataType: typeof data,
           isArray: Array.isArray(data),
           dataPreview: typeof data === "string" ? data.substring(0, 100) : data,
@@ -347,16 +354,14 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 <RadioGroup
                   row
                   value={csvIncludeHeader}
-                  onChange={(e) =>
-                    setCsvIncludeHeader(e.target.value as "yes" | "no")
-                  }
+                  onChange={(e) => setCsvIncludeHeader(e.target.value as "true" | "false")}
                 >
                   <FormControlLabel
-                    value="yes"
+                    value="true"
                     control={<Radio />}
                     label="Yes"
                   />
-                  <FormControlLabel value="no" control={<Radio />} label="No" />
+                  <FormControlLabel value="false" control={<Radio />} label="No" />
                 </RadioGroup>
               </Box>
             </FormControl>
