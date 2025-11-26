@@ -75,6 +75,23 @@ const DialogInnerContent = () => {
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
   const { loading } = useAppSelector(selectExtendRequestStatus);
 
+  // Log extension services on mount/update
+  React.useEffect(() => {
+    console.log("=== Extension Dialog: Available Services ===");
+    console.log("Total services:", extensionServices.length);
+    const chMatching = extensionServices.find((s) => s.name === "CH Matching");
+    if (chMatching) {
+      console.log("CH Matching service found:", {
+        id: chMatching.id,
+        name: chMatching.name,
+        skipFiltering: chMatching.skipFiltering,
+        allValues: chMatching.allValues,
+      });
+    } else {
+      console.warn("CH Matching service NOT found in extension services!");
+    }
+  }, [extensionServices]);
+
   async function groupServices() {
     const groupedServsMap = new Map();
     const uniqueExtensionServices = extensionServices.filter(
@@ -116,13 +133,23 @@ const DialogInnerContent = () => {
       (service) => service.id === event.target.value,
     );
     if (val) {
-      console.log("current service", val);
+      console.log("=== Extension Dialog: Service Selected ===");
+      console.log("Service:", val.name);
+      console.log("skipFiltering:", val.skipFiltering);
+      console.log("allValues:", val.allValues);
+      console.log("Full config:", val);
       setCurrentService(val);
     }
   };
 
   const handleSubmit = (formState: Record<string, any>, reset?: Function) => {
     if (currentService) {
+      console.log("=== Extension Dialog: Submitting Extension Request ===");
+      console.log("Service:", currentService.name);
+      console.log("skipFiltering:", currentService.skipFiltering);
+      console.log("allValues:", currentService.allValues);
+      console.log("Form values:", formState);
+
       const req = dispatch(
         extend({
           extender: currentService,

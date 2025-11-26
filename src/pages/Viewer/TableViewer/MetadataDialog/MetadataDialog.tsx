@@ -180,7 +180,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
-      score: 1.00,
+      score: 1.0,
       match: "true",
     },
   });
@@ -191,7 +191,9 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
-  const columnsState = useAppSelector((state) => state.table.entities.columns);
+  const uniqueReconciliators = Array.from(
+    new Set(reconciliators.map((r) => r.prefix))
+  ).map((prefix) => reconciliators.find((r) => r.prefix === prefix));
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -227,7 +229,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   useEffect(() => {
     //this useEffect is used to track the initial selected metadata in order to not show the propagation if not needed
-    if (cell) {
+    if (cell && cell.metadata && cell.metadata.length > 0) {
       const { metadata } = cell;
       const initialMatch = metadata
         .filter((meta) => meta.match)
@@ -259,6 +261,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       cell && selectedMetadata,
       selectedMetadata
     );
+
+    // Safety check for empty metadata
+    if (!cell || !cell.metadata || cell.metadata.length === 0) {
+      console.warn("Cannot confirm: cell metadata is empty");
+      handleClose();
+      return;
+    }
 
     // Check if the selection has changed from the initial state
     const hasSelectionChanged = () => {
@@ -349,18 +358,28 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   const handleDeleteRow = (original: any) => {
     console.log("original Id", original.id);
-    if (cell) {
-      console.log();
-      dispatch(
-          deleteCellMetadata({
-            cellId: cell.id,
-            metadataId: original.id.label || original.id,
-          })
-      );
+    if (!cell || !cell.metadata || cell.metadata.length === 0) {
+      console.warn("Cannot delete: cell metadata is empty");
+      return;
     }
+    if (!original || !original.id) {
+      console.warn("Cannot delete: invalid row data");
+      return;
+    }
+    console.log();
+    dispatch(
+      deleteCellMetadata({
+        cellId: cell.id,
+        metadataId: original.id.label || original.id,
+      })
+    );
   };
 
   const handleSelectedRowDelete = useCallback((row: any) => {
+    if (!row || !row.id) {
+      console.warn("Cannot delete: invalid row data");
+      return;
+    }
     handleDeleteRow(row);
     setMetasToDelete((prev) => {
       const newMetas = [...prev];
@@ -379,6 +398,12 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     (row: any) => {
       if (row) {
         setState(({ columns: colState, data: dataState }) => {
+          // Safety check: ensure data is not empty and row exists
+          if (!dataState || dataState.length === 0) {
+            console.warn("Cannot update selection: data is empty");
+            return { columns: colState, data: dataState };
+          }
+
           const newData = dataState.map((item: any) => {
             if (item.id === row.id) {
               const match = !item.match;
@@ -474,34 +499,70 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     [initialMatching]
   );
 
-  const onSubmitNewMetadata = async (formState: FormState) => {
-    if (!cell) return;
-    const { prefix } = formState;
-    let idFromUri = "";
-    try {
-      const url = new URL(formState.uri);
-      console.log("url", url);
-      if (prefix.startsWith("wd")) {
-        // es. https://www.wikidata.org/wiki/Q18711
-        idFromUri = url.pathname.split("/").pop();
-      } else if (prefix === "geo") {
-        // es. https://www.geonames.org/3117735/madrid.html
-        idFromUri = url.pathname.split("/")[1];
-      } else if (prefix === "geoCoord") {
-        // es. https://www.google.com/maps/place/lat,long
-        const parts = url.pathname.split("/").pop()?.split(",") || [];
-        idFromUri = parts.join(",");
+  const onSubmitNewMetadata = (formState: FormState) => {
+    if (!cell || !cell.metadata) {
+      console.warn("Cannot add metadata: cell is invalid");
+      return;
+    }
+    if (cell) {
+      let tempPrefix = getCellContext(cell);
+      if (formState.id.split(":").length > 1) {
+        tempPrefix = formState.id.split(":")[0];
+      } else {
+        if (
+          tempPrefix === "" ||
+          (tempPrefix.startsWith("r0$") && cell.id.split(":").length > 1)
+        ) {
+          tempPrefix = cell.id.split(":")[0];
+        }
       }
-    } catch (err) {
-      console.log("Invalid URI, fallback to id", err);
+
+      console.log(
+        "prefix",
+        getCellContext(cell) !== ""
+          ? getCellContext(cell)
+          : cell.id.split(":")[0]
+      );
+
+      dispatch(
+        addCellMetadata({
+          cellId: cell.id,
+          prefix: tempPrefix,
+          value: { ...formState },
+        })
+      );
+      let newMetadata = {
+        ...formState,
+        id: formState.id.startsWith(tempPrefix)
+          ? formState.id
+          : tempPrefix + ":" + formState.id,
+      };
+      setSelectedMetadata(newMetadata);
+      if (formState.match === "true") {
+        setSelectedMetadata(newMetadata);
+        setShowPropagate(true);
+      }
+      setShowPropagate(true);
+
+      reset();
+      setNewMetaMatching(formState.match === "true");
+      setShowAdd(false);
+      setToUpdate(!toUpdate);
     }
 
-    const finalId = idFromUri.includes(":") ? idFromUri : `${prefix}:${idFromUri}`;
+    const finalId = idFromUri.includes(":")
+      ? idFromUri
+      : `${prefix}:${idFromUri}`;
     let description = "";
     let type: any[] = [];
     try {
       const context = "cell";
-      const result = await fetchTypeAndDescription(prefix, idFromUri, formState.name, context);
+      const result = await fetchTypeAndDescription(
+        prefix,
+        idFromUri,
+        formState.name,
+        context
+      );
       description = result.description || "";
       type = result.type || [];
     } catch (err) {
@@ -577,6 +638,22 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     return "warn";
   };
 
+  const fetchMetadata = (service: string) => {
+    const reconciliator = reconciliators.find(
+      (recon) => recon.prefix === service
+    );
+    if (reconciliator && cell) {
+      // dispatch(reconcile({
+      //   baseUrl: reconciliator.relativeUrl,
+      //   items: [{
+      //     id: cell.id,
+      //     label: cell.label
+      //   }],
+      //   reconciliator,
+      //   contextColumns: []
+      // }));
+    }
+  };
   const handlePropagate = () => {
     try {
       if (cell && selectedMetadata) {
@@ -607,15 +684,32 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log("Row checked:", rowId);
   }, []);
 
+  // Early return if cell has no metadata to prevent crashes
+  if (cell && (!cell.metadata || cell.metadata.length === 0)) {
+    return (
+      <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
+        <Stack
+          height="100%"
+          minHeight="200px"
+          padding="24px"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Typography variant="h6" color="textSecondary">
+            No metadata available for this cell
+          </Typography>
+          <Button onClick={handleCancel} sx={{ marginTop: 2 }}>
+            Close
+          </Button>
+        </Stack>
+      </Dialog>
+    );
+  }
+
   return cell ? (
     <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
       <Stack height="100%" minHeight="600px">
-        <Stack
-          direction="row"
-          gap="8px"
-          alignItems="center"
-          padding="16px"
-        >
+        <Stack direction="row" gap="8px" alignItems="center" padding="16px">
           <Stack direction="row" alignItems="center" gap={1}>
             {cell.annotationMeta && cell.annotationMeta.annotated && (
               <StatusBadge status={getBadgeStatus(cell)} />
@@ -660,14 +754,16 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             )}
             <IconButtonTooltip
               tooltipText="Help"
-              onClick={() => dispatch(updateUI({ openHelpDialog: true, tutorialStep: 13 }))}
+              onClick={() =>
+                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 13 }))
+              }
               Icon={HelpOutlineRoundedIcon}
             />
           </Stack>
         </Stack>
         <Divider orientation="horizontal" flexItem />
         <Box padding="16px">
-          {(currentService || isManualMatch) ? (
+          {currentService || isManualMatch ? (
             <Typography color="text.secondary">
               Reconciliation service:{" "}
               <Typography
@@ -678,8 +774,12 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 {isManualMatch
                   ? "manual"
                   : currentService
-                    ? `${reconciliators.find((rec) => rec.prefix === currentService).name}`
-                    : ""}
+                  ? `${
+                      reconciliators.find(
+                        (rec) => rec.prefix === currentService
+                      ).name
+                    }`
+                  : ""}
               </Typography>
             </Typography>
           ) : (
@@ -707,7 +807,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   textTransform: "none",
                   display: "flex",
                   alignItems: "center",
-                  gap: 1
+                  gap: 1,
                 }}
               >
                 Add metadata
