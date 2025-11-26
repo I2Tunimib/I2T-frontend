@@ -1,12 +1,32 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, FormControl, FormHelperText, Slider, Stack, styled, Switch, TextField, Tooltip, Typography } from '@mui/material';
-import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
-import { FC, useState, useEffect, ChangeEvent, useMemo } from 'react';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { selectCurrentTable, selectSettings } from '@store/slices/table/table.selectors';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { updateUI } from '@store/slices/table/table.slice';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogProps,
+  DialogTitle,
+  FormControl,
+  FormHelperText,
+  Slider,
+  Stack,
+  styled,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import { FC, useState, useEffect, ChangeEvent, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import {
+  selectCurrentTable,
+  selectSettings,
+} from "@store/slices/table/table.selectors";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { updateUI } from "@store/slices/table/table.slice";
 
-const Root = styled('span')`
+const Root = styled("span")`
   font-size: 0;
   position: relative;
   display: inline-block;
@@ -71,7 +91,6 @@ const Root = styled('span')`
   }
 `;
 
-
 type TmpSettingsState = {
   isViewOnly: boolean;
   scoreLowerBoundEnabled: boolean;
@@ -104,12 +123,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
     setTmpSettingsState({
       isViewOnly: !!isViewOnly,
       scoreLowerBoundEnabled: !!isScoreLowerBoundEnabled,
-      scoreLowerBound: Number(
-        (scoreLowerBound === 0
-          ? (maxMetaScore - minMetaScore) / 3
-          : scoreLowerBound
-        ).toFixed(2)
-      ),
+      scoreLowerBound: Number(scoreLowerBound.toFixed(2)),
     });
   }, [settings]);
 
@@ -136,7 +150,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
   };
 
   const handleLowerBoundScoreChange = (
-    event: ChangeEvent<HTMLInputElement>
+    event: ChangeEvent<HTMLInputElement>,
   ) => {
     setTmpSettingsState((old) => {
       if (old) {
@@ -161,7 +175,6 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
         </Stack>
         <Switch
           component={Root}
-
           checked={!tmpSettingsState.isViewOnly}
           disabled={currentTable.mantisStatus === "PENDING"}
           onChange={handleViewOnlyChange}
@@ -182,7 +195,6 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
         </Stack>
         <Switch
           component={Root}
-
           checked={tmpSettingsState.scoreLowerBoundEnabled}
           onChange={handleLowerBoundToggleChange}
         />
@@ -214,7 +226,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
             />
             <FormHelperText>
               {`Min is ${settings.lowerBound.minMetaScore?.toFixed(
-                2
+                2,
               )}, Max is ${settings.lowerBound.maxMetaScore?.toFixed(2)}`}
             </FormHelperText>
           </FormControl>
@@ -243,7 +255,7 @@ const SettingsDialog: FC<DialogProps> = ({ ...props }) => {
             scoreLowerBound: state.scoreLowerBound,
           },
         }),
-      })
+      }),
     );
   };
 
