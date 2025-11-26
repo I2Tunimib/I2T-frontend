@@ -64,7 +64,7 @@ import AddMetadataForm from "../MetadataColumnDialog/AddMetadataForm";
 const DeferredTable = deferMounting(CustomTable);
 
 const makeData = (
-  rawData: ReturnType<typeof selectCellMetadataTableFormat>
+  rawData: ReturnType<typeof selectCellMetadataTableFormat>,
 ) => {
   if (rawData) {
     const { cell, service } = rawData;
@@ -113,17 +113,20 @@ const makeData = (
         return 1;
       })
       .map((metadataItem) => {
-        return Object.keys(metaToView).reduce((acc, key) => {
-          let value = metadataItem[key as keyof BaseMetadata];
+        return Object.keys(metaToView).reduce(
+          (acc, key) => {
+            let value = metadataItem[key as keyof BaseMetadata];
 
-          if (value !== undefined) {
-            acc[key] = value;
-          } else {
-            acc[key] = null;
-          }
+            if (value !== undefined) {
+              acc[key] = value;
+            } else {
+              acc[key] = null;
+            }
 
-          return acc;
-        }, {} as Record<string, any>);
+            return acc;
+          },
+          {} as Record<string, any>,
+        );
       })
       .map((item) => {
         return {
@@ -170,7 +173,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [currentService, setCurrentService] = useState<string>();
   const [isManualMatch, setIsManualMatch] = useState(false);
   const [selectedMetadata, setSelectedMetadata] = useState<FormState | null>(
-    null
+    null,
   );
   const [newMetaMatching, setNewMetaMatching] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
@@ -192,7 +195,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
   const uniqueReconciliators = Array.from(
-    new Set(reconciliators.map((r) => r.prefix))
+    new Set(reconciliators.map((r) => r.prefix)),
   ).map((prefix) => reconciliators.find((r) => r.prefix === prefix));
 
   const {
@@ -219,13 +222,14 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   useEffect(() => {
     //When a cell has been reconciliated manually, the other ones can be reconciled using the same prefix
-    const [rowId, colKey] = cell.id.split("$");
-    const column = columnsState.byId[colKey];
-    if (column.status === "empty" && column.context?.prefix) {
-      const prefix = column.context.prefix.replace(":", "");
-      setCurrentService(prefix);
+    if (cell && cell.id) {
+      const cellContext = getCellContext(cell);
+      if (cellContext && cellContext !== "") {
+        const prefix = cellContext.replace(":", "");
+        setCurrentService(prefix);
+      }
     }
-  }, [columnsState]);
+  }, [cell]);
 
   useEffect(() => {
     //this useEffect is used to track the initial selected metadata in order to not show the propagation if not needed
@@ -245,7 +249,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     dispatch(
       updateUI({
         openMetadataDialog: false,
-      })
+      }),
     );
   };
 
@@ -259,7 +263,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log(
       "confirm condition",
       cell && selectedMetadata,
-      selectedMetadata
+      selectedMetadata,
     );
 
     // Safety check for empty metadata
@@ -322,7 +326,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               updateCellMetadata({
                 metadataId: selectedMetadata.id,
                 cellId: cell.id,
-              })
+              }),
             );
           } else if (selectedMetadata.match === "false") {
             // For when we're deselecting a newly selected item
@@ -331,7 +335,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 metadataId: selectedMetadata.id,
                 cellId: cell.id,
                 match: false,
-              })
+              }),
             );
           }
         } else {
@@ -343,7 +347,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 metadataId: selectedMetadata.id,
                 cellId: cell.id,
                 match: selectedMetadata.match === "true",
-              })
+              }),
             );
           }
         }
@@ -371,7 +375,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       deleteCellMetadata({
         cellId: cell.id,
         metadataId: original.id.label || original.id,
-      })
+      }),
     );
   };
 
@@ -434,7 +438,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   "item",
                   item,
                   initialMatching.includes(item.id),
-                  !currentState.matched
+                  !currentState.matched,
                 );
                 if (
                   initialMatching.includes(item.id) &&
@@ -472,7 +476,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 "Current state:",
                 currentState,
                 "Initial matching:",
-                initialMatching
+                initialMatching,
               );
               setShowPropagate(selectionChanged);
 
@@ -496,10 +500,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         });
       }
     },
-    [initialMatching]
+    [initialMatching],
   );
 
-  const onSubmitNewMetadata = (formState: FormState) => {
+  const onSubmitNewMetadata = async (formState: FormState) => {
     if (!cell || !cell.metadata) {
       console.warn("Cannot add metadata: cell is invalid");
       return;
@@ -521,82 +525,64 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         "prefix",
         getCellContext(cell) !== ""
           ? getCellContext(cell)
-          : cell.id.split(":")[0]
+          : cell.id.split(":")[0],
       );
+
+      // Extract prefix and id from URI for type and description fetching
+      const idFromUri = formState.id.includes(":")
+        ? formState.id.split(":")[1]
+        : formState.id;
+      const prefix = formState.id.includes(":")
+        ? formState.id.split(":")[0]
+        : tempPrefix;
+
+      const finalId = idFromUri.includes(":")
+        ? idFromUri
+        : `${prefix}:${idFromUri}`;
+
+      let description = "";
+      let type: any[] = [];
+      try {
+        const context = "cell";
+        const result = await fetchTypeAndDescription(
+          prefix,
+          idFromUri,
+          formState.name,
+          context,
+        );
+        description = result.description || "";
+        type = result.type || [];
+      } catch (err) {
+        console.error("Error fetching metadata info:", err);
+      }
+
+      const newMetadata = {
+        ...formState,
+        id: formState.id.startsWith(tempPrefix)
+          ? formState.id
+          : tempPrefix + ":" + formState.id,
+        description,
+        type,
+      };
 
       dispatch(
         addCellMetadata({
           cellId: cell.id,
           prefix: tempPrefix,
-          value: { ...formState },
-        })
+          value: newMetadata,
+        }),
       );
-      let newMetadata = {
-        ...formState,
-        id: formState.id.startsWith(tempPrefix)
-          ? formState.id
-          : tempPrefix + ":" + formState.id,
-      };
+
       setSelectedMetadata(newMetadata);
       if (formState.match === "true") {
-        setSelectedMetadata(newMetadata);
         setShowPropagate(true);
       }
-      setShowPropagate(true);
 
       reset();
       setNewMetaMatching(formState.match === "true");
       setShowAdd(false);
       setToUpdate(!toUpdate);
     }
-
-    const finalId = idFromUri.includes(":")
-      ? idFromUri
-      : `${prefix}:${idFromUri}`;
-    let description = "";
-    let type: any[] = [];
-    try {
-      const context = "cell";
-      const result = await fetchTypeAndDescription(
-        prefix,
-        idFromUri,
-        formState.name,
-        context
-      );
-      description = result.description || "";
-      type = result.type || [];
-    } catch (err) {
-      console.error("Error fetching metadata info:", err);
-    }
-
-    const newMetadata = {
-      id: finalId,
-      name: formState.name,
-      uri: formState.uri,
-      score: formState.score,
-      match: formState.match,
-      description,
-      type,
-    };
-
-    dispatch(
-      addCellMetadata({
-        cellId: cell.id,
-        prefix,
-        value: newMetadata,
-      })
-    );
-    setSelectedMetadata(newMetadata);
-    if (formState.match === "true") {
-      setSelectedMetadata(newMetadata);
-      setShowPropagate(true);
-    }
-    setShowPropagate(true);
-
-    reset();
-    setNewMetaMatching(formState.match === "true");
-    setShowAdd(false);
-    setToUpdate(!toUpdate);
   };
 
   const handleTooltipOpen = () => {
@@ -640,7 +626,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   const fetchMetadata = (service: string) => {
     const reconciliator = reconciliators.find(
-      (recon) => recon.prefix === service
+      (recon) => recon.prefix === service,
     );
     if (reconciliator && cell) {
       // dispatch(reconcile({
@@ -662,7 +648,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             value: selectedMetadata,
             metadataId: selectedMetadata.id,
             cellId: cell.id,
-          })
+          }),
         );
       }
       if (metasToDelete.length > 0 && cell) {
@@ -670,7 +656,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           propagateCellDeleteMetadata({
             metadataIds: metasToDelete.map((meta) => meta.id),
             cellId: cell.id,
-          })
+          }),
         );
       }
       handleClose();
@@ -774,12 +760,12 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 {isManualMatch
                   ? "manual"
                   : currentService
-                  ? `${
-                      reconciliators.find(
-                        (rec) => rec.prefix === currentService
-                      ).name
-                    }`
-                  : ""}
+                    ? `${
+                        reconciliators.find(
+                          (rec) => rec.prefix === currentService,
+                        ).name
+                      }`
+                    : ""}
               </Typography>
             </Typography>
           ) : (
