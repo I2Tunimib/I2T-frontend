@@ -1,7 +1,7 @@
 export const KG_INFO = {
   cr: {
     uri: "",
-    groupName: "In-Table Column Reconciler",
+    groupName: "In-Table Linking",
   },
   wd: {
     uri: "https://www.wikidata.org/wiki/",
