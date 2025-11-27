@@ -704,12 +704,10 @@ export const extend = createAsyncThunk<
   const selectedColumnId = selectedColumnIds[0];
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
-  const params = getRequestFormValuesExtension(
-    formParams,
-    formValues,
-    table,
-    extender,
-  );
+  const params = {
+    ...getRequestFormValuesModification(formParams, formValues, table, extender),
+    selectedColumns: formValues.selectedColumns,
+  };
 
   // Create axios CancelToken source and wire it to the thunk abort signal
   const source = axios.CancelToken.source();

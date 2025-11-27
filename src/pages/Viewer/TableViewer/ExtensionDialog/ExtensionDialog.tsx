@@ -37,7 +37,7 @@ import {
 } from "@mui/icons-material";
 import {
   selectAreCellReconciliated,
-  selectExtendRequestStatus,
+  selectExtendRequestStatus, selectSelectedColumnIdsAsArray,
 } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectExtendersAsArray } from "@store/slices/config/config.selectors";
@@ -73,6 +73,7 @@ const DialogInnerContent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const extensionServices = useAppSelector(selectExtendersAsArray);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
+  const selectedColumnsArray = useAppSelector(selectSelectedColumnIdsAsArray);
   const { loading } = useAppSelector(selectExtendRequestStatus);
 
   // Log extension services on mount/update
@@ -192,6 +193,15 @@ const DialogInnerContent = () => {
     e.stopPropagation(); // Prevent the Select from closing
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
+
+  const serviceWithDescription = React.useMemo(() => {
+    if (!currentService) return undefined;
+    const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
+    return {
+      ...currentService,
+      description: `${currentService.description || ""}<br><br><b>Input selected column(s):</b> ${colsText}`,
+    };
+  }, [currentService, selectedColumnsArray]);
   return (
     <>
       <FormControl className="field">
@@ -239,7 +249,7 @@ const DialogInnerContent = () => {
       {currentService && (
         <>
           <SquaredBox
-            dangerouslySetInnerHTML={{ __html: currentService.description }}
+            dangerouslySetInnerHTML={{ __html: serviceWithDescription.description }}
           />
           {!cellReconciliated && !currentService.skipFiltering && (
             <Alert severity="warning">
@@ -276,7 +286,7 @@ const DialogInnerContent = () => {
               }
               handleClose();
             }}
-            service={currentService}
+            service={{ ...serviceWithDescription, selectedColumns: selectedColumnsArray }}
           />
         </>
       )}
