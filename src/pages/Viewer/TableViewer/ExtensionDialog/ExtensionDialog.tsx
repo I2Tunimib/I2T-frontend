@@ -250,15 +250,16 @@ const DialogInnerContent = () => {
           )}
           {!cellReconciliated && currentService.skipFiltering && (
             <Alert severity="info">
-              This service will process all rows, including non-reconciled ones.
-              Non-matched rows will be sent with empty knowledge base
-              identifiers.
+              This service will process all rows, using the content of each cell
+              during the process. Non-matched rows will be sent with empty
+              knowledge base identifiers.
             </Alert>
           )}
           {cellReconciliated && currentService.skipFiltering && (
             <Alert severity="info">
-              This service will process all rows, including any non-reconciled
-              ones that may exist in your table.
+              This service will process all rows, using the content of each cell
+              during the process. Non-matched rows will be sent with empty
+              knowledge base identifiers.
             </Alert>
           )}
           <Divider />
@@ -319,7 +320,13 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 15 }));
+            dispatch(
+              updateUI({
+                openHelpDialog: true,
+                helpStart: "tutorial",
+                tutorialStep: 15,
+              }),
+            );
           }}
         >
           <HelpOutlineRounded />
