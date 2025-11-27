@@ -510,16 +510,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     }
     if (cell) {
       let tempPrefix = getCellContext(cell);
-      if (formState.id.split(":").length > 1) {
-        tempPrefix = formState.id.split(":")[0];
-      } else {
-        if (
-          tempPrefix === "" ||
-          (tempPrefix.startsWith("r0$") && cell.id.split(":").length > 1)
-        ) {
-          tempPrefix = cell.id.split(":")[0];
-        }
-      }
 
       console.log(
         "prefix",
@@ -527,16 +517,24 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           ? getCellContext(cell)
           : cell.id.split(":")[0],
       );
-
+      const { prefix } = formState;
       // Extract prefix and id from URI for type and description fetching
-      const idFromUri = formState.id.includes(":")
-        ? formState.id.split(":")[1]
-        : formState.id;
-      const prefix = formState.id.includes(":")
-        ? formState.id.split(":")[0]
-        : tempPrefix;
+      let idFromUri = "";
+      const url = new URL(formState.uri);
+      console.log("url", url);
+      if (prefix.startsWith("wd")) {
+        // es. https://www.wikidata.org/wiki/Q18711
+        idFromUri = url.pathname.split("/").pop();
+      } else if (prefix === "geo") {
+        // es. https://www.geonames.org/3117735/madrid.html
+        idFromUri = url.pathname.split("/")[1];
+      } else if (prefix === "geoCoord") {
+        // es. https://www.google.com/maps/place/lat,long
+        const parts = url.pathname.split("/").pop()?.split(",") || [];
+        idFromUri = parts.join(",");
+      }
 
-      const finalId = idFromUri.includes(":")
+      const finalId = (idFromUri.includes(":"))
         ? idFromUri
         : `${prefix}:${idFromUri}`;
 
@@ -558,9 +556,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
       const newMetadata = {
         ...formState,
-        id: formState.id.startsWith(tempPrefix)
-          ? formState.id
-          : tempPrefix + ":" + formState.id,
+        id: finalId,
         description,
         type,
       };
