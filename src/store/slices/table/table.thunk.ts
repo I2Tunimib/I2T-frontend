@@ -705,7 +705,7 @@ export const extend = createAsyncThunk<
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
   const params = {
-    ...getRequestFormValuesModification(formParams, formValues, table, extender),
+    ...getRequestFormValuesExtension(formParams, formValues, table, extender),
     selectedColumns: formValues.selectedColumns,
   };
 
