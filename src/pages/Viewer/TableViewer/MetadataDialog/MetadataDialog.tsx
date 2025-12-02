@@ -209,10 +209,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       const reason = cell?.annotationMeta?.match?.reason;
       if (reason === "manual") {
         setIsManualMatch(true);
-      } else {
-        const prefix = cell?.metadata[0].id.split(":")[0];
+      } else if (cell?.metadata && cell.metadata.length > 0) {
+        const prefix = cell.metadata[0].id.split(":")[0];
         setIsManualMatch(false);
         setCurrentService(prefix);
+      } else {
+        setIsManualMatch(false);
+        setCurrentService("");
       }
     } else {
       setIsManualMatch(false);
@@ -534,7 +537,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         idFromUri = parts.join(",");
       }
 
-      const finalId = (idFromUri.includes(":"))
+      const finalId = idFromUri.includes(":")
         ? idFromUri
         : `${prefix}:${idFromUri}`;
 
