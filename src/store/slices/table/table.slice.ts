@@ -36,6 +36,7 @@ import {
   //FileFormat,
   PasteCellPayload,
   ReconciliationFulfilledPayload,
+  ModifyFulfilledPayload,
   RefineMatchingPayload,
   //RowState,
   TableInstance,
@@ -2169,7 +2170,7 @@ export const tableSlice = createSliceWithRequests({
       )
       .addCase(
         modify.fulfilled,
-        (state, action: PayloadAction<Payload<ExtendThunkResponseProps>>) => {
+        (state, action: PayloadAction<Payload<ModifyFulfilledPayload>>) => {
           const {
             data,
             modifier,
@@ -2177,92 +2178,143 @@ export const tableSlice = createSliceWithRequests({
             undoable = true,
           } = action.payload;
 
-          const { columns, meta, originalColMeta } = data;
-          const newColumnsIds = Object.keys(columns);
-          return produceWithPatch(
-            state,
-            undoable,
-            (draft) => {
-              // Find the index of the selected column that was modified
-              const selectedColumnIndex =
-                draft.entities.columns.allIds.findIndex(
-                  (colId) => colId === selectedColumnId,
-                );
+          if (data.rows) {
+            return produceWithPatch(
+              state,
+              undoable,
+              (draft) => {
+                const allColumnIds = draft.entities.columns.allIds;
 
-              newColumnsIds.forEach((newColId, newColIndex) => {
-                const {
-                  metadata: columnMetadata,
-                  cells,
-                  label,
-                  ...rest
-                } = columns[newColId];
+                draft.entities.rows.allIds = [];
+                draft.entities.rows.byId = {};
 
-                // add new column
-                draft.entities.columns.byId[newColId] = {
-                  id: newColId,
-                  label,
-                  metadata: getColumnMetadata(columnMetadata),
-                  status: ColumnStatus.EMPTY,
-                  context: {},
-                  ...getColumnAnnotationMeta(columnMetadata),
-                  ...rest,
-                };
+                Object.entries(data.rows).forEach(([rowId, rowData]) => {
+                  draft.entities.rows.allIds.push(rowId);
+                  draft.entities.rows.byId[rowId] = {
+                    id: rowId,
+                    cells: {},
+                  };
 
-                // add rows
-
-                draft.entities.rows.allIds.forEach((rowId) => {
-                  const newCell = createCell(rowId, newColId, cells[rowId]);
-                  if (newCell.metadata.length === 0) {
-                    newCell.annotationMeta = {
-                      annotated: false,
-                      match: {
-                        value: false,
-                      },
+                  allColumnIds.forEach((colId) => {
+                    const cellData = rowData.cells[colId] ?? {
+                      label: "",
+                      metadata: [],
                     };
-                  }
-                  draft.entities.rows.byId[rowId].cells[newColId] = newCell;
-                  if (newCell.metadata.length > 0) {
-                    updateContext(draft, newCell);
+
+                    draft.entities.rows.byId[rowId].cells[colId] = createCell(
+                      rowId,
+                      colId,
+                      cellData
+                    );
+                  });
+                });
+              },
+              (draft) => {
+                if (selectedColumnId && draft.entities.columns.byId[selectedColumnId]) {
+                  draft.ui.selectedColumnsIds = { [selectedColumnId]: true };
+                  draft.ui.selectedColumnCellsIds = {};
+                  draft.ui.selectedCellIds = {};
+
+                  draft.entities.rows.allIds.forEach((rowId) => {
+                    const cell = draft.entities.rows.byId[rowId]?.cells[selectedColumnId];
+                    if (cell) {
+                      draft.ui.selectedCellIds[cell.id] = true;
+                      draft.ui.selectedColumnCellsIds[cell.id] = true;
+                    }
+                  });
+                }
+                draft.entities.tableInstance.lastModifiedDate =
+                  new Date().toISOString();
+              }
+            );
+          } else {
+            const { columns, meta, originalColMeta } = data;
+            const newColumnsIds = Object.keys(columns);
+            return produceWithPatch(
+              state,
+              undoable,
+              (draft) => {
+                // Find the index of the selected column that was modified
+                const selectedColumnIndex =
+                  draft.entities.columns.allIds.findIndex(
+                    (colId) => colId === selectedColumnId,
+                  );
+
+                newColumnsIds.forEach((newColId, newColIndex) => {
+                  const {
+                    metadata: columnMetadata,
+                    cells,
+                    label,
+                    ...rest
+                  } = columns[newColId];
+
+                  // add new column
+                  draft.entities.columns.byId[newColId] = {
+                    id: newColId,
+                    label,
+                    metadata: getColumnMetadata(columnMetadata),
+                    status: ColumnStatus.EMPTY,
+                    context: {},
+                    ...getColumnAnnotationMeta(columnMetadata),
+                    ...rest,
+                  };
+
+                  // add rows
+
+                  draft.entities.rows.allIds.forEach((rowId) => {
+                    const newCell = createCell(rowId, newColId, cells[rowId]);
+                    if (newCell.metadata.length === 0) {
+                      newCell.annotationMeta = {
+                        annotated: false,
+                        match: {
+                          value: false,
+                        },
+                      };
+                    }
+                    draft.entities.rows.byId[rowId].cells[newColId] = newCell;
+                    if (newCell.metadata.length > 0) {
+                      updateContext(draft, newCell);
+                    }
+                  });
+
+                  draft.entities.columns.byId[newColId].status = getColumnStatus(
+                    draft,
+                    newColId,
+                  );
+
+                  // Insert the new column right after the selected column
+                  if (!draft.entities.columns.allIds.includes(newColId)) {
+                    draft.entities.columns.allIds.push(newColId);
                   }
                 });
-
-                draft.entities.columns.byId[newColId].status = getColumnStatus(
-                  draft,
-                  newColId,
-                );
-
-                // Insert the new column right after the selected column
-                if (!draft.entities.columns.allIds.includes(newColId)) {
-                  draft.entities.columns.allIds.push(newColId);
-                }
-              });
-              updateNumberOfReconciliatedCells(draft);
-              //add additional meta if needed (up to now only properties)
-              if (originalColMeta && originalColMeta.originalColName) {
-                if (
-                  draft.entities.columns.byId[originalColMeta.originalColName]
-                    .metadata[0].property
-                ) {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = [
-                    ...draft.entities.columns.byId[
+                updateNumberOfReconciliatedCells(draft);
+                //add additional meta if needed (up to now only properties)
+                if (originalColMeta && originalColMeta.originalColName) {
+                  if (
+                    draft.entities.columns.byId[originalColMeta.originalColName]
+                      .metadata[0].property
+                  ) {
+                    draft.entities.columns.byId[
                       originalColMeta.originalColName
-                    ].metadata[0].property,
-                    ...originalColMeta.properties,
-                  ];
-                } else {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = originalColMeta.properties;
+                      ].metadata[0].property = [
+                      ...draft.entities.columns.byId[
+                        originalColMeta.originalColName
+                        ].metadata[0].property,
+                      ...originalColMeta.properties,
+                    ];
+                  } else {
+                    draft.entities.columns.byId[
+                      originalColMeta.originalColName
+                      ].metadata[0].property = originalColMeta.properties;
+                  }
                 }
-              }
-            },
-            (draft) => {
-              draft.entities.tableInstance.lastModifiedDate =
-                new Date().toISOString();
-            },
-          );
+              },
+              (draft) => {
+                draft.entities.tableInstance.lastModifiedDate =
+                  new Date().toISOString();
+              },
+            );
+          }
         },
       ),
 });

@@ -142,8 +142,14 @@ const DialogInnerContent = () => {
       if (reset) reset();
       setCurrentService(undefined);
       dispatch(updateUI({ openModificationDialog: false }));
-      const nColumns = Object.keys(data.columns).length;
-      const infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} added`;
+      let infoText = "";
+      if (data.rows) {
+        const nRows = Object.keys(data.rows).length;
+        infoText = `${nRows} ${nRows > 1 ? "rows" : "row"} added`;
+      } else {
+        const nColumns = Object.keys(data.columns).length;
+        infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} added`;
+      }
       enqueueSnackbar(infoText, {
         autoHideDuration: 3000,
         anchorOrigin: { vertical: "bottom", horizontal: "center" },
