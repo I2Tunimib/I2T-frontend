@@ -479,14 +479,26 @@ const getRequestFormValuesModification = (
 
   const { ui, entities } = table;
   const { rows } = entities;
-  const selectedColumnsIds = Object.keys(table.ui.selectedColumnsIds);
+  let selectedColumnsIds = Object.keys(table.ui.selectedColumnsIds);
   console.log("getting request form values", modifier);
+
+  if (modifier?.skipFiltering) {
+    selectedColumnsIds = Object.keys(entities.columns.byId);
+  }
+
   const requestParams = {} as Record<string, any>;
 
-  requestParams.items = selectedColumnsIds.reduce((acc, key) => {
-    acc[key] = getColumnValues(key, rows);
-    return acc;
-  }, {} as Record<string, any>);
+  if (modifier?.allValues) {
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+      acc[key] = getAllColumnMetaObjects(key, rows);
+      return acc;
+    }, {} as Record<string, any>);
+  } else {
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+      acc[key] = getColumnValues(key, rows);
+      return acc;
+    }, {} as Record<string, any>);
+  }
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
@@ -765,7 +777,7 @@ export const modify = createAsyncThunk<
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
   const params = {
-    ...getRequestFormValuesModification(formParams, formValues, table),
+    ...getRequestFormValuesModification(formParams, formValues, table, modifier),
     joinColumns: formValues.joinColumns,
     selectedColumns: formValues.selectedColumns,
     columnType: formValues.columnType,

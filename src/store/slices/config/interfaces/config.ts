@@ -48,6 +48,8 @@ export interface Modifier extends Record<string, any> {
   relativeUrl: string;
   description: string;
   formParams: FormInputParams[];
+  skipFiltering?: boolean;
+  allValues?: boolean;
 }
 
 export interface FormInputParams {
