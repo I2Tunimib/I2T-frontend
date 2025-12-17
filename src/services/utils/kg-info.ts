@@ -6,18 +6,22 @@ export const KG_INFO = {
   wd: {
     uri: "https://www.wikidata.org/wiki/",
     groupName: "Wikidata",
+    search: (label: string) => `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(label)}`,
   },
   wdL: {
     uri: "https://www.wikidata.org/wiki/",
     groupName: "Wikidata",
+    search: (label: string) => `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(label)}`,
   },
   wdA: {
     uri: "https://www.wikidata.org/wiki/",
     groupName: "Wikidata",
+    search: (label: string) => `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(label,)}`,
   },
   wiki: {
     uri: "https://www.wikidata.org/wiki/",
     groupName: "Wikidata",
+    search: (label: string) => `https://www.wikidata.org/w/index.php?search=${encodeURIComponent(label)}`,
   },
   dbp: {
     uri: "https://dbpedia.org/page/",
@@ -26,6 +30,7 @@ export const KG_INFO = {
   geo: {
     uri: "http://www.geonames.org/",
     groupName: "GeoNames",
+    search: (label: string) => `https://www.geonames.org/search.html?q=${encodeURIComponent(label)}`,
   },
   geoCoord: {
     uri: "http://20.8.170.217:3002/geocoords",
@@ -41,6 +46,7 @@ export const KG_INFO = {
   maps: {
     uri: "http://www.google.com/maps/place/",
     groupName: "Geo Coordinates",
+    search: (label: string) => `https://www.google.com/maps/search/${encodeURIComponent(label)}`,
   },
   atokaPeople: {
     uri: "https://atoka.io/public/en/people/-/",

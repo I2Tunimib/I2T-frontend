@@ -666,6 +666,14 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log("Row checked:", rowId);
   }, []);
 
+  const handleSearchInService = () => {
+    if (!cell?.label || !currentService) return;
+    const serviceInfo = KG_INFO[currentService as keyof typeof KG_INFO];
+    if (!serviceInfo?.search) return;
+    const url = serviceInfo.search(cell.label);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   // Early return if cell has no metadata to prevent crashes
   if (cell && (!cell.metadata || cell.metadata.length === 0)) {
     return (
@@ -778,43 +786,50 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             padding="0px 16px"
             gap={1}
           >
-            <Tooltip open={showTooltip} title="Add metadata" placement="right">
-              <Button
-                variant="outlined"
-                color="primary"
-                onMouseLeave={handleTooltipClose}
-                onMouseEnter={handleTooltipOpen}
-                onClick={handleShowAdd}
-                sx={{
-                  textTransform: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                Add metadata
-                <AddRoundedIcon
+            <Stack direction="row" gap={1} alignItems="center">
+              <Tooltip open={showTooltip} title="Add metadata" placement="right">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onMouseLeave={handleTooltipClose}
+                  onMouseEnter={handleTooltipOpen}
+                  onClick={handleShowAdd}
                   sx={{
-                    transition: "transform 150ms ease-out",
-                    transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
                   }}
+                >
+                  Add metadata
+                  <AddRoundedIcon
+                    sx={{
+                      transition: "transform 150ms ease-out",
+                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+              {showAdd && !!currentService && !!KG_INFO[currentService as keyof typeof KG_INFO]?.search && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleSearchInService}
+                  sx={{ textTransform: "none" }}
+                >
+                  Search in {KG_INFO[currentService].groupName}
+                </Button>
+              )}
+            </Stack>
+            {showAdd && (
+              <Box sx={{ width: "100%", paddingTop: "8px" }}>
+                <AddMetadataForm
+                  currentService={currentService}
+                  onSubmit={onSubmitNewMetadata}
+                  context="metadataDialog"
                 />
-              </Button>
-            </Tooltip>
-
-            <Box
-              sx={{
-                width: "100%",
-                paddingTop: "8px",
-                display: showAdd ? "block" : "none",
-              }}
-            >
-              <AddMetadataForm
-                currentService={currentService}
-                onSubmit={onSubmitNewMetadata}
-                context="metadataDialog"
-              />
-            </Box>
+              </Box>
+            )}
           </Stack>
         )}
         <DeferredTable
