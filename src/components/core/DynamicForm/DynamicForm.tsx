@@ -57,6 +57,8 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const isJoinInvalid = service.columnType === "unknown";
   const granularity = watch("granularity");
   const splitRenameMode = watch("splitRenameMode");
+  const splitMode = watch("splitMode");
+
   let finalType = "";
 
   useEffect(() => {
@@ -220,6 +222,10 @@ const DynamicForm: FC<DynamicFormProps> = ({
           if (service.id === "textColumnsTransformer") {
             if (id === "columnToJoin" && operationType !== "joinOp") return null;
             if (id === "renameJoinedColumn" && (!operationType || operationType === "splitOp")) return null;
+            if (id === "splitMode" && (!operationType || operationType === "joinOp")) return null;
+            if (id === "separator" && (!operationType || (operationType === "splitOp" &&
+              (!splitMode || splitMode === "portion")))) return null;
+            if (id === "extractPortion" && (!operationType || !splitMode || splitMode === "separator")) return null;
             if (id === "renameNewColumnSplit" && (!operationType || operationType === "joinOp" ||
               !splitRenameMode || splitRenameMode === "auto")) return null;
             if (id === "splitRenameMode" && (!operationType || operationType === "joinOp")) return null;
