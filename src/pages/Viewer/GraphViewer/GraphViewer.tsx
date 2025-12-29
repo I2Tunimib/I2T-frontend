@@ -9,6 +9,7 @@ import { Divider, Typography, Tooltip, Button } from '@mui/material';
 import { IconButtonTooltip } from "@components/core";
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
 import styled from '@emotion/styled';
 import styles from './GraphViewer.module.scss';
@@ -335,10 +336,10 @@ const GraphViewer: FC = () => {
             variant="outlined"
             color="primary"
             size="medium"
-            startIcon={<VisibilityIcon />}
+            startIcon={showLinkLabels ? <VisibilityOffIcon /> : <VisibilityIcon />}
             sx={{ textTransform: 'none' }}
           >
-            Show link label
+            {showLinkLabels ? "Hide link label" : "Show link label"}
           </Button>
         </div>
         <ForceGraph2D
