@@ -332,6 +332,11 @@ export const selectHelpDialogStatus = createSelector(
   (ui) => ui.openHelpDialog,
 );
 
+export const selectGraphTutorialDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openGraphTutorialDialog,
+);
+
 /**
  * Get tutorial step.
  */

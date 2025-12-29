@@ -1,11 +1,15 @@
 import React, { FC, useEffect, useState, useMemo, useRef } from 'react';
-import { useAppDispatch } from '@hooks/store';
+import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { selectGraphTutorialDialogStatus } from "@store/slices/table/table.selectors";
+import { updateUI } from "@store/slices/table/table.slice";
 import { exportTable } from '@store/slices/table/table.thunk';
 import { useParams } from 'react-router-dom';
 import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
 import { Divider, Typography, Tooltip, Button } from '@mui/material';
+import { IconButtonTooltip } from "@components/core";
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
 import styled from '@emotion/styled';
 import styles from './GraphViewer.module.scss';
 
@@ -67,6 +71,7 @@ const GraphViewer: FC = () => {
   const nodeSectionRef = useRef<HTMLDivElement | null>(null);
   const linkSectionRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<ForceGraphMethods | null>(null);
+  const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
 
   useEffect(() => {
     dispatch(
@@ -270,6 +275,10 @@ const GraphViewer: FC = () => {
     return <div className={styles.Empty}>No semantic schema available</div>;
   }
 
+  const handleCloseGraphTutorial = () => {
+    dispatch(updateUI({ openGraphTutorialDialog: false }));
+  };
+
   return (
     <div className={styles.Container}>
       <div className={styles.GraphWrapper}>
@@ -316,6 +325,11 @@ const GraphViewer: FC = () => {
           )}
         </div>
         <div className={styles.LinkLabel}>
+          <IconButtonTooltip
+            tooltipText="Graph tutorial"
+            onClick={() => dispatch(updateUI({ openGraphTutorialDialog: true }))}
+            Icon={HelpOutlineRoundedIcon}
+          />
           <Button
             onClick={handleShowLinkLabel}
             variant="outlined"
@@ -424,8 +438,8 @@ const GraphViewer: FC = () => {
                 onClick={() => setShowNodes(!showNodes)}
               >
                 {showNodes
-                  ? <Typography variant="body2" color="text.secondary">Hide list</Typography>
-                  : <Typography variant="body2" color="text.secondary">Show list</Typography>
+                  ? <Typography component="span" variant="body2" color="text.secondary">Hide list</Typography>
+                  : <Typography component="span" variant="body2" color="text.secondary">Show list</Typography>
                 }
               </Typography>
             </div>
@@ -450,8 +464,8 @@ const GraphViewer: FC = () => {
                 onClick={() => setShowLinks(!showLinks)}
               >
                 {showLinks
-                  ? <Typography variant="body2" color="text.secondary">Hide list</Typography>
-                  : <Typography variant="body2" color="text.secondary">Show list</Typography>
+                  ? <Typography component="span" variant="body2" color="text.secondary">Hide list</Typography>
+                  : <Typography component="span" variant="body2" color="text.secondary">Show list</Typography>
                 }
               </Typography>
             </div>
@@ -646,8 +660,8 @@ const GraphViewer: FC = () => {
                   onClick={() => setShowSourceTypes(!showSourceTypes)}
                 >
                   {showSourceTypes
-                    ? <Typography variant="body2" color="text.secondary">Hide types</Typography>
-                    : <Typography variant="body2" color="text.secondary">Show types</Typography>
+                    ? <Typography component="span" variant="body2" color="text.secondary">Hide types</Typography>
+                    : <Typography component="span" variant="body2" color="text.secondary">Show types</Typography>
                   }
                 </Typography>
               </div>
@@ -670,8 +684,8 @@ const GraphViewer: FC = () => {
                   onClick={() => setShowTargetTypes(!showTargetTypes)}
                 >
                   {showTargetTypes
-                    ? <Typography variant="body2" color="text.secondary">Hide types</Typography>
-                    : <Typography variant="body2" color="text.secondary">Show types</Typography>
+                    ? <Typography component="span" variant="body2" color="text.secondary">Hide types</Typography>
+                    : <Typography component="span" variant="body2" color="text.secondary">Show types</Typography>
                   }
                 </Typography>
               </div>
@@ -688,6 +702,7 @@ const GraphViewer: FC = () => {
           )}
         </div>
       </div>
+      <GraphTutorialDialog open={openGraphTutorialDialog} onClose={handleCloseGraphTutorial} />
     </div>
   );
 };

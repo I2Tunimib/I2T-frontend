@@ -142,7 +142,9 @@ const initialState: TableState = {
     metadataColumnDialogColId: null,
     openExportDialog: false,
     openHelpDialog: false,
+    openGraphTutorialDialog: false,
     helpStart: false,
+    graphTutorialStart: false,
     settingsDialog: false,
     settings: {
       isViewOnly: false,
@@ -1608,6 +1610,12 @@ export const tableSlice = createSliceWithRequests({
     ) => {
       state.ui.helpStart = action.payload;
     },
+    setGraphTutorialStart: (
+      state,
+      action: PayloadAction<boolean | "tutorial">,
+    ) => {
+      state.ui.graphTutorialStart = action.payload;
+    },
     /**
      * Merges parameters of the UI to the current state.
      */
@@ -2349,6 +2357,7 @@ export const {
   updateColumnTypeMatches,
   addColumnType,
   setHelpStart,
+  setGraphTutorialStart,
   updateUI,
   addTutorialBox,
   deleteColumn,

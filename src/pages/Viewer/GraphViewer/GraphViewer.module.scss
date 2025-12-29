@@ -144,9 +144,12 @@
 
 .LinkLabel {
   position: absolute;
+  display: flex;
+  align-items: center;
   top: 16px;
   right: 16px;
   z-index: 10;
+  gap: 8px;
 }
 
 .Sidebar {
