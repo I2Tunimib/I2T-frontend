@@ -188,7 +188,7 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="graph" aria-label="right aligned">
-              <Tooltip title="Graph view (coming soon)">
+              <Tooltip title="Graph view">
                 <BubbleChartRoundedIcon fontSize="small" />
               </Tooltip>
             </ToggleButton>
