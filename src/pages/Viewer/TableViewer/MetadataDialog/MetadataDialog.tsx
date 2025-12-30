@@ -666,11 +666,21 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log("Row checked:", rowId);
   }, []);
 
+  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+    (acc, service) => {
+      acc[service.prefix] = service;
+      return acc;
+    },
+    {},
+  );
+
   const handleSearchInService = () => {
     if (!cell?.label || !currentService) return;
-    const serviceInfo = KG_INFO[currentService as keyof typeof KG_INFO];
-    if (!serviceInfo?.search) return;
-    const url = serviceInfo.search(cell.label);
+
+    const serviceInfo = servicesByPrefix[currentService];
+    if (!serviceInfo?.searchPattern) return;
+
+    const url = serviceInfo.searchTemplate.replace("{label}", encodeURIComponent(cell.label));
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -810,7 +820,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   />
                 </Button>
               </Tooltip>
-              {showAdd && !!currentService && !!KG_INFO[currentService as keyof typeof KG_INFO]?.search && (
+              {showAdd && servicesByPrefix[currentService]?.searchPattern && (
                 <Button
                   variant="outlined"
                   color="primary"
