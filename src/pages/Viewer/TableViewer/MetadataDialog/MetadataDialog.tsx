@@ -680,7 +680,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     const serviceInfo = servicesByPrefix[currentService];
     if (!serviceInfo?.searchPattern) return;
 
-    const url = serviceInfo.searchTemplate.replace("{label}", encodeURIComponent(cell.label));
+    const url = serviceInfo.searchPattern.replace("{label}", encodeURIComponent(cell.label));
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

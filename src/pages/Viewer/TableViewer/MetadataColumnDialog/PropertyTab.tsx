@@ -49,8 +49,8 @@ import { Controller, useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { SelectColumns } from "@components/core/DynamicForm/formComponents/Select";
-import { fetchTypeAndDescription } from "@services/utils/kg-info";
-import { Property } from "@store/slices/table"
+import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
+import { Property } from "@store/slices/table";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
@@ -476,6 +476,24 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     [lowerBound]
   );
 
+  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+    (acc, service) => {
+      acc[service.prefix] = service;
+      return acc;
+    },
+    {},
+  );
+
+  const handleListPropsInService = () => {
+    if (!currentService) return;
+
+    const serviceInfo = servicesByPrefix[currentService];
+    if (!serviceInfo?.listProps) return;
+
+    const url = serviceInfo.listProps;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       {
@@ -488,46 +506,53 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
             padding="0px 16px"
             gap={1}
           >
-            <Tooltip open={showTooltip} title="Add property" placement="right">
-              <Button
-                variant="outlined"
-                color="primary"
-                onMouseLeave={handleTooltipClose}
-                onMouseEnter={handleTooltipOpen}
-                onClick={handleShowAdd}
-                sx={{
-                  textTransform: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1
-                }}
-              >
-                Add column property
-                <AddRoundedIcon
+            <Stack direction="row" gap={1} alignItems="center">
+              <Tooltip open={showTooltip} title="Add property" placement="right">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onMouseLeave={handleTooltipClose}
+                  onMouseEnter={handleTooltipOpen}
+                  onClick={handleShowAdd}
                   sx={{
-                    transition: "transform 150ms ease-out",
-                    transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1
                   }}
+                >
+                  Add column property
+                  <AddRoundedIcon
+                    sx={{
+                      transition: "transform 150ms ease-out",
+                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+              {showAdd && servicesByPrefix[currentService]?.listProps && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleListPropsInService}
+                  sx={{ textTransform: "none" }}
+                >
+                  View list of {"Wikidata" || KG_INFO[currentService].groupName} properties
+                </Button>
+              )}
+            </Stack>
+            {showAdd && (
+              <Box sx={{ width: "100%", paddingTop: "8px" }}>
+                <AddMetadataForm
+                  currentService={currentService}
+                  onSubmit={onSubmitNewMetadata}
+                  otherColumns={otherColumns || []}
+                  context="propertyTab"
                 />
-              </Button>
-            </Tooltip>
-            <Box
-              sx={{
-                width: "100%",
-                paddingTop: "5px",
-                display: showAdd ? "block" : "none",
-              }}
-            >
-              <AddMetadataForm
-                currentService={currentService}
-                onSubmit={onSubmitNewMetadata}
-                otherColumns={otherColumns || []}
-                context="propertyTab"
-              />
-            </Box>
+              </Box>
+            )}
           </Stack>
-        )
-      }
+      )}
       <DeferredTable
         flexGrow={1}
         stickyHeaderTop="61.5px"

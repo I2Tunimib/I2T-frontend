@@ -13,9 +13,9 @@ import {
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { fetchTypeAndDescription } from "@services/utils/kg-info";
+import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
 import { createWikidataURI } from "@services/utils/uri-utils";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
+import { selectAppConfig, selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
 import { isValidWikidataId } from "@services/utils/regexs";
 import { BaseMetadata } from "@store/slices/table/interfaces/table";
 import deferMounting from "@components/HOC";
@@ -143,6 +143,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const isViewOnly = useAppSelector(selectIsViewOnly);
+  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const colId = useAppSelector((state) => state.table.ui.metadataColumnDialogColId);
   const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
   const currentService = rawData?.service?.prefix || "";
@@ -426,6 +427,26 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 
+  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+    (acc, service) => {
+      acc[service.prefix] = service;
+      return acc;
+    },
+    {},
+  );
+
+  const handleTypesInService = () => {
+    if (!rawData?.column?.id || !currentService) return;
+    const serviceInfo = servicesByPrefix[currentService];
+    let url = "";
+    if (serviceInfo?.searchTypesPattern) {
+      url = serviceInfo.searchTypesPattern.replace("{label}", encodeURIComponent(rawData.column.id));
+    } else if (serviceInfo?.listTypes) {
+      url = serviceInfo.listTypes;
+    } else return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return types ? (
     <Stack position="sticky" top="0" zIndex={10} bgcolor="#FFF">
       <Stack
@@ -447,42 +468,61 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
             padding="0px 16px"
             gap={1}
           >
-            <Tooltip open={showTooltip} title="Add type" placement="right">
-              <Button
-                variant="outlined"
-                color="primary"
-                onMouseLeave={handleTooltipClose}
-                onMouseEnter={handleTooltipOpen}
-                onClick={handleShowAdd}
-                sx={{
-                  textTransform: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1
-                }}
-              >
-                Add column type
-                <AddRoundedIcon
+            <Stack direction="row" gap={1} alignItems="center">
+              <Tooltip open={showTooltip} title="Add type" placement="right">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onMouseLeave={handleTooltipClose}
+                  onMouseEnter={handleTooltipOpen}
+                  onClick={handleShowAdd}
                   sx={{
-                    transition: "transform 150ms ease-out",
-                    transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1
                   }}
+                >
+                  Add column type
+                  <AddRoundedIcon
+                    sx={{
+                      transition: "transform 150ms ease-out",
+                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+              {(showAdd && servicesByPrefix[currentService]?.searchTypesPattern) ? (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleTypesInService}
+                  sx={{ textTransform: "none" }}
+                >
+                  Search in {KG_INFO[currentService].groupName}
+                </Button>
+              ) : (
+                showAdd && servicesByPrefix[currentService]?.listTypes ? (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleTypesInService}
+                    sx={{ textTransform: "none" }}
+                  >
+                    View list of {KG_INFO[currentService].groupName} types
+                  </Button>
+                ) : []
+              )}
+            </Stack>
+            {showAdd && (
+              <Box sx={{ width: "100%", paddingTop: "8px" }}>
+                <AddMetadataForm
+                  currentService={currentService}
+                  onSubmit={onSubmitNewMetadata}
+                  context="typeTab"
                 />
-              </Button>
-            </Tooltip>
-            <Box
-              sx={{
-                width: "100%",
-                paddingTop: "5px",
-                display: showAdd ? "block" : "none",
-              }}
-            >
-              <AddMetadataForm
-                currentService={currentService}
-                onSubmit={onSubmitNewMetadata}
-                context="typeTab"
-              />
-            </Box>
+              </Box>
+            )}
           </Stack>
         )
       }
