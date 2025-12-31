@@ -322,28 +322,80 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
       //console.log("onSubmitNewMetadata prefix", prefix);
       let idFromUri = "";
 
+      // Robust extraction strategy:
+      // 1) Try to parse as URL and prefer fragment (#id) if present.
+      // 2) Otherwise use the last non-empty path segment.
+      // 3) Apply special cases for known prefixes (wd, geo, geoCoord).
+      // 4) If parsing fails, fallback to string token extraction.
       try {
         const url = new URL(formState.uri);
         console.log("url", url);
-        if (prefix && prefix.startsWith("wd")) {
-          // es. https://www.wikidata.org/wiki/Q18711
-          idFromUri = url.pathname.split("/").pop();
-        } else if (prefix === "geo") {
-          // es. https://www.geonames.org/3117735/madrid.html
-          idFromUri = url.pathname.split("/")[1];
-        } else if (prefix === "geoCoord") {
-          // es. https://www.google.com/maps/place/lat,long
-          const parts = url.pathname.split("/").pop()?.split(",") || [];
-          idFromUri = parts.join(",");
+
+        // Prefer fragment (after #)
+        if (url.hash && url.hash.length > 1) {
+          idFromUri = url.hash.slice(1);
         } else {
-          // For custom prefixes, extract the last part of the path or after #
-          const pathParts = url.pathname.split("/");
+          // Last non-empty path segment
+          const pathParts = url.pathname.split("/").filter(Boolean);
+          if (pathParts.length > 0) {
+            idFromUri = pathParts[pathParts.length - 1];
+          } else {
+            // No path segments - try to use pathname without leading/trailing slashes
+            idFromUri = url.pathname.replace(/^\/+|\/+$/g, "");
+          }
+        }
+
+        // Apply known special cases when needed (prefer the above result if present)
+        if (
+          (!idFromUri || idFromUri === "") &&
+          prefix &&
+          prefix.startsWith("wd")
+        ) {
+          // e.g. https://www.wikidata.org/wiki/Q18711
+          idFromUri = url.pathname.split("/").filter(Boolean).pop() || "";
+        } else if ((!idFromUri || idFromUri === "") && prefix === "geo") {
+          // e.g. https://www.geonames.org/3117735/madrid.html -> 3117735
+          const parts = url.pathname.split("/").filter(Boolean);
           idFromUri =
-            pathParts[pathParts.length - 1] || url.hash.slice(1) || "";
+            parts[0] === undefined
+              ? ""
+              : parts[0] || parts[parts.length - 1] || "";
+        } else if ((!idFromUri || idFromUri === "") && prefix === "geoCoord") {
+          // e.g. https://www.google.com/maps/place/lat,long
+          const parts =
+            url.pathname.split("/").filter(Boolean).pop()?.split(",") || [];
+          idFromUri = parts.join(",");
+        }
+
+        // If still empty, try to extract something from the query params (last value)
+        if (!idFromUri) {
+          const params = new URLSearchParams(url.search);
+          const lastKey = Array.from(params.keys()).pop();
+          if (lastKey) {
+            idFromUri = params.get(lastKey) || "";
+          }
+        }
+
+        // Final fallback: stringify pathname+search+hash trimmed
+        if (!idFromUri) {
+          idFromUri = (
+            url.pathname +
+            (url.search || "") +
+            (url.hash || "")
+          ).replace(/^\/+/, "");
         }
       } catch (err) {
-        console.log("Invalid URI, fallback to id", err);
+        // Not a valid URL - fallback heuristics on the raw string
+        console.warn("Invalid URI, fallback to extracting last token", err);
+        const trimmed = formState.uri.trim();
+        if (trimmed.includes("#")) {
+          idFromUri = trimmed.split("#").pop() || trimmed;
+        } else {
+          const parts = trimmed.split("/").filter(Boolean);
+          idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
+        }
       }
+
       const sanitizedPrefix = prefix ? String(prefix).replace(/:+$/, "") : "";
       const finalId = idFromUri.includes(":")
         ? idFromUri
