@@ -918,12 +918,21 @@ export const selectColumnTypes = createSelector(
         return item;
       })
       .concat(
-        additionalTypes.map((type) => ({
-          id: type.id,
-          label: type.name,
-          count: 0,
-          percentage: "0.00",
-        })),
+        additionalTypes.map((type) => {
+          // ensure additional types carry a match flag and are treated similarly to existing types
+          const t = {
+            id: type.id,
+            label: type.name,
+            count: 0,
+            percentage: "0.00",
+            match: !!type.match,
+          };
+          // if the additional type is already marked as matched, include it in selectedType
+          if (t.match) {
+            selectedType.push(t);
+          }
+          return t;
+        }),
       )
       .sort((a, b) => b.count - a.count);
 

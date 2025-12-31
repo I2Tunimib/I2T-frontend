@@ -40,6 +40,16 @@ import AddMetadataForm from "./AddMetadataForm";
 
 const DeferredTable = deferMounting(CustomTable);
 
+const normalizeTypeId = (id: string) => {
+  if (!id) return id;
+  // If already prefixed with wd:, return as-is
+  if (id.startsWith("wd:")) return id;
+  // If it's a bare Wikidata id like Q123, normalize to wd:Q123
+  if (/^Q\d+$/.test(id)) return `wd:${id}`;
+  // Otherwise return original id
+  return id;
+};
+
 const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
   ({ percentage, checked }) => ({
     width: `${percentage}%`,
@@ -47,7 +57,7 @@ const PercentageBar = styled.div<{ percentage: string; checked: boolean }>(
     borderRadius: "6px",
     backgroundColor: checked ? "#4AC99B" : "#E4E6EB",
     transition: "all 250ms ease-out",
-  })
+  }),
 );
 
 const SquaredBox = styled.div({
@@ -143,7 +153,9 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const isViewOnly = useAppSelector(selectIsViewOnly);
-  const colId = useAppSelector((state) => state.table.ui.metadataColumnDialogColId);
+  const colId = useAppSelector(
+    (state) => state.table.ui.metadataColumnDialogColId,
+  );
   const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
   const currentService = rawData?.service?.prefix || "";
 
@@ -170,7 +182,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     setShowTooltip(false);
   };
   const makeData = (
-    rawData: ReturnType<typeof selectColumnCellMetadataTableFormat>
+    rawData: ReturnType<typeof selectColumnCellMetadataTableFormat>,
   ) => {
     if (!rawData) {
       return {
@@ -216,7 +228,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   */
     const allColumnTypes = [
       ...(types.allTypes || []),
-      ...(column.metadata[0]?.additionalTypes || [])
+      ...(column.metadata[0]?.additionalTypes || []),
     ];
 
     const uniqueTypesMap: Record<string, any> = {};
@@ -231,14 +243,21 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           "mapped types",
           type,
           selected,
-          selected.some((item) => item.id === type.id) || column.metadata[0]?.additionalTypes?.some((t: any) => t.id === type.id),
+          selected.some((item) => item.id === type.id) ||
+            column.metadata[0]?.additionalTypes?.some(
+              (t: any) => t.id === type.id,
+            ),
         );
         return {
-          selected: selected.some((item) => item.id === type.id) || column.metadata[0]?.additionalTypes?.some((t: any) => t.id === type.id),
+          selected:
+            selected.some((item) => item.id === type.id) ||
+            column.metadata[0]?.additionalTypes?.some(
+              (t: any) => t.id === type.id,
+            ),
           id: isValidWikidataId(type.id) ? "wd:" + type.id : type.id,
           name: {
             value: type.label || type.name,
-            uri: createWikidataURI(type.id),
+            uri: createWikidataURI(type.id) || type.uri,
           },
           percentage: Number(type.percentage || 100).toFixed(0) + "%",
           // match: "",
@@ -266,17 +285,20 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
 
     const data = newMetadata.map((metadataItem) => {
       //const data = metadata.map((metadataItem) => {
-      return Object.keys(metaToView).reduce((acc, key) => {
-        console.log("tttest", metadataItem[key]);
-        const value = metadataItem[key as keyof BaseMetadata];
-        if (value !== undefined) {
-          acc[key] = value;
-        } else {
-          acc[key] = null;
-        }
+      return Object.keys(metaToView).reduce(
+        (acc, key) => {
+          console.log("tttest", metadataItem[key]);
+          const value = metadataItem[key as keyof BaseMetadata];
+          if (value !== undefined) {
+            acc[key] = value;
+          } else {
+            acc[key] = null;
+          }
 
-        return acc;
-      }, {} as Record<string, any>);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
     });
     console.log("data", data);
     console.log("columns", columns);
@@ -303,7 +325,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
       try {
         const url = new URL(formState.uri);
         console.log("url", url);
-        if (prefix.startsWith("wd")) {
+        if (prefix && prefix.startsWith("wd")) {
           // es. https://www.wikidata.org/wiki/Q18711
           idFromUri = url.pathname.split("/").pop();
         } else if (prefix === "geo") {
@@ -313,11 +335,21 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           // es. https://www.google.com/maps/place/lat,long
           const parts = url.pathname.split("/").pop()?.split(",") || [];
           idFromUri = parts.join(",");
+        } else {
+          // For custom prefixes, extract the last part of the path or after #
+          const pathParts = url.pathname.split("/");
+          idFromUri =
+            pathParts[pathParts.length - 1] || url.hash.slice(1) || "";
         }
       } catch (err) {
         console.log("Invalid URI, fallback to id", err);
       }
-      const finalId = idFromUri.includes(":") ? idFromUri : `${prefix}:${idFromUri}`;
+      const sanitizedPrefix = prefix ? String(prefix).replace(/:+$/, "") : "";
+      const finalId = idFromUri.includes(":")
+        ? idFromUri
+        : sanitizedPrefix
+          ? `${sanitizedPrefix}:${idFromUri}`
+          : idFromUri;
 
       if (prefix) {
         const newType = {
@@ -325,22 +357,51 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           name: formState.name,
           uri: formState.uri,
         };
+        // Add the new type to the column metadata
         dispatch(addColumnType({ colId, newTypes: [newType] }));
+        // Ensure the column's main type list is updated (id + name) so selectors/readers see it
+        dispatch(updateColumnType([{ id: finalId, name: formState.name }]));
+        // Also mark the newly added type as matched so checkboxes reflect selection/save
+        dispatch(updateColumnTypeMatches({ typeIds: [finalId] }));
+        // Auto-select the newly added type in the local component state so UI updates immediately
+        setSelected((prev) => {
+          // avoid duplicates
+          if (prev.some((p) => p.id === finalId)) {
+            return prev;
+          }
+          return [
+            ...prev,
+            {
+              id: finalId,
+              label: formState.name,
+              count: 1,
+              percentage: "100",
+            },
+          ];
+        });
       }
     }
   };
 
   const handleRowTypeCheck = (row: any) => {
-    let rowId = row.id;
-    if (rowId.startsWith("wd:")) {
-      rowId = rowId.replace("wd:", "");
-    }
-    const index = selected.findIndex((item) => item.id === rowId);
+    const normRowId = normalizeTypeId(row.id);
+    const index = selected.findIndex(
+      (item) => normalizeTypeId(item.id) === normRowId,
+    );
     if (index > -1) {
-      setSelected(selected.filter((item) => item.id !== rowId));
+      setSelected(
+        selected.filter((item) => normalizeTypeId(item.id) !== normRowId),
+      );
     } else {
-      if (types) {
-        const selectedType = types.allTypes.find((item) => item.id === rowId);
+      if (types && rawData) {
+        const { column } = rawData;
+        const allTypes = [
+          ...(types.allTypes || []),
+          ...(column?.metadata?.[0]?.additionalTypes || []),
+        ];
+        const selectedType = allTypes.find(
+          (item) => normalizeTypeId(item.id) === normRowId,
+        );
         if (selectedType) {
           setSelected([...selected, selectedType]);
         }
@@ -373,24 +434,29 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         };
       });
     },
-    [selected, setSelected]
+    [selected, setSelected],
   );
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement>,
-    checked: boolean
+    checked: boolean,
   ) => {
     if (types && types.allTypes) {
+      const value = event.target.value;
+      const normValue = normalizeTypeId(value);
       if (checked) {
-        const selectedType = types.allTypes.find(
-          (item) => item.id === event.target.value
-        );
+        const selectedType =
+          (types.allTypes || []).find(
+            (item) => normalizeTypeId(item.id) === normValue,
+          ) || undefined;
 
         if (selectedType) {
           setSelected([...selected, selectedType]);
         }
       } else {
-        setSelected(selected.filter((item) => item.id !== event.target.value));
+        setSelected(
+          selected.filter((item) => normalizeTypeId(item.id) !== normValue),
+        );
       }
     }
   };
@@ -411,13 +477,20 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
 
   const handleConfirm = () => {
     if (selected && selected.length > 0) {
-      // Create types from selection for updateColumnType
-      const mappedTypes = selected.map((item) => ({
-        id: item.id,
+      // Prepare payloads using normalized ids:
+      // 1) updateColumnType expects an array of { id, name }
+      const mappedTypesForUpdate = selected.map((item) => ({
+        id: normalizeTypeId(item.id),
         name: item.label,
       }));
+      // 2) updateColumnTypeMatches expects { typeIds: string[] }
+      const mappedTypeIds = selected.map((item) => normalizeTypeId(item.id));
 
-      addEdit(updateColumnTypeMatches(mappedTypes), true);
+      // Dispatch both actions via addEdit so they are treated as edits/undoable
+      // First update the column types themselves (ids + names)
+      addEdit(updateColumnType(mappedTypesForUpdate), true);
+      // Then update the matches for those types
+      addEdit(updateColumnTypeMatches({ typeIds: mappedTypeIds }), true);
     }
     dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
@@ -428,13 +501,10 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
 
   return types ? (
     <Stack position="sticky" top="0" zIndex={10} bgcolor="#FFF">
-      <Stack
-        direction="column"
-        paddingLeft="16px"
-        paddingBottom="10px"
-      >
+      <Stack direction="column" paddingLeft="16px" paddingBottom="10px">
         <Typography color="textSecondary">
-          In the following list is shown the frequency of the types which are present in the column
+          In the following list is shown the frequency of the types which are
+          present in the column
         </Typography>
       </Stack>
       {
@@ -458,7 +528,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                   textTransform: "none",
                   display: "flex",
                   alignItems: "center",
-                  gap: 1
+                  gap: 1,
                 }}
               >
                 Add column type

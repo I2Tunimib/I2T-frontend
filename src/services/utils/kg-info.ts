@@ -1,4 +1,9 @@
-export const KG_INFO = {
+type KGInfoEntry = {
+  uri: string;
+  groupName?: string;
+};
+
+export const KG_INFO: Record<string, KGInfoEntry> = {
   cr: {
     uri: "",
     groupName: "In-Table Linking",
@@ -102,7 +107,11 @@ export const getPrefixIfAvailable = (uri: string, id: string): string => {
   }
 };
 
-export async function fetchTypeAndDescription(prefix: string, id: string, label?: string) {
+export async function fetchTypeAndDescription(
+  prefix: string,
+  id: string,
+  label?: string,
+) {
   const base = import.meta.env.VITE_BACKEND_API_URL;
   let res;
   try {
@@ -111,7 +120,9 @@ export async function fetchTypeAndDescription(prefix: string, id: string, label?
       return await res.json();
     }
     if (prefix === "wdL") {
-      res = await fetch(`${base}/metadata/lionlinker?id=${id}&label=${encodeURIComponent(label || "")}`);
+      res = await fetch(
+        `${base}/metadata/lionlinker?id=${id}&label=${encodeURIComponent(label || "")}`,
+      );
       return await res.json();
     }
     if (prefix === "geo") {

@@ -195,8 +195,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
   const uniqueReconciliators = Array.from(
-    new Set(reconciliators.map((r) => r.prefix)),
-  ).map((prefix) => reconciliators.find((r) => r.prefix === prefix));
+    new Set(reconciliators.map((r) => r.id)),
+  ).map((id) => reconciliators.find((r) => r.id === id));
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
