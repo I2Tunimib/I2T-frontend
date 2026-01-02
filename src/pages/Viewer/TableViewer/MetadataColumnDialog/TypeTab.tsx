@@ -492,27 +492,43 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                   />
                 </Button>
               </Tooltip>
-              {(showAdd && servicesByPrefix[currentService]?.searchTypesPattern) ? (
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={handleTypesInService}
-                  sx={{ textTransform: "none" }}
-                >
-                  Search in {KG_INFO[currentService].groupName}
-                </Button>
-              ) : (
-                showAdd && servicesByPrefix[currentService]?.listTypes ? (
+              {showAdd ? (
+                !!currentService ? (
+                  servicesByPrefix[currentService]?.searchTypesPattern ? (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleTypesInService}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Search in {KG_INFO[currentService].groupName}
+                    </Button>
+                  ) : servicesByPrefix[currentService]?.listTypes ? (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleTypesInService}
+                      sx={{ textTransform: "none" }}
+                    >
+                      View list of {KG_INFO[currentService].groupName} types
+                    </Button>
+                  ) : null
+                ) : (
+                  // fallback when no service → Wikidata
                   <Button
                     variant="outlined"
                     color="primary"
-                    onClick={handleTypesInService}
+                    onClick={() => {
+                      const wikidataPattern = "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
+                      const url = wikidataPattern.replace("{label}", encodeURIComponent(rawData?.column?.id || ""));
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }}
                     sx={{ textTransform: "none" }}
                   >
-                    View list of {KG_INFO[currentService].groupName} types
+                    Search in {KG_INFO["wd"].groupName || "Wikidata"}
                   </Button>
-                ) : []
-              )}
+                )
+              ) : null}
             </Stack>
             {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>

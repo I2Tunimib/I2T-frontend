@@ -530,6 +530,31 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                   />
                 </Button>
               </Tooltip>
+              {showAdd ? (
+                !!currentService && servicesByPrefix[currentService]?.listProps ? (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleListPropsInService}
+                    sx={{ textTransform: "none" }}
+                  >
+                    View list of {KG_INFO[currentService].groupName} properties
+                  </Button>
+                ) : (
+                  // fallback when no service → Wikidata
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => {
+                      const url = "https://www.wikidata.org/wiki/Special:ListProperties";
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }}
+                    sx={{ textTransform: "none" }}
+                  >
+                    View list of {KG_INFO["wd"].groupName || "Wikidata"} properties
+                  </Button>
+                )
+              ) : null}
               {showAdd && servicesByPrefix[currentService]?.listProps && (
                 <Button
                   variant="outlined"
