@@ -5,9 +5,11 @@ import { updateUI } from "@store/slices/table/table.slice";
 import { exportTable } from '@store/slices/table/table.thunk';
 import { useParams } from 'react-router-dom';
 import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
-import { Divider, Typography, Tooltip, Button } from '@mui/material';
+import { Divider, Typography, Tooltip, Button, IconButton } from '@mui/material';
 import { IconButtonTooltip } from "@components/core";
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
+import RemoveOutlinedIcon from '@mui/icons-material/RemoveOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
@@ -156,15 +158,6 @@ const GraphViewer: FC = () => {
     return { nodes, links: finalLinks };
   }, [w3cData]);
 
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return;
-    graph.d3Force('link')?.distance(80);
-    graph.d3Force('charge')?.strength(-50);
-    graph.d3ReheatSimulation();
-    graph.zoom(2.5);
-  }, [graphData]);
-
   const handleShowLinkLabel = () => {
     setShowLinkLabels((prev) => !prev);
   };
@@ -187,6 +180,29 @@ const GraphViewer: FC = () => {
       return targetId === selectedNode.label;
     })
     : [];
+
+  const isNodeIsolated = (node: any) => {
+    return !graphData.links.some((l) =>
+      (typeof l.source === 'object' ? l.source.label : l.source) === node.label ||
+      (typeof l.target === 'object' ? l.target.label : l.target) === node.label
+    );
+  };
+
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph) return;
+    graph.d3Force('link')?.distance(80);
+    graph.d3Force('charge')?.strength(-50);
+    graph.d3Force('isolate', (alpha) => {
+      graphData.nodes.forEach((node) => {
+        if (isNodeIsolated(node)) {
+          node.vx *= 0.2;
+          node.vy *= 0.2;
+        }
+      });
+    });
+    graph.d3ReheatSimulation();
+  }, [graphData]);
 
   const density = nodesLength > 1 ? linksLength / (nodesLength * (nodesLength - 1)) : 0;
   const nodeDegrees = useMemo(() => {
@@ -280,23 +296,34 @@ const GraphViewer: FC = () => {
     dispatch(updateUI({ openGraphTutorialDialog: false }));
   };
 
+  const handleZoomIn = () => {
+    if (graphRef.current) {
+      const currentZoom = graphRef.current.zoom();
+      graphRef.current.zoom(currentZoom * 1.2);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (graphRef.current) {
+      const currentZoom = graphRef.current.zoom();
+      graphRef.current.zoom(currentZoom * 0.8);
+    }
+  };
+
   return (
     <div className={styles.Container}>
       <div className={styles.GraphWrapper}>
-        <div className={styles.Legend}>
-          <h4>Legend</h4>
-          <div>
-            <Typography className={styles.Subject} />
-            Subject
-          </div>
-          <div>
-            <Typography className={styles.Entity} />
-            Entity
-          </div>
-          <div>
-            <Typography className={styles.Literal} />
-            Literal
-          </div>
+        <div className={styles.Zooming}>
+          <Tooltip title="Zoom in" placement="left" arrow>
+            <IconButton onClick={handleZoomIn}>
+              <AddOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom out" placement="left" arrow>
+            <IconButton onClick={handleZoomOut}>
+              <RemoveOutlinedIcon />
+            </IconButton>
+          </Tooltip>
         </div>
         <div className={styles.Values}>
           <h4>Column values:</h4>
@@ -325,28 +352,57 @@ const GraphViewer: FC = () => {
             </Typography>
           )}
         </div>
-        <div className={styles.LinkLabel}>
-          <IconButtonTooltip
-            tooltipText="Graph tutorial"
-            onClick={() => dispatch(updateUI({ openGraphTutorialDialog: true }))}
-            Icon={HelpOutlineRoundedIcon}
-          />
-          <Button
-            onClick={handleShowLinkLabel}
-            variant="outlined"
-            color="primary"
-            size="medium"
-            startIcon={showLinkLabels ? <VisibilityOffIcon /> : <VisibilityIcon />}
-            sx={{ textTransform: 'none' }}
-          >
-            {showLinkLabels ? "Hide link label" : "Show link label"}
-          </Button>
+        <div className={styles.TopOverlay}>
+          <div className={styles.Legend}>
+            <h4>Legend</h4>
+            <div>
+              <Typography className={styles.Subject} />
+              Subject
+            </div>
+            <div>
+              <Typography className={styles.Entity} />
+              Entity
+            </div>
+            <div>
+              <Typography className={styles.Literal} />
+              Literal
+            </div>
+          </div>
+          <div className={styles.LinkLabel}>
+            <IconButtonTooltip
+              tooltipText="Graph visualization tutorial"
+              onClick={() => dispatch(updateUI({ openGraphTutorialDialog: true }))}
+              Icon={HelpOutlineRoundedIcon}
+            />
+            <Button
+              onClick={handleShowLinkLabel}
+              variant="outlined"
+              color="primary"
+              size="medium"
+              startIcon={showLinkLabels ? <VisibilityOffIcon /> : <VisibilityIcon />}
+              sx={{
+                textTransform: 'none',
+                backgroundColor: '#fff',
+                '&:hover': {
+                  backgroundColor: '#fff'
+                }
+              }}
+            >
+              {showLinkLabels ? "Hide link label" : "Show link label"}
+            </Button>
+          </div>
         </div>
         <ForceGraph2D
           graphData={graphData}
           ref={graphRef}
           nodeId="label"
-          nodeLabel={(node: any) => node.metadata}
+          nodeLabel={(node: any) => {
+            const typeHighestScore = node.types?.reduce((prev: any, curr: any) => {
+              return (curr.score > (prev?.score ?? -Infinity)) ? curr : prev;
+            }, null);
+            const typeHighestScoreName = typeHighestScore?.name ?? '';
+            return `${node.metadata || ''} ${typeHighestScoreName}`.trim();
+          }}
           nodeCanvasObjectMode={() => 'replace'}
           nodeCanvasObject={(node: any, ctx) => {
             const RADIUS = 12;

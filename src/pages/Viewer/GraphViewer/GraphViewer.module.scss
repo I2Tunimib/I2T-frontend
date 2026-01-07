@@ -22,8 +22,46 @@
   align-items: center;
 }
 
-.Legend {
+.Zooming {
   position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.TopOverlay {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.Legend,
+.LinkLabel {
+  pointer-events: auto;
+}
+
+@media (max-width: 800px) {
+  .TopOverlay {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .LinkLabel {
+    margin-top: 8px;
+  }
+}
+
+.Legend {
   top: 16px;
   left: 16px;
   background: rgba(255, 255, 255, 0.9);
@@ -143,7 +181,6 @@
 }
 
 .LinkLabel {
-  position: absolute;
   display: flex;
   align-items: center;
   top: 16px;
