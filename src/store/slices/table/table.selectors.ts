@@ -396,6 +396,10 @@ export const selectExportDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openExportDialog,
 );
+export const selectAutoAnnotationDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openAutoAnnotationDialog,
+);
 
 export const selectSearchStatus = createSelector(
   selectUIState,

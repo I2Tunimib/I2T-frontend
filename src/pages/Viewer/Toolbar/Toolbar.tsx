@@ -42,6 +42,7 @@ import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
+import AutoAnnotationDialog from '../TableViewer/AutoAnnotationDialog';
 import SettingsDialog from '../SettingsDialog/SettingsDialog';
 import HelpDialog from '../HelpDialog/HelpDialog';
 
@@ -205,14 +206,18 @@ const Toolbar = () => {
             </Button>
             <ExportDialog />
           </>
-          <Button
-            color="primary"
-            disabled={loadingAutomaticAnnotation || (currentTable && currentTable.mantisStatus === 'PENDING')}
-            onClick={handleAutomaticAnnotation}
-            startIcon={<PlayCircleOutlineRoundedIcon />}
-            variant="contained">
-            Automatic annotation
-          </Button>
+          <>
+            <Button
+              onClick={() => dispatch(updateUI({ openAutoAnnotationDialog: true }))}
+              variant="contained"
+              size="medium"
+              disabled={loadingAutomaticAnnotation || (currentTable && (currentTable.mantisStatus === 'PENDING' || currentTable.schemaStatus === 'PENDING'))}
+              startIcon={<PlayCircleOutlineRoundedIcon />}
+            >
+              Automatic annotation
+            </Button>
+            <AutoAnnotationDialog />
+          </>
           {API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0 && (
             <>
               <Button

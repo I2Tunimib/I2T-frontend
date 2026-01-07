@@ -1,13 +1,13 @@
 import { RouteContainer } from "@components/layout";
 import useInit from "@hooks/init/useInit";
 import React, { Suspense, useEffect } from "react";
-import { Link, Redirect } from "react-router-dom";
+import { Link, Redirect, useLocation } from "react-router-dom";
 import Route from "@components/core/Route";
 import { Loader, useSocketIo } from "@components/core";
 import { useSnackbar } from "notistack";
 import { useAppDispatch } from "@hooks/store";
-import { updateTableSocket } from "@store/slices/table/table.thunk";
-import { GetTableResponse } from "@services/api/table";
+import { updateTableSocket, updateSchemaSocket } from "@store/slices/table/table.thunk";
+import { GetTableResponse, GetSchemaResponse } from "@services/api/table";
 import { Button } from "@mui/material";
 import { getRedirects, getRoutes } from "./routes";
 
@@ -24,6 +24,7 @@ const App = () => {
   const socket = useSocketIo();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
+  const location = useLocation();
 
   // Set global enqueueSnackbar for API interceptors
   useEffect(() => {
@@ -34,23 +35,43 @@ const App = () => {
     if (socket) {
       socket.on("done", (data: GetTableResponse) => {
         const { table } = data;
+        const tablePath = `/datasets/${table.idDataset}/tables/${table.id}`;
         dispatch(updateTableSocket(data));
         enqueueSnackbar(`Annotation for table ${table.name} completed`, {
           variant: "success",
-          action: (key) => {
-            return (
+          action: location.pathname === tablePath
+            ? (key) => (
               <Button
-                sx={{
-                  color: "#ffffff",
-                }}
+                sx={{ color: "#ffffff" }}
                 component={Link}
-                to={`/datasets/${table.idDataset}/tables/${table.id}`}
+                to={tablePath}
                 onClick={() => closeSnackbar(key)}
               >
                 view
               </Button>
-            );
-          },
+            )
+            : undefined
+        });
+      });
+      socket.on("schema-done", (data: GetSchemaResponse) => {
+        const { table } = data;
+        const tablePath = `/datasets/${table.idDataset}/tables/${table.id}`;
+        console.log("data", data);
+        dispatch(updateSchemaSocket(data));
+        enqueueSnackbar(`Annotation schema for table ${table.name} completed`, {
+          variant: "success",
+          action: location.pathname === tablePath
+            ? (key) => (
+              <Button
+                sx={{ color: "#ffffff" }}
+                component={Link}
+                to={tablePath}
+                onClick={() => closeSnackbar(key)}
+              >
+                view
+              </Button>
+            )
+            : undefined
         });
       });
     }

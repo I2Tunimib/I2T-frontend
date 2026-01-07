@@ -66,23 +66,29 @@ const Viewer: FC<unknown> = () => {
   }, [tableId, datasetId]);
 
   useEffect(() => {
-    if (!isEmptyObject(currentTable)) {
-      if (currentTable.mantisStatus === 'PENDING') {
-        const key = enqueueSnackbar((
-          <Stack direction="row" gap="10px" alignItems="center">
-            <span>The table is being annotated</span>
-            <LoaderAnnoation />
-          </Stack>
-        ), {
-          persist: true,
-          variant: 'info'
-        });
-        refSnack.current = key;
-      } else {
-        if (refSnack.current) {
-          closeSnackbar(refSnack.current);
-        }
-      }
+    if (isEmptyObject(currentTable)) return;
+
+    if (refSnack.current) {
+      closeSnackbar(refSnack.current);
+      refSnack.current = null;
+    }
+
+    let message = "";
+    if (currentTable.schemaStatus === "PENDING") {
+      message = "The headers are being classified";
+    } else if (currentTable.mantisStatus === "PENDING") {
+      message = "The table is being annotated";
+    }
+    if (message) {
+      refSnack.current = enqueueSnackbar((
+        <Stack direction="row" gap="10px" alignItems="center">
+          <span>{message}</span>
+          <LoaderAnnoation />
+        </Stack>
+      ), {
+        persist: true,
+        variant: 'info'
+      });
     }
   }, [currentTable]);
 

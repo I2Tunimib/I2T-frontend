@@ -1,6 +1,6 @@
 //import { useAppSelector } from "@hooks/store";
 import { current, PayloadAction } from "@reduxjs/toolkit";
-import tableAPI, { GetTableResponse } from "@services/api/table";
+import tableAPI, { GetTableResponse, GetSchemaResponse } from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
 import { buildURI } from "@services/utils/uri-utils";
@@ -141,6 +141,7 @@ const initialState: TableState = {
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
     openExportDialog: false,
+    openAutoAnnotationDialog: false,
     openHelpDialog: false,
     openGraphTutorialDialog: false,
     helpStart: false,
@@ -247,6 +248,69 @@ export const tableSlice = createSliceWithRequests({
           allIds: Object.keys(rows),
         },
       };
+    },
+    updateSchema: (state, action: PayloadAction<Payload<GetSchemaResponse>>) => {
+      const { table, result } = action.payload;
+      let tableInstance = {} as TableInstance;
+      tableInstance = { ...table };
+
+      console.log("[updateSchema] called", {
+        tableId: table.id,
+        currentTableId: tableInstance?.id,
+      });
+
+      if (!tableInstance || tableInstance.id.toString() !== table.id.toString()) {
+        console.log("[updateSchema] skipping: tableInstance missing or id mismatch");
+        return;
+      }
+
+      state.entities.tableInstance = {
+        ...tableInstance,
+        ...table,
+      };
+
+      const updatedColumns = {};
+      const columnIdMap = {};
+
+      Object.keys(state.entities.columns.byId).forEach((oldId) => {
+        const cleanId = oldId.replace(/^\uFEFF/, "").trim();
+        const col = state.entities.columns.byId[oldId];
+
+        if (!col) return;
+
+        columnIdMap[oldId] = cleanId;
+
+        updatedColumns[cleanId] = {
+          ...col,
+          id: cleanId,
+          label: col.label?.replace(/^\uFEFF/, "").trim() ?? cleanId,
+          kind: result.kind_classification[cleanId] ?? col.kind ?? "unknown",
+          nerClassification: result.ner_classification[cleanId] ?? col.nerClassification ?? "unknown",
+        };
+      });
+
+      state.entities.columns.byId = updatedColumns;
+      state.entities.columns.allIds = Object.keys(updatedColumns);
+
+      const updatedRows = {};
+
+      Object.entries(state.entities.rows.byId).forEach(([rowId, row]) => {
+        const newCells = {};
+
+        Object.entries(row.cells).forEach(([oldColId, cell]) => {
+          const cleanColId = columnIdMap[oldColId] ?? oldColId;
+          newCells[cleanColId] = cell;
+        });
+
+        updatedRows[rowId] = {
+          ...row,
+          cells: newCells,
+        };
+      });
+
+      state.entities.rows.byId = updatedRows;
+
+      console.log("[updateSchema] schema applied correctly");
     },
     /**
      *  Set selected cell as expanded.
@@ -2024,8 +2088,14 @@ export const tableSlice = createSliceWithRequests({
       .addCase(
         automaticAnnotation.fulfilled,
         (state, action: PayloadAction<Payload<AutomaticAnnotationPayload>>) => {
-          const { datasetId, tableId, mantisStatus } = action.payload;
-          state.entities.tableInstance.mantisStatus = mantisStatus;
+          const { datasetId, tableId, mantisStatus, schemaStatus } = action.payload;
+          console.log("[automaticAnnotation.fulfilled]", action.payload);
+          if (mantisStatus) {
+            state.entities.tableInstance.mantisStatus = mantisStatus;
+          }
+          if (schemaStatus) {
+            state.entities.tableInstance.schemaStatus = schemaStatus;
+          }
           state.ui.settings.isViewOnly = true;
         },
       )
@@ -2369,6 +2439,7 @@ export const {
   undo,
   redo,
   updateColumnVisibility,
+  updateSchema,
 } = tableSlice.actions;
 
 export default tableSlice.reducer;

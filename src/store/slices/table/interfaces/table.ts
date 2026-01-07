@@ -31,6 +31,7 @@ export interface TableInstance {
   minMetaScore: number;
   maxMetaScore: number;
   mantisStatus?: "PENDING" | "DONE";
+  schemaStatus?: "PENDING" | "DONE";
 }
 
 /**
@@ -44,6 +45,7 @@ export interface TableUIState {
   openModificationDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
+  openAutoAnnotationDialog: boolean;
   openMetadataColumnDialog: boolean;
   metadataColumnDialogColId: string | null;
   openHelpDialog: boolean;
@@ -186,6 +188,7 @@ export interface AutomaticAnnotationPayload {
   datasetId: string;
   tableId: string;
   mantisStatus: "PENDING";
+  schemaStatus: "PENDING";
 }
 
 export interface UpdateSelectedRowPayload {
