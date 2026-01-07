@@ -231,6 +231,38 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
 
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
+
+  const hasColumnClassifier = !!column?.kind && !!column?.nerClassification;
+  const getWikidataPropertyListUrl = (kind?: string, nerClassification?: string) => {
+    if (kind === "entity") {
+      return "https://www.wikidata.org/wiki/Special:ListProperties/wikibase-item";
+    }
+    if (kind === "literal") {
+      switch (nerClassification) {
+        case "DATE":
+          return "https://www.wikidata.org/wiki/Special:ListProperties/time";
+        case "NUMBER":
+          return "https://www.wikidata.org/wiki/Special:ListProperties/quantity";
+        case "STRING":
+          return "https://www.wikidata.org/wiki/Special:ListProperties/string";
+        default :
+          return "https://www.wikidata.org/wiki/Special:ListProperties";
+      }
+    }
+    return "https://www.wikidata.org/wiki/Special:ListProperties";
+  };
+  const getPropertyListLabel = (kind?: string, nerClassification?: string) => {
+    if (kind === "entity") {
+      return `ENTITY - ${nerClassification}`;
+    }
+    if (kind === "literal") {
+      return `LITERAL - ${nerClassification}`;
+    }
+    return "Wikidata";
+  };
+  const propertyListUrl = getWikidataPropertyListUrl(column?.kind, column?.nerClassification);
+  const propertyListLabel = getPropertyListLabel(column?.kind, column?.nerClassification);
+
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
       score: 1.00,
@@ -494,6 +526,13 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const handleClick = () => {
+    const url = hasColumnClassifier
+      ? propertyListUrl
+      : "https://www.wikidata.org/wiki/Special:ListProperties";
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       {
@@ -541,30 +580,26 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                     View list of {KG_INFO[currentService].groupName} properties
                   </Button>
                 ) : (
-                  // fallback when no service → Wikidata
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={() => {
-                      const url = "https://www.wikidata.org/wiki/Special:ListProperties";
-                      window.open(url, "_blank", "noopener,noreferrer");
-                    }}
-                    sx={{ textTransform: "none" }}
+                  <Tooltip
+                    title={hasColumnClassifier
+                      ? `List filtered using the Column Classifier schema annotation result: ${propertyListLabel}.` : ""}
+                    placement="right"
+                    arrow
                   >
-                    View list of {KG_INFO["wd"].groupName || "Wikidata"} properties
-                  </Button>
+                    <span>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleClick}
+                        sx={{ textTransform: "none" }}
+                      >
+                        View list of Wikidata properties
+                        {hasColumnClassifier ? ` (${propertyListLabel})` : "" }
+                      </Button>
+                    </span>
+                  </Tooltip>
                 )
               ) : null}
-              {showAdd && servicesByPrefix[currentService]?.listProps && (
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={handleListPropsInService}
-                  sx={{ textTransform: "none" }}
-                >
-                  View list of {"Wikidata" || KG_INFO[currentService].groupName} properties
-                </Button>
-              )}
             </Stack>
             {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
