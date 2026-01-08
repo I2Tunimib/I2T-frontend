@@ -55,6 +55,7 @@ const DialogInnerContent = () => {
   const selectedColumnsArray = useAppSelector(selectSelectedColumnIdsAsArray);
   const [joinColumns, setJoinColumns] = useState(false);
   const rows = useAppSelector((state: RootState) => state.table.entities.rows);
+  const currentColumnsCount = useAppSelector((state: RootState) => state.table.entities.columns.allIds.length);
 
   const sampledValues = React.useMemo(() => {
     if (!rows || selectedColumnsArray.length === 0) return [];
@@ -147,8 +148,11 @@ const DialogInnerContent = () => {
         const nRows = Object.keys(data.rows).length;
         infoText = `${nRows} ${nRows > 1 ? "rows" : "row"} added`;
       } else {
-        const nColumns = Object.keys(data.columns).length;
-        infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} added`;
+        const modifiedColumnIds = Object.keys(data.columns || {});
+        const nColumns = modifiedColumnIds.length;
+        const isUpdate = modifiedColumnIds.every((id) => selectedColumnsArray.includes(id));
+        const actionText = isUpdate ? "updated" : "added";
+        infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} ${actionText}`;
       }
       enqueueSnackbar(infoText, {
         autoHideDuration: 3000,

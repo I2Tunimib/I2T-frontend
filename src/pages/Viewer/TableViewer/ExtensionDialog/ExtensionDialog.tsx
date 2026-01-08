@@ -199,7 +199,10 @@ const DialogInnerContent = () => {
     const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
     return {
       ...currentService,
-      description: `${currentService.description || ""}<br><br><b>Input selected column(s):</b> ${colsText}`,
+      description: `${currentService.description || ""} ${currentService.name === "COFOG Classifier"
+        ? "<b>Input selected column(s):</b>"
+        : "<br/><br/><b>Input selected column(s):</b>"
+      } ${colsText}`,
     };
   }, [currentService, selectedColumnsArray]);
   return (
