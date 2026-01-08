@@ -755,7 +755,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             <IconButtonTooltip
               tooltipText="Help"
               onClick={() =>
-                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 13 }))
+                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 16 }))
               }
               Icon={HelpOutlineRoundedIcon}
             />

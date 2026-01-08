@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { InlineInput } from '@components/kit';
 import { Link, useHistory, useParams } from 'react-router-dom';
-import {
+import React, {
   ChangeEvent, FocusEvent,
   MouseEvent, useState,
   useEffect
@@ -18,7 +18,7 @@ import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   selectAutomaticAnnotationStatus,
-  selectCurrentTable,
+  selectCurrentTable, selectGraphTutorialDialogStatus,
   selectHelpDialogStatus,
   selectIsViewOnly,
   selectLastSaved,
@@ -35,10 +35,10 @@ import { selectAppConfig } from '@store/slices/config/config.selectors';
 //import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 //import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
-import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import { IconButtonTooltip } from '@components/core';
 import UserAvatar from '@components/kit/UserAvatar';
 import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
+import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
@@ -74,6 +74,7 @@ const Toolbar = () => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
   const openHelpDialog = useAppSelector(selectHelpDialogStatus);
+  const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
   const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectIsLoggedIn);
@@ -130,6 +131,9 @@ const Toolbar = () => {
   };
   const handleCloseHelp = () => {
     dispatch(updateUI({ openHelpDialog: false }));
+  };
+  const handleCloseGraphTutorial = () => {
+    dispatch(updateUI({ openGraphTutorialDialog: false }));
   };
 
   const handleSave = () => {
@@ -194,6 +198,7 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
+          {/*
           <>
             <Button
               onClick={() => dispatch(updateUI({ openExportDialog: true }))}
@@ -206,6 +211,7 @@ const Toolbar = () => {
             </Button>
             <ExportDialog />
           </>
+          */}
           <>
             <Button
               onClick={() => dispatch(updateUI({ openAutoAnnotationDialog: true }))}
@@ -264,6 +270,7 @@ const Toolbar = () => {
       </div>
       <SettingsDialog open={openSettingsDialog} onClose={handleCloseSettings} />
       <HelpDialog open={openHelpDialog} onClose={handleCloseHelp} />
+      <GraphTutorialDialog open={openGraphTutorialDialog} onClose={handleCloseGraphTutorial} />
     </>
   );
 };

@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { FC, useState, useEffect, useMemo } from "react";
+import React, { FC, useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -13,24 +13,20 @@ import {
   FormControlLabel,
   FormHelperText,
   InputLabel,
+  IconButton,
   MenuItem,
   Radio,
   RadioGroup,
   Select,
   SelectChangeEvent,
   Tooltip,
-  Typography,
+  Stack,
 } from "@mui/material";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
-import {
-  selectCurrentTable,
-  selectAutoAnnotationDialogStatus,
-  selectIsUnsaved,
-} from "@store/slices/table/table.selectors";
+import { selectAutoAnnotationDialogStatus } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { automaticAnnotation } from "@store/slices/table/table.thunk";
-import { useSnackbar } from "notistack";
 import { useParams } from "react-router-dom";
+import { HelpOutlineRounded } from "@mui/icons-material";
 
 interface AutoAnnotationDialogProps {}
 
@@ -43,10 +39,6 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
     datasetId: string;
     tableId: string;
   }>();
-  const { name: tableName } = useAppSelector(selectCurrentTable);
-  const { API } = useAppSelector(selectAppConfig);
-  const isUnsaved = useAppSelector(selectIsUnsaved);
-  const { enqueueSnackbar } = useSnackbar();
 
   const availableMethods = useMemo(() => {
     if (target === "fullTable") {
@@ -87,7 +79,24 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
 
   return (
     <Dialog open={isOpen} onClose={handleClose}>
-      <DialogTitle>Automatic Annotation</DialogTitle>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <DialogTitle>Automatic Annotation</DialogTitle>
+        <IconButton
+          sx={{
+            color: "rgba(0, 0, 0, 0.54)",
+            marginRight: "20px",
+          }}
+          onClick={() => {
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 4 }));
+          }}
+        >
+          <HelpOutlineRounded />
+        </IconButton>
+      </Stack>
       <DialogContent>
         <DialogContentText>Choose what to annotate automatically:</DialogContentText>
         <FormControl fullWidth sx={{ marginTop: "20px", marginBottom: "20px" }}>
