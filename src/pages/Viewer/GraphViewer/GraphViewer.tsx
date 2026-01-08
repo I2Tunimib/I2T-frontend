@@ -130,15 +130,28 @@ const GraphViewer: FC = () => {
       };
     });
 
-    let links = Object.values(schema).flatMap((th: any) =>
-      th.metadata?.flatMap((m: any) => (m.property ?? []).map((p: any) => ({
-        id: `${clean(th.label)}-${clean(p.obj)}`,
-        source: clean(th.label),
-        target: clean(p.obj),
-        label: p.name,
-        propID: p.id,
-        curvature: 0
-      }))) ?? []);
+    const nodeLabels = new Set(nodes.map((n) => n.label));
+
+    let links = Object.values(schema).flatMap((th: any) => {
+      return (th.metadata ?? []).flatMap((m: any) => {
+        return (m.property ?? []).map((p: any) => {
+          const sourceLabel = clean(th.label);
+          const targetLabel = clean(p.obj);
+
+          if (nodeLabels.has(sourceLabel) && nodeLabels.has(targetLabel)) {
+            return {
+              id: `${sourceLabel}-${targetLabel}`,
+              source: sourceLabel,
+              target: targetLabel,
+              label: p.name,
+              propID: p.id,
+              curvature: 0
+            };
+          }
+          return null;
+        });
+      });
+    }).filter((l): l is any => l !== null);
 
     links = links.map((link) => {
       const duplicates = links.filter((l) =>
@@ -184,8 +197,7 @@ const GraphViewer: FC = () => {
   const isNodeIsolated = (node: any) => {
     return !graphData.links.some((l) =>
       (typeof l.source === 'object' ? l.source.label : l.source) === node.label ||
-      (typeof l.target === 'object' ? l.target.label : l.target) === node.label
-    );
+      (typeof l.target === 'object' ? l.target.label : l.target) === node.label);
   };
 
   useEffect(() => {
@@ -195,7 +207,7 @@ const GraphViewer: FC = () => {
     graph.d3Force('charge')?.strength(-50);
     graph.d3Force('isolate', (alpha) => {
       graphData.nodes.forEach((node) => {
-        if (isNodeIsolated(node)) {
+        if (isNodeIsolated(node) && typeof node === 'object' && 'vx' in node) {
           node.vx *= 0.2;
           node.vy *= 0.2;
         }
@@ -572,7 +584,7 @@ const GraphViewer: FC = () => {
                               {r.role}: {r.count}
                               {r.role === 'unknown' && r.unknownNodes.length > 0 && (
                                 <>
-                                  {r.unknownNodes.join(', ')})
+                                  {" "}({r.unknownNodes.join(', ')})
                                 </>
                               )}
                             </li>
