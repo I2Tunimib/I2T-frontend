@@ -55,6 +55,7 @@ const DialogInnerContent = () => {
   const selectedColumnsArray = useAppSelector(selectSelectedColumnIdsAsArray);
   const [joinColumns, setJoinColumns] = useState(false);
   const rows = useAppSelector((state: RootState) => state.table.entities.rows);
+  const currentColumnsCount = useAppSelector((state: RootState) => state.table.entities.columns.allIds.length);
 
   const sampledValues = React.useMemo(() => {
     if (!rows || selectedColumnsArray.length === 0) return [];
@@ -142,8 +143,17 @@ const DialogInnerContent = () => {
       if (reset) reset();
       setCurrentService(undefined);
       dispatch(updateUI({ openModificationDialog: false }));
-      const nColumns = Object.keys(data.columns).length;
-      const infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} added`;
+      let infoText = "";
+      if (data.rows) {
+        const nRows = Object.keys(data.rows).length;
+        infoText = `${nRows} ${nRows > 1 ? "rows" : "row"} added`;
+      } else {
+        const modifiedColumnIds = Object.keys(data.columns || {});
+        const nColumns = modifiedColumnIds.length;
+        const isUpdate = modifiedColumnIds.every((id) => selectedColumnsArray.includes(id));
+        const actionText = isUpdate ? "updated" : "added";
+        infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} ${actionText}`;
+      }
       enqueueSnackbar(infoText, {
         autoHideDuration: 3000,
         anchorOrigin: { vertical: "bottom", horizontal: "center" },
@@ -246,7 +256,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 15 }));
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 6 }));
           }}
         >
           <HelpOutlineRounded />

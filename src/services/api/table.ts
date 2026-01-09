@@ -15,6 +15,14 @@ export interface GetTableResponse {
   columnOrder?: string[]; // Optional field for preserving column order
 }
 
+export interface GetSchemaResponse {
+  table: TableInstance;
+  result: {
+    ner_classification: string;
+    kind_classification: string;
+  };
+}
+
 export interface ChallengeTableDataset {
   name: string;
   tables: {

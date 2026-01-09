@@ -199,7 +199,10 @@ const DialogInnerContent = () => {
     const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
     return {
       ...currentService,
-      description: `${currentService.description || ""}<br><br><b>Input selected column(s):</b> ${colsText}`,
+      description: `${currentService.description || ""} ${currentService.name === "COFOG Classifier"
+        ? "<b>Input selected column(s):</b>"
+        : "<br/><br/><b>Input selected column(s):</b>"
+      } ${colsText}`,
     };
   }, [currentService, selectedColumnsArray]);
   return (
@@ -330,13 +333,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(
-              updateUI({
-                openHelpDialog: true,
-                helpStart: "tutorial",
-                tutorialStep: 15,
-              }),
-            );
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 18 }));
           }}
         >
           <HelpOutlineRounded />

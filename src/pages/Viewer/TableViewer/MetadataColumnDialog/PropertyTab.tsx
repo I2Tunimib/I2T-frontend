@@ -49,8 +49,8 @@ import { Controller, useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { SelectColumns } from "@components/core/DynamicForm/formComponents/Select";
-import { fetchTypeAndDescription } from "@services/utils/kg-info";
-import { Property } from "@store/slices/table"
+import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
+import { Property } from "@store/slices/table";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
@@ -231,6 +231,38 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
 
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
+
+  const hasColumnClassifier = !!column?.kind && !!column?.nerClassification;
+  const getWikidataPropertyListUrl = (kind?: string, nerClassification?: string) => {
+    if (kind === "entity") {
+      return "https://www.wikidata.org/wiki/Special:ListProperties/wikibase-item";
+    }
+    if (kind === "literal") {
+      switch (nerClassification) {
+        case "DATE":
+          return "https://www.wikidata.org/wiki/Special:ListProperties/time";
+        case "NUMBER":
+          return "https://www.wikidata.org/wiki/Special:ListProperties/quantity";
+        case "STRING":
+          return "https://www.wikidata.org/wiki/Special:ListProperties/string";
+        default :
+          return "https://www.wikidata.org/wiki/Special:ListProperties";
+      }
+    }
+    return "https://www.wikidata.org/wiki/Special:ListProperties";
+  };
+  const getPropertyListLabel = (kind?: string, nerClassification?: string) => {
+    if (kind === "entity") {
+      return `ENTITY - ${nerClassification}`;
+    }
+    if (kind === "literal") {
+      return `LITERAL - ${nerClassification}`;
+    }
+    return "Wikidata";
+  };
+  const propertyListUrl = getWikidataPropertyListUrl(column?.kind, column?.nerClassification);
+  const propertyListLabel = getPropertyListLabel(column?.kind, column?.nerClassification);
+
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
       score: 1.00,
@@ -476,6 +508,31 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     [lowerBound]
   );
 
+  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+    (acc, service) => {
+      acc[service.prefix] = service;
+      return acc;
+    },
+    {},
+  );
+
+  const handleListPropsInService = () => {
+    if (!currentService) return;
+
+    const serviceInfo = servicesByPrefix[currentService];
+    if (!serviceInfo?.listProps) return;
+
+    const url = serviceInfo.listProps;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleClick = () => {
+    const url = hasColumnClassifier
+      ? propertyListUrl
+      : "https://www.wikidata.org/wiki/Special:ListProperties";
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       {
@@ -488,46 +545,74 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
             padding="0px 16px"
             gap={1}
           >
-            <Tooltip open={showTooltip} title="Add property" placement="right">
-              <Button
-                variant="outlined"
-                color="primary"
-                onMouseLeave={handleTooltipClose}
-                onMouseEnter={handleTooltipOpen}
-                onClick={handleShowAdd}
-                sx={{
-                  textTransform: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1
-                }}
-              >
-                Add column property
-                <AddRoundedIcon
+            <Stack direction="row" gap={1} alignItems="center">
+              <Tooltip open={showTooltip} title="Add property" placement="right">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onMouseLeave={handleTooltipClose}
+                  onMouseEnter={handleTooltipOpen}
+                  onClick={handleShowAdd}
                   sx={{
-                    transition: "transform 150ms ease-out",
-                    transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1
                   }}
+                >
+                  Add column property
+                  <AddRoundedIcon
+                    sx={{
+                      transition: "transform 150ms ease-out",
+                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+              {showAdd ? (
+                !!currentService && servicesByPrefix[currentService]?.listProps ? (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleListPropsInService}
+                    sx={{ textTransform: "none" }}
+                  >
+                    View list of {KG_INFO[currentService].groupName} properties
+                  </Button>
+                ) : (
+                  <Tooltip
+                    title={hasColumnClassifier
+                      ? `List filtered using the Column Classifier schema annotation result: ${propertyListLabel}.` : ""}
+                    placement="right"
+                    arrow
+                  >
+                    <span>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleClick}
+                        sx={{ textTransform: "none" }}
+                      >
+                        View list of Wikidata properties
+                        {hasColumnClassifier ? ` (${propertyListLabel})` : "" }
+                      </Button>
+                    </span>
+                  </Tooltip>
+                )
+              ) : null}
+            </Stack>
+            {showAdd && (
+              <Box sx={{ width: "100%", paddingTop: "8px" }}>
+                <AddMetadataForm
+                  currentService={currentService}
+                  onSubmit={onSubmitNewMetadata}
+                  otherColumns={otherColumns || []}
+                  context="propertyTab"
                 />
-              </Button>
-            </Tooltip>
-            <Box
-              sx={{
-                width: "100%",
-                paddingTop: "5px",
-                display: showAdd ? "block" : "none",
-              }}
-            >
-              <AddMetadataForm
-                currentService={currentService}
-                onSubmit={onSubmitNewMetadata}
-                otherColumns={otherColumns || []}
-                context="propertyTab"
-              />
-            </Box>
+              </Box>
+            )}
           </Stack>
-        )
-      }
+      )}
       <DeferredTable
         flexGrow={1}
         stickyHeaderTop="61.5px"

@@ -1,6 +1,6 @@
 //import { useAppSelector } from "@hooks/store";
 import { current, PayloadAction } from "@reduxjs/toolkit";
-import tableAPI, { GetTableResponse } from "@services/api/table";
+import tableAPI, { GetTableResponse, GetSchemaResponse } from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
 import { buildURI } from "@services/utils/uri-utils";
@@ -36,6 +36,7 @@ import {
   //FileFormat,
   PasteCellPayload,
   ReconciliationFulfilledPayload,
+  ModifyFulfilledPayload,
   RefineMatchingPayload,
   //RowState,
   TableInstance,
@@ -140,8 +141,11 @@ const initialState: TableState = {
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
     openExportDialog: false,
+    openAutoAnnotationDialog: false,
     openHelpDialog: false,
+    openGraphTutorialDialog: false,
     helpStart: false,
+    graphTutorialStart: false,
     settingsDialog: false,
     settings: {
       isViewOnly: false,
@@ -244,6 +248,69 @@ export const tableSlice = createSliceWithRequests({
           allIds: Object.keys(rows),
         },
       };
+    },
+    updateSchema: (state, action: PayloadAction<Payload<GetSchemaResponse>>) => {
+      const { table, result } = action.payload;
+      let tableInstance = {} as TableInstance;
+      tableInstance = { ...table };
+
+      console.log("[updateSchema] called", {
+        tableId: table.id,
+        currentTableId: tableInstance?.id,
+      });
+
+      if (!tableInstance || tableInstance.id.toString() !== table.id.toString()) {
+        console.log("[updateSchema] skipping: tableInstance missing or id mismatch");
+        return;
+      }
+
+      state.entities.tableInstance = {
+        ...tableInstance,
+        ...table,
+      };
+
+      const updatedColumns = {};
+      const columnIdMap = {};
+
+      Object.keys(state.entities.columns.byId).forEach((oldId) => {
+        const cleanId = oldId.replace(/^\uFEFF/, "").trim();
+        const col = state.entities.columns.byId[oldId];
+
+        if (!col) return;
+
+        columnIdMap[oldId] = cleanId;
+
+        updatedColumns[cleanId] = {
+          ...col,
+          id: cleanId,
+          label: col.label?.replace(/^\uFEFF/, "").trim() ?? cleanId,
+          kind: result.kind_classification[cleanId] ?? col.kind ?? "unknown",
+          nerClassification: result.ner_classification[cleanId] ?? col.nerClassification ?? "unknown",
+        };
+      });
+
+      state.entities.columns.byId = updatedColumns;
+      state.entities.columns.allIds = Object.keys(updatedColumns);
+
+      const updatedRows = {};
+
+      Object.entries(state.entities.rows.byId).forEach(([rowId, row]) => {
+        const newCells = {};
+
+        Object.entries(row.cells).forEach(([oldColId, cell]) => {
+          const cleanColId = columnIdMap[oldColId] ?? oldColId;
+          newCells[cleanColId] = cell;
+        });
+
+        updatedRows[rowId] = {
+          ...row,
+          cells: newCells,
+        };
+      });
+
+      state.entities.rows.byId = updatedRows;
+
+      console.log("[updateSchema] schema applied correctly");
     },
     /**
      *  Set selected cell as expanded.
@@ -1645,6 +1712,12 @@ export const tableSlice = createSliceWithRequests({
     ) => {
       state.ui.helpStart = action.payload;
     },
+    setGraphTutorialStart: (
+      state,
+      action: PayloadAction<boolean | "tutorial">,
+    ) => {
+      state.ui.graphTutorialStart = action.payload;
+    },
     /**
      * Merges parameters of the UI to the current state.
      */
@@ -2078,8 +2151,14 @@ export const tableSlice = createSliceWithRequests({
       .addCase(
         automaticAnnotation.fulfilled,
         (state, action: PayloadAction<Payload<AutomaticAnnotationPayload>>) => {
-          const { datasetId, tableId, mantisStatus } = action.payload;
-          state.entities.tableInstance.mantisStatus = mantisStatus;
+          const { datasetId, tableId, mantisStatus, schemaStatus } = action.payload;
+          console.log("[automaticAnnotation.fulfilled]", action.payload);
+          if (mantisStatus) {
+            state.entities.tableInstance.mantisStatus = mantisStatus;
+          }
+          if (schemaStatus) {
+            state.entities.tableInstance.schemaStatus = schemaStatus;
+          }
           state.ui.settings.isViewOnly = true;
         },
       )
@@ -2232,7 +2311,7 @@ export const tableSlice = createSliceWithRequests({
       )
       .addCase(
         modify.fulfilled,
-        (state, action: PayloadAction<Payload<ExtendThunkResponseProps>>) => {
+        (state, action: PayloadAction<Payload<ModifyFulfilledPayload>>) => {
           const {
             data,
             modifier,
@@ -2240,92 +2319,143 @@ export const tableSlice = createSliceWithRequests({
             undoable = true,
           } = action.payload;
 
-          const { columns, meta, originalColMeta } = data;
-          const newColumnsIds = Object.keys(columns);
-          return produceWithPatch(
-            state,
-            undoable,
-            (draft) => {
-              // Find the index of the selected column that was modified
-              const selectedColumnIndex =
-                draft.entities.columns.allIds.findIndex(
-                  (colId) => colId === selectedColumnId,
-                );
+          if (data.rows) {
+            return produceWithPatch(
+              state,
+              undoable,
+              (draft) => {
+                const allColumnIds = draft.entities.columns.allIds;
 
-              newColumnsIds.forEach((newColId, newColIndex) => {
-                const {
-                  metadata: columnMetadata,
-                  cells,
-                  label,
-                  ...rest
-                } = columns[newColId];
+                draft.entities.rows.allIds = [];
+                draft.entities.rows.byId = {};
 
-                // add new column
-                draft.entities.columns.byId[newColId] = {
-                  id: newColId,
-                  label,
-                  metadata: getColumnMetadata(columnMetadata),
-                  status: ColumnStatus.EMPTY,
-                  context: {},
-                  ...getColumnAnnotationMeta(columnMetadata),
-                  ...rest,
-                };
+                Object.entries(data.rows).forEach(([rowId, rowData]) => {
+                  draft.entities.rows.allIds.push(rowId);
+                  draft.entities.rows.byId[rowId] = {
+                    id: rowId,
+                    cells: {},
+                  };
 
-                // add rows
-
-                draft.entities.rows.allIds.forEach((rowId) => {
-                  const newCell = createCell(rowId, newColId, cells[rowId]);
-                  if (newCell.metadata.length === 0) {
-                    newCell.annotationMeta = {
-                      annotated: false,
-                      match: {
-                        value: false,
-                      },
+                  allColumnIds.forEach((colId) => {
+                    const cellData = rowData.cells[colId] ?? {
+                      label: "",
+                      metadata: [],
                     };
-                  }
-                  draft.entities.rows.byId[rowId].cells[newColId] = newCell;
-                  if (newCell.metadata.length > 0) {
-                    updateContext(draft, newCell);
+
+                    draft.entities.rows.byId[rowId].cells[colId] = createCell(
+                      rowId,
+                      colId,
+                      cellData
+                    );
+                  });
+                });
+              },
+              (draft) => {
+                if (selectedColumnId && draft.entities.columns.byId[selectedColumnId]) {
+                  draft.ui.selectedColumnsIds = { [selectedColumnId]: true };
+                  draft.ui.selectedColumnCellsIds = {};
+                  draft.ui.selectedCellIds = {};
+
+                  draft.entities.rows.allIds.forEach((rowId) => {
+                    const cell = draft.entities.rows.byId[rowId]?.cells[selectedColumnId];
+                    if (cell) {
+                      draft.ui.selectedCellIds[cell.id] = true;
+                      draft.ui.selectedColumnCellsIds[cell.id] = true;
+                    }
+                  });
+                }
+                draft.entities.tableInstance.lastModifiedDate =
+                  new Date().toISOString();
+              }
+            );
+          } else {
+            const { columns, meta, originalColMeta } = data;
+            const newColumnsIds = Object.keys(columns);
+            return produceWithPatch(
+              state,
+              undoable,
+              (draft) => {
+                // Find the index of the selected column that was modified
+                const selectedColumnIndex =
+                  draft.entities.columns.allIds.findIndex(
+                    (colId) => colId === selectedColumnId,
+                  );
+
+                newColumnsIds.forEach((newColId, newColIndex) => {
+                  const {
+                    metadata: columnMetadata,
+                    cells,
+                    label,
+                    ...rest
+                  } = columns[newColId];
+
+                  // add new column
+                  draft.entities.columns.byId[newColId] = {
+                    id: newColId,
+                    label,
+                    metadata: getColumnMetadata(columnMetadata),
+                    status: ColumnStatus.EMPTY,
+                    context: {},
+                    ...getColumnAnnotationMeta(columnMetadata),
+                    ...rest,
+                  };
+
+                  // add rows
+
+                  draft.entities.rows.allIds.forEach((rowId) => {
+                    const newCell = createCell(rowId, newColId, cells[rowId]);
+                    if (newCell.metadata.length === 0) {
+                      newCell.annotationMeta = {
+                        annotated: false,
+                        match: {
+                          value: false,
+                        },
+                      };
+                    }
+                    draft.entities.rows.byId[rowId].cells[newColId] = newCell;
+                    if (newCell.metadata.length > 0) {
+                      updateContext(draft, newCell);
+                    }
+                  });
+
+                  draft.entities.columns.byId[newColId].status = getColumnStatus(
+                    draft,
+                    newColId,
+                  );
+
+                  // Insert the new column right after the selected column
+                  if (!draft.entities.columns.allIds.includes(newColId)) {
+                    draft.entities.columns.allIds.push(newColId);
                   }
                 });
-
-                draft.entities.columns.byId[newColId].status = getColumnStatus(
-                  draft,
-                  newColId,
-                );
-
-                // Insert the new column right after the selected column
-                if (!draft.entities.columns.allIds.includes(newColId)) {
-                  draft.entities.columns.allIds.push(newColId);
-                }
-              });
-              updateNumberOfReconciliatedCells(draft);
-              //add additional meta if needed (up to now only properties)
-              if (originalColMeta && originalColMeta.originalColName) {
-                if (
-                  draft.entities.columns.byId[originalColMeta.originalColName]
-                    .metadata[0].property
-                ) {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = [
-                    ...draft.entities.columns.byId[
+                updateNumberOfReconciliatedCells(draft);
+                //add additional meta if needed (up to now only properties)
+                if (originalColMeta && originalColMeta.originalColName) {
+                  if (
+                    draft.entities.columns.byId[originalColMeta.originalColName]
+                      .metadata[0].property
+                  ) {
+                    draft.entities.columns.byId[
                       originalColMeta.originalColName
-                    ].metadata[0].property,
-                    ...originalColMeta.properties,
-                  ];
-                } else {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = originalColMeta.properties;
+                      ].metadata[0].property = [
+                      ...draft.entities.columns.byId[
+                        originalColMeta.originalColName
+                        ].metadata[0].property,
+                      ...originalColMeta.properties,
+                    ];
+                  } else {
+                    draft.entities.columns.byId[
+                      originalColMeta.originalColName
+                      ].metadata[0].property = originalColMeta.properties;
+                  }
                 }
-              }
-            },
-            (draft) => {
-              draft.entities.tableInstance.lastModifiedDate =
-                new Date().toISOString();
-            },
-          );
+              },
+              (draft) => {
+                draft.entities.tableInstance.lastModifiedDate =
+                  new Date().toISOString();
+              },
+            );
+          }
         },
       ),
 });
@@ -2360,6 +2490,7 @@ export const {
   updateColumnTypeMatches,
   addColumnType,
   setHelpStart,
+  setGraphTutorialStart,
   updateUI,
   addTutorialBox,
   deleteColumn,
@@ -2371,6 +2502,7 @@ export const {
   undo,
   redo,
   updateColumnVisibility,
+  updateSchema,
 } = tableSlice.actions;
 
 export default tableSlice.reducer;

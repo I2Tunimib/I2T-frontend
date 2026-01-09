@@ -1,0 +1,9 @@
+.Subject, .Entity, .Literal {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.Subject { background-color: #2ecc71; }
+.Entity { background-color: #3498db; }
+.Literal { background-color: #e67e22; }

@@ -25,6 +25,7 @@
     "react-animate-height": "^2.0.23",
     "react-dom": "^18.2.0",
     "react-draggable": "^4.4.4",
+    "react-force-graph-2d": "^1.29.0",
     "react-google-recaptcha": "^3.1.0",
     "react-hook-form": "^7.15.0",
     "react-hotkeys": "^2.0.0",

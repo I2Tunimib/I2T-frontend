@@ -85,9 +85,11 @@ const TableViewer = () => {
   );
 
   useEffect(() => {
-    if (currentTable && currentTable.mantisStatus === 'PENDING') {
+    if (!currentTable) return;
+
+    if (currentTable.mantisStatus === 'PENDING' || currentTable.schemaStatus === 'PENDING') {
       dispatch(updateUI({ settings: {
-        ...settings.lowerBound,
+        ...settings,
         isViewOnly: true
       } }));
     }

@@ -332,6 +332,11 @@ export const selectHelpDialogStatus = createSelector(
   (ui) => ui.openHelpDialog,
 );
 
+export const selectGraphTutorialDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openGraphTutorialDialog,
+);
+
 /**
  * Get tutorial step.
  */
@@ -390,6 +395,10 @@ export const selectMetadataColumnDialogStatus = createSelector(
 export const selectExportDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openExportDialog,
+);
+export const selectAutoAnnotationDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openAutoAnnotationDialog,
 );
 
 export const selectSearchStatus = createSelector(
@@ -597,10 +606,14 @@ export const selectReconciliationCells = createSelector(
     if (colCellsIds.length > 0 || colIds.length > 0) {
       const uniqueColIds = [...new Set(colCellsIds.concat(colIds))];
       ids = ids.concat(
-        uniqueColIds.map((colId) => ({
-          id: colId,
-          label: cols.byId[colId].label,
-        })),
+        uniqueColIds.map((colId) => {
+          const col = cols.byId[colId];
+          if (!col) return null;
+          return {
+            id: colId,
+            label: col.label,
+          };
+        }),
       );
     }
     return ids.concat(

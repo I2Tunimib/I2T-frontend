@@ -18,7 +18,7 @@ import {
   Select,
   SelectChangeEvent,
   Tooltip,
-  Typography,
+  Typography, IconButton, Stack,
 } from "@mui/material";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
@@ -32,6 +32,7 @@ import fileDownload from "js-file-download";
 import { useSnackbar } from "notistack";
 import { FC, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { HelpOutlineRounded } from "@mui/icons-material";
 
 interface ExportDialogProps {}
 
@@ -218,7 +219,24 @@ const ExportDialog: FC<ExportDialogProps> = () => {
 
   return (
     <Dialog open={isOpen} onClose={handleClose}>
-      <DialogTitle>Export</DialogTitle>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <DialogTitle>Export</DialogTitle>
+        <IconButton
+          sx={{
+            color: "rgba(0, 0, 0, 0.54)",
+            marginRight: "20px",
+          }}
+          onClick={() => {
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 5 }));
+          }}
+        >
+          <HelpOutlineRounded />
+        </IconButton>
+      </Stack>
       <DialogContent>
         <DialogContentText>Choose what to export:</DialogContentText>
         <FormControl fullWidth sx={{ marginTop: "20px", marginBottom: "20px" }}>
@@ -444,7 +462,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button color="primary" onClick={handleConfirm}>
+        <Button color="primary" disabled={!type || !format} onClick={handleConfirm}>
           Confirm
         </Button>
       </DialogActions>

@@ -4,7 +4,7 @@ import {
 } from '@mui/material';
 import { InlineInput } from '@components/kit';
 import { Link, useHistory, useParams } from 'react-router-dom';
-import {
+import React, {
   ChangeEvent, FocusEvent,
   MouseEvent, useState,
   useEffect
@@ -18,7 +18,7 @@ import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   selectAutomaticAnnotationStatus,
-  selectCurrentTable,
+  selectCurrentTable, selectGraphTutorialDialogStatus,
   selectHelpDialogStatus,
   selectIsViewOnly,
   selectLastSaved,
@@ -35,13 +35,14 @@ import { selectAppConfig } from '@store/slices/config/config.selectors';
 //import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 //import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
-import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import { IconButtonTooltip } from '@components/core';
 import UserAvatar from '@components/kit/UserAvatar';
 import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
+import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
+import AutoAnnotationDialog from '../TableViewer/AutoAnnotationDialog';
 import SettingsDialog from '../SettingsDialog/SettingsDialog';
 import HelpDialog from '../HelpDialog/HelpDialog';
 
@@ -73,6 +74,7 @@ const Toolbar = () => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
   const openHelpDialog = useAppSelector(selectHelpDialogStatus);
+  const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
   const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectIsLoggedIn);
@@ -129,6 +131,9 @@ const Toolbar = () => {
   };
   const handleCloseHelp = () => {
     dispatch(updateUI({ openHelpDialog: false }));
+  };
+  const handleCloseGraphTutorial = () => {
+    dispatch(updateUI({ openGraphTutorialDialog: false }));
   };
 
   const handleSave = () => {
@@ -188,11 +193,12 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="graph" aria-label="right aligned">
-              <Tooltip title="Graph view (coming soon)">
+              <Tooltip title="Graph view">
                 <BubbleChartRoundedIcon fontSize="small" />
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
+          {/*
           <>
             <Button
               onClick={() => dispatch(updateUI({ openExportDialog: true }))}
@@ -205,14 +211,19 @@ const Toolbar = () => {
             </Button>
             <ExportDialog />
           </>
-          <Button
-            color="primary"
-            disabled={loadingAutomaticAnnotation || (currentTable && currentTable.mantisStatus === 'PENDING')}
-            onClick={handleAutomaticAnnotation}
-            startIcon={<PlayCircleOutlineRoundedIcon />}
-            variant="contained">
-            Automatic annotation
-          </Button>
+          */}
+          <>
+            <Button
+              onClick={() => dispatch(updateUI({ openAutoAnnotationDialog: true }))}
+              variant="contained"
+              size="medium"
+              disabled={loadingAutomaticAnnotation || (currentTable && (currentTable.mantisStatus === 'PENDING' || currentTable.schemaStatus === 'PENDING'))}
+              startIcon={<PlayCircleOutlineRoundedIcon />}
+            >
+              Automatic annotation
+            </Button>
+            <AutoAnnotationDialog />
+          </>
           {API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0 && (
             <>
               <Button
@@ -259,6 +270,7 @@ const Toolbar = () => {
       </div>
       <SettingsDialog open={openSettingsDialog} onClose={handleCloseSettings} />
       <HelpDialog open={openHelpDialog} onClose={handleCloseHelp} />
+      <GraphTutorialDialog open={openGraphTutorialDialog} onClose={handleCloseGraphTutorial} />
     </>
   );
 };

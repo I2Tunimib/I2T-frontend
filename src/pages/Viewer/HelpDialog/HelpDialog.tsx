@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { KeyboardArrowLeft, KeyboardArrowRight } from "@mui/icons-material";
+import { KeyboardArrowLeft, KeyboardArrowRight, ExpandMore, ExpandLess } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -10,8 +10,10 @@ import {
   DialogTitle,
   Stack,
   Typography,
+  Collapse,
+  Link,
 } from "@mui/material";
-import { setHelpStart } from "@store/slices/table/table.slice";
+import { setHelpStart, updateUI } from "@store/slices/table/table.slice";
 import { selectTutorialStep, selectDiscoverRecStep, selectDiscoverExtStep } from "@store/slices/table/table.selectors";
 import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import PlaylistAddCheckRoundedIcon from "@mui/icons-material/PlaylistAddCheckRounded";
@@ -23,13 +25,15 @@ import {
   useState,
   useRef,
   useCallback,
-  FunctionComponent,
   ReactNode,
   useEffect,
 } from "react";
 import { StatusBadge } from "@components/core";
 import DiscoverRecStepper from "./DiscoverRecStepper";
 import DiscoverExtStepper from "./DiscoverExtStepper";
+import tableView from "../../../assets/table-view.png";
+import rawView from "../../../assets/raw-view.png";
+import graphView from "../../../assets/graph-view.png";
 import manualAnnotation from "../../../assets/manual-reconciliation.gif";
 import automaticAnnotation from "../../../assets/automatic-annotation.gif";
 import refineMatchingManual from "../../../assets/refine-matching-manual.gif";
@@ -47,6 +51,14 @@ const List = styled.ul({
   flexDirection: "column",
   gap: "10px",
   listStyle: "disc",
+});
+
+const SubList = styled.ul({
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px",
+  listStyle: "circle",
+  marginTop: "6px",
 });
 
 const Img = styled.img({
@@ -76,6 +88,21 @@ const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
   },
 }));
 
+const ListItemButton = styled(Button, { shouldForwardProp: (prop) =>
+    prop !== 'active' })(({ active }: { active?: boolean }) => ({
+  textTransform: "none",
+  fontWeight: active ? "bold" : "normal",
+  backgroundColor: active ? "rgba(0, 0, 0, 0.04)" : "transparent",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
+  marginTop: "8px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%"
+}));
+
 const IndexContainer = styled(Box)({
   padding: "16px",
   borderRight: "1px solid rgba(0, 0, 0, 0.12)",
@@ -93,7 +120,7 @@ const ContentContainer = styled(Box)({
 
 type Step = {
   label: string;
-  Description: FunctionComponent<{ goTo: (step: number) => void }>;
+  Description: (props: { goTo: (step: number) => void }) => ReactNode;
 };
 
 const steps: Step[] = [
@@ -107,14 +134,15 @@ const steps: Step[] = [
     label: "Introduction",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           SemTUI is a framework that makes tabular data more informative by
           integrating it with external knowledge sources. It provides an
           intuitive interface to explore tables, manage annotations, and
           enrich data with additional context.
           <br />
           <br />
-          In this tutorial, you will learn how to use the
+          In this tutorial, you will get an overview of the main components
+          and features of SemTUI, including the
           <b> Table Viewer and its main features</b>
           , as well as how the
           <b> enrichment process </b>
@@ -124,10 +152,10 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "Table Viewer: Global Actions",
+    label: "Global Actions",
     Description: () => (
-      <Stack>
-        <Typography>
+      <Stack gap="10px">
+        <Typography component="div">
           It is the main component of SemTUI. It allows users to efficiently
           visualize a table and perform various kinds of action on it.
           <Box display="flex" justifyContent="center" my={1}>
@@ -140,7 +168,7 @@ const steps: Step[] = [
           <List>
             <li>
               <b>Switch </b>
-              between different table views: tabular, raw JSON and graph, still under development.
+              between different table views: tabular, raw JSON and graph.
             </li>
             <li>
               Run an
@@ -171,10 +199,151 @@ const steps: Step[] = [
     ),
   },
   {
+    label: "Visualization",
+    Description: ({ goTo }) => {
+      const dispatch = useAppDispatch();
+
+      return (
+        <Stack gap="10px">
+          <Typography component="div">
+            SemTUI allows users to visualize tabular data in different formats, depending on the task and level of
+            detail
+            required.
+            The available visualization modes are:
+            <List>
+              <li>
+                <b>Table view</b>
+                <br />
+                It is the default visualization mode, which displays data in a structured tabular format.
+                This view enables users to interact with cells, rows, and columns, apply filters, manage annotations,
+                and perform enrichment operations.
+                <Box display="flex" justifyContent="center" my={1}>
+                  <Img src={tableView} style={{ width: "90%" }} />
+                </Box>
+                For a detailed explanation of table-based interactions, refer to Section
+                <Link
+                  component="span"
+                  underline="hover"
+                  role="button"
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => goTo(6)}
+                >
+                  <b> 3. Table Viewer </b>
+                </Link>
+                {" "}of this tutorial.
+              </li>
+              <li>
+                <b>Raw view</b>
+                <br />
+                It shows the underlying JSON representation of the table.
+                The JSON includes both column definitions and row data:
+                <SubList>
+                  <li>
+                    <b>Columns: </b>
+                    Each column (th0, th1, ...) contains metadata, labels, and other contextual information.
+                  </li>
+                  <li>
+                    <b>Rows: </b>
+                    Each row object uses column names as keys, with values representing the cell content,
+                    associated labels, metadata, and contextual information.
+                  </li>
+                </SubList>
+                They can be expanded or collapsed to inspect their structure, making this view particularly useful
+                for debugging, inspection, or advanced users interested in the raw table model.
+                <Box display="flex" justifyContent="center" my={1}>
+                  <Img src={rawView} style={{ width: "90%" }} />
+                </Box>
+              </li>
+              <li>
+                <b>Graph view</b>
+                <br />
+                It represents the table as an interactive graph, where nodes correspond to columns and links represent
+                semantic relationships between them.
+                This visualization helps users explore the structure of the dataset and understand how different
+                columns are connected.
+                <Box display="flex" justifyContent="center" my={1}>
+                  <Img src={graphView} style={{ width: "90%" }} />
+                </Box>
+                For a detailed explanation of graph-based interactions and features, refer to {" "}
+                <Link
+                  component="span"
+                  underline="hover"
+                  role="button"
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => {
+                    dispatch(updateUI({
+                      openHelpDialog: false,
+                      openGraphTutorialDialog: true,
+                      tutorialStep: 1,
+                    }));
+                  }}
+                >
+                  <b>Graph Visualization Tutorial</b>
+                </Link>
+              </li>
+            </List>
+          </Typography>
+        </Stack>
+      );
+    },
+  },
+  {
+    label: "Automatic Annotation",
+    Description: () => (
+      <Stack gap="10px">
+        <Typography component="div">
+          It allows users to annotate tables automatically using semantic services.
+          The automatic annotation can be applied to:
+          <List>
+            <li>
+              <b>Full table: </b>
+              Annotates the entire table using a specific service, such as <i>Semantic Table Annotation (Alligator)</i>,
+              which is currently the only available method.
+            </li>
+            <li>
+              <b>Schema: </b>
+              Annotates only the columns of the table using a specific service (e.g., <i> Column Classifier</i>).
+            </li>
+          </List>
+          These annotations can be a long-running and asynchronous, allowing users to continue working on other tables.
+          Once the process is complete, a notification will appear in the bottom-left corner.
+          The annotated cells or columns will be automatically updated: for full table annotation with the predicted
+          entities and metadata; for schema annotation with NER and kind classifications.
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
+    label: "Export",
+    Description: () => (
+      <Stack gap="10px">
+        <Typography component="div">
+          Users can export tables or pipelines in different formats depending on their needs.
+          The export options include:
+          <List>
+            <li>
+              <b>Table: </b>
+              Exports the table in standard formats, such as <i>CSV</i>, <i>JSON (W3C Compliant)</i>, or <i>RDF</i>.
+              <br />
+              CSV allows customization of delimiter, quote character, decimal separator, and inclusion of header.
+              RDF allows setting serialization format, @base URI, filtering threshold, and match value.
+            </li>
+            <li>
+              <b>Pipeline: </b>
+              Generates a Python or Jupyter Notebook pipeline representing the current table workflow.
+              Pipelines require that all changes are saved before export.
+            </li>
+          </List>
+          Once the export parameters are selected and confirmed, the file will be automatically downloaded.
+        </Typography>
+      </Stack>
+    ),
+  },
+  {
     label: "Contextual Actions",
     Description: () => (
-      <Stack>
-        <Typography>
+      <Stack gap="10px">
+        <Typography component="div">
           They are part of the SubToolbar and are enabled when one or
           more table elements (cells, columns, or rows) are selected. They apply only
           to what is selected and may require specific conditions.
@@ -221,7 +390,7 @@ const steps: Step[] = [
     label: "Search and Navigation",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           A search and filtering feature is available at the top-right corner.
           <br />
           It enables row filtering based on cell
@@ -245,7 +414,7 @@ const steps: Step[] = [
     label: "Filtering and Column Visibility",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           Filtering options allow users to focus on specific subsets of data based on their match status
           using the
           <FilterAltOutlinedIcon
@@ -255,6 +424,7 @@ const steps: Step[] = [
             }}
           />
           icon:
+          <br />
         </Typography>
         <Stack gap="10px">
           <Stack direction="row">
@@ -265,7 +435,7 @@ const steps: Step[] = [
               }}
               status="match-reconciliator"
             />
-            <Typography>
+            <Typography component="div">
               <b>Matches: </b>
               cells that have been successfully reconciled.
             </Typography>
@@ -278,7 +448,7 @@ const steps: Step[] = [
               }}
               status="warn"
             />
-            <Typography>
+            <Typography component="div">
               <b>Ambiguous: </b>
               cells with multiple possible reconciliation candidates,
               none of which has a perfect score, so the correct reconciliation is unclear.
@@ -292,13 +462,13 @@ const steps: Step[] = [
               }}
               status="miss"
             />
-            <Typography>
+            <Typography component="div">
               <b>Miss matches: </b>
               cells that could not be reconciled or have no match.
             </Typography>
           </Stack>
         </Stack>
-        <Typography>
+        <Typography component="div">
           <br />
           Users can also toggle the visibility of columns via a dynamic list, which
           automatically updates when columns are added or removed, using the
@@ -317,93 +487,94 @@ const steps: Step[] = [
     label: "Column Header Actions",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           Each column header provides actions to manage the column efficiently:
-        </Typography>
-        <List>
-          <li>
-            <b>Pin/unpin column: </b>
-            keep a column fixed on the left while scrolling.
-          </li>
-          <li>
-            <b>Manage metadata: </b>
-            view or edit metadata of the column.
-          </li>
-          <li>
-            <b>Drag & drop: </b>
-            reorder columns freely by dragging their headers.
-          </li>
-          <li>
-            <b>Resize column: </b>
-            drag the edge manually to adjust width. The reset button
-            <RestartAltRoundedIcon
-              sx={{
-                margin: "0px 3px",
-                verticalAlign: "middle",
-              }}
-            />
-            appears in the Subtoolbar only after resizing to restore default widths.
-          </li>
-          <li>
-            <b>Sort alphabetically: </b>
-            arrange cell values in ascending or descending order.
-          </li>
-          <li>
-            <b>Sort by match score: </b>
-            cells with fully reconciled entities appear first, followed by ambiguous or unmatched cells.
-          </li>
-        </List>
-        <Typography>
+          <List>
+            <li>
+              <b>Pin/unpin column: </b>
+              keep a column fixed on the left while scrolling.
+            </li>
+            <li>
+              <b>Manage metadata: </b>
+              view or edit metadata of the column.
+            </li>
+            <li>
+              <b>Drag & drop: </b>
+              reorder columns freely by dragging their headers.
+            </li>
+            <li>
+              <b>Resize column: </b>
+              drag the edge manually to adjust width. The reset button
+              <RestartAltRoundedIcon
+                sx={{
+                  margin: "0px 3px",
+                  verticalAlign: "middle",
+                }}
+              />
+              appears in the Subtoolbar only after resizing to restore default widths.
+            </li>
+            <li>
+              <b>Sort alphabetically: </b>
+              arrange cell values in ascending or descending order.
+            </li>
+            <li>
+              <b>Sort by match score: </b>
+              cells with fully reconciled entities appear first, followed by ambiguous or unmatched cells.
+            </li>
+          </List>
           Column headers also indicate the
           <b> type </b>
           of data contained, such as Named Entity tag for a reconciled
           entity, and the
           <b> Reconciliation service </b>
           status showing whether the cell was fully, partially, or not reconciled.
+          <Box display="flex" justifyContent="center" my={1}>
+            <Img src={columnHeader} style={{ width: "30%" }} />
+          </Box>
         </Typography>
-        <Box display="flex" justifyContent="center" my={1}>
-          <Img src={columnHeader} style={{ width: "30%" }} />
-        </Box>
       </Stack>
     ),
   },
   {
     label: "Enrichment process",
     Description: () => (
-      <Stack>
-        The enrichment process involves linking entities in the original data to external datasets (e.g., Wikidata, DBpedia) and consists of two main steps:
-        <List>
-          <li>
-            <b>Reconciliation: </b>
-            Matching entities in the original data with entities in a target dataset.
-          </li>
-          <li>
-            <b>Extension: </b>
-            Retrieving additional information from the target dataset using the reconciled entities.
-          </li>
-        </List>
-        SemTUI supports both steps by providing integrated access to reconciliation and extension services.
+      <Stack gap="10px">
+        <Typography component="div">
+          The enrichment process involves linking entities in the original data to external datasets (e.g., Wikidata, DBpedia) and consists of two main steps:
+          <List>
+            <li>
+              <b>Reconciliation: </b>
+              Matching entities in the original data with entities in a target dataset.
+            </li>
+            <li>
+              <b>Extension: </b>
+              Retrieving additional information from the target dataset using the reconciled entities.
+            </li>
+          </List>
+          SemTUI supports both steps by providing integrated access to reconciliation and extension services.
+        </Typography>
       </Stack>
     ),
   },
   {
-    label: "Reconciliation",
+    label: "Introduction",
     Description: () => (
-      <Stack>
-        SemTUI provides access to manual and automatic entity reconciliation
-        services:
-        <List>
-          <li>
-            <b>Manual reconciliation: </b>
-            A column or a cell can be reconciled by activating one of the
-            reconciliation services available for the selected dataset or knowledge graph.
-          </li>
-          <li>
-            <b>Automatic reconciliation: </b>
-            A Semantic Table Interpretation (STI) service can be activated to automatically
-            reconcile cells and annotate headers with predicates and types from Wikidata.
-          </li>
-        </List>
+      <Stack gap="10px">
+        <Typography component="div">
+          SemTUI provides access to manual and automatic entity reconciliation services:
+          <List>
+            <li>
+              <b>Manual reconciliation: </b>
+              A column or a cell can be reconciled by activating one of the
+              reconciliation services available for the selected dataset or knowledge graph.
+            </li>
+            <li>
+              <b>Automatic reconciliation: </b>
+              A Semantic Table Interpretation (STI) service can be activated to automatically
+              reconcile cells and annotate headers with predicates and types from Wikidata.
+            </li>
+          </List>
+        </Typography>
       </Stack>
     ),
   },
@@ -411,7 +582,7 @@ const steps: Step[] = [
     label: "Manual annotation",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           Select a column or some cells to reconcile and click on the
           <ButtonText> Reconcile </ButtonText>
           button in the application toolbar.
@@ -426,7 +597,7 @@ const steps: Step[] = [
     label: "Automatic annotation",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           Activate the automatic annotation service for the entire table by pressing the
           <ButtonText>Automatic annotation</ButtonText>
           button in the top right corner. It is a long-running asynchronous,
@@ -441,7 +612,7 @@ const steps: Step[] = [
     label: "Annotation symbols",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           The colors and shapes of the icons in front of reconciled entities provide
           visual feedback on the outcome of the reconciliation process.
         </Typography>
@@ -454,7 +625,7 @@ const steps: Step[] = [
               }}
               status="match-reconciliator"
             />
-            <Typography>
+            <Typography component="div">
               <b>Successful reconciliation:</b>
               The cell is annotated with an entity automatically assigned by the
               <i> reconciliation service</i>
@@ -469,7 +640,7 @@ const steps: Step[] = [
               }}
               status="match-refinement"
             />
-            <Typography>
+            <Typography component="div">
               <b>Successful reconciliation: </b>
               An entity has been assigned by the
               <i> column refinement feature</i>
@@ -484,7 +655,7 @@ const steps: Step[] = [
               }}
               status="match-manual"
             />
-            <Typography>
+            <Typography component="div">
               <b>Successful reconciliation: </b>
               An entity has been
               <i> manually </i>
@@ -499,7 +670,7 @@ const steps: Step[] = [
               }}
               status="warn"
             />
-            <Typography>
+            <Typography component="div">
               <b>Uncertain reconciliation: </b>
               There are candidate entities above the threshold, but none have been
               selected for the cell because multiple candidates have similar scores.
@@ -513,7 +684,7 @@ const steps: Step[] = [
               }}
               status="miss"
             />
-            <Typography>
+            <Typography component="div">
               <b>Unsuccessful reconciliation: </b>
               No candidate entities have been found, or none have scores above the threshold.
             </Typography>
@@ -523,26 +694,28 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "Matching Refinement",
+    label: "Introduction",
     Description: () => (
-      <Stack>
-        SemTUI supports two types of matching refinement:
-        <List>
-          <li>
-            <b>Single cell refinement: </b>
-            The user can assign the
-            <i> true </i>
-            tag to one of the candidate entities
-            for a single cell and optionally propagate the choice to identical cells in the same column.
-          </li>
-          <li>
-            <b>Group of cells refinement: </b>
-            The user can select a column (or multiple cells within it) and
-            refine the matching using the
-            <i> Refine Matching </i>
-            feature.
-          </li>
-        </List>
+      <Stack gap="10px">
+        <Typography component="div">
+          SemTUI supports two types of matching refinement:
+          <List>
+            <li>
+              <b>Single cell refinement: </b>
+              The user can assign the
+              <i> true </i>
+              tag to one of the candidate entities
+              for a single cell and optionally propagate the choice to identical cells in the same column.
+            </li>
+            <li>
+              <b>Group of cells refinement: </b>
+              The user can select a column (or multiple cells within it) and
+              refine the matching using the
+              <i> Refine Matching </i>
+              feature.
+            </li>
+          </List>
+        </Typography>
       </Stack>
     ),
   },
@@ -550,7 +723,7 @@ const steps: Step[] = [
     label: "Single cell Refinement",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           After the reconciliation process is complete, matchings can be refined by inspecting the metadata
           associated with each cell. Use the
           <SettingsEthernetRoundedIcon
@@ -570,7 +743,7 @@ const steps: Step[] = [
     label: "Group of cells Refinement",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           The
           <PlaylistAddCheckRoundedIcon
             sx={{
@@ -599,7 +772,7 @@ const steps: Step[] = [
     label: "Extension",
     Description: () => (
       <Stack gap="10px">
-        <Typography>
+        <Typography component="div">
           Once a column has been reconciled, its matched entities can be used to extend the table.
           Simply select the column, click the
           <ButtonText>Extend</ButtonText>
@@ -635,6 +808,90 @@ const TutorialIndex: FC<{
   activeStep: number;
   onStepSelect: (step: number) => void;
 }> = ({ activeStep, onStepSelect }) => {
+  const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});
+
+  const toggleChapter = (chapter: number) => {
+    setOpenChapters((prev) => ({ ...prev, [chapter]: !prev[chapter] }));
+  };
+
+  const chapters = [
+    {
+      chapterNumber: 2,
+      step: 2,
+      label: "Toolbar",
+      subSteps: [
+        { step: 2, label: "Global Actions" },
+        { step: 3, label: "Visualization" },
+        { step: 4, label: "Automatic Annotation" },
+        { step: 5, label: "Export" },
+      ],
+    },
+    {
+      chapterNumber: 3,
+      step: 6,
+      label: "Table Viewer",
+      subSteps: [
+        { step: 6, label: "Contextual Actions" },
+        { step: 7, label: "Search and Navigation" },
+        { step: 8, label: "Filter and Column Visibility" },
+        { step: 9, label: "Column Header Actions" },
+      ],
+    },
+    {
+      chapterNumber: 4,
+      step: 10,
+      label: "Enrichment Process",
+      subSteps: [],
+    },
+    {
+      chapterNumber: 5,
+      step: 11,
+      label: "Reconciliation",
+      subSteps: [
+        { step: 11, label: "Introduction" },
+        { step: 12, label: "Manual Annotation" },
+        { step: 13, label: "Automatic Annotation" },
+        { step: 14, label: "Annotation Symbols" },
+      ],
+    },
+    {
+      chapterNumber: 6,
+      step: 15,
+      label: "Matching Refinement",
+      subSteps: [
+        { step: 15, label: "Introduction" },
+        { step: 16, label: "Single cell Refinement" },
+        { step: 17, label: "Group of cells Refinement" },
+      ],
+    },
+    {
+      chapterNumber: 7,
+      step: 18,
+      label: "Extension",
+      subSteps: [],
+    },
+  ];
+
+  const stepToChapterMap: Record<number, number> = {};
+
+  chapters.forEach((chapter) => {
+    stepToChapterMap[chapter.step] = chapter.step;
+    chapter.subSteps.forEach((sub) => {
+      stepToChapterMap[sub.step] = chapter.step;
+    });
+  });
+
+  useEffect(() => {
+    const chapterToOpen = stepToChapterMap[activeStep];
+
+    if (chapterToOpen !== undefined) {
+      setOpenChapters((prev) => ({
+        ...prev,
+        [chapterToOpen]: true,
+      }));
+    }
+  }, [activeStep]);
+
   return (
     <IndexContainer>
       <Typography variant="subtitle1" fontWeight="bold" mb={2}>
@@ -644,48 +901,53 @@ const TutorialIndex: FC<{
         <IndexButton active={activeStep === 1} onClick={() => onStepSelect(1)}>
           1. Introduction
         </IndexButton>
-        <IndexButton active={activeStep === 2} onClick={() => onStepSelect(2)}>
-          2. Table Viewer: Global Actions
-        </IndexButton>
-        <IndexButton active={activeStep === 3} onClick={() => onStepSelect(3)} sx={{ pl: 3 }}>
-          2.1 Contextual Actions
-        </IndexButton>
-        <IndexButton active={activeStep === 4} onClick={() => onStepSelect(4)} sx={{ pl: 3 }}>
-          2.2 Search and Navigation
-        </IndexButton>
-        <IndexButton active={activeStep === 5} onClick={() => onStepSelect(5)} sx={{ pl: 3 }}>
-          2.3 Filter and Column Visibility
-        </IndexButton>
-        <IndexButton active={activeStep === 6} onClick={() => onStepSelect(6)} sx={{ pl: 3 }}>
-          2.4 Column Header Actions
-        </IndexButton>
-        <IndexButton active={activeStep === 7} onClick={() => onStepSelect(7)}>
-          3. Enrichment Process
-        </IndexButton>
-        <IndexButton active={activeStep === 8} onClick={() => onStepSelect(8)}>
-          4. Reconciliation
-        </IndexButton>
-        <IndexButton active={activeStep === 9} onClick={() => onStepSelect(9)} sx={{ pl: 3 }}>
-          4.1 Manual Annotation
-        </IndexButton>
-        <IndexButton active={activeStep === 10} onClick={() => onStepSelect(10)} sx={{ pl: 3 }}>
-          4.2 Automatic Annotation
-        </IndexButton>
-        <IndexButton active={activeStep === 11} onClick={() => onStepSelect(11)} sx={{ pl: 3 }}>
-          4.3 Annotation Symbols
-        </IndexButton>
-        <IndexButton active={activeStep === 12} onClick={() => onStepSelect(12)}>
-          5. Matching Refinement
-        </IndexButton>
-        <IndexButton active={activeStep === 13} onClick={() => onStepSelect(13)} sx={{ pl: 3 }}>
-          5.1 Single cell Refinement
-        </IndexButton>
-        <IndexButton active={activeStep === 14} onClick={() => onStepSelect(14)} sx={{ pl: 3 }}>
-          5.2 Group of cells Refinement
-        </IndexButton>
-        <IndexButton active={activeStep === 15} onClick={() => onStepSelect(15)}>
-          6. Extension
-        </IndexButton>
+        {chapters.map((chapter) => {
+          const hasSubSteps = chapter.subSteps.length > 0;
+          const isOpen = openChapters[chapter.step] || false;
+          const isSubStepActive = chapter.subSteps.some(
+            (sub) => sub.step === activeStep
+          );
+          return (
+            <Stack key={chapter.step} spacing={1}>
+              <ListItemButton
+                onClick={() => {
+                  if (hasSubSteps) {
+                    toggleChapter(chapter.step);
+                  } else {
+                    onStepSelect(chapter.step);
+                  }
+                }}
+                active={activeStep === chapter.step && !isSubStepActive}
+                sx={{
+                  mb: hasSubSteps && isOpen ? 1 : 0,
+                }}
+              >
+                <Box>
+                  {`${chapter.chapterNumber}. ${chapter.label}`}
+                </Box>
+
+                {hasSubSteps && (isOpen ? <ExpandLess /> : <ExpandMore />)}
+              </ListItemButton>
+
+              {hasSubSteps && (
+                <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                  <Stack spacing={1}>
+                    {chapter.subSteps.map((sub, index) => (
+                      <IndexButton
+                        key={sub.step}
+                        sx={{ pl: 3 }}
+                        active={activeStep === sub.step}
+                        onClick={() => onStepSelect(sub.step)}
+                      >
+                        {`${chapter.chapterNumber}.${index + 1} ${sub.label}`}
+                      </IndexButton>
+                    ))}
+                  </Stack>
+                </Collapse>
+              )}
+            </Stack>
+          );
+        })}
       </Stack>
     </IndexContainer>
   );

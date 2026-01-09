@@ -1,5 +1,5 @@
 import axios from "axios";
-import tableAPI, { GetTableResponse } from "@services/api/table";
+import tableAPI, { GetTableResponse, GetSchemaResponse } from "@services/api/table";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "@store";
 //import { levDistance } from "@services/utils/lev-distance";
@@ -18,7 +18,7 @@ import {
   RowState,
   TableState,
 } from "./interfaces/table";
-import { updateTable, updateUI } from "./table.slice";
+import { updateTable, updateSchema, updateUI } from "./table.slice";
 import { getIdsFromCell } from "./utils/table.utils";
 
 const ACTION_PREFIX = "table";
@@ -30,6 +30,7 @@ export enum TableThunkActions {
   RECONCILE = "reconcile",
   AUTOMATIC_ANNOTATION = "automaticAnnotation",
   UPDATE_TABLE_SOCKET = "updateTableSocket",
+  UPDATE_SCHEMA_SOCKET = "updateSchemaSocket",
   EXTEND = "extend",
   MODIFY = "modify",
   SUGGEST = "suggest",
@@ -481,17 +482,26 @@ const getRequestFormValuesModification = (
 
   const { ui, entities } = table;
   const { rows } = entities;
-  const selectedColumnsIds = Object.keys(table.ui.selectedColumnsIds);
+  let selectedColumnsIds = Object.keys(table.ui.selectedColumnsIds);
   console.log("getting request form values", modifier);
+
+  if (modifier?.skipFiltering) {
+    selectedColumnsIds = Object.keys(entities.columns.byId);
+  }
+
   const requestParams = {} as Record<string, any>;
 
-  requestParams.items = selectedColumnsIds.reduce(
-    (acc, key) => {
+  if (modifier?.allValues) {
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+      acc[key] = getAllColumnMetaObjects(key, rows);
+      return acc;
+    }, {} as Record<string, any>);
+  } else {
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
       acc[key] = getColumnValues(key, rows);
       return acc;
-    },
-    {} as Record<string, any>,
-  );
+    }, {} as Record<string, any>);
+  }
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
@@ -580,21 +590,27 @@ export const reconcile = createAsyncThunk(
 type AutomaticAnnotationThunkInputProps = {
   datasetId: string;
   tableId: string;
+  target: "fullTable" | "schema";
+  method: "alligator" | "columnClassifier";
 };
 
 type AutomaticAnnotationThunkOutputProps = {
   datasetId: string;
   tableId: string;
   mantisStatus: "PENDING";
+  schemaStatus: "PENDING";
 };
 
 export const automaticAnnotation = createAsyncThunk<
   AutomaticAnnotationThunkOutputProps,
   AutomaticAnnotationThunkInputProps
 >(`${ACTION_PREFIX}/automaticAnnotation`, async (params, { getState }) => {
+  const { datasetId, tableId, target, method } = params;
   const { table } = getState() as any;
   const { entities } = table;
   const data = {
+    target,
+    method,
     rows: entities.rows.byId,
     columns: entities.columns.byId,
     table: entities.tableInstance,
@@ -770,7 +786,7 @@ export const modify = createAsyncThunk<
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
   const params = {
-    ...getRequestFormValuesModification(formParams, formValues, table),
+    ...getRequestFormValuesModification(formParams, formValues, table, modifier),
     joinColumns: formValues.joinColumns,
     selectedColumns: formValues.selectedColumns,
     columnType: formValues.columnType,
@@ -821,6 +837,29 @@ export const updateTableSocket = createAsyncThunk(
             ...settings,
             isViewOnly: false,
             scoreLowerBound: (table.maxMetaScore - table.minMetaScore) / 3,
+          },
+        }),
+      );
+    }
+  },
+);
+export const updateSchemaSocket = createAsyncThunk(
+  `${ACTION_PREFIX}/updateSchemaSocket`,
+  async (inputProps: GetSchemaResponse, { getState, dispatch }) => {
+    const state = getState() as RootState;
+    const { tableInstance } = state.table.entities;
+    const { settings } = state.table.ui;
+    const { table } = inputProps;
+
+    if (!isEmptyObject(tableInstance) && tableInstance.id.toString() === table.id.toString()) {
+      console.log("updateSchemaSocket: IDs match, dispatching updateSchema");
+
+      dispatch(updateSchema(inputProps));
+      dispatch(
+        updateUI({
+          settings: {
+            ...settings,
+            isViewOnly: false,
           },
         }),
       );

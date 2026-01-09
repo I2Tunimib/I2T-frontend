@@ -176,7 +176,7 @@ const DialogSettingsContent: FC<DialogSettingsContentProps> = ({
         <Switch
           component={Root}
           checked={!tmpSettingsState.isViewOnly}
-          disabled={currentTable.mantisStatus === "PENDING"}
+          disabled={currentTable.mantisStatus === "PENDING" || currentTable.schemaStatus === "PENDING"}
           onChange={handleViewOnlyChange}
         />
       </Stack>

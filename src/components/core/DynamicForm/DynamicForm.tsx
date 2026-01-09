@@ -56,6 +56,9 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const operationType = watch("operationType");
   const isJoinInvalid = service.columnType === "unknown";
   const granularity = watch("granularity");
+  const splitRenameMode = watch("splitRenameMode");
+  const splitMode = watch("splitMode");
+
   let finalType = "";
 
   useEffect(() => {
@@ -217,8 +220,14 @@ const DynamicForm: FC<DynamicFormProps> = ({
       {service.id !== "dateFormatter" && formParams &&
         formParams.map(({ id, inputType, ...inputProps }) => {
           if (service.id === "textColumnsTransformer") {
-            if (id === "columnToJoinSplit" && operationType !== "joinOp") return null;
-            if (id === "renameNewColumn" && (!operationType || operationType === "splitOp")) return null;
+            if (id === "columnToJoin" && operationType !== "joinOp") return null;
+            if (id === "renameJoinedColumn" && (!operationType || operationType === "splitOp")) return null;
+            if (id === "splitMode" && (!operationType || operationType === "joinOp")) return null;
+            if (id === "separator" && !operationType) return null;
+            if (id === "binaryDirection" && (!operationType || !splitMode || splitMode === "separatorAll")) return null;
+            if (id === "renameNewColumnSplit" && (!operationType || operationType === "joinOp" ||
+              !splitRenameMode || splitRenameMode === "auto")) return null;
+            if (id === "splitRenameMode" && (!operationType || operationType === "joinOp")) return null;
           }
           if (service.id === "meteoPropertiesOpenMeteo") {
             if (id === "weatherParams_daily" && granularity !== "daily") return null;
@@ -246,12 +255,6 @@ const DynamicForm: FC<DynamicFormProps> = ({
             />
           );
       })}
-      {service.id === "textColumnsTransformer" && operationType === "splitOp" && (
-        <div>
-          <b>Note: </b>the new columns created after splitting will be named automatically as
-          <code> columnName_1</code>,<code> columnName_2</code>,etc.
-        </div>
-      )}
       {service.id === "wikidataPropertySPARQL" && (
         <Button
           variant="outlined"
