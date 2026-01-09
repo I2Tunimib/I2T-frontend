@@ -8,8 +8,9 @@ type QueryParams = {
 export const buildURI = (
   baseUrl: string,
   path: string,
-  queryParams?: QueryParams
+  queryParams?: QueryParams,
 ) => {
+  console.log("called build uri", path, baseUrl);
   const url = new URL(path, baseUrl);
 
   if (queryParams) {

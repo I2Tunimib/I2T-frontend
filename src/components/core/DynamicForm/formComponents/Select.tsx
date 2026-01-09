@@ -68,16 +68,14 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       infoText,
       options,
       defaultValue,
-      children,
       formState,
       reset,
       setValue,
       onChange,
       noGap = false,
-      selectedColumns,
       ...props
     },
-    ref
+    ref,
   ) => {
     const errors = formState?.errors ?? {};
 
@@ -87,9 +85,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       <Stack gap={noGap ? 0 : "10px"}>
         <InputDescription description={description} infoText={infoText} />
         <FormControl error={error}>
-          <InputLabel sx={noGap ? { top: "-6px" } : {}}>
-            {label}
-          </InputLabel>
+          <InputLabel sx={noGap ? { top: "-6px" } : {}}>{label}</InputLabel>
           <SelectMaterial
             inputRef={ref}
             onChange={onChange}
@@ -99,7 +95,11 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
             sx={noGap ? { height: 40 } : {}}
           >
             {options.map((option) => (
-              <MenuItem key={option.id} value={option.value} disabled={option.disabled}>
+              <MenuItem
+                key={option.id}
+                value={option.value}
+                disabled={option.disabled}
+              >
                 <Box display="flex" alignItems="center" width="100%">
                   <span style={{ flex: 1 }}>{option.label}</span>
                   {noGap && option.kind && option.kind !== "" && (
@@ -111,11 +111,13 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
               </MenuItem>
             ))}
           </SelectMaterial>
-          {error && <FormHelperText>{errors[id].message}</FormHelperText>}
+          {error && (
+            <FormHelperText>{String(errors[id]?.message)}</FormHelperText>
+          )}
         </FormControl>
       </Stack>
     );
-  }
+  },
 );
 
 export type SelectColumnProps = Omit<SelectProps, "options">;
@@ -123,36 +125,42 @@ export type SelectColumnProps = Omit<SelectProps, "options">;
 /**
  * Select component where the options are the columns of the table
  */
-export const SelectColumns = forwardRef<HTMLInputElement, SelectColumnProps & { selectedColumns?: string[] }>(
-  (props, ref) => {
-    const { id, setValue, selectedColumns = [] } = props;
-    const options = useAppSelector(selectColumnsAsSelectOptions);
+export const SelectColumns = forwardRef<
+  HTMLInputElement,
+  SelectColumnProps & { selectedColumns?: string[]; options?: Option[] }
+>((props, ref) => {
+  const { id, setValue, selectedColumns = [], options: propOptions } = props;
+  const defaultOptions = useAppSelector(selectColumnsAsSelectOptions);
+  const options = propOptions || defaultOptions;
 
-    const modifiedOptions = options.map((option) => {
-      const isSelected = selectedColumns.includes(option.value);
-      return {
-        ...option,
-        label: isSelected ? `${option.label} (selected)` : option.label,
-        disabled: isSelected,
-      };
-    });
-    return <Select ref={ref} options={modifiedOptions} {...props} />;
-  }
-);
+  const modifiedOptions = options.map((option: Option) => {
+    const isSelected = selectedColumns.includes(option.value);
+    return {
+      ...option,
+      label: isSelected ? `${option.label} (selected)` : option.label,
+      disabled: isSelected,
+    };
+  });
+  return <Select ref={ref} options={modifiedOptions} {...props} />;
+});
 
 export type SelectPrefixProps = BaseFormControlProps & {
   id: string;
   label: string;
   value: string;
   context?: string;
-  onChange: (value: string) => void;
+  onChange: (e: any) => void;
+  required?: boolean;
+  variant?: string;
+  sx?: any;
+  noGap?: boolean;
 };
 
 export const SelectPrefix = forwardRef<HTMLInputElement, SelectPrefixProps>(
   ({ id, label, value, onChange, context, ...formProps }, ref) => {
     const exclusion = ["maps", "wiki", "dbp", "cr"];
     const prefixProperty = ["wd", "wdA", "wdL"];
-    const options: Option[] = Object.keys(KG_INFO)
+    const baseOptions: Option[] = Object.keys(KG_INFO)
       .filter((key) => {
         if (exclusion.includes(key) || !KG_INFO[key].groupName) return false;
         if (context === "propertyTab") {
@@ -166,6 +174,38 @@ export const SelectPrefix = forwardRef<HTMLInputElement, SelectPrefixProps>(
         label: `${key} (${KG_INFO[key].groupName || "N/A"})`,
       }));
 
-    return <Select ref={ref} id={id} label={label} value={value ?? ""} options={options} onChange={onChange} {...formProps} />;
-  }
+    const options: Option[] = [
+      ...baseOptions,
+      {
+        id: "custom",
+        value: "custom",
+        label: "Custom",
+      },
+    ];
+
+    // If value is set and not in options, add it
+    if (
+      value &&
+      value !== "custom" &&
+      !baseOptions.some((opt) => opt.value === value)
+    ) {
+      options.splice(options.length - 1, 0, {
+        id: value,
+        value,
+        label: value,
+      });
+    }
+
+    return (
+      <Select
+        ref={ref}
+        id={id}
+        label={label}
+        value={value ?? ""}
+        options={options}
+        onChange={onChange}
+        {...formProps}
+      />
+    );
+  },
 );

@@ -114,6 +114,7 @@ export interface Column {
   metadata: ColumnMetadata[];
   kind?: string;
   role?: string;
+  reconciler?: string;
 }
 /**
  * A row instance.

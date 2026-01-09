@@ -195,8 +195,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
   const uniqueReconciliators = Array.from(
-    new Set(reconciliators.map((r) => r.prefix)),
-  ).map((prefix) => reconciliators.find((r) => r.prefix === prefix));
+    new Set(reconciliators.map((r) => r.id)),
+  ).map((id) => reconciliators.find((r) => r.id === id));
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -209,10 +209,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       const reason = cell?.annotationMeta?.match?.reason;
       if (reason === "manual") {
         setIsManualMatch(true);
-      } else {
-        const prefix = cell?.metadata[0].id.split(":")[0];
+      } else if (cell?.metadata && cell.metadata.length > 0) {
+        const prefix = cell.metadata[0].id.split(":")[0];
         setIsManualMatch(false);
         setCurrentService(prefix);
+      } else {
+        setIsManualMatch(false);
+        setCurrentService("");
       }
     } else {
       setIsManualMatch(false);
@@ -520,23 +523,81 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       const { prefix } = formState;
       // Extract prefix and id from URI for type and description fetching
       let idFromUri = "";
-      const url = new URL(formState.uri);
-      console.log("url", url);
-      if (prefix.startsWith("wd")) {
-        // es. https://www.wikidata.org/wiki/Q18711
-        idFromUri = url.pathname.split("/").pop();
-      } else if (prefix === "geo") {
-        // es. https://www.geonames.org/3117735/madrid.html
-        idFromUri = url.pathname.split("/")[1];
-      } else if (prefix === "geoCoord") {
-        // es. https://www.google.com/maps/place/lat,long
-        const parts = url.pathname.split("/").pop()?.split(",") || [];
-        idFromUri = parts.join(",");
+
+      // Prioritize known providers (Wikidata, Geonames, GeoCoord) first,
+      // then fall back to generic extraction (fragment, last path segment, query).
+      try {
+        const url = new URL(formState.uri);
+        console.log("url", url);
+
+        // SPECIAL CASES FIRST
+        if (prefix && prefix.startsWith("wd")) {
+          // Wikidata typical URL: https://www.wikidata.org/wiki/Q123
+          // prefer the last non-empty path segment or fragment
+          idFromUri =
+            url.pathname.split("/").filter(Boolean).pop() ||
+            url.hash.replace(/^#/, "") ||
+            "";
+        } else if (prefix === "geo") {
+          // Geonames: https://www.geonames.org/3117735/madrid.html -> id is 3117735
+          const parts = url.pathname.split("/").filter(Boolean);
+          idFromUri =
+            parts[0] ||
+            parts[parts.length - 1] ||
+            url.hash.replace(/^#/, "") ||
+            "";
+        } else if (prefix === "geoCoord") {
+          // Coordinates (e.g., Google Maps): take last path segment and keep comma-separated coords
+          const last = url.pathname.split("/").filter(Boolean).pop() || "";
+          const parts = last.split(",");
+          idFromUri = parts.join(",") || url.hash.replace(/^#/, "");
+        } else {
+          // GENERIC FALLBACK
+          // Prefer fragment (#id), otherwise last non-empty path segment,
+          // otherwise last query param value, otherwise pathname trimmed.
+          if (url.hash && url.hash.length > 1) {
+            idFromUri = url.hash.slice(1);
+          } else {
+            const pathParts = url.pathname.split("/").filter(Boolean);
+            if (pathParts.length > 0) {
+              idFromUri = pathParts[pathParts.length - 1];
+            } else {
+              const params = new URLSearchParams(url.search);
+              const lastKey = Array.from(params.keys()).pop();
+              idFromUri = lastKey
+                ? params.get(lastKey) || ""
+                : url.pathname.replace(/^\/+|\/+$/g, "");
+            }
+          }
+        }
+
+        // If still empty, combine pathname/search/hash as a last resort
+        if (!idFromUri) {
+          idFromUri = (
+            url.pathname +
+            (url.search || "") +
+            (url.hash || "")
+          ).replace(/^\/+/, "");
+        }
+      } catch (err) {
+        // Not a valid URL - fallback heuristics on the raw string
+        console.warn("Invalid URI, fallback to extracting last token", err);
+        const trimmed = formState.uri.trim();
+        if (trimmed.includes("#")) {
+          idFromUri = trimmed.split("#").pop() || trimmed;
+        } else {
+          const parts = trimmed.split("/").filter(Boolean);
+          idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
+        }
       }
 
-      const finalId = (idFromUri.includes(":"))
+      // Normalize prefix (remove any trailing colon) before composing final id.
+      const sanitizedPrefix = prefix ? String(prefix).replace(/:+$/, "") : "";
+      const finalId = idFromUri.includes(":")
         ? idFromUri
-        : `${prefix}:${idFromUri}`;
+        : sanitizedPrefix
+          ? `${sanitizedPrefix}:${idFromUri}`
+          : idFromUri;
 
       let description = "";
       let type: any[] = [];

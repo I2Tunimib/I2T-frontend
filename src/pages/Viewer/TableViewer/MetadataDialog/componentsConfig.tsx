@@ -1,4 +1,4 @@
-import { React } from 'react';
+import { React } from "react";
 import { Tag } from "@components/core";
 import { Button, Checkbox, Chip, Link, Stack, Typography } from "@mui/material";
 import { MetaToViewItem } from "@store/slices/config/interfaces/config";
@@ -61,7 +61,11 @@ export const SubList = (value: any[] = []) => {
   );
 };
 
-export const Expander = ({ row, setSubRows, getValue }: {
+export const Expander = ({
+  row,
+  setSubRows,
+  getValue,
+}: {
   row: Row<any>;
   setSubRows: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   getValue: () => any[];
@@ -90,11 +94,20 @@ export const Expander = ({ row, setSubRows, getValue }: {
     </Button>
   );
 };
-export const CheckBoxCell = ({ getValue, table, row, column }: CellContext<any, any>) => {
+export const CheckBoxCell = ({
+  getValue,
+  table,
+  row,
+  column,
+}: CellContext<any, any>) => {
   const value = getValue();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    table.options.meta?.onCheckboxChange?.(row, column.id, event.target.checked);
+    table.options.meta?.onCheckboxChange?.(
+      row,
+      column.id,
+      event.target.checked,
+    );
   };
 
   return (
@@ -114,13 +127,22 @@ export const CELL_COMPONENTS_TYPES = {
 
 export const getCellComponent = (
   cell: CellContext<any, any>,
-  type: MetaToViewItem["type"]
+  type: MetaToViewItem["type"],
 ) => {
   const value = cell.getValue();
 
   console.log("getCellComponent called with:", value, type, cell);
 
+  // Allow checkBox cells to render even when their value is null/undefined.
+  // Previously the function returned early with "null" for any null value,
+  // preventing checkbox rendering. Now we render the checkbox component
+  // when type === "checkBox" even if value is null.
   if (value == null) {
+    if (type === "checkBox") {
+      return (
+        <div style={{ width: "100%" }}>{CELL_COMPONENTS_TYPES[type](cell)}</div>
+      );
+    }
     return <Typography color="textSecondary">null</Typography>;
   }
   if (!type) {

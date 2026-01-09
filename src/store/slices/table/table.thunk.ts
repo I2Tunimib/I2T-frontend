@@ -277,6 +277,7 @@ const getColumnMetaObjects = (colId: string, rowEntities: RowState) => {
       const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
       if (trueMeta) {
         acc[rowId] = {
+          name: trueMeta.name,
           kbId: trueMeta.id,
           value: cell.label,
           matchingType: trueMeta.match ? "exact" : "fuzzy", // Adjust logic if needed
@@ -315,6 +316,7 @@ const getAllColumnMetaObjects = (colId: string, rowEntities: RowState) => {
       // Always include every row - use matched metadata if available, otherwise include with null kbId
       if (trueMeta) {
         acc[rowId] = {
+          name: trueMeta.name,
           kbId: trueMeta.id,
           value: cell.label,
           matchingType: trueMeta.match ? "exact" : "fuzzy",
@@ -469,10 +471,10 @@ const getRequestFormValuesReconciliation = (
 };
 
 const getRequestFormValuesModification = (
-    formParams: FormInputParams[],
-    formValues: Record<string, any>,
-    table: TableState,
-    modifier?: Modifier
+  formParams: FormInputParams[],
+  formValues: Record<string, any>,
+  table: TableState,
+  modifier?: Modifier,
 ) => {
   if (!formParams) {
     return {};
@@ -800,7 +802,7 @@ export const modify = createAsyncThunk<
     },
     tableInstance.id,
     tableInstance.idDataset,
-    columnName
+    columnName,
   );
 
   return {

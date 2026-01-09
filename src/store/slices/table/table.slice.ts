@@ -1479,13 +1479,29 @@ export const tableSlice = createSliceWithRequests({
             score: 100,
           }));
 
+          // Ensure metadata[0] exists
           if (!columns.byId[colId].metadata[0]) {
             columns.byId[colId].metadata[0] = {
               type: newTypes,
             };
+          } else {
+            // Merge newTypes into the main metadata[0].type array (replace same id or append)
+            const existingMainTypes =
+              columns.byId[colId].metadata[0].type || [];
+            const mergedMain = [...existingMainTypes];
+            newTypes.forEach((newType) => {
+              const idx = mergedMain.findIndex((t: any) => t.id === newType.id);
+              if (idx !== -1) {
+                mergedMain[idx] = { ...mergedMain[idx], ...newType };
+              } else {
+                mergedMain.push(newType);
+              }
+            });
+            columns.byId[colId].metadata[0].type = mergedMain;
           }
+
+          // Ensure additionalTypes exists and merge newTypes there as well
           if (!columns.byId[colId].metadata[0].additionalTypes) {
-            columns.byId[colId].metadata[0].additionalTypes = [];
             columns.byId[colId].metadata[0].additionalTypes = newTypes;
           } else {
             // Check for existing types with the same ID and replace them
@@ -1500,7 +1516,10 @@ export const tableSlice = createSliceWithRequests({
               );
               if (existingIndex !== -1) {
                 // Replace existing type with the same ID
-                mergedTypes[existingIndex] = newType;
+                mergedTypes[existingIndex] = {
+                  ...mergedTypes[existingIndex],
+                  ...newType,
+                };
               } else {
                 // Add new type if ID doesn't exist
                 mergedTypes.push(newType);
@@ -1510,15 +1529,24 @@ export const tableSlice = createSliceWithRequests({
             columns.byId[colId].metadata[0].additionalTypes = mergedTypes;
           }
 
-          // if (columns.byId[colId].metadata.length === 0) {
-          //   (columns.byId[colId].metadata as any) = [
-          //     {
-          //       type: newTypes,
-          //     },
-          //   ];
-          // } else {
-          //   (columns.byId[colId].metadata[0] as any) = newTypes;
-          // }
+          // Ensure match flags are set consistently on metadata[0].type entries
+          if (columns.byId[colId].metadata[0].type) {
+            columns.byId[colId].metadata[0].type = columns.byId[
+              colId
+            ].metadata[0].type.map((t: any) => ({
+              ...t,
+              match: !!t.match,
+            }));
+          }
+          // Ensure match flags are set on additionalTypes too
+          if (columns.byId[colId].metadata[0].additionalTypes) {
+            columns.byId[colId].metadata[0].additionalTypes = columns.byId[
+              colId
+            ].metadata[0].additionalTypes.map((t: any) => ({
+              ...t,
+              match: !!t.match,
+            }));
+          }
         },
         (draft) => {
           // do not include in undo history
@@ -1601,6 +1629,16 @@ export const tableSlice = createSliceWithRequests({
             columns.byId[colId].metadata[0].type = columns.byId[
               colId
             ].metadata[0].type.map((type: any) => ({
+              ...type,
+              match: typeIds.includes(type.id),
+            }));
+          }
+
+          // Also update additionalTypes match property if present
+          if (columns.byId[colId].metadata[0].additionalTypes) {
+            columns.byId[colId].metadata[0].additionalTypes = columns.byId[
+              colId
+            ].metadata[0].additionalTypes.map((type: any) => ({
               ...type,
               match: typeIds.includes(type.id),
             }));
@@ -1888,6 +1926,15 @@ export const tableSlice = createSliceWithRequests({
           if (state.ui.settings.scoreLowerBound === 0) {
             state.ui.settings.scoreLowerBound = 0.35;
           }
+          state.entities.columns.allIds.forEach((colId) => {
+            const column = getColumn(state, colId);
+            if (column) {
+              column.status = getColumnStatus(state, colId);
+            }
+          });
+          // update global counters derived from contexts / metadata
+          updateNumberOfReconciliatedCells(state);
+          updateScoreBoundaries(state);
         },
       )
       .addCase(
@@ -1916,8 +1963,8 @@ export const tableSlice = createSliceWithRequests({
               ? (data as any).reconciliator
               : reconciliator;
 
-          const { prefix, uri } = effectiveReconciliator;
-
+          const { id: reconcilerId, prefix, uri } = effectiveReconciliator;
+          console.log("*** recon Id used", reconcilerId);
           return produceWithPatch(
             state,
             undoable,
@@ -1947,14 +1994,22 @@ export const tableSlice = createSliceWithRequests({
                   }
                   // assign new reconciliator and metadata
                   // cell.metadata.reconciliator.id = reconciliator.id;
+                  console.log(
+                    "debug effective reconciliator object",
+                    effectiveReconciliator,
+                  );
                   cell.metadata = metadata.map(({ id, name, ...rest }) => {
                     const [_, metaId] = id.split(":");
+                    console.log("rest of the item", rest);
                     return {
                       id,
                       name: {
                         value: name as unknown as string,
                         //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                        uri: buildURI(effectiveReconciliator.uri, metaId),
+                        uri: buildURI(
+                          effectiveReconciliator.uri || rest.uri,
+                          metaId,
+                        ),
                       },
                       ...rest,
                     };
@@ -1994,7 +2049,10 @@ export const tableSlice = createSliceWithRequests({
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(effectiveReconciliator.uri, metaId),
+                            uri: buildURI(
+                              effectiveReconciliator.uri || rest.uri,
+                              metaId,
+                            ),
                           },
                           ...rest,
                         };
@@ -2017,7 +2075,7 @@ export const tableSlice = createSliceWithRequests({
                       });
 
                       column.metadata[0].property = [
-                        ...column.metadata[0].property,
+                        ...(column.metadata[0].property || []),
                         ...newProps,
                       ];
                     }
@@ -2061,7 +2119,10 @@ export const tableSlice = createSliceWithRequests({
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(effectiveReconciliator.uri, metaId),
+                            uri: buildURI(
+                              effectiveReconciliator.uri || rest.uri,
+                              metaId,
+                            ),
                           },
                           ...rest,
                         };
@@ -2072,6 +2133,8 @@ export const tableSlice = createSliceWithRequests({
                       annotated: true,
                       ...computeColumnAnnotationStats(column),
                     };
+                    //set reconciler id used
+                    column.reconciler = reconcilerId;
                   }
                 }
               });

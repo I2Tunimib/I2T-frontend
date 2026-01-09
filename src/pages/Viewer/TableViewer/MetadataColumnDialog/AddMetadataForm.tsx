@@ -1,6 +1,18 @@
-import { FC, useEffect } from "react";
-import { Stack, TextField, Button, FormControl, InputLabel, Select, MenuItem, Tooltip } from "@mui/material";
-import { SelectColumns, SelectPrefix } from "@components/core/DynamicForm/formComponents/Select";
+import { FC, useEffect, useState } from "react";
+import {
+  Stack,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+} from "@mui/material";
+import {
+  SelectColumns,
+  SelectPrefix,
+} from "@components/core/DynamicForm/formComponents/Select";
 import { Controller, useForm } from "react-hook-form";
 
 export interface AddMetadataFormProps {
@@ -10,21 +22,43 @@ export interface AddMetadataFormProps {
   otherColumns?: { id: string; label: string; value: string }[];
 }
 
-const AddMetadataForm: FC<AddMetadataFormProps> = ({ currentService, onSubmit, context, otherColumns }) => {
-  const { handleSubmit, reset, register, control } = useForm({
-    defaultValues: { prefix: "", id: "", name: "", uri: "", score: 1.00, match: "true", obj: "" },
+const AddMetadataForm: FC<AddMetadataFormProps> = ({
+  currentService,
+  onSubmit,
+  context,
+  otherColumns,
+}) => {
+  const { handleSubmit, reset, register, control, setValue, watch } = useForm({
+    defaultValues: {
+      prefix: "",
+      id: "",
+      name: "",
+      uri: "",
+      score: 1.0,
+      match: "true",
+      obj: "",
+    },
   });
+  const [customPrefix, setCustomPrefix] = useState("");
+
+  const watchedPrefix = watch("prefix");
 
   useEffect(() => {
     if (currentService !== undefined) {
       reset({ prefix: currentService });
+      setCustomPrefix("");
     }
   }, [currentService, reset]);
 
   console.log("AddMetadataForm currentService", currentService);
 
   return (
-    <Stack component="form" direction="row" gap={1} onSubmit={handleSubmit(onSubmit)}>
+    <Stack
+      component="form"
+      direction="row"
+      gap={1}
+      onSubmit={handleSubmit(onSubmit)}
+    >
       <Tooltip
         title={
           !!currentService
@@ -63,21 +97,51 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({ currentService, onSubmit, c
           />
         </FormControl>
       </Tooltip>
+      {watchedPrefix === "custom" && (
+        <Stack direction="row" gap={1} alignItems="center">
+          <TextField
+            sx={{ minWidth: 150, flex: "1 1 150px" }}
+            size="small"
+            label="Custom Prefix"
+            variant="outlined"
+            value={customPrefix}
+            onChange={(e) => setCustomPrefix(e.target.value)}
+          />
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => {
+              const trimmed = customPrefix.trim();
+              if (trimmed) {
+                // Remove any trailing colons and whitespace to store a normalized prefix (e.g., "wd" not "wd:")
+                const sanitized = trimmed.replace(/:+$/, "");
+                setValue("prefix", sanitized);
+                setCustomPrefix("");
+              }
+            }}
+            sx={{ height: 40 }}
+          >
+            OK
+          </Button>
+        </Stack>
+      )}
       <TextField
-        sx={{ minWidth: 300, flex: context === "typeTab" ? "1 1 150px" : "1 1 300px" }}
+        sx={{
+          minWidth: 300,
+          flex: context === "typeTab" ? "1 1 150px" : "1 1 300px",
+        }}
         size="small"
         label="Uri"
         required
         variant="outlined"
         {...register("uri")}
       />
-      <Tooltip
-        title="Enter a name"
-        arrow
-        placement="top"
-      >
+      <Tooltip title="Enter a name" arrow placement="top">
         <TextField
-          sx={{ minWidth: 150, flex: context === "typeTab" ? "1 1 30px" : "1 1 150px" }}
+          sx={{
+            minWidth: 150,
+            flex: context === "typeTab" ? "1 1 30px" : "1 1 150px",
+          }}
           size="small"
           label="Name"
           required
@@ -86,11 +150,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({ currentService, onSubmit, c
         />
       </Tooltip>
       {context === "propertyTab" && (
-        <Tooltip
-          title="Select the referenced column"
-          arrow
-          placement="top"
-        >
+        <Tooltip title="Select the referenced column" arrow placement="top">
           <FormControl
             sx={{ minWidth: 200, flex: "1 1 200px" }}
             fullWidth
@@ -151,7 +211,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({ currentService, onSubmit, c
         sx={{
           height: 40,
           padding: "0 16px",
-          textTransform: "none"
+          textTransform: "none",
         }}
       >
         Add

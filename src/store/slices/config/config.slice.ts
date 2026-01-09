@@ -23,7 +23,7 @@ export const configSlice = createSliceWithRequests({
       console.log("Config slice - received payload:", action.payload);
       console.log(
         "Config slice - payload keys:",
-        action.payload ? Object.keys(action.payload) : "no payload"
+        action.payload ? Object.keys(action.payload) : "no payload",
       );
 
       // Handle different possible response structures
@@ -58,9 +58,8 @@ export const configSlice = createSliceWithRequests({
         reconciliators.forEach((reconciliator, i) => {
           //state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
           //state.entities.reconciliators.allIds.push(reconciliator.id);
-          state.entities.reconciliators.byId[reconciliator.prefix] =
-            reconciliator;
-          state.entities.reconciliators.allIds.push(reconciliator.prefix);
+          state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
+          state.entities.reconciliators.allIds.push(reconciliator.id);
         });
       } else {
         console.warn("Config slice - reconciliators not found or not an array");
