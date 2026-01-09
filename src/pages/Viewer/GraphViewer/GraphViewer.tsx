@@ -634,14 +634,25 @@ const GraphViewer: FC = () => {
                   {(nodeIncomingLinks.length > 0 && selectedNode.role !== 'subject') ?
                     (
                       <>
-                        object of {' '}
+                        object of column(s):{' '}
                         {Array.from(
                           new Set(
                             nodeIncomingLinks.map((l) => (typeof l.source === 'object' ? l.source.label : l.source))
                           )
                         ).join(', ')}
                       </>
-                    ) : (selectedNode.role || '-')
+                    ) : ((nodeOutgoingLinks.length > 0 && selectedNode.role === 'subject') ?
+                        (
+                          <>
+                            {selectedNode.role} of column(s):{' '}
+                            {Array.from(
+                              new Set(
+                                nodeOutgoingLinks.map((l) => (typeof l.target === 'object' ? l.target.label : l.target))
+                              )
+                            ).join(', ')}
+                          </>
+                        ) : '-'
+                    )
                   }
                 </Typography>
                 {selectedNode.types.length > 0 ? (
