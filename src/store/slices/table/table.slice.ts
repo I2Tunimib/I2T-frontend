@@ -1921,14 +1921,22 @@ export const tableSlice = createSliceWithRequests({
                   }
                   // assign new reconciliator and metadata
                   // cell.metadata.reconciliator.id = reconciliator.id;
+                  console.log(
+                    "debug effective reconciliator object",
+                    effectiveReconciliator,
+                  );
                   cell.metadata = metadata.map(({ id, name, ...rest }) => {
                     const [_, metaId] = id.split(":");
+                    console.log("rest of the item", rest);
                     return {
                       id,
                       name: {
                         value: name as unknown as string,
                         //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                        uri: buildURI(effectiveReconciliator.uri, metaId),
+                        uri: buildURI(
+                          effectiveReconciliator.uri || rest.uri,
+                          metaId,
+                        ),
                       },
                       ...rest,
                     };
@@ -1968,7 +1976,10 @@ export const tableSlice = createSliceWithRequests({
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(effectiveReconciliator.uri, metaId),
+                            uri: buildURI(
+                              effectiveReconciliator.uri || rest.uri,
+                              metaId,
+                            ),
                           },
                           ...rest,
                         };
@@ -2035,7 +2046,10 @@ export const tableSlice = createSliceWithRequests({
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(effectiveReconciliator.uri, metaId),
+                            uri: buildURI(
+                              effectiveReconciliator.uri || rest.uri,
+                              metaId,
+                            ),
                           },
                           ...rest,
                         };
