@@ -224,7 +224,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
             if (id === "renameJoinedColumn" && (!operationType || operationType === "splitOp")) return null;
             if (id === "splitMode" && (!operationType || operationType === "joinOp")) return null;
             if (id === "separator" && !operationType) return null;
-            if (id === "binaryDirection" && (!operationType || !splitMode || splitMode === "separatorAll")) return null;
+            if (id === "splitDirection" && (!operationType || !splitMode || splitMode === "separatorAll")) return null;
             if (id === "renameNewColumnSplit" && (!operationType || operationType === "joinOp" ||
               !splitRenameMode || splitRenameMode === "auto")) return null;
             if (id === "splitRenameMode" && (!operationType || operationType === "joinOp")) return null;

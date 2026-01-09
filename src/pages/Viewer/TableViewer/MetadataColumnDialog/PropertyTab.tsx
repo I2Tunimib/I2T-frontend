@@ -233,35 +233,45 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
   const hasColumnClassifier = !!column?.kind && !!column?.nerClassification;
-  const getWikidataPropertyListUrl = (kind?: string, nerClassification?: string) => {
+  const getPropertyInfo = (kind?: string, nerClassification?: string) => {
+    const baseUrl = "https://www.wikidata.org/wiki/Special:ListProperties";
+
     if (kind === "entity") {
-      return "https://www.wikidata.org/wiki/Special:ListProperties/wikibase-item";
+      return {
+        url: `${baseUrl}/wikibase-item`,
+        label: "Items"
+      };
     }
     if (kind === "literal") {
       switch (nerClassification) {
         case "DATE":
-          return "https://www.wikidata.org/wiki/Special:ListProperties/time";
+          return {
+            url: `${baseUrl}/time`,
+            label: "Point in time"
+          };
         case "NUMBER":
-          return "https://www.wikidata.org/wiki/Special:ListProperties/quantity";
+          return {
+            url: `${baseUrl}/quantity`,
+            label: "Quantity"
+          };
         case "STRING":
-          return "https://www.wikidata.org/wiki/Special:ListProperties/string";
-        default :
-          return "https://www.wikidata.org/wiki/Special:ListProperties";
+          return {
+            url: `${baseUrl}/string`,
+            label: "String"
+          };
+        default:
+          return {
+            url: baseUrl,
+            label: "Wikidata"
+          };
       }
     }
-    return "https://www.wikidata.org/wiki/Special:ListProperties";
+    return {
+      url: baseUrl,
+      label: "Wikidata"
+    };
   };
-  const getPropertyListLabel = (kind?: string, nerClassification?: string) => {
-    if (kind === "entity") {
-      return `ENTITY - ${nerClassification}`;
-    }
-    if (kind === "literal") {
-      return `LITERAL - ${nerClassification}`;
-    }
-    return "Wikidata";
-  };
-  const propertyListUrl = getWikidataPropertyListUrl(column?.kind, column?.nerClassification);
-  const propertyListLabel = getPropertyListLabel(column?.kind, column?.nerClassification);
+  const propertyInfo = getPropertyInfo(column?.kind, column?.nerClassification);
 
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
@@ -526,13 +536,6 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const handleClick = () => {
-    const url = hasColumnClassifier
-      ? propertyListUrl
-      : "https://www.wikidata.org/wiki/Special:ListProperties";
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
   return (
     <>
       {
@@ -546,60 +549,65 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
             gap={1}
           >
             <Stack direction="row" gap={1} alignItems="center">
-              <Tooltip open={showTooltip} title="Add property" placement="right">
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onMouseLeave={handleTooltipClose}
-                  onMouseEnter={handleTooltipOpen}
-                  onClick={handleShowAdd}
-                  sx={{
-                    textTransform: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1
-                  }}
-                >
-                  Add column property
-                  <AddRoundedIcon
-                    sx={{
-                      transition: "transform 150ms ease-out",
-                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
-                    }}
-                  />
-                </Button>
-              </Tooltip>
-              {showAdd ? (
-                !!currentService && servicesByPrefix[currentService]?.listProps ? (
+              {column.kind !== "literal" && (
+                <Tooltip open={showTooltip} title="Add property" placement="right">
                   <Button
                     variant="outlined"
                     color="primary"
-                    onClick={handleListPropsInService}
-                    sx={{ textTransform: "none" }}
+                    onMouseLeave={handleTooltipClose}
+                    onMouseEnter={handleTooltipOpen}
+                    onClick={handleShowAdd}
+                    sx={{
+                      textTransform: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1
+                    }}
                   >
-                    View list of {KG_INFO[currentService].groupName} properties
+                    Add column property
+                    <AddRoundedIcon
+                      sx={{
+                        transition: "transform 150ms ease-out",
+                        transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                      }}
+                    />
                   </Button>
-                ) : (
-                  <Tooltip
-                    title={hasColumnClassifier
-                      ? `List filtered using the Column Classifier schema annotation result: ${propertyListLabel}.` : ""}
-                    placement="right"
-                    arrow
-                  >
-                    <span>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleClick}
-                        sx={{ textTransform: "none" }}
-                      >
-                        View list of Wikidata properties
-                        {hasColumnClassifier ? ` (${propertyListLabel})` : "" }
-                      </Button>
-                    </span>
-                  </Tooltip>
-                )
-              ) : null}
+                </Tooltip>
+              )}
+              {(column.kind === "literal" || showAdd) && (
+                <>
+                  {!!currentService && servicesByPrefix[currentService]?.listProps ? (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleListPropsInService}
+                      sx={{ textTransform: "none" }}
+                    >
+                      View list of {KG_INFO[currentService].groupName} properties
+                    </Button>
+                  ) : (
+                    <Tooltip
+                      title={hasColumnClassifier
+                        ? `List filtered using the Column Classifier schema annotation result (Kind: ${column?.kind} 
+                        - Classification: ${column?.nerClassification}).` : ""}
+                      placement="right"
+                      arrow
+                    >
+                      <span>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => window.open(propertyInfo.url, "_blank", "noopener,noreferrer")}
+                          sx={{ textTransform: "none" }}
+                        >
+                          View list of Wikidata properties
+                          {hasColumnClassifier ? ` for ${propertyInfo.label}` : "" }
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  )}
+                </>
+              )}
             </Stack>
             {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>

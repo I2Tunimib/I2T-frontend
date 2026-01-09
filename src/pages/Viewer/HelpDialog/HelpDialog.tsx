@@ -43,6 +43,8 @@ import search from "../../../assets/search.gif";
 import globalActions from "../../../assets/global-actions.png";
 import contextualActions from "../../../assets/contextual-actions.png";
 import columnHeader from "../../../assets/column-header.png";
+import modification from "../../../assets/modification.gif";
+import schemaAnnotation from "../../../assets/schema-annotation.gif";
 
 type HelpDialogProps = DialogProps;
 
@@ -107,7 +109,7 @@ const IndexContainer = styled(Box)({
   padding: "16px",
   borderRight: "1px solid rgba(0, 0, 0, 0.12)",
   height: "auto",
-  minWidth: "250px",
+  minWidth: "260px",
   overflowY: "auto",
 }) as typeof Box;
 
@@ -146,7 +148,24 @@ const steps: Step[] = [
           <b> Table Viewer and its main features</b>
           , as well as how the
           <b> enrichment process </b>
-          works — from reconciling data with external datasets to extending it with new information.
+          works. This workflow allows you to enhance your data through three main steps:
+          <List>
+            <li>
+              <b>Modification: </b>
+              Applying transformation functions to selected columns, such as Date Formatter or Data Cleaning,
+              to ensure consistency.
+            </li>
+            <li>
+              <b>Reconciliation: </b>
+              Matching entities in your original data with entities in external datasets (e.g., Wikidata).
+            </li>
+            <li>
+              <b>Extension: </b>
+              Retrieving additional information from the target dataset using the reconciled entities.
+            </li>
+          </List>
+          SemTUI supports each of these steps by providing integrated access to modification, reconciliation, and
+          extension services.
         </Typography>
       </Stack>
     ),
@@ -156,7 +175,7 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
-          It is the main component of SemTUI. It allows users to efficiently
+          It is the main component of SemTUI. It allows you to efficiently
           visualize a table and perform various kinds of action on it.
           <Box display="flex" justifyContent="center" my={1}>
             <Img src={globalActions} style={{ width: "90%" }} />
@@ -164,7 +183,7 @@ const steps: Step[] = [
           Starting from the top, the Toolbar contains
           <b> global actions </b>
           that affect the entire
-          table. From here, users can:
+          table. From here, you can:
           <List>
             <li>
               <b>Switch </b>
@@ -206,7 +225,7 @@ const steps: Step[] = [
       return (
         <Stack gap="10px">
           <Typography component="div">
-            SemTUI allows users to visualize tabular data in different formats, depending on the task and level of
+            SemTUI allows you to visualize tabular data in different formats, depending on the task and level of
             detail
             required.
             The available visualization modes are:
@@ -215,12 +234,12 @@ const steps: Step[] = [
                 <b>Table view</b>
                 <br />
                 It is the default visualization mode, which displays data in a structured tabular format.
-                This view enables users to interact with cells, rows, and columns, apply filters, manage annotations,
+                This view enables you to interact with cells, rows, and columns, apply filters, manage annotations,
                 and perform enrichment operations.
                 <Box display="flex" justifyContent="center" my={1}>
                   <Img src={tableView} style={{ width: "90%" }} />
                 </Box>
-                For a detailed explanation of table-based interactions, refer to Section
+                For a detailed explanation of table-based interactions, refer to Section {""}
                 <Link
                   component="span"
                   underline="hover"
@@ -228,9 +247,9 @@ const steps: Step[] = [
                   sx={{ cursor: "pointer" }}
                   onClick={() => goTo(6)}
                 >
-                  <b> 3. Table Viewer </b>
+                  <b>3. Table Viewer</b>
                 </Link>
-                {" "}of this tutorial.
+                of this tutorial.
               </li>
               <li>
                 <b>Raw view</b>
@@ -249,7 +268,7 @@ const steps: Step[] = [
                   </li>
                 </SubList>
                 They can be expanded or collapsed to inspect their structure, making this view particularly useful
-                for debugging, inspection, or advanced users interested in the raw table model.
+                for debugging, inspection, or advanced you interested in the raw table model.
                 <Box display="flex" justifyContent="center" my={1}>
                   <Img src={rawView} style={{ width: "90%" }} />
                 </Box>
@@ -259,7 +278,7 @@ const steps: Step[] = [
                 <br />
                 It represents the table as an interactive graph, where nodes correspond to columns and links represent
                 semantic relationships between them.
-                This visualization helps users explore the structure of the dataset and understand how different
+                This visualization helps you explore the structure of the dataset and understand how different
                 columns are connected.
                 <Box display="flex" justifyContent="center" my={1}>
                   <Img src={graphView} style={{ width: "90%" }} />
@@ -289,24 +308,41 @@ const steps: Step[] = [
   },
   {
     label: "Automatic Annotation",
-    Description: () => (
+    Description: ({ goTo }) => (
       <Stack gap="10px">
         <Typography component="div">
-          It allows users to annotate tables automatically using semantic services.
+          It allows you to annotate tables automatically using semantic services.
           The automatic annotation can be applied to:
           <List>
             <li>
               <b>Full table: </b>
-              Annotates the entire table using a specific service, such as <i>Semantic Table Annotation (Alligator)</i>,
-              which is currently the only available method.
+              Annotates the entire table using a specific service, such as Semantic Table Annotation (Alligator),
+              which is currently the only available method. For more details, check {""}
+              <Link
+                component="span"
+                underline="hover"
+                role="button"
+                sx={{ cursor: "pointer" }}
+                onClick={() => goTo(12)}
+              >
+                <b>5.2 Semantic Table Interpretation</b>
+              </Link>
             </li>
             <li>
               <b>Schema: </b>
-              Annotates only the columns of the table using a specific service (e.g., <i> Column Classifier</i>).
+              Annotates only the columns of the table using a specific service (e.g., Column Classifier).
+              For more details, check {""}
+              <Link
+                component="span"
+                underline="hover"
+                role="button"
+                sx={{ cursor: "pointer" }}
+                onClick={() => goTo(14)}
+              >
+                <b>5.4 Schema Annotation</b>
+              </Link>
             </li>
           </List>
-          These annotations can be a long-running and asynchronous, allowing users to continue working on other tables.
-          Once the process is complete, a notification will appear in the bottom-left corner.
           The annotated cells or columns will be automatically updated: for full table annotation with the predicted
           entities and metadata; for schema annotation with NER and kind classifications.
         </Typography>
@@ -318,12 +354,12 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
-          Users can export tables or pipelines in different formats depending on their needs.
+          You can export tables or pipelines in different formats depending on their needs.
           The export options include:
           <List>
             <li>
               <b>Table: </b>
-              Exports the table in standard formats, such as <i>CSV</i>, <i>JSON (W3C Compliant)</i>, or <i>RDF</i>.
+              Exports the table in standard formats, such as CSV, JSON (W3C Compliant), or RDF.
               <br />
               CSV allows customization of delimiter, quote character, decimal separator, and inclusion of header.
               RDF allows setting serialization format, @base URI, filtering threshold, and match value.
@@ -341,7 +377,7 @@ const steps: Step[] = [
   },
   {
     label: "Contextual Actions",
-    Description: () => (
+    Description: ({ goTo }) => (
       <Stack gap="10px">
         <Typography component="div">
           They are part of the SubToolbar and are enabled when one or
@@ -353,12 +389,30 @@ const steps: Step[] = [
           The main options are:
           <List>
             <li>
+              <b>Undo/Redo </b>
+              revert a specific change or re-apply it, allowing you to experiment safely with different
+              annoations and trasformations.
+            </li>
+            <li>
               <b>Delete column(s): </b>
               remove the selected column(s).
             </li>
             <li>
               <b>Manage metadata: </b>
               view or edit metadata of the selected column or cells.
+            </li>
+            <li>
+              <b>Refine matching: </b>
+              part of the enrichment process, covered later in this tutorial. For more details, check {""}
+              <Link
+                component="span"
+                underline="hover"
+                role="button"
+                sx={{ cursor: "pointer" }}
+                onClick={() => goTo(16)}
+              >
+                <b>6. Matching Refinement</b>
+              </Link>
             </li>
             <li>
               <b>Expand cell: </b>
@@ -374,11 +428,7 @@ const steps: Step[] = [
               readability.
             </li>
             <li>
-              <b>Modify column(s): </b>
-              apply transformation functions to the selected column(s), such as date formatting.
-            </li>
-            <li>
-              <b>Reconciliation, Refinement and Extension: </b>
+              <b>Modification, Reconciliantion and Extension: </b>
               part of the enrichment process, covered later in this tutorial.
             </li>
           </List>
@@ -415,7 +465,7 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
-          Filtering options allow users to focus on specific subsets of data based on their match status
+          Filtering options allows you to focus on specific subsets of data based on their match status
           using the
           <FilterAltOutlinedIcon
             sx={{
@@ -470,7 +520,7 @@ const steps: Step[] = [
         </Stack>
         <Typography component="div">
           <br />
-          Users can also toggle the visibility of columns via a dynamic list, which
+          You can also toggle the visibility of columns via a dynamic list, which
           automatically updates when columns are added or removed, using the
           <VisibilityIcon
             sx={{
@@ -536,23 +586,16 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "Enrichment process",
+    label: "Modification",
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
-          The enrichment process involves linking entities in the original data to external datasets (e.g., Wikidata, DBpedia) and consists of two main steps:
-          <List>
-            <li>
-              <b>Reconciliation: </b>
-              Matching entities in the original data with entities in a target dataset.
-            </li>
-            <li>
-              <b>Extension: </b>
-              Retrieving additional information from the target dataset using the reconciled entities.
-            </li>
-          </List>
-          SemTUI supports both steps by providing integrated access to reconciliation and extension services.
+          In this first step you can refine your data before starting with the reconciliation. Simply select one or
+          more columns and then by clicking the
+          <ButtonText> Modify </ButtonText>
+          button in the Toolbar, and then choose one of the available transformation function.
         </Typography>
+        <Img src={modification} />
       </Stack>
     ),
   },
@@ -570,8 +613,18 @@ const steps: Step[] = [
             </li>
             <li>
               <b>Automatic reconciliation: </b>
-              A Semantic Table Interpretation (STI) service can be activated to automatically
-              reconcile cells and annotate headers with predicates and types from Wikidata.
+              It can be performed at two different levels:
+              <SubList>
+                <li>
+                  <b>Full Table with Semantic Table Interpretation: </b>
+                  Automatically reconciles all cells and annotates headers.
+                </li>
+                <li>
+                  <b>Schema Annotation: </b>
+                  Automatically identifies the nature of the columns (Kind and NER
+                  classification).
+                </li>
+              </SubList>
             </li>
           </List>
         </Typography>
@@ -579,7 +632,24 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "Manual annotation",
+    label: "Semantic Table Interpretation (Automatic)",
+    Description: () => (
+      <Stack gap="10px">
+        <Typography component="div">
+          Click on the
+          <ButtonText> Automatic Annotation </ButtonText>
+          button in the application toolbar.
+          <br />
+          Then, choose as target "Full table" and as method the "Semantic Table Interpretation (Alligator)" service.
+          It is a long-running asynchronous, allowing users to continue working on other tables. Once the process
+          is completed, a notification will appear as a pop-up in the bottom left.
+        </Typography>
+        <Img src={automaticAnnotation} />
+      </Stack>
+    ),
+  },
+  {
+    label: "Column Entity Reconciliation",
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
@@ -594,17 +664,37 @@ const steps: Step[] = [
     ),
   },
   {
-    label: "Automatic annotation",
+    label: "Schema Annotation",
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
-          Activate the automatic annotation service for the entire table by pressing the
-          <ButtonText>Automatic annotation</ButtonText>
-          button in the top right corner. It is a long-running asynchronous,
-          allowing users to continue working on other tables. Once the process
-          is completed, a notification will appear as a pop-up in the bottom left.
+          Click on the
+          <ButtonText> Automatic Annotation </ButtonText>
+          button in the application toolbar.
+          <br />
+          Then, choose as target "Schema" and as method the "Column Classifier" service.
+          This process automatically identifies the
+          <b> Kind </b>
+          of the column (e.g., whether it contains entities or
+          literal values) and assigns a
+          <b> NER Classification </b>
+          based on the cell values of the columns:
+          <List>
+            <li>
+              <b>For entities: </b>
+              it distinguishes between PERSON, LOCATION, ORGANIZATION, or OTHER;
+            </li>
+            <li>
+              <b>For literals: </b>
+              it distinguishes between NUMBER, DATE, or STRING;
+            </li>
+          </List>
+          This classification is crucial as it guides the system in suggesting only the most relevant properties
+          by providing a direct link to a list of Wikidata properties relevant to your data type.
+          <br />
+          Once the process is completed, a notification will appear as a pop-up in the bottom left.
         </Typography>
-        <Img src={automaticAnnotation} />
+        <Img src={schemaAnnotation} />
       </Stack>
     ),
   },
@@ -732,7 +822,7 @@ const steps: Step[] = [
               verticalAlign: "middle",
             }}
           />
-          icon to view the metadata of a selected cell. Users can click on candidate names to view their
+          icon to view the metadata of a selected cell. You can click on candidate names to view their
           corresponding entities and browse the associated types to select the correct match.
         </Typography>
         <Img src={refineMatchingManual} />
@@ -840,7 +930,7 @@ const TutorialIndex: FC<{
     {
       chapterNumber: 4,
       step: 10,
-      label: "Enrichment Process",
+      label: "Modification",
       subSteps: [],
     },
     {
@@ -849,24 +939,25 @@ const TutorialIndex: FC<{
       label: "Reconciliation",
       subSteps: [
         { step: 11, label: "Introduction" },
-        { step: 12, label: "Manual Annotation" },
-        { step: 13, label: "Automatic Annotation" },
-        { step: 14, label: "Annotation Symbols" },
+        { step: 12, label: "Semantic Table Interpretation" },
+        { step: 13, label: "Column Entity Reconciliation" },
+        { step: 14, label: "Schema Annotation" },
+        { step: 15, label: "Annotation Symbols" },
       ],
     },
     {
       chapterNumber: 6,
-      step: 15,
+      step: 16,
       label: "Matching Refinement",
       subSteps: [
-        { step: 15, label: "Introduction" },
-        { step: 16, label: "Single cell Refinement" },
-        { step: 17, label: "Group of cells Refinement" },
+        { step: 16, label: "Introduction" },
+        { step: 17, label: "Single cell Refinement" },
+        { step: 18, label: "Group of cells Refinement" },
       ],
     },
     {
       chapterNumber: 7,
-      step: 18,
+      step: 19,
       label: "Extension",
       subSteps: [],
     },
@@ -1102,7 +1193,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
               <Stack gap="10px">
                 SemTUI is a framework for the semantic enrichment of tabular data.
                 <br />
-                It helps users enhance tables by linking cells and columns to external
+                It helps you enhance tables by linking cells and columns to external
                 knowledge sources, adding context and extra information.
                 <br />
                 <Stack alignSelf="center" direction="row" gap="16px" marginTop="16px">

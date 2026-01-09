@@ -256,7 +256,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 6 }));
+            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 10 }));
           }}
         >
           <HelpOutlineRounded />
