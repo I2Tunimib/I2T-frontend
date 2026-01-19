@@ -746,7 +746,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   };
 
   // Early return if cell has no metadata to prevent crashes
-  if (cell && (!cell.metadata || cell.metadata.length === 0)) {
+  if (cell && !cell?.annotationMeta?.annotated && (!cell.metadata || cell.metadata.length === 0)) {
     return (
       <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
         <Stack

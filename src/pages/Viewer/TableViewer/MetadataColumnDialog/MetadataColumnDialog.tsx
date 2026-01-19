@@ -256,7 +256,7 @@ const Content = () => {
           <TypeTab addEdit={handleAddEdit} />
         </TabPanel>
         <TabPanel value={value} index={1}>
-          <PropertyTab addEdit={handleAddEdit} />
+          <PropertyTab addEdit={handleAddEdit} setCurrentRole={setCurrentRole} />
         </TabPanel>
       </Stack>
     </Stack>

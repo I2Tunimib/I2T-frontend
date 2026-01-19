@@ -925,6 +925,14 @@ export const tableSlice = createSliceWithRequests({
               const { id, match, name, uri, obj, description, ...rest } = value;
               const isMatching = match === "true";
 
+              for (let i = 0; i < draft.entities.columns.allIds.length; i++) {
+                const currentId = draft.entities.columns.allIds[i];
+                if (currentId !== colId) {
+                  draft.entities.columns.byId[currentId].role = undefined;
+                }
+              }
+              draft.entities.columns.byId[colId].role = "subject";
+
               if (
                 columnToUpdate.metadata.length > 0 &&
                 columnToUpdate.metadata[0].property &&
@@ -956,6 +964,7 @@ export const tableSlice = createSliceWithRequests({
               draft.entities.columns.byId[colId].metadata = [
                 {
                   ...draft.entities.columns.byId[colId].metadata[0],
+                  role: "subject",
                   property: [
                     ...(draft.entities.columns.byId[colId].metadata[0]
                       ?.property || []),
@@ -1956,10 +1965,10 @@ export const tableSlice = createSliceWithRequests({
           const { data, reconciliator, undoable = true } = action.payload;
           console.log("reconcile data", data);
 
-          //if columnReconciler, use the reconciliator with the corresponding selected prefix
+          //if inTableLinker, use the reconciliator with the corresponding selected prefix
           const effectiveReconciliator =
             (data as any).reconciliator &&
-            reconciliator.id === "columnReconciler"
+            reconciliator.id === "inTableLinker"
               ? (data as any).reconciliator
               : reconciliator;
 
