@@ -7,21 +7,25 @@ import { CellContext, Row } from "@tanstack/react-table";
 export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
   const cellValue = getValue();
   console.log("ResourceLink called with:", cellValue);
-  const { value, uri } = cellValue;
-  console.log("cell uri", uri);
+
+  // Extract the actual string value if it's nested in an object
+  const displayValue =
+    typeof cellValue === "object" && cellValue !== null && "value" in cellValue
+      ? typeof cellValue.value === "object" &&
+        cellValue.value !== null &&
+        "value" in cellValue.value
+        ? cellValue.value.value
+        : cellValue.value
+      : cellValue;
+
+  const uri = cellValue?.uri;
+  console.log("cell uri", uri, "displayValue", displayValue);
+
   if (!uri) {
-    // If the URI is empty, render plain text instead of a clickable link with a tooltip for the value
-    if (typeof value === "object" && value !== null && "value" in value) {
-      console.log("Found object with value property:", value);
-      return (
-        <Typography variant="body2" color="textSecondary">
-          {value.value || ""}
-        </Typography>
-      );
-    }
+    // If the URI is empty, render plain text instead of a clickable link
     return (
       <Typography variant="body2" color="textSecondary">
-        {value}
+        {displayValue || ""}
       </Typography>
     );
   }
@@ -29,11 +33,11 @@ export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
   return (
     <Link
       onClick={(event) => event.stopPropagation()}
-      title={value}
+      title={displayValue}
       href={uri ?? "#"}
       target="_blank"
     >
-      {value}
+      {displayValue}
     </Link>
   );
 };
