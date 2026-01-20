@@ -102,10 +102,10 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
       renderFunction: (item: any) => JSX.Element,
       isExpanded: boolean,
       toggleExpanded: () => void,
+      maxInitial: number = 3,
     ) => {
       if (!items || items.length === 0) return null;
 
-      const maxInitial = 3;
       const displayItems = isExpanded ? items : items.slice(0, maxInitial);
       const hasMore = items.length > maxInitial;
 
@@ -145,6 +145,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
           RenderType,
           typesExpanded,
           () => setTypesExpanded(!typesExpanded),
+          1,
         )}
       {metadata[0].property &&
         renderExpandableSection(
@@ -152,6 +153,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
           RenderProperty,
           propertiesExpanded,
           () => setPropertiesExpanded(!propertiesExpanded),
+          1,
         )}
       <ExpandableList
         messageIfNoContent="Cell doesn't have any entity metadata"
@@ -164,7 +166,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
                 {item.match ? (
                   <CheckRoundedIcon className={styles.Icon} />
                 ) : null}
-                <EntityLabel className={styles.MetaLink} type="entity">
+                <EntityLabel className={styles.MetaLink} type="">
                   <Link
                     sx={{
                       marginLeft: "20px",
@@ -187,7 +189,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
                 {item.match ? (
                   <CheckRoundedIcon className={styles.Icon} />
                 ) : null}
-                <EntityLabel className={styles.MetaLink} type="entity">
+                <EntityLabel className={styles.MetaLink} type="">
                   <Link
                     sx={{
                       marginLeft: "20px",
