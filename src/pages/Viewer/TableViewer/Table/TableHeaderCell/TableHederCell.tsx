@@ -70,6 +70,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       handleSelectedColumnChange,
       handleSelectedColumnCellChange,
       reconciliators,
+      rowsState,
       highlightState,
       sortType,
       setSortType,
@@ -116,25 +117,79 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       setSortType(type);
     };
 
+    const shouldShowBadge = useCallback(() => {
+      // Skip for index column
+      if (id === "index" || !rowsState || !rowsState.allIds) {
+        return false;
+      }
+
+      // Check if any cells have metadata OR have been annotated (reconciled)
+      return rowsState.allIds.some((rowId: string) => {
+        const cell = rowsState.byId[rowId]?.cells?.[id];
+        return (
+          cell &&
+          ((cell.metadata && cell.metadata.length > 0) ||
+            (cell.annotationMeta && cell.annotationMeta.annotated))
+        );
+      });
+    }, [id, rowsState]);
+
     const getBadgeStatus = useCallback(
       (column: any) => {
         const {
           annotationMeta: { annotated, match, highestScore },
         } = column;
 
-        if (match.value) {
-          switch (match.reason) {
-            case "manual":
-              return "match-manual";
-            case "reconciliator":
-              return "match-reconciliator";
-            case "refinement":
-              return "match-refinement";
-            default:
-              return "match-reconciliator";
+        // Check if all cells in this column are actually reconciled
+        // Skip check for index column
+        if (id !== "index" && rowsState && rowsState.allIds) {
+          const allCellsReconciled = rowsState.allIds.every((rowId: string) => {
+            const cell = rowsState.byId[rowId]?.cells?.[id];
+            return (
+              cell &&
+              cell.annotationMeta &&
+              cell.annotationMeta.match?.value === true
+            );
+          });
+
+          // If ALL cells are reconciled, show green badge
+          if (allCellsReconciled) {
+            if (match.value) {
+              switch (match.reason) {
+                case "manual":
+                  return "match-manual";
+                case "reconciliator":
+                  return "match-reconciliator";
+                case "refinement":
+                  return "match-refinement";
+                default:
+                  return "match-reconciliator";
+              }
+            }
+            // All cells matched but no column metadata match reason
+            return "match-reconciliator";
           }
+
+          // Check if any cells are matched
+          const someCellsMatched = rowsState.allIds.some((rowId: string) => {
+            const cell = rowsState.byId[rowId]?.cells?.[id];
+            return (
+              cell &&
+              cell.annotationMeta &&
+              cell.annotationMeta.match?.value === true
+            );
+          });
+
+          // If some cells are matched but not all, return warn (yellow)
+          if (someCellsMatched) {
+            return "warn";
+          }
+
+          // If no cells are matched but all have metadata, return miss (red)
+          return "miss";
         }
 
+        // Below checks are fallback for when rowsState is not available
         if (
           annotated &&
           column.metadata.length > 0 &&
@@ -153,7 +208,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         }
         return "warn";
       },
-      [lowerBound],
+      [lowerBound, rowsState, id],
     );
 
     const getSortTooltipText = (column: any, type: string) => {
@@ -288,14 +343,13 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
               <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
                   <div className={styles.Row}>
-                    {columnData.annotationMeta &&
-                      columnData.annotationMeta.annotated && (
-                        <StatusBadge
-                          status={getBadgeStatus(columnData)}
-                          size="small"
-                          marginRight="5px"
-                        />
-                      )}
+                    {shouldShowBadge() && (
+                      <StatusBadge
+                        status={getBadgeStatus(columnData)}
+                        size="small"
+                        marginRight="5px"
+                      />
+                    )}
                     <Stack
                       sx={{
                         flex: "1 1 auto",
@@ -451,6 +505,7 @@ const mapStateToProps = (state: RootState, props: any) => {
   const columnData = props.header?.column?.columnDef?.data;
   return {
     reconciliators: selectColumnReconciliators(state, { data: columnData }),
+    rowsState: state.table.entities.rows,
   };
 };
 
