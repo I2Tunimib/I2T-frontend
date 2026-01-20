@@ -43,11 +43,8 @@ const Content = styled.div({
 });
 
 const DialogInnerContent = () => {
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [uniqueServices, setUniqueServices] = useState<Modifier[]>([]);
   const [currentService, setCurrentService] = useState<Modifier>();
-  const [groupedServices, setGroupedServices] =
-    useState<Map<string, Modifier[]>>();
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const modificationServices = useAppSelector(selectModifiersAsArray);
@@ -55,7 +52,6 @@ const DialogInnerContent = () => {
   const selectedColumnsArray = useAppSelector(selectSelectedColumnIdsAsArray);
   const [joinColumns, setJoinColumns] = useState(false);
   const rows = useAppSelector((state: RootState) => state.table.entities.rows);
-  const currentColumnsCount = useAppSelector((state: RootState) => state.table.entities.columns.allIds.length);
 
   const sampledValues = React.useMemo(() => {
     if (!rows || selectedColumnsArray.length === 0) return [];
@@ -168,13 +164,6 @@ const DialogInnerContent = () => {
       throw err;
     }
   };
-  const toggleGroup = (uri: string) => {
-    setExpandedGroup((prev) => (prev === uri ? null : uri));
-  };
-  const handleHeaderClick = (e, uri) => {
-    e.stopPropagation(); // Prevent the Select from closing
-    setExpandedGroup((prev) => (prev === uri ? null : uri));
-  };
   const serviceWithDescription = React.useMemo(() => {
     if (!currentService) return undefined;
     const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
@@ -256,7 +245,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 10 }));
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 10 }));
           }}
         >
           <HelpOutlineRounded />

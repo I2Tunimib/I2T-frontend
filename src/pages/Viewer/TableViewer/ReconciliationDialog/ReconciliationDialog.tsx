@@ -281,7 +281,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
           <IconButton
             size="small"
             onClick={() => {
-              dispatch(updateUI({ openHelpDialog: true, helpStart: "rec" }));
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 7 }));
             }}
           >
             <HelpOutlineRounded />

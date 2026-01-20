@@ -64,11 +64,8 @@ const Content = styled.div({
 });
 
 const DialogInnerContent = () => {
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [uniqueServices, setUniqueServices] = useState<Extender[]>([]);
   const [currentService, setCurrentService] = useState<Extender>();
-  const [groupedServices, setGroupedServices] =
-    useState<Map<string, Extender[]>>();
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const extensionServices = useAppSelector(selectExtendersAsArray);
@@ -185,13 +182,6 @@ const DialogInnerContent = () => {
           }
         });
     }
-  };
-  const toggleGroup = (uri: string) => {
-    setExpandedGroup((prev) => (prev === uri ? null : uri));
-  };
-  const handleHeaderClick = (e: React.MouseEvent, uri: string) => {
-    e.stopPropagation(); // Prevent the Select from closing
-    setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
 
   const serviceWithDescription = React.useMemo(() => {
@@ -345,7 +335,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
           <IconButton
             size="small"
             onClick={() => {
-              dispatch(updateUI({ openHelpDialog: true, helpStart: "ext" }));
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 15 }));
             }}
           >
             <HelpOutlineRounded />

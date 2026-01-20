@@ -347,17 +347,9 @@ export const selectTutorialStep = createSelector(
 /**
  * Get discover reconcilers step.
  */
-export const selectDiscoverRecStep = createSelector(
+export const selectDiscoverStep = createSelector(
   selectUIState,
-  (ui) => ui.discoverRecStep || 1,
-);
-
-/**
- * Get discover extenders step.
- */
-export const selectDiscoverExtStep = createSelector(
-  selectUIState,
-  (ui) => ui.discoverExtStep || 1,
+  (ui) => ui.discoverStep || 1,
 );
 
 /**

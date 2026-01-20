@@ -14,7 +14,7 @@ import {
   Link,
 } from "@mui/material";
 import { setHelpStart, updateUI } from "@store/slices/table/table.slice";
-import { selectTutorialStep, selectDiscoverRecStep, selectDiscoverExtStep } from "@store/slices/table/table.selectors";
+import { selectTutorialStep, selectDiscoverStep } from "@store/slices/table/table.selectors";
 import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import PlaylistAddCheckRoundedIcon from "@mui/icons-material/PlaylistAddCheckRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -29,8 +29,7 @@ import {
   useEffect,
 } from "react";
 import { StatusBadge } from "@components/core";
-import DiscoverRecStepper from "./DiscoverRecStepper";
-import DiscoverExtStepper from "./DiscoverExtStepper";
+import DiscoverStepper from "./DiscoverStepper";
 import tableView from "../../../assets/table-view.png";
 import rawView from "../../../assets/raw-view.png";
 import graphView from "../../../assets/graph-view.png";
@@ -239,7 +238,7 @@ const steps: Step[] = [
                 <Box display="flex" justifyContent="center" my={1}>
                   <Img src={tableView} style={{ width: "90%" }} />
                 </Box>
-                For a detailed explanation of table-based interactions, refer to Section {""}
+                For a detailed explanation of table-based interactions, refer to Section {" "}
                 <Link
                   component="span"
                   underline="hover"
@@ -249,7 +248,7 @@ const steps: Step[] = [
                 >
                   <b>3. Table Viewer</b>
                 </Link>
-                of this tutorial.
+                {" "}of this tutorial.
               </li>
               <li>
                 <b>Raw view</b>
@@ -1145,8 +1144,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
   const refWrapper = useRef<HTMLDivElement | null>(null);
   const dispatch = useAppDispatch();
   const tutorialStep = useAppSelector(selectTutorialStep);
-  const discoverRecStep = useAppSelector(selectDiscoverRecStep);
-  const discoverExtStep = useAppSelector(selectDiscoverExtStep);
+  const discoverStep = useAppSelector(selectDiscoverStep);
 
   const handleStart = (value: boolean | "tutorial" | "rec" | "ext") => {
     dispatch(setHelpStart(value));
@@ -1157,19 +1155,18 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
     // automatically start the tutorial
     if (tutorialStep && tutorialStep > 1) {
       handleStart("tutorial");
-    } else if (discoverRecStep && discoverRecStep > 1) {
-      handleStart("rec");
-    } else if (discoverExtStep && discoverExtStep > 1) {
-      handleStart("ext");
+    } else if (discoverStep && discoverStep > 1) {
+      handleStart("discover");
     } else {
       handleStart(false); // welcome
     }
-  }, [tutorialStep, discoverRecStep, discoverExtStep, dispatch]);
+  }, [tutorialStep, discoverStep, dispatch]);
 
   const handleOnClose = (
     event: {},
     reason: "backdropClick" | "escapeKeyDown"
   ) => {
+    dispatch(updateUI({ tutorialStep: 0, discoverStep: 0 }));
     handleStart(false);
     if (onClose) {
       onClose(event, reason);
@@ -1177,6 +1174,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
   };
 
   const handleOnDone = () => {
+    dispatch(updateUI({ tutorialStep: 0, discoverStep: 0 }));
     handleStart(false);
   };
 
@@ -1205,16 +1203,10 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
                     Start tutorial
                   </Button>
                   <Button
-                    onClick={() => handleStart("rec")}
+                    onClick={() => handleStart("discover")}
                     variant="outlined"
                   >
-                    Discover reconcilers
-                  </Button>
-                  <Button
-                    onClick={() => handleStart("ext")}
-                    variant="outlined"
-                  >
-                    Discover extenders
+                    Discover services
                   </Button>
                 </Stack>
               </Stack>
@@ -1222,8 +1214,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
           </>
         ) : (
           <DialogContent sx={{ p: 0 }}>
-            {start === "rec" && <DiscoverRecStepper onDone={handleOnDone} onBackToWelcome={() => handleStart(false)} />}
-            {start === "ext" && <DiscoverExtStepper onDone={handleOnDone} onBackToWelcome={() => handleStart(false)} />}
+            {start === "discover" && <DiscoverStepper onDone={handleOnDone} onBackToWelcome={() => handleStart(false)} />}
             {start === "tutorial" && <TutorialStepper onDone={handleOnDone} onBackToWelcome={() => handleStart(false)} />}
           </DialogContent>
         )}
