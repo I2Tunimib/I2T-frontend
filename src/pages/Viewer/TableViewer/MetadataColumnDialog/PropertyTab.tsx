@@ -57,19 +57,8 @@ import AddMetadataForm from "./AddMetadataForm";
 
 const DeferredTable = deferMounting(CustomTable);
 
-const makeData = (
-  rawData: ReturnType<typeof selectColumnCellMetadataTableFormat>
-) => {
-  if (!rawData) {
-    return {
-      columns: [],
-      data: [],
-    };
-  }
-
-  const { column, service } = rawData;
-
-  if (!service) {
+const makeData = (column: Column | undefined) => {
+  if (!column) {
     return {
       columns: [],
       data: [],
@@ -91,7 +80,7 @@ const makeData = (
     match: { label: "Match", type: "tag" },
   };
 
-  if (!column.metadata || !column.metadata[0].property) {
+  if (!column.metadata || !column.metadata[0] || !column.metadata[0].property) {
     return {
       columns: [],
       data: [],
@@ -99,7 +88,7 @@ const makeData = (
   }
 
   const { property: metadata } = column.metadata[0];
-
+  console.log("column data", column);
   /*
   the following snippet is a workaround because Datamodel of Property (API response JSON) is different
   from Entity Datamodel
@@ -140,16 +129,19 @@ const makeData = (
   const data = newMetadata
     .map((metadataItem) => {
       //const data = metadata.map((metadataItem) => {
-      return Object.keys(metaToView).reduce((acc, key) => {
-        const value = metadataItem[key as keyof BaseMetadata];
-        if (value !== undefined) {
-          acc[key] = value;
-        } else {
-          acc[key] = null;
-        }
+      return Object.keys(metaToView).reduce(
+        (acc, key) => {
+          const value = metadataItem[key as keyof BaseMetadata];
+          if (value !== undefined) {
+            acc[key] = value;
+          } else {
+            acc[key] = null;
+          }
 
-        return acc;
-      }, {} as Record<string, any>);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
     })
     .sort((a, b) => {
       // Sort by selected status first (selected items come first)
@@ -208,7 +200,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     setState,
     memoizedState: { columns, data },
   } = usePrepareTable({
-    selector: selectColumnCellMetadataTableFormat,
+    selector: selectCurrentCol,
     makeData,
     dependencies: [column],
   });
@@ -221,8 +213,8 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
   const { loading } = useAppSelector(selectReconcileRequestStatus);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
-  const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
-  const currentService = rawData?.service?.prefix || "";
+  const currentService =
+    column?.metadata?.[0]?.property?.[0]?.id?.split(":")?.[0] || "";
 
   const options = useAppSelector(selectColumnsAsSelectOptions);
   const currentColumnId = column?.id;
@@ -239,7 +231,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
     if (kind === "entity") {
       return {
         url: `${baseUrl}/wikibase-item`,
-        label: "Items"
+        label: "Items",
       };
     }
     if (kind === "literal") {
@@ -247,35 +239,35 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
         case "DATE":
           return {
             url: `${baseUrl}/time`,
-            label: "Point in time"
+            label: "Point in time",
           };
         case "NUMBER":
           return {
             url: `${baseUrl}/quantity`,
-            label: "Quantity"
+            label: "Quantity",
           };
         case "STRING":
           return {
             url: `${baseUrl}/string`,
-            label: "String"
+            label: "String",
           };
         default:
           return {
             url: baseUrl,
-            label: "Wikidata"
+            label: "Wikidata",
           };
       }
     }
     return {
       url: baseUrl,
-      label: "Wikidata"
+      label: "Wikidata",
     };
   };
   const propertyInfo = getPropertyInfo(column?.kind, column?.nerClassification);
 
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
-      score: 1.00,
+      score: 1.0,
       match: "false",
     },
   });
@@ -297,7 +289,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
             colId: column.id,
           }),
           false,
-          false
+          false,
         );
         // dispatch(updateColumnMetadata({ metadataId: selectedMetadata, colId: column.id }));
         // dispatch(updateUI({ openMetadataColumnDialog: false }));
@@ -329,22 +321,22 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
         if (column.metadata && column.metadata.length > 0) {
           console.log("deleting prop metadata", row);
           if (column.metadata[0].property) {
-            deleteColumnMetadata({
+            (deleteColumnMetadata({
               metadataId: row.id,
               colId: column.id,
               type: "property",
             }),
-              true;
+              true);
 
             // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'property' }));
             // setUndoSteps(undoSteps + 1);
           } else if (column.metadata[0].entity) {
-            deleteColumnMetadata({
+            (deleteColumnMetadata({
               metadataId: row.id,
               colId: column.id,
               type: "entity",
             }),
-              true;
+              true);
 
             // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'entity' }));
             // setUndoSteps(undoSteps + 1);
@@ -427,12 +419,12 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
         };
       });
     },
-    [setState, setSelectedMetadata]
+    [setState, setSelectedMetadata],
   );
 
   const fetchMetadata = (service: string) => {
     const reconciliator = reconciliators.find(
-      (recon) => recon.prefix === service
+      (recon) => recon.prefix === service,
     );
     if (reconciliator && column) {
       // dispatch(reconcile({
@@ -465,7 +457,11 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
 
       let description = "";
       try {
-        const result = await fetchTypeAndDescription(prefix.replace(/:$/, ""), idFromUri, formState.name);
+        const result = await fetchTypeAndDescription(
+          prefix.replace(/:$/, ""),
+          idFromUri,
+          formState.name,
+        );
         description = result.description || "";
       } catch (err) {
         console.error("Error fetching metadata info:", err);
@@ -478,7 +474,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
           prefix,
           value: { ...formState, id: `${prefix}:${idFromUri}`, description },
         }),
-        true
+        true,
       );
       reset();
       setShowAdd(false);
@@ -515,7 +511,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
       }
       return "warn";
     },
-    [lowerBound]
+    [lowerBound],
   );
 
   const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
@@ -550,7 +546,11 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
           >
             <Stack direction="row" gap={1} alignItems="center">
               {column.kind !== "literal" && (
-                <Tooltip open={showTooltip} title="Add property" placement="right">
+                <Tooltip
+                  open={showTooltip}
+                  title="Add property"
+                  placement="right"
+                >
                   <Button
                     variant="outlined"
                     color="primary"
@@ -561,7 +561,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                       textTransform: "none",
                       display: "flex",
                       alignItems: "center",
-                      gap: 1
+                      gap: 1,
                     }}
                   >
                     Add column property
@@ -576,20 +576,25 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
               )}
               {(column.kind === "literal" || showAdd) && (
                 <>
-                  {!!currentService && servicesByPrefix[currentService]?.listProps ? (
+                  {!!currentService &&
+                  servicesByPrefix[currentService]?.listProps ? (
                     <Button
                       variant="outlined"
                       color="primary"
                       onClick={handleListPropsInService}
                       sx={{ textTransform: "none" }}
                     >
-                      View list of {KG_INFO[currentService].groupName} properties
+                      View list of {KG_INFO[currentService].groupName}{" "}
+                      properties
                     </Button>
                   ) : (
                     <Tooltip
-                      title={hasColumnClassifier
-                        ? `List filtered using the Column Classifier schema annotation result (Kind: ${column?.kind} 
-                        - Classification: ${column?.nerClassification}).` : ""}
+                      title={
+                        hasColumnClassifier
+                          ? `List filtered using the Column Classifier schema annotation result (Kind: ${column?.kind}
+                        - Classification: ${column?.nerClassification}).`
+                          : ""
+                      }
                       placement="right"
                       arrow
                     >
@@ -597,11 +602,19 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
                         <Button
                           variant="outlined"
                           color="primary"
-                          onClick={() => window.open(propertyInfo.url, "_blank", "noopener,noreferrer")}
+                          onClick={() =>
+                            window.open(
+                              propertyInfo.url,
+                              "_blank",
+                              "noopener,noreferrer",
+                            )
+                          }
                           sx={{ textTransform: "none" }}
                         >
                           View list of Wikidata properties
-                          {hasColumnClassifier ? ` for ${propertyInfo.label}` : "" }
+                          {hasColumnClassifier
+                            ? ` for ${propertyInfo.label}`
+                            : ""}
                         </Button>
                       </span>
                     </Tooltip>
@@ -620,7 +633,8 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
               </Box>
             )}
           </Stack>
-      )}
+        )
+      }
       <DeferredTable
         flexGrow={1}
         stickyHeaderTop="61.5px"
