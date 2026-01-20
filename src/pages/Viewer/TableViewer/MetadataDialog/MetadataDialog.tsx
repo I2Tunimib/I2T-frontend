@@ -27,11 +27,11 @@ import {
 } from "@store/slices/table/table.slice";
 import {
   selectCellMetadataTableFormat,
+  selectColumnCellMetadataTableFormat,
   selectCurrentCell,
   selectIsViewOnly,
   selectReconcileRequestStatus,
   selectSettings,
-  selectHelpDialogStatus,
 } from "@store/slices/table/table.selectors";
 import {
   selectAppConfig,
@@ -43,7 +43,7 @@ import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import { getCellContext } from "@store/slices/table/utils/table.reconciliation-utils";
 import CustomTable from "@components/kit/CustomTable/CustomTable";
 import deferMounting from "@components/HOC";
-import { reconcile } from "@store/slices/table/table.thunk";
+//import { reconcile } from "@store/slices/table/table.thunk";
 import { Cell } from "@tanstack/react-table";
 import {
   BaseMetadata,
@@ -54,15 +54,17 @@ import {
   StatusBadge,
   IconButtonTooltip,
 } from "@components/core";
+import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
+//import { initial } from "lodash";
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
-import HelpDialog from "../../HelpDialog/HelpDialog";
-import { initial } from "lodash";
+import AddMetadataForm from "../MetadataColumnDialog/AddMetadataForm";
+//import HelpDialog from "../../HelpDialog/HelpDialog";
 
 const DeferredTable = deferMounting(CustomTable);
 
 const makeData = (
-  rawData: ReturnType<typeof selectCellMetadataTableFormat>
+  rawData: ReturnType<typeof selectCellMetadataTableFormat>,
 ) => {
   if (rawData) {
     const { cell, service } = rawData;
@@ -111,17 +113,20 @@ const makeData = (
         return 1;
       })
       .map((metadataItem) => {
-        return Object.keys(metaToView).reduce((acc, key) => {
-          let value = metadataItem[key as keyof BaseMetadata];
+        return Object.keys(metaToView).reduce(
+          (acc, key) => {
+            let value = metadataItem[key as keyof BaseMetadata];
 
-          if (value !== undefined) {
-            acc[key] = value;
-          } else {
-            acc[key] = null;
-          }
+            if (value !== undefined) {
+              acc[key] = value;
+            } else {
+              acc[key] = null;
+            }
 
-          return acc;
-        }, {} as Record<string, any>);
+            return acc;
+          },
+          {} as Record<string, any>,
+        );
       })
       .map((item) => {
         return {
@@ -166,8 +171,9 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     dependencies: [toUpdate],
   });
   const [currentService, setCurrentService] = useState<string>();
+  const [isManualMatch, setIsManualMatch] = useState(false);
   const [selectedMetadata, setSelectedMetadata] = useState<FormState | null>(
-    null
+    null,
   );
   const [newMetaMatching, setNewMetaMatching] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
@@ -177,7 +183,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
-      score: 1,
+      score: 1.0,
       match: "true",
     },
   });
@@ -188,23 +194,49 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const settings = useAppSelector(selectSettings);
   const dispatch = useAppDispatch();
-  const uniqueReconciliators = Array.from(new Set(reconciliators.map(r => r.prefix)))
-      .map(prefix => reconciliators.find(r => r.prefix === prefix));
+  const uniqueReconciliators = Array.from(
+    new Set(reconciliators.map((r) => r.id)),
+  ).map((id) => reconciliators.find((r) => r.id === id));
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
   } = settings;
 
   useEffect(() => {
-    // set initial value of select
-    if (reconciliators) {
-      setCurrentService(reconciliators[0].prefix);
+    if (!cell) return;
+    const isCellReconciled = cell?.annotationMeta?.annotated;
+    if (isCellReconciled) {
+      const reason = cell?.annotationMeta?.match?.reason;
+      if (reason === "manual") {
+        setIsManualMatch(true);
+      } else if (cell?.metadata && cell.metadata.length > 0) {
+        const prefix = cell.metadata[0].id.split(":")[0];
+        setIsManualMatch(false);
+        setCurrentService(prefix);
+      } else {
+        setIsManualMatch(false);
+        setCurrentService("");
+      }
+    } else {
+      setIsManualMatch(false);
+      setCurrentService("");
     }
-  }, [reconciliators]);
+  }, [cell, reconciliators]);
+
+  useEffect(() => {
+    //When a cell has been reconciliated manually, the other ones can be reconciled using the same prefix
+    if (cell && cell.id) {
+      const cellContext = getCellContext(cell);
+      if (cellContext && cellContext !== "") {
+        const prefix = cellContext.replace(":", "");
+        setCurrentService(prefix);
+      }
+    }
+  }, [cell]);
 
   useEffect(() => {
     //this useEffect is used to track the initial selected metadata in order to not show the propagation if not needed
-    if (cell) {
+    if (cell && cell.metadata && cell.metadata.length > 0) {
       const { metadata } = cell;
       const initialMatch = metadata
         .filter((meta) => meta.match)
@@ -220,7 +252,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     dispatch(
       updateUI({
         openMetadataDialog: false,
-      })
+      }),
     );
   };
 
@@ -234,8 +266,15 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log(
       "confirm condition",
       cell && selectedMetadata,
-      selectedMetadata
+      selectedMetadata,
     );
+
+    // Safety check for empty metadata
+    if (!cell || !cell.metadata || cell.metadata.length === 0) {
+      console.warn("Cannot confirm: cell metadata is empty");
+      handleClose();
+      return;
+    }
 
     // Check if the selection has changed from the initial state
     const hasSelectionChanged = () => {
@@ -290,7 +329,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               updateCellMetadata({
                 metadataId: selectedMetadata.id,
                 cellId: cell.id,
-              })
+              }),
             );
           } else if (selectedMetadata.match === "false") {
             // For when we're deselecting a newly selected item
@@ -299,7 +338,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 metadataId: selectedMetadata.id,
                 cellId: cell.id,
                 match: false,
-              })
+              }),
             );
           }
         } else {
@@ -311,7 +350,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 metadataId: selectedMetadata.id,
                 cellId: cell.id,
                 match: selectedMetadata.match === "true",
-              })
+              }),
             );
           }
         }
@@ -324,7 +363,30 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     }
   };
 
+  const handleDeleteRow = (original: any) => {
+    console.log("original Id", original.id);
+    if (!cell || !cell.metadata || cell.metadata.length === 0) {
+      console.warn("Cannot delete: cell metadata is empty");
+      return;
+    }
+    if (!original || !original.id) {
+      console.warn("Cannot delete: invalid row data");
+      return;
+    }
+    console.log();
+    dispatch(
+      deleteCellMetadata({
+        cellId: cell.id,
+        metadataId: original.id.label || original.id,
+      }),
+    );
+  };
+
   const handleSelectedRowDelete = useCallback((row: any) => {
+    if (!row || !row.id) {
+      console.warn("Cannot delete: invalid row data");
+      return;
+    }
     handleDeleteRow(row);
     setMetasToDelete((prev) => {
       const newMetas = [...prev];
@@ -343,8 +405,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     (row: any) => {
       if (row) {
         setState(({ columns: colState, data: dataState }) => {
-          // Check if the row is already matched (selected)
-          const isCurrentlyMatched = row.match;
+          // Safety check: ensure data is not empty and row exists
+          if (!dataState || dataState.length === 0) {
+            console.warn("Cannot update selection: data is empty");
+            return { columns: colState, data: dataState };
+          }
 
           const newData = dataState.map((item: any) => {
             if (item.id === row.id) {
@@ -376,7 +441,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   "item",
                   item,
                   initialMatching.includes(item.id),
-                  !currentState.matched
+                  !currentState.matched,
                 );
                 if (
                   initialMatching.includes(item.id) &&
@@ -414,13 +479,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 "Current state:",
                 currentState,
                 "Initial matching:",
-                initialMatching
+                initialMatching,
               );
               setShowPropagate(selectionChanged);
 
               return {
                 ...item,
-                match: match,
+                match,
                 selected: match,
               };
             }
@@ -438,62 +503,137 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         });
       }
     },
-    [initialMatching]
+    [initialMatching],
   );
 
-  const handleDeleteRow = (original: any) => {
-    console.log("original Id", original.id);
-    if (cell) {
-      console.log();
-      dispatch(
-        deleteCellMetadata({
-          cellId: cell.id,
-          metadataId: original.id.label || original.id,
-        })
-      );
+  const onSubmitNewMetadata = async (formState: FormState) => {
+    if (!cell || !cell.metadata) {
+      console.warn("Cannot add metadata: cell is invalid");
+      return;
     }
-  };
-
-  const onSubmitNewMetadata = (formState: FormState) => {
     if (cell) {
       let tempPrefix = getCellContext(cell);
-      if (formState.id.split(":").length > 1) {
-        tempPrefix = formState.id.split(":")[0];
-      } else {
-        if (
-          tempPrefix === "" ||
-          (tempPrefix.startsWith("r0$") && cell.id.split(":").length > 1)
-        ) {
-          tempPrefix = cell.id.split(":")[0];
-        }
-      }
 
       console.log(
         "prefix",
         getCellContext(cell) !== ""
           ? getCellContext(cell)
-          : cell.id.split(":")[0]
+          : cell.id.split(":")[0],
       );
+      const { prefix } = formState;
+      // Extract prefix and id from URI for type and description fetching
+      let idFromUri = "";
+
+      // Prioritize known providers (Wikidata, Geonames, GeoCoord) first,
+      // then fall back to generic extraction (fragment, last path segment, query).
+      try {
+        const url = new URL(formState.uri);
+        console.log("url", url);
+
+        // SPECIAL CASES FIRST
+        if (prefix && prefix.startsWith("wd")) {
+          // Wikidata typical URL: https://www.wikidata.org/wiki/Q123
+          // prefer the last non-empty path segment or fragment
+          idFromUri =
+            url.pathname.split("/").filter(Boolean).pop() ||
+            url.hash.replace(/^#/, "") ||
+            "";
+        } else if (prefix === "geo") {
+          // Geonames: https://www.geonames.org/3117735/madrid.html -> id is 3117735
+          const parts = url.pathname.split("/").filter(Boolean);
+          idFromUri =
+            parts[0] ||
+            parts[parts.length - 1] ||
+            url.hash.replace(/^#/, "") ||
+            "";
+        } else if (prefix === "geoCoord") {
+          // Coordinates (e.g., Google Maps): take last path segment and keep comma-separated coords
+          const last = url.pathname.split("/").filter(Boolean).pop() || "";
+          const parts = last.split(",");
+          idFromUri = parts.join(",") || url.hash.replace(/^#/, "");
+        } else {
+          // GENERIC FALLBACK
+          // Prefer fragment (#id), otherwise last non-empty path segment,
+          // otherwise last query param value, otherwise pathname trimmed.
+          if (url.hash && url.hash.length > 1) {
+            idFromUri = url.hash.slice(1);
+          } else {
+            const pathParts = url.pathname.split("/").filter(Boolean);
+            if (pathParts.length > 0) {
+              idFromUri = pathParts[pathParts.length - 1];
+            } else {
+              const params = new URLSearchParams(url.search);
+              const lastKey = Array.from(params.keys()).pop();
+              idFromUri = lastKey
+                ? params.get(lastKey) || ""
+                : url.pathname.replace(/^\/+|\/+$/g, "");
+            }
+          }
+        }
+
+        // If still empty, combine pathname/search/hash as a last resort
+        if (!idFromUri) {
+          idFromUri = (
+            url.pathname +
+            (url.search || "") +
+            (url.hash || "")
+          ).replace(/^\/+/, "");
+        }
+      } catch (err) {
+        // Not a valid URL - fallback heuristics on the raw string
+        console.warn("Invalid URI, fallback to extracting last token", err);
+        const trimmed = formState.uri.trim();
+        if (trimmed.includes("#")) {
+          idFromUri = trimmed.split("#").pop() || trimmed;
+        } else {
+          const parts = trimmed.split("/").filter(Boolean);
+          idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
+        }
+      }
+
+      // Normalize prefix (remove any trailing colon) before composing final id.
+      const sanitizedPrefix = prefix ? String(prefix).replace(/:+$/, "") : "";
+      const finalId = idFromUri.includes(":")
+        ? idFromUri
+        : sanitizedPrefix
+          ? `${sanitizedPrefix}:${idFromUri}`
+          : idFromUri;
+
+      let description = "";
+      let type: any[] = [];
+      try {
+        const context = "cell";
+        const result = await fetchTypeAndDescription(
+          prefix,
+          idFromUri,
+          formState.name,
+          context,
+        );
+        description = result.description || "";
+        type = result.type || [];
+      } catch (err) {
+        console.error("Error fetching metadata info:", err);
+      }
+
+      const newMetadata = {
+        ...formState,
+        id: finalId,
+        description,
+        type,
+      };
 
       dispatch(
         addCellMetadata({
           cellId: cell.id,
           prefix: tempPrefix,
-          value: { ...formState },
-        })
+          value: newMetadata,
+        }),
       );
-      let newMetadata = {
-        ...formState,
-        id: formState.id.startsWith(tempPrefix)
-          ? formState.id
-          : tempPrefix + ":" + formState.id,
-      };
+
       setSelectedMetadata(newMetadata);
       if (formState.match === "true") {
-        setSelectedMetadata(newMetadata);
         setShowPropagate(true);
       }
-      setShowPropagate(true);
 
       reset();
       setNewMetaMatching(formState.match === "true");
@@ -543,7 +683,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
   const fetchMetadata = (service: string) => {
     const reconciliator = reconciliators.find(
-      (recon) => recon.prefix === service
+      (recon) => recon.prefix === service,
     );
     if (reconciliator && cell) {
       // dispatch(reconcile({
@@ -565,7 +705,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             value: selectedMetadata,
             metadataId: selectedMetadata.id,
             cellId: cell.id,
-          })
+          }),
         );
       }
       if (metasToDelete.length > 0 && cell) {
@@ -573,18 +713,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           propagateCellDeleteMetadata({
             metadataIds: metasToDelete.map((meta) => meta.id),
             cellId: cell.id,
-          })
+          }),
         );
       }
       handleClose();
     } catch (error) {}
-  };
-  const handleChangeService = (event: SelectChangeEvent<string>) => {
-    const newService = event.target.value;
-    if (newService) {
-      setCurrentService(newService);
-      fetchMetadata(newService);
-    }
   };
 
   // Add a handler for row checking
@@ -594,20 +727,55 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log("Row checked:", rowId);
   }, []);
 
+  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+    (acc, service) => {
+      acc[service.prefix] = service;
+      return acc;
+    },
+    {},
+  );
+
+  const handleSearchInService = () => {
+    if (!cell?.label || !currentService) return;
+
+    const serviceInfo = servicesByPrefix[currentService];
+    if (!serviceInfo?.searchPattern) return;
+
+    const url = serviceInfo.searchPattern.replace("{label}", encodeURIComponent(cell.label));
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  // Early return if cell has no metadata to prevent crashes
+  if (cell && (!cell.metadata || cell.metadata.length === 0)) {
+    return (
+      <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
+        <Stack
+          height="100%"
+          minHeight="200px"
+          padding="24px"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Typography variant="h6" color="textSecondary">
+            No metadata available for this cell
+          </Typography>
+          <Button onClick={handleCancel} sx={{ marginTop: 2 }}>
+            Close
+          </Button>
+        </Stack>
+      </Dialog>
+    );
+  }
+
   return cell ? (
     <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
       <Stack height="100%" minHeight="600px">
-        <Stack
-          direction="row"
-          gap="10px"
-          alignItems="center"
-          padding="12px 16px"
-        >
+        <Stack direction="row" gap="8px" alignItems="center" padding="16px">
           <Stack direction="row" alignItems="center" gap={1}>
             {cell.annotationMeta && cell.annotationMeta.annotated && (
               <StatusBadge status={getBadgeStatus(cell)} />
             )}
-            <Typography variant="h5">{cell?.label}</Typography>
+            <Typography variant="h5">{cell?.label || "N/A"}</Typography>
             <Typography color="textSecondary">(Cell label)</Typography>
           </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
@@ -648,165 +816,91 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             <IconButtonTooltip
               tooltipText="Help"
               onClick={() =>
-                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 8 }))
+                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 17 }))
               }
               Icon={HelpOutlineRoundedIcon}
             />
           </Stack>
         </Stack>
         <Divider orientation="horizontal" flexItem />
-        <Box paddingLeft="16px" paddingBottom="12px" marginTop="20px">
-          {currentService && (
-            <FormControl
-              sx={{
-                maxWidth: "200px",
-              }}
-              fullWidth
-              size="small"
-            >
-              <InputLabel variant="outlined" id="reconciliator-label">
-                Reconciliator service
-              </InputLabel>
-              <Select
-                labelId="reconciliator-label"
-                label="Reconciliator service"
-                value={currentService}
-                onChange={(e) => handleChangeService(e)}
-                variant="outlined"
+        <Box padding="16px">
+          {currentService || isManualMatch ? (
+            <Typography color="text.secondary">
+              Reconciliation service:{" "}
+              <Typography
+                component="span"
+                color="primary"
+                sx={{ fontWeight: 500 }}
               >
-                {uniqueReconciliators &&
-                    uniqueReconciliators.map((reconciliator) => (
-                    <MenuItem
-                      key={reconciliator.prefix}
-                      value={reconciliator.prefix}
-                    >
-                      {reconciliator.name}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
+                {isManualMatch
+                  ? "manual"
+                  : currentService
+                    ? `${
+                        reconciliators.find(
+                          (rec) => rec.prefix === currentService,
+                        ).name
+                      }`
+                    : ""}
+              </Typography>
+            </Typography>
+          ) : (
+            <Typography color="text.secondary">
+              This cell has not been reconciled yet
+            </Typography>
           )}
         </Box>
-        <Typography
-          sx={{
-            display: showAdd ? "block" : "none",
-            opacity: showAdd ? 1 : 0,
-            transition: "opacity 300ms ease-out",
-            marginLeft: "27px",
-          }}
-          variant="body2"
-        >
-          * required fields
-        </Typography>
         {API.ENDPOINTS.SAVE && !isViewOnly && (
           <Stack
             position="relative"
-            direction="row"
-            alignItems="center"
-            alignSelf="flex-start"
-            padding="0px 12px"
+            direction="column"
+            alignItems="flex-start"
+            padding="0px 16px"
+            gap={1}
           >
-            <Typography
-              sx={{
-                display: !showAdd ? "block" : "none",
-                opacity: !showAdd ? 1 : 0,
-                transition: "opacity 300ms ease-out",
-              }}
-              variant="body2"
-            >
-              Add Metadata
-            </Typography>
-
-            <Tooltip open={showTooltip} title="Add metadata" placement="right">
-              <IconButton
-                color="primary"
-                onMouseLeave={handleTooltipClose}
-                onMouseEnter={handleTooltipOpen}
-                onClick={handleShowAdd}
-              >
-                <AddRoundedIcon
-                  sx={{
-                    transition: "transform 150ms ease-out",
-                    transform: showAdd ? "rotate(45deg)" : "rotate(0)",
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-
-            <Box
-              sx={{
-                position: "absolute",
-                left: "100%",
-                top: "50%",
-                padding: "12px 16px",
-                borderRadius: "6px",
-                transition: "all 150ms ease-out",
-                display: showAdd ? "block" : "none",
-                opacity: showAdd ? 1 : 0,
-                transform: showAdd
-                  ? "translateY(-50%) translateX(0)"
-                  : "translateY(-50%) translateX(-20px)",
-              }}
-            >
-              <Stack
-                component="form"
-                direction="row"
-                gap="10px"
-                onSubmit={handleSubmit(onSubmitNewMetadata)}
-              >
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Id"
-                  required
-                  variant="outlined"
-                  {...register("id")}
-                />
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Name"
-                  required
-                  variant="outlined"
-                  {...register("name")}
-                />
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Uri"
-                  variant="outlined"
-                  required
-                  {...register("uri")}
-                />
-                <TextField
-                  sx={{ minWidth: "200px" }}
-                  size="small"
-                  label="Score"
-                  variant="outlined"
-                  {...register("score")}
-                />
-                <FormControl size="small" sx={{ width: "200px" }}>
-                  <InputLabel>Match</InputLabel>
-                  <Controller
-                    render={({ field }) => (
-                      <Select {...field} labelId="select-match" label="Match">
-                        <MenuItem value="true">true</MenuItem>
-                        <MenuItem value="false">false</MenuItem>
-                      </Select>
-                    )}
-                    name="match"
-                    control={control}
-                  />
-                </FormControl>
+            <Stack direction="row" gap={1} alignItems="center">
+              <Tooltip open={showTooltip} title="Add metadata" placement="right">
                 <Button
-                  type="submit"
-                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  onMouseLeave={handleTooltipClose}
+                  onMouseEnter={handleTooltipOpen}
+                  onClick={handleShowAdd}
+                  sx={{
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  Add metadata
+                  <AddRoundedIcon
+                    sx={{
+                      transition: "transform 150ms ease-out",
+                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+              {showAdd && servicesByPrefix[currentService]?.searchPattern && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleSearchInService}
                   sx={{ textTransform: "none" }}
                 >
-                  Add
+                  Search in {KG_INFO[currentService].groupName}
                 </Button>
-              </Stack>
-            </Box>
+              )}
+            </Stack>
+            {showAdd && (
+              <Box sx={{ width: "100%", paddingTop: "8px" }}>
+                <AddMetadataForm
+                  currentService={currentService}
+                  onSubmit={onSubmitNewMetadata}
+                  context="metadataDialog"
+                />
+              </Box>
+            )}
           </Stack>
         )}
         <DeferredTable

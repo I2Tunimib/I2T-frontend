@@ -12,23 +12,43 @@ import { getColumn, getContextPrefix } from "./table.utils";
 
 export const isColumnReconciliated = (
   state: Draft<TableState>,
-  colId: string
+  colId: string,
 ) => {
   const { context } = getColumn(state, colId);
   const totalRows = state.entities.rows.allIds.length;
   const totalReconciliated = Object.keys(context).reduce(
     (acc, key) => acc + context[key].reconciliated,
-    0
+    0,
   );
   if (totalReconciliated === totalRows) {
     return true;
   }
   return false;
 };
+export const isColumnFullyAnnotated = (
+  state: Draft<TableState>,
+  colId: string,
+) => {
+  // consider the column fully annotated if every row has a matched value (manual or reconciliator)
+  const rowIds = state.entities.rows.allIds;
+  const unmatched: string[] = [];
 
+  rowIds.forEach((rowId) => {
+    const cell: Cell | undefined =
+      state.entities.rows.byId[rowId]?.cells?.[colId];
+    const matched = !!(
+      cell &&
+      cell.annotationMeta &&
+      cell.annotationMeta.match?.value
+    );
+    if (!matched) unmatched.push(rowId);
+  });
+
+  return unmatched.length === 0;
+};
 export const isColumnPartialAnnotated = (
   state: Draft<TableState>,
-  colId: string
+  colId: string,
 ) => {
   const { context } = getColumn(state, colId);
   return Object.keys(context).some((key) => context[key].total > 0);
@@ -58,7 +78,10 @@ export const createContext = ({
 };
 
 export const getColumnStatus = (state: Draft<TableState>, colId: ID) => {
-  if (isColumnReconciliated(state, colId)) {
+  if (
+    isColumnReconciliated(state, colId) ||
+    isColumnFullyAnnotated(state, colId)
+  ) {
     return ColumnStatus.RECONCILIATED;
   }
   if (isColumnPartialAnnotated(state, colId)) {
@@ -132,7 +155,7 @@ export const updateNumberOfReconciliatedCells = (state: Draft<TableState>) => {
           : 0;
         return accInner;
       },
-      0
+      0,
     );
     return acc;
   }, 0);

@@ -19,7 +19,7 @@ const apiClient = setup({
 // Add request interceptor to log all outgoing requests
 apiClient.interceptors.request.use(
   (config) => {
-    console.log("🚀 Outgoing request:", {
+    console.log("Outgoing request:", {
       method: config.method?.toUpperCase(),
       url: config.url,
       headers: config.headers,
@@ -36,7 +36,7 @@ apiClient.interceptors.request.use(
 // Add response interceptor to log responses
 apiClient.interceptors.response.use(
   (response) => {
-    console.log("✅ Response received:", {
+    console.log("Response received:", {
       status: response.status,
       url: response.config.url,
       headers: response.headers,
@@ -49,6 +49,10 @@ apiClient.interceptors.response.use(
       error.response?.status,
       error.response?.data,
     );
+    // Show snackbar for API errors with error message
+    if (error.response?.data?.error) {
+      window.enqueueSnackbar?.(error.response.data.error, { variant: "error" });
+    }
     return Promise.reject(error);
   },
 );

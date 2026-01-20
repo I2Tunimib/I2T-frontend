@@ -1,9 +1,9 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Alert,
-  Box,
-  Button,
-  Collapse,
+  //Box,
+  //Button,
+  //Collapse,
   Dialog,
   DialogContent,
   DialogContentText,
@@ -11,13 +11,13 @@ import {
   Divider,
   FormControl,
   IconButton,
-  ListItemText,
-  ListSubheader,
+  //ListItemText,
+  //ListSubheader,
   MenuItem,
   Select,
   SelectChangeEvent,
   Stack,
-  Typography,
+  //Typography,
 } from "@mui/material";
 import React, {
   forwardRef,
@@ -30,14 +30,14 @@ import React, {
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import {
-  ExpandLess,
-  ExpandMore,
-  HelpCenterRounded,
+  //ExpandLess,
+  //ExpandMore,
+  //HelpCenterRounded,
   HelpOutlineRounded,
 } from "@mui/icons-material";
 import {
   selectAreCellReconciliated,
-  selectExtendRequestStatus,
+  selectExtendRequestStatus, selectSelectedColumnIdsAsArray,
 } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectExtendersAsArray } from "@store/slices/config/config.selectors";
@@ -73,7 +73,25 @@ const DialogInnerContent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const extensionServices = useAppSelector(selectExtendersAsArray);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
+  const selectedColumnsArray = useAppSelector(selectSelectedColumnIdsAsArray);
   const { loading } = useAppSelector(selectExtendRequestStatus);
+
+  // Log extension services on mount/update
+  React.useEffect(() => {
+    console.log("=== Extension Dialog: Available Services ===");
+    console.log("Total services:", extensionServices.length);
+    const chMatching = extensionServices.find((s) => s.name === "CH Matching");
+    if (chMatching) {
+      console.log("CH Matching service found:", {
+        id: chMatching.id,
+        name: chMatching.name,
+        skipFiltering: chMatching.skipFiltering,
+        allValues: chMatching.allValues,
+      });
+    } else {
+      console.warn("CH Matching service NOT found in extension services!");
+    }
+  }, [extensionServices]);
 
   async function groupServices() {
     const groupedServsMap = new Map();
@@ -116,13 +134,23 @@ const DialogInnerContent = () => {
       (service) => service.id === event.target.value,
     );
     if (val) {
-      console.log("current service", val);
+      console.log("=== Extension Dialog: Service Selected ===");
+      console.log("Service:", val.name);
+      console.log("skipFiltering:", val.skipFiltering);
+      console.log("allValues:", val.allValues);
+      console.log("Full config:", val);
       setCurrentService(val);
     }
   };
 
   const handleSubmit = (formState: Record<string, any>, reset?: Function) => {
     if (currentService) {
+      console.log("=== Extension Dialog: Submitting Extension Request ===");
+      console.log("Service:", currentService.name);
+      console.log("skipFiltering:", currentService.skipFiltering);
+      console.log("allValues:", currentService.allValues);
+      console.log("Form values:", formState);
+
       const req = dispatch(
         extend({
           extender: currentService,
@@ -165,6 +193,18 @@ const DialogInnerContent = () => {
     e.stopPropagation(); // Prevent the Select from closing
     setExpandedGroup((prev) => (prev === uri ? null : uri));
   };
+
+  const serviceWithDescription = React.useMemo(() => {
+    if (!currentService) return undefined;
+    const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
+    return {
+      ...currentService,
+      description: `${currentService.description || ""} ${currentService.name === "COFOG Classifier"
+        ? "<b>Input selected column(s):</b>"
+        : "<br/><br/><b>Input selected column(s):</b>"
+      } ${colsText}`,
+    };
+  }, [currentService, selectedColumnsArray]);
   return (
     <>
       <FormControl className="field">
@@ -212,7 +252,7 @@ const DialogInnerContent = () => {
       {currentService && (
         <>
           <SquaredBox
-            dangerouslySetInnerHTML={{ __html: currentService.description }}
+            dangerouslySetInnerHTML={{ __html: serviceWithDescription.description }}
           />
           {!cellReconciliated && !currentService.skipFiltering && (
             <Alert severity="warning">
@@ -223,15 +263,16 @@ const DialogInnerContent = () => {
           )}
           {!cellReconciliated && currentService.skipFiltering && (
             <Alert severity="info">
-              This service will process all rows, including non-reconciled ones.
-              Non-matched rows will be sent with empty knowledge base
-              identifiers.
+              This service will process all rows, using the content of each cell
+              during the process. Non-matched rows will be sent with empty
+              knowledge base identifiers.
             </Alert>
           )}
           {cellReconciliated && currentService.skipFiltering && (
             <Alert severity="info">
-              This service will process all rows, including any non-reconciled
-              ones that may exist in your table.
+              This service will process all rows, using the content of each cell
+              during the process. Non-matched rows will be sent with empty
+              knowledge base identifiers.
             </Alert>
           )}
           <Divider />
@@ -249,7 +290,7 @@ const DialogInnerContent = () => {
               }
               handleClose();
             }}
-            service={currentService}
+            service={{ ...serviceWithDescription, selectedColumns: selectedColumnsArray }}
           />
         </>
       )}
@@ -292,16 +333,24 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 10 }));
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 19 }));
           }}
         >
           <HelpOutlineRounded />
         </IconButton>
       </Stack>
       <DialogContent>
-        <DialogContentText paddingBottom="10px">
-          Select an extension service:
-        </DialogContentText>
+        <Stack direction="row" alignItems="center">
+          <DialogContentText>Select an extension service:</DialogContentText>
+          <IconButton
+            size="small"
+            onClick={() => {
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "ext" }));
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+        </Stack>
         <Content>
           <DialogInnerContent />
         </Content>

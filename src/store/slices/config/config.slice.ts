@@ -9,6 +9,7 @@ const initialState: IConfigState = {
   entities: {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] },
+    modifiers: { byId: {}, allIds: [] },
   },
   _requests: { byId: {}, allIds: [] },
 };
@@ -22,7 +23,7 @@ export const configSlice = createSliceWithRequests({
       console.log("Config slice - received payload:", action.payload);
       console.log(
         "Config slice - payload keys:",
-        action.payload ? Object.keys(action.payload) : "no payload"
+        action.payload ? Object.keys(action.payload) : "no payload",
       );
 
       // Handle different possible response structures
@@ -32,6 +33,7 @@ export const configSlice = createSliceWithRequests({
       const reconciliators =
         payload.reconciliators || payload.reconcilers || payload.services || [];
       const extenders = payload.extenders || payload.extensions || [];
+      const modifiers = payload.modifiers || payload.extensions || [];
 
       console.log("Config slice - found data:", {
         reconciliators: {
@@ -44,6 +46,11 @@ export const configSlice = createSliceWithRequests({
           isArray: Array.isArray(extenders),
           length: extenders?.length,
         },
+        modifiers: {
+          type: typeof modifiers,
+          isArray: Array.isArray(modifiers),
+          length: modifiers?.length,
+        },
       });
 
       // Process reconciliators if they exist and are an array
@@ -51,9 +58,8 @@ export const configSlice = createSliceWithRequests({
         reconciliators.forEach((reconciliator, i) => {
           //state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
           //state.entities.reconciliators.allIds.push(reconciliator.id);
-          state.entities.reconciliators.byId[reconciliator.prefix] =
-            reconciliator;
-          state.entities.reconciliators.allIds.push(reconciliator.prefix);
+          state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
+          state.entities.reconciliators.allIds.push(reconciliator.id);
         });
       } else {
         console.warn("Config slice - reconciliators not found or not an array");
@@ -67,6 +73,16 @@ export const configSlice = createSliceWithRequests({
         });
       } else {
         console.warn("Config slice - extenders not found or not an array");
+      }
+
+      // Process modifiers if they exist and are an array
+      if (Array.isArray(modifiers)) {
+        modifiers.forEach((modifier) => {
+          state.entities.modifiers.byId[modifier.id] = modifier;
+          state.entities.modifiers.allIds.push(modifier.id);
+        });
+      } else {
+        console.warn("Config slice - modifiers not found or not an array");
       }
     }),
 });

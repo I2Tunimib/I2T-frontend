@@ -9,14 +9,19 @@ interface SvgArrowProps {
   d: string;
   direction: "start" | "end";
   color?: string;
-  label?: string;
+  label?: string | string[];
   link?: string;
   showLabel?: boolean;
+  showArrow?: boolean;
   showTooltip?: boolean;
   startElementLabel?: string;
   endElementLabel?: string;
   onMouseEnter?: (data: any) => void;
   onMouseLeave?: () => void;
+  adjustedLabelPosition?: { x: number; y: number };
+  onLabelRef?: (id: string, element: SVGTextElement | null) => void;
+  isHighlighted?: boolean;
+  onLabelHover?: (hovered: boolean) => void;
 }
 
 const SvgArrow: FC<SvgArrowProps> = ({
@@ -27,16 +32,28 @@ const SvgArrow: FC<SvgArrowProps> = ({
   color = "black",
   label,
   link,
-  showLabel = false,
-  showTooltip = true,
+  showLabel = true,
+  showArrow = true,
+  showTooltip = false,
   startElementLabel,
   endElementLabel,
   onMouseEnter,
   onMouseLeave,
+  adjustedLabelPosition,
+  onLabelRef,
+  isHighlighted = false,
+  onLabelHover,
 }) => {
   const pathRef = useRef<SVGPathElement>(null);
+  const textRef = useRef<SVGTextElement>(null);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+  const [labelHovering, setLabelHovering] = useState(false);
+  const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
+  const [labelViewportPosition, setLabelViewportPosition] = useState({
+    x: 0,
+    y: 0,
+  });
   const animationFrameRef = useRef<number | null>(null);
 
   // Handle mouse movement to update tooltip position
@@ -64,6 +81,44 @@ const SvgArrow: FC<SvgArrowProps> = ({
       setCursorPosition(newPosition);
     });
   };
+
+  // Calculate label position at the highest point of the curve
+  useEffect(() => {
+    if (pathRef.current) {
+      const totalLength = pathRef.current.getTotalLength();
+
+      // Use adjusted position if provided, otherwise calculate the highest point
+      if (adjustedLabelPosition) {
+        setLabelPosition({
+          x: adjustedLabelPosition.x,
+          y: adjustedLabelPosition.y,
+        });
+      } else {
+        // Sample points along the curve to find the highest (minimum y) point
+        let highestPoint = pathRef.current.getPointAtLength(0);
+        const sampleCount = 50;
+
+        for (let i = 0; i <= sampleCount; i++) {
+          const point = pathRef.current.getPointAtLength(
+            (i / sampleCount) * totalLength,
+          );
+          if (point.y < highestPoint.y) {
+            highestPoint = point;
+          }
+        }
+
+        setLabelPosition({ x: highestPoint.x, y: highestPoint.y - 10 }); // 10px above highest point
+      }
+    }
+  }, [d, adjustedLabelPosition]); // Recalculate when path or adjusted position changes
+
+  // Calculate label viewport position for tooltip
+  useEffect(() => {
+    if (textRef.current) {
+      const rect = textRef.current.getBoundingClientRect();
+      setLabelViewportPosition({ x: rect.left + rect.width / 2, y: rect.top });
+    }
+  }, [labelPosition]); // Recalculate when label position changes
 
   // Clean up animation frame on unmount
   useEffect(() => {
@@ -100,52 +155,85 @@ const SvgArrow: FC<SvgArrowProps> = ({
         }}
         onMouseMove={handleMouseMove}
       >
-        <a href={link} target="_blank" rel="noreferrer">
-          {/* Show either label on path or tooltip on hover based on props */}
-          {label && showLabel && (
-            <text key={`label-${id}`} dy="-5%">
-              <textPath href={`#${id}`} startOffset="50%" textAnchor="middle">
-                {label}
-              </textPath>
-            </text>
-          )}
-
+        {showArrow && (
+          <a href={link} target="_blank" rel="noreferrer">
+            <path
+              id={id}
+              ref={pathRef}
+              d={d}
+              fill="none"
+              stroke={color}
+              strokeWidth={isHighlighted ? "3" : "0.5"}
+              opacity={isHighlighted ? "1" : "0.5"}
+              {...(direction === "end"
+                ? {
+                    markerEnd: `url(#${arrowId})`,
+                  }
+                : {
+                    markerStart: `url(#${arrowId})`,
+                  })}
+            />
+            {/* Invisible wider path on top for easier hovering/clicking */}
+            <path
+              d={d}
+              fill="none"
+              stroke="transparent"
+              strokeWidth="10"
+              style={{ cursor: "pointer" }}
+              onMouseEnter={() =>
+                onMouseEnter &&
+                onMouseEnter({ id, label, startElementLabel, endElementLabel })
+              }
+              onMouseLeave={() => {
+                setIsHovering(false);
+                onMouseLeave && onMouseLeave();
+              }}
+              onMouseMove={handleMouseMove}
+            />
+          </a>
+        )}
+        {/* Hidden path for label position calculation when showArrow is false */}
+        {!showArrow && (
           <path
-            id={id}
             ref={pathRef}
             d={d}
             fill="none"
-            stroke={color}
-            strokeWidth="10"
-            {...(direction === "end"
-              ? {
-                  markerEnd: `url(#${arrowId})`,
-                }
-              : {
-                  markerStart: `url(#${arrowId})`,
-                })}
-          />
-          {/* Invisible wider path on top for easier hovering/clicking */}
-          <path
-            d={d}
-            fill="none"
             stroke="transparent"
-            strokeWidth="30"
-            style={{ cursor: "pointer" }}
-            onMouseEnter={() =>
-              onMouseEnter &&
-              onMouseEnter({ id, label, startElementLabel, endElementLabel })
-            }
-            onMouseLeave={() => {
-              setIsHovering(false);
-              onMouseLeave && onMouseLeave();
-            }}
-            onMouseMove={handleMouseMove}
+            strokeWidth="0"
+            pointerEvents="none"
           />
-        </a>
+        )}
+        {/* Show label at the top of the arrow */}
+        {label && showLabel && (
+          <text
+            ref={(el) => {
+              textRef.current = el;
+              onLabelRef && onLabelRef(id, el);
+            }}
+            key={`label-${id}`}
+            x={labelPosition.x + 15}
+            y={labelPosition.y}
+            textAnchor="middle"
+            style={{
+              cursor: "pointer",
+              fontSize: "14px",
+              fill: "black",
+            }}
+            onMouseEnter={() => {
+              setLabelHovering(true);
+              onLabelHover && onLabelHover(true);
+            }}
+            onMouseLeave={() => {
+              setLabelHovering(false);
+              onLabelHover && onLabelHover(false);
+            }}
+          >
+            {Array.isArray(label) ? label[0] : label}
+          </text>
+        )}
       </g>
 
-      {/* Tooltip rendered outside SVG using portal */}
+      {/* Tooltip rendered outside SVG using portal for arrow hover */}
       {label && showTooltip && isHovering && (
         <TooltipPortal>
           <div
@@ -160,12 +248,41 @@ const SvgArrow: FC<SvgArrowProps> = ({
           >
             <div className={styles.TooltipBackground}>
               <div className={styles.TooltipContent}>
-                <div className={styles.TooltipText}>Relation: {label}</div>
+                <div className={styles.TooltipText}>
+                  Relation: {Array.isArray(label) ? label.join(", ") : label}
+                </div>
                 {startElementLabel && endElementLabel && (
                   <div className={styles.TooltipText}>
                     {startElementLabel} → {endElementLabel}
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </TooltipPortal>
+      )}
+
+      {/* Tooltip for multiple labels on label hover */}
+      {label && Array.isArray(label) && label.length > 1 && labelHovering && (
+        <TooltipPortal>
+          <div
+            className={styles.PortalTooltip}
+            style={{
+              position: "fixed",
+              left: labelViewportPosition.x + 15, // Offset from label
+              top: labelViewportPosition.y - 40, // Above label
+              zIndex: 10000,
+              pointerEvents: "none",
+            }}
+          >
+            <div className={styles.TooltipBackground}>
+              <div className={styles.TooltipContent}>
+                <div className={styles.TooltipText}>Relations:</div>
+                {label.map((l, i) => (
+                  <div key={i} className={styles.TooltipText}>
+                    {l}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

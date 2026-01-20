@@ -4,7 +4,7 @@ import {
   Row,
   TableInstance,
 } from "@store/slices/table/interfaces/table";
-import { CancelToken } from "axios";
+//import { CancelToken } from "axios";
 import { apiEndpoint } from "../../configHelpers";
 import apiClient from "./config/config";
 
@@ -13,6 +13,14 @@ export interface GetTableResponse {
   columns: Record<ID, Column>;
   rows: Record<ID, Row>;
   columnOrder?: string[]; // Optional field for preserving column order
+}
+
+export interface GetSchemaResponse {
+  table: TableInstance;
+  result: {
+    ner_classification: string;
+    kind_classification: string;
+  };
 }
 
 export interface ChallengeTableDataset {
@@ -54,6 +62,18 @@ const tableAPI = {
     format: string,
     params: Record<string, string | number> = {},
   ) => {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    };
+    if (params.tableId && params.datasetId) {
+      const tableId = String(params.tableId);
+      const datasetId = String(params.datasetId);
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+
+      headers["X-Table-Dataset-Info"] =
+        `tableId:${cleanTableId};datasetId:${cleanDatasetId}`;
+    }
     return apiClient.get<any>(
       apiEndpoint({
         endpoint: "EXPORT",
@@ -61,9 +81,8 @@ const tableAPI = {
         paramsValue: params,
       }),
       {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        headers,
+        params,
       },
     );
   },
@@ -259,8 +278,50 @@ const tableAPI = {
       cancelToken,
     });
   },
-  suggest: (baseUrl: string, data: any, cancelToken?: CancelToken) =>
-    apiClient.post(`/suggestion${baseUrl}`, data, { cancelToken }),
+  modify: (
+    baseUrl: string,
+    data: any,
+    tableId?: string,
+    datasetId?: string,
+    columnName?: string,
+  ) => {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    };
+
+    // Add table and dataset headers if provided
+    if (tableId && datasetId) {
+      console.log(
+        `Adding headers for modify: tableId: ${tableId}, datasetId: ${datasetId}, columnName: ${columnName}`,
+      );
+
+      // Clean values to remove BOM and other problematic characters
+      const cleanTableId = tableId.replace(/\uFEFF/g, "").trim();
+      const cleanDatasetId = datasetId.replace(/\uFEFF/g, "").trim();
+      const cleanColumnName = columnName
+        ? columnName.replace(/\uFEFF/g, "").trim()
+        : "";
+
+      headers["X-Table-Dataset-Info"] =
+        `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
+          cleanColumnName ? `;columnName:${cleanColumnName}` : ""
+        }`;
+    }
+    console.log("Modification request headers:", headers);
+
+    // Clean baseUrl to remove BOM characters
+    const cleanBaseUrl = baseUrl.replace(/\uFEFF/g, "").trim();
+    console.log("Modification request URL:", `modifiers${cleanBaseUrl}`);
+    console.log("Modification request data:", data);
+    console.log("Modify request config:", { headers, clearCacheEntry: true });
+
+    return apiClient.post(`modifiers${cleanBaseUrl}`, data, {
+      headers,
+      clearCacheEntry: true, // Bypass cache for this request
+    });
+  },
+  suggest: (baseUrl: string, data: any) =>
+    apiClient.post(`/suggestion${baseUrl}`, data),
   getChallengeDatasets: () =>
     apiClient.get<ChallengeTableDataset[]>("/tables/challenge/datasets"),
   getChallengeTable: (datasetName: string, tableName: string) =>

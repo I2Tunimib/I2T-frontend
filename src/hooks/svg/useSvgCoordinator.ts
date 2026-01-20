@@ -17,7 +17,7 @@ export interface CoordinatorPath {
   endElementLabel: string;
   startElement: HTMLElement;
   endElement: HTMLElement;
-  label?: string;
+  label?: string | string[];
   link?: string;
 }
 
@@ -59,7 +59,7 @@ const getPoint = (
   { top: svgTop = 0 }: Partial<DOMRect>,
   fullWidth: number,
   visibleWidth: number,
-  scrollLeft: number = 0
+  scrollLeft: number = 0,
 ) => {
   // Get element position relative to viewport
   const { left, top, width } = element.getBoundingClientRect();
@@ -91,21 +91,21 @@ const calcPointsDistances = (
   svgBoundingClientRect: DOMRect,
   fullWidth: number,
   visibleWidth: number,
-  scrollLeft: number = 0
+  scrollLeft: number = 0,
 ) => {
   const [x1, y1] = getPoint(
     el1,
     svgBoundingClientRect,
     fullWidth,
     visibleWidth,
-    scrollLeft
+    scrollLeft,
   );
   const [x2, y2] = getPoint(
     el2,
     svgBoundingClientRect,
     fullWidth,
     visibleWidth,
-    scrollLeft
+    scrollLeft,
   );
 
   // draw always in the same direction [left - right] so that
@@ -144,33 +144,47 @@ const useSvgCoordinator = ({
         horizontalOffset: 0,
       };
 
-      // Flatten the grouped paths to individual paths for drawing
-      const individualPaths: any[] = [];
+      // Total number of arrows for height calculation
+      const totalArrows = groupedPaths.length;
 
-      groupedPaths.forEach(({ p1, p2, properties, ...rest }, groupIndex) => {
-        const currentGroup = rest.group;
+      // Track how many arrows we've seen at each distance for small offset
+      const distanceCounters = new Map<number, number>();
 
-        properties.forEach((property: any, propIndex: number) => {
-          individualPaths.push({
-            ...rest,
-            p1,
-            p2,
-            ...property, // id, label, link
-            groupIndex,
-            propertyIndex: propIndex,
-          });
-        });
-      });
-
-      return individualPaths.map(({ p1, p2, ...rest }, index) => {
+      return groupedPaths.map(({ p1, p2, properties, ...rest }, index) => {
         const currentGroup = rest.group;
         const path = new Path(
           rest.direction === "end"
             ? { x: p1.x, y: p1.y }
-            : { x: p1.x - 5, y: p1.y - 5 }
+            : { x: p1.x - 5, y: p1.y - 5 },
         );
-        // offset between each path
+
+        // SIMPLE GUARANTEED HEIGHT ORDERING:
+        // Longest distance (index 0) = HIGHEST arc
+        // Shortest distance (last index) = LOWEST arc
+        // Strict descending order, no exceptions
+
+        const minHeight = 20;
+        const maxHeight = 230;
+        const heightRange = maxHeight - minHeight;
+
+        // Each arrow gets a guaranteed height based ONLY on its index
+        // Larger index = shorter distance = lower height
+        const heightStep = heightRange / Math.max(1, totalArrows - 1);
+        let baseHeight = maxHeight - index * heightStep;
+
+        // For arrows at same distance (bidirectional or duplicates), add tiny jitter
+        // Max ±3px so it NEVER breaks the ordering between different distances
+        const distanceKey = Math.round(rest.distance);
+        const countAtDistance = distanceCounters.get(distanceKey) || 0;
+        distanceCounters.set(distanceKey, countAtDistance + 1);
+
+        // Small jitter: alternate +3, -3, +3, -3... for same-distance arrows
+        const jitter = countAtDistance % 2 === 0 ? 3 : -3;
+        baseHeight = baseHeight + jitter;
+
+        // offset between each path (for arrows with same distance)
         const offsetPath = offset * (index + 1);
+
         // horizontal offset for control points of
         // the same group, so that paths don't stack one on top of the other
         const horizontalOffset =
@@ -186,20 +200,15 @@ const useSvgCoordinator = ({
         // Add jitter to prevent overlapping arrows
         // Use a deterministic jitter based on path properties for consistency
         const jitterSeed = rest.id.length + index;
-        const horizontalJitter = Math.sin(jitterSeed * 1.5) * 15; // ±15px horizontal jitter
-        const verticalJitter = Math.cos(jitterSeed * 2.3) * 25; // ±25px vertical jitter
+        const horizontalJitter = Math.sin(jitterSeed * 2) * 15; // ±15px horizontal jitter
+        const verticalJitter = Math.cos(jitterSeed * 2.3) * 8; // Small vertical jitter
 
-        // Calculate more adaptive control point values
-        // Limit the maximum Y offset to prevent arrows from getting too high
-        const maxYOffset = 300;
-        const yOffset1 = Math.min(
-          offsetPath - 0.9 * horizontalOffset + verticalJitter,
-          maxYOffset
-        );
-        const yOffset2 = Math.min(
-          offsetPath - 0.9 * horizontalOffset + verticalJitter * 0.8,
-          maxYOffset
-        );
+        // Calculate control point Y offsets using baseHeight
+        // baseHeight is already calculated based on distance ordering
+        // Longest distance = highest baseHeight, shortest = lowest baseHeight
+        const yOffset1 = baseHeight - 0.9 * horizontalOffset + verticalJitter;
+        const yOffset2 =
+          baseHeight - 0.9 * horizontalOffset + verticalJitter * 0.8;
 
         path.pipe(
           bezierCurve(
@@ -208,20 +217,23 @@ const useSvgCoordinator = ({
             p1.y - yOffset1,
             // second control point with different jitter
             p2.x + horizontalJitter * 0.6,
-            p2.y - yOffset2
+            p2.y - yOffset2,
           ),
           drawTo(
             rest.direction === "end" ? p2.x + 5 : p2.x,
-            rest.direction === "end" ? p2.y - 5 : p2.y
-          )
+            rest.direction === "end" ? p2.y - 5 : p2.y,
+          ),
         );
         return {
           ...rest,
           path,
+          label: properties.map((p: any) => p.label),
+          link: properties[0]?.link, // Use first link or handle multiple
+          id: properties[0]?.id, // Use first id
         };
       });
     },
-    [alfa]
+    [alfa],
   );
   const draw = useCallback(() => {
     if (paths && !isEmptyObject(paths) && svgRef && svgRef.current) {
@@ -281,7 +293,7 @@ const useSvgCoordinator = ({
               svgBB,
               fullWidth,
               svgBB.width,
-              scrollLeft
+              scrollLeft,
             );
             resultingMap[pathKey] = {
               id: pathKey,
@@ -306,8 +318,10 @@ const useSvgCoordinator = ({
       // Compute offset heights based on svg height and number of path groups to draw
       const offset = height / groupedPaths.length - minimumDistance;
 
-      // Order paths in ascending order by distance
-      groupedPaths.sort((el1, el2) => (el2.distance < el1.distance ? 1 : -1));
+      // Order paths in descending order by distance (farthest first, closest last)
+      // This is critical: farthest arrows must be processed first to get the highest arc
+      // and render first (behind), while closest arrows get the lowest arc and render last (on top)
+      groupedPaths.sort((el1, el2) => el2.distance - el1.distance);
 
       setProcessedPaths(calcPaths(groupedPaths, offset));
     }

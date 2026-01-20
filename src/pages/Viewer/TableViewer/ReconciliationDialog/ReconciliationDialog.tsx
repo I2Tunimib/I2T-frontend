@@ -1,22 +1,22 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
-  Box,
-  Button,
-  Checkbox,
-  Collapse,
+  //Box,
+  //Button,
+  //Checkbox,
+  //Collapse,
   Dialog,
-  DialogActions,
+  //DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
   Divider,
   FormControl,
   IconButton,
-  InputLabel,
-  ListItemText,
-  ListSubheader,
+  //InputLabel,
+  //ListItemText,
+  //ListSubheader,
   MenuItem,
-  OutlinedInput,
+  //OutlinedInput,
   Select,
   SelectChangeEvent,
   Stack,
@@ -35,15 +35,14 @@ import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import { reconcile } from "@store/slices/table/table.thunk";
 import {
-  selectReconcileDialogStatus,
+  //selectReconcileDialogStatus,
   selectReconciliationCells,
   selectReconcileRequestStatus,
   selectReconciliatioContextColumnIds,
-  selectSelectedColumnIds,
+  //selectSelectedColumnIds,
 } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
-//import { LoadingButton } from "@mui/lab";
 import { SquaredBox } from "@components/core";
 import {
   Extender,
@@ -51,12 +50,12 @@ import {
 } from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import {
-  ExpandLess,
-  ExpandMore,
+  //ExpandLess,
+  //ExpandMore,
   HelpOutlineRounded,
 } from "@mui/icons-material";
 import { getGroupFromUri } from "@services/utils/kg-info";
-import HelpDialog from "@pages/Viewer/HelpDialog/HelpDialog";
+//import HelpDialog from "@pages/Viewer/HelpDialog/HelpDialog";
 import { selectIsHelpDialogOpen } from "@store/slices/datasets/datasets.selectors";
 
 const Transition = forwardRef(
@@ -106,12 +105,6 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     }
   }, [reconciliators]);
 
-  function handleServiceSelectOpen() {
-    setServiceSelectOpen(true);
-  }
-  function handleServiceSelectClose() {
-    setServiceSelectOpen(false);
-  }
   async function groupReconciliators() {
     const mappedReconciliators = new Map<string, Reconciliator[]>();
     const uniqueGroupNamesSet = new Set<string>();
@@ -134,6 +127,23 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     }
     setReconciliatorsGroups(mappedReconciliators);
     setUniqueGroupNames(Array.from(uniqueGroupNamesSet));
+  }
+
+  useEffect(() => {
+    // Log the value of reconciliators
+
+    // set initial value of select
+    if (reconciliators) {
+      // setCurrentService(reconciliators[0]);
+      groupReconciliators();
+    }
+  }, [reconciliators]);
+
+  function handleServiceSelectOpen() {
+    setServiceSelectOpen(true);
+  }
+  function handleServiceSelectClose() {
+    setServiceSelectOpen(false);
   }
 
   const selectedServices = reconciliatorsGroups.get(selectedGroup || "") || [];
@@ -259,16 +269,24 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, tutorialStep: 3 }));
+            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 11 }));
           }}
         >
           <HelpOutlineRounded />
         </IconButton>
       </Stack>
       <DialogContent>
-        <DialogContentText paddingBottom="10px">
-          Select a group of service to reconcile with:
-        </DialogContentText>
+        <Stack direction="row" alignItems="center">
+          <DialogContentText>Select a group of service to reconcile with:</DialogContentText>
+          <IconButton
+            size="small"
+            onClick={() => {
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "rec" }));
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+        </Stack>
         <Stack gap="10px">
           <Stack gap="10px">
             {/* Select reconciliator group */}

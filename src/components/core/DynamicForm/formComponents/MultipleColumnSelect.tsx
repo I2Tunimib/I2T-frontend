@@ -9,19 +9,20 @@ import {
   Button,
   Box,
 } from "@mui/material";
-import { forwardRef, useEffect, useState } from "react";
+import { SelectProps as MuiSelectProps } from "@mui/material/Select";
+import { forwardRef, useState } from "react";
 import { useAppSelector } from "@hooks/store";
 import { selectColumnsAsSelectOptions } from "@store/slices/table/table.selectors";
-import { SelectInputProps } from "@mui/material/Select/SelectInput";
 import { BaseFormControlProps, Option } from "./types";
 import InputDescription from "./InputDescription";
 
 export type SelectProps = BaseFormControlProps &
-  SelectInputProps & {
+  MuiSelectProps & {
     id: string;
     label: string;
     options: Option[];
     onChange: (e: any) => void;
+    selectedColumns?: string[];
     defaultValue?: string[];
   };
 
@@ -44,6 +45,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       setValue,
       onChange,
       multiple,
+      selectedColumns = [],
       value,
       ...props
     },
@@ -101,11 +103,18 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
             }}
             {...props}
           >
-            {options.map((option) => (
-              <MenuItem key={option.id} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
+            {options.map((option) => {
+              const isDisabled = selectedColumns?.includes(option.value);
+              return (
+                <MenuItem
+                  key={option.id}
+                  value={option.value}
+                  disabled={isDisabled}
+                >
+                  {option.label} {isDisabled && "(selected)"}
+                </MenuItem>
+              );
+            })}
             <Box
               component="div"
               sx={{

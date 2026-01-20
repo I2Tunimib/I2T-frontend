@@ -81,7 +81,7 @@ const CONFIG: AppConfig = {
         path: "/dataset/:datasetId/table/:tableId",
       },
       AUTOMATIC_ANNOTATION: {
-        path: "/reconcilers/mantis/dataset/:datasetId/table/:tableId",
+        path: "/reconcilers/automatic/dataset/:datasetId/table/:tableId",
       },
       PROCESS_START: [
         {
@@ -107,6 +107,24 @@ const CONFIG: AppConfig = {
           name: "CSV",
           params: {
             extension: "csv",
+          },
+        },
+        {
+          path: "/dataset/:datasetId/table/:tableId/export?format=rdf&serialization=:serialization&baseUri=:baseUri&score=:score&match=:match",
+          name: "RDF",
+          params: {
+            postDownload: (data: any) => {
+              // If data is already a string, return it as-is
+              if (typeof data === "string") {
+                return data;
+              }
+              // If data is an object (e.g., JSON-LD format), stringify it
+              if (typeof data === "object" && data !== null) {
+                return JSON.stringify(data, null, 2);
+              }
+              // For any other type, convert to string
+              return String(data);
+            },
           },
         },
         {

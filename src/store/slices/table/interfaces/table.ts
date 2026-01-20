@@ -31,6 +31,7 @@ export interface TableInstance {
   minMetaScore: number;
   maxMetaScore: number;
   mantisStatus?: "PENDING" | "DONE";
+  schemaStatus?: "PENDING" | "DONE";
 }
 
 /**
@@ -41,10 +42,16 @@ export interface TableUIState {
   denseView: boolean;
   openReconciliateDialog: boolean;
   openExtensionDialog: boolean;
+  openModificationDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
+  openAutoAnnotationDialog: boolean;
   openMetadataColumnDialog: boolean;
+  metadataColumnDialogColId: string | null;
   openHelpDialog: boolean;
+  openGraphTutorialDialog: boolean;
+  helpStart: "rec" | "ext" | "tutorial";
+  graphTutorialStart: "tutorial";
   settingsDialog: boolean;
   settings: Partial<Settings>;
   headerExpanded: boolean;
@@ -107,6 +114,7 @@ export interface Column {
   metadata: ColumnMetadata[];
   kind?: string;
   role?: string;
+  reconciler?: string;
 }
 /**
  * A row instance.
@@ -181,6 +189,7 @@ export interface AutomaticAnnotationPayload {
   datasetId: string;
   tableId: string;
   mantisStatus: "PENDING";
+  schemaStatus: "PENDING";
 }
 
 export interface UpdateSelectedRowPayload {
@@ -202,6 +211,11 @@ export interface ReconciliationFulfilledPayload {
 }
 
 export interface ExtendFulfilledPayload {
+  columns: ColumnState["byId"];
+  rows: RowState["byId"];
+}
+
+export interface ModifyFulfilledPayload {
   columns: ColumnState["byId"];
   rows: RowState["byId"];
 }
@@ -229,6 +243,7 @@ export interface AddColumnMetadataPayload {
     uri?: string;
     score: number;
     match: string;
+    description: string;
     obj?: string;
   };
 }

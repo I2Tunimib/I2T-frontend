@@ -3,18 +3,16 @@ import {
   Box,
   IconButton,
   PopperPlacementType,
-  Stack,
   Tab,
   Tabs,
   Tooltip,
-  Typography,
 } from "@mui/material";
 import { FC, ReactNode, SyntheticEvent, useState } from "react";
-import ScoreRefineMatching from "./ScoreRefineMatching";
-import TypeRefineMatching from "./TypeRefineMatching";
 import { HelpOutlineRounded } from "@mui/icons-material";
 import { useAppDispatch } from "@hooks/store";
 import { updateUI } from "@store/slices/table/table.slice";
+import ScoreRefineMatching from "./ScoreRefineMatching";
+import TypeRefineMatching from "./TypeRefineMatching";
 
 export type RefineMatchingProps = {
   open: boolean;
@@ -59,7 +57,7 @@ const RefineMatchingDialog: FC<RefineMatchingProps> = ({
   };
 
   const handleHelpClick = () => {
-    dispatch(updateUI({ openHelpDialog: true, tutorialStep: 7 }));
+    dispatch(updateUI({ openHelpDialog: true, tutorialStep: 16 }));
     handleClose();
   };
 

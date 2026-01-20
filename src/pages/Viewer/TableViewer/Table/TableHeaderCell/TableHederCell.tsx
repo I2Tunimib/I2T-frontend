@@ -1,23 +1,24 @@
 /* eslint-disable react/destructuring-assignment */
 import { Box, IconButton, Stack, Tooltip } from "@mui/material";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
-import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
-import PushPinIcon from '@mui/icons-material/PushPin';
-import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
+import PushPinIcon from "@mui/icons-material/PushPin";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
 import clsx from "clsx";
 import { ButtonShortcut } from "@components/kit";
 import { ColumnStatus } from "@store/slices/table/interfaces/table";
 import { RootState } from "@store";
 import { connect } from "react-redux";
 import { selectColumnReconciliators } from "@store/slices/table/table.selectors";
-import { forwardRef, MouseEvent, useCallback, useState } from "react";
+import { updateUI } from "@store/slices/table/table.slice";
+import { useAppDispatch } from "@hooks/store";
+import { forwardRef, useCallback, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
-import { IconButtonTooltip, StatusBadge } from "@components/core";
+import { StatusBadge } from "@components/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import styled from "@emotion/styled";
@@ -69,6 +70,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       handleSelectedColumnChange,
       handleSelectedColumnCellChange,
       reconciliators,
+      rowsState,
       highlightState,
       sortType,
       setSortType,
@@ -79,11 +81,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       settings,
       style,
     }: any,
-    ref
+    ref,
   ) => {
+    const dispatch = useAppDispatch();
     const [hover, setHover] = useState<boolean>(false);
     const { lowerBound } = settings;
     const columnData = header.column.columnDef.data;
+    console.log("*** header data props", data);
+    console.log("*** header columnData", columnData);
     const {
       attributes,
       listeners,
@@ -91,28 +96,43 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       transform,
       transition,
       isDragging,
-    } = useSortable({ id, disabled: id === "index" || header.column.getIsPinned() });
+    } = useSortable({
+      id,
+      disabled: id === "index" || header.column.getIsPinned(),
+    });
     const dragStyle = header.column.getIsPinned()
-      ? { transform: 'none', transition: 'none' }
+      ? { transform: "none", transition: "none" }
       : { transform: CSS.Transform.toString(transform), transition };
 
     const handleSortByClick = (event: any, type: string) => {
-        header.column.columnDef.sortingFn = sortFunctions[type];
-        const currentSort = header.column.getIsSorted();
-        if (!currentSort) {
-            header.column.toggleSorting(false);// A → Z
-        } else if (currentSort === 'asc') {
-            header.column.toggleSorting(true);// Z → A
-        } else if (currentSort === 'desc') {
-            header.column.clearSorting();// ordine originale
-        }
+      header.column.columnDef.sortingFn = sortFunctions[type];
+      const currentSort = header.column.getIsSorted();
+      if (!currentSort) {
+        header.column.toggleSorting(false); // A → Z
+      } else if (currentSort === "asc") {
+        header.column.toggleSorting(true); // Z → A
+      } else if (currentSort === "desc") {
+        header.column.clearSorting(); // ordine originale
+      }
       setSortType(type);
     };
 
-    const handleSelectColumn = (event: MouseEvent) => {
-      event.stopPropagation();
-      handleSelectedColumnChange(event, id);
-    };
+    const shouldShowBadge = useCallback(() => {
+      // Skip for index column
+      if (id === "index" || !rowsState || !rowsState.allIds) {
+        return false;
+      }
+
+      // Check if any cells have metadata OR have been annotated (reconciled)
+      return rowsState.allIds.some((rowId: string) => {
+        const cell = rowsState.byId[rowId]?.cells?.[id];
+        return (
+          cell &&
+          ((cell.metadata && cell.metadata.length > 0) ||
+            (cell.annotationMeta && cell.annotationMeta.annotated))
+        );
+      });
+    }, [id, rowsState]);
 
     const getBadgeStatus = useCallback(
       (column: any) => {
@@ -120,19 +140,56 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
           annotationMeta: { annotated, match, highestScore },
         } = column;
 
-        if (match.value) {
-          switch (match.reason) {
-            case "manual":
-              return "match-manual";
-            case "reconciliator":
-              return "match-reconciliator";
-            case "refinement":
-              return "match-refinement";
-            default:
-              return "match-reconciliator";
+        // Check if all cells in this column are actually reconciled
+        // Skip check for index column
+        if (id !== "index" && rowsState && rowsState.allIds) {
+          const allCellsReconciled = rowsState.allIds.every((rowId: string) => {
+            const cell = rowsState.byId[rowId]?.cells?.[id];
+            return (
+              cell &&
+              cell.annotationMeta &&
+              cell.annotationMeta.match?.value === true
+            );
+          });
+
+          // If ALL cells are reconciled, show green badge
+          if (allCellsReconciled) {
+            if (match.value) {
+              switch (match.reason) {
+                case "manual":
+                  return "match-manual";
+                case "reconciliator":
+                  return "match-reconciliator";
+                case "refinement":
+                  return "match-refinement";
+                default:
+                  return "match-reconciliator";
+              }
+            }
+            // All cells matched but no column metadata match reason
+            return "match-reconciliator";
           }
+
+          // Check if any cells are matched
+          const someCellsMatched = rowsState.allIds.some((rowId: string) => {
+            const cell = rowsState.byId[rowId]?.cells?.[id];
+            return (
+              cell &&
+              cell.annotationMeta &&
+              cell.annotationMeta.match?.value === true
+            );
+          });
+
+          // If some cells are matched but not all, return warn (yellow)
+          if (someCellsMatched) {
+            return "warn";
+          }
+
+          // If no cells are matched but all have metadata, return miss (red)
+          return "miss";
         }
 
+        // Below checks are fallback for when rowsState is not available
         if (
           annotated &&
           column.metadata.length > 0 &&
@@ -151,7 +208,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         }
         return "warn";
       },
-      [lowerBound]
+      [lowerBound, rowsState, id],
     );
 
     const getSortTooltipText = (column: any, type: string) => {
@@ -167,6 +224,15 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         return "Reset order";
       }
       return "";
+    };
+
+    const handleMetadataDialogAction = (colId: string) => {
+      dispatch(
+        updateUI({
+          openMetadataColumnDialog: true,
+          metadataColumnDialogColId: colId,
+        }),
+      );
     };
 
     return (
@@ -188,9 +254,11 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             highlightState && highlightState.columns.includes(id)
               ? `${highlightState.color}10`
               : "",
-          transform: transform ? `translate3d(${transform.x}px, 0, 0)` : undefined,
+          transform: transform
+            ? `translate3d(${transform.x}px, 0, 0)`
+            : undefined,
           transition,
-          ...(id !== "index" && { ...style, width: style?.width ?? 100, }),
+          ...(id !== "index" && { ...style, width: style?.width ?? 100 }),
           ...dragStyle,
         }}
         className={clsx([
@@ -225,52 +293,57 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
               {/* Pin and Unpin */}
               {header.column.getCanPin() && (
                 <Tooltip
-                  key={header.column.getIsPinned() ? 'pinned' : 'unpinned'}
-                  title={header.column.getIsPinned() ? "Unpin column" : "Pin column to left"}
+                  key={header.column.getIsPinned() ? "pinned" : "unpinned"}
+                  title={
+                    header.column.getIsPinned()
+                      ? "Unpin column"
+                      : "Pin column to left"
+                  }
                   arrow
                 >
                   <IconButton
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const isAlreadySelected = !!selected;
+                      if (!isAlreadySelected) {
+                        handleSelectedColumnCellChange(e, id);
+                      }
                       const currentPin = header.column.getIsPinned();
-                      header.column.pin(currentPin ? false : 'left');
+                      header.column.pin(currentPin ? false : "left");
                     }}
                     size="small"
                     className={styles.PinButton}
                   >
-                    {header.column.getIsPinned()
-                      ? <PushPinIcon fontSize="small" />
-                      : <PushPinOutlinedIcon fontSize="small" />}
+                    {header.column.getIsPinned() ? (
+                      <PushPinIcon fontSize="small" />
+                    ) : (
+                      <PushPinOutlinedIcon fontSize="small" />
+                    )}
                   </IconButton>
                 </Tooltip>
               )}
-              {/* Select Column */}
-              {!selected ? (
-                <Tooltip title="Select to enable Reconcile and Expand functions" arrow>
-                  <IconButton
-                    onClick={handleSelectColumn}
-                    className={styles.ColumnSelectionButton}
-                    sx={{ marginBottom: 15 }}
-                    size="small"
-                    title=""
-                >
-                    <CheckCircleOutlineRoundedIcon fontSize="medium" />
-                  </IconButton>
-                </Tooltip>
-              ) : (
+              <Tooltip title="Manage metadata" arrow>
                 <IconButton
-                  onClick={handleSelectColumn}
-                  className={styles.ColumnSelectionButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const isAlreadySelected = !!selected;
+                    if (!isAlreadySelected) {
+                      handleSelectedColumnCellChange(e, id);
+                    }
+                    handleMetadataDialogAction(header.column.id);
+                  }}
+                  className={styles.ColumnManageButton}
                   sx={{ marginBottom: 15 }}
                   size="small"
                   title=""
                 >
-                  <CheckCircleRoundedIcon fontSize="medium" />
+                  <SettingsEthernetRoundedIcon fontSize="medium" />
                 </IconButton>
-              )}
+              </Tooltip>
               <div style={{ marginTop: 20 }} className={styles.Row}>
                 <div className={styles.Column}>
                   <div className={styles.Row}>
-                    {columnData.annotationMeta && columnData.annotationMeta.annotated && (
+                    {shouldShowBadge() && (
                       <StatusBadge
                         status={getBadgeStatus(columnData)}
                         size="small"
@@ -299,13 +372,23 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
-                          onClick={(e) => handleSortByClick(e, "sortByText")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const isAlreadySelected = !!selected;
+                            if (!isAlreadySelected) {
+                              handleSelectedColumnCellChange(e, id);
+                            }
+                            handleSortByClick(e, "sortByText");
+                          }}
                           sx={{
                             visibility:
-                              hover || (header.column.getIsSorted() && sortType === "sortByText")
+                              hover ||
+                              (header.column.getIsSorted() &&
+                                sortType === "sortByText")
                                 ? "visible"
                                 : "hidden",
-                            ...((!header.column.getIsSorted() || sortType !== "sortByText") && {
+                            ...((!header.column.getIsSorted() ||
+                              sortType !== "sortByText") && {
                               color: "rgba(0, 0, 0, 0.377)",
                             }),
                           }}
@@ -316,26 +399,42 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         </SortButton>
                       </Tooltip>
                       <Tooltip
-                        title={getSortTooltipText(header.column, "sortByMetadata")}
+                        title={getSortTooltipText(
+                          header.column,
+                          "sortByMetadata",
+                        )}
                         arrow
                       >
                         <SortButton
-                          onClick={(e) => handleSortByClick(e, "sortByMetadata")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const isAlreadySelected = !!selected;
+                            if (!isAlreadySelected) {
+                              handleSelectedColumnCellChange(e, id);
+                            }
+                            handleSortByClick(e, "sortByMetadata");
+                          }}
                           sx={{
                             visibility:
-                              hover || (header.column.getIsSorted() && sortType === "sortByMetadata")
+                              hover ||
+                              (header.column.getIsSorted() &&
+                                sortType === "sortByMetadata")
                                 ? "visible"
                                 : "hidden",
-                            ...((!header.column.getIsSorted() || sortType !== "sortByMetadata") && {
+                            ...((!header.column.getIsSorted() ||
+                              sortType !== "sortByMetadata") && {
                               color: "rgba(0, 0, 0, 0.377)",
                             }),
                           }}
                           size="small"
                           title=""
                         >
-                          {sortType === "sortByMetadata" && header.column.getIsSorted() === "desc"
-                            ? <ArrowDownwardRoundedIcon fontSize="small" />
-                            : <ArrowUpwardRoundedIcon fontSize="small" />}
+                          {sortType === "sortByMetadata" &&
+                          header.column.getIsSorted() === "desc" ? (
+                            <ArrowDownwardRoundedIcon fontSize="small" />
+                          ) : (
+                            <ArrowUpwardRoundedIcon fontSize="small" />
+                          )}
                         </SortButton>
                       </Tooltip>
                     </Stack>
@@ -361,9 +460,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                       alignItems="center"
                     >
                       <LinkRoundedIcon />
-                      {reconciliators && reconciliators.length > 0
-                        ? reconciliators.join(" | ")
-                        : data.reconciliator}
+                      {data.data.reconciler}
                     </Stack>
                   ) : columnData.status === ColumnStatus.PENDING ? (
                     <Stack
@@ -391,7 +488,9 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             onMouseDown={header.getResizeHandler()}
             className={styles.ResizeHandle}
             style={{
-              cursor: header.column.getIsResizing() ? 'col-resize' : 'ew-resize',
+              cursor: header.column.getIsResizing()
+                ? "col-resize"
+                : "ew-resize",
             }}
             role="separator"
             aria-orientation="horizontal"
@@ -399,16 +498,17 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         )}
       </th>
     );
-  }
+  },
 );
 
 const mapStateToProps = (state: RootState, props: any) => {
   const columnData = props.header?.column?.columnDef?.data;
   return {
     reconciliators: selectColumnReconciliators(state, { data: columnData }),
+    rowsState: state.table.entities.rows,
   };
 };
 
 export default connect(mapStateToProps, null, null, { forwardRef: true })(
-  TableHeaderCell
+  TableHeaderCell,
 );

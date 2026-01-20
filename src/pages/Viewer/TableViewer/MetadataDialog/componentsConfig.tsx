@@ -1,4 +1,4 @@
-import { React } from 'react';
+import { React } from "react";
 import { Tag } from "@components/core";
 import { Button, Checkbox, Chip, Link, Stack, Typography } from "@mui/material";
 import { MetaToViewItem } from "@store/slices/config/interfaces/config";
@@ -7,21 +7,25 @@ import { CellContext, Row } from "@tanstack/react-table";
 export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
   const cellValue = getValue();
   console.log("ResourceLink called with:", cellValue);
-  const { value, uri } = cellValue;
-  console.log("cell uri", uri);
+
+  // Extract the actual string value if it's nested in an object
+  const displayValue =
+    typeof cellValue === "object" && cellValue !== null && "value" in cellValue
+      ? typeof cellValue.value === "object" &&
+        cellValue.value !== null &&
+        "value" in cellValue.value
+        ? cellValue.value.value
+        : cellValue.value
+      : cellValue;
+
+  const uri = cellValue?.uri;
+  console.log("cell uri", uri, "displayValue", displayValue);
+
   if (!uri) {
-    // If the URI is empty, render plain text instead of a clickable link with a tooltip for the value
-    if (typeof value === "object" && value !== null && "value" in value) {
-      console.log("Found object with value property:", value);
-      return (
-        <Typography variant="body2" color="textSecondary">
-          {value.value || ""}
-        </Typography>
-      );
-    }
+    // If the URI is empty, render plain text instead of a clickable link
     return (
       <Typography variant="body2" color="textSecondary">
-        {value}
+        {displayValue || ""}
       </Typography>
     );
   }
@@ -29,11 +33,11 @@ export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
   return (
     <Link
       onClick={(event) => event.stopPropagation()}
-      title={value}
+      title={displayValue}
       href={uri ?? "#"}
       target="_blank"
     >
-      {value}
+      {displayValue}
     </Link>
   );
 };
@@ -61,7 +65,11 @@ export const SubList = (value: any[] = []) => {
   );
 };
 
-export const Expander = ({ row, setSubRows, getValue }: {
+export const Expander = ({
+  row,
+  setSubRows,
+  getValue,
+}: {
   row: Row<any>;
   setSubRows: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   getValue: () => any[];
@@ -90,11 +98,20 @@ export const Expander = ({ row, setSubRows, getValue }: {
     </Button>
   );
 };
-export const CheckBoxCell = ({ getValue, table, row, column }: CellContext<any, any>) => {
+export const CheckBoxCell = ({
+  getValue,
+  table,
+  row,
+  column,
+}: CellContext<any, any>) => {
   const value = getValue();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    table.options.meta?.onCheckboxChange?.(row, column.id, event.target.checked);
+    table.options.meta?.onCheckboxChange?.(
+      row,
+      column.id,
+      event.target.checked,
+    );
   };
 
   return (
@@ -114,13 +131,22 @@ export const CELL_COMPONENTS_TYPES = {
 
 export const getCellComponent = (
   cell: CellContext<any, any>,
-  type: MetaToViewItem["type"]
+  type: MetaToViewItem["type"],
 ) => {
   const value = cell.getValue();
 
   console.log("getCellComponent called with:", value, type, cell);
 
+  // Allow checkBox cells to render even when their value is null/undefined.
+  // Previously the function returned early with "null" for any null value,
+  // preventing checkbox rendering. Now we render the checkbox component
+  // when type === "checkBox" even if value is null.
   if (value == null) {
+    if (type === "checkBox") {
+      return (
+        <div style={{ width: "100%" }}>{CELL_COMPONENTS_TYPES[type](cell)}</div>
+      );
+    }
     return <Typography color="textSecondary">null</Typography>;
   }
   if (!type) {

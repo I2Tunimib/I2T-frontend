@@ -1,11 +1,12 @@
 import axios from "axios";
-import tableAPI, { GetTableResponse } from "@services/api/table";
-import { createAsyncThunk, current } from "@reduxjs/toolkit";
+import tableAPI, { GetTableResponse, GetSchemaResponse } from "@services/api/table";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "@store";
-import { levDistance } from "@services/utils/lev-distance";
+//import { levDistance } from "@services/utils/lev-distance";
 import { isEmptyObject } from "@services/utils/objects-utils";
 import {
   Extender,
+  Modifier,
   FormInputParams,
   Reconciliator,
 } from "../config/interfaces/config";
@@ -17,7 +18,7 @@ import {
   RowState,
   TableState,
 } from "./interfaces/table";
-import { updateTable, updateUI } from "./table.slice";
+import { updateTable, updateSchema, updateUI } from "./table.slice";
 import { getIdsFromCell } from "./utils/table.utils";
 
 const ACTION_PREFIX = "table";
@@ -29,7 +30,9 @@ export enum TableThunkActions {
   RECONCILE = "reconcile",
   AUTOMATIC_ANNOTATION = "automaticAnnotation",
   UPDATE_TABLE_SOCKET = "updateTableSocket",
+  UPDATE_SCHEMA_SOCKET = "updateSchemaSocket",
   EXTEND = "extend",
+  MODIFY = "modify",
   SUGGEST = "suggest",
   CONVER_W3C = "convertToW3C",
   EXPORT_TABLE = "exportTable",
@@ -274,6 +277,7 @@ const getColumnMetaObjects = (colId: string, rowEntities: RowState) => {
       const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
       if (trueMeta) {
         acc[rowId] = {
+          name: trueMeta.name,
           kbId: trueMeta.id,
           value: cell.label,
           matchingType: trueMeta.match ? "exact" : "fuzzy", // Adjust logic if needed
@@ -312,6 +316,7 @@ const getAllColumnMetaObjects = (colId: string, rowEntities: RowState) => {
       // Always include every row - use matched metadata if available, otherwise include with null kbId
       if (trueMeta) {
         acc[rowId] = {
+          name: trueMeta.name,
           kbId: trueMeta.id,
           value: cell.label,
           matchingType: trueMeta.match ? "exact" : "fuzzy",
@@ -371,8 +376,11 @@ const getRequestFormValuesExtension = (
 
   if (shouldSkipFiltering) {
     // Skip filtering - include all rows regardless of reconciliation status
-    if (extender && extender.id === "llmClassifier") {
-      console.log("intercepted llmClassifier with skipFiltering enabled");
+    if (extender && (extender.id === "llmClassifier" || extender.allValues)) {
+      console.log(
+        "intercepted extender with rich objects and skipFiltering enabled",
+        extender.id,
+      );
       requestParams.items = selectedColumnsIds.reduce(
         (acc, key) => {
           acc[key] = getAllColumnMetaObjects(key, rows);
@@ -392,8 +400,8 @@ const getRequestFormValuesExtension = (
     }
   } else {
     // Use existing filtering logic - only include reconciled items
-    if (extender && extender.id === "llmClassifier") {
-      console.log("intercepted llmClassifier");
+    if (extender && (extender.id === "llmClassifier" || extender.allValues)) {
+      console.log("intercepted extender with rich objects", extender.id);
       requestParams.items = selectedColumnsIds.reduce(
         (acc, key) => {
           acc[key] = getColumnMetaObjects(key, rows);
@@ -402,7 +410,7 @@ const getRequestFormValuesExtension = (
         {} as Record<string, any>,
       );
     } else {
-      // fallback: if extender is undefined or not llmClassifier, use KB id logic
+      // fallback: if extender is undefined or doesn't need rich objects, use KB id logic
       requestParams.items = selectedColumnsIds.reduce(
         (acc, key) => {
           acc[key] = getColumnMetaIds(key, rows);
@@ -452,6 +460,57 @@ const getRequestFormValuesReconciliation = (
         requestParams[id] = {};
         for (const colId of formValues[id]) {
           requestParams[id][colId] = getMultipleColumnsValues(colId, rows);
+        }
+      } else {
+        requestParams[id] = formValues[id];
+      }
+    }
+  });
+
+  return requestParams;
+};
+
+const getRequestFormValuesModification = (
+  formParams: FormInputParams[],
+  formValues: Record<string, any>,
+  table: TableState,
+  modifier?: Modifier,
+) => {
+  if (!formParams) {
+    return {};
+  }
+
+  const { ui, entities } = table;
+  const { rows } = entities;
+  let selectedColumnsIds = Object.keys(table.ui.selectedColumnsIds);
+  console.log("getting request form values", modifier);
+
+  if (modifier?.skipFiltering) {
+    selectedColumnsIds = Object.keys(entities.columns.byId);
+  }
+
+  const requestParams = {} as Record<string, any>;
+
+  if (modifier?.allValues) {
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+      acc[key] = getAllColumnMetaObjects(key, rows);
+      return acc;
+    }, {} as Record<string, any>);
+  } else {
+    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
+      acc[key] = getColumnValues(key, rows);
+      return acc;
+    }, {} as Record<string, any>);
+  }
+
+  formParams.forEach(({ id, inputType }) => {
+    if (formValues[id]) {
+      if (inputType === "selectColumns") {
+        requestParams[id] = getColumnValues(formValues[id], rows);
+      } else if (inputType === "multipleColumnSelect") {
+        requestParams[id] = {};
+        for (const colId of formValues[id]) {
+          requestParams[id][colId] = getColumnValues(colId, rows);
         }
       } else {
         requestParams[id] = formValues[id];
@@ -531,21 +590,27 @@ export const reconcile = createAsyncThunk(
 type AutomaticAnnotationThunkInputProps = {
   datasetId: string;
   tableId: string;
+  target: "fullTable" | "schema";
+  method: "alligator" | "columnClassifier";
 };
 
 type AutomaticAnnotationThunkOutputProps = {
   datasetId: string;
   tableId: string;
   mantisStatus: "PENDING";
+  schemaStatus: "PENDING";
 };
 
 export const automaticAnnotation = createAsyncThunk<
   AutomaticAnnotationThunkOutputProps,
   AutomaticAnnotationThunkInputProps
 >(`${ACTION_PREFIX}/automaticAnnotation`, async (params, { getState }) => {
+  const { datasetId, tableId, target, method } = params;
   const { table } = getState() as any;
   const { entities } = table;
   const data = {
+    target,
+    method,
     rows: entities.rows.byId,
     columns: entities.columns.byId,
     table: entities.tableInstance,
@@ -623,6 +688,7 @@ interface Property {
   id: string; // Wikidata property ID (e.g., "wd:P31")
   obj: string; // Column name that this property maps to
   name: string; // Human-readable name of the property
+  description: string;
   match: boolean; // Whether this is a matched property
   score: number; // Match confidence score (1 = exact match)
 }
@@ -659,12 +725,10 @@ export const extend = createAsyncThunk<
   const selectedColumnId = selectedColumnIds[0];
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
-  const params = getRequestFormValuesExtension(
-    formParams,
-    formValues,
-    table,
-    extender,
-  );
+  const params = {
+    ...getRequestFormValuesExtension(formParams, formValues, table, extender),
+    selectedColumns: formValues.selectedColumns,
+  };
 
   // Create axios CancelToken source and wire it to the thunk abort signal
   const source = axios.CancelToken.source();
@@ -695,6 +759,59 @@ export const extend = createAsyncThunk<
   };
 });
 
+export type ModifyThunkInputProps = {
+  modifier: Modifier;
+  formValues: Record<string, any>;
+};
+
+export type ModifyThunkResponseProps = {
+  modifier: Modifier;
+  selectedColumnId: string;
+  data: any;
+};
+
+export const modify = createAsyncThunk<
+  ModifyThunkResponseProps,
+  ModifyThunkInputProps
+>(`${ACTION_PREFIX}/modify`, async (inputProps, { getState }) => {
+  const { modifier, formValues } = inputProps;
+
+  const { table } = getState() as RootState;
+  const { relativeUrl, formParams, id } = modifier;
+  const { entities, ui } = table;
+  const { tableInstance, columns } = entities;
+
+  const selectedColumnIds = Object.keys(ui.selectedColumnsIds);
+  const selectedColumnId = selectedColumnIds[0];
+  const columnName = columns.byId[selectedColumnId]?.label || "";
+
+  const params = {
+    ...getRequestFormValuesModification(formParams, formValues, table, modifier),
+    joinColumns: formValues.joinColumns,
+    selectedColumns: formValues.selectedColumns,
+    columnType: formValues.columnType,
+    separator: formValues.separator,
+    splitDatetime: formValues.splitDatetime,
+  };
+
+  const response = await tableAPI.modify(
+    relativeUrl,
+    {
+      serviceId: id,
+      ...params,
+    },
+    tableInstance.id,
+    tableInstance.idDataset,
+    columnName,
+  );
+
+  return {
+    data: response.data,
+    modifier,
+    selectedColumnId,
+  };
+});
+
 export const updateTableSocket = createAsyncThunk(
   `${ACTION_PREFIX}/updateTableSocket`,
   async (inputProps: GetTableResponse, { getState, dispatch }) => {
@@ -720,6 +837,29 @@ export const updateTableSocket = createAsyncThunk(
             ...settings,
             isViewOnly: false,
             scoreLowerBound: (table.maxMetaScore - table.minMetaScore) / 3,
+          },
+        }),
+      );
+    }
+  },
+);
+export const updateSchemaSocket = createAsyncThunk(
+  `${ACTION_PREFIX}/updateSchemaSocket`,
+  async (inputProps: GetSchemaResponse, { getState, dispatch }) => {
+    const state = getState() as RootState;
+    const { tableInstance } = state.table.entities;
+    const { settings } = state.table.ui;
+    const { table } = inputProps;
+
+    if (!isEmptyObject(tableInstance) && tableInstance.id.toString() === table.id.toString()) {
+      console.log("updateSchemaSocket: IDs match, dispatching updateSchema");
+
+      dispatch(updateSchema(inputProps));
+      dispatch(
+        updateUI({
+          settings: {
+            ...settings,
+            isViewOnly: false,
           },
         }),
       );

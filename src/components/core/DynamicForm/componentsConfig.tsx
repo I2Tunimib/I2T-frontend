@@ -3,8 +3,9 @@ import {
   FormInputParams,
 } from "@store/slices/config/interfaces/config";
 import CheckboxGroup from "./formComponents/CheckboxGroup";
+import RadioGroupComponent from "./formComponents/RadioGroupComponent";
 import InputText from "./formComponents/InputText";
-import { Select, SelectColumns } from "./formComponents/Select";
+import { Select, SelectColumns, SelectPrefix } from "./formComponents/Select";
 import TextArea from "./formComponents/TextArea";
 import { MultipleColumnSelect } from "./formComponents/MultipleColumnSelect";
 
@@ -15,9 +16,11 @@ export const FORM_COMPONENTS = {
   text: InputText,
   select: Select,
   selectColumns: SelectColumns,
+  selectPrefix: SelectPrefix,
   multipleColumnSelect: MultipleColumnSelect,
   checkbox: CheckboxGroup,
   textArea: TextArea,
+  radio: RadioGroupComponent,
 };
 
 /**
@@ -60,10 +63,14 @@ export const getDefaultValues = (extender: Extender) => {
       }
     } else if (inputType === "checkbox") {
       acc[id] = defaultValue || [];
+    } else if (inputType === "radio") {
+      acc[id] = defaultValue || "";
     } else if (inputType === "selectColumns") {
       acc[id] = defaultValue || ""; //TODO: cange back to ""
     } else if (inputType === "multipleColumnSelect") {
       acc[id] = defaultValue || [];
+    } else if (inputType === "selectPrefix") {
+      acc[id] = defaultValue || "";
     }
     return acc;
   }, {} as Record<string, any>);

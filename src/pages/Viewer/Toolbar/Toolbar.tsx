@@ -1,11 +1,10 @@
 import {
-  Button, FormControlLabel, FormGroup, IconButton, Stack,
-  Switch,
+  Button, IconButton, Stack,
   ToggleButton, ToggleButtonGroup, Tooltip
 } from '@mui/material';
 import { InlineInput } from '@components/kit';
 import { Link, useHistory, useParams } from 'react-router-dom';
-import {
+import React, {
   ChangeEvent, FocusEvent,
   MouseEvent, useState,
   useEffect
@@ -19,7 +18,7 @@ import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
 import {
   selectAutomaticAnnotationStatus,
-  selectCurrentTable,
+  selectCurrentTable, selectGraphTutorialDialogStatus,
   selectHelpDialogStatus,
   selectIsViewOnly,
   selectLastSaved,
@@ -33,15 +32,17 @@ import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
 import { automaticAnnotation, saveTable } from '@store/slices/table/table.thunk';
 import { useQuery } from '@hooks/router';
 import { selectAppConfig } from '@store/slices/config/config.selectors';
-import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
-import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
+//import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
+//import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { IconButtonTooltip } from '@components/core';
 import UserAvatar from '@components/kit/UserAvatar';
 import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
+import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
 import styles from './Toolbar.module.scss';
 import SaveIndicator from '../TableViewer/SaveIndicator';
 import ExportDialog from '../TableViewer/ExportDialog';
+import AutoAnnotationDialog from '../TableViewer/AutoAnnotationDialog';
 import SettingsDialog from '../SettingsDialog/SettingsDialog';
 import HelpDialog from '../HelpDialog/HelpDialog';
 
@@ -73,6 +74,7 @@ const Toolbar = () => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
   const openHelpDialog = useAppSelector(selectHelpDialogStatus);
+  const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
   const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectIsLoggedIn);
@@ -129,6 +131,9 @@ const Toolbar = () => {
   };
   const handleCloseHelp = () => {
     dispatch(updateUI({ openHelpDialog: false }));
+  };
+  const handleCloseGraphTutorial = () => {
+    dispatch(updateUI({ openGraphTutorialDialog: false }));
   };
 
   const handleSave = () => {
@@ -193,14 +198,32 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
-          <Button
-            color="primary"
-            disabled={loadingAutomaticAnnotation || (currentTable && currentTable.mantisStatus === 'PENDING')}
-            onClick={handleAutomaticAnnotation}
-            startIcon={<PlayCircleOutlineRoundedIcon />}
-            variant="contained">
-            Automatic annotation
-          </Button>
+          {/*
+          <>
+            <Button
+              onClick={() => dispatch(updateUI({ openExportDialog: true }))}
+              variant="contained"
+              color="primary"
+              size="medium"
+              startIcon={<AssignmentTurnedInOutlinedIcon />}
+            >
+              Compliance
+            </Button>
+            <ExportDialog />
+          </>
+          */}
+          <>
+            <Button
+              onClick={() => dispatch(updateUI({ openAutoAnnotationDialog: true }))}
+              variant="contained"
+              size="medium"
+              disabled={loadingAutomaticAnnotation || (currentTable && (currentTable.mantisStatus === 'PENDING' || currentTable.schemaStatus === 'PENDING'))}
+              startIcon={<PlayCircleOutlineRoundedIcon />}
+            >
+              Automatic annotation
+            </Button>
+            <AutoAnnotationDialog />
+          </>
           {API.ENDPOINTS.EXPORT && API.ENDPOINTS.EXPORT.length > 0 && (
             <>
               <Button
@@ -247,6 +270,7 @@ const Toolbar = () => {
       </div>
       <SettingsDialog open={openSettingsDialog} onClose={handleCloseSettings} />
       <HelpDialog open={openHelpDialog} onClose={handleCloseHelp} />
+      <GraphTutorialDialog open={openGraphTutorialDialog} onClose={handleCloseGraphTutorial} />
     </>
   );
 };
