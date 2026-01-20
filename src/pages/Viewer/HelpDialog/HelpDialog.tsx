@@ -487,7 +487,8 @@ const steps: Step[] = [
             />
             <Typography component="div">
               <b>Matches: </b>
-              cells that have been successfully reconciled.
+              The cell is annotated with an entity automatically assigned by the
+              <i> reconciliation service</i>
             </Typography>
           </Stack>
           <Stack direction="row">
@@ -500,8 +501,8 @@ const steps: Step[] = [
             />
             <Typography component="div">
               <b>Ambiguous: </b>
-              cells with multiple possible reconciliation candidates,
-              none of which has a perfect score, so the correct reconciliation is unclear.
+              There are candidate entities above the threshold, but none have been
+              selected for the cell because multiple candidates have similar scores.
             </Typography>
           </Stack>
           <Stack direction="row">
@@ -514,7 +515,7 @@ const steps: Step[] = [
             />
             <Typography component="div">
               <b>Miss matches: </b>
-              cells that could not be reconciled or have no match.
+              No candidate entities have been found, or none have scores above the threshold.
             </Typography>
           </Stack>
         </Stack>
