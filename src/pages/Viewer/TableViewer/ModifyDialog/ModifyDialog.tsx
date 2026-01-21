@@ -43,7 +43,9 @@ const Content = styled.div({
 });
 
 const DialogInnerContent = () => {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [uniqueServices, setUniqueServices] = useState<Modifier[]>([]);
+  const [groupedServices, setGroupedServices] = useState<Map<string, Modifier[]>>();
   const [currentService, setCurrentService] = useState<Modifier>();
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();

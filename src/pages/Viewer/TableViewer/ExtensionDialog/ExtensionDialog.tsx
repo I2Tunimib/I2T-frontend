@@ -64,8 +64,11 @@ const Content = styled.div({
 });
 
 const DialogInnerContent = () => {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [uniqueServices, setUniqueServices] = useState<Extender[]>([]);
   const [currentService, setCurrentService] = useState<Extender>();
+  const [groupedServices, setGroupedServices] =
+    useState<Map<string, Extender[]>>();
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const extensionServices = useAppSelector(selectExtendersAsArray);

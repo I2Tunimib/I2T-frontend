@@ -2027,6 +2027,7 @@ export const tableSlice = createSliceWithRequests({
                     annotated: true,
                     ...computeCellAnnotationStats(cell),
                   };
+                  cell.reconciler = reconcilerId;
                   // increment current
                   if (
                     !column.context[prefix] ||
