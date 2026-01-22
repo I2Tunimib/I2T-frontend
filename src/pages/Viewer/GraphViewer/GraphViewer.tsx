@@ -490,28 +490,6 @@ const GraphViewer: FC = () => {
             setSelectedLink(link);
             setSelectedNode(null);
           }}
-          linkPointerAreaPaint={(link: any, color, ctx) => {
-            const source = typeof link.source === 'object' ? link.source : null;
-            const target = typeof link.target === 'object' ? link.target : null;
-            if (!source || !target) return;
-
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 5;
-            ctx.moveTo(source.x, source.y);
-
-            const mx = (source.x + target.x) / 2 + link.curvature * (target.y - source.y);
-            const my = (source.y + target.y) / 2 - link.curvature * (target.x - source.x);
-
-            ctx.quadraticCurveTo(mx, my, target.x, target.y);
-            ctx.stroke();
-
-            if (showLinkLabels) {
-              ctx.fillStyle = color;
-              const width = 25;
-              const height = 8;
-              ctx.fillRect(mx - width / 2, my - height / 2, width, height);
-            }
-          }}
         />
       </div>
       <div className={styles.Sidebar}>
