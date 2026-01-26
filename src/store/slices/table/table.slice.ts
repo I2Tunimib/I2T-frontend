@@ -1984,6 +1984,25 @@ export const tableSlice = createSliceWithRequests({
                 id: string;
                 metadata: any[];
               }[];
+
+              const colIds = new Set<string>();
+
+              dataArray.forEach(({ id }) => {
+                if (id.includes("$")) {
+                  const [, colId] = getIdsFromCell(id);
+                  colIds.add(colId);
+                } else {
+                  colIds.add(id);
+                }
+              });
+
+              colIds.forEach((colId) => {
+                const column = getColumn(draft, colId);
+                if (column && column.kind !== "entity") {
+                  column.kind = "entity";
+                }
+              });
+
               dataArray.forEach(({ id: cellId, metadata }) => {
                 if (cellId.includes("$")) {
                   const [rowId, colId] = getIdsFromCell(cellId);
