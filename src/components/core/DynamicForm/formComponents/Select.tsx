@@ -158,13 +158,12 @@ export type SelectPrefixProps = BaseFormControlProps & {
 
 export const SelectPrefix = forwardRef<HTMLInputElement, SelectPrefixProps>(
   ({ id, label, value, onChange, context, ...formProps }, ref) => {
-    const exclusion = ["maps", "wiki", "dbp", "cr"];
-    const prefixProperty = ["wd", "wdA", "wdL"];
+    const exclusion = ["maps", "wiki", "dbp", "cr", "wdA", "wdL", "local"];
     const baseOptions: Option[] = Object.keys(KG_INFO)
       .filter((key) => {
         if (exclusion.includes(key) || !KG_INFO[key].groupName) return false;
         if (context === "propertyTab") {
-          return prefixProperty.includes(key);
+          return key === "wd";
         }
         return true;
       })

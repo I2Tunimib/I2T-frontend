@@ -73,7 +73,7 @@ const Content = () => {
   const role = useAppSelector(selectColumnRole);
   const [currentRole, setCurrentRole] = useState(role);
   const metadata = useAppSelector(selectColumnCellMetadataTableFormat);
-  const currentService = metadata?.service?.prefix || null;
+  const currentService = metadata?.column?.reconciler || null;
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const dispatch = useAppDispatch();
   const handleChange = (event: SyntheticEvent, newValue: number) => {
@@ -235,13 +235,13 @@ const Content = () => {
       <Stack minHeight="600px">
         <Stack position="sticky" top={0} zIndex={10} bgcolor="#FFF">
           <Stack paddingLeft="16px" paddingTop="16px" paddingBottom="8px">
-            {currentService ? (
+            {metadata?.column?.status !== "empty" ? (
               <Typography color="text.secondary">
                 Reconciliation service:{" "}
                 <Typography component="span" color="primary" sx={{ fontWeight: 500 }}>
                   {currentService === "manual"
                     ? "manual"
-                    : reconciliators.find((r) => r.prefix === currentService)?.name ||
+                    : reconciliators.find((r) => r.id === currentService)?.name ||
                     currentService}
                 </Typography>
               </Typography>
@@ -256,7 +256,7 @@ const Content = () => {
           <TypeTab addEdit={handleAddEdit} />
         </TabPanel>
         <TabPanel value={value} index={1}>
-          <PropertyTab addEdit={handleAddEdit} />
+          <PropertyTab addEdit={handleAddEdit} setCurrentRole={setCurrentRole} />
         </TabPanel>
       </Stack>
     </Stack>

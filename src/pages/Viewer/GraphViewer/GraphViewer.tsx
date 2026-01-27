@@ -677,7 +677,7 @@ const GraphViewer: FC = () => {
               </div>
               <Divider />
               <div className={styles.Section}>
-                <h3>Connections</h3>
+                <h3>Properties</h3>
                 <Typography>
                   <strong>Outgoing Links ({nodeOutgoingLinks.length})</strong>
                 </Typography>

@@ -138,6 +138,7 @@ export interface AnnotationMeta {
   match: {
     value: boolean;
     reason?: "reconciliator" | "manual" | "refinement";
+    reconciler?: string;
   };
   highestScore: number;
   lowestScore: number;

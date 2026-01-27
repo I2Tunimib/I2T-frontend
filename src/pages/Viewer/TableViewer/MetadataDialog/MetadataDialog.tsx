@@ -210,9 +210,9 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       if (reason === "manual") {
         setIsManualMatch(true);
       } else if (cell?.metadata && cell.metadata.length > 0) {
-        const prefix = cell.metadata[0].id.split(":")[0];
+        const serviceRec = cell?.reconciler;
         setIsManualMatch(false);
-        setCurrentService(prefix);
+        setCurrentService(serviceRec);
       } else {
         setIsManualMatch(false);
         setCurrentService("");
@@ -548,7 +548,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             "";
         } else if (prefix === "geoCoord") {
           // Coordinates (e.g., Google Maps): take last path segment and keep comma-separated coords
-          const last = url.pathname.split("/").filter(Boolean).pop() || "";
+          const last = url.pathname.split("/@").filter(Boolean).pop() || "";
           const parts = last.split(",");
           idFromUri = parts.join(",") || url.hash.replace(/^#/, "");
         } else {
@@ -727,18 +727,18 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     console.log("Row checked:", rowId);
   }, []);
 
-  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+  const servicesById = reconciliators.reduce<Record<string, any>>(
     (acc, service) => {
-      acc[service.prefix] = service;
+      acc[service.id] = service;
       return acc;
     },
     {},
   );
 
   const handleSearchInService = () => {
-    if (!cell?.label || !currentService) return;
+    if (!cell?.label) return;
 
-    const serviceInfo = servicesByPrefix[currentService];
+    const serviceInfo = servicesById[cell?.reconciler];
     if (!serviceInfo?.searchPattern) return;
 
     const url = serviceInfo.searchPattern.replace("{label}", encodeURIComponent(cell.label));
@@ -746,7 +746,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   };
 
   // Early return if cell has no metadata to prevent crashes
-  if (cell && (!cell.metadata || cell.metadata.length === 0)) {
+  if (cell && !cell?.annotationMeta?.annotated && (!cell.metadata || cell.metadata.length === 0)) {
     return (
       <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
         <Stack
@@ -816,7 +816,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             <IconButtonTooltip
               tooltipText="Help"
               onClick={() =>
-                dispatch(updateUI({ openHelpDialog: true, tutorialStep: 17 }))
+                dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 17 }))
               }
               Icon={HelpOutlineRoundedIcon}
             />
@@ -824,7 +824,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         </Stack>
         <Divider orientation="horizontal" flexItem />
         <Box padding="16px">
-          {currentService || isManualMatch ? (
+          {cell.reconciler || isManualMatch ? (
             <Typography color="text.secondary">
               Reconciliation service:{" "}
               <Typography
@@ -834,10 +834,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               >
                 {isManualMatch
                   ? "manual"
-                  : currentService
+                  : cell.reconciler
                     ? `${
                         reconciliators.find(
-                          (rec) => rec.prefix === currentService,
+                          (rec) => rec.id === cell.reconciler,
                         ).name
                       }`
                     : ""}
@@ -881,21 +881,21 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   />
                 </Button>
               </Tooltip>
-              {showAdd && servicesByPrefix[currentService]?.searchPattern && (
+              {showAdd && servicesById[cell?.reconciler]?.searchPattern && (
                 <Button
                   variant="outlined"
                   color="primary"
                   onClick={handleSearchInService}
                   sx={{ textTransform: "none" }}
                 >
-                  Search in {KG_INFO[currentService].groupName}
+                  Search in {KG_INFO[servicesById[cell?.reconciler].prefix].groupName}
                 </Button>
               )}
             </Stack>
             {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
                 <AddMetadataForm
-                  currentService={currentService}
+                  currentService={servicesById[cell?.reconciler].prefix}
                   onSubmit={onSubmitNewMetadata}
                   context="metadataDialog"
                 />
