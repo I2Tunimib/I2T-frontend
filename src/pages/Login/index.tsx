@@ -16,6 +16,7 @@ import { authSignIn } from "@store/slices/auth/auth.thunk";
 import { selectSignInStatus } from "@store/slices/auth/auth.selectors";
 //import { LoadingButton } from "@mui/lab";
 import { useHistory } from "react-router-dom";
+import { login, logout } from "../../keycloak";
 
 const Container = styled.div({
   height: "100%",
@@ -121,6 +122,32 @@ const LoginPage = () => {
           disabled={loading}
         >
           Don't have an account? Sign up
+        </Button>
+
+        {/* Keycloak login / logout buttons (minimal, non-invasive) */}
+        <Button
+          variant="outlined"
+          onClick={() => {
+            // trigger Keycloak login (redirect)
+            login();
+          }}
+          disabled={loading}
+          sx={{ mt: 1 }}
+        >
+          Login with Keycloak
+        </Button>
+
+        <Button
+          variant="outlined"
+          onClick={() => {
+            // trigger Keycloak logout
+            logout();
+            // Optionally you may redirect or clear local app state here
+          }}
+          disabled={loading}
+          sx={{ mt: 1 }}
+        >
+          Logout Keycloak
         </Button>
       </FormContainer>
     </Container>

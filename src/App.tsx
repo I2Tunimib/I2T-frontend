@@ -6,10 +6,15 @@ import Route from "@components/core/Route";
 import { Loader, useSocketIo } from "@components/core";
 import { useSnackbar } from "notistack";
 import { useAppDispatch } from "@hooks/store";
-import { updateTableSocket, updateSchemaSocket } from "@store/slices/table/table.thunk";
+import {
+  updateTableSocket,
+  updateSchemaSocket,
+} from "@store/slices/table/table.thunk";
 import { GetTableResponse, GetSchemaResponse } from "@services/api/table";
 import { Button } from "@mui/material";
 import { getRedirects, getRoutes } from "./routes";
+import { initKeycloak, getUserInfo } from "./keycloak";
+import { setKeycloakAuth } from "./store/slices/auth/auth.slice";
 
 // Make enqueueSnackbar globally available for API interceptors
 declare global {
@@ -26,6 +31,33 @@ const App = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
 
+  // Initialize Keycloak on app startup (minimal)
+  useEffect(() => {
+    initKeycloak({
+      onAuthenticated: () => {
+        const userInfo = getUserInfo();
+        dispatch(
+          setKeycloakAuth({
+            loggedIn: true,
+            user: {
+              id: 0,
+              username: userInfo.username || "",
+              email: userInfo.email,
+            },
+          }),
+        );
+      },
+      onLogout: () => {
+        dispatch(setKeycloakAuth({ loggedIn: false }));
+      },
+    }).then((authenticated) => {
+      console.log("Keycloak initialized, authenticated:", authenticated);
+      if (!authenticated) {
+        dispatch(setKeycloakAuth({ loggedIn: false }));
+      }
+    });
+  }, []);
+
   // Set global enqueueSnackbar for API interceptors
   useEffect(() => {
     window.enqueueSnackbar = enqueueSnackbar;
@@ -39,18 +71,19 @@ const App = () => {
         dispatch(updateTableSocket(data));
         enqueueSnackbar(`Annotation for table ${table.name} completed`, {
           variant: "success",
-          action: location.pathname === tablePath
-            ? (key) => (
-              <Button
-                sx={{ color: "#ffffff" }}
-                component={Link}
-                to={tablePath}
-                onClick={() => closeSnackbar(key)}
-              >
-                view
-              </Button>
-            )
-            : undefined
+          action:
+            location.pathname === tablePath
+              ? (key) => (
+                  <Button
+                    sx={{ color: "#ffffff" }}
+                    component={Link}
+                    to={tablePath}
+                    onClick={() => closeSnackbar(key)}
+                  >
+                    view
+                  </Button>
+                )
+              : undefined,
         });
       });
       socket.on("schema-done", (data: GetSchemaResponse) => {
@@ -60,18 +93,19 @@ const App = () => {
         dispatch(updateSchemaSocket(data));
         enqueueSnackbar(`Annotation schema for table ${table.name} completed`, {
           variant: "success",
-          action: location.pathname === tablePath
-            ? (key) => (
-              <Button
-                sx={{ color: "#ffffff" }}
-                component={Link}
-                to={tablePath}
-                onClick={() => closeSnackbar(key)}
-              >
-                view
-              </Button>
-            )
-            : undefined
+          action:
+            location.pathname === tablePath
+              ? (key) => (
+                  <Button
+                    sx={{ color: "#ffffff" }}
+                    component={Link}
+                    to={tablePath}
+                    onClick={() => closeSnackbar(key)}
+                  >
+                    view
+                  </Button>
+                )
+              : undefined,
         });
       });
     }

@@ -24,6 +24,19 @@ export type GetCollectionResult<T = {}> = {
   collection: T[];
 };
 
+/**
+ * Helper to build Authorization header preferring Keycloak token (kc_token)
+ * and falling back to legacy token (token).
+ */
+const getAuthHeader = (): Record<string, string> => {
+  const kcToken =
+    typeof localStorage !== "undefined" && localStorage.getItem("kc_token");
+  const legacyToken =
+    typeof localStorage !== "undefined" && localStorage.getItem("token");
+  const token = kcToken || legacyToken;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const datasetAPI = {
   getDataset: (params: Record<string, string | number> = {}) => {
     return apiClient.get<GetCollectionResult<Dataset>>(
@@ -34,11 +47,12 @@ const datasetAPI = {
       {
         clearCacheEntry: true,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...getAuthHeader(),
         },
-      }
+      },
     );
   },
+
   getDatasetInfo: (params: Record<string, string | number> = {}) => {
     return apiClient.get<Dataset>(
       apiEndpoint({
@@ -48,11 +62,12 @@ const datasetAPI = {
       {
         clearCacheEntry: true,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...getAuthHeader(),
         },
-      }
+      },
     );
   },
+
   getTablesByDataset: (params: Record<string, string | number> = {}) => {
     return apiClient.get<GetCollectionResult<Table>>(
       apiEndpoint({
@@ -62,11 +77,12 @@ const datasetAPI = {
       {
         clearCacheEntry: true,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...getAuthHeader(),
         },
-      }
+      },
     );
   },
+
   annotate: (name: string, data: { idDataset: any[]; idTable: any[] }) => {
     return apiClient.post<Table[]>(
       apiEndpoint({
@@ -76,11 +92,12 @@ const datasetAPI = {
       data,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...getAuthHeader(),
         },
-      }
+      },
     );
   },
+
   globalSearch: (query: string) => {
     return apiClient.get<GlobalSearchResult>(
       apiEndpoint({
@@ -89,16 +106,23 @@ const datasetAPI = {
       }),
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...getAuthHeader(),
         },
-      }
+      },
     );
   },
+
   uploadDataset: (formData: FormData) => {
-    const token = localStorage.getItem("token");
+    const kcToken =
+      typeof localStorage !== "undefined" && localStorage.getItem("kc_token");
+    const legacyToken =
+      typeof localStorage !== "undefined" && localStorage.getItem("token");
+    const token = kcToken || legacyToken;
+
     if (!token) {
       throw new Error("No authentication token found");
     }
+
     return apiClient.post(
       apiEndpoint({
         endpoint: "UPLOAD_DATASET",
@@ -107,10 +131,12 @@ const datasetAPI = {
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          // Let axios set Content-Type for multipart/form-data with proper boundary
         },
-      }
+      },
     );
   },
+
   deleteDataset: (datasetId: string) => {
     return apiClient.delete(
       apiEndpoint({
@@ -119,12 +145,17 @@ const datasetAPI = {
       }),
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...getAuthHeader(),
         },
-      }
+      },
     );
   },
+
   uploadTable: (formData: FormData, datasetId: string) => {
+    const headers = {
+      ...getAuthHeader(),
+    };
+
     return apiClient.post(
       apiEndpoint({
         endpoint: "UPLOAD_TABLE",
@@ -132,12 +163,11 @@ const datasetAPI = {
       }),
       formData,
       {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
+        headers,
+      },
     );
   },
+
   deleteTable: (params: { datasetId: string; tableId: string }) => {
     return apiClient.delete(
       apiEndpoint({
@@ -146,9 +176,9 @@ const datasetAPI = {
       }),
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...getAuthHeader(),
         },
-      }
+      },
     );
   },
 };
