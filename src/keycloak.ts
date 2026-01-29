@@ -1,4 +1,5 @@
 import Keycloak, { KeycloakInstance, KeycloakInitOptions } from "keycloak-js";
+import sha256 from "js-sha256";
 
 /**
  * Keycloak helper (simplified)
@@ -59,6 +60,62 @@ if (realmUrlRaw) {
   );
 }
 
+/*
+  Library-backed polyfill for Web Crypto `subtle.digest` (SHA-256).
+
+  - If native `window.crypto.subtle` exists, it is used (preferred).
+  - If missing, this attaches a fallback implementation using `js-sha256`.
+  - The fallback returns an ArrayBuffer to match the native subtle.digest signature.
+  - The code below tries to avoid clobbering existing `crypto` fields.
+*/
+(function ensureWebCryptoSubtle() {
+  if (typeof window === "undefined") return;
+
+  const hasSubtle = !!(
+    window.crypto &&
+    (window.crypto.subtle || (window.crypto as any).webkitSubtle)
+  );
+  if (hasSubtle) return;
+
+  // Ensure crypto object exists
+  (window as any).crypto = (window as any).crypto || {};
+
+  // Attach fallback subtle with sha256 from js-sha256 (arrayBuffer available)
+  (window as any).crypto.subtle = {
+    digest: async (algorithm: string, data: ArrayBuffer | ArrayBufferView) => {
+      const alg = (algorithm || "").toUpperCase();
+      if (alg !== "SHA-256" && alg !== "SHA256") {
+        throw new Error("Fallback subtle.digest only supports SHA-256");
+      }
+
+      // coerce input to ArrayBuffer
+      let inputBuf: ArrayBuffer;
+      if (data instanceof ArrayBuffer) {
+        inputBuf = data;
+      } else if (ArrayBuffer.isView(data)) {
+        inputBuf = data.buffer.slice(
+          data.byteOffset,
+          data.byteOffset + data.byteLength,
+        );
+      } else {
+        inputBuf = new TextEncoder().encode(String(data)).buffer;
+      }
+
+      // Use js-sha256's arrayBuffer helper if available
+      // @ts-ignore - `arrayBuffer` exists on js-sha256 in runtime
+      const ab = (sha256 as any).arrayBuffer(new Uint8Array(inputBuf));
+      if (ab instanceof ArrayBuffer) return ab;
+      if (ab instanceof Uint8Array) return ab.buffer.slice(0);
+      return new Uint8Array(ab).buffer;
+    },
+  };
+
+  // eslint-disable-next-line no-console
+  console.warn(
+    "Web Crypto 'subtle' was missing. `js-sha256` is being used as a fallback. Serve over HTTPS to enable native Web Crypto.",
+  );
+})();
+
 /* Build Keycloak config object */
 const kcConfig = {
   url: kcBaseUrl,
@@ -83,12 +140,12 @@ export function initKeycloak(options?: {
   if (_initPromise) return _initPromise;
 
   _initPromise = (async () => {
+    // If crypto.subtle exists (native or fallback), keep pkceMethod S256.
+    // Keycloak will use the digest implementation we provided above when native API is absent.
     const initOptions: KeycloakInitOptions = {
-      onLoad: "check-sso", // do not force login; prefer existing session if present
+      onLoad: "check-sso",
       pkceMethod: "S256",
       promiseType: "native",
-      // Note: we avoid requiring an extra static file. If you add silent-check-sso.html
-      // at the app root you can enable silentCheckSsoRedirectUri here.
     };
 
     try {
