@@ -50,9 +50,38 @@ const App = () => {
       onLogout: () => {
         dispatch(setKeycloakAuth({ loggedIn: false }));
       },
-    }).then((authenticated) => {
+    }).then(async (authenticated) => {
       console.log("Keycloak initialized, authenticated:", authenticated);
       if (!authenticated) {
+        // Fallback: check server-side session endpoint to see if backend completed PKCE login
+        try {
+          const resp = await fetch("/api/auth/keycloak/me", {
+            method: "GET",
+            credentials: "same-origin",
+            headers: { Accept: "application/json" },
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.loggedIn && data.tokenPayload) {
+              dispatch(
+                setKeycloakAuth({
+                  loggedIn: true,
+                  user: {
+                    id: 0,
+                    username:
+                      data.tokenPayload.preferred_username ||
+                      data.tokenPayload.username ||
+                      "",
+                    email: data.tokenPayload.email,
+                  },
+                }),
+              );
+              return;
+            }
+          }
+        } catch (e) {
+          // network or parsing error - fall through to unauthenticated state
+        }
         dispatch(setKeycloakAuth({ loggedIn: false }));
       }
     });

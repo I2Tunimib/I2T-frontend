@@ -16,7 +16,7 @@ import { authSignIn } from "@store/slices/auth/auth.thunk";
 import { selectSignInStatus } from "@store/slices/auth/auth.selectors";
 //import { LoadingButton } from "@mui/lab";
 import { useHistory } from "react-router-dom";
-import { login, logout } from "../../keycloak";
+import { login, logout, loginServer } from "../../keycloak";
 
 const Container = styled.div({
   height: "100%",
@@ -121,7 +121,7 @@ const LoginPage = () => {
           onClick={() => history.push("/signup")}
           disabled={loading}
         >
-          Don't have an account? Sign up
+          Don&apos;t have an account? Sign up
         </Button>
 
         {/* Keycloak login / logout buttons (minimal, non-invasive) */}
@@ -135,6 +135,19 @@ const LoginPage = () => {
           sx={{ mt: 1 }}
         >
           Login with Keycloak
+        </Button>
+
+        {/* Server-side Keycloak login: redirects to backend which performs PKCE + token exchange */}
+        <Button
+          variant="outlined"
+          onClick={() => {
+            // trigger server-side Keycloak login (redirect to backend)
+            loginServer();
+          }}
+          disabled={loading}
+          sx={{ mt: 1 }}
+        >
+          Login with Keycloak (server)
         </Button>
 
         <Button

@@ -1,24 +1,41 @@
-import Keycloak, { KeycloakInstance, KeycloakInitOptions } from "keycloak-js";
-import sha256 from "js-sha256";
-
-/**
- * Keycloak helper (simplified)
+/* semTUI/I2T-frontend/src/keycloak.ts
  *
- * - Uses a single Vite env var: VITE_KEYCLOAK_REALM
- *   This must be the full realm URL, e.g.:
- *     VITE_KEYCLOAK_REALM=http://vm.chronos.disco.unimib.it:8007/realms/DAVE
+ * Simplified Keycloak helper.
  *
- * - Optional Vite var: VITE_KEYCLOAK_CLIENT_ID (if omitted a sensible default is used)
+ * - Removes any WebCrypto polyfills.
+ * - Keeps the original keycloak-js behaviour when the browser environment supports it.
+ * - Supports a server-backed login flow endpoint at `/api/auth/keycloak/login`
+ *   which performs PKCE + token exchange server-side and sets HTTP-only cookies.
  *
- * Behavior:
- * - Extracts base URL + realm name from VITE_KEYCLOAK_REALM
- * - Provides idempotent `initKeycloak()` to initialize the client once
- * - Exposes `login()`, `logout()`, `getToken()`, `getUserInfo()` and default export `keycloak`
+ * Exports:
+ * - initKeycloak(options?)
+ * - login(opts?)
+ * - loginServer()
+ * - logout()
+ * - getToken()
+ * - getTokenParsed()
+ * - getUserInfo()
+ * - isAuthenticated()
+ * - default export: keycloak instance
  *
- * Note: This file intentionally avoids requiring additional env variables.
+ * Notes:
+ * - The server-backed endpoints implemented in the backend must exist:
+ *   - GET /api/auth/keycloak/login   -> redirects to Keycloak (server starts PKCE)
+ *   - GET /api/auth/keycloak/callback -> callback that exchanges code and sets cookies
+ *   - GET /api/auth/keycloak/me      -> returns { loggedIn: boolean, tokenPayload?: {...} }
+ *
+ * - The helper prefers keycloak-js when available and falls back to the server flow when the
+ *   browser doesn't provide native Web Crypto (so PKCE client-side wouldn't work).
  */
 
-/* Read env */
+import Keycloak, { KeycloakInstance, KeycloakInitOptions } from "keycloak-js";
+
+type InitOptions = {
+  onAuthenticated?: () => void;
+  onLogout?: () => void;
+};
+
+/* Read Vite env */
 const realmUrlRaw = (import.meta.env.VITE_KEYCLOAK_REALM as string) || "";
 const clientId =
   (import.meta.env.VITE_KEYCLOAK_CLIENT_ID as string) || "semtui_frontend";
@@ -49,7 +66,6 @@ if (realmUrlRaw) {
       kcBaseUrl = parsed.origin;
     }
   } catch (err) {
-    // invalid URL
     // eslint-disable-next-line no-console
     console.error("VITE_KEYCLOAK_REALM is not a valid URL:", realmUrlRaw, err);
   }
@@ -60,176 +76,118 @@ if (realmUrlRaw) {
   );
 }
 
-/*
-  Robust polyfill for Web Crypto `subtle.digest` (SHA-256):
-
-  - Prefer native `window.crypto.subtle` if present (including webkitSubtle).
-  - If missing, try to attach a `subtle.digest` implementation using `js-sha256`.
-  - Do NOT assign `window.crypto = ...` because `crypto` can be a read-only / getter-only property in some environments.
-  - Instead:
-    1) If `window.crypto` exists and is an object, try to define `window.crypto.subtle` using Object.defineProperty.
-    2) If `window.crypto` does NOT exist, try to define `window.crypto` on window using Object.defineProperty (may fail if the environment forbids it).
-    3) If both approaches fail, fall back to not enabling PKCE S256 (safer than forcing an overwrite that throws).
-  - We return whether the polyfill was successfully installed so callers can decide whether S256 can be used.
-*/
-
-function createFallbackSubtle() {
-  return {
-    digest: async (algorithm: string, data: ArrayBuffer | ArrayBufferView) => {
-      const alg = (algorithm || "").toUpperCase();
-      if (alg !== "SHA-256" && alg !== "SHA256") {
-        throw new Error("Fallback subtle.digest only supports SHA-256");
-      }
-
-      // coerce to ArrayBuffer
-      let inputBuf: ArrayBuffer;
-      if (data instanceof ArrayBuffer) {
-        inputBuf = data;
-      } else if (ArrayBuffer.isView(data)) {
-        inputBuf = data.buffer.slice(
-          data.byteOffset,
-          data.byteOffset + data.byteLength,
-        );
-      } else {
-        inputBuf = new TextEncoder().encode(String(data)).buffer;
-      }
-
-      // js-sha256 offers arrayBuffer output
-      // @ts-ignore
-      const ab = (sha256 as any).arrayBuffer(new Uint8Array(inputBuf));
-      if (ab instanceof ArrayBuffer) return ab;
-      if (ab instanceof Uint8Array) return ab.buffer.slice(0);
-      return new Uint8Array(ab).buffer;
-    },
-  };
-}
-
-function tryInstallSubtleFallback(): boolean {
-  if (typeof window === "undefined") return false;
-
-  const nativeSubtle = !!(
-    window.crypto &&
-    ((window.crypto as any).subtle || (window.crypto as any).webkitSubtle)
-  );
-  if (nativeSubtle) return true;
-
-  const fallback = createFallbackSubtle();
-
-  // Case A: window.crypto exists and is an object -> attempt to define .subtle on it
-  if ((window as any).crypto && typeof (window as any).crypto === "object") {
-    try {
-      // defineProperty avoids direct assignment which can throw in some browsers
-      Object.defineProperty((window as any).crypto, "subtle", {
-        configurable: true,
-        enumerable: false,
-        writable: false,
-        value: fallback,
-      });
-      // success
-      // eslint-disable-next-line no-console
-      console.warn(
-        "Attached fallback crypto.subtle using js-sha256 on existing window.crypto",
-      );
-      return true;
-    } catch (e) {
-      // defining subtle failed (maybe crypto has a getter-only subtle or environment forbids)
-      // fall through to try defining window.crypto itself
-    }
-  }
-
-  // Case B: window.crypto does not exist or defineProperty on crypto failed -> try to define window.crypto
-  try {
-    // NOTE: defining global properties may also fail in some hosts (non-configurable)
-    Object.defineProperty(window, "crypto", {
-      configurable: true,
-      enumerable: false,
-      writable: false,
-      value: { subtle: fallback },
-    });
-    // eslint-disable-next-line no-console
-    console.warn("Defined window.crypto with fallback subtle using js-sha256");
-    return true;
-  } catch (e) {
-    // Could not define window.crypto either. This environment is restrictive.
-  }
-
-  // Case C: try to define a non-enumerable fallback property name to be used by our code only.
-  // We can't guarantee Keycloak or other libs will look there, but we can indicate failure so callers can avoid using S256.
-  // eslint-disable-next-line no-console
-  console.warn(
-    "Unable to attach crypto.subtle fallback (read-only environment). PKCE S256 will be disabled.",
-  );
-  return false;
-}
-
-/* Attempt to install polyfill and record whether it's present for our use */
-const polyfillInstalled = tryInstallSubtleFallback();
-
-/* Build Keycloak config object */
+/* Build Keycloak config object and instance */
 const kcConfig = {
   url: kcBaseUrl,
   realm: kcRealmName,
   clientId,
 };
-
-/* Create instance */
 const keycloak: KeycloakInstance = new Keycloak(kcConfig as any);
+
+/* API base for server endpoints (use Vite env if provided) */
+const RAW_API_BASE =
+  (import.meta.env.VITE_BACKEND_API_URL as string | undefined) ||
+  (import.meta.env.VITE_BASE_URI as string | undefined) ||
+  "";
+
+/* Normalize API base:
+   - trim trailing slashes
+   - remove a trailing '/api' segment if present
+   This prevents double '/api/api/...' when the env already contains '/api'. */
+const API_BASE = ((): string => {
+  if (!RAW_API_BASE) return "";
+  let v = RAW_API_BASE.replace(/\/+$/, "");
+  v = v.replace(/\/api$/, "");
+  return v;
+})();
+
+/* Internal state: server-side token payload (populated by /api/auth/keycloak/me) */
+let serverTokenPayload: Record<string, any> | undefined;
+
+/* Helper: check server-side session (backend must expose /api/auth/keycloak/me) */
+async function checkServerSession(): Promise<boolean> {
+  try {
+    const base = API_BASE ? API_BASE : "";
+    const url = base ? `${base}/api/auth/keycloak/me` : "/api/auth/keycloak/me";
+    const resp = await fetch(url, {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    if (!resp.ok) return false;
+    const data = await resp.json();
+    if (data && data.loggedIn) {
+      serverTokenPayload = data.tokenPayload;
+      return true;
+    }
+    return false;
+  } catch (e) {
+    // network error or endpoint missing
+    return false;
+  }
+}
 
 /* idempotent init promise */
 let _initPromise: Promise<boolean> | null = null;
 
 /**
- * Initialize Keycloak once. Returns a promise that resolves to whether the user is authenticated.
- * Keep init options minimal — no extra envs required.
+ * Initialize Keycloak.
+ * - Tries keycloak-js initialization (client-side PKCE) first.
+ * - If the browser lacks Web Crypto or keycloak init fails, falls back to checking server session.
  */
-export function initKeycloak(options?: {
-  onAuthenticated?: () => void;
-  onLogout?: () => void;
-}): Promise<boolean> {
+export function initKeycloak(options?: InitOptions): Promise<boolean> {
   if (_initPromise) return _initPromise;
 
   _initPromise = (async () => {
-    // Decide whether to enable PKCE S256:
-    // - Use S256 if native subtle exists OR our polyfill was successfully installed.
-    const subtleAvailable =
-      !!(
-        window.crypto &&
-        ((window.crypto as any).subtle || (window.crypto as any).webkitSubtle)
-      ) || polyfillInstalled;
+    const nativeSubtle = !!(
+      typeof window !== "undefined" &&
+      window.crypto &&
+      ((window.crypto as any).subtle || (window.crypto as any).webkitSubtle)
+    );
 
+    // If native subtle is missing, do not attempt a client PKCE init that will throw;
+    // instead check server session immediately.
+    if (!nativeSubtle) {
+      const serverLogged = await checkServerSession();
+      if (serverLogged) {
+        options?.onAuthenticated?.();
+        return true;
+      }
+      options?.onAuthenticated?.();
+      return false;
+    }
+
+    // Client-side initialization using keycloak-js (preserve original behavior)
     const initOptions: KeycloakInitOptions = {
-      onLoad: "check-sso", // do not force login; prefer existing session if present
-      // enable S256 only if subtle is available (native or our installed polyfill)
-      pkceMethod: subtleAvailable ? "S256" : undefined,
+      onLoad: "check-sso",
+      pkceMethod: "S256",
       promiseType: "native",
-      // Note: we avoid requiring an extra static file. If you add silent-check-sso.html
-      // at the app root you can enable silentCheckSsoRedirectUri here.
-    };
+    } as KeycloakInitOptions;
 
     try {
       const authenticated = await keycloak.init(initOptions);
-
       if (authenticated && keycloak.token) {
         try {
           localStorage.setItem("kc_token", keycloak.token);
-        } catch (e) {
+        } catch {
           // ignore storage errors
         }
 
+        // token refresh handler
         keycloak.onTokenExpired = () => {
           keycloak
             .updateToken(30)
-            .then((refreshed) => {
+            .then((refreshed: boolean) => {
               if (refreshed && keycloak.token) {
                 try {
                   localStorage.setItem("kc_token", keycloak.token);
-                } catch (e) {
+                } catch {
                   // ignore
                 }
               }
             })
             .catch(() => {
-              // token refresh failed - let app handle re-login if needed
+              // ignore refresh failure
             });
         };
 
@@ -237,7 +195,7 @@ export function initKeycloak(options?: {
       } else {
         try {
           localStorage.removeItem("kc_token");
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -245,15 +203,19 @@ export function initKeycloak(options?: {
       options?.onAuthenticated?.();
       return authenticated;
     } catch (err) {
-      // initialization failed; clear token and allow retry next call
-      try {
-        localStorage.removeItem("kc_token");
-      } catch (e) {
-        // ignore
+      // if client init fails, fallback to server session check
+      // eslint-disable-next-line no-console
+      console.error(
+        "Keycloak init failed, falling back to server session check:",
+        err,
+      );
+      const serverLogged = await checkServerSession();
+      if (serverLogged) {
+        options?.onAuthenticated?.();
+        return true;
       }
       _initPromise = null;
-      // eslint-disable-next-line no-console
-      console.error("Keycloak init error:", err);
+      options?.onAuthenticated?.();
       return false;
     }
   })();
@@ -261,35 +223,86 @@ export function initKeycloak(options?: {
   return _initPromise;
 }
 
-/* Trigger redirect to Keycloak login */
-export function login(): Promise<void> {
-  return keycloak.login();
+/**
+ * Login
+ *
+ * - If opts?.serverOnly is true, always redirect to server login endpoint.
+ * - If the browser lacks Web Crypto, redirect to server login endpoint.
+ * - Otherwise use keycloak-js login() (existing behavior).
+ */
+export async function login(opts?: { serverOnly?: boolean }): Promise<void> {
+  const nativeSubtle = !!(
+    typeof window !== "undefined" &&
+    window.crypto &&
+    ((window.crypto as any).subtle || (window.crypto as any).webkitSubtle)
+  );
+
+  if (opts?.serverOnly || !nativeSubtle) {
+    const base = API_BASE ? API_BASE : "";
+    const loginUrl = base
+      ? `${base}/api/auth/keycloak/login`
+      : "/api/auth/keycloak/login";
+    window.location.assign(loginUrl);
+    return Promise.resolve();
+  }
+
+  try {
+    // Use keycloak-js (preserves previous client-side flow)
+    return await keycloak.login();
+  } catch (err) {
+    // fallback: server-side login
+    try {
+      const base = API_BASE ? API_BASE : "";
+      const loginUrl = base
+        ? `${base}/api/auth/keycloak/login`
+        : "/api/auth/keycloak/login";
+      window.location.assign(loginUrl);
+    } catch {
+      // nothing else to do
+    }
+    return Promise.resolve();
+  }
 }
 
-/* Logout and clear token from storage */
+/* Explicit server-side login helper */
+export function loginServer(): void {
+  const base = API_BASE ? API_BASE : "";
+  const loginUrl = base
+    ? `${base}/api/auth/keycloak/login`
+    : "/api/auth/keycloak/login";
+  window.location.assign(loginUrl);
+}
+
+/* Logout: attempt client logout; note server-side logout endpoint not implemented here */
 export function logout(params?: { redirectUri?: string }): Promise<void> {
   try {
     localStorage.removeItem("kc_token");
-  } catch (e) {
-    // ignore
+  } catch {
+    /* ignore */
   }
-  return keycloak.logout(params);
+  try {
+    return keycloak.logout(params);
+  } catch {
+    return Promise.resolve();
+  }
 }
 
-/* Get token (attempt refresh if needed) */
+/* Get token (client-side only). Server-side tokens are stored in httpOnly cookies and not accessible. */
 export async function getToken(): Promise<string | null> {
   try {
-    // try refresh if token expires in < 30s
     await keycloak.updateToken(30).catch(() => false);
   } catch {
-    // ignore
+    /* ignore */
   }
   return keycloak.token ?? null;
 }
 
-/* Helpers to read token payload / user info */
+/* Token parsing / user info helpers: prefer client-side parsed token, otherwise use server payload */
 export function getTokenParsed(): Record<string, any> | undefined {
-  return keycloak.tokenParsed as Record<string, any> | undefined;
+  return (
+    (keycloak.tokenParsed as Record<string, any> | undefined) ||
+    serverTokenPayload
+  );
 }
 
 export function getUserInfo(): { username?: string; email?: string } {
@@ -300,9 +313,36 @@ export function getUserInfo(): { username?: string; email?: string } {
   };
 }
 
-export function isAuthenticated(): boolean {
-  return !!keycloak.authenticated;
+/* Explicit server-side logout helper: redirect to backend logout which clears cookies and calls Keycloak end-session.
+   Include frontend origin as post_logout_redirect_uri so Keycloak redirects back to the SPA after logout.
+   Also include id_token_hint when available (take from client-side Keycloak token or localStorage). */
+export function logoutServer(): void {
+  try {
+    localStorage.removeItem("kc_token");
+  } catch {
+    // ignore
+  }
+  const base = API_BASE ? API_BASE : "";
+  const redirect = `${window.location.origin}/`;
+
+  // Prefer client-side Keycloak token if available, fall back to localStorage entry.
+  const tokenHint =
+    (typeof keycloak !== "undefined" && (keycloak.token ?? null)) ||
+    (typeof window !== "undefined" ? localStorage.getItem("kc_token") : null);
+
+  const idHintParam = tokenHint
+    ? `&id_token_hint=${encodeURIComponent(tokenHint)}`
+    : "";
+
+  const logoutUrl = base
+    ? `${base}/api/auth/keycloak/logout?post_logout_redirect_uri=${encodeURIComponent(redirect)}${idHintParam}`
+    : `/api/auth/keycloak/logout?post_logout_redirect_uri=${encodeURIComponent(redirect)}${idHintParam}`;
+  window.location.assign(logoutUrl);
 }
 
-/* Default export Keycloak instance for advanced use */
+export function isAuthenticated(): boolean {
+  return !!(keycloak.authenticated || serverTokenPayload);
+}
+
+/* Default export */
 export default keycloak;
