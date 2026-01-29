@@ -61,34 +61,27 @@ if (realmUrlRaw) {
 }
 
 /*
-  Library-backed polyfill for Web Crypto `subtle.digest` (SHA-256).
+  Robust polyfill for Web Crypto `subtle.digest` (SHA-256):
 
-  - If native `window.crypto.subtle` exists, it is used (preferred).
-  - If missing, this attaches a fallback implementation using `js-sha256`.
-  - The fallback returns an ArrayBuffer to match the native subtle.digest signature.
-  - The code below tries to avoid clobbering existing `crypto` fields.
+  - Prefer native `window.crypto.subtle` if present (including webkitSubtle).
+  - If missing, try to attach a `subtle.digest` implementation using `js-sha256`.
+  - Do NOT assign `window.crypto = ...` because `crypto` can be a read-only / getter-only property in some environments.
+  - Instead:
+    1) If `window.crypto` exists and is an object, try to define `window.crypto.subtle` using Object.defineProperty.
+    2) If `window.crypto` does NOT exist, try to define `window.crypto` on window using Object.defineProperty (may fail if the environment forbids it).
+    3) If both approaches fail, fall back to not enabling PKCE S256 (safer than forcing an overwrite that throws).
+  - We return whether the polyfill was successfully installed so callers can decide whether S256 can be used.
 */
-(function ensureWebCryptoSubtle() {
-  if (typeof window === "undefined") return;
 
-  const hasSubtle = !!(
-    window.crypto &&
-    (window.crypto.subtle || (window.crypto as any).webkitSubtle)
-  );
-  if (hasSubtle) return;
-
-  // Ensure crypto object exists
-  (window as any).crypto = (window as any).crypto || {};
-
-  // Attach fallback subtle with sha256 from js-sha256 (arrayBuffer available)
-  (window as any).crypto.subtle = {
+function createFallbackSubtle() {
+  return {
     digest: async (algorithm: string, data: ArrayBuffer | ArrayBufferView) => {
       const alg = (algorithm || "").toUpperCase();
       if (alg !== "SHA-256" && alg !== "SHA256") {
         throw new Error("Fallback subtle.digest only supports SHA-256");
       }
 
-      // coerce input to ArrayBuffer
+      // coerce to ArrayBuffer
       let inputBuf: ArrayBuffer;
       if (data instanceof ArrayBuffer) {
         inputBuf = data;
@@ -101,20 +94,76 @@ if (realmUrlRaw) {
         inputBuf = new TextEncoder().encode(String(data)).buffer;
       }
 
-      // Use js-sha256's arrayBuffer helper if available
-      // @ts-ignore - `arrayBuffer` exists on js-sha256 in runtime
+      // js-sha256 offers arrayBuffer output
+      // @ts-ignore
       const ab = (sha256 as any).arrayBuffer(new Uint8Array(inputBuf));
       if (ab instanceof ArrayBuffer) return ab;
       if (ab instanceof Uint8Array) return ab.buffer.slice(0);
       return new Uint8Array(ab).buffer;
     },
   };
+}
 
+function tryInstallSubtleFallback(): boolean {
+  if (typeof window === "undefined") return false;
+
+  const nativeSubtle = !!(
+    window.crypto &&
+    ((window.crypto as any).subtle || (window.crypto as any).webkitSubtle)
+  );
+  if (nativeSubtle) return true;
+
+  const fallback = createFallbackSubtle();
+
+  // Case A: window.crypto exists and is an object -> attempt to define .subtle on it
+  if ((window as any).crypto && typeof (window as any).crypto === "object") {
+    try {
+      // defineProperty avoids direct assignment which can throw in some browsers
+      Object.defineProperty((window as any).crypto, "subtle", {
+        configurable: true,
+        enumerable: false,
+        writable: false,
+        value: fallback,
+      });
+      // success
+      // eslint-disable-next-line no-console
+      console.warn(
+        "Attached fallback crypto.subtle using js-sha256 on existing window.crypto",
+      );
+      return true;
+    } catch (e) {
+      // defining subtle failed (maybe crypto has a getter-only subtle or environment forbids)
+      // fall through to try defining window.crypto itself
+    }
+  }
+
+  // Case B: window.crypto does not exist or defineProperty on crypto failed -> try to define window.crypto
+  try {
+    // NOTE: defining global properties may also fail in some hosts (non-configurable)
+    Object.defineProperty(window, "crypto", {
+      configurable: true,
+      enumerable: false,
+      writable: false,
+      value: { subtle: fallback },
+    });
+    // eslint-disable-next-line no-console
+    console.warn("Defined window.crypto with fallback subtle using js-sha256");
+    return true;
+  } catch (e) {
+    // Could not define window.crypto either. This environment is restrictive.
+  }
+
+  // Case C: try to define a non-enumerable fallback property name to be used by our code only.
+  // We can't guarantee Keycloak or other libs will look there, but we can indicate failure so callers can avoid using S256.
   // eslint-disable-next-line no-console
   console.warn(
-    "Web Crypto 'subtle' was missing. `js-sha256` is being used as a fallback. Serve over HTTPS to enable native Web Crypto.",
+    "Unable to attach crypto.subtle fallback (read-only environment). PKCE S256 will be disabled.",
   );
-})();
+  return false;
+}
+
+/* Attempt to install polyfill and record whether it's present for our use */
+const polyfillInstalled = tryInstallSubtleFallback();
 
 /* Build Keycloak config object */
 const kcConfig = {
@@ -140,12 +189,21 @@ export function initKeycloak(options?: {
   if (_initPromise) return _initPromise;
 
   _initPromise = (async () => {
-    // If crypto.subtle exists (native or fallback), keep pkceMethod S256.
-    // Keycloak will use the digest implementation we provided above when native API is absent.
+    // Decide whether to enable PKCE S256:
+    // - Use S256 if native subtle exists OR our polyfill was successfully installed.
+    const subtleAvailable =
+      !!(
+        window.crypto &&
+        ((window.crypto as any).subtle || (window.crypto as any).webkitSubtle)
+      ) || polyfillInstalled;
+
     const initOptions: KeycloakInitOptions = {
-      onLoad: "check-sso",
-      pkceMethod: "S256",
+      onLoad: "check-sso", // do not force login; prefer existing session if present
+      // enable S256 only if subtle is available (native or our installed polyfill)
+      pkceMethod: subtleAvailable ? "S256" : undefined,
       promiseType: "native",
+      // Note: we avoid requiring an extra static file. If you add silent-check-sso.html
+      // at the app root you can enable silentCheckSsoRedirectUri here.
     };
 
     try {
