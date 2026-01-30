@@ -107,11 +107,41 @@ let serverTokenPayload: Record<string, any> | undefined;
 /* Helper: check server-side session (backend must expose /api/auth/keycloak/me) */
 async function checkServerSession(): Promise<boolean> {
   try {
+    // If Keycloak redirected back with the access token in the URL fragment (#access_token=...),
+    // capture it into localStorage so client-side code can use it (simple fallback).
+    if (
+      typeof window !== "undefined" &&
+      window.location &&
+      window.location.hash
+    ) {
+      const m = window.location.hash.match(/[#&]access_token=([^&]+)/);
+      if (m && m[1]) {
+        try {
+          const tokenFromFragment = decodeURIComponent(m[1]);
+          try {
+            localStorage.setItem("kc_token", tokenFromFragment);
+          } catch (e) {
+            // ignore storage errors
+          }
+          // remove fragment from URL to avoid leaking token on reload
+          try {
+            const cleanUrl = window.location.pathname + window.location.search;
+            history.replaceState(null, "", cleanUrl);
+          } catch (e) {
+            // ignore history errors
+          }
+        } catch (e) {
+          // ignore decoding errors
+        }
+      }
+    }
+
     const base = API_BASE ? API_BASE : "";
     const url = base ? `${base}/api/auth/keycloak/me` : "/api/auth/keycloak/me";
+    // Use credentials: 'include' so cookies are sent on cross-origin requests when configured.
     const resp = await fetch(url, {
       method: "GET",
-      credentials: "same-origin",
+      credentials: "include",
       headers: { Accept: "application/json" },
     });
     if (!resp.ok) return false;
@@ -294,7 +324,21 @@ export async function getToken(): Promise<string | null> {
   } catch {
     /* ignore */
   }
-  return keycloak.token ?? null;
+
+  // Prefer client-side Keycloak token when available
+  if (keycloak.token) return keycloak.token;
+
+  // Fallback: try the value we may have stored from the fragment or prior flows
+  try {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("kc_token");
+      if (stored) return stored;
+    }
+  } catch (e) {
+    // ignore storage errors
+  }
+
+  return null;
 }
 
 /* Token parsing / user info helpers: prefer client-side parsed token, otherwise use server payload */
