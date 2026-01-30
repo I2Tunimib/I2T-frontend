@@ -946,7 +946,7 @@ export const tableSlice = createSliceWithRequests({
                       colId
                     ].metadata[0].property?.map((item) => ({
                       ...item,
-                      match: false,
+                      match: true,
                     }));
                 }
               }

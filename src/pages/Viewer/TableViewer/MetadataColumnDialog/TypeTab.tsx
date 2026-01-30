@@ -645,7 +645,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                     }}
                     sx={{ textTransform: "none" }}
                   >
-                    Search in {KG_INFO["wd"].groupName || "Wikidata"}
+                    Search "{rawData?.column?.id}" in {KG_INFO["wd"].groupName || "Wikidata"}
                   </Button>
                 )
               ) : null}

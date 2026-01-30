@@ -888,7 +888,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   onClick={handleSearchInService}
                   sx={{ textTransform: "none" }}
                 >
-                  Search in {KG_INFO[servicesById[cell?.reconciler].prefix].groupName}
+                  Search "{cell?.label}" in {KG_INFO[servicesById[cell?.reconciler].prefix].groupName}
                 </Button>
               )}
             </Stack>
