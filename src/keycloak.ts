@@ -84,17 +84,20 @@ const kcConfig = {
 };
 const keycloak: KeycloakInstance = new Keycloak(kcConfig as any);
 
-/* API base for server endpoints (use Vite env if provided) */
+/* API base for server endpoints (use Vite env if provided).
+   Fallback to http://localhost:3003 when VITE_BACKEND_API_URL / VITE_BASE_URI is not set */
 const RAW_API_BASE =
   (import.meta.env.VITE_BACKEND_API_URL as string | undefined) ||
-  (import.meta.env.VITE_BASE_URI as string | undefined) ||
-  "";
+  "http://localhost:3003";
+
+// Log the resolved backend base URL to aid debugging (useful in dev)
+console.log("[keycloak] RAW_API_BASE resolved to:", RAW_API_BASE);
 
 /* Normalize API base:
    - trim trailing slashes
    - remove a trailing '/api' segment if present
    This prevents double '/api/api/...' when the env already contains '/api'. */
-const API_BASE = ((): string => {
+export const API_BASE = ((): string => {
   if (!RAW_API_BASE) return "";
   let v = RAW_API_BASE.replace(/\/+$/, "");
   v = v.replace(/\/api$/, "");

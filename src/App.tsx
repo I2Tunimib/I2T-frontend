@@ -13,7 +13,7 @@ import {
 import { GetTableResponse, GetSchemaResponse } from "@services/api/table";
 import { Button } from "@mui/material";
 import { getRedirects, getRoutes } from "./routes";
-import { initKeycloak, getUserInfo } from "./keycloak";
+import { initKeycloak, getUserInfo, API_BASE } from "./keycloak";
 import { setKeycloakAuth } from "./store/slices/auth/auth.slice";
 
 // Make enqueueSnackbar globally available for API interceptors
@@ -55,9 +55,12 @@ const App = () => {
       if (!authenticated) {
         // Fallback: check server-side session endpoint to see if backend completed PKCE login
         try {
-          const resp = await fetch("/api/auth/keycloak/me", {
+          const url = API_BASE
+            ? `${API_BASE}/api/auth/keycloak/me`
+            : "/api/auth/keycloak/me";
+          const resp = await fetch(url, {
             method: "GET",
-            credentials: "same-origin",
+            credentials: "include",
             headers: { Accept: "application/json" },
           });
           if (resp.ok) {
