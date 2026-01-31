@@ -45,7 +45,9 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
       return [{ id: "alligator", label: "Semantic Table Annotation (Alligator)" }];
     }
     if (target === "schema") {
-      return [{ id: "columnClassifier", label: "Column Classifier" }];
+      return [
+        //{ id: "columnClassifier", label: "Column Classifier" }
+      ];
     }
     return [];
   }, [target]);
