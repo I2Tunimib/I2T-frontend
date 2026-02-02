@@ -656,11 +656,12 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   };
 
   const getBadgeStatus = (cellItem: TableCell) => {
-    const {
-      annotationMeta: { match, highestScore },
-    } = cellItem;
+    // Defensive / null-safe checks to avoid runtime errors when opening a table
+    // if some cells don't have annotationMeta populated.
+    const match = cellItem?.annotationMeta?.match;
+    const highestScore = cellItem?.annotationMeta?.highestScore;
 
-    if (match.value) {
+    if (match && match.value) {
       switch (match.reason) {
         case "manual":
           return "match-manual";
@@ -674,7 +675,12 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     }
 
     if (isScoreLowerBoundEnabled) {
-      if (scoreLowerBound && highestScore < scoreLowerBound) {
+      // Ensure highestScore is a number before comparing
+      if (
+        scoreLowerBound &&
+        typeof highestScore === "number" &&
+        highestScore < scoreLowerBound
+      ) {
         return "miss";
       }
     }
@@ -741,12 +747,19 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     const serviceInfo = servicesById[cell?.reconciler];
     if (!serviceInfo?.searchPattern) return;
 
-    const url = serviceInfo.searchPattern.replace("{label}", encodeURIComponent(cell.label));
+    const url = serviceInfo.searchPattern.replace(
+      "{label}",
+      encodeURIComponent(cell.label),
+    );
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
   // Early return if cell has no metadata to prevent crashes
-  if (cell && !cell?.annotationMeta?.annotated && (!cell.metadata || cell.metadata.length === 0)) {
+  if (
+    cell &&
+    !cell?.annotationMeta?.annotated &&
+    (!cell.metadata || cell.metadata.length === 0)
+  ) {
     return (
       <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
         <Stack
@@ -816,7 +829,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             <IconButtonTooltip
               tooltipText="Help"
               onClick={() =>
-                dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 17 }))
+                dispatch(
+                  updateUI({
+                    openHelpDialog: true,
+                    helpStart: "tutorial",
+                    tutorialStep: 17,
+                  }),
+                )
               }
               Icon={HelpOutlineRoundedIcon}
             />
@@ -836,9 +855,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   ? "manual"
                   : cell.reconciler
                     ? `${
-                        reconciliators.find(
-                          (rec) => rec.id === cell.reconciler,
-                        ).name
+                        reconciliators.find((rec) => rec.id === cell.reconciler)
+                          .name
                       }`
                     : ""}
               </Typography>
@@ -858,7 +876,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             gap={1}
           >
             <Stack direction="row" gap={1} alignItems="center">
-              <Tooltip open={showTooltip} title="Add metadata" placement="right">
+              <Tooltip
+                open={showTooltip}
+                title="Add metadata"
+                placement="right"
+              >
                 <Button
                   variant="outlined"
                   color="primary"

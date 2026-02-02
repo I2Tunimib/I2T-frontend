@@ -16,9 +16,21 @@ const apiClient = setup({
   },
 });
 
-// Add request interceptor to log all outgoing requests
+// Add request interceptor to attach Authorization header and log outgoing requests
 apiClient.interceptors.request.use(
   (config) => {
+    try {
+      // Prefer Keycloak token (kc_token) and fall back to legacy app token (app_token)
+      const kcToken = localStorage.getItem("kc_token");
+      const appToken = localStorage.getItem("app_token");
+      const token = kcToken || appToken;
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (e) {
+      // accessing localStorage may fail in some environments; ignore silently
+    }
+
     console.log("Outgoing request:", {
       method: config.method?.toUpperCase(),
       url: config.url,
