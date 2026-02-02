@@ -130,8 +130,8 @@ const NormalCell: FC<NormalCellProps> = ({
           onClick={() => dispatch(
             updateUI({
               openMetadataDialog: true,
-            }))
-          }
+            })
+          )}
           size="small"
           className={styles.ActionButton}
         >
@@ -150,7 +150,7 @@ const NormalCell: FC<NormalCellProps> = ({
                   {item.match ? (
                     <CheckRoundedIcon className={styles.Icon} />
                   ) : null}
-                  <EntityLabel className={styles.MetaLink} type="entity">
+                  <EntityLabel className={styles.MetaLink} type="">
                     <Link
                       sx={{
                         marginLeft: "20px",
@@ -173,7 +173,7 @@ const NormalCell: FC<NormalCellProps> = ({
                   {item.match ? (
                     <CheckRoundedIcon className={styles.Icon} />
                   ) : null}
-                  <EntityLabel className={styles.MetaLink} type="entity">
+                  <EntityLabel className={styles.MetaLink} type="">
                     <Link
                       sx={{
                         marginLeft: "20px",

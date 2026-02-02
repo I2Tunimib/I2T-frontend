@@ -42,10 +42,15 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
 
   const availableMethods = useMemo(() => {
     if (target === "fullTable") {
-      return [{ id: "alligator", label: "Semantic Table Annotation (Alligator)" }];
+      return [
+        { id: "alligator", label: "Semantic Table Annotation (Alligator)" },
+      ];
     }
     if (target === "schema") {
-      return [{ id: "columnClassifier", label: "Column Classifier" }];
+      return [
+        { id: "columnClassifier", label: "Column Classifier" },
+        { id: "llm", label: "LLM Column Classifier" },
+      ];
     }
     return [];
   }, [target]);
@@ -79,11 +84,7 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
 
   return (
     <Dialog open={isOpen} onClose={handleClose}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Automatic Annotation</DialogTitle>
         <IconButton
           sx={{
@@ -91,14 +92,22 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 4 }));
+            dispatch(
+              updateUI({
+                openHelpDialog: true,
+                helpStart: "tutorial",
+                tutorialStep: 4,
+              }),
+            );
           }}
         >
           <HelpOutlineRounded />
         </IconButton>
       </Stack>
       <DialogContent>
-        <DialogContentText>Choose what to annotate automatically:</DialogContentText>
+        <DialogContentText>
+          Choose what to annotate automatically:
+        </DialogContentText>
         <FormControl fullWidth sx={{ marginTop: "20px", marginBottom: "20px" }}>
           <InputLabel id="target-label">Annotation target</InputLabel>
           <Select
@@ -137,7 +146,11 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button color="primary" disabled={!target || !method} onClick={handleConfirm}>
+        <Button
+          color="primary"
+          disabled={!target || !method}
+          onClick={handleConfirm}
+        >
           Start annotation
         </Button>
       </DialogActions>

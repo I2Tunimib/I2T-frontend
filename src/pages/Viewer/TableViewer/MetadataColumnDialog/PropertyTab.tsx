@@ -38,6 +38,7 @@ import {
   addColumnMetadata,
   deleteColumnMetadata,
   undo,
+  updateColumnRole,
   updateColumnMetadata,
   updateColumnPropertyMetadata,
   updateUI,
@@ -192,8 +193,9 @@ interface PropertyTabProps {
   // function used to pass to the main component the
   // actions to do in order to persist the modifications
   addEdit: Function;
+  setCurrentRole: (role: string) => void;
 }
-const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
+const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
   const column = useAppSelector(selectCurrentCol);
   const {
     state,
@@ -476,7 +478,9 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit }) => {
         }),
         true,
       );
+      addEdit(updateColumnRole({ colId: column.id, role: "subject" }), true, true);
       reset();
+      setCurrentRole("subject");
       setShowAdd(false);
     }
   };

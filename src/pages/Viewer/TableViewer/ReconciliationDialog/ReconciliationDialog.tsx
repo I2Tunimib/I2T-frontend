@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   //Box,
-  //Button,
+  Button,
   //Checkbox,
   //Collapse,
   Dialog,
@@ -34,6 +34,7 @@ import React, {
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import { reconcile } from "@store/slices/table/table.thunk";
+import { useSnackbar, closeSnackbar } from "notistack";
 import {
   //selectReconcileDialogStatus,
   selectReconciliationCells,
@@ -93,6 +94,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const helpDialogOpen = useAppSelector(selectIsHelpDialogOpen);
   const selectedCells = useAppSelector(selectReconciliationCells);
   const { loading, error } = useAppSelector(selectReconcileRequestStatus);
+  const { enqueueSnackbar } = useSnackbar();
   const selectRef = React.useRef<HTMLDivElement>(null);
   const reconcileRequestRef = React.useRef<any>(null);
   useEffect(() => {
@@ -230,6 +232,26 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             openReconciliateDialog: false,
           }),
         );
+        enqueueSnackbar("Learn more about annotation symbols in this tutorial section", {
+          variant: "info",
+          autoHideDuration: 8000,
+          action: (key) => (
+            <Button
+              size="small"
+              sx={{ color: "#fff", fontWeight: 'bold' }}
+              onClick={() => {
+                dispatch(updateUI({
+                  openHelpDialog: true,
+                  helpStart: "tutorial",
+                  tutorialStep: 15
+                }));
+                closeSnackbar(key);
+              }}
+            >
+              HERE
+            </Button>
+          ),
+        });
       })
       .finally(() => {
         reconcileRequestRef.current = null;
@@ -281,7 +303,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
           <IconButton
             size="small"
             onClick={() => {
-              dispatch(updateUI({ openHelpDialog: true, helpStart: "rec" }));
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 7 }));
             }}
           >
             <HelpOutlineRounded />

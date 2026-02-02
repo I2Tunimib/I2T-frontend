@@ -26,6 +26,7 @@ import {
   updateColumnRole,
   updateUI,
 } from "@store/slices/table/table.slice";
+import { ConfirmationDialog } from "@components/core";
 import TypeTab from "./TypeTab";
 import PropertyTab from "./PropertyTab";
 
@@ -73,9 +74,10 @@ const Content = () => {
   const role = useAppSelector(selectColumnRole);
   const [currentRole, setCurrentRole] = useState(role);
   const metadata = useAppSelector(selectColumnCellMetadataTableFormat);
-  const currentService = metadata?.service?.prefix || null;
+  const currentService = metadata?.column?.reconciler || null;
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const dispatch = useAppDispatch();
+  const [showConfirmMessage, setShowConfirmMessage] = useState<boolean>(false);
   const handleChange = (event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
@@ -128,10 +130,10 @@ const Content = () => {
    */
   const handleApplyEdits = () => {
     try {
-      for (const edit of editsState) {
-        console.log("edit", edit);
+      editsState.forEach((edit) => {
+        console.log("Dispatching edit:", edit);
         dispatch(edit);
-      }
+      });
       setEditsState([]);
 
       dispatch(updateUI({ openMetadataColumnDialog: false }));
@@ -168,6 +170,15 @@ const Content = () => {
       role: event.target.value,
     });
     handleAddEdit(edit, true, true);
+  };
+
+  const handleConfirmClick = () => {
+    if (editsState.length > 0) {
+      setShowConfirmMessage(true);
+    } else {
+      // If no edits were made, just close the main dialog directly
+      dispatch(updateUI({ openMetadataColumnDialog: false }));
+    }
   };
   return (
     <Stack>
@@ -213,9 +224,28 @@ const Content = () => {
             {API.ENDPOINTS.SAVE && !isViewOnly ? "Cancel" : "Close"}
           </Button>
           {API.ENDPOINTS.SAVE && !isViewOnly && (
-            <Button onClick={handleApplyEdits} variant="outlined">
-              Confirm
-            </Button>
+            <>
+              <Button onClick={handleConfirmClick} variant="outlined">
+                Confirm and Close
+              </Button>
+              <ConfirmationDialog
+                open={showConfirmMessage}
+                onClose={() => setShowConfirmMessage(false)}
+                title="Apply Column Changes"
+                content="Are you sure you want to apply these changes to the column metadata? Make sure you have added
+                  all the types and properties you need before proceeding."
+                actions={[
+                  {
+                    label: "Cancel",
+                    callback: () => setShowConfirmMessage(false),
+                  },
+                  {
+                    label: "Confirm",
+                    callback: handleApplyEdits,
+                  },
+                ]}
+              />
+            </>
           )}
         </Stack>
       </Stack>
@@ -235,13 +265,13 @@ const Content = () => {
       <Stack minHeight="600px">
         <Stack position="sticky" top={0} zIndex={10} bgcolor="#FFF">
           <Stack paddingLeft="16px" paddingTop="16px" paddingBottom="8px">
-            {currentService ? (
+            {metadata?.column?.status !== "empty" ? (
               <Typography color="text.secondary">
                 Reconciliation service:{" "}
                 <Typography component="span" color="primary" sx={{ fontWeight: 500 }}>
                   {currentService === "manual"
                     ? "manual"
-                    : reconciliators.find((r) => r.prefix === currentService)?.name ||
+                    : reconciliators.find((r) => r.id === currentService)?.name ||
                     currentService}
                 </Typography>
               </Typography>
@@ -256,7 +286,7 @@ const Content = () => {
           <TypeTab addEdit={handleAddEdit} />
         </TabPanel>
         <TabPanel value={value} index={1}>
-          <PropertyTab addEdit={handleAddEdit} />
+          <PropertyTab addEdit={handleAddEdit} setCurrentRole={setCurrentRole} />
         </TabPanel>
       </Stack>
     </Stack>

@@ -186,13 +186,6 @@ const DialogInnerContent = () => {
         });
     }
   };
-  const toggleGroup = (uri: string) => {
-    setExpandedGroup((prev) => (prev === uri ? null : uri));
-  };
-  const handleHeaderClick = (e: React.MouseEvent, uri: string) => {
-    e.stopPropagation(); // Prevent the Select from closing
-    setExpandedGroup((prev) => (prev === uri ? null : uri));
-  };
 
   const serviceWithDescription = React.useMemo(() => {
     if (!currentService) return undefined;
@@ -345,7 +338,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
           <IconButton
             size="small"
             onClick={() => {
-              dispatch(updateUI({ openHelpDialog: true, helpStart: "ext" }));
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 15 }));
             }}
           >
             <HelpOutlineRounded />
