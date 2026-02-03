@@ -7,7 +7,7 @@ const SocketIoProvider: FC<{}> = ({ children }) => {
 
   useEffect(() => {
     const socket = io(import.meta.env.VITE_BACKEND_DOMAIN || "", {
-      transports: ["websocket", "polling"],
+      transports: ["polling"],
       upgrade: true,
       reconnection: true,
       reconnectionDelay: 1000,
