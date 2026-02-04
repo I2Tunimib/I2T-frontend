@@ -23,8 +23,11 @@ import {
   selectIsCellSelected,
 } from "@store/slices/table/table.selectors";
 import { useSnackbar } from "notistack";
-import { selectExtendersAsArray } from "@store/slices/config/config.selectors";
-import { extend } from "@store/slices/table/table.thunk";
+import {
+  selectExtendersAsArray,
+  selectModifiersAsArray,
+} from "@store/slices/config/config.selectors";
+import { extend, modify } from "@store/slices/table/table.thunk";
 
 interface ContextMenuColumnProps extends MenuBaseProps {
   data?: any;
@@ -53,7 +56,7 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
   const extensionServices = useAppSelector(selectExtendersAsArray);
-
+  const modificationServices = useAppSelector(selectModifiersAsArray);
   /**
    * Handle modify column action.
    */
@@ -143,9 +146,10 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
    */
   const handleAnonymize = useCallback(() => {
     // Find the pseudoanonymization service
-    const pseudoService = extensionServices.find(
+    const pseudoService = modificationServices.find(
       (service) => service.id === "pseudoanonymization",
     );
+    console.log("PSEUDO SERVICE", pseudoService);
 
     if (!pseudoService) {
       enqueueSnackbar("Pseudoanonymization service not available", {
@@ -155,12 +159,22 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
       handleClose();
       return;
     }
-
+    console.log("context payload", {
+      decrypt: [],
+      selectedColumns: [id],
+      columnType: "unknown",
+      joinColumns: false,
+    });
     // Call the extension with default form values (empty object)
     const req = dispatch(
-      extend({
-        extender: pseudoService,
-        formValues: {},
+      modify({
+        modifier: pseudoService,
+        formValues: {
+          decrypt: [],
+          selectedColumns: [id],
+          columnType: "unknown",
+          joinColumns: true,
+        },
       }),
     );
 
@@ -185,7 +199,7 @@ const ContextMenuColumn: FC<ContextMenuColumnProps> = ({
       });
 
     handleClose();
-  }, [extensionServices, dispatch, enqueueSnackbar, handleClose]);
+  }, [id, modificationServices, dispatch, enqueueSnackbar, handleClose]);
 
   return (
     <MenuBase
