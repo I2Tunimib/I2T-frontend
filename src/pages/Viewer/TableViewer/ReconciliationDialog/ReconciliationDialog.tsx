@@ -111,7 +111,15 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
     const mappedReconciliators = new Map<string, Reconciliator[]>();
     const uniqueGroupNamesSet = new Set<string>();
 
-    const uniqueReconciliators = reconciliators.filter(
+    // Filter out services that have a custom group property (they belong to GroupServiceDialog)
+    const ungroupedReconciliators = reconciliators.filter((reconciliator) => {
+      const service = reconciliator as any;
+      const hasCustomGroup =
+        service.group || service.public?.group || service.public?.groupName;
+      return !hasCustomGroup;
+    });
+
+    const uniqueReconciliators = ungroupedReconciliators.filter(
       (reconciliator, index, self) =>
         index === self.findIndex((r) => r.id === reconciliator.id),
     );
@@ -232,26 +240,31 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             openReconciliateDialog: false,
           }),
         );
-        enqueueSnackbar("Learn more about annotation symbols in this tutorial section", {
-          variant: "info",
-          autoHideDuration: 8000,
-          action: (key) => (
-            <Button
-              size="small"
-              sx={{ color: "#fff", fontWeight: 'bold' }}
-              onClick={() => {
-                dispatch(updateUI({
-                  openHelpDialog: true,
-                  helpStart: "tutorial",
-                  tutorialStep: 15
-                }));
-                closeSnackbar(key);
-              }}
-            >
-              HERE
-            </Button>
-          ),
-        });
+        enqueueSnackbar(
+          "Learn more about annotation symbols in this tutorial section",
+          {
+            variant: "info",
+            autoHideDuration: 8000,
+            action: (key) => (
+              <Button
+                size="small"
+                sx={{ color: "#fff", fontWeight: "bold" }}
+                onClick={() => {
+                  dispatch(
+                    updateUI({
+                      openHelpDialog: true,
+                      helpStart: "tutorial",
+                      tutorialStep: 15,
+                    }),
+                  );
+                  closeSnackbar(key);
+                }}
+              >
+                HERE
+              </Button>
+            ),
+          },
+        );
       })
       .finally(() => {
         reconcileRequestRef.current = null;
@@ -291,7 +304,13 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 11 }));
+            dispatch(
+              updateUI({
+                openHelpDialog: true,
+                helpStart: "tutorial",
+                tutorialStep: 11,
+              }),
+            );
           }}
         >
           <HelpOutlineRounded />
@@ -299,11 +318,19 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
       </Stack>
       <DialogContent>
         <Stack direction="row" alignItems="center">
-          <DialogContentText>Select a group of service to reconcile with:</DialogContentText>
+          <DialogContentText>
+            Select a group of service to reconcile with:
+          </DialogContentText>
           <IconButton
             size="small"
             onClick={() => {
-              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 7 }));
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "discover",
+                  discoverStep: 7,
+                }),
+              );
             }}
           >
             <HelpOutlineRounded />

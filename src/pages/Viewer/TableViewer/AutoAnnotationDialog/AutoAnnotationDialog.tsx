@@ -48,8 +48,8 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
     }
     if (target === "schema") {
       return [
-        { id: "columnClassifier", label: "Column Classifier" },
         { id: "llm", label: "LLM Column Classifier" },
+        { id: "columnClassifier", label: "Column Classifier" },
       ];
     }
     return [];

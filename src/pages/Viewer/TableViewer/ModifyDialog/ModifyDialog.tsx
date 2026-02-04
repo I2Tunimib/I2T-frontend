@@ -1,4 +1,11 @@
-import React, { forwardRef, Ref, ReactElement, useState, useEffect, FC } from "react";
+import React, {
+  forwardRef,
+  Ref,
+  ReactElement,
+  useState,
+  useEffect,
+  FC,
+} from "react";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Dialog,
@@ -17,7 +24,10 @@ import {
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { HelpOutlineRounded } from "@mui/icons-material";
-import { selectModifyRequestStatus, selectSelectedColumnIdsAsArray } from "@store/slices/table/table.selectors";
+import {
+  selectModifyRequestStatus,
+  selectSelectedColumnIdsAsArray,
+} from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectModifiersAsArray } from "@store/slices/config/config.selectors";
 import { Modifier } from "@store/slices/config/interfaces/config";
@@ -45,7 +55,8 @@ const Content = styled.div({
 const DialogInnerContent = () => {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [uniqueServices, setUniqueServices] = useState<Modifier[]>([]);
-  const [groupedServices, setGroupedServices] = useState<Map<string, Modifier[]>>();
+  const [groupedServices, setGroupedServices] =
+    useState<Map<string, Modifier[]>>();
   const [currentService, setCurrentService] = useState<Modifier>();
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -80,8 +91,17 @@ const DialogInnerContent = () => {
 
   async function groupServices() {
     const groupedServsMap = new Map();
-    const uniqueModificationServices = modificationServices.filter(
-      (service, index, self) => index === self.findIndex((s) => s.id === service.id)
+
+    // Filter out services that have a custom group property (they belong to GroupServiceDialog)
+    const ungroupedModifiers = modificationServices.filter((service) => {
+      const hasCustomGroup =
+        service.group || service.public?.group || service.public?.groupName;
+      return !hasCustomGroup;
+    });
+
+    const uniqueModificationServices = ungroupedModifiers.filter(
+      (service, index, self) =>
+        index === self.findIndex((s) => s.id === service.id),
     );
 
     setUniqueServices(uniqueModificationServices);
@@ -123,7 +143,10 @@ const DialogInnerContent = () => {
     }
   };
 
-  const handleSubmit = async (formState: Record<string, any>, reset?: Function) => {
+  const handleSubmit = async (
+    formState: Record<string, any>,
+    reset?: Function,
+  ) => {
     if (!currentService) return;
     try {
       const payload = {
@@ -136,7 +159,7 @@ const DialogInnerContent = () => {
         modify({
           modifier: currentService,
           formValues: payload,
-        })
+        }),
       ).unwrap();
       if (reset) reset();
       setCurrentService(undefined);
@@ -148,7 +171,9 @@ const DialogInnerContent = () => {
       } else {
         const modifiedColumnIds = Object.keys(data.columns || {});
         const nColumns = modifiedColumnIds.length;
-        const isUpdate = modifiedColumnIds.every((id) => selectedColumnsArray.includes(id));
+        const isUpdate = modifiedColumnIds.every((id) =>
+          selectedColumnsArray.includes(id),
+        );
         const actionText = isUpdate ? "updated" : "added";
         infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} ${actionText}`;
       }
@@ -158,17 +183,22 @@ const DialogInnerContent = () => {
       });
       return data;
     } catch (err: any) {
-      enqueueSnackbar(err.message || "An error occurred while formatting dates.", {
-        variant: "error",
-        autoHideDuration: 4000,
-        anchorOrigin: { vertical: "bottom", horizontal: "center" },
-      });
+      enqueueSnackbar(
+        err.message || "An error occurred while formatting dates.",
+        {
+          variant: "error",
+          autoHideDuration: 4000,
+          anchorOrigin: { vertical: "bottom", horizontal: "center" },
+        },
+      );
       throw err;
     }
   };
   const serviceWithDescription = React.useMemo(() => {
     if (!currentService) return undefined;
-    const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
+    const colsText = selectedColumnsArray.length
+      ? selectedColumnsArray.join(", ")
+      : "None";
     return {
       ...currentService,
       description: `${currentService.description || ""}<br><br><b>Input selected column(s):</b> ${colsText}`,
@@ -210,14 +240,22 @@ const DialogInnerContent = () => {
       </FormControl>
       {serviceWithDescription && (
         <>
-          <SquaredBox dangerouslySetInnerHTML={{ __html: serviceWithDescription.description }} />
+          <SquaredBox
+            dangerouslySetInnerHTML={{
+              __html: serviceWithDescription.description,
+            }}
+          />
           {error && <Typography color="error">{error.message}</Typography>}
           <Divider />
           <DynamicModificationForm
             loading={loading}
             onSubmit={handleSubmit}
             onCancel={handleClose}
-            service={{ ...serviceWithDescription, ...serviceWithColumnType, selectedColumns: selectedColumnsArray }}
+            service={{
+              ...serviceWithDescription,
+              ...serviceWithColumnType,
+              selectedColumns: selectedColumnsArray,
+            }}
           />
         </>
       )}
@@ -235,11 +273,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
 
   return (
     <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-      >
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Modify</DialogTitle>
         <IconButton
           sx={{
@@ -247,7 +281,13 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 10 }));
+            dispatch(
+              updateUI({
+                openHelpDialog: true,
+                helpStart: "tutorial",
+                tutorialStep: 10,
+              }),
+            );
           }}
         >
           <HelpOutlineRounded />
