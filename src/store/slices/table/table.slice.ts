@@ -1,6 +1,9 @@
 //import { useAppSelector } from "@hooks/store";
 import { current, PayloadAction } from "@reduxjs/toolkit";
-import tableAPI, { GetTableResponse, GetSchemaResponse } from "@services/api/table";
+import tableAPI, {
+  GetTableResponse,
+  GetSchemaResponse,
+} from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
 import { buildURI } from "@services/utils/uri-utils";
@@ -249,7 +252,10 @@ export const tableSlice = createSliceWithRequests({
         },
       };
     },
-    updateSchema: (state, action: PayloadAction<Payload<GetSchemaResponse>>) => {
+    updateSchema: (
+      state,
+      action: PayloadAction<Payload<GetSchemaResponse>>,
+    ) => {
       const { table, result } = action.payload;
       let tableInstance = {} as TableInstance;
       tableInstance = { ...table };
@@ -259,14 +265,20 @@ export const tableSlice = createSliceWithRequests({
         currentTableId: tableInstance?.id,
       });
 
-      if (!tableInstance || tableInstance.id.toString() !== table.id.toString()) {
-        console.log("[updateSchema] skipping: tableInstance missing or id mismatch");
+      if (
+        !tableInstance ||
+        tableInstance.id.toString() !== table.id.toString()
+      ) {
+        console.log(
+          "[updateSchema] skipping: tableInstance missing or id mismatch",
+        );
         return;
       }
 
       state.entities.tableInstance = {
         ...tableInstance,
         ...table,
+        schemaStatus: "DONE",
       };
 
       const updatedColumns = {};
@@ -285,7 +297,10 @@ export const tableSlice = createSliceWithRequests({
           id: cleanId,
           label: col.label?.replace(/^\uFEFF/, "").trim() ?? cleanId,
           kind: result.kind_classification[cleanId] ?? col.kind ?? "unknown",
-          nerClassification: result.ner_classification[cleanId] ?? col.nerClassification ?? "unknown",
+          nerClassification:
+            result.ner_classification[cleanId] ??
+            col.nerClassification ??
+            "unknown",
         };
       });
 
@@ -1967,8 +1982,7 @@ export const tableSlice = createSliceWithRequests({
 
           //if inTableLinker, use the reconciliator with the corresponding selected prefix
           const effectiveReconciliator =
-            (data as any).reconciliator &&
-            reconciliator.id === "inTableLinker"
+            (data as any).reconciliator && reconciliator.id === "inTableLinker"
               ? (data as any).reconciliator
               : reconciliator;
 
@@ -2180,7 +2194,8 @@ export const tableSlice = createSliceWithRequests({
       .addCase(
         automaticAnnotation.fulfilled,
         (state, action: PayloadAction<Payload<AutomaticAnnotationPayload>>) => {
-          const { datasetId, tableId, mantisStatus, schemaStatus } = action.payload;
+          const { datasetId, tableId, mantisStatus, schemaStatus } =
+            action.payload;
           console.log("[automaticAnnotation.fulfilled]", action.payload);
           if (mantisStatus) {
             state.entities.tableInstance.mantisStatus = mantisStatus;
@@ -2374,19 +2389,23 @@ export const tableSlice = createSliceWithRequests({
                     draft.entities.rows.byId[rowId].cells[colId] = createCell(
                       rowId,
                       colId,
-                      cellData
+                      cellData,
                     );
                   });
                 });
               },
               (draft) => {
-                if (selectedColumnId && draft.entities.columns.byId[selectedColumnId]) {
+                if (
+                  selectedColumnId &&
+                  draft.entities.columns.byId[selectedColumnId]
+                ) {
                   draft.ui.selectedColumnsIds = { [selectedColumnId]: true };
                   draft.ui.selectedColumnCellsIds = {};
                   draft.ui.selectedCellIds = {};
 
                   draft.entities.rows.allIds.forEach((rowId) => {
-                    const cell = draft.entities.rows.byId[rowId]?.cells[selectedColumnId];
+                    const cell =
+                      draft.entities.rows.byId[rowId]?.cells[selectedColumnId];
                     if (cell) {
                       draft.ui.selectedCellIds[cell.id] = true;
                       draft.ui.selectedColumnCellsIds[cell.id] = true;
@@ -2395,7 +2414,7 @@ export const tableSlice = createSliceWithRequests({
                 }
                 draft.entities.tableInstance.lastModifiedDate =
                   new Date().toISOString();
-              }
+              },
             );
           } else {
             const { columns, meta, originalColMeta } = data;
@@ -2447,10 +2466,8 @@ export const tableSlice = createSliceWithRequests({
                     }
                   });
 
-                  draft.entities.columns.byId[newColId].status = getColumnStatus(
-                    draft,
-                    newColId,
-                  );
+                  draft.entities.columns.byId[newColId].status =
+                    getColumnStatus(draft, newColId);
 
                   // Insert the new column right after the selected column
                   if (!draft.entities.columns.allIds.includes(newColId)) {
@@ -2466,16 +2483,16 @@ export const tableSlice = createSliceWithRequests({
                   ) {
                     draft.entities.columns.byId[
                       originalColMeta.originalColName
-                      ].metadata[0].property = [
+                    ].metadata[0].property = [
                       ...draft.entities.columns.byId[
                         originalColMeta.originalColName
-                        ].metadata[0].property,
+                      ].metadata[0].property,
                       ...originalColMeta.properties,
                     ];
                   } else {
                     draft.entities.columns.byId[
                       originalColMeta.originalColName
-                      ].metadata[0].property = originalColMeta.properties;
+                    ].metadata[0].property = originalColMeta.properties;
                   }
                 }
               },
