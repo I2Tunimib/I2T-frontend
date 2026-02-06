@@ -1,58 +1,68 @@
 import {
-  Button, IconButton, Stack,
-  ToggleButton, ToggleButtonGroup, Tooltip
-} from '@mui/material';
-import { InlineInput } from '@components/kit';
-import { Link, useHistory, useParams } from 'react-router-dom';
+  Button,
+  IconButton,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+} from "@mui/material";
+import { InlineInput } from "@components/kit";
+import { Link, useHistory, useParams } from "react-router-dom";
 import React, {
-  ChangeEvent, FocusEvent,
-  MouseEvent, useState,
-  useEffect
-} from 'react';
-import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
-import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
-import SystemUpdateAltRoundedIcon from '@mui/icons-material/SystemUpdateAltRounded';
-import SettingsIcon from '@mui/icons-material/Settings';
-import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
-import clsx from 'clsx';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
+  ChangeEvent,
+  FocusEvent,
+  MouseEvent,
+  useState,
+  useEffect,
+} from "react";
+import ArrowBackIosRoundedIcon from "@mui/icons-material/ArrowBackIosRounded";
+import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import SystemUpdateAltRoundedIcon from "@mui/icons-material/SystemUpdateAltRounded";
+import SettingsIcon from "@mui/icons-material/Settings";
+import PlayCircleOutlineRoundedIcon from "@mui/icons-material/PlayCircleOutlineRounded";
+import clsx from "clsx";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   selectAutomaticAnnotationStatus,
-  selectCurrentTable, selectGraphTutorialDialogStatus,
+  selectCurrentTable,
+  selectGraphTutorialDialogStatus,
   selectHelpDialogStatus,
   selectIsViewOnly,
   selectLastSaved,
   selectSaveTableStatus,
-  selectSettingsDialogStatus
-} from '@store/slices/table/table.selectors';
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
-import BubbleChartRoundedIcon from '@mui/icons-material/BubbleChartRounded';
-import FormatAlignJustifyRoundedIcon from '@mui/icons-material/FormatAlignJustifyRounded';
-import { updateCurrentTable, updateUI } from '@store/slices/table/table.slice';
-import { automaticAnnotation, saveTable } from '@store/slices/table/table.thunk';
-import { useQuery } from '@hooks/router';
-import { selectAppConfig } from '@store/slices/config/config.selectors';
+  selectSettingsDialogStatus,
+} from "@store/slices/table/table.selectors";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
+import BubbleChartRoundedIcon from "@mui/icons-material/BubbleChartRounded";
+import FormatAlignJustifyRoundedIcon from "@mui/icons-material/FormatAlignJustifyRounded";
+import { updateCurrentTable, updateUI } from "@store/slices/table/table.slice";
+import {
+  automaticAnnotation,
+  saveTable,
+} from "@store/slices/table/table.thunk";
+import { useQuery } from "@hooks/router";
+import { selectAppConfig } from "@store/slices/config/config.selectors";
 //import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 //import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
-import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
-import { IconButtonTooltip } from '@components/core';
-import UserAvatar from '@components/kit/UserAvatar';
-import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import { IconButtonTooltip } from "@components/core";
+import UserAvatar from "@components/kit/UserAvatar";
+import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
-import styles from './Toolbar.module.scss';
-import SaveIndicator from '../TableViewer/SaveIndicator';
-import ExportDialog from '../TableViewer/ExportDialog';
-import AutoAnnotationDialog from '../TableViewer/AutoAnnotationDialog';
-import SettingsDialog from '../SettingsDialog/SettingsDialog';
-import HelpDialog from '../HelpDialog/HelpDialog';
+import styles from "./Toolbar.module.scss";
+import SaveIndicator from "../TableViewer/SaveIndicator";
+import ExportDialog from "../TableViewer/ExportDialog";
+import AutoAnnotationDialog from "../TableViewer/AutoAnnotationDialog";
+import SettingsDialog from "../SettingsDialog/SettingsDialog";
+import HelpDialog from "../HelpDialog/HelpDialog";
+import { AssignmentTurnedInOutlined } from "@mui/icons-material";
 
-interface MenuState extends Record<string, boolean> {
-}
+interface MenuState extends Record<string, boolean> {}
 
 const initialMenuState: MenuState = {
   file: false,
   edit: false,
-  view: false
+  view: false,
 };
 
 /**
@@ -60,13 +70,16 @@ const initialMenuState: MenuState = {
  */
 const Toolbar = () => {
   // keep track of table name
-  const [tableName, setTableName] = useState<string>('');
+  const [tableName, setTableName] = useState<string>("");
 
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
 
   const history = useHistory();
-  const { datasetId, tableId } = useParams<{ datasetId: string; tableId: string; }>();
+  const { datasetId, tableId } = useParams<{
+    datasetId: string;
+    tableId: string;
+  }>();
   const { loading } = useAppSelector(selectSaveTableStatus);
   const currentTable = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
@@ -74,8 +87,12 @@ const Toolbar = () => {
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
   const openHelpDialog = useAppSelector(selectHelpDialogStatus);
-  const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
-  const { loading: loadingAutomaticAnnotation } = useAppSelector(selectAutomaticAnnotationStatus);
+  const openGraphTutorialDialog = useAppSelector(
+    selectGraphTutorialDialogStatus,
+  );
+  const { loading: loadingAutomaticAnnotation } = useAppSelector(
+    selectAutomaticAnnotationStatus,
+  );
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectIsLoggedIn);
 
@@ -97,7 +114,8 @@ const Toolbar = () => {
   };
 
   const onBlurTableName = (event: FocusEvent<HTMLInputElement>) => {
-    const newValue = event.target.value === '' ? 'Unnamed table' : event.target.value;
+    const newValue =
+      event.target.value === "" ? "Unnamed table" : event.target.value;
     dispatch(updateCurrentTable({ name: newValue }));
   };
 
@@ -106,17 +124,23 @@ const Toolbar = () => {
   };
 
   const handleMenuOpen = (event: MouseEvent<HTMLButtonElement>, id: string) => {
-    setMenuState((state) => Object.keys(state)
-      .reduce((acc, key) => ({
-        ...acc,
-        [key]: key === id
-      }), {}));
+    setMenuState((state) =>
+      Object.keys(state).reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: key === id,
+        }),
+        {},
+      ),
+    );
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMenuEnter = (event: MouseEvent<HTMLButtonElement>, id: string) => {
-    if (Object.keys(menuState)
-      .some((key) => menuState[key])) {
+  const handleMenuEnter = (
+    event: MouseEvent<HTMLButtonElement>,
+    id: string,
+  ) => {
+    if (Object.keys(menuState).some((key) => menuState[key])) {
       handleMenuOpen(event, id);
     }
   };
@@ -137,10 +161,12 @@ const Toolbar = () => {
   };
 
   const handleSave = () => {
-    dispatch(saveTable({
-      datasetId,
-      tableId
-    }));
+    dispatch(
+      saveTable({
+        datasetId,
+        tableId,
+      }),
+    );
   };
 
   const handleAutomaticAnnotation = () => {
@@ -150,7 +176,11 @@ const Toolbar = () => {
   return (
     <>
       <div className={styles.Container}>
-        <IconButton component={Link} to={`/datasets/${datasetId}/tables`} size="large">
+        <IconButton
+          component={Link}
+          to={`/datasets/${datasetId}/tables`}
+          size="large"
+        >
           <ArrowBackIosRoundedIcon />
         </IconButton>
         <div className={styles.ColumnMenu}>
@@ -161,20 +191,26 @@ const Toolbar = () => {
               onChange={onChangeTableName}
               value={tableName}
               className={clsx({
-                [styles.DefaultName]: tableName === 'Unnamed table'
+                [styles.DefaultName]: tableName === "Unnamed table",
               })}
               disabled={!API.ENDPOINTS.SAVE || !!isViewOnly}
             />
-            {(API.ENDPOINTS.SAVE && !isViewOnly) && (
+            {API.ENDPOINTS.SAVE && !isViewOnly && (
               <SaveIndicator
                 value={currentTable.lastModifiedDate}
                 lastSaved={lastSaved}
                 loading={!!loading}
-                className={styles.SaveIcon} />
+                className={styles.SaveIcon}
+              />
             )}
           </div>
         </div>
-        <Stack direction="row" gap="20px" alignItems="center" className={styles.TopButtons}>
+        <Stack
+          direction="row"
+          gap="20px"
+          alignItems="center"
+          className={styles.TopButtons}
+        >
           <ToggleButtonGroup
             size="small"
             value={view}
@@ -198,26 +234,33 @@ const Toolbar = () => {
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
-          {/*
+
           <>
             <Button
               onClick={() => dispatch(updateUI({ openExportDialog: true }))}
               variant="contained"
               color="primary"
               size="medium"
-              startIcon={<AssignmentTurnedInOutlinedIcon />}
+              startIcon={<AssignmentTurnedInOutlined />}
             >
               Compliance
             </Button>
             <ExportDialog />
           </>
-          */}
+
           <>
             <Button
-              onClick={() => dispatch(updateUI({ openAutoAnnotationDialog: true }))}
+              onClick={() =>
+                dispatch(updateUI({ openAutoAnnotationDialog: true }))
+              }
               variant="contained"
               size="medium"
-              disabled={loadingAutomaticAnnotation || (currentTable && (currentTable.mantisStatus === 'PENDING' || currentTable.schemaStatus === 'PENDING'))}
+              disabled={
+                loadingAutomaticAnnotation ||
+                (currentTable &&
+                  (currentTable.mantisStatus === "PENDING" ||
+                    currentTable.schemaStatus === "PENDING"))
+              }
               startIcon={<PlayCircleOutlineRoundedIcon />}
             >
               Automatic annotation
@@ -238,15 +281,18 @@ const Toolbar = () => {
               <ExportDialog />
             </>
           )}
-          {(API.ENDPOINTS.SAVE && !isViewOnly) && (
+          {API.ENDPOINTS.SAVE && !isViewOnly && (
             <Button
               onClick={handleSave}
               variant="contained"
               color="primary"
               size="medium"
-              disabled={currentTable.lastModifiedDate
-                ? new Date(lastSaved) >= new Date(currentTable.lastModifiedDate)
-                : true}
+              disabled={
+                currentTable.lastModifiedDate
+                  ? new Date(lastSaved) >=
+                    new Date(currentTable.lastModifiedDate)
+                  : true
+              }
               startIcon={<SaveRoundedIcon />}
             >
               Save
@@ -260,7 +306,8 @@ const Toolbar = () => {
           <IconButtonTooltip
             tooltipText="Help"
             onClick={() => dispatch(updateUI({ openHelpDialog: true }))}
-            Icon={HelpOutlineRoundedIcon} />
+            Icon={HelpOutlineRoundedIcon}
+          />
           {auth.loggedIn && auth.user && (
             <UserAvatar>
               {auth.user.username.slice(0, 2).toUpperCase()}
@@ -270,7 +317,10 @@ const Toolbar = () => {
       </div>
       <SettingsDialog open={openSettingsDialog} onClose={handleCloseSettings} />
       <HelpDialog open={openHelpDialog} onClose={handleCloseHelp} />
-      <GraphTutorialDialog open={openGraphTutorialDialog} onClose={handleCloseGraphTutorial} />
+      <GraphTutorialDialog
+        open={openGraphTutorialDialog}
+        onClose={handleCloseGraphTutorial}
+      />
     </>
   );
 };

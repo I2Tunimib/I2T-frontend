@@ -1,5 +1,8 @@
 import axios from "axios";
-import tableAPI, { GetTableResponse, GetSchemaResponse } from "@services/api/table";
+import tableAPI, {
+  GetTableResponse,
+  GetSchemaResponse,
+} from "@services/api/table";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from "@store";
 //import { levDistance } from "@services/utils/lev-distance";
@@ -367,8 +370,31 @@ const getRequestFormValuesExtension = (
 
   const { ui, entities } = table;
   const { rows } = entities;
-  const selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
-  console.log("getting request form values", extender);
+  // Prefer UI selection, but fallback to formValues.selectedColumns when UI selection is empty.
+  // This fixes calls originating from GroupServiceDialog which pass selectedColumns in formValues
+  let selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
+
+  if (
+    (!selectedColumnsIds || selectedColumnsIds.length === 0) &&
+    formValues &&
+    formValues.selectedColumns
+  ) {
+    // formValues.selectedColumns can be an array or an object; normalize to array of ids
+    if (Array.isArray(formValues.selectedColumns)) {
+      selectedColumnsIds = formValues.selectedColumns;
+    } else if (typeof formValues.selectedColumns === "object") {
+      selectedColumnsIds = Object.keys(formValues.selectedColumns);
+    }
+    console.debug(
+      "[getRequestFormValuesExtension] using fallback formValues.selectedColumns:",
+      selectedColumnsIds,
+    );
+  }
+
+  console.debug("getting request form values", {
+    extender,
+    selectedColumnsIds,
+  });
   const requestParams = {} as Record<string, any>;
 
   // Check if skipFiltering is enabled
@@ -402,9 +428,11 @@ const getRequestFormValuesExtension = (
     // Use existing filtering logic - only include reconciled items
     if (extender && (extender.id === "llmClassifier" || extender.allValues)) {
       console.log("intercepted extender with rich objects", extender.id);
+      // For extenders that require rich objects or explicitly request allValues,
+      // include ALL rows' metadata objects (not only reconciled ones).
       requestParams.items = selectedColumnsIds.reduce(
         (acc, key) => {
-          acc[key] = getColumnMetaObjects(key, rows);
+          acc[key] = getAllColumnMetaObjects(key, rows);
           return acc;
         },
         {} as Record<string, any>,
@@ -492,15 +520,21 @@ const getRequestFormValuesModification = (
   const requestParams = {} as Record<string, any>;
 
   if (modifier?.allValues) {
-    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
-      acc[key] = getAllColumnMetaObjects(key, rows);
-      return acc;
-    }, {} as Record<string, any>);
+    requestParams.items = selectedColumnsIds.reduce(
+      (acc, key) => {
+        acc[key] = getAllColumnMetaObjects(key, rows);
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
   } else {
-    requestParams.items = selectedColumnsIds.reduce((acc, key) => {
-      acc[key] = getColumnValues(key, rows);
-      return acc;
-    }, {} as Record<string, any>);
+    requestParams.items = selectedColumnsIds.reduce(
+      (acc, key) => {
+        acc[key] = getColumnValues(key, rows);
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
   }
 
   formParams.forEach(({ id, inputType }) => {
@@ -727,7 +761,14 @@ export const extend = createAsyncThunk<
 
   const params = {
     ...getRequestFormValuesExtension(formParams, formValues, table, extender),
-    selectedColumns: formValues.selectedColumns,
+    // Prefer selected columns explicitly provided by the formValues.
+    // If not present, fall back to extender.selectedColumns (service-level selection).
+    selectedColumns:
+      formValues && formValues.selectedColumns
+        ? formValues.selectedColumns
+        : extender && (extender as any).selectedColumns
+          ? (extender as any).selectedColumns
+          : undefined,
   };
 
   // Create axios CancelToken source and wire it to the thunk abort signal
@@ -786,7 +827,12 @@ export const modify = createAsyncThunk<
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
   const params = {
-    ...getRequestFormValuesModification(formParams, formValues, table, modifier),
+    ...getRequestFormValuesModification(
+      formParams,
+      formValues,
+      table,
+      modifier,
+    ),
     joinColumns: formValues.joinColumns,
     selectedColumns: formValues.selectedColumns,
     columnType: formValues.columnType,
@@ -851,7 +897,10 @@ export const updateSchemaSocket = createAsyncThunk(
     const { settings } = state.table.ui;
     const { table } = inputProps;
 
-    if (!isEmptyObject(tableInstance) && tableInstance.id.toString() === table.id.toString()) {
+    if (
+      !isEmptyObject(tableInstance) &&
+      tableInstance.id.toString() === table.id.toString()
+    ) {
       console.log("updateSchemaSocket: IDs match, dispatching updateSchema");
 
       dispatch(updateSchema(inputProps));

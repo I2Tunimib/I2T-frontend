@@ -37,7 +37,8 @@ import {
 } from "@mui/icons-material";
 import {
   selectAreCellReconciliated,
-  selectExtendRequestStatus, selectSelectedColumnIdsAsArray,
+  selectExtendRequestStatus,
+  selectSelectedColumnIdsAsArray,
 } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { selectExtendersAsArray } from "@store/slices/config/config.selectors";
@@ -95,7 +96,15 @@ const DialogInnerContent = () => {
 
   async function groupServices() {
     const groupedServsMap = new Map();
-    const uniqueExtensionServices = extensionServices.filter(
+
+    // Filter out services that have a custom group property (they belong to GroupServiceDialog)
+    const ungroupedExtenders = extensionServices.filter((service) => {
+      const hasCustomGroup =
+        service.group || service.public?.group || service.public?.groupName;
+      return !hasCustomGroup;
+    });
+
+    const uniqueExtensionServices = ungroupedExtenders.filter(
       (service, index, self) =>
         index === self.findIndex((s) => s.id === service.id),
     );
@@ -189,12 +198,15 @@ const DialogInnerContent = () => {
 
   const serviceWithDescription = React.useMemo(() => {
     if (!currentService) return undefined;
-    const colsText = selectedColumnsArray.length ? selectedColumnsArray.join(", ") : "None";
+    const colsText = selectedColumnsArray.length
+      ? selectedColumnsArray.join(", ")
+      : "None";
     return {
       ...currentService,
-      description: `${currentService.description || ""} ${currentService.name === "COFOG Classifier"
-        ? "<b>Input selected column(s):</b>"
-        : "<br/><br/><b>Input selected column(s):</b>"
+      description: `${currentService.description || ""} ${
+        currentService.name === "COFOG Classifier"
+          ? "<b>Input selected column(s):</b>"
+          : "<br/><br/><b>Input selected column(s):</b>"
       } ${colsText}`,
     };
   }, [currentService, selectedColumnsArray]);
@@ -245,7 +257,9 @@ const DialogInnerContent = () => {
       {currentService && (
         <>
           <SquaredBox
-            dangerouslySetInnerHTML={{ __html: serviceWithDescription.description }}
+            dangerouslySetInnerHTML={{
+              __html: serviceWithDescription.description,
+            }}
           />
           {!cellReconciliated && !currentService.skipFiltering && (
             <Alert severity="warning">
@@ -283,7 +297,10 @@ const DialogInnerContent = () => {
               }
               handleClose();
             }}
-            service={{ ...serviceWithDescription, selectedColumns: selectedColumnsArray }}
+            service={{
+              ...serviceWithDescription,
+              selectedColumns: selectedColumnsArray,
+            }}
           />
         </>
       )}
@@ -326,7 +343,13 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 19 }));
+            dispatch(
+              updateUI({
+                openHelpDialog: true,
+                helpStart: "tutorial",
+                tutorialStep: 19,
+              }),
+            );
           }}
         >
           <HelpOutlineRounded />
@@ -338,7 +361,13 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
           <IconButton
             size="small"
             onClick={() => {
-              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 15 }));
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "discover",
+                  discoverStep: 15,
+                }),
+              );
             }}
           >
             <HelpOutlineRounded />
