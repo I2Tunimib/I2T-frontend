@@ -90,7 +90,6 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     const [hover, setHover] = useState<boolean>(false);
     const { lowerBound } = settings;
     const columnData = header.column.columnDef.data;
-    console.log("*** header data compliance", compliance);
     const getColumnComplianceStatus = useCallback(() => {
       if (!compliance || complianceStatus !== "DONE" || !compliance.length) {
         return null;
