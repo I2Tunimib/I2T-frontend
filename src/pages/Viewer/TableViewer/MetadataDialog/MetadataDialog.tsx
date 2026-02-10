@@ -68,6 +68,8 @@ const makeData = (
 ) => {
   if (rawData) {
     const { cell, service } = rawData;
+    const { metadata } = cell;
+    const hasDescriptions = metadata.some(m => m.description && m.description.trim() !== "");
     let metaToView = {};
     if (service) {
       console.log("meta to view from service", service);
@@ -81,11 +83,11 @@ const makeData = (
         id: { label: "Id", type: "link" },
         name: { label: "Name", type: "link" },
         type: { label: "Type", type: "subList" },
+        ...(hasDescriptions && { description: { label: "Description" } }),
         score: { label: "Score" },
         match: { label: "Match", type: "tag" },
       };
     }
-    const { metadata } = cell;
     // add checkbox column
     const metaWithCheck = {
       selected: { label: "Selected", type: "checkBox" },

@@ -136,8 +136,8 @@ const DynamicForm: FC<DynamicFormProps> = ({
     <Stack component="form" gap="20px" onSubmit={handleSubmit(onSubmit)}>
       {service.id === "dateFormatter" && (isJoinInvalid ? (
         <div style={{ color: "red", marginTop: 8 }}>
-          Please select either <b> one date column </b> and <b> one time column </b> to create a datetime column, or
-          <b> only date </b> or <b> only time column</b>.
+          Please select either a column containing <b> date-, time-, or datetime-like values </b> or <b> a single
+          date column and a single time column </b> to create a datetime column.
         </div>
       ) : (
         <>

@@ -338,7 +338,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
           <IconButton
             size="small"
             onClick={() => {
-              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 15 }));
+              dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep: 14 }));
             }}
           >
             <HelpOutlineRounded />
