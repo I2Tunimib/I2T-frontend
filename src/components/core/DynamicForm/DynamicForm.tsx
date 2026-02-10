@@ -31,6 +31,7 @@ import {
   getDefaultValues,
   getRules,
   prepareFormInput,
+  shouldShowField,
 } from "./componentsConfig";
 
 export type DynamicFormProps = {
@@ -55,6 +56,9 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const { control, handleSubmit, reset, setValue, formState, watch } = useForm({
     defaultValues: getDefaultValues(service),
   });
+
+  // Watch all form values for dependency checking
+  const watchedValues = watch();
   const formatType = watch("formatType");
   const columnToJoin = watch("columnToJoin");
   const splitDatetime = watch("splitDatetime");
@@ -276,7 +280,14 @@ const DynamicForm: FC<DynamicFormProps> = ({
         ))}
       {service.id !== "dateFormatter" &&
         formParams &&
-        formParams.map(({ id, inputType, ...inputProps }) => {
+        formParams.map(({ id, inputType, dependsOn, ...inputProps }) => {
+          // Check generic dependency first
+          const param = { id, inputType, dependsOn, ...inputProps };
+          if (!shouldShowField(param, watchedValues)) {
+            return null;
+          }
+
+          // Legacy service-specific logic (kept for backward compatibility)
           if (service.id === "textColumnsTransformer") {
             if (id === "columnToJoin" && operationType !== "joinOp")
               return null;
@@ -307,6 +318,33 @@ const DynamicForm: FC<DynamicFormProps> = ({
             if (
               id === "splitRenameMode" &&
               (!operationType || operationType === "joinOp")
+            )
+              return null;
+          }
+          if (service.id === "llmModifier") {
+            if (id === "columnToJoin" && operationType !== "joinOp")
+              return null;
+            if (
+              id === "renameJoinedColumn" &&
+              (!operationType ||
+                operationType === "splitOp" ||
+                operationType === "inPlace")
+            )
+              return null;
+            if (
+              id === "renameNewColumnSplit" &&
+              (!operationType ||
+                operationType === "joinOp" ||
+                operationType === "inPlace" ||
+                !splitRenameMode ||
+                splitRenameMode === "auto")
+            )
+              return null;
+            if (
+              id === "splitRenameMode" &&
+              (!operationType ||
+                operationType === "joinOp" ||
+                operationType === "inPlace")
             )
               return null;
           }
