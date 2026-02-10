@@ -56,6 +56,7 @@ import AutoAnnotationDialog from "../TableViewer/AutoAnnotationDialog";
 import SettingsDialog from "../SettingsDialog/SettingsDialog";
 import HelpDialog from "../HelpDialog/HelpDialog";
 import { AssignmentTurnedInOutlined } from "@mui/icons-material";
+import ComplianceDialog from "../TableViewer/ComplianceDialog";
 
 interface MenuState extends Record<string, boolean> {}
 
@@ -237,7 +238,9 @@ const Toolbar = () => {
 
           <>
             <Button
-              onClick={() => dispatch(updateUI({ openExportDialog: true }))}
+              onClick={() =>
+                dispatch(updateUI({ openComplianceStatusDialog: true }))
+              }
               variant="contained"
               color="primary"
               size="medium"
@@ -245,7 +248,7 @@ const Toolbar = () => {
             >
               Compliance
             </Button>
-            <ExportDialog />
+            <ComplianceDialog />
           </>
 
           <>

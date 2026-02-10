@@ -652,6 +652,25 @@ export const automaticAnnotation = createAsyncThunk<
   const response = await tableAPI.automaticAnnotation(params, data);
   return response.data;
 });
+export type TableComplianceThunkInputProps = {
+  datasetId: string;
+  tableId: string;
+  purpose?: string;
+};
+export type TableComplianceThunkOutputProps = {
+  response: any;
+};
+export const tableCompliance = createAsyncThunk<
+  TableComplianceThunkOutputProps,
+  TableComplianceThunkInputProps
+>(`${ACTION_PREFIX}/compliance`, async (params, { getState }) => {
+  const { datasetId, tableId, purpose } = params;
+  const data = {
+    purpose: purpose || "General data processing",
+  };
+  const response = await tableAPI.makeCompliance({ datasetId, tableId }, data);
+  return { response: response.data };
+});
 export type SuggestThunkInputProps = {
   // rowCellsEntities: any;
   suggester: string;

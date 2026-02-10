@@ -67,6 +67,7 @@ import {
   reconcile,
   modify,
   saveTable,
+  tableCompliance,
 } from "./table.thunk";
 import {
   deleteOneColumn,
@@ -144,6 +145,7 @@ const initialState: TableState = {
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
     openExportDialog: false,
+    openComplianceStatusDialog: false,
     openAutoAnnotationDialog: false,
     openHelpDialog: false,
     openGraphTutorialDialog: false,
@@ -2206,6 +2208,17 @@ export const tableSlice = createSliceWithRequests({
           state.ui.settings.isViewOnly = true;
         },
       )
+      .addCase(tableCompliance.fulfilled, (state, action) => {
+        // Don't set to DONE here - wait for WebSocket event
+        // The API only confirms the job started, not that it's complete
+        state.entities.tableInstance.complianceStatus = "PENDING";
+      })
+      .addCase(tableCompliance.pending, (state) => {
+        state.entities.tableInstance.complianceStatus = "PENDING";
+      })
+      .addCase(tableCompliance.rejected, (state) => {
+        state.entities.tableInstance.complianceStatus = "ERROR";
+      })
       .addCase(
         extend.fulfilled,
         (state, action: PayloadAction<Payload<ExtendThunkResponseProps>>) => {
