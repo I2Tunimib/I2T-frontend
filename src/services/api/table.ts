@@ -38,7 +38,7 @@ const tableAPI = {
   getTable: (params: Record<string, string | number> = {}) => {
     console.log("Fetching table with params:", params);
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
     };
     if (params.tableId && params.datasetId) {
       console.log(
@@ -63,7 +63,7 @@ const tableAPI = {
     params: Record<string, string | number> = {},
   ) => {
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
     };
     if (params.tableId && params.datasetId) {
       const tableId = String(params.tableId);
@@ -94,7 +94,7 @@ const tableAPI = {
     deletedColumns?: string[],
   ) => {
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
     };
 
     // Add table and dataset headers if provided
@@ -178,7 +178,7 @@ const tableAPI = {
       data,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
         },
       },
     );
@@ -192,7 +192,7 @@ const tableAPI = {
     cancelToken?: CancelToken,
   ) => {
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
     };
 
     // Add table and dataset headers if provided
@@ -239,7 +239,7 @@ const tableAPI = {
     cancelToken?: CancelToken,
   ) => {
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
     };
 
     // Add table and dataset headers if provided
@@ -286,7 +286,7 @@ const tableAPI = {
     columnName?: string,
   ) => {
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
     };
 
     // Add table and dataset headers if provided
@@ -331,7 +331,7 @@ const tableAPI = {
   trackTable: (datasetId: string, tableId: string, metadataToTrack: any) =>
     apiClient.post(`/dataset/track/${datasetId}/${tableId}`, metadataToTrack, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
       },
     }),
 };
