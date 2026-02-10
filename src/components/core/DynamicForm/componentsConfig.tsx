@@ -11,6 +11,13 @@ import { MultipleColumnSelect } from "./formComponents/MultipleColumnSelect";
 
 /**
  * Check if a field should be visible based on its dependencies
+ *
+ * Supports:
+ * - Simple condition: { field: "type", value: "option1" }
+ * - OR condition: { field: "type", value: ["option1", "option2"] }
+ * - NOT condition: { field: "type", value: "option1", not: true }
+ * - AND condition: { and: [{ field: "a", value: "1" }, { field: "b", value: "2" }] }
+ * - OR condition: { or: [{ field: "a", value: "1" }, { field: "b", value: "2" }] }
  */
 export const shouldShowField = (
   param: FormInputParams,
@@ -20,16 +27,48 @@ export const shouldShowField = (
     return true;
   }
 
-  const { field, value } = param.dependsOn;
-  const currentValue = watchValues[field];
+  const dep = param.dependsOn as any;
 
-  // Handle array of values (OR condition)
-  if (Array.isArray(value)) {
-    return value.includes(currentValue);
+  // Handle AND logic: all conditions must be true
+  if (dep.and && Array.isArray(dep.and)) {
+    return dep.and.every((condition: any) =>
+      evaluateCondition(condition, watchValues),
+    );
   }
 
-  // Handle single value
-  return currentValue === value;
+  // Handle OR logic: at least one condition must be true
+  if (dep.or && Array.isArray(dep.or)) {
+    return dep.or.some((condition: any) =>
+      evaluateCondition(condition, watchValues),
+    );
+  }
+
+  // Handle simple condition
+  return evaluateCondition(dep, watchValues);
+};
+
+/**
+ * Evaluate a single condition
+ */
+const evaluateCondition = (
+  condition: any,
+  watchValues: Record<string, any>,
+): boolean => {
+  const { field, value, not } = condition;
+  const currentValue = watchValues[field];
+
+  let matches = false;
+
+  // Handle array of values (OR condition within single field)
+  if (Array.isArray(value)) {
+    matches = value.includes(currentValue);
+  } else {
+    // Handle single value
+    matches = currentValue === value;
+  }
+
+  // Apply NOT logic if specified
+  return not ? !matches : matches;
 };
 
 /**

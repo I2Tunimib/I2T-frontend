@@ -179,51 +179,41 @@ const DynamicForm: FC<DynamicFormProps> = ({
           </div>
         ) : (
           <>
-            {modifiedFormParams.map(({ id, inputType, ...inputProps }) => {
-              if (service.id === "dateFormatter") {
-                if (id === "customPattern" && formatType !== "custom")
+            {modifiedFormParams.map(
+              ({ id, inputType, dependsOn, ...inputProps }) => {
+                // Check generic dependency using shouldShowField utility
+                const param = { id, inputType, dependsOn, ...inputProps };
+                if (!shouldShowField(param, watchedValues)) {
                   return null;
-                if (id === "detailLevel" && !formatType) return null;
-                if (
-                  id === "outputMode" &&
-                  (selectedColumns.length > 1 || splitDatetime)
-                )
-                  return null;
-                if (id === "detailLevel" && formatType === "custom")
-                  return null;
-                if (
-                  id === "columnToJoin" &&
-                  (selectedColumns.length > 1 ||
-                    service.columnType === "datetime")
-                )
-                  return null;
-              }
-              const FormComponent = FORM_COMPONENTS[inputType];
-              return (
-                <Controller
-                  key={id}
-                  defaultValue=""
-                  rules={getRules(inputProps.rules)}
-                  render={({
-                    field: { selectedColumns: _, ...fieldProps },
-                  }) => (
-                    <FormComponent
-                      id={id}
-                      formState={formState}
-                      reset={reset}
-                      setValue={setValue}
-                      {...fieldProps}
-                      {...(prepareFormInput(inputProps) as any)}
-                      {...(inputType === "selectColumns"
-                        ? { selectedColumns }
-                        : {})}
-                    />
-                  )}
-                  name={id}
-                  control={control}
-                />
-              );
-            })}
+                }
+
+                const FormComponent = FORM_COMPONENTS[inputType];
+                return (
+                  <Controller
+                    key={id}
+                    defaultValue=""
+                    rules={getRules(inputProps.rules)}
+                    render={({
+                      field: { selectedColumns: _, ...fieldProps },
+                    }) => (
+                      <FormComponent
+                        id={id}
+                        formState={formState}
+                        reset={reset}
+                        setValue={setValue}
+                        {...fieldProps}
+                        {...(prepareFormInput(inputProps) as any)}
+                        {...(inputType === "selectColumns"
+                          ? { selectedColumns }
+                          : {})}
+                      />
+                    )}
+                    name={id}
+                    control={control}
+                  />
+                );
+              },
+            )}
             {selectedColumns.length > 1 && (
               <Controller
                 name="joinColumns"
@@ -281,79 +271,12 @@ const DynamicForm: FC<DynamicFormProps> = ({
       {service.id !== "dateFormatter" &&
         formParams &&
         formParams.map(({ id, inputType, dependsOn, ...inputProps }) => {
-          // Check generic dependency first
+          // Check generic dependency using shouldShowField utility
           const param = { id, inputType, dependsOn, ...inputProps };
           if (!shouldShowField(param, watchedValues)) {
             return null;
           }
 
-          // Legacy service-specific logic (kept for backward compatibility)
-          if (service.id === "textColumnsTransformer") {
-            if (id === "columnToJoin" && operationType !== "joinOp")
-              return null;
-            if (
-              id === "renameJoinedColumn" &&
-              (!operationType || operationType === "splitOp")
-            )
-              return null;
-            if (
-              id === "splitMode" &&
-              (!operationType || operationType === "joinOp")
-            )
-              return null;
-            if (id === "separator" && !operationType) return null;
-            if (
-              id === "splitDirection" &&
-              (!operationType || !splitMode || splitMode === "separatorAll")
-            )
-              return null;
-            if (
-              id === "renameNewColumnSplit" &&
-              (!operationType ||
-                operationType === "joinOp" ||
-                !splitRenameMode ||
-                splitRenameMode === "auto")
-            )
-              return null;
-            if (
-              id === "splitRenameMode" &&
-              (!operationType || operationType === "joinOp")
-            )
-              return null;
-          }
-          if (service.id === "llmModifier") {
-            if (id === "columnToJoin" && operationType !== "joinOp")
-              return null;
-            if (
-              id === "renameJoinedColumn" &&
-              (!operationType ||
-                operationType === "splitOp" ||
-                operationType === "inPlace")
-            )
-              return null;
-            if (
-              id === "renameNewColumnSplit" &&
-              (!operationType ||
-                operationType === "joinOp" ||
-                operationType === "inPlace" ||
-                !splitRenameMode ||
-                splitRenameMode === "auto")
-            )
-              return null;
-            if (
-              id === "splitRenameMode" &&
-              (!operationType ||
-                operationType === "joinOp" ||
-                operationType === "inPlace")
-            )
-              return null;
-          }
-          if (service.id === "meteoPropertiesOpenMeteo") {
-            if (id === "weatherParams_daily" && granularity !== "daily")
-              return null;
-            if (id === "weatherParams_hourly" && granularity !== "hourly")
-              return null;
-          }
           const FormComponent = FORM_COMPONENTS[inputType];
           return (
             <Controller
