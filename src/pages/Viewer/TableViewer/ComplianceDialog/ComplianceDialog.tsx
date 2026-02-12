@@ -228,18 +228,14 @@ const ComplianceDialog: FC<ComplianceDialogProps> = () => {
                           <Chip
                             label={`${(analysis.score * 100).toFixed(0)}%`}
                             size="small"
-                            color={
-                              analysis.score >= 0.8 ? "success" : "warning"
-                            }
+                            color="default"
                           />
                         </Stack>
                         <Stack direction="row" spacing={1} mb={1}>
                           <Chip
                             label={analysis.classification}
                             size="small"
-                            color={getClassificationColor(
-                              analysis.classification,
-                            )}
+                            color="default"
                           />
                           <Chip
                             label={`Action: ${analysis.action}`}
