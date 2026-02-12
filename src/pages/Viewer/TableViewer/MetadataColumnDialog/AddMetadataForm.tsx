@@ -77,9 +77,13 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
 
   useEffect(() => {
     const fetchNameFromUri = async () => {
-      if (watchedUri && watchedUri.startsWith("https") && watchedPrefix) {
-        const id = extractIdFromUri(watchedUri, watchedPrefix);
-
+      if (watchedUri) {
+        let id = "";
+        if (watchedUri.startsWith("https") && watchedPrefix) {
+          id = extractIdFromUri(watchedUri, watchedPrefix);
+        } else {
+          id = watchedUri;
+        }
         if (id) {
           try {
             setIsFetchingName(true);
@@ -142,7 +146,6 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
                   minWidth: 100,
                   flex: context === "typeTab" ? "1 1 20px" : "1 1 50px",
                 }}
-                disabled={!!currentService}
                 {...field}
               />
             )}

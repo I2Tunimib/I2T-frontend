@@ -756,32 +756,6 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  // Early return if cell has no metadata to prevent crashes
-  if (
-    cell &&
-    !cell?.annotationMeta?.annotated &&
-    (!cell.metadata || cell.metadata.length === 0)
-  ) {
-    return (
-      <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
-        <Stack
-          height="100%"
-          minHeight="200px"
-          padding="24px"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Typography variant="h6" color="textSecondary">
-            No metadata available for this cell
-          </Typography>
-          <Button onClick={handleCancel} sx={{ marginTop: 2 }}>
-            Close
-          </Button>
-        </Stack>
-      </Dialog>
-    );
-  }
-
   return cell ? (
     <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
       <Stack height="100%" minHeight="600px">
@@ -919,7 +893,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
             {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
                 <AddMetadataForm
-                  currentService={servicesById[cell?.reconciler].prefix}
+                  currentService={servicesById[cell?.reconciler]?.prefix}
                   onSubmit={onSubmitNewMetadata}
                   context="metadataDialog"
                 />
