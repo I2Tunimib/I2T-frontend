@@ -69,7 +69,9 @@ const makeData = (
   if (rawData) {
     const { cell, service } = rawData;
     const { metadata } = cell;
-    const hasDescriptions = metadata.some(m => m.description && m.description.trim() !== "");
+    const hasDescriptions = metadata.some(
+      (m) => m.description && m.description.trim() !== "",
+    );
     let metaToView = {};
     if (service) {
       console.log("meta to view from service", service);
@@ -367,7 +369,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   };
 
   const handleDeleteRow = (original: any) => {
-    console.log("original Id", original.id);
+    console.log("original Id", original?.id);
     if (!cell || !cell.metadata || cell.metadata.length === 0) {
       console.warn("Cannot delete: cell metadata is empty");
       return;
@@ -376,11 +378,28 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       console.warn("Cannot delete: invalid row data");
       return;
     }
-    console.log();
+
+    // Resolve metadata identifier robustly:
+    // - If original.id is a string, use it.
+    // - If it's an object, prefer `.id`, then `.label`, then `.value`.
+    // - Otherwise pass the whole object so reducers that accept object shapes can handle it.
+    let metadataIdToDelete: any = original.id;
+    if (typeof original.id === "object" && original.id !== null) {
+      if (original.id.id) {
+        metadataIdToDelete = original.id.id;
+      } else if (original.id.label) {
+        metadataIdToDelete = original.id.label;
+      } else if (original.id.value) {
+        metadataIdToDelete = original.id.value;
+      } else {
+        metadataIdToDelete = original.id;
+      }
+    }
+
     dispatch(
       deleteCellMetadata({
         cellId: cell.id,
-        metadataId: original.id.label || original.id,
+        metadataId: metadataIdToDelete,
       }),
     );
   };
@@ -756,13 +775,13 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     if (!cell || !cell.metadata || cell.metadata.length === 0) return null;
     const matchedMeta = cell.metadata.find((m) => m.match) || cell.metadata[0];
     if (!matchedMeta || !matchedMeta.id) return null;
-    const parts = matchedMeta.id.split(':');
+    const parts = matchedMeta.id.split(":");
     return parts.length > 1 ? parts[0] : null;
   };
 
   const getActiveSearchService = () => {
     // Cell reconciliated with inTableLinker -> prefix selected when reconciliating
-    if (cell?.reconciler === 'inTableLinker') {
+    if (cell?.reconciler === "inTableLinker") {
       const prefix = getPrefixFromCellMetadata();
       if (prefix && servicesByPrefix[prefix]?.searchPattern) {
         return servicesByPrefix[prefix];
@@ -774,7 +793,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       return servicesById[cell?.reconciler];
     }
     // Cell not reconciliated -> prefix selected in the form
-    if (formSelectedPrefix && servicesByPrefix[formSelectedPrefix]?.searchPattern) {
+    if (
+      formSelectedPrefix &&
+      servicesByPrefix[formSelectedPrefix]?.searchPattern
+    ) {
       return servicesByPrefix[formSelectedPrefix];
     }
     return null;
@@ -923,7 +945,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   onClick={handleSearchInService}
                   sx={{ textTransform: "none" }}
                 >
-                  Search "{cell?.label}" in {KG_INFO[activeSearchService.prefix].groupName}
+                  Search "{cell?.label}" in{" "}
+                  {KG_INFO[activeSearchService.prefix].groupName}
                 </Button>
               )}
             </Stack>
@@ -932,7 +955,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                 <AddMetadataForm
                   onPrefixChange={setFormSelectedPrefix}
                   currentService={
-                    cell?.reconciler === 'inTableLinker'
+                    cell?.reconciler === "inTableLinker"
                       ? getPrefixFromCellMetadata()
                       : servicesById[cell?.reconciler]?.prefix
                   }

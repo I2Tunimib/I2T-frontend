@@ -15,7 +15,10 @@ import {
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
 import { createWikidataURI } from "@services/utils/uri-utils";
-import { selectAppConfig, selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
+import {
+  selectAppConfig,
+  selectReconciliatorsAsArray,
+} from "@store/slices/config/config.selectors";
 import { isValidWikidataId } from "@services/utils/regexs";
 import { BaseMetadata } from "@store/slices/table/interfaces/table";
 import deferMounting from "@components/HOC";
@@ -154,7 +157,9 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
-  const colId = useAppSelector((state) => state.table.ui.metadataColumnDialogColId);
+  const colId = useAppSelector(
+    (state) => state.table.ui.metadataColumnDialogColId,
+  );
   const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
   const currentService = rawData?.service?.prefix || "";
 
@@ -320,78 +325,104 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
       const prefix = formState?.prefix;
       //console.log("onSubmitNewMetadata prefix", prefix);
       let idFromUri = "";
+      let constructedUri: string | null = null;
 
-      // Robust extraction strategy:
-      // 1) Try to parse as URL and prefer fragment (#id) if present.
-      // 2) Otherwise use the last non-empty path segment.
-      // 3) Apply special cases for known prefixes (wd, geo, geoCoord).
-      // 4) If parsing fails, fallback to string token extraction.
-      try {
-        const url = new URL(formState.uri);
-        console.log("url", url);
+      // If prefix indicates geoCoord and the user provided plain coordinates (lat,lon),
+      // convert them to a Google Maps URL automatically.
+      // Only trigger this when the string is NOT an http(s) URL and matches a lat,long pattern.
+      const coordPattern = /^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/;
+      const isHttp = /^https?:\/\//i.test(formState.uri);
+      const sanitizedPrefixCheck = prefix
+        ? String(prefix).replace(/:+$/, "")
+        : "";
+      if (
+        sanitizedPrefixCheck === "geoCoord" &&
+        !isHttp &&
+        coordPattern.test(formState.uri)
+      ) {
+        const coords = formState.uri.trim().replace(/\s+/g, "");
+        // Use Google Maps search query for coordinates
+        constructedUri = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          coords,
+        )}`;
+        idFromUri = coords;
+      } else {
+        // Robust extraction strategy:
+        // 1) Try to parse as URL and prefer fragment (#id) if present.
+        // 2) Otherwise use the last non-empty path segment.
+        // 3) Apply special cases for known prefixes (wd, geo, geoCoord).
+        // 4) If parsing fails, fallback to string token extraction.
+        try {
+          const url = new URL(formState.uri);
+          console.log("url", url);
 
-        // Prefer fragment (after #)
-        if (url.hash && url.hash.length > 1) {
-          idFromUri = url.hash.slice(1);
-        } else {
-          // Last non-empty path segment
-          const pathParts = url.pathname.split("/").filter(Boolean);
-          if (pathParts.length > 0) {
-            idFromUri = pathParts[pathParts.length - 1];
+          // Prefer fragment (after #)
+          if (url.hash && url.hash.length > 1) {
+            idFromUri = url.hash.slice(1);
           } else {
-            // No path segments - try to use pathname without leading/trailing slashes
-            idFromUri = url.pathname.replace(/^\/+|\/+$/g, "");
+            // Last non-empty path segment
+            const pathParts = url.pathname.split("/").filter(Boolean);
+            if (pathParts.length > 0) {
+              idFromUri = pathParts[pathParts.length - 1];
+            } else {
+              // No path segments - try to use pathname without leading/trailing slashes
+              idFromUri = url.pathname.replace(/^\/+|\/+$/g, "");
+            }
           }
-        }
 
-        // Apply known special cases when needed (prefer the above result if present)
-        if (
-          (!idFromUri || idFromUri === "") &&
-          prefix &&
-          prefix.startsWith("wd")
-        ) {
-          // e.g. https://www.wikidata.org/wiki/Q18711
-          idFromUri = url.pathname.split("/").filter(Boolean).pop() || "";
-        } else if ((!idFromUri || idFromUri === "") && prefix === "geo") {
-          // e.g. https://www.geonames.org/3117735/madrid.html -> 3117735
-          const parts = url.pathname.split("/").filter(Boolean);
-          idFromUri =
-            parts[0] === undefined
-              ? ""
-              : parts[0] || parts[parts.length - 1] || "";
-        } else if ((!idFromUri || idFromUri === "") && prefix === "geoCoord") {
-          // e.g. https://www.google.com/maps/place/lat,long
-          const parts =
-            url.pathname.split("/").filter(Boolean).pop()?.split(",") || [];
-          idFromUri = parts.join(",");
-        }
-
-        // If still empty, try to extract something from the query params (last value)
-        if (!idFromUri) {
-          const params = new URLSearchParams(url.search);
-          const lastKey = Array.from(params.keys()).pop();
-          if (lastKey) {
-            idFromUri = params.get(lastKey) || "";
+          // Apply known special cases when needed (prefer the above result if present)
+          if (
+            (!idFromUri || idFromUri === "") &&
+            prefix &&
+            prefix.startsWith("wd")
+          ) {
+            // e.g. https://www.wikidata.org/wiki/Q18711
+            idFromUri = url.pathname.split("/").filter(Boolean).pop() || "";
+          } else if ((!idFromUri || idFromUri === "") && prefix === "geo") {
+            // e.g. https://www.geonames.org/3117735/madrid.html -> 3117735
+            const parts = url.pathname.split("/").filter(Boolean);
+            idFromUri =
+              parts[0] === undefined
+                ? ""
+                : parts[0] || parts[parts.length - 1] || "";
+          } else if (
+            (!idFromUri || idFromUri === "") &&
+            prefix === "geoCoord"
+          ) {
+            // e.g. https://www.google.com/maps/place/lat,long
+            const parts =
+              url.pathname.split("/").filter(Boolean).pop()?.split(",") || [];
+            idFromUri = parts.join(",");
+            // Also, if it looks like a google maps coordinates URL, we can keep the original URL
           }
-        }
 
-        // Final fallback: stringify pathname+search+hash trimmed
-        if (!idFromUri) {
-          idFromUri = (
-            url.pathname +
-            (url.search || "") +
-            (url.hash || "")
-          ).replace(/^\/+/, "");
-        }
-      } catch (err) {
-        // Not a valid URL - fallback heuristics on the raw string
-        console.warn("Invalid URI, fallback to extracting last token", err);
-        const trimmed = formState.uri.trim();
-        if (trimmed.includes("#")) {
-          idFromUri = trimmed.split("#").pop() || trimmed;
-        } else {
-          const parts = trimmed.split("/").filter(Boolean);
-          idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
+          // If still empty, try to extract something from the query params (last value)
+          if (!idFromUri) {
+            const params = new URLSearchParams(url.search);
+            const lastKey = Array.from(params.keys()).pop();
+            if (lastKey) {
+              idFromUri = params.get(lastKey) || "";
+            }
+          }
+
+          // Final fallback: stringify pathname+search+hash trimmed
+          if (!idFromUri) {
+            idFromUri = (
+              url.pathname +
+              (url.search || "") +
+              (url.hash || "")
+            ).replace(/^\/+/, "");
+          }
+        } catch (err) {
+          // Not a valid URL - fallback heuristics on the raw string
+          console.warn("Invalid URI, fallback to extracting last token", err);
+          const trimmed = formState.uri.trim();
+          if (trimmed.includes("#")) {
+            idFromUri = trimmed.split("#").pop() || trimmed;
+          } else {
+            const parts = trimmed.split("/").filter(Boolean);
+            idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
+          }
         }
       }
 
@@ -406,7 +437,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
         const newType = {
           id: finalId,
           name: formState.name,
-          uri: formState.uri,
+          uri: constructedUri || formState.uri,
         };
         // Add the new type to the column metadata
         dispatch(addColumnType({ colId, newTypes: [newType] }));
@@ -563,7 +594,10 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     const serviceInfo = servicesByPrefix[currentService];
     let url = "";
     if (serviceInfo?.searchTypesPattern) {
-      url = serviceInfo.searchTypesPattern.replace("{label}", encodeURIComponent(rawData.column.id));
+      url = serviceInfo.searchTypesPattern.replace(
+        "{label}",
+        encodeURIComponent(rawData.column.id),
+      );
     } else if (serviceInfo?.listTypes) {
       url = serviceInfo.listTypes;
     } else return;
@@ -600,7 +634,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                     textTransform: "none",
                     display: "flex",
                     alignItems: "center",
-                    gap: 1
+                    gap: 1,
                   }}
                 >
                   Add column type
@@ -639,13 +673,18 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                     variant="outlined"
                     color="primary"
                     onClick={() => {
-                      const wikidataPattern = "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
-                      const url = wikidataPattern.replace("{label}", encodeURIComponent(rawData?.column?.id || ""));
+                      const wikidataPattern =
+                        "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
+                      const url = wikidataPattern.replace(
+                        "{label}",
+                        encodeURIComponent(rawData?.column?.id || ""),
+                      );
                       window.open(url, "_blank", "noopener,noreferrer");
                     }}
                     sx={{ textTransform: "none" }}
                   >
-                    Search "{rawData?.column?.id}" in {KG_INFO["wd"].groupName || "Wikidata"}
+                    Search "{rawData?.column?.id}" in{" "}
+                    {KG_INFO["wd"].groupName || "Wikidata"}
                   </Button>
                 )
               ) : null}

@@ -1236,6 +1236,14 @@ export const tableSlice = createSliceWithRequests({
     /**
      * Handle deletion of a metadata value.
      * --UNDOABLE ACTION--
+     *
+     * This reducer is robust to different shapes for the incoming metadataId:
+     * - string id
+     * - object with { label, id, value } fields
+     * - array of such values
+     *
+     * It normalizes the incoming metadataId(s) to candidate strings and compares them
+     * to the stored metadata items (which themselves may have string or object ids).
      */
     deleteCellMetadata: (
       state,
@@ -1245,28 +1253,135 @@ export const tableSlice = createSliceWithRequests({
       const { metadataId, cellId, undoable = true } = action.payload;
       const [rowId, colId] = getIdsFromCell(cellId);
 
+      // Normalize incoming metadataId into an array of candidate id strings
+      // Normalization: trim + lowercase, and include token after colon (e.g. "geo:12,34" -> ["geo:12,34","12,34"])
+      const normalizeIncoming = (mid: any): string[] => {
+        const normalizeToken = (t: any): string[] => {
+          if (t == null) return [];
+          const s = String(t).trim().toLowerCase();
+          const tokens: string[] = [];
+          if (s) tokens.push(s);
+          if (s.includes(":")) {
+            const parts = s.split(":");
+            const after = parts.slice(1).join(":").trim();
+            if (after) tokens.push(after);
+          }
+          return tokens;
+        };
+
+        if (mid == null) return [];
+        if (typeof mid === "string") return normalizeToken(mid);
+        if (Array.isArray(mid)) {
+          return mid.flatMap((m) => normalizeIncoming(m));
+        }
+        if (typeof mid === "object") {
+          const candidates: string[] = [];
+          if (mid.label) candidates.push(...normalizeToken(mid.label));
+          if (mid.id) candidates.push(...normalizeToken(mid.id));
+          if (mid.value) candidates.push(...normalizeToken(mid.value));
+          // If object has nested id-like shapes, try to stringify as fallback
+          if (candidates.length === 0)
+            candidates.push(...normalizeToken(JSON.stringify(mid)));
+          // remove duplicates and empty strings
+          return Array.from(new Set(candidates.filter((c) => !!c)));
+        }
+        return normalizeToken(String(mid));
+      };
+
+      const targetIds = normalizeIncoming(metadataId);
+
       return produceWithPatch(
         state,
         undoable,
         (draft) => {
           const column = getColumn(draft, colId);
           const cell = getCell(draft, rowId, colId);
+          if (!cell) return;
           const cellContext = getCellContext(cell);
           let wasMatch = false;
 
-          cell.metadata = cell.metadata.filter((item) => {
-            if (item.id === metadataId) {
-              wasMatch = !!item.match;
+          // DEBUG: show the normalized target ids we will try to match against
+          console.log("deleteCellMetadata targetIds", targetIds);
+
+          // Normalize stored item.id to a list of candidate strings and compare against targetIds
+          const itemIdCandidates = (itemId: any): string[] => {
+            const normalizeToken = (t: any): string[] => {
+              if (t == null) return [];
+              const s = String(t).trim().toLowerCase();
+              const tokens: string[] = [];
+              if (s) tokens.push(s);
+              if (s.includes(":")) {
+                const parts = s.split(":");
+                const after = parts.slice(1).join(":").trim();
+                if (after) tokens.push(after);
+              }
+              return tokens;
+            };
+
+            if (itemId == null) return [""];
+            if (typeof itemId === "string") return normalizeToken(itemId);
+            if (Array.isArray(itemId))
+              return itemId.flatMap((i) => itemIdCandidates(i));
+            if (typeof itemId === "object") {
+              const c: string[] = [];
+              if (itemId.label) c.push(...normalizeToken(itemId.label));
+              if (itemId.id) c.push(...normalizeToken(itemId.id));
+              if (itemId.value) c.push(...normalizeToken(itemId.value));
+              if (c.length === 0)
+                c.push(...normalizeToken(JSON.stringify(itemId)));
+              // deduplicate and remove empty
+              return Array.from(new Set(c.filter((x) => !!x)));
             }
-            return item.id !== metadataId;
+            return normalizeToken(String(itemId));
+          };
+
+          // Debugging: record length before deletion and show matching candidates per item
+          const beforeLen = cell.metadata.length;
+          cell.metadata = cell.metadata.filter((item) => {
+            const candidates = itemIdCandidates(item.id);
+            const matches = candidates.some((cand) => targetIds.includes(cand));
+            // DEBUG: log each candidate comparison
+            console.log("deleteCellMetadata checking item", {
+              rawId: item.id,
+              candidates,
+              targetIds,
+              matches,
+            });
+            if (matches) {
+              wasMatch = !!item.match;
+              return false; // remove this item
+            }
+            return true; // keep
           });
-          if (cell.metadata.length === 0) {
-            column.context[cellContext] = decrementContextTotal(
-              column.context[cellContext],
+          const afterLen = cell.metadata.length;
+          console.log("deleteCellMetadata result", {
+            beforeLen,
+            afterLen,
+            removed: beforeLen - afterLen,
+            wasMatch,
+          });
+
+          // Safeguard: cellContext may be empty or the context key may not exist on the column.
+          // If the context entry does not exist, create a default one so decrement operations are safe.
+          const safeContextKey = cellContext || "";
+          if (safeContextKey) {
+            if (!column.context[safeContextKey]) {
+              // create a context with zeroed counters to avoid undefined access
+              column.context[safeContextKey] = createContext({
+                uri: "",
+                total: 0,
+                reconciliated: 0,
+              });
+            }
+          }
+
+          if (safeContextKey && cell.metadata.length === 0) {
+            column.context[safeContextKey] = decrementContextTotal(
+              column.context[safeContextKey],
             );
             if (wasMatch) {
-              column.context[cellContext] = decrementContextReconciliated(
-                column.context[cellContext],
+              column.context[safeContextKey] = decrementContextReconciliated(
+                column.context[safeContextKey],
               );
               draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
                 ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
@@ -1276,9 +1391,9 @@ export const tableSlice = createSliceWithRequests({
                 },
               };
             }
-          } else if (wasMatch) {
-            column.context[cellContext] = decrementContextReconciliated(
-              column.context[cellContext],
+          } else if (safeContextKey && wasMatch) {
+            column.context[safeContextKey] = decrementContextReconciliated(
+              column.context[safeContextKey],
             );
             draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
               ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
@@ -1287,6 +1402,18 @@ export const tableSlice = createSliceWithRequests({
                 value: false,
               },
             };
+          } else {
+            // If there is no context key (safeContextKey is empty) we skip context counters.
+            // Still ensure cell annotationMeta is updated when a match was removed on a cell with other metadata.
+            if (!safeContextKey && wasMatch) {
+              draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
+                ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
+                annotated: true,
+                match: {
+                  value: false,
+                },
+              };
+            }
           }
           column.status = getColumnStatus(draft, colId);
           updateNumberOfReconciliatedCells(draft);

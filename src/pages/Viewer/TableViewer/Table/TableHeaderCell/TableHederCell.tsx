@@ -179,9 +179,15 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
     const getBadgeStatus = useCallback(
       (column: any) => {
-        const {
-          annotationMeta: { annotated, match, highestScore },
-        } = column;
+        console.log("*** get badge status col", column);
+
+        // Safely extract annotationMeta fields with defaults to avoid runtime errors
+        const annotated = !!column?.annotationMeta?.annotated;
+        const match = column?.annotationMeta?.match ?? {};
+        const highestScore =
+          typeof column?.annotationMeta?.highestScore === "number"
+            ? column.annotationMeta.highestScore
+            : 0;
 
         // Check if all cells in this column are actually reconciled
         // Skip check for index column
@@ -197,7 +203,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
           // If ALL cells are reconciled, show green badge
           if (allCellsReconciled) {
-            if (match.value) {
+            if (match?.value) {
               switch (match.reason) {
                 case "manual":
                   return "match-manual";
@@ -233,19 +239,25 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         }
 
         // Below checks are fallback for when rowsState is not available
+        // Ensure metadata exists and is an array before accessing it
         if (
           annotated &&
+          Array.isArray(column?.metadata) &&
           column.metadata.length > 0 &&
-          column.metadata[0].entity &&
+          column.metadata[0]?.entity &&
+          Array.isArray(column.metadata[0].entity) &&
           column.metadata[0].entity.length === 0
         ) {
           return "miss";
         }
 
-        const { isScoreLowerBoundEnabled, scoreLowerBound } = lowerBound;
+        const { isScoreLowerBoundEnabled, scoreLowerBound } = lowerBound || {};
 
         if (isScoreLowerBoundEnabled) {
-          if (scoreLowerBound && highestScore < scoreLowerBound) {
+          if (
+            typeof scoreLowerBound === "number" &&
+            highestScore < scoreLowerBound
+          ) {
             return "miss";
           }
         }
