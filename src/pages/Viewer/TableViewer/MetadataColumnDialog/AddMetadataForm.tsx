@@ -19,6 +19,7 @@ import { Controller, useForm } from "react-hook-form";
 import { fetchTypeAndDescription } from "@services/utils/kg-info";
 
 export interface AddMetadataFormProps {
+  onPrefixChange?: (prefix: string) => void;
   currentService: string;
   onSubmit: (data: any) => void;
   context: "metadataDialog" | "typeTab" | "propertyTab";
@@ -26,6 +27,7 @@ export interface AddMetadataFormProps {
 }
 
 const AddMetadataForm: FC<AddMetadataFormProps> = ({
+  onPrefixChange,
   currentService,
   onSubmit,
   context,
@@ -47,6 +49,12 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
 
   const watchedUri = watch("uri");
   const watchedPrefix = watch("prefix");
+
+  useEffect(() => {
+    if (onPrefixChange) {
+      onPrefixChange(watchedPrefix);
+    }
+  }, [watchedPrefix, onPrefixChange]);
 
   useEffect(() => {
     if (currentService !== undefined) {
