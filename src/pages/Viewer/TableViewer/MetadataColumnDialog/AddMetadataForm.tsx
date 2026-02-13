@@ -8,14 +8,18 @@ import {
   Select,
   MenuItem,
   Tooltip,
+  CircularProgress,
+  InputAdornment,
 } from "@mui/material";
 import {
   SelectColumns,
   SelectPrefix,
 } from "@components/core/DynamicForm/formComponents/Select";
 import { Controller, useForm } from "react-hook-form";
+import { fetchTypeAndDescription } from "@services/utils/kg-info";
 
 export interface AddMetadataFormProps {
+  onPrefixChange?: (prefix: string) => void;
   currentService: string;
   onSubmit: (data: any) => void;
   context: "metadataDialog" | "typeTab" | "propertyTab";
@@ -23,6 +27,7 @@ export interface AddMetadataFormProps {
 }
 
 const AddMetadataForm: FC<AddMetadataFormProps> = ({
+  onPrefixChange,
   currentService,
   onSubmit,
   context,
@@ -40,8 +45,16 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
     },
   });
   const [customPrefix, setCustomPrefix] = useState("");
+  const [isFetchingName, setIsFetchingName] = useState(false);
 
+  const watchedUri = watch("uri");
   const watchedPrefix = watch("prefix");
+
+  useEffect(() => {
+    if (onPrefixChange) {
+      onPrefixChange(watchedPrefix);
+    }
+  }, [watchedPrefix, onPrefixChange]);
 
   useEffect(() => {
     if (currentService !== undefined) {
@@ -51,6 +64,57 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
   }, [currentService, reset]);
 
   console.log("AddMetadataForm currentService", currentService);
+
+  const extractIdFromUri = (uri: string, prefix: string) => {
+    try {
+      const url = new URL(uri);
+      if (prefix.startsWith("wd")) {
+        return url.pathname.split("/").pop()?.split(":").pop() || "";
+      }
+      if (prefix.startsWith("geo")) {
+        if (prefix.startsWith("geo")) {
+          const parts = url.pathname.split("/").filter(Boolean);
+          return parts[0] || "";
+        }
+      }
+      return url.pathname.split("/").filter(Boolean).pop() || "";
+    } catch (e) {
+      return "";
+    }
+  };
+
+  useEffect(() => {
+    const fetchNameFromUri = async () => {
+      if (watchedUri) {
+        let id = "";
+        if (watchedUri.startsWith("https") && watchedPrefix) {
+          id = extractIdFromUri(watchedUri, watchedPrefix);
+        } else {
+          id = watchedUri;
+        }
+        if (id) {
+          try {
+            setIsFetchingName(true);
+            const result = await fetchTypeAndDescription(watchedPrefix.replace(/:$/, ""), id, "");
+            console.log("result", result);
+
+            if (result && result.name) {
+              setValue("name", result.name);
+            }
+          } catch (err) {
+            console.error("Errore nel recupero automatico del nome:", err);
+          } finally {
+            setIsFetchingName(false);
+          }
+        }
+      }
+    };
+    const timeoutId = setTimeout(() => {
+      fetchNameFromUri();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedUri, watchedPrefix, setValue]);
 
   return (
     <Stack
@@ -90,7 +154,6 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
                   minWidth: 100,
                   flex: context === "typeTab" ? "1 1 20px" : "1 1 50px",
                 }}
-                disabled={!!currentService}
                 {...field}
               />
             )}
@@ -134,19 +197,35 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
         label="Uri"
         required
         variant="outlined"
-        {...register("uri")}
+        {...register("uri", {
+          onBlur: (e) => {}
+        })}
       />
-      <Tooltip title="Enter a name" arrow placement="top">
+      <Tooltip title={isFetchingName ? "Fetching name from URI..." : "Enter a name"} arrow placement="top">
         <TextField
           sx={{
             minWidth: 150,
             flex: context === "typeTab" ? "1 1 30px" : "1 1 150px",
+            "& .MuiInputBase-root.Mui-disabled": {
+              backgroundColor: "rgba(0, 0, 0, 0.03)"
+            }
           }}
           size="small"
           label="Name"
           required
           variant="outlined"
           {...register("name")}
+          disabled={isFetchingName}
+          InputLabelProps={{
+            shrink: isFetchingName || !!watch("name")
+          }}
+          InputProps={{
+            endAdornment: isFetchingName ? (
+              <InputAdornment position="end">
+                <CircularProgress size={16} color="inherit" />
+              </InputAdornment>
+            ) : null,
+          }}
         />
       </Tooltip>
       {context === "propertyTab" && (

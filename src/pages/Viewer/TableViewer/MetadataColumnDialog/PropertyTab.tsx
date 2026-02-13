@@ -548,6 +548,12 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
             padding="0px 16px"
             gap={1}
           >
+            {column.kind === "literal" && (
+              <Typography color="text.secondary">
+                Properties can only be assigned to entity columns. Literal columns can be selected as object
+                (target column) when defining a property on an entity column.
+              </Typography>
+            )}
             <Stack direction="row" gap={1} alignItems="center">
               {column.kind !== "literal" && (
                 <Tooltip

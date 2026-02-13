@@ -68,6 +68,8 @@ const makeData = (
 ) => {
   if (rawData) {
     const { cell, service } = rawData;
+    const { metadata } = cell;
+    const hasDescriptions = metadata.some(m => m.description && m.description.trim() !== "");
     let metaToView = {};
     if (service) {
       console.log("meta to view from service", service);
@@ -81,11 +83,11 @@ const makeData = (
         id: { label: "Id", type: "link" },
         name: { label: "Name", type: "link" },
         type: { label: "Type", type: "subList" },
+        ...(hasDescriptions && { description: { label: "Description" } }),
         score: { label: "Score" },
         match: { label: "Match", type: "tag" },
       };
     }
-    const { metadata } = cell;
     // add checkbox column
     const metaWithCheck = {
       selected: { label: "Selected", type: "checkBox" },
@@ -181,6 +183,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [metasToDelete, setMetasToDelete] = useState<any[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
+  const [formSelectedPrefix, setFormSelectedPrefix] = useState<string>("");
   const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
       score: 1.0,
@@ -741,44 +744,54 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     {},
   );
 
+  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+    (acc, service) => {
+      acc[service.prefix] = service;
+      return acc;
+    },
+    {},
+  );
+
+  const getPrefixFromCellMetadata = () => {
+    if (!cell || !cell.metadata || cell.metadata.length === 0) return null;
+    const matchedMeta = cell.metadata.find((m) => m.match) || cell.metadata[0];
+    if (!matchedMeta || !matchedMeta.id) return null;
+    const parts = matchedMeta.id.split(':');
+    return parts.length > 1 ? parts[0] : null;
+  };
+
+  const getActiveSearchService = () => {
+    // Cell reconciliated with inTableLinker -> prefix selected when reconciliating
+    if (cell?.reconciler === 'inTableLinker') {
+      const prefix = getPrefixFromCellMetadata();
+      if (prefix && servicesByPrefix[prefix]?.searchPattern) {
+        return servicesByPrefix[prefix];
+      }
+    }
+
+    // Cell reconciliated -> service's prefix
+    if (cell?.reconciler && servicesById[cell?.reconciler]?.searchPattern) {
+      return servicesById[cell?.reconciler];
+    }
+    // Cell not reconciliated -> prefix selected in the form
+    if (formSelectedPrefix && servicesByPrefix[formSelectedPrefix]?.searchPattern) {
+      return servicesByPrefix[formSelectedPrefix];
+    }
+    return null;
+  };
+
+  const activeSearchService = getActiveSearchService();
+  console.log("ATT activeSearchService", activeSearchService);
+
   const handleSearchInService = () => {
-    if (!cell?.label) return;
+    if (!cell?.label || !activeSearchService) return;
 
-    const serviceInfo = servicesById[cell?.reconciler];
-    if (!serviceInfo?.searchPattern) return;
-
-    const url = serviceInfo.searchPattern.replace(
+    const url = activeSearchService.searchPattern.replace(
       "{label}",
       encodeURIComponent(cell.label),
     );
     window.open(url, "_blank", "noopener,noreferrer");
   };
-
-  // Early return if cell has no metadata to prevent crashes
-  if (
-    cell &&
-    !cell?.annotationMeta?.annotated &&
-    (!cell.metadata || cell.metadata.length === 0)
-  ) {
-    return (
-      <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
-        <Stack
-          height="100%"
-          minHeight="200px"
-          padding="24px"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Typography variant="h6" color="textSecondary">
-            No metadata available for this cell
-          </Typography>
-          <Button onClick={handleCancel} sx={{ marginTop: 2 }}>
-            Close
-          </Button>
-        </Stack>
-      </Dialog>
-    );
-  }
 
   return cell ? (
     <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
@@ -903,21 +916,26 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   />
                 </Button>
               </Tooltip>
-              {showAdd && servicesById[cell?.reconciler]?.searchPattern && (
+              {showAdd && activeSearchService && (
                 <Button
                   variant="outlined"
                   color="primary"
                   onClick={handleSearchInService}
                   sx={{ textTransform: "none" }}
                 >
-                  Search "{cell?.label}" in {KG_INFO[servicesById[cell?.reconciler].prefix].groupName}
+                  Search "{cell?.label}" in {KG_INFO[activeSearchService.prefix].groupName}
                 </Button>
               )}
             </Stack>
             {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
                 <AddMetadataForm
-                  currentService={servicesById[cell?.reconciler].prefix}
+                  onPrefixChange={setFormSelectedPrefix}
+                  currentService={
+                    cell?.reconciler === 'inTableLinker'
+                      ? getPrefixFromCellMetadata()
+                      : servicesById[cell?.reconciler]?.prefix
+                  }
                   onSubmit={onSubmitNewMetadata}
                   context="metadataDialog"
                 />

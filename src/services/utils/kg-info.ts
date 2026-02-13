@@ -133,9 +133,9 @@ export async function fetchTypeAndDescription(
       res = await fetch(`${base}/metadata/geonamesCoordinates?id=${id}`);
       return await res.json();
     }
-    return { description: "", type: [] };
+    return { name: "", description: "", type: [] };
   } catch (err) {
     console.error("fetchTypeAndDescription frontend error:", err);
-    return { description: "", type: [] };
+    return { name: "", description: "", type: [] };
   }
 }
