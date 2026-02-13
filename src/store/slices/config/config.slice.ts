@@ -20,12 +20,6 @@ export const configSlice = createSliceWithRequests({
   reducers: {},
   extraRules: (builder) =>
     builder.addCase(getConfig.fulfilled, (state, action) => {
-      console.log("Config slice - received payload:", action.payload);
-      console.log(
-        "Config slice - payload keys:",
-        action.payload ? Object.keys(action.payload) : "no payload",
-      );
-
       // Handle different possible response structures
       const payload = (action.payload as any) || {};
 
@@ -34,24 +28,6 @@ export const configSlice = createSliceWithRequests({
         payload.reconciliators || payload.reconcilers || payload.services || [];
       const extenders = payload.extenders || payload.extensions || [];
       const modifiers = payload.modifiers || payload.extensions || [];
-
-      console.log("Config slice - found data:", {
-        reconciliators: {
-          type: typeof reconciliators,
-          isArray: Array.isArray(reconciliators),
-          length: reconciliators?.length,
-        },
-        extenders: {
-          type: typeof extenders,
-          isArray: Array.isArray(extenders),
-          length: extenders?.length,
-        },
-        modifiers: {
-          type: typeof modifiers,
-          isArray: Array.isArray(modifiers),
-          length: modifiers?.length,
-        },
-      });
 
       // Process reconciliators if they exist and are an array
       if (Array.isArray(reconciliators)) {

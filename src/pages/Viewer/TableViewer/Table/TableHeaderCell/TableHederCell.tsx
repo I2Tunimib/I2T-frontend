@@ -80,6 +80,9 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       data,
       settings,
       style,
+      tableInstance,
+      complianceStatus,
+      compliance,
     }: any,
     ref,
   ) => {
@@ -87,8 +90,48 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     const [hover, setHover] = useState<boolean>(false);
     const { lowerBound } = settings;
     const columnData = header.column.columnDef.data;
-    console.log("*** header data props", data);
-    console.log("*** header columnData", columnData);
+    const getColumnComplianceStatus = useCallback(() => {
+      if (!compliance || complianceStatus !== "DONE" || !compliance.length) {
+        return null;
+      }
+
+      // Get table-level GDPR status
+      const tableInfo = compliance[0]?.table;
+      if (!tableInfo) return null;
+
+      const isTableCompliant = tableInfo.gdpr === "noGDPR";
+
+      // Get column-specific compliance
+      const columnResults = compliance.slice(1) || [];
+      const columnName = String(children);
+
+      const columnCompliance = columnResults.find((colResult: any) => {
+        const key = Object.keys(colResult)[0];
+        return key === columnName;
+      });
+
+      if (columnCompliance) {
+        const key = Object.keys(columnCompliance)[0];
+        const colData = columnCompliance[key];
+
+        // Column is compliant if classification is NOT personalData
+        // AND action is noChange
+        const isColumnCompliant =
+          colData.classification === "nonPersonalData" &&
+          colData.action === "noChange";
+
+        return {
+          isCompliant: isTableCompliant && isColumnCompliant,
+          classification: colData.classification,
+          action: colData.action,
+          reasoning: colData.reasoning,
+          score: colData.score,
+        };
+      }
+
+      return null;
+    }, [compliance, complianceStatus, children]);
+
     const {
       attributes,
       listeners,
@@ -449,6 +492,46 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         size="xs"
                       />
                     )}
+                    {complianceStatus === "DONE" &&
+                      (() => {
+                        const complianceInfo = getColumnComplianceStatus();
+                        if (!complianceInfo) return null;
+
+                        const tooltipContent = (
+                          <Box sx={{ whiteSpace: "pre-line" }}>
+                            {`GDPR: ${complianceInfo.action === "noChange" ? "Compliant" : "Non-Compliant"}
+Classification: ${complianceInfo.classification}
+Action: ${complianceInfo.action}
+${complianceInfo.reasoning}
+Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
+                          </Box>
+                        );
+
+                        return (
+                          <Tooltip title={tooltipContent} arrow placement="top">
+                            <Box
+                              component="span"
+                              sx={{ display: "inline-flex" }}
+                            >
+                              <ButtonShortcut
+                                text={
+                                  complianceInfo.action === "noChange"
+                                    ? "C"
+                                    : "C̸"
+                                }
+                                tooltipText=""
+                                size="xs"
+                                variant="flat"
+                                color={
+                                  complianceInfo.action === "noChange"
+                                    ? "green"
+                                    : "darkblue"
+                                }
+                              />
+                            </Box>
+                          </Tooltip>
+                        );
+                      })()}
                   </div>
                   {columnData.status === ColumnStatus.RECONCILIATED ? (
                     <Stack
@@ -506,6 +589,9 @@ const mapStateToProps = (state: RootState, props: any) => {
   return {
     reconciliators: selectColumnReconciliators(state, { data: columnData }),
     rowsState: state.table.entities.rows,
+    tableInstance: state.table.entities.tableInstance,
+    complianceStatus: state.table.entities.tableInstance.complianceStatus,
+    compliance: state.table.entities.tableInstance.compliance,
   };
 };
 

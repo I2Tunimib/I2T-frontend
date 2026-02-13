@@ -183,6 +183,20 @@ const tableAPI = {
       },
     );
   },
+  makeCompliance: (params: Record<string, string | number> = {}, data: any) => {
+    return apiClient.post<any>(
+      apiEndpoint({
+        endpoint: "COMPLIANCE",
+        paramsValue: { ...params },
+      }),
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    );
+  },
   reconcile: (
     baseUrl: string,
     data: any,

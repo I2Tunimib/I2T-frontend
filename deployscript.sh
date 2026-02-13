@@ -54,8 +54,8 @@ git pull
 print_success "Latest code pulled from repository"
 
 print_step "STEP 3: Building Docker containers"
-print_progress "Building with no cache (this may take a while)..."
-docker compose build --no-cache
+print_progress "Building (this may take a while)..."
+docker compose build
 print_success "Docker images built successfully"
 
 print_step "STEP 4: Stopping current containers"

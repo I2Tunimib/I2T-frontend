@@ -27,6 +27,7 @@ export type ApiConfig = {
     SAVE: Endpoint;
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
+    COMPLIANCE: Endpoint;
     EXPORT: Endpoint[];
     AUTH_SIGNIN: Endpoint;
     AUTH_SIGNUP: Endpoint;
@@ -93,6 +94,9 @@ const CONFIG: AppConfig = {
           name: "Endpoint 2",
         },
       ],
+      COMPLIANCE: {
+        path: "/dataset/:datasetId/table/:tableId/compliance",
+      },
       EXPORT: [
         {
           path: "/dataset/:datasetId/table/:tableId/export?format=w3c",

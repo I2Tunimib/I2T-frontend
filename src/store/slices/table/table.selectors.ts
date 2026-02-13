@@ -388,6 +388,10 @@ export const selectExportDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openExportDialog,
 );
+export const selectComplianceDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openComplianceStatusDialog,
+);
 export const selectAutoAnnotationDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openAutoAnnotationDialog,

@@ -67,6 +67,26 @@ export interface FormInputParams {
   options?: Option[];
   infoText?: string;
   defaultValue?: string;
+  dependsOn?:
+    | {
+        field: string;
+        value: string | string[];
+        not?: boolean;
+      }
+    | {
+        and: Array<{
+          field: string;
+          value: string | string[];
+          not?: boolean;
+        }>;
+      }
+    | {
+        or: Array<{
+          field: string;
+          value: string | string[];
+          not?: boolean;
+        }>;
+      };
 }
 
 export interface Option {

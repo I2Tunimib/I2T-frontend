@@ -1,4 +1,19 @@
-import { Button, Menu, Stack, Typography, Tooltip } from "@mui/material";
+import {
+  Button,
+  Menu,
+  Stack,
+  Typography,
+  Tooltip,
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormControl,
+  Select,
+  MenuItem,
+  IconButton,
+  Divider,
+} from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 import RedoRoundedIcon from "@mui/icons-material/RedoRounded";
@@ -11,7 +26,7 @@ import ArrowRightAltRoundedIcon from "@mui/icons-material/ArrowRightAltRounded";
 import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
+import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import {
   addTutorialBox,
   deleteSelected,
@@ -27,14 +42,9 @@ import {
   IconButtonTooltip,
   StatusBadge,
   TaggedSearch,
+  SquaredBox,
 } from "@components/core";
-import {
-  MouseEvent,
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-} from "react";
+import { MouseEvent, useState, useRef, useEffect, useMemo } from "react";
 import {
   selectIsCellSelected,
   selectIsAutoMatchingEnabled,
@@ -56,11 +66,16 @@ import {
   selectAreCellReconciliated,
   selectReconcileDialogStatus,
   selecteSelectedColumnId,
+  selectSelectedColumnIdsAsArray,
+  selectReconciliationCells,
 } from "@store/slices/table/table.selectors";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
   automaticAnnotation,
   filterTable,
+  extend,
+  reconcile,
+  modify,
 } from "@store/slices/table/table.thunk";
 import { TableUIState } from "@store/slices/table/interfaces/table";
 import { useParams } from "react-router-dom";
@@ -72,6 +87,19 @@ import ExtensionDialog from "../ExtensionDialog";
 import MetadataColumnDialog from "../MetadataColumnDialog/MetadataColumnDialog";
 import RefineMatchingDialog from "../RefineMatching/RefineMatchingDialog";
 import ModifyDialog from "../ModifyDialog/ModifyDialog";
+import {
+  selectExtendersAsArray,
+  selectReconciliatorsAsArray,
+  selectModifiersAsArray,
+} from "@store/slices/config/config.selectors";
+import DynamicForm from "@components/core/DynamicForm/DynamicForm";
+import GroupServiceDialog from "../GroupServiceDialog/GroupServiceDialog";
+import {
+  Extender,
+  Reconciliator,
+  Modifier,
+} from "@store/slices/config/interfaces/config";
+import { useSnackbar } from "notistack";
 
 const tags = [
   {
@@ -150,14 +178,14 @@ const SubToolbar = ({
   const [anchorElMenuFilter, setAnchorElMenuFilter] =
     useState<null | HTMLElement>(null);
   const [anchorElMenuColumns, setAnchorElMenuColumns] =
-      useState<null | HTMLElement>(null);
+    useState<null | HTMLElement>(null);
   const params = useParams<{ datasetId: string; tableId: string }>();
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const { status: isMetadataButtonEnabled, type: metadataAction } =
     useAppSelector(selectIsMetadataButtonEnabled);
   const { API } = useAppSelector(selectAppConfig);
   const { loading: loadingAutomaticAnnotation } = useAppSelector(
-    selectAutomaticAnnotationStatus
+    selectAutomaticAnnotationStatus,
   );
   const isExtendButtonEnabled = useAppSelector(selectIsExtendButtonEnabled);
   const isAutoMatchingEnabled = useAppSelector(selectIsAutoMatchingEnabled);
@@ -170,7 +198,7 @@ const SubToolbar = ({
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openMetadataDialog = useAppSelector(selectMetadataDialogStatus);
   const openMetadataColumnDialog = useAppSelector(
-    selectMetadataColumnDialogStatus
+    selectMetadataColumnDialogStatus,
   );
   const openExtensionDialog = useAppSelector(selectExtensionDialogStatus);
   const openReconciliationDialog = useAppSelector(selectReconcileDialogStatus);
@@ -179,6 +207,41 @@ const SubToolbar = ({
   const searchFilter = useAppSelector(selectSearchStatus);
   const cellReconciliated = useAppSelector(selectAreCellReconciliated);
   const selectedColId = useAppSelector(selecteSelectedColumnId);
+
+  // Services and selection state used to build group buttons and the group dialog
+  const extenders = useAppSelector(selectExtendersAsArray);
+  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
+  const modifiers = useAppSelector(selectModifiersAsArray);
+  const selectedColumnIds = useAppSelector(selectSelectedColumnIdsAsArray);
+  const reconciliationCells = useAppSelector(selectReconciliationCells);
+
+  // Build groups from services using the `group` property if present (fallback to "Other Services")
+  const serviceGroups = useMemo(() => {
+    const groups = new Map<string, Array<any>>();
+    const pushService = (
+      s: any,
+      type: "extender" | "reconciliator" | "modifier",
+    ) => {
+      // the public grouping information may be stored under different keys depending on the service shape
+      const groupLabel =
+        s.group || s.public?.group || s.public?.groupName || null;
+      if (groupLabel !== null) {
+        if (!groups.has(groupLabel)) groups.set(groupLabel, []);
+        // annotate with type so dialog knows how to call thunks
+        groups.get(groupLabel)!.push({ ...s, _serviceType: type });
+      }
+    };
+    (extenders || []).forEach((e) => pushService(e, "extender"));
+    (reconciliators || []).forEach((r) => pushService(r, "reconciliator"));
+    (modifiers || []).forEach((m) => pushService(m, "modifier"));
+    return groups;
+  }, [extenders, reconciliators, modifiers]);
+
+  const groupNames = Array.from(serviceGroups.keys()).sort();
+
+  // local state for group dialog
+  const [openGroupDialog, setOpenGroupDialog] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
 
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -199,7 +262,7 @@ const SubToolbar = ({
             x,
             y,
           },
-        })
+        }),
       );
     }
   }, [ref]);
@@ -209,10 +272,12 @@ const SubToolbar = ({
       dispatch(updateUI({ openMetadataDialog: true }));
     } else if (metadataAction === "column") {
       if (!selectedColId) return;
-      dispatch(updateUI({
-        openMetadataColumnDialog: true,
-        metadataColumnDialogColId: selectedColId,
-      }));
+      dispatch(
+        updateUI({
+          openMetadataColumnDialog: true,
+          metadataColumnDialogColId: selectedColId,
+        }),
+      );
     }
   };
   const handleDelete = () => {
@@ -233,7 +298,7 @@ const SubToolbar = ({
         filterTable({
           value,
           tag: currentTag.value,
-        })
+        }),
       )
         .unwrap()
         .then((res) => {
@@ -247,7 +312,7 @@ const SubToolbar = ({
           filter: currentTag.value,
           value,
         },
-      })
+      }),
     );
   };
 
@@ -278,7 +343,7 @@ const SubToolbar = ({
           ...searchFilter,
           globalFilter: selectedFilters,
         },
-      })
+      }),
     );
   };
 
@@ -313,17 +378,23 @@ const SubToolbar = ({
     });
   };
 
-  const memoColumns = useMemo(() => columns.map((col) => ({
-    label: col.header?.toString().trim(),
-    value: col.id,
-    checked: columnVisibility[col.id] ?? true
-  })), [columns, columnVisibility]);
+  const memoColumns = useMemo(
+    () =>
+      columns.map((col) => ({
+        label: col.header?.toString().trim(),
+        value: col.id,
+        checked: columnVisibility[col.id] ?? true,
+      })),
+    [columns, columnVisibility],
+  );
 
-  const hasResizedColumns = Object.entries(columnSizing).some(([colId, size]) => {
-    const col = columns.find((c) => c.id === colId);
-    const defaultSize = col?.column?.columnDef?.size ?? 100;
-    return Math.abs(size - defaultSize) > 1;
-  });
+  const hasResizedColumns = Object.entries(columnSizing).some(
+    ([colId, size]) => {
+      const col = columns.find((c) => c.id === colId);
+      const defaultSize = col?.column?.columnDef?.size ?? 100;
+      return Math.abs(size - defaultSize) > 1;
+    },
+  );
 
   const handleResetColumnSizes = () => {
     setColumnSizing({});
@@ -378,7 +449,8 @@ const SubToolbar = ({
           <IconButtonTooltip
             tooltipText="Expand header"
             Icon={UnfoldMoreRoundedIcon}
-            onClick={() => dispatch(updateUI({ headerExpanded: !isHeaderExpanded }))
+            onClick={() =>
+              dispatch(updateUI({ headerExpanded: !isHeaderExpanded }))
             }
           />
         </ActionGroup>
@@ -393,7 +465,11 @@ const SubToolbar = ({
           <ActionGroup>
             {/* Modify */}
             <Tooltip
-              title={!isCellSelected ? "Select a column to enable Modify function" : "Modify selected column(s)"}
+              title={
+                !isCellSelected
+                  ? "Select a column to enable Modify function"
+                  : "Modify selected column(s)"
+              }
               arrow
             >
               <span>
@@ -403,7 +479,9 @@ const SubToolbar = ({
                   }}
                   color="primary"
                   disabled={!isCellSelected}
-                  onClick={() => dispatch(updateUI({ openModificationDialog: true }))}
+                  onClick={() =>
+                    dispatch(updateUI({ openModificationDialog: true }))
+                  }
                   variant="contained"
                 >
                   Modify
@@ -412,7 +490,11 @@ const SubToolbar = ({
             </Tooltip>
             {/* Reconcile */}
             <Tooltip
-              title={!isCellSelected ? "Select a column to enable Reconcile function" : "Reconcile selected column(s)"}
+              title={
+                !isCellSelected
+                  ? "Select a column to enable Reconcile function"
+                  : "Reconcile selected column(s)"
+              }
               arrow
             >
               <span>
@@ -422,7 +504,9 @@ const SubToolbar = ({
                   }}
                   color="primary"
                   disabled={!isCellSelected}
-                  onClick={() => dispatch(updateUI({ openReconciliateDialog: true }))}
+                  onClick={() =>
+                    dispatch(updateUI({ openReconciliateDialog: true }))
+                  }
                   variant="contained"
                 >
                   Reconcile
@@ -431,11 +515,12 @@ const SubToolbar = ({
             </Tooltip>
             {/* Extend */}
             <Tooltip
-              title={!isCellSelected
-                ? "Select a column reconciled to enable Extend function"
-                : !cellReconciliated
-                  ? "Reconcile data to enable Extend function"
-                  : "Extend selected column(s)"
+              title={
+                !isCellSelected
+                  ? "Select a column reconciled to enable Extend function"
+                  : !cellReconciliated
+                    ? "Reconcile data to enable Extend function"
+                    : "Extend selected column(s)"
               }
               arrow
             >
@@ -445,7 +530,11 @@ const SubToolbar = ({
                   sx={{
                     textTransform: "none",
                   }}
-                  disabled={!isExtendButtonEnabled || !isCellSelected || !cellReconciliated}
+                  disabled={
+                    !isExtendButtonEnabled ||
+                    !isCellSelected ||
+                    !cellReconciliated
+                  }
                   onClick={() => {
                     if (isExtendButtonEnabled && cellReconciliated) {
                       dispatch(updateUI({ openExtensionDialog: true }));
@@ -457,6 +546,29 @@ const SubToolbar = ({
                 </Button>
               </span>
             </Tooltip>
+
+            {/* Group buttons for mixed services */}
+            {groupNames.map((groupName) => (
+              <Tooltip
+                key={groupName}
+                title={`Open services in group: ${groupName}`}
+                arrow
+              >
+                <span>
+                  <Button
+                    sx={{ textTransform: "none", marginLeft: "8px" }}
+                    variant="outlined"
+                    onClick={() => {
+                      setActiveGroup(groupName);
+                      setOpenGroupDialog(true);
+                    }}
+                    disabled={isViewOnly}
+                  >
+                    {groupName}
+                  </Button>
+                </span>
+              </Tooltip>
+            ))}
           </ActionGroup>
         )}
         <Stack direction="row" alignItems="center" marginLeft="auto" gap="10px">
@@ -480,7 +592,7 @@ const SubToolbar = ({
             onClose={handleCloseColumnsMenu}
           >
             <CheckboxGroup
-              key={Object.values(columnVisibility).join(',')}
+              key={Object.values(columnVisibility).join(",")}
               items={memoColumns}
               onChange={handleColumnToggle}
             />
@@ -533,11 +645,11 @@ const SubToolbar = ({
         anchorElement={autoMatchingAnchor}
         handleClose={handleCloseAutoMatching}
       />
-      {/* <AutoMatching
-        open={isAutoMatching}
-        anchorElement={autoMatchingAnchor}
-        handleClose={handleCloseAutoMatching}
-      /> */}
+      <GroupServiceDialog
+        open={openGroupDialog}
+        groupName={activeGroup}
+        handleClose={() => setOpenGroupDialog(false)}
+      />
     </>
   );
 };

@@ -32,6 +32,8 @@ export interface TableInstance {
   maxMetaScore: number;
   mantisStatus?: "PENDING" | "DONE";
   schemaStatus?: "PENDING" | "DONE";
+  complianceStatus?: "PENDING" | "DONE" | "ERROR";
+  compliance?: any;
 }
 
 /**
@@ -45,6 +47,7 @@ export interface TableUIState {
   openModificationDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
+  openComplianceStatusDialog: boolean;
   openAutoAnnotationDialog: boolean;
   openMetadataColumnDialog: boolean;
   metadataColumnDialogColId: string | null;
