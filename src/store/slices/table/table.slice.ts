@@ -529,6 +529,29 @@ export const tableSlice = createSliceWithRequests({
               ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
               annotated: true,
             };
+
+            // Update column context and counters so that manually added metadata
+            // marks the column as annotated/reconciliated when appropriate.
+            try {
+              const column = getColumn(draft, colId);
+              // Ensure the cell's annotation meta is used to update context counters.
+              // updateContext will create/increment the column.context entry for the cell's context.
+              updateContext(
+                draft,
+                draft.entities.rows.byId[rowId].cells[colId],
+              );
+
+              // Recompute column status and global reconciliated counts
+              column.status = getColumnStatus(draft, colId);
+              updateNumberOfReconciliatedCells(draft);
+            } catch (e) {
+              // Swallow any errors here to avoid breaking the reducer; debugging info can be added if needed.
+              // eslint-disable-next-line no-console
+              console.warn(
+                "Failed to update column context after manual metadata add:",
+                e,
+              );
+            }
           }
           //draft.entities.rows.byId[rowId].cells[colId].metadata = [];
         },
