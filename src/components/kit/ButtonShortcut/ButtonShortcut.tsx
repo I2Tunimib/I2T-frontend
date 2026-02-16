@@ -1,7 +1,8 @@
+/* eslint-disable react/destructuring-assignment */
 import clsx from "clsx";
 import { FC, HTMLAttributes } from "react";
-import styles from "./ButtonShortcut.module.scss";
 import { Tooltip } from "@mui/material";
+import styles from "./ButtonShortcut.module.scss";
 
 interface ButtonShortcutProps extends HTMLAttributes<HTMLDivElement> {
   /**
@@ -11,7 +12,15 @@ interface ButtonShortcutProps extends HTMLAttributes<HTMLDivElement> {
   tooltipText?: string;
   size?: "s" | "xs";
   variant?: "flat" | "raised";
-  color?: "standard" | "green" | "darkgreen" | "blue" | "darkblue" | "white";
+  color?:
+    | "standard"
+    | "green"
+    | "darkgreen"
+    | "blue"
+    | "darkblue"
+    | "white"
+    | "teal"
+    | "crimson";
 }
 
 /**
@@ -24,7 +33,15 @@ const ButtonShortcut: FC<ButtonShortcutProps> = ({
   variant = "raised",
   color = "standard",
   className,
+  ...rest
 }) => {
+  // Inline styles for new colors (keeps appearance consistent with existing palette)
+  const colorStyle =
+    color === "teal"
+      ? { background: "#d8f3f0", color: "#0b6b63" }
+      : color === "crimson"
+        ? { background: "#fde0e3", color: "#9b0f15" }
+        : undefined;
   return (
     <Tooltip title={tooltipText ?? ""} placement="top">
       <div
@@ -39,8 +56,10 @@ const ButtonShortcut: FC<ButtonShortcutProps> = ({
             [styles.DarkBlue]: color === "darkblue",
             [styles.White]: color === "white",
           },
-          className
+          className,
         )}
+        style={colorStyle}
+        {...rest}
       >
         {text}
       </div>

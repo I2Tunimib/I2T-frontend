@@ -1,51 +1,66 @@
 .Container {
-  background: linear-gradient(-225deg, #d5dbe4, #f8f8f8);
-  border-radius: 3px;
-  color: #969faf;
-  display: flex;
-  height: 18px;
-  min-width: 20px;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  margin-right: .4em;
-  padding: 2px 6px;
-  position: relative;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.1;
+    background: linear-gradient(-225deg, #d5dbe4, #f8f8f8);
+    border-radius: 3px;
+    color: #969faf;
+    display: flex;
+    height: 18px;
+    min-width: 20px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 0.4em;
+    padding: 2px 6px;
+    position: relative;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.1;
 
-  &.xs {
-    font-size: 11px;
-    padding: 1px 4px;
-  }
+    &.xs {
+        font-size: 11px;
+        padding: 1px 4px;
+    }
 
-  &.Raised {
-    box-shadow: inset 0 -2px 0 0 #cdcde6, inset 0 0 1px 1px #fff, 0 1px 2px 1px rgba(30, 35, 90, 0.4);
-  }
+    &.Raised {
+        box-shadow:
+            inset 0 -2px 0 0 #cdcde6,
+            inset 0 0 1px 1px #fff,
+            0 1px 2px 1px rgba(30, 35, 90, 0.4);
+    }
 
-  &.Blue {
-    background: rgb(206, 228, 248);
-    color: #34638f;
-  }
-  &.DarkBlue {
-    background: rgb(149, 191, 234);
-    color: #1c374f;
-  }
-  &.Green {
-    background:#d8ece5;
-    color: #3d715e;
-  }
+    &.Blue {
+        background: rgb(206, 228, 248);
+        color: #34638f;
+    }
+    &.DarkBlue {
+        background: rgb(149, 191, 234);
+        color: #1c374f;
+    }
+    &.Green {
+        background: #d8ece5;
+        color: #3d715e;
+    }
 
-  &.DarkGreen {
-    background: rgba(5, 128, 85, 0.24);
-    color: #066e50;
-  }
+    &.DarkGreen {
+        background: rgba(5, 128, 85, 0.24);
+        color: #066e50;
+    }
 
-  &.White {
-    padding: 0 2px;
-    background: white;
-    color: var(--brown-dark);
-    border: 1px solid rgb(229, 232, 236);
-  }
+    /* Teal: used for compliant state */
+    &.Teal {
+        background: #e0f7f5;
+        color: #00796b;
+    }
+
+    /* Crimson: used for non-compliant state */
+    &.Crimson {
+        background: #f9dde0;
+        color: #a10d2e;
+    }
+
+    &.White {
+        padding: 0 2px;
+        background: white;
+        color: var(--brown-dark);
+        border: 1px solid rgb(229, 232, 236);
+    }
 }
