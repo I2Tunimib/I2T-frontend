@@ -536,8 +536,8 @@ Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
                                 variant="flat"
                                 color={
                                   complianceInfo.action === "noChange"
-                                    ? "green"
-                                    : "darkblue"
+                                    ? "teal"
+                                    : "crimson"
                                 }
                               />
                             </Box>
