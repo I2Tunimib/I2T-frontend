@@ -2634,7 +2634,18 @@ export const tableSlice = createSliceWithRequests({
 
                   // Insert the new column right after the selected column
                   if (!draft.entities.columns.allIds.includes(newColId)) {
-                    draft.entities.columns.allIds.push(newColId);
+                    // If we have a valid selected column index, insert new columns immediately after it,
+                    // preserving the relative order of newly created columns. If selected column index is not found,
+                    // fallback to appending at the end.
+                    const insertIndex =
+                      selectedColumnIndex !== -1
+                        ? selectedColumnIndex + 1 + newColIndex
+                        : draft.entities.columns.allIds.length;
+                    draft.entities.columns.allIds.splice(
+                      insertIndex,
+                      0,
+                      newColId,
+                    );
                   }
                 });
                 updateNumberOfReconciliatedCells(draft);
