@@ -24,6 +24,9 @@ const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
   justifyContent: "flex-start",
   fontWeight: active ? "bold" : "normal",
   backgroundColor: active ? "rgba(0, 0, 0, 0.04)" : "transparent",
+  textAlign: "left",
+  alignItems: "flex-start",
+  whiteSpace: "normal",
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.04)",
   },
@@ -65,40 +68,78 @@ const ContentContainer = styled(Box)({
   overflow: "auto",
 }) as typeof Box;
 
+const ROOT_KEY = "__root" as const;
+
 type Step = {
   label: string;
   Description: FunctionComponent<{ goTo: (step: number) => void }>;
 };
 
+type NestedData = Record<string, Record<string, any[]>>;
+
+const SOURCES = [
+  { key: "Modification", selector: selectModifiersAsArray },
+  { key: "Reconciliation", selector: selectReconciliatorsAsArray },
+  { key: "Extension", selector: selectExtendersAsArray },
+];
+
+const getGroup = (s: any) => s?.public?.group ?? s?.group;
+const isGenAI = (s: any) => getGroup(s) === "Gen AI";
+
+const deduplicateById = (services: any[]) => {
+  const seen = new Set();
+  return services.filter((s) => {
+    if (seen.has(s.id)) return false;
+    seen.add(s.id);
+    return true;
+  });
+};
+
+const splitName = (rawName: string) => {
+  const parts = (rawName || "").split(":").map((x) => x.trim());
+  const rawCategory = parts.length > 1 ? parts[0] : "";
+  const titleAfterColon = parts.length > 1 ? parts.slice(1).join(": ") : "";
+  return { rawCategory, titleAfterColon };
+};
+
 const DiscoverIndex: FC<{
   activeStep: number;
   onStepSelect: (step: number) => void;
-  nestedData: Record<string, Record<string, any[]>>;
-  macroOrder: string[];
-}> = ({ activeStep, onStepSelect, nestedData, macroOrder }) => {
+  nestedData: NestedData;
+  chapters: Array<{ chapterNumber: number; key: string }>;
+}> = ({ activeStep, onStepSelect, nestedData, chapters }) => {
+  const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    Object.keys(nestedData).forEach((macro) => {
-      Object.keys(nestedData[macro]).forEach((category) => {
-        const services = nestedData[macro][category];
-        const isCurrentStepInCategory = services.some((s) => s.stepIndex === activeStep);
-
-        if (isCurrentStepInCategory) {
-          setOpenCategories((prev) => ({
-            ...prev,
-            [category]: true,
-          }));
-        }
-      });
-    });
-  }, [activeStep, nestedData]);
-
-  let globalCategoryCounter = 2;
-
-  const toggleCategory = (category: string) => {
-    setOpenCategories((prev) => ({ ...prev, [category]: !prev[category] }));
+  const toggleChapter = (key: string) => {
+    setOpenChapters((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const toggleCategory = (categoryKey: string) => {
+    setOpenCategories((prev) => ({ ...prev, [categoryKey]: !prev[categoryKey] }));
+  };
+
+  useEffect(() => {
+    chapters.forEach((ch) => {
+      const categories = nestedData[ch.key] || {};
+      const rootItems = categories[ROOT_KEY] || [];
+
+      if (rootItems.some((s) => s.stepIndex === activeStep)) {
+        setOpenChapters((prev) => ({ ...prev, [ch.key]: true }));
+        return;
+      }
+
+      Object.keys(categories)
+        .filter((c) => c !== ROOT_KEY)
+        .forEach((category) => {
+          const services = categories[category] || [];
+          if (services.some((s) => s.stepIndex === activeStep)) {
+            setOpenChapters((prev) => ({ ...prev, [ch.key]: true }));
+            setOpenCategories((prev) => ({ ...prev, [`${ch.key}::${category}`]: true }));
+          }
+        });
+    });
+  }, [activeStep, chapters, nestedData]);
 
   return (
     <IndexContainer>
@@ -110,68 +151,100 @@ const DiscoverIndex: FC<{
           1. Introduction
         </IndexButton>
 
-        {macroOrder.map((macro) => (
-          <Box key={macro}>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 'bold', color: 'text.secondary', pl: 1, mb: 1, display: 'block', textTransform: 'uppercase' }}
-            >
-              {macro}
-            </Typography>
+        {chapters.map((ch) => {
+          const categories = nestedData[ch.key] || {};
+          const rootItems = categories[ROOT_KEY] || [];
+          const categoryNames = Object.keys(categories).filter((c) => c !== ROOT_KEY);
 
-            <Stack spacing={1}>
-              {nestedData[macro] && Object.keys(nestedData[macro]).map((category) => {
-                const services = nestedData[macro][category];
-                const isSingleItem = services.length === 1;
-                const currentParentNumber = globalCategoryCounter++;
-                const isOpen = openCategories[category] || false;
-                const isAnyChildActive = services.some((s) => s.stepIndex === activeStep);
+          const isAnyChildActive =
+            rootItems.some((s) => s.stepIndex === activeStep) ||
+            categoryNames.some((cat) => (categories[cat] || []).some((s) => s.stepIndex === activeStep));
 
-                if (isSingleItem) {
-                  const item = services[0];
-                  return (
+          const isOpen = openChapters[ch.key] || false;
+
+          return (
+            <Stack key={ch.key} spacing={1}>
+              <ListItemButton
+                onClick={() => toggleChapter(ch.key)}
+                sx={{ fontWeight: isAnyChildActive ? "bold" : "normal" }}
+              >
+                <Typography variant="body2">
+                  {`${ch.chapterNumber}. ${ch.key}`}
+                </Typography>
+                {isOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+              </ListItemButton>
+
+              <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                <Stack spacing={1} sx={{ ml: 2, mt: 0.5, borderLeft: "1px solid rgba(0,0,0,0.08)" }}>
+                  {rootItems.map((item, idx) => (
                     <IndexButton
                       key={item.id}
                       active={activeStep === item.stepIndex}
                       onClick={() => onStepSelect(item.stepIndex)}
                     >
-                      {`${currentParentNumber}. ${item.title}`}
+                      {`${ch.chapterNumber}.${idx + 1} ${item.title}`}
                     </IndexButton>
-                  );
-                }
+                  ))}
+                  {categoryNames.map((category, catIdx) => {
+                    const services = categories[category] || [];
+                    const number = rootItems.length + catIdx + 1;
+                    const categoryKey = `${ch.key}::${category}`;
+                    const isCategoryOpen = openCategories[categoryKey] || false;
+                    const isSingleItem = services.length === 1;
+                    const isCategoryActive = services.some((s) => s.stepIndex === activeStep);
+                    const forceAccordion = ch.key === "Gen AI";
 
-                return (
-                  <Box key={category} spacing={1}>
-                    <ListItemButton
-                      onClick={() => toggleCategory(category)}
-                      sx={{ fontWeight: isAnyChildActive ? 'bold' : 'normal' }}
-                    >
-                      <Typography variant="body2">
-                        {`${currentParentNumber}. ${category}`}
-                      </Typography>
-                      {isOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-                    </ListItemButton>
+                    if (isSingleItem && !forceAccordion) {
+                      const item = services[0];
+                      return (
+                        <IndexButton
+                          key={item.id}
+                          active={activeStep === item.stepIndex}
+                          onClick={() => onStepSelect(item.stepIndex)}
+                        >
+                          {`${ch.chapterNumber}.${number} ${item.title}`}
+                        </IndexButton>
+                      );
+                    }
 
-                    <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                      <Stack spacing={1} sx={{ ml: 2, mt: 0.5, borderLeft: '1px solid rgba(0,0,0,0.08)' }}>
-                        {services.map((item, idx) => (
-                          <IndexButton
-                            key={item.id}
-                            sx={{ py: 0.5, fontSize: '0.85rem', pl: 2 }}
-                            active={activeStep === item.stepIndex}
-                            onClick={() => onStepSelect(item.stepIndex)}
-                          >
-                            {`${currentParentNumber}.${idx + 1} ${item.title}`}
-                          </IndexButton>
-                        ))}
-                      </Stack>
-                    </Collapse>
-                  </Box>
-                );
-              })}
+                    return (
+                      <Box key={categoryKey} spacing={1}>
+                        <ListItemButton
+                          onClick={() => toggleCategory(categoryKey)}
+                          sx={{ fontWeight: isCategoryActive ? "bold" : "normal" }}
+                        >
+                          <Typography variant="body2">
+                            {`${ch.chapterNumber}.${number} ${category}`}
+                          </Typography>
+                          {isCategoryOpen ? (
+                            <ExpandLess fontSize="small" />
+                          ) : (
+                            <ExpandMore fontSize="small" />
+                          )}
+                        </ListItemButton>
+
+                        <Collapse in={isCategoryOpen} timeout="auto" unmountOnExit>
+                          <Stack spacing={1} sx={{ ml: 2, mt: 0.5, borderLeft: '1px solid rgba(0,0,0,0.08)' }}>
+                            {services.map((item, idx) => (
+                              <IndexButton
+                                key={item.id}
+                                sx={{ py: 0.5, fontSize: "0.85rem", pl: 2 }}
+                                active={activeStep === item.stepIndex}
+                                onClick={() => onStepSelect(item.stepIndex)}
+                              >
+                                {`${ch.chapterNumber}.${number}.${idx + 1} ${item.title}`}
+                              </IndexButton>
+                            ))}
+                          </Stack>
+                        </Collapse>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Collapse>
             </Stack>
-          </Box>
-        ))}
+          );
+        })}
       </Stack>
     </IndexContainer>
   );
@@ -181,17 +254,18 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
   const discoverStep = useAppSelector(selectDiscoverStep);
   const [activeStep, setActiveStep] = useState(discoverStep);
 
-  const modifiers = useAppSelector(selectModifiersAsArray);
-  const reconcilers = useAppSelector(selectReconciliatorsAsArray);
-  const extenders = useAppSelector(selectExtendersAsArray);
+  const sourceData = SOURCES.map((s) => ({
+    key: s.key,
+    services: useAppSelector(s.selector) || [],
+  }));
 
-  const { steps, nestedData, macroOrder } = useMemo(() => {
-    const order = ["For Modification", "For Reconciliation", "For Extension"];
-    const data: Record<string, Record<string, any[]>> = {
-      "For Modification": {},
-      "For Reconciliation": {},
-      "For Extension": {}
-    };
+  const chapters = useMemo(() => {
+    const base = SOURCES.map((s, i) => ({ chapterNumber: i + 2, key: s.key }));
+    return [...base, { chapterNumber: base.length + 2, key: "Gen AI" }];
+  }, []);
+
+  const { steps, nestedData } = useMemo(() => {
+    const data: NestedData = Object.fromEntries([...SOURCES.map((s) => [s.key, {}]), ["Gen AI", {}]]) as NestedData;
 
     const allSteps: Step[] = [
       {
@@ -226,32 +300,47 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
       },
     ];
 
-    const processServices = (services: any[], macroKey: string) => {
-      const unique = services.filter((s, i, self) => i === self.findIndex((t) => t.id === s.id));
+    const processServices = (s: any, macroKey: string) => {
+      const rawName = s.name ?? "";
+        const { rawCategory, titleAfterColon } = splitName(rawName);
 
-      unique.forEach((s) => {
-        const [category, title] = s.name.split(":").map((str: string) => str.trim());
-        if (!data[macroKey][category]) data[macroKey][category] = [];
+        const targetMacro = isGenAI(s) ? "Gen AI" : macroKey;
+        const category = isGenAI(s) ? macroKey : (rawCategory || ROOT_KEY);
+        const displayTitle = titleAfterColon || rawName;
 
-        const currentStepIndex = allSteps.length;
-        data[macroKey][category].push({ ...s, title: title || category, stepIndex: currentStepIndex });
+        if (!data[targetMacro][category]) data[targetMacro][category] = [];
+
+        const stepIndex = allSteps.length;
+        data[targetMacro][category].push({
+          ...s,
+          title: displayTitle,
+          stepIndex,
+          originMacro: macroKey,
+        });
 
         allSteps.push({
-          label: s.name,
+          label: rawName,
           Description: () => (
             <Stack gap="10px">
               <Typography dangerouslySetInnerHTML={{ __html: s.description }} />
             </Stack>
           ),
         });
-      });
     };
-    processServices(modifiers, "For Modification");
-    processServices(reconcilers, "For Reconciliation");
-    processServices(extenders, "For Extension");
 
-    return { steps: allSteps, nestedData: data, macroOrder: order };
-  }, [modifiers, reconcilers, extenders]);
+    sourceData.forEach(({ key, services }) => {
+      deduplicateById(services)
+        .filter((s) => !isGenAI(s))
+        .forEach((s) => processServices(s, key));
+    });
+
+    sourceData.forEach(({ key, services }) => {
+      deduplicateById(services)
+        .filter(isGenAI)
+        .forEach((s) => processServices(s, key));
+    });
+    return { steps: allSteps, nestedData: data };
+  }, [sourceData]);
 
   useEffect(() => {
     if (discoverStep > 0 && discoverStep < steps.length) setActiveStep(discoverStep);
@@ -276,7 +365,7 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
           activeStep={activeStep}
           onStepSelect={setActiveStep}
           nestedData={nestedData}
-          macroOrder={macroOrder}
+          chapters={chapters}
         />
         <ContentContainer>
           <Typography variant="h6" mb={2}>{currentStep.label}</Typography>

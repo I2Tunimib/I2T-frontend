@@ -91,9 +91,9 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
   const groupedServicesByType = useMemo(() => {
     if (!groupName) {
       return {
+        modifiers: [],
         reconciliators: [],
         extenders: [],
-        modifiers: [],
       };
     }
 
@@ -130,13 +130,13 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
   const availableServiceTypes = useMemo(() => {
     const types: Array<{ id: ServiceType; label: string }> = [];
     if (groupedServicesByType.reconciliators.length > 0) {
-      types.push({ id: "reconciliator", label: "Reconcilers" });
+      types.push({ id: "reconciliator", label: "Reconciliation" });
     }
     if (groupedServicesByType.extenders.length > 0) {
-      types.push({ id: "extender", label: "Extenders" });
+      types.push({ id: "extender", label: "Extension" });
     }
     if (groupedServicesByType.modifiers.length > 0) {
-      types.push({ id: "modifier", label: "Modifiers" });
+      types.push({ id: "modifier", label: "Modification" });
     }
     return types;
   }, [groupedServicesByType]);
