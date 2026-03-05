@@ -51,6 +51,7 @@ import {
 } from "@store/slices/config/interfaces/config";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import {
+  Close,
   //ExpandLess,
   //ExpandMore,
   HelpOutlineRounded,
@@ -97,15 +98,6 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
   const { enqueueSnackbar } = useSnackbar();
   const selectRef = React.useRef<HTMLDivElement>(null);
   const reconcileRequestRef = React.useRef<any>(null);
-  useEffect(() => {
-    // Log the value of reconciliators
-
-    // set initial value of select
-    if (reconciliators) {
-      // setCurrentService(reconciliators[0]);
-      groupReconciliators();
-    }
-  }, [reconciliators]);
 
   async function groupReconciliators() {
     const mappedReconciliators = new Map<string, Reconciliator[]>();
@@ -298,23 +290,34 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
       /> */}
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Reconciliation</DialogTitle>
-        <IconButton
-          sx={{
-            color: "rgba(0, 0, 0, 0.54)",
-            marginRight: "20px",
-          }}
-          onClick={() => {
-            dispatch(
-              updateUI({
-                openHelpDialog: true,
-                helpStart: "tutorial",
-                tutorialStep: 11,
-              }),
-            );
-          }}
-        >
-          <HelpOutlineRounded />
-        </IconButton>
+        <Stack direction="row" alignItems="flex-end">
+          <IconButton
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+            }}
+            onClick={() => {
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "tutorial",
+                  tutorialStep: 11,
+                }),
+              );
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+          <IconButton
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+              marginRight: "20px",
+              opacity: "0.6",
+            }}
+            onClick={handleClose}
+          >
+            <Close />
+          </IconButton>
+        </Stack>
       </Stack>
       <DialogContent>
         <Stack direction="row" alignItems="center">
@@ -328,7 +331,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "discover",
-                  discoverStep: 7,
+                  discoverStep: 8,
                 }),
               );
             }}
@@ -337,149 +340,145 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
           </IconButton>
         </Stack>
         <Stack gap="10px">
-          <Stack gap="10px">
-            {/* Select reconciliator group */}
-            <FormControl className="field">
-              <Select
-                labelId="reconciliator-group-label"
-                value={selectedGroup || ""}
-                onChange={handleGroupChange}
-                variant="outlined"
-                displayEmpty
-                MenuProps={{
-                  PaperProps: {
-                    style: {
-                      maxHeight: "400px",
-                    },
+          {/* Select reconciliator group */}
+          <FormControl className="field">
+            <Select
+              labelId="reconciliator-group-label"
+              value={selectedGroup || ""}
+              onChange={handleGroupChange}
+              variant="outlined"
+              displayEmpty
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: "400px",
                   },
-                }}
-                renderValue={(selected) => {
-                  if (!selected) {
-                    return (
-                      <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
-                        Choose a service group...
-                      </em>
-                    );
-                  }
-                  return selected;
-                }}
-              >
-                <MenuItem disabled value="">
-                  <em>Choose a service group...</em>
+                },
+              }}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return (
+                    <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                      Choose a service group...
+                    </em>
+                  );
+                }
+                return selected;
+              }}
+            >
+              <MenuItem disabled value="">
+                <em>Choose a service group...</em>
+              </MenuItem>
+              {uniqueGroupNames.map((groupName) => (
+                <MenuItem key={groupName} value={groupName}>
+                  {groupName}
                 </MenuItem>
-                {uniqueGroupNames.map((groupName) => (
-                  <MenuItem key={groupName} value={groupName}>
-                    {groupName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
+              ))}
+            </Select>
+          </FormControl>
         </Stack>
         {/* Select specific reconciliate service, abled only if a reconciliator group is selected */}
-        <DialogContentText paddingTop="10px" paddingBottom="10px">
-          Select a specific service of the group selected:
+        <DialogContentText paddingTop="10px" paddingBottom="5px">
+          Select a specific service of the selected group:
         </DialogContentText>
         <Stack gap="10px">
-          <Stack gap="10px">
-            <FormControl className="field" disabled={!selectedGroup}>
-              <Select
-                labelId="reconciliator-service-label"
-                value={currentService?.id || ""}
-                onChange={handleServiceChange}
-                variant="outlined"
-                displayEmpty
-                MenuProps={{
-                  PaperProps: {
-                    style: {
-                      maxHeight: "400px",
-                    },
+          <FormControl className="field" disabled={!selectedGroup}>
+            <Select
+              labelId="reconciliator-service-label"
+              value={currentService?.id || ""}
+              onChange={handleServiceChange}
+              variant="outlined"
+              displayEmpty
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: "400px",
                   },
-                }}
-                renderValue={(selected) => {
-                  if (!selected) {
-                    return (
-                      <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
-                        Choose a reconciliation service...
-                      </em>
-                    );
-                  }
-                  const selectedService = selectedServices.find(
-                    (service) => service.id === selected,
+                },
+              }}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return (
+                    <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                      Choose a reconciliation service...
+                    </em>
                   );
-                  return selectedService ? selectedService.name : "";
-                }}
-              >
-                <MenuItem disabled value="">
-                  <em>Choose a reconciliation service...</em>
+                }
+                const selectedService = selectedServices.find(
+                  (service) => service.id === selected,
+                );
+                return selectedService ? selectedService.name : "";
+              }}
+            >
+              <MenuItem disabled value="">
+                <em>Choose a reconciliation service...</em>
+              </MenuItem>
+              {selectedServices.map((reconciliator) => (
+                <MenuItem key={reconciliator.id} value={reconciliator.id}>
+                  {reconciliator.name}
                 </MenuItem>
-                {selectedServices.map((reconciliator) => (
-                  <MenuItem key={reconciliator.id} value={reconciliator.id}>
-                    {reconciliator.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {error && <Typography color="error">{error.message}</Typography>}
-            {currentService && currentService.description && (
-              <SquaredBox
-                dangerouslySetInnerHTML={{
-                  __html: currentService.description,
+              ))}
+            </Select>
+          </FormControl>
+          {error && <Typography color="error">{error.message}</Typography>}
+          {currentService && currentService.description && (
+            <SquaredBox
+              dangerouslySetInnerHTML={{
+                __html: currentService.description,
+              }}
+            >
+              {/*
+                {currentService.description}
+                */}
+            </SquaredBox>
+          )}
+          {currentService && (
+            <>
+              <Divider />
+              <DynamicForm
+                service={currentService}
+                loading={loading}
+                onSubmit={handleSubmit}
+                onCancel={() => {
+                  // abort any in-flight reconcile request when user cancels the modal form
+                  if (
+                    reconcileRequestRef.current &&
+                    reconcileRequestRef.current.abort
+                  ) {
+                    reconcileRequestRef.current.abort();
+                    reconcileRequestRef.current = null;
+                  }
+                  handleClose();
+                  setCurrentService(null);
+                  setSelectedGroup(null);
+                  setExpandedGroup(null);
                 }}
-              >
-                {/*
-                 {currentService.description}
-                 */}
-              </SquaredBox>
-            )}
-            {currentService && (
-              <>
-                <Divider />
-                <DynamicForm
-                  service={currentService}
-                  loading={loading}
-                  onSubmit={handleSubmit}
-                  onCancel={() => {
-                    // abort any in-flight reconcile request when user cancels the modal form
-                    if (
-                      reconcileRequestRef.current &&
-                      reconcileRequestRef.current.abort
-                    ) {
-                      reconcileRequestRef.current.abort();
-                      reconcileRequestRef.current = null;
-                    }
-                    handleClose();
-                    setCurrentService(null);
-                    setSelectedGroup(null);
-                    setExpandedGroup(null);
-                  }}
-                />
-              </>
-            )}
+              />
+            </>
+          )}
 
-            {/* <div>
-                Select any context columns to provide to the reconciliator service
-              </div>
-              <FormControl className="field">
-                <InputLabel id="demo-multiple-checkbox-label">Context columns</InputLabel>
-                <Select
-                  labelId="demo-multiple-checkbox-label"
-                  id="demo-multiple-checkbox"
-                  multiple
-                  value={contextColumns}
-                  onChange={handleChangeContextColumns}
-                  input={<OutlinedInput label="Context columns" />}
-                  renderValue={(selected) => selected.join(', ')}
-                >
-                  {columnIds.map((id) => (
-                    <MenuItem key={id} value={id}>
-                      <Checkbox checked={contextColumns.indexOf(id) > -1} />
-                      <ListItemText primary={<span>{id}</span>} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl> */}
-          </Stack>
+          {/* <div>
+               Select any context columns to provide to the reconciliator service
+             </div>
+             <FormControl className="field">
+               <InputLabel id="demo-multiple-checkbox-label">Context columns</InputLabel>
+              <Select
+                 labelId="demo-multiple-checkbox-label"
+                 id="demo-multiple-checkbox"
+                 multiple
+                 value={contextColumns}
+                 onChange={handleChangeContextColumns}
+                 input={<OutlinedInput label="Context columns" />}
+                 renderValue={(selected) => selected.join(', ')}
+               >
+                 {columnIds.map((id) => (
+                   <MenuItem key={id} value={id}>
+                     <Checkbox checked={contextColumns.indexOf(id) > -1} />
+                     <ListItemText primary={<span>{id}</span>} />
+                   </MenuItem>
+                 ))}
+               </Select>
+             </FormControl> */}
         </Stack>
       </DialogContent>
       {/* <DialogActions>

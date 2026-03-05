@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState, useMemo } from "react";
+import React, { FC, useEffect, useRef, useState, useMemo, forwardRef, ReactElement, Ref } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,10 +12,10 @@ import {
   Stack,
   InputLabel,
   SelectChangeEvent,
+  Slide,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { useSnackbar } from "notistack";
-import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import { SquaredBox } from "@components/core";
 import {
   selectExtendersAsArray,
@@ -30,6 +30,16 @@ import {
   selectReconcileRequestStatus,
 } from "@store/slices/table/table.selectors";
 import { extend, reconcile, modify } from "@store/slices/table/table.thunk";
+import { updateUI } from "@store/slices/table/table.slice";
+import { HelpOutlineRounded, Close } from "@mui/icons-material";
+import { TransitionProps } from "@mui/material/transitions";
+
+const Transition = forwardRef(
+  (
+    props: TransitionProps & { children?: ReactElement<any, any> },
+    ref: Ref<unknown>,
+  ) => <Slide direction="down" ref={ref} {...props} />,
+);
 
 /**
  * Dialog props
@@ -295,100 +305,140 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
 
   return (
     <Dialog
-      open={open}
-      onClose={onClose}
       className="default-dialog"
-      fullWidth
-      maxWidth="md"
+      open={open}
+      TransitionComponent={Transition}
+      keepMounted
+      onClose={onClose}
     >
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ px: 2, pt: 1 }}
       >
-        <DialogTitle sx={{ m: 0, p: 0 }}>
+        <DialogTitle>
           {`Services - ${groupName || "Group"}`}
         </DialogTitle>
-        <IconButton onClick={onClose} size="large">
-          <span style={{ fontSize: 18, opacity: 0.6 }}>✕</span>
+        <IconButton
+          sx={{
+            color: "rgba(0, 0, 0, 0.54)",
+            marginRight: "20px",
+            opacity: "0.6",
+          }}
+          onClick={onClose}
+        >
+          <Close />
         </IconButton>
       </Stack>
-
-      <DialogContent dividers>
-        <DialogContentText sx={{ mb: 2 }}>
-          Choose the type of service from this group:
-        </DialogContentText>
-
-        {/* Step 1: Select Service Type (filtered by group) */}
-        <FormControl
-          fullWidth
-          variant="outlined"
-          className="field"
-          sx={{ mb: 2 }}
-        >
-          <InputLabel id="service-type-label">Service Type</InputLabel>
-          <Select
-            labelId="service-type-label"
-            value={serviceType}
-            label="Service Type"
-            onChange={handleServiceTypeChange}
-            disabled={loading || availableServiceTypes.length === 0}
+      <DialogContent>
+        <Stack direction="row" alignItems="center">
+          <DialogContentText>
+            Choose the type of service from this group:
+          </DialogContentText>
+          <IconButton
+            size="small"
+            onClick={() => {
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "discover",
+                  discoverStep: 21,
+                }),
+              );
+            }}
           >
-            <MenuItem value="">
-              <em>Choose a service type...</em>
-            </MenuItem>
-            {availableServiceTypes.map((type) => (
-              <MenuItem key={type.id} value={type.id} disabled={loading}>
-                {type.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Step 2: Select Specific Service */}
-        {serviceType && (
-          <>
-            <DialogContentText sx={{ mb: 2 }}>
-              Select a specific service:
-            </DialogContentText>
-            <FormControl
-              fullWidth
+            <HelpOutlineRounded />
+          </IconButton>
+        </Stack>
+        <Stack gap="10px">
+          <FormControl
+            className="field"
+          >
+            <Select
+              labelId="service-type-label"
+              value={serviceType}
               variant="outlined"
-              className="field"
-              sx={{ mb: 2 }}
+              displayEmpty
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: "400px",
+                  },
+                },
+              }}
+              onChange={handleServiceTypeChange}
+              disabled={loading || availableServiceTypes.length === 0}
+              renderValue={(selected) => {
+                const value = selected as ServiceType;
+                if (!value) {
+                  return (
+                    <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                      Choose a service type...
+                    </em>
+                  );
+                }
+                const selectedType = availableServiceTypes.find((type) => type.id === value);
+                return selectedType ? selectedType.label : "";
+              }}
             >
-              <InputLabel id="service-label">Service</InputLabel>
-              <Select
-                labelId="service-label"
-                value={currentService ? currentService.id : ""}
-                label="Service"
-                onChange={(e) => onSelectService(String(e.target.value))}
-                MenuProps={{ PaperProps: { style: { maxHeight: 400 } } }}
-                disabled={loading || availableServices.length === 0}
-              >
-                <MenuItem value="">
-                  <em>Choose a service...</em>
+              <MenuItem disabled value="">
+                <em>Choose a service type...</em>
+              </MenuItem>
+              {availableServiceTypes.map((type) => (
+                <MenuItem key={type.id} value={type.id} disabled={loading}>
+                  {type.label}
                 </MenuItem>
-                {availableServices.map((svc) => (
-                  <MenuItem key={svc.id} value={svc.id} disabled={loading}>
-                    {svc.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </>
-        )}
-
-        {/* Service Description */}
-        {currentService?.description && (
-          <SquaredBox
-            dangerouslySetInnerHTML={{ __html: currentService.description }}
-            sx={{ mb: 2 }}
-          />
-        )}
-
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+        <DialogContentText paddingTop="10px" paddingBottom="5px">
+          Select a specific service of the selected type:
+        </DialogContentText>
+        <Stack gap="10px">
+          <FormControl className="field" disabled={!serviceType}>
+            <Select
+              labelId="service-label"
+              value={currentService ? currentService.id : ""}
+              variant="outlined"
+              displayEmpty
+              onChange={(e) => onSelectService(String(e.target.value))}
+              MenuProps={{ PaperProps: { style: { maxHeight: 400 } } }}
+              disabled={loading || availableServices.length === 0}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return (
+                    <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                      Choose a service of the selected type...
+                    </em>
+                  );
+                }
+                const selectedService = availableServices.find(
+                  (service) => service.id === selected,
+                );
+                return selectedService ? selectedService.name : "";
+              }}
+            >
+              <MenuItem disabled value="">
+                <em>Choose a service of the selected type...</em>
+              </MenuItem>
+              {availableServices.map((svc) => (
+                <MenuItem key={svc.id} value={svc.id} disabled={loading}>
+                  {svc.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {/* Service Description */}
+          {currentService?.description && (
+            <SquaredBox
+              dangerouslySetInnerHTML={{ __html: currentService.description }}
+              sx={{ mb: 2 }}
+            />
+          )}
+        </Stack>
         {/* Dynamic Form for Service Configuration */}
+        {/*
         {currentService ? (
           <>
             <Divider sx={{ my: 2 }} />
@@ -416,6 +466,7 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
             Select a service type to begin.
           </div>
         )}
+        */}
       </DialogContent>
     </Dialog>
   );

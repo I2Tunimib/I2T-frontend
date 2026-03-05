@@ -23,7 +23,7 @@ import {
   Typography,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
-import { HelpOutlineRounded } from "@mui/icons-material";
+import { Close, HelpOutlineRounded } from "@mui/icons-material";
 import {
   selectModifyRequestStatus,
   selectSelectedColumnIdsAsArray,
@@ -171,9 +171,7 @@ const DialogInnerContent = () => {
       } else {
         const modifiedColumnIds = Object.keys(data.columns || {});
         const nColumns = modifiedColumnIds.length;
-        const isUpdate = modifiedColumnIds.every((id) =>
-          selectedColumnsArray.includes(id),
-        );
+        const isUpdate = modifiedColumnIds.every((id) => selectedColumnsArray.includes(id),);
         const actionText = isUpdate ? "updated" : "added";
         infoText = `${nColumns} ${nColumns > 1 ? "columns" : "column"} ${actionText}`;
       }
@@ -212,6 +210,7 @@ const DialogInnerContent = () => {
           value={currentService ? currentService.id : ""}
           onChange={handleChange}
           variant="outlined"
+          displayEmpty
           MenuProps={{
             PaperProps: {
               style: {
@@ -220,12 +219,22 @@ const DialogInnerContent = () => {
             },
           }}
           renderValue={(selected) => {
+            if (!selected) {
+              return (
+                <em style={{ color: "rgba(0, 0, 0, 0.38)" }}>
+                  Choose a modification service...
+                </em>
+              );
+            }
             const selectedService = modificationServices.find(
               (service) => service.id === selected,
             );
             return selectedService ? selectedService.name : "";
           }}
         >
+          <MenuItem disabled value="">
+            <em>Choose a modification service...</em>
+          </MenuItem>
           {uniqueServices.map((modifier) => (
             <MenuItem
               key={modifier.id}
@@ -275,28 +284,55 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
     <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Modify</DialogTitle>
-        <IconButton
-          sx={{
-            color: "rgba(0, 0, 0, 0.54)",
-            marginRight: "20px",
-          }}
-          onClick={() => {
-            dispatch(
-              updateUI({
-                openHelpDialog: true,
-                helpStart: "tutorial",
-                tutorialStep: 10,
-              }),
-            );
-          }}
-        >
-          <HelpOutlineRounded />
-        </IconButton>
+        <Stack direction="row" alignItems="flex-end">
+          <IconButton
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+            }}
+            onClick={() => {
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "tutorial",
+                  tutorialStep: 10,
+                }),
+              );
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+          <IconButton
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+              marginRight: "20px",
+              opacity: "0.6",
+            }}
+            onClick={handleClose}
+          >
+            <Close />
+          </IconButton>
+        </Stack>
       </Stack>
       <DialogContent>
-        <DialogContentText paddingBottom="10px">
-          Select a transformation function to modify with:
-        </DialogContentText>
+        <Stack direction="row" alignItems="center">
+          <DialogContentText>
+            Select a transformation function to modify with:
+          </DialogContentText>
+          <IconButton
+            size="small"
+            onClick={() => {
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "discover",
+                  discoverStep: 2,
+                }),
+              );
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+        </Stack>
         <Content>
           <DialogInnerContent />
         </Content>
