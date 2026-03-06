@@ -347,7 +347,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "tutorial",
-                  tutorialStep: 19,
+                  tutorialStep: 21,
                 }),
               );
             }}

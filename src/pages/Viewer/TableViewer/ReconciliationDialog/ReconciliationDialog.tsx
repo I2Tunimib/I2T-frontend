@@ -238,7 +238,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
             variant: "info",
             autoHideDuration: 8000,
             action: (key) => (
-              <Button
+              <IconButton
                 size="small"
                 sx={{ color: "#fff", fontWeight: "bold" }}
                 onClick={() => {
@@ -246,14 +246,14 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                     updateUI({
                       openHelpDialog: true,
                       helpStart: "tutorial",
-                      tutorialStep: 15,
+                      tutorialStep: 17,
                     }),
                   );
                   closeSnackbar(key);
                 }}
               >
-                HERE
-              </Button>
+                <HelpOutlineRounded />
+              </IconButton>
             ),
           },
         );
@@ -300,7 +300,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "tutorial",
-                  tutorialStep: 11,
+                  tutorialStep: 12,
                 }),
               );
             }}

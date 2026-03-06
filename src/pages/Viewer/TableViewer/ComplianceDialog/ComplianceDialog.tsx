@@ -114,7 +114,7 @@ const ComplianceDialog: FC<ComplianceDialogProps> = () => {
               updateUI({
                 openHelpDialog: true,
                 helpStart: "tutorial",
-                tutorialStep: 5,
+                tutorialStep: 4,
               }),
             );
           }}

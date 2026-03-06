@@ -868,7 +868,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   updateUI({
                     openHelpDialog: true,
                     helpStart: "tutorial",
-                    tutorialStep: 17,
+                    tutorialStep: 19,
                   }),
                 )
               }

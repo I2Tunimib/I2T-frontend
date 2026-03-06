@@ -231,7 +231,13 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 5 }));
+            dispatch(
+              updateUI({
+                openHelpDialog: true,
+                helpStart: "tutorial",
+                tutorialStep: 6
+              })
+            );
           }}
         >
           <HelpOutlineRounded />

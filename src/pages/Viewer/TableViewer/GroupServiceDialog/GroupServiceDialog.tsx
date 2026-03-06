@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { useSnackbar } from "notistack";
+import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import { SquaredBox } from "@components/core";
 import {
   selectExtendersAsArray,
@@ -139,14 +140,14 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
   // Determine which service types have available services in this group
   const availableServiceTypes = useMemo(() => {
     const types: Array<{ id: ServiceType; label: string }> = [];
+    if (groupedServicesByType.modifiers.length > 0) {
+      types.push({ id: "modifier", label: "Modification" });
+    }
     if (groupedServicesByType.reconciliators.length > 0) {
       types.push({ id: "reconciliator", label: "Reconciliation" });
     }
     if (groupedServicesByType.extenders.length > 0) {
       types.push({ id: "extender", label: "Extension" });
-    }
-    if (groupedServicesByType.modifiers.length > 0) {
-      types.push({ id: "modifier", label: "Modification" });
     }
     return types;
   }, [groupedServicesByType]);
@@ -319,16 +320,34 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
         <DialogTitle>
           {`Services - ${groupName || "Group"}`}
         </DialogTitle>
-        <IconButton
-          sx={{
-            color: "rgba(0, 0, 0, 0.54)",
-            marginRight: "20px",
-            opacity: "0.6",
-          }}
-          onClick={onClose}
-        >
-          <Close />
-        </IconButton>
+        <Stack direction="row" alignItems="flex-end">
+          <IconButton
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+            }}
+            onClick={() => {
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "tutorial",
+                  tutorialStep: 22,
+                }),
+              );
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+          <IconButton
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+              marginRight: "20px",
+              opacity: "0.6",
+            }}
+            onClick={handleClose}
+          >
+            <Close />
+          </IconButton>
+        </Stack>
       </Stack>
       <DialogContent>
         <Stack direction="row" alignItems="center">
@@ -436,37 +455,22 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
               sx={{ mb: 2 }}
             />
           )}
+          {/* Dynamic Form for Service Configuration */}
+          {currentService && (
+            <>
+              <Divider sx={{ my: 2 }} />
+              <DynamicForm
+                service={{
+                  ...currentService,
+                  selectedColumns: selectedColumnIds,
+                }}
+                loading={loading}
+                onSubmit={onSubmit}
+                onCancel={onClose}
+              />
+            </>
+          )}
         </Stack>
-        {/* Dynamic Form for Service Configuration */}
-        {/*
-        {currentService ? (
-          <>
-            <Divider sx={{ my: 2 }} />
-            <DynamicForm
-              service={{
-                ...currentService,
-                selectedColumns: selectedColumnIds,
-              }}
-              loading={loading}
-              onSubmit={onSubmit}
-              onCancel={onClose}
-            />
-          </>
-        ) : serviceType ? (
-          <div style={{ marginTop: 8, color: "rgba(0,0,0,0.6)" }}>
-            No service selected. Choose one from the dropdown to configure and
-            run it.
-          </div>
-        ) : availableServiceTypes.length === 0 ? (
-          <div style={{ marginTop: 8, color: "rgba(0,0,0,0.6)" }}>
-            No services available in this group.
-          </div>
-        ) : (
-          <div style={{ marginTop: 8, color: "rgba(0,0,0,0.6)" }}>
-            Select a service type to begin.
-          </div>
-        )}
-        */}
       </DialogContent>
     </Dialog>
   );

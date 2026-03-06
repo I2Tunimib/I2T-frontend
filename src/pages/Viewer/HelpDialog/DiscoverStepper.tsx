@@ -284,7 +284,7 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
                   data cleaning or date formatting).
                 </li>
                 <li>
-                  <b>Reconcilers</b>: responsible for aligning or enriching tabular data with semantic metadata. They
+                  <b>Reconcilers</b>: Responsible for aligning or enriching tabular data with semantic metadata. They
                   match entities from the dataset with corresponding entries from external or internal knowledge sources,
                   enabling semantic linking and enhanced interoperability.
                 </li>
