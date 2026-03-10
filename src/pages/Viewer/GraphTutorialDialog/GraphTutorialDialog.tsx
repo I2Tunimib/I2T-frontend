@@ -167,7 +167,7 @@ const steps: Step[] = [
             </Stack>
           </Stack>
           <br />
-            You can explore and interact with the graph:
+          You can explore and interact with the graph:
           <List>
             <li>
               Hovering over a node displays its metadata
@@ -189,7 +189,7 @@ const steps: Step[] = [
           </List>
         </Typography>
         <Box display="flex" justifyContent="center" my={1}>
-          <Img src={graphArea} style={{ width: "90%" }} />
+          <Img src={graphArea} />
         </Box>
       </Stack>
     ),
@@ -327,7 +327,7 @@ const steps: Step[] = [
           <Box display="flex" justifyContent="center" my={1}>
             <Img src={suggestion} style={{ width: "40%" }} />
           </Box>
-            This view allows you to:
+          This view allows you to:
           <List>
             <li>
               Inspect the

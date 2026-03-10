@@ -16,7 +16,13 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { selectModifiersAsArray, selectReconciliatorsAsArray, selectExtendersAsArray } from "@store/slices/config/config.selectors";
+import {
+  selectModifiersAsArray,
+  selectReconciliatorsAsArray,
+  selectExtendersAsArray,
+  selectComplianceAsArray,
+} from "@store/slices/config/config.selectors";
+import compliance from "../../../assets/compliance.gif";
 
 const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
     prop !== 'active' })(({ active }: { active?: boolean }) => ({
@@ -81,6 +87,8 @@ const SOURCES = [
   { key: "Modification", selector: selectModifiersAsArray },
   { key: "Reconciliation", selector: selectReconciliatorsAsArray },
   { key: "Extension", selector: selectExtendersAsArray },
+  { key: "Gen AI", selector: () => [] },
+  { key: "Compliance", selector: selectComplianceAsArray },
 ];
 
 const getGroup = (s: any) => s?.public?.group ?? s?.group;
@@ -260,12 +268,16 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
   }));
 
   const chapters = useMemo(() => {
-    const base = SOURCES.map((s, i) => ({ chapterNumber: i + 2, key: s.key }));
-    return [...base, { chapterNumber: base.length + 2, key: "Gen AI" }];
+    return SOURCES.map((s, i) => ({
+      chapterNumber: i + 2,
+      key: s.key
+    }));
   }, []);
 
   const { steps, nestedData } = useMemo(() => {
-    const data: NestedData = Object.fromEntries([...SOURCES.map((s) => [s.key, {}]), ["Gen AI", {}]]) as NestedData;
+    const data: NestedData = Object.fromEntries(
+      SOURCES.map((s) => [s.key, {}])
+    ) as NestedData;
 
     const allSteps: Step[] = [
       {
@@ -320,24 +332,40 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
 
         allSteps.push({
           label: rawName,
-          Description: () => (
-            <Stack gap="10px">
-              <Typography dangerouslySetInnerHTML={{ __html: s.description }} />
-            </Stack>
-          ),
+          Description: () => {
+            let finalDescription = s.description;
+
+            if (macroKey === "Compliance") {
+              finalDescription = finalDescription.replace(
+                "PLACEHOLDER_COMPLIANCE_GIF",
+                `<img src="${compliance}" alt="GDPR Compliance Check demonstration" style="width:100%; border-radius:7px; margin-top:10px;" />`
+              );
+            }
+
+            return (
+              <Stack gap="10px">
+                <Typography dangerouslySetInnerHTML={{ __html: finalDescription }} />
+              </Stack>
+            );
+          },
         });
     };
 
-    sourceData.forEach(({ key, services }) => {
-      deduplicateById(services)
-        .filter((s) => !isGenAI(s))
-        .forEach((s) => processServices(s, key));
-    });
-
-    sourceData.forEach(({ key, services }) => {
-      deduplicateById(services)
-        .filter(isGenAI)
-        .forEach((s) => processServices(s, key));
+    SOURCES.forEach(({ key }) => {
+      if (key === "Gen AI") {
+        sourceData.forEach((d) => {
+          deduplicateById(d.services)
+            .filter(isGenAI)
+            .forEach((s) => processServices(s, d.key));
+        });
+      } else {
+        const currentSource = sourceData.find((d) => d.key === key);
+        if (currentSource) {
+          deduplicateById(currentSource.services)
+            .filter((s) => !isGenAI(s))
+            .forEach((s) => processServices(s, key));
+        }
+      }
     });
     return { steps: allSteps, nestedData: data };
   }, [sourceData]);

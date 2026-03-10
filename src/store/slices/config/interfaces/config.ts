@@ -9,12 +9,14 @@ export interface IConfigState extends RequestEnhancedState {
     reconciliators: ReconciliatorsState;
     extenders: ExtendersState;
     modifiers: ModifiersState;
+    complianceServices: ComplianceState;
   };
 }
 
 export interface ReconciliatorsState extends BaseState<Reconciliator> {}
 export interface ExtendersState extends BaseState<Extender> {}
 export interface ModifiersState extends BaseState<Modifier> {}
+export interface ComplianceState extends BaseState<ComplianceService> {}
 
 export interface Reconciliator {
   id: ID;
@@ -50,6 +52,13 @@ export interface Modifier extends Record<string, any> {
   formParams: FormInputParams[];
   skipFiltering?: boolean;
   allValues?: boolean;
+}
+
+export interface ComplianceService extends Record<string, any> {
+  id: ID;
+  name: string;
+  group: string;
+  description: string;
 }
 
 export interface FormInputParams {

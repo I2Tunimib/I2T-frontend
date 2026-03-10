@@ -1,25 +1,18 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import React, { FC, useState, useEffect, useMemo } from "react";
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  TextField,
   FormControl,
-  FormControlLabel,
-  FormHelperText,
   InputLabel,
   IconButton,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
   SelectChangeEvent,
-  Tooltip,
   Stack,
 } from "@mui/material";
 import { selectAutoAnnotationDialogStatus } from "@store/slices/table/table.selectors";
@@ -49,7 +42,7 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
     if (target === "schema") {
       return [
         { id: "llm", label: "LLM Column Classifier" },
-        { id: "columnClassifier", label: "Column Classifier" },
+        { id: "columnClassifier", label: "Deep Learning Column Classifier" },
       ];
     }
     return [];

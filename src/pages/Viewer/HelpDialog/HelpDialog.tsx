@@ -24,7 +24,6 @@ import {
   FC,
   useState,
   useRef,
-  useCallback,
   ReactNode,
   useEffect,
 } from "react";
@@ -44,7 +43,6 @@ import extension from "../../../assets/extension.gif";
 import search from "../../../assets/search.gif";
 import modification from "../../../assets/modification.gif";
 import schemaAnnotation from "../../../assets/schema-annotation.gif";
-import compliance from "../../../assets/compliance.gif";
 import serviceReconciliation from "../../../assets/service-reconciliation.gif";
 import generativeAi from "../../../assets/generative-ai.gif";
 
@@ -192,7 +190,7 @@ const chapters: Chapter[] = [
               The Toolbar provides quick access to global table actions and management features. It allows you to
               efficiently perform various actions that affect the entire table. Starting from the left, you can:
               <Box display="flex" justifyContent="center" my={1}>
-                <Img src={globalActions} style={{ width: "90%" }} />
+                <Img src={globalActions} />
               </Box>
               <List>
                 <li>
@@ -239,11 +237,11 @@ const chapters: Chapter[] = [
                     interact with cells, rows, and columns to apply filters, manage annotations, and perform enrichment
                     operations.
                     <Box display="flex" justifyContent="center" my={1}>
-                      <Img src={tableView} style={{ width: "90%" }} />
+                      <Img src={tableView} />
                     </Box>
                     For a detailed explanation of table-based interactions, refer to Section {" "}
                     <Link
-                      component="span"
+                      component="button"
                       underline="hover"
                       role="button"
                       sx={{ cursor: "pointer" }}
@@ -272,7 +270,7 @@ const chapters: Chapter[] = [
                     You can expand or collapse these elements to inspect their structure, making this view ideal for
                     debugging or for those interested in the raw data model.
                     <Box display="flex" justifyContent="center" my={1}>
-                      <Img src={rawView} style={{ width: "90%" }} />
+                      <Img src={rawView} />
                     </Box>
                   </li>
                   <li>
@@ -282,11 +280,11 @@ const chapters: Chapter[] = [
                     semantic relationships. It simplifies exploring the dataset's structure and helps you understand how
                     different columns are connected.
                     <Box display="flex" justifyContent="center" my={1}>
-                      <Img src={graphView} style={{ width: "90%" }} />
+                      <Img src={graphView} />
                     </Box>
                     For a detailed explanation of graph-based interactions and features, refer to {" "}
                     <Link
-                      component="span"
+                      component="button"
                       underline="hover"
                       role="button"
                       sx={{ cursor: "pointer" }}
@@ -309,81 +307,41 @@ const chapters: Chapter[] = [
       },
       {
         label: "Compliance",
-        Description: () => (
-          <Stack gap="10px">
-            <Typography component="div">
-              This feature evaluates the current state of your table's compliance with different regulatory frameworks.
-              Currently, it assesses whether the data falls under the scope of GDPR, based on a brief description of the
-              data processing purpose you provide.
-
-              The compliance check is performed automatically by an LLM-powered service, which provides:
-              <List>
-                <li>
-                  <b>Table overview</b>, a summary of the overall GDPR status and the system's confidence level.
-                </li>
-                <li>
-                  <b>Column analysis</b>, a detailed list for each column including its classification, suggested
-                  action, reasoning, and confidence score.
-                </li>
-              </List>
-
-              The possible table GDPR statuses include:
-              <List>
-                <li>
-                  <b>noGDPR</b>: The table contains no personal data and is outside the scope of GDPR.
-                </li>
-                <li>
-                  <b>yesGDPR</b>: The table contains identifiable personal data and is subject to GDPR requirements.
-                </li>
-                <li>
-                  <b>pseudoGDPR</b>: The table contains pseudonymized (but not anonymous) data; GDPR still applies, but
-                  the risk is reduced.
-                </li>
-              </List>
-
-              The system classifies each column into one of the following categories:
-              <List>
-                <li>
-                  <b>personalData</b>: Information that directly identifies an individual (e.g., name, email, ID number).
-                </li>
-                <li>
-                  <b>quasiIdentifiers</b>: Attributes that could indirectly identify a person when combined with other data
-                  (e.g., birth year, location, role).
-                </li>
-                <li>
-                  <b>nonPersonalData</b>: Data that does not identify individuals (e.g., organizational or contextual information).
-                </li>
-                <li>
-                  <b>anonymousData</b>: Data that has been fully anonymized and cannot be used to identify individuals.
-                </li>
-              </List>
-
-              To help you achieve compliance, the system also suggests specific actions for each column:
-              <List>
-                <li>
-                  <b>noChange</b>: The data is already compliant and requires no modification.
-                </li>
-                <li>
-                  <b>pseudonymize</b>: Identifying values should be replaced with pseudonyms or hashed identifiers.
-                </li>
-                <li>
-                  <b>generalize</b>: The data should be made less specific (e.g., converting exact dates to years or
-                  coordinates to broader areas) to reduce the risk of re-identification.
-                </li>
-                <li>
-                  <b>remove</b>: The column should be deleted as it contains unnecessary personal data for the specified
-                  purpose.
-                </li>
-              </List>
-              <Box display="flex" justifyContent="center" my={1}>
-                <Img src={compliance} style={{width: "90%"}}/>
-              </Box>
-              For example, a column such as <code>ChildId</code> may be classified as <i>personalData</i> and the system
-              may recommend <i>pseudonymize</i>, while generalized information such as <code>Permanent_address_generalized</code>
-              may be considered <i>anonymousData</i> with the action <i>noChange</i>.
-            </Typography>
-          </Stack>
-        ),
+        Description: () => {
+          const dispatch = useAppDispatch();
+          return (
+            <Stack gap="10px">
+              <Typography component="div">
+                This feature evaluates the current state of your table's compliance with different regulatory frameworks.
+                <br /><br />
+                Click on the <ButtonText>Compliance</ButtonText> button in the Toolbar and simply select one of the
+                available compliance services. Currently, the system supports GDPR assessment, allowing you to determine
+                if your data processing aligns with European privacy standards. For a detailed explanation,
+                refer to {" "}
+                <Link
+                  component="button"
+                  underline="hover"
+                  role="button"
+                  sx={{ cursor: "pointer" }}
+                  onClick={() => {
+                    dispatch(
+                      updateUI({
+                        openHelpDialog: true,
+                        helpStart: "discover",
+                        discoverStep: 27,
+                      })
+                    );
+                  }}
+                >
+                  <b>GDPR</b>
+                </Link>.
+                <br /><br />
+                This is a long-running asynchronous process, allowing you to continue working on other tables. Once the
+                task is completed, you will receive a notification via a pop-up in the bottom-left corner of the screen.
+              </Typography>
+            </Stack>
+          );
+        },
       },
       {
         label: "Automatic Annotation",
@@ -398,7 +356,7 @@ const chapters: Chapter[] = [
                   Processes the entire table using a specific service like Alligator (Semantic Table Interpretation).
                   This is currently the primary method for full-scale interpretation. For further details, refer to Section{" "}
                   <Link
-                    component="span"
+                    component="button"
                     underline="hover"
                     role="button"
                     sx={{ cursor: "pointer" }}
@@ -413,7 +371,7 @@ const chapters: Chapter[] = [
                   Focuses exclusively on the table columns using a specific services, such as the Column Classifier.
                   To learn more, refer to Section{" "}
                   <Link
-                    component="span"
+                    component="button"
                     underline="hover"
                     role="button"
                     sx={{ cursor: "pointer" }}
@@ -498,10 +456,10 @@ const chapters: Chapter[] = [
                   <b>Refine matching: </b>
                   Part of the enrichment process. For more details, refer to Section{" "}
                   <Link
-                    component="span"
+                    component="button"
                     underline="hover"
                     role="button"
-                    sx={{cursor: "pointer"}}
+                    sx={{ cursor: "pointer" }}
                     onClick={() => goToByLabel("Matching Revision", "Group of Cells Refinement", goTo)}
                   >
                     <b>6.3 Group of Cells Refinement</b>
@@ -567,7 +525,7 @@ const chapters: Chapter[] = [
                 }}
               />
               icon to filter rows based on their <i>reconciliation status</i>:
-              <br/>
+              <br />
             </Typography>
             <Stack gap="10px">
               <Stack direction="row">
@@ -612,10 +570,10 @@ const chapters: Chapter[] = [
             <Typography component="div">
               For more details on the annotation symbols, please refer to Section{" "}
               <Link
-                component="span"
+                component="button"
                 underline="hover"
                 role="button"
-                sx={{cursor: "pointer"}}
+                sx={{ cursor: "pointer" }}
                 onClick={() => goToByLabel("Reconciliation", "Annotation Symbols", goTo)}
               >
                 <b>5.5 Annotation Symbols</b>
@@ -623,7 +581,7 @@ const chapters: Chapter[] = [
               {" "}of this tutorial.
             </Typography>
             <Typography component="div">
-              <br/>
+              <br />
               Additionally, <b>toggle column visibility</b> using the
               <VisibilityIcon
                 sx={{
@@ -745,7 +703,7 @@ const chapters: Chapter[] = [
             <Typography component="div">
               Click on the <ButtonText> Automatic Annotation </ButtonText> button in the Toolbar.
               Then, select "Full table" as target and "Semantic Table Interpretation (Alligator)" ad the method.
-              <br/><br/>
+              <br /><br />
               This is a long-running asynchronous process, allowing you to continue working on other tables.
               Once the task is completed, you will receive a notification via a pop-up in the bottom-left corner of the screen.
             </Typography>
@@ -779,7 +737,7 @@ const chapters: Chapter[] = [
                 }}
               />
               icon of a cell.
-              <br/><br/>
+              <br /><br />
               Choose the knowledege source prefix you want to use, fill in the required fields, and
               add the entity. You can then persist this match across the table by clicking the <ButtonText> Confirm and
               Propagate </ButtonText> button.
@@ -795,7 +753,7 @@ const chapters: Chapter[] = [
             <Typography component="div">
               Simply click on the <ButtonText> Automatic Annotation </ButtonText> button in the Toolbar.
               Then, choose "Schema" as target and "Column Classifier" as method.
-              <br/><br/>
+              <br /><br />
               This process automatically identifies the <b> Kind </b> of the column (e.g., whether it contains entities
               or literal values) and assigns a <b> NER Classification </b> based on the cell values:
               <List>
@@ -926,7 +884,7 @@ const chapters: Chapter[] = [
             <Typography component="div">
               Once reconciliation is completed, you can review, correct and validate the results by inspecting the
               metadata associated with each cell.
-              <br/><br/>
+              <br /><br />
               Click the
               <SettingsEthernetRoundedIcon
                 sx={{
@@ -936,16 +894,16 @@ const chapters: Chapter[] = [
               />
               icon to open the metadata view for a selected cell. Here, you can compare different candidates by viewing
               their types and select the correct entity from the list.
-              <br/><br/>
+              <br /><br />
               If the correct entity is not among the candidates, you can search for it directly in the reference
               knowledge graph. Select the appropriate <i>prefix</i>, find the entity on the external provider's site,
               then copy and paste its URL into the dedicated field. After filling in the required metadata, click
               <ButtonText>Add</ButtonText>.
-              <br/><br/>
-              You can then persist this match across the table by clicking the <ButtonText> Confirm and
-              Propagate </ButtonText> button.
+              <br /><br />
+              You can then persist this match across the table by clicking the <ButtonText> Confirm and Propagate </ButtonText>
+              button.
             </Typography>
-            <Img src={entityMatchingRevision}/>
+            <Img src={entityMatchingRevision} />
           </Stack>
         ),
       },
@@ -1071,8 +1029,7 @@ const flatPages: FlatPage[] = chapters.flatMap((ch, ci) =>
     label: p.label,
     hiddenInIndex: p.hiddenInIndex,
     Description: p.Description,
-  })),
-).map((p, idx) => ({ ...p, step: idx + 1 }));
+  }))).map((p, idx) => ({ ...p, step: idx + 1 }));
 
 // Tutorial Index component to display all tutorial sections
 const TutorialIndex: FC<{
@@ -1250,21 +1207,21 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
   const tutorialStep = useAppSelector(selectTutorialStep);
   const discoverStep = useAppSelector(selectDiscoverStep);
 
-  const handleStart = (value: boolean | "tutorial" | "rec" | "ext") => {
+  const handleStart = (value: boolean | "tutorial" | "discover") => {
     dispatch(setHelpStart(value));
   };
 
   useEffect(() => {
     // If a specific tutorial step is set (greater than 1),
     // automatically start the tutorial
-    if (tutorialStep && tutorialStep > 1) {
-      handleStart("tutorial");
-    } else if (discoverStep && discoverStep > 1) {
+    if (discoverStep && discoverStep > 1) {
       handleStart("discover");
+    } else if (tutorialStep && tutorialStep > 1) {
+      handleStart("tutorial");
     } else {
-      handleStart(false); // welcome
+      handleStart(false);
     }
-  }, [tutorialStep, discoverStep, dispatch]);
+  }, [tutorialStep, discoverStep]);
 
   const handleOnClose = (
     event: {},
