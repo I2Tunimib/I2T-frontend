@@ -10,6 +10,7 @@ const initialState: IConfigState = {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] },
     modifiers: { byId: {}, allIds: [] },
+    complianceServices: { byId: {}, allIds: [] },
   },
   _requests: { byId: {}, allIds: [] },
 };
@@ -28,6 +29,7 @@ export const configSlice = createSliceWithRequests({
         payload.reconciliators || payload.reconcilers || payload.services || [];
       const extenders = payload.extenders || payload.extensions || [];
       const modifiers = payload.modifiers || payload.extensions || [];
+      const complianceServices = payload.complianceServices || [];
 
       // Process reconciliators if they exist and are an array
       if (Array.isArray(reconciliators)) {
@@ -59,6 +61,15 @@ export const configSlice = createSliceWithRequests({
         });
       } else {
         console.warn("Config slice - modifiers not found or not an array");
+      }
+
+      if (Array.isArray(complianceServices)) {
+        complianceServices.forEach((service) => {
+          state.entities.complianceServices.byId[service.id] = service;
+          state.entities.complianceServices.allIds.push(service.id);
+        });
+      } else {
+        console.warn("Config slice - compliance services not found or not an array");
       }
     }),
 });

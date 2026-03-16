@@ -69,7 +69,6 @@ import {
   selectSelectedColumnIdsAsArray,
   selectReconciliationCells,
 } from "@store/slices/table/table.selectors";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
   automaticAnnotation,
   filterTable,
@@ -77,7 +76,19 @@ import {
   reconcile,
   modify,
 } from "@store/slices/table/table.thunk";
+import {
+  selectExtendersAsArray,
+  selectReconciliatorsAsArray,
+  selectModifiersAsArray,
+  selectAppConfig,
+} from "@store/slices/config/config.selectors";
+import {
+  Extender,
+  Reconciliator,
+  Modifier,
+} from "@store/slices/config/interfaces/config";
 import { TableUIState } from "@store/slices/table/interfaces/table";
+import { useSnackbar } from "notistack";
 import { useParams } from "react-router-dom";
 import { Tag } from "@components/core/TaggedSearch/TagSelect";
 import styles from "./SubToolbar.module.scss";
@@ -87,19 +98,7 @@ import ExtensionDialog from "../ExtensionDialog";
 import MetadataColumnDialog from "../MetadataColumnDialog/MetadataColumnDialog";
 import RefineMatchingDialog from "../RefineMatching/RefineMatchingDialog";
 import ModifyDialog from "../ModifyDialog/ModifyDialog";
-import {
-  selectExtendersAsArray,
-  selectReconciliatorsAsArray,
-  selectModifiersAsArray,
-} from "@store/slices/config/config.selectors";
-import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import GroupServiceDialog from "../GroupServiceDialog/GroupServiceDialog";
-import {
-  Extender,
-  Reconciliator,
-  Modifier,
-} from "@store/slices/config/interfaces/config";
-import { useSnackbar } from "notistack";
 
 const tags = [
   {
@@ -550,19 +549,22 @@ const SubToolbar = ({
             {/* Group buttons for mixed services */}
             {groupNames.map((groupName) => (
               <Tooltip
-                key={groupName}
-                title={`Open services in group: ${groupName}`}
+                title={
+                  !isCellSelected
+                    ? "Select a column to enable Gen AI services"
+                    : "Use a Gen AI service to the selected column(s)"
+                }
                 arrow
               >
                 <span>
                   <Button
-                    sx={{ textTransform: "none", marginLeft: "8px" }}
+                    sx={{ textTransform: "none" }}
                     variant="outlined"
                     onClick={() => {
                       setActiveGroup(groupName);
                       setOpenGroupDialog(true);
                     }}
-                    disabled={isViewOnly}
+                    disabled={isViewOnly || !isCellSelected}
                   >
                     {groupName}
                   </Button>

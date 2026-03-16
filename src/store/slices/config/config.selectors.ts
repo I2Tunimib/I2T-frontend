@@ -14,6 +14,9 @@ export const selectExtenders = (state: RootState) =>
 // select modifiers
 export const selectModifiers = (state: RootState) =>
   state.config.entities.modifiers;
+// select compliance services
+export const selectComplianceServices = (state: RootState) =>
+  state.config.entities.complianceServices;
 // select requests
 export const selectRequests = (state: RootState) => state.config._requests;
 export const selectStoreConfig = (state: RootState) => state.config;
@@ -64,6 +67,12 @@ export const selectModifiersAsArray = createSelector(
       .sort((a, b) => a.name.localeCompare(b.name))
 );
 
+export const selectComplianceAsArray = createSelector(
+  selectComplianceServices,
+  (complianceServices) =>
+    complianceServices.allIds
+      .map((id) => complianceServices.byId[id])
+);
 // Loading selectors
 export const selectGetConfigRequest = createSelector(
   selectRequests,

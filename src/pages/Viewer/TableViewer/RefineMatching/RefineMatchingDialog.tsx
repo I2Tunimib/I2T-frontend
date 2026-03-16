@@ -57,7 +57,13 @@ const RefineMatchingDialog: FC<RefineMatchingProps> = ({
   };
 
   const handleHelpClick = () => {
-    dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 16 }));
+    dispatch(
+      updateUI({
+        openHelpDialog: true,
+        helpStart: "tutorial",
+        tutorialStep: 20
+      })
+    );
     handleClose();
   };
 
