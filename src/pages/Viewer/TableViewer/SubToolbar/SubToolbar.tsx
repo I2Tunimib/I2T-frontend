@@ -92,12 +92,17 @@ import { useSnackbar } from "notistack";
 import { useParams } from "react-router-dom";
 import { Tag } from "@components/core/TaggedSearch/TagSelect";
 import styles from "./SubToolbar.module.scss";
-import ReconciliateDialog from "../ReconciliationDialog";
 import MetadataDialog from "../MetadataDialog";
-import ExtensionDialog from "../ExtensionDialog";
+import UnifiedDialog from "../UnifiedDialog/UnifiedDialog";
 import MetadataColumnDialog from "../MetadataColumnDialog/MetadataColumnDialog";
 import RefineMatchingDialog from "../RefineMatching/RefineMatchingDialog";
-import ModifyDialog from "../ModifyDialog/ModifyDialog";
+// import ModifyDialog from "../ModifyDialog/ModifyDialog";
+import {
+  selectExtendersAsArray,
+  selectReconciliatorsAsArray,
+  selectModifiersAsArray,
+} from "@store/slices/config/config.selectors";
+import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import GroupServiceDialog from "../GroupServiceDialog/GroupServiceDialog";
 
 const tags = [
@@ -626,7 +631,8 @@ const SubToolbar = ({
         </Stack>
       </ToolbarActions>
       {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}
-      <ReconciliateDialog
+      <UnifiedDialog
+        mode="reconcile"
         open={openReconciliationDialog}
         handleClose={() => handleExtensionClose("openReconciliateDialog")}
       />
@@ -634,11 +640,13 @@ const SubToolbar = ({
         open={openMetadataColumnDialog}
         onClose={() => handleExtensionClose("openMetadataColumnDialog")}
       />
-      <ExtensionDialog
+      <UnifiedDialog
+        mode="extend"
         open={openExtensionDialog}
         handleClose={() => handleExtensionClose("openExtensionDialog")}
       />
-      <ModifyDialog
+      <UnifiedDialog
+        mode="modify"
         open={openModificationDialog}
         handleClose={() => handleExtensionClose("openModificationDialog")}
       />
