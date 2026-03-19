@@ -25,7 +25,8 @@ const InlineInput: FC<InlineInputProps> = ({
   onClick,
   onBlur,
   onChange,
-  disabled = false
+  disabled = false,
+  ...rest
 }) => (
   <div className={styles.Container}>
     <span className={styles.Text}>
@@ -45,6 +46,7 @@ const InlineInput: FC<InlineInputProps> = ({
       autoCorrect="off"
       spellCheck="false"
       disabled={disabled}
+      {...rest}
     />
   </div>
 );

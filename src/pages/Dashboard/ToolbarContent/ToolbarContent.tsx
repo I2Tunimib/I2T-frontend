@@ -98,6 +98,7 @@ const ToolbarContent: FC<any> = () => {
       )}
 
       <IconButton
+        aria-label="help"
         sx={{
           color: '#FFF'
         }}
@@ -105,7 +106,7 @@ const ToolbarContent: FC<any> = () => {
         <HelpOutlineRoundedIcon />
       </IconButton>
       {auth.loggedIn && auth.user && (
-        <UserAvatar>
+        <UserAvatar aria-label="user-menu">
           {auth.user.username.slice(0, 2).toUpperCase()}
         </UserAvatar>
       )}

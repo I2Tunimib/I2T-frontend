@@ -113,6 +113,7 @@ const UploadDataset = () => {
       >
         Add dataset
         <IconButton
+          aria-label="help-dataset"
           onClick={() => dispatch(updateUI({ helpDialogOpen: true }))}
           size="small"
           sx={{ ml: 1 }}
