@@ -38,7 +38,6 @@ const NormalCell: FC<NormalCellProps> = ({
   expanded,
 }) => {
   const dispatch = useAppDispatch();
-  const isViewOnly = useAppSelector(selectIsViewOnly);
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
