@@ -286,6 +286,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
         <DialogTitle>Modification</DialogTitle>
         <Stack direction="row" alignItems="flex-end">
           <IconButton
+            aria-label="open-modification-tutorial"
             sx={{
               color: "rgba(0, 0, 0, 0.54)",
             }}
@@ -302,6 +303,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
             <HelpOutlineRounded />
           </IconButton>
           <IconButton
+            aria-label="close"
             sx={{
               color: "rgba(0, 0, 0, 0.54)",
               marginRight: "20px",
@@ -319,6 +321,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
             Select a transformation function to modify with:
           </DialogContentText>
           <IconButton
+            aria-label="open-modification-discover"
             size="small"
             onClick={() => {
               dispatch(

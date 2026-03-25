@@ -406,18 +406,21 @@ const SubToolbar = ({
         <ActionGroup>
           <IconButtonTooltip
             ref={ref}
+            aria-label="undo"
             tooltipText="Undo"
             Icon={UndoRoundedIcon}
             disabled={!canUndo}
             onClick={() => dispatch(undo())}
           />
           <IconButtonTooltip
+            aria-label="redo"
             tooltipText="Redo"
             Icon={RedoRoundedIcon}
             disabled={!canRedo}
             onClick={() => dispatch(redo())}
           />
           <IconButtonTooltip
+            aria-label="delete-selected"
             tooltipText="Delete selected"
             Icon={DeleteOutlineRoundedIcon}
             disabled={!canDelete}
@@ -426,6 +429,7 @@ const SubToolbar = ({
         </ActionGroup>
         <ActionGroup>
           <IconButtonTooltip
+            aria-label="open-metadata-dialog-subtoolbar"
             tooltipText="Manage metadata"
             Icon={SettingsEthernetRoundedIcon}
             disabled={!isMetadataButtonEnabled}
@@ -433,6 +437,7 @@ const SubToolbar = ({
           />
           {API.ENDPOINTS.SAVE && !isViewOnly && (
             <IconButtonTooltip
+              aria-label="open-refinement-dialog"
               tooltipText="Refine matching"
               Icon={PlaylistAddCheckRoundedIcon}
               disabled={!isAutoMatchingEnabled}
@@ -440,12 +445,14 @@ const SubToolbar = ({
             />
           )}
           <IconButtonTooltip
+            aria-label="expand-cell"
             tooltipText="Expand cell"
             Icon={ArrowRightAltRoundedIcon}
             disabled={!isACellSelected}
             onClick={() => dispatch(updateSelectedCellExpanded({}))}
           />
           <IconButtonTooltip
+            aria-label='expand-header'
             tooltipText="Expand header"
             Icon={UnfoldMoreRoundedIcon}
             onClick={() =>
@@ -455,6 +462,7 @@ const SubToolbar = ({
         </ActionGroup>
         <ActionGroup>
           <IconButtonTooltip
+            aria-label={isDenseView ? "accessible-view" : "dense-view"}
             tooltipText={isDenseView ? "Accessible view" : "Dense view"}
             Icon={isDenseView ? ViewStreamRoundedIcon : ReorderRoundedIcon}
             onClick={() => dispatch(updateUI({ denseView: !isDenseView }))}
@@ -583,6 +591,7 @@ const SubToolbar = ({
             />
           )}
           <IconButtonTooltip
+            aria-label="visibility-column"
             tooltipText="Show/hide columns"
             Icon={VisibilityIcon}
             onClick={handleColumnsMenuClick}
@@ -601,6 +610,7 @@ const SubToolbar = ({
             />
           </Menu>
           <IconButtonTooltip
+            aria-label="filter-rows"
             tooltipText="Filter rows"
             Icon={FilterAltOutlinedIcon}
             onClick={handleFilterButtonClick}

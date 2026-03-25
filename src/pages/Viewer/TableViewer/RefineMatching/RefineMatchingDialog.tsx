@@ -93,6 +93,7 @@ const RefineMatchingDialog: FC<RefineMatchingProps> = ({
           </Tabs>
           <Tooltip title="Help">
             <IconButton
+              aria-label="open-refinement-tutorial"
               sx={{
                 color: "rgba(0, 0, 0, 0.54)",
                 marginRight: "8px",

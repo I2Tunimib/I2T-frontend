@@ -226,6 +226,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       >
         <DialogTitle>Export</DialogTitle>
         <IconButton
+          aria-label="open-export-tutorial"
           sx={{
             color: "rgba(0, 0, 0, 0.54)",
             marginRight: "20px",

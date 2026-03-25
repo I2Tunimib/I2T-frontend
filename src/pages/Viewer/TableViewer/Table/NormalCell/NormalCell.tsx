@@ -123,10 +123,11 @@ const NormalCell: FC<NormalCellProps> = ({
         })}
       >
         {value && value.annotationMeta && value.annotationMeta.annotated && (
-          <StatusBadge status={getBadgeStatus(value)} />
+          <StatusBadge aria-label={`status-${getBadgeStatus(value)}`} status={getBadgeStatus(value)} />
         )}
         <div className={styles.TextLabel}>{getLabel()}</div>
         <IconButton
+          aria-label="open-metadata-dialog"
           onClick={() => dispatch(
             updateUI({
               openMetadataDialog: true,

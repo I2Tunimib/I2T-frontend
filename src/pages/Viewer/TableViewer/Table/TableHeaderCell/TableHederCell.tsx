@@ -32,6 +32,7 @@ const getKind = (kind: string) => {
   if (kind === "entity") {
     return (
       <ButtonShortcut
+        aria-label="kind-entity"
         text="E"
         tooltipText="Named Entity"
         size="xs"
@@ -43,6 +44,7 @@ const getKind = (kind: string) => {
   if (kind === "literal") {
     return (
       <ButtonShortcut
+        aria-label="kind-literal"
         text="L"
         tooltipText="Literal"
         size="xs"
@@ -357,6 +359,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   arrow
                 >
                   <IconButton
+                    aria-label={header.column.getIsPinned() ? 'unpin-column' : 'pin-column'}
                     onClick={(e) => {
                       e.stopPropagation();
                       const isAlreadySelected = !!selected;
@@ -400,6 +403,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   <div className={styles.Row}>
                     {shouldShowBadge() && (
                       <StatusBadge
+                        aria-label={`status-${getBadgeStatus(columnData)}`}
                         status={getBadgeStatus(columnData)}
                         size="small"
                         marginRight="5px"
@@ -427,6 +431,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
+                          aria-label="sort-alphabetical"
                           onClick={(e) => {
                             e.stopPropagation();
                             const isAlreadySelected = !!selected;
@@ -461,6 +466,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
+                          aria-label="sort-score"
                           onClick={(e) => {
                             e.stopPropagation();
                             const isAlreadySelected = !!selected;
@@ -496,6 +502,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     {columnData.kind && getKind(columnData.kind)}
                     {columnData.role && (
                       <ButtonShortcut
+                        aria-label="role-subject"
                         className={styles.SubjectLabel}
                         tooltipText={capitalize(columnData.role)}
                         text={columnData.role[0].toUpperCase()}
@@ -526,6 +533,7 @@ Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
                               sx={{ display: "inline-flex" }}
                             >
                               <ButtonShortcut
+                                aria-label="compliance-badge"
                                 text={
                                   complianceInfo.action === "noChange"
                                     ? "C"

@@ -862,6 +862,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
               </>
             )}
             <IconButtonTooltip
+              aria-label="open-metadata-tutorial"
               tooltipText="Help"
               onClick={() =>
                 dispatch(

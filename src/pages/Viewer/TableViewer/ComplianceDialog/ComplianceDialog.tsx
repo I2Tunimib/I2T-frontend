@@ -45,6 +45,7 @@ const ComplianceDialog: FC = () => {
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Compliance Check</DialogTitle>
         <IconButton
+          aria-label="open-compliance-tutorial"
           sx={{
             color: "rgba(0, 0, 0, 0.54)",
             marginRight: "20px",
@@ -68,6 +69,7 @@ const ComplianceDialog: FC = () => {
             Select the type of compliance check you want to perform:
           </DialogContentText>
           <IconButton
+            aria-label="open-compliance-discover"
             size="small"
             onClick={() => {
               dispatch(
