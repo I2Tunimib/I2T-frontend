@@ -45,6 +45,7 @@ import { selectAppConfig } from "@store/slices/config/config.selectors";
 //import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 //import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import { AssignmentTurnedInOutlined } from "@mui/icons-material";
 import { IconButtonTooltip } from "@components/core";
 import UserAvatar from "@components/kit/UserAvatar";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
@@ -55,7 +56,6 @@ import ExportDialog from "../TableViewer/ExportDialog";
 import AutoAnnotationDialog from "../TableViewer/AutoAnnotationDialog";
 import SettingsDialog from "../SettingsDialog/SettingsDialog";
 import HelpDialog from "../HelpDialog/HelpDialog";
-import { AssignmentTurnedInOutlined } from "@mui/icons-material";
 import ComplianceDialog from "../TableViewer/ComplianceDialog";
 
 interface MenuState extends Record<string, boolean> {}
@@ -187,6 +187,7 @@ const Toolbar = () => {
         <div className={styles.ColumnMenu}>
           <div className={clsx(styles.RowMenu)}>
             <InlineInput
+              aria-label="Table name"
               onClick={onInputClick}
               onBlur={onBlurTableName}
               onChange={onChangeTableName}

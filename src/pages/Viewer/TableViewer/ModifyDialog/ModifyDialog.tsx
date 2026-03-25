@@ -283,7 +283,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
   return (
     <Dialog open={open} TransitionComponent={Transition} onClose={handleClose}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <DialogTitle>Modify</DialogTitle>
+        <DialogTitle>Modification</DialogTitle>
         <Stack direction="row" alignItems="flex-end">
           <IconButton
             sx={{

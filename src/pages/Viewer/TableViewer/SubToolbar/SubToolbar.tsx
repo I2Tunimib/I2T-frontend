@@ -554,6 +554,7 @@ const SubToolbar = ({
             {/* Group buttons for mixed services */}
             {groupNames.map((groupName) => (
               <Tooltip
+                key={groupName}
                 title={
                   !isCellSelected
                     ? "Select a column to enable Gen AI services"

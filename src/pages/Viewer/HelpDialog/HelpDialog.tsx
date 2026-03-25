@@ -377,7 +377,7 @@ const chapters: Chapter[] = [
                     sx={{ cursor: "pointer" }}
                     onClick={() => goToByLabel("Reconciliation", "Schema Annotation", goTo)}
                   >
-                    <b>5.4 Schema Annotation</b>
+                    <b>5.5 Schema Annotation</b>
                   </Link>
                   {" "}of this tutorial.
                 </li>
