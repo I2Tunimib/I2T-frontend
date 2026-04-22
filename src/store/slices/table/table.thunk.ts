@@ -451,7 +451,7 @@ const getRequestFormValuesExtension = (
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
-      if (inputType === "selectColumns") {
+      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else if (inputType === "multipleColumnSelect") {
         requestParams[id] = {};
@@ -482,7 +482,7 @@ const getRequestFormValuesReconciliation = (
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
-      if (inputType === "selectColumns") {
+      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else if (inputType === "multipleColumnSelect") {
         requestParams[id] = {};
@@ -539,7 +539,7 @@ const getRequestFormValuesModification = (
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
-      if (inputType === "selectColumns") {
+      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else if (inputType === "multipleColumnSelect") {
         requestParams[id] = {};

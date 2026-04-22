@@ -120,10 +120,26 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
   },
 );
 
+export type SelectColumnAllProps = Omit<SelectProps, "options">;
+
+/**
+ * Select component where the options are all the columns of the table
+ */
+export const SelectColumnAll = forwardRef<
+  HTMLInputElement,
+  SelectColumnAllProps & { selectedColumns?: string[]; options?: Option[] }
+>((props, ref) => {
+  const { options: propOptions } = props;
+  const defaultOptions = useAppSelector(selectColumnsAsSelectOptions);
+  const options = propOptions || defaultOptions;
+  return (
+    <Select ref={ref} options={options} {...props} />
+  );
+});
 export type SelectColumnProps = Omit<SelectProps, "options">;
 
 /**
- * Select component where the options are the columns of the table
+ * Select component where the options are the columns of the table, except the selected one
  */
 export const SelectColumns = forwardRef<
   HTMLInputElement,
