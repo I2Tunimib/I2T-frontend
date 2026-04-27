@@ -626,6 +626,7 @@ type AutomaticAnnotationThunkInputProps = {
   tableId: string;
   target: "fullTable" | "schema";
   method: "alligator" | "columnClassifier";
+  useLLM?: boolean;
 };
 
 type AutomaticAnnotationThunkOutputProps = {
@@ -639,17 +640,21 @@ export const automaticAnnotation = createAsyncThunk<
   AutomaticAnnotationThunkOutputProps,
   AutomaticAnnotationThunkInputProps
 >(`${ACTION_PREFIX}/automaticAnnotation`, async (params, { getState }) => {
-  const { datasetId, tableId, target, method } = params;
+  const { datasetId, tableId, target, method, useLLM } = params;
   const { table } = getState() as any;
   const { entities } = table;
   const data = {
     target,
     method,
+    ...(useLLM !== undefined && { useLLM }),
     rows: entities.rows.byId,
     columns: entities.columns.byId,
     table: entities.tableInstance,
   };
-  const response = await tableAPI.automaticAnnotation(params, data);
+  const response = await tableAPI.automaticAnnotation(
+    { datasetId, tableId, target, method },
+    data,
+  );
   return response.data;
 });
 export type TableComplianceThunkInputProps = {
