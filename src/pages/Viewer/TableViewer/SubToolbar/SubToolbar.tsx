@@ -76,12 +76,7 @@ import {
   reconcile,
   modify,
 } from "@store/slices/table/table.thunk";
-import {
-  selectExtendersAsArray,
-  selectReconciliatorsAsArray,
-  selectModifiersAsArray,
-  selectAppConfig,
-} from "@store/slices/config/config.selectors";
+import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
   Extender,
   Reconciliator,
