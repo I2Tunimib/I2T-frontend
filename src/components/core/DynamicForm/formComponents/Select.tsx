@@ -181,6 +181,9 @@ export const SelectPrefix = forwardRef<HTMLInputElement, SelectPrefixProps>(
         if (context === "propertyTab") {
           return key === "wd";
         }
+        if (context === "typeTab") {
+          return key === "wd" || key === "geo";
+        }
         return true;
       })
       .map((key) => ({

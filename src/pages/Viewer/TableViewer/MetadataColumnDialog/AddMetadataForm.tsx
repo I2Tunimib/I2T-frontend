@@ -72,7 +72,14 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
         return url.pathname.split("/").pop()?.split(":").pop() || "";
       }
       if (prefix.startsWith("geo")) {
-        if (prefix.startsWith("geo")) {
+        if (prefix === "geoCoord" || prefix === "georss") {
+          if (url.hash.includes("#map=")) {
+            const mapPart = url.hash.split("#map=")[1];
+            const [zoom, lat, lon] = mapPart.split("/");
+            return `${lat},${lon}`;
+          }
+          return "";
+        } else {
           const parts = url.pathname.split("/").filter(Boolean);
           return parts[0] || "";
         }
@@ -89,6 +96,11 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
         let id = "";
         if (watchedUri.startsWith("https") && watchedPrefix) {
           id = extractIdFromUri(watchedUri, watchedPrefix);
+        } else if (watchedPrefix && (watchedPrefix === "geoCoord" || watchedPrefix === "georss")) {
+          id = watchedUri
+            .trim()
+            .replace(/\s+/g, "")
+            .replace("/", ",");
         } else {
           id = watchedUri;
         }

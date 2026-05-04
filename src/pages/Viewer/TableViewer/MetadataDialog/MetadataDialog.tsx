@@ -549,50 +549,60 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       // Prioritize known providers (Wikidata, Geonames, GeoCoord) first,
       // then fall back to generic extraction (fragment, last path segment, query).
       try {
-        const url = new URL(formState.uri);
-        console.log("url", url);
-
-        // SPECIAL CASES FIRST
-        if (prefix && prefix.startsWith("wd")) {
-          // Wikidata typical URL: https://www.wikidata.org/wiki/Q123
-          // prefer the last non-empty path segment or fragment
-          idFromUri =
-            url.pathname.split("/").filter(Boolean).pop() ||
-            url.hash.replace(/^#/, "") ||
-            "";
-        } else if (prefix === "geo") {
-          // Geonames: https://www.geonames.org/3117735/madrid.html -> id is 3117735
-          const parts = url.pathname.split("/").filter(Boolean);
-          idFromUri =
-            parts[0] ||
-            parts[parts.length - 1] ||
-            url.hash.replace(/^#/, "") ||
-            "";
-        } else if (prefix === "geoCoord") {
-          // Coordinates (e.g., Google Maps): take last path segment and keep comma-separated coords
-          const last = url.pathname.split("/@").filter(Boolean).pop() || "";
-          const parts = last.split(",");
-          idFromUri = parts.join(",") || url.hash.replace(/^#/, "");
+        if (!formState.uri.startsWith("https")) {
+          if (formState.prefix === "geoCoord" || formState.prefix === "georss") {
+            idFromUri = formState.uri
+              .trim()
+              .replace(/\s+/g, "")
+              .replace("/", ",");
+          }
         } else {
-          // GENERIC FALLBACK
-          // Prefer fragment (#id), otherwise last non-empty path segment,
-          // otherwise last query param value, otherwise pathname trimmed.
-          if (url.hash && url.hash.length > 1) {
-            idFromUri = url.hash.slice(1);
+          const url = new URL(formState.uri);
+          console.log("url", url);
+
+          // SPECIAL CASES FIRST
+          if (prefix && prefix.startsWith("wd")) {
+            // Wikidata typical URL: https://www.wikidata.org/wiki/Q123
+            // prefer the last non-empty path segment or fragment
+            idFromUri =
+              url.pathname.split("/").filter(Boolean).pop() ||
+              url.hash.replace(/^#/, "") ||
+              "";
+          } else if (prefix === "geo") {
+            // Geonames: https://www.geonames.org/3117735/madrid.html -> id is 3117735
+            const parts = url.pathname.split("/").filter(Boolean);
+            idFromUri =
+              parts[0] ||
+              parts[parts.length - 1] ||
+              url.hash.replace(/^#/, "") ||
+              "";
+          } else if (prefix === "geoCoord" || prefix === "georss") {
+            // Coordinates (OpenStreetMaps): take last path segment and keep comma-separated coords
+            if (url.hash.includes("#map=")) {
+              const mapPart = url.hash.split("#map=")[1];
+              const [, lat, lon] = mapPart.split("/");
+              idFromUri = `${lat},${lon}`;
+            }
           } else {
-            const pathParts = url.pathname.split("/").filter(Boolean);
-            if (pathParts.length > 0) {
-              idFromUri = pathParts[pathParts.length - 1];
+            // GENERIC FALLBACK
+            // Prefer fragment (#id), otherwise last non-empty path segment,
+            // otherwise last query param value, otherwise pathname trimmed.
+            if (url.hash && url.hash.length > 1) {
+              idFromUri = url.hash.slice(1);
             } else {
-              const params = new URLSearchParams(url.search);
-              const lastKey = Array.from(params.keys()).pop();
-              idFromUri = lastKey
-                ? params.get(lastKey) || ""
-                : url.pathname.replace(/^\/+|\/+$/g, "");
+              const pathParts = url.pathname.split("/").filter(Boolean);
+              if (pathParts.length > 0) {
+                idFromUri = pathParts[pathParts.length - 1];
+              } else {
+                const params = new URLSearchParams(url.search);
+                const lastKey = Array.from(params.keys()).pop();
+                idFromUri = lastKey
+                  ? params.get(lastKey) || ""
+                  : url.pathname.replace(/^\/+|\/+$/g, "");
+              }
             }
           }
         }
-
         // If still empty, combine pathname/search/hash as a last resort
         if (!idFromUri) {
           idFromUri = (

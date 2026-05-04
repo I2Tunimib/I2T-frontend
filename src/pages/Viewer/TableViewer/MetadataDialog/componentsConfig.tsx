@@ -27,8 +27,14 @@ export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
         // Example: "wd:Q183"
         finalHref = `https://www.wikidata.org/wiki/${uri}`;
       } else if (uri.includes(',')) {
-        // Example: "geoCoords:lat,log" or "geoors:lat,log"
-        finalHref = `https://www.google.com/maps/place/${uri}`;
+        const osmCoords = uri.replace(',', '/');
+        // Example: "geoCoords:lat,lon" or "geoors:lat,lon"
+        const zoom = 12;
+        finalHref = `https://www.openstreetmap.org/search?query=${displayValue}#map=${zoom}/${osmCoords}`;
+      } else if (uri.includes('/')) {
+        // When uri provided is "lat/lon"
+        const zoom = 12;
+        finalHref = `https://www.openstreetmap.org/search?query=${displayValue}#map=${zoom}/${uri}`;
       } else {
         // Example: "geo:2921044"
         finalHref = `https://www.geonames.org/${uri}`;

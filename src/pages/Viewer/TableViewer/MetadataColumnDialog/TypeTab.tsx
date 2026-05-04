@@ -162,6 +162,13 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   );
   const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
   const currentService = rawData?.service?.prefix || "";
+  const [selectedPrefix, setSelectedPrefix] = useState<string>(currentService || "");
+
+  useEffect(() => {
+    if (currentService) {
+      setSelectedPrefix(currentService);
+    }
+  }, [currentService]);
 
   const {
     handleSubmit: handleSubmitNewType,
@@ -325,28 +332,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
       const prefix = formState?.prefix;
       //console.log("onSubmitNewMetadata prefix", prefix);
       let idFromUri = "";
-      let constructedUri: string | null = null;
 
-      // If prefix indicates geoCoord and the user provided plain coordinates (lat,lon),
-      // convert them to a Google Maps URL automatically.
-      // Only trigger this when the string is NOT an http(s) URL and matches a lat,long pattern.
-      const coordPattern = /^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/;
-      const isHttp = /^https?:\/\//i.test(formState.uri);
-      const sanitizedPrefixCheck = prefix
-        ? String(prefix).replace(/:+$/, "")
-        : "";
-      if (
-        sanitizedPrefixCheck === "geoCoord" &&
-        !isHttp &&
-        coordPattern.test(formState.uri)
-      ) {
-        const coords = formState.uri.trim().replace(/\s+/g, "");
-        // Use Google Maps search query for coordinates
-        constructedUri = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          coords,
-        )}`;
-        idFromUri = coords;
-      } else {
         // Robust extraction strategy:
         // 1) Try to parse as URL and prefer fragment (#id) if present.
         // 2) Otherwise use the last non-empty path segment.
@@ -385,15 +371,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
               parts[0] === undefined
                 ? ""
                 : parts[0] || parts[parts.length - 1] || "";
-          } else if (
-            (!idFromUri || idFromUri === "") &&
-            prefix === "geoCoord"
-          ) {
-            // e.g. https://www.google.com/maps/place/lat,long
-            const parts =
-              url.pathname.split("/").filter(Boolean).pop()?.split(",") || [];
-            idFromUri = parts.join(",");
-            // Also, if it looks like a google maps coordinates URL, we can keep the original URL
           }
 
           // If still empty, try to extract something from the query params (last value)
@@ -462,7 +439,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           ];
         });
       }
-    }
   };
 
   const handleRowTypeCheck = (row: any) => {
@@ -581,28 +557,33 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 
-  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+  const servicesByPrefix = (reconciliators || []).reduce<Record<string, any>>(
     (acc, service) => {
-      acc[service.prefix] = service;
+      if (service?.prefix) {
+        const cleanPrefix = service.prefix.replace(/:$/, "");
+        acc[cleanPrefix] = service;
+      }
       return acc;
     },
     {},
   );
-
-  const handleTypesInService = () => {
-    if (!rawData?.column?.id || !currentService) return;
-    const serviceInfo = servicesByPrefix[currentService];
-    let url = "";
-    if (serviceInfo?.searchTypesPattern) {
-      url = serviceInfo.searchTypesPattern.replace(
-        "{label}",
-        encodeURIComponent(rawData.column.id),
-      );
-    } else if (serviceInfo?.listTypes) {
-      url = serviceInfo.listTypes;
-    } else return;
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
+const handleTypesInService = () => {
+  const serviceInfo = servicesByPrefix[selectedPrefix.replace(/:$/, "")];
+  if (!serviceInfo) {
+    console.error("No service info found for prefix:", selectedPrefix);
+    return;
+  }
+  let url = "";
+  if (serviceInfo?.searchTypesPattern) {
+    url = serviceInfo.searchTypesPattern.replace(
+      "{label}",
+      encodeURIComponent(rawData.column.id),
+    );
+  } else if (serviceInfo?.listTypes) {
+    url = serviceInfo.listTypes;
+  } else return;
+  window.open(url, "_blank", "noopener,noreferrer");
+};
 
   return types ? (
     <Stack position="sticky" top="0" zIndex={10} bgcolor="#FFF">
@@ -647,24 +628,24 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                 </Button>
               </Tooltip>
               {showAdd ? (
-                !!currentService ? (
-                  servicesByPrefix[currentService]?.searchTypesPattern ? (
+                !!selectedPrefix ? (
+                  servicesByPrefix[selectedPrefix]?.searchTypesPattern ? (
                     <Button
                       variant="outlined"
                       color="primary"
                       onClick={handleTypesInService}
                       sx={{ textTransform: "none" }}
                     >
-                      Search in {KG_INFO[currentService].groupName}
+                      Search "{rawData?.column?.id}" in {KG_INFO[selectedPrefix].groupName}
                     </Button>
-                  ) : servicesByPrefix[currentService]?.listTypes ? (
+                  ) : servicesByPrefix[selectedPrefix]?.listTypes ? (
                     <Button
                       variant="outlined"
                       color="primary"
                       onClick={handleTypesInService}
                       sx={{ textTransform: "none" }}
                     >
-                      View list of {KG_INFO[currentService].groupName} types
+                      View list of {KG_INFO[selectedPrefix].groupName} types
                     </Button>
                   ) : null
                 ) : (
@@ -695,6 +676,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                   currentService={currentService}
                   onSubmit={onSubmitNewMetadata}
                   context="typeTab"
+                  onPrefixChange={setSelectedPrefix}
                 />
               </Box>
             )}

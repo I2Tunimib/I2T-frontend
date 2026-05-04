@@ -519,13 +519,32 @@ const getMetadata = (cell: Cell, cellContext: Context) => {
     return [];
   }
 
-  const metadata = cell.metadata.map((item) => ({
-    ...item,
-    url:
-      cellContext !== undefined
-        ? `${cellContext.uri}${item.id.split(":")[1]}`
-        : null,
-  }));
+  const metadata = cell.metadata.map((item) => {
+    const base = cellContext?.uri;
+    const metaId = item.id.split(":")[1];
+
+    let url = null;
+
+    if (base) {
+      if (base.includes("openstreetmap")) {
+        const [lat, lon] = metaId.split(",");
+        const zoom = 12;
+        if (item.name?.value.includes(",")) {
+          url = `${base}?mlat=${lat}&mlon=${lon}`;
+        } else {
+          const label = encodeURIComponent(item.name?.value);
+          url = `${base}search?query=${label}#map=${zoom}/${lat}/${lon}`;
+        }
+      } else {
+        url = `${base}${metaId}`;
+      }
+    }
+
+    return {
+      ...item,
+      url,
+    };
+  });
 
   if (cell.annotationMeta && !cell.annotationMeta.match) {
     return metadata;
