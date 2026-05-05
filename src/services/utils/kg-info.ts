@@ -44,7 +44,7 @@ export const KG_INFO: Record<string, KGInfoEntry> = {
     uri: "https://atoka.io/public/en/company/-/",
   },
   maps: {
-    uri: "http://www.google.com/maps/place/",
+    uri: "https://www.openstreetmap.org/search?query={label}#map={zoom}/{osmCoords}",
     groupName: "Geo Coordinates",
   },
   atokaPeople: {

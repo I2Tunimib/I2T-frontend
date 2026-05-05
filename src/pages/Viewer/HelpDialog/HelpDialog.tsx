@@ -638,9 +638,21 @@ const chapters: Chapter[] = [
                   <b>Sort by match score</b> to prioritize cells with fully reconciled entities or unmatched ones.
                 </li>
               </List>
-              Column headers also show the data <b> kind </b>, whether they contains entities or literal values, the
-              <b> Reconciliation service </b> name, and the status indicating whether they were fully, partially,
-              or not reconciled.
+              Column headers also show the following data:
+              <List>
+                <li>
+                  <b>Kind</b>, whether they contains entities or literal values.
+                </li>
+                <li>
+                  <b>Reconciliation service </b> name.
+                </li>
+                <li>
+                  <b>Reconciliation status</b>, indicating whether they were fully, partially, or not reconciled.
+                </li>
+                <li>
+                  <b>Compliance check status</b>, indicating whether the column is compliance against privacy standars or legal regulations.
+                </li>
+              </List>
             </Typography>
           </Stack>
         ),

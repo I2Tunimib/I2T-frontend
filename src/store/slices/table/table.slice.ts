@@ -2200,10 +2200,24 @@ export const tableSlice = createSliceWithRequests({
                       name: {
                         value: name as unknown as string,
                         //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                        uri: buildURI(
-                          effectiveReconciliator.uri || rest.uri,
-                          metaId,
-                        ),
+                        uri: (() => {
+                          const base = effectiveReconciliator.uri || rest.uri;
+                          if (base.includes("openstreetmap")) {
+                            const osmCoords = metaId.replace(',', '/');
+                            const zoom = 12;
+                            let finalUri = "";
+                            if (name.includes(",")) {
+                              const [lat, lon] = osmCoords.split('/');
+                              finalUri = `${base}?mlat=${lat}&mlon=${lon}`;
+                            } else {
+                              const label = encodeURIComponent(name);
+                              finalUri = `${base}search?query=${label}#map=${zoom}/${osmCoords}`;
+                            }
+                            return finalUri;
+                          } else {
+                            return buildURI(base, metaId);
+                          }
+                        })(),
                       },
                       ...rest,
                     };
@@ -2244,10 +2258,24 @@ export const tableSlice = createSliceWithRequests({
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(
-                              effectiveReconciliator.uri || rest.uri,
-                              metaId,
-                            ),
+                            uri: (() => {
+                              const base = effectiveReconciliator.uri || rest.uri;
+                              if (base.includes("openstreetmap")) {
+                                const osmCoords = metaId.replace(',', '/');
+                                const zoom = 12;
+                                let finalUri = "";
+                                if (name.includes(",")) {
+                                  const [lat, lon] = osmCoords.split('/');
+                                  finalUri = `${base}?mlat=${lat}&mlon=${lon}`;
+                                } else {
+                                  const label = encodeURIComponent(name);
+                                  finalUri = `${base}search?query=${label}#map=${zoom}/${osmCoords}`;
+                                }
+                                return finalUri;
+                              } else {
+                                return buildURI(base, metaId);
+                              }
+                            })(),
                           },
                           ...rest,
                         };
@@ -2313,11 +2341,24 @@ export const tableSlice = createSliceWithRequests({
                           id,
                           name: {
                             value: name as unknown as string,
-                            //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(
-                              effectiveReconciliator.uri || rest.uri,
-                              metaId,
-                            ),
+                            uri: (() => {
+                              const base = effectiveReconciliator.uri || rest.uri;
+                              if (base.includes("openstreetmap")) {
+                                const osmCoords = metaId.replace(',', '/');
+                                const zoom = 12;
+                                let finalUri = "";
+                                if (name.includes(",")) {
+                                  const [lat, lon] = osmCoords.split('/');
+                                  finalUri = `${base}?mlat=${lat}&mlon=${lon}`;
+                                } else {
+                                  const label = encodeURIComponent(name);
+                                  finalUri = `${base}search?query=${label}#map=${zoom}/${osmCoords}`;
+                                }
+                                return finalUri;
+                              } else {
+                                return buildURI(base, metaId);
+                              }
+                            })(),
                           },
                           ...rest,
                         };
