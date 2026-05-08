@@ -2655,7 +2655,13 @@ export const tableSlice = createSliceWithRequests({
                   // add rows
 
                   draft.entities.rows.allIds.forEach((rowId) => {
+                    const oldCell = draft.entities.rows.byId[rowId].cells[newColId];
+                    const incomingCellData = cells[rowId];
                     const newCell = createCell(rowId, newColId, cells[rowId]);
+                    if (oldCell) {
+                      newCell.metadata = oldCell.metadata;
+                      newCell.annotationMeta = oldCell.annotationMeta;
+                    }
                     if (newCell.metadata.length === 0) {
                       newCell.annotationMeta = {
                         annotated: false,
