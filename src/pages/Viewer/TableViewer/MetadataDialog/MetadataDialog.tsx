@@ -55,6 +55,7 @@ import {
   IconButtonTooltip,
 } from "@components/core";
 import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
+import { extractIdFromUri, resolveURI, createOSMURI } from "@services/utils/uri-utils";
 //import { initial } from "lodash";
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
@@ -533,145 +534,77 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       console.warn("Cannot add metadata: cell is invalid");
       return;
     }
-    if (cell) {
-      let tempPrefix = getCellContext(cell);
+    const { prefix, uri, name } = formState;
+    const cleanPrefix = prefix.replace(/:$/, "");
+    // Extract id from URI for type and description fetching
+    let idFromUri = extractIdFromUri(uri, cleanPrefix);
+    let finalUri = uri;
+    let extraOsmData = { osmId: "", osmType: "" };
+    const reconciliator = reconciliators.find(
+      (recon) => recon.prefix === cleanPrefix,
+    );
 
-      console.log(
-        "prefix",
-        getCellContext(cell) !== ""
-          ? getCellContext(cell)
-          : cell.id.split(":")[0],
-      );
-      const { prefix } = formState;
-      // Extract prefix and id from URI for type and description fetching
-      let idFromUri = "";
-
-      // Prioritize known providers (Wikidata, Geonames, GeoCoord) first,
-      // then fall back to generic extraction (fragment, last path segment, query).
+    if (cleanPrefix === "geoCoord" || cleanPrefix === "georss") {
       try {
-        if (!formState.uri.startsWith("https")) {
-          if (formState.prefix === "geoCoord" || formState.prefix === "georss") {
-            idFromUri = formState.uri
-              .trim()
-              .replace(/\s+/g, "")
-              .replace("/", ",");
+        const base = import.meta.env.VITE_BACKEND_API_URL;
+        const response = await fetch(`${base}/metadata/osm?id=${encodeURIComponent(idFromUri)}`);
+        if (response.ok) {
+          const osmData = await response.json();
+          if (osmData.lat && osmData.lon) {
+            idFromUri = `${osmData.lat},${osmData.lon}`;
           }
-        } else {
-          const url = new URL(formState.uri);
-          console.log("url", url);
-
-          // SPECIAL CASES FIRST
-          if (prefix && prefix.startsWith("wd")) {
-            // Wikidata typical URL: https://www.wikidata.org/wiki/Q123
-            // prefer the last non-empty path segment or fragment
-            idFromUri =
-              url.pathname.split("/").filter(Boolean).pop() ||
-              url.hash.replace(/^#/, "") ||
-              "";
-          } else if (prefix === "geo") {
-            // Geonames: https://www.geonames.org/3117735/madrid.html -> id is 3117735
-            const parts = url.pathname.split("/").filter(Boolean);
-            idFromUri =
-              parts[0] ||
-              parts[parts.length - 1] ||
-              url.hash.replace(/^#/, "") ||
-              "";
-          } else if (prefix === "geoCoord" || prefix === "georss") {
-            // Coordinates (OpenStreetMaps): take last path segment and keep comma-separated coords
-            if (url.hash.includes("#map=")) {
-              const mapPart = url.hash.split("#map=")[1];
-              const [, lat, lon] = mapPart.split("/");
-              idFromUri = `${lat},${lon}`;
-            }
-          } else {
-            // GENERIC FALLBACK
-            // Prefer fragment (#id), otherwise last non-empty path segment,
-            // otherwise last query param value, otherwise pathname trimmed.
-            if (url.hash && url.hash.length > 1) {
-              idFromUri = url.hash.slice(1);
-            } else {
-              const pathParts = url.pathname.split("/").filter(Boolean);
-              if (pathParts.length > 0) {
-                idFromUri = pathParts[pathParts.length - 1];
-              } else {
-                const params = new URLSearchParams(url.search);
-                const lastKey = Array.from(params.keys()).pop();
-                idFromUri = lastKey
-                  ? params.get(lastKey) || ""
-                  : url.pathname.replace(/^\/+|\/+$/g, "");
-              }
-            }
+          if (osmData.osmType && osmData.osmId) {
+            extraOsmData = {
+              osmId: String(osmData.osmId),
+              osmType: osmData.osmType
+            };
+            finalUri = createOSMURI(reconciliator.uri, extraOsmData);
           }
         }
-        // If still empty, combine pathname/search/hash as a last resort
-        if (!idFromUri) {
-          idFromUri = (
-            url.pathname +
-            (url.search || "") +
-            (url.hash || "")
-          ).replace(/^\/+/, "");
-        }
       } catch (err) {
-        // Not a valid URL - fallback heuristics on the raw string
-        console.warn("Invalid URI, fallback to extracting last token", err);
-        const trimmed = formState.uri.trim();
-        if (trimmed.includes("#")) {
-          idFromUri = trimmed.split("#").pop() || trimmed;
-        } else {
-          const parts = trimmed.split("/").filter(Boolean);
-          idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
-        }
+        console.warn("OSM Proxy failed", err);
       }
-
-      // Normalize prefix (remove any trailing colon) before composing final id.
-      const sanitizedPrefix = prefix ? String(prefix).replace(/:+$/, "") : "";
-      const finalId = idFromUri.includes(":")
-        ? idFromUri
-        : sanitizedPrefix
-          ? `${sanitizedPrefix}:${idFromUri}`
-          : idFromUri;
-
-      let description = "";
-      let type: any[] = [];
-      try {
-        const context = "cell";
-        const result = await fetchTypeAndDescription(
-          prefix,
-          idFromUri,
-          formState.name,
-          context,
-        );
-        description = result.description || "";
-        type = result.type || [];
-      } catch (err) {
-        console.error("Error fetching metadata info:", err);
-      }
-
-      const newMetadata = {
-        ...formState,
-        id: finalId,
-        description,
-        type,
-      };
-
-      dispatch(
-        addCellMetadata({
-          cellId: cell.id,
-          prefix: tempPrefix,
-          value: newMetadata,
-        }),
-      );
-
-      setSelectedMetadata(newMetadata);
-      if (formState.match === "true") {
-        setShowPropagate(true);
-      }
-
-      reset();
-      setNewMetaMatching(formState.match === "true");
-      setShowAdd(false);
-      setToUpdate(!toUpdate);
+    } else {
+      finalUri = resolveURI(reconciliator, { id: idFromUri });
     }
+
+    let description = "";
+    let type: any[] = [];
+
+    try {
+      const result = await fetchTypeAndDescription(cleanPrefix, idFromUri, name);
+      description = result.description || "";
+      type = result.type || [];
+    } catch (err) {
+      console.error("Error fetching metadata info:", err);
+    }
+
+    const finalId = `${cleanPrefix}:${idFromUri}`;
+
+    const newMetadata = {
+      ...formState,
+      id: finalId,
+      uri: finalUri,
+      description,
+      type,
+      ...extraOsmData
+    };
+
+    dispatch(addCellMetadata({
+      cellId: cell.id,
+      prefix: getCellContext(cell) || cleanPrefix,
+      value: newMetadata,
+    }));
+
+    setSelectedMetadata(newMetadata);
+    if (formState.match === "true") {
+      setShowPropagate(true);
+    }
+
+    reset();
+    setNewMetaMatching(formState.match === "true");
+    setShowAdd(false);
+    setToUpdate(!toUpdate);
   };
 
   const handleTooltipOpen = () => {

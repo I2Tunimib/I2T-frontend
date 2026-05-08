@@ -18,35 +18,9 @@ export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
         : cellValue.value
       : cellValue;
 
-  const uri = cellValue?.uri;
-  let finalHref = "#";
+  const finalHref = cellValue?.uri || "";
 
-  if (uri && typeof uri === 'string') {
-    if (!uri.startsWith('http')) {
-      if (uri.startsWith('Q')) {
-        // Example: "wd:Q183"
-        finalHref = `https://www.wikidata.org/wiki/${uri}`;
-      } else if (uri.includes(',')) {
-        const osmCoords = uri.replace(',', '/');
-        // Example: "geoCoords:lat,lon" or "geoors:lat,lon"
-        const zoom = 12;
-        finalHref = `https://www.openstreetmap.org/search?query=${displayValue}#map=${zoom}/${osmCoords}`;
-      } else if (uri.includes('/')) {
-        // When uri provided is "lat/lon"
-        const zoom = 12;
-        finalHref = `https://www.openstreetmap.org/search?query=${displayValue}#map=${zoom}/${uri}`;
-      } else {
-        // Example: "geo:2921044"
-        finalHref = `https://www.geonames.org/${uri}`;
-      }
-    } else {
-      finalHref = uri;
-    }
-  }
-
-  console.log("cell uri", uri, "displayValue", displayValue);
-
-  if (!uri) {
+  if (!finalHref) {
     // If the URI is empty, render plain text instead of a clickable link
     return (
       <Typography variant="body2" color="textSecondary">

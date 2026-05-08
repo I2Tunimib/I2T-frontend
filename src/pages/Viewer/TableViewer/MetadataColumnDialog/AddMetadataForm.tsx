@@ -17,6 +17,7 @@ import {
 } from "@components/core/DynamicForm/formComponents/Select";
 import { Controller, useForm } from "react-hook-form";
 import { fetchTypeAndDescription } from "@services/utils/kg-info";
+import { extractIdFromUri } from "@services/utils/uri-utils";
 
 export interface AddMetadataFormProps {
   onPrefixChange?: (prefix: string) => void;
@@ -65,59 +66,36 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
 
   console.log("AddMetadataForm currentService", currentService);
 
-  const extractIdFromUri = (uri: string, prefix: string) => {
-    try {
-      const url = new URL(uri);
-      if (prefix.startsWith("wd")) {
-        return url.pathname.split("/").pop()?.split(":").pop() || "";
-      }
-      if (prefix.startsWith("geo")) {
-        if (prefix === "geoCoord" || prefix === "georss") {
-          if (url.hash.includes("#map=")) {
-            const mapPart = url.hash.split("#map=")[1];
-            const [zoom, lat, lon] = mapPart.split("/");
-            return `${lat},${lon}`;
-          }
-          return "";
-        } else {
-          const parts = url.pathname.split("/").filter(Boolean);
-          return parts[0] || "";
-        }
-      }
-      return url.pathname.split("/").filter(Boolean).pop() || "";
-    } catch (e) {
-      return "";
-    }
-  };
-
   useEffect(() => {
     const fetchNameFromUri = async () => {
-      if (watchedUri) {
-        let id = "";
-        if (watchedUri.startsWith("https") && watchedPrefix) {
-          id = extractIdFromUri(watchedUri, watchedPrefix);
-        } else if (watchedPrefix && (watchedPrefix === "geoCoord" || watchedPrefix === "georss")) {
-          id = watchedUri
-            .trim()
-            .replace(/\s+/g, "")
-            .replace("/", ",");
-        } else {
-          id = watchedUri;
-        }
-        if (id) {
-          try {
-            setIsFetchingName(true);
-            const result = await fetchTypeAndDescription(watchedPrefix.replace(/:$/, ""), id, "");
-            console.log("result", result);
-
-            if (result && result.name) {
-              setValue("name", result.name);
+      if (!watchedUri || !watchedPrefix) return;
+      const cleanPrefix = watchedPrefix.replace(/:$/, "");
+      const id = extractIdFromUri(watchedUri, cleanPrefix);
+      if (id) {
+        try {
+          setIsFetchingName(true);
+          let result;
+          if (cleanPrefix === "geoCoord" || cleanPrefix === "georss") {
+            const base = import.meta.env.VITE_BACKEND_API_URL;
+            const response = await fetch(`${base}/metadata/osm?id=${encodeURIComponent(id)}`);
+            if (response.ok) {
+              result = await response.json();
             }
-          } catch (err) {
-            console.error("Errore nel recupero automatico del nome:", err);
-          } finally {
-            setIsFetchingName(false);
+          } else {
+            result = await fetchTypeAndDescription(cleanPrefix, id, "");
           }
+
+          if (result && result.name) {
+            setValue("name", result.name);
+            if (result.osmId && result.osmType) {
+              setValue("osmId", result.osmId);
+              setValue("osmType", result.osmType);
+            }
+          }
+        } catch (err) {
+          console.error("Error in fetching name:", err);
+        } finally {
+          setIsFetchingName(false);
         }
       }
     };

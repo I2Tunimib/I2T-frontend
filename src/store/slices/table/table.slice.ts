@@ -6,7 +6,7 @@ import tableAPI, {
 } from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
-import { buildURI } from "@services/utils/uri-utils";
+import { resolveURI } from "@services/utils/uri-utils";
 //import { RootState, store } from "@store";
 import { createSliceWithRequests } from "@store/enhancers/requests";
 import {
@@ -2194,30 +2194,18 @@ export const tableSlice = createSliceWithRequests({
                   );
                   cell.metadata = metadata.map(({ id, name, ...rest }) => {
                     const [_, metaId] = id.split(":");
+                    const computedUri = resolveURI(effectiveReconciliator, {
+                      id: metaId,
+                      label: name,
+                      ...rest
+                    });
                     console.log("rest of the item", rest);
                     return {
                       id,
                       name: {
                         value: name as unknown as string,
                         //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                        uri: (() => {
-                          const base = effectiveReconciliator.uri || rest.uri;
-                          if (base.includes("openstreetmap")) {
-                            const osmCoords = metaId.replace(',', '/');
-                            const zoom = 12;
-                            let finalUri = "";
-                            if (name.includes(",")) {
-                              const [lat, lon] = osmCoords.split('/');
-                              finalUri = `${base}?mlat=${lat}&mlon=${lon}`;
-                            } else {
-                              const label = encodeURIComponent(name);
-                              finalUri = `${base}search?query=${label}#map=${zoom}/${osmCoords}`;
-                            }
-                            return finalUri;
-                          } else {
-                            return buildURI(base, metaId);
-                          }
-                        })(),
+                        uri: computedUri,
                       },
                       ...rest,
                     };
@@ -2253,29 +2241,17 @@ export const tableSlice = createSliceWithRequests({
                     column.metadata[0].entity = metadata.map(
                       ({ id, name, ...rest }) => {
                         const [_, metaId] = id.split(":");
+                        const computedUri = resolveURI(effectiveReconciliator, {
+                          id: metaId,
+                          label: name,
+                          ...rest
+                        });
                         return {
                           id,
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: (() => {
-                              const base = effectiveReconciliator.uri || rest.uri;
-                              if (base.includes("openstreetmap")) {
-                                const osmCoords = metaId.replace(',', '/');
-                                const zoom = 12;
-                                let finalUri = "";
-                                if (name.includes(",")) {
-                                  const [lat, lon] = osmCoords.split('/');
-                                  finalUri = `${base}?mlat=${lat}&mlon=${lon}`;
-                                } else {
-                                  const label = encodeURIComponent(name);
-                                  finalUri = `${base}search?query=${label}#map=${zoom}/${osmCoords}`;
-                                }
-                                return finalUri;
-                              } else {
-                                return buildURI(base, metaId);
-                              }
-                            })(),
+                            uri: computedUri,
                           },
                           ...rest,
                         };
@@ -2337,30 +2313,18 @@ export const tableSlice = createSliceWithRequests({
                       }),
                       entity: metadata.map(({ id, name, ...rest }) => {
                         const [_, metaId] = id.split(":");
+                        const computedUri = resolveURI(effectiveReconciliator, {
+                          id: metaId,
+                          label: name,
+                          ...rest
+                        });
                         return {
                           id,
                           name: {
                             value: name as unknown as string,
-                            uri: (() => {
-                              const base = effectiveReconciliator.uri || rest.uri;
-                              if (base.includes("openstreetmap")) {
-                                const osmCoords = metaId.replace(',', '/');
-                                const zoom = 12;
-                                let finalUri = "";
-                                if (name.includes(",")) {
-                                  const [lat, lon] = osmCoords.split('/');
-                                  finalUri = `${base}?mlat=${lat}&mlon=${lon}`;
-                                } else {
-                                  const label = encodeURIComponent(name);
-                                  finalUri = `${base}search?query=${label}#map=${zoom}/${osmCoords}`;
-                                }
-                                return finalUri;
-                              } else {
-                                return buildURI(base, metaId);
-                              }
-                            })(),
-                          },
-                          ...rest,
+                            uri: computedUri,
+                            ...rest,
+                          }
                         };
                       }),
                     };

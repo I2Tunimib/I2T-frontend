@@ -3,6 +3,7 @@ import { floor } from "@services/utils/math";
 import { RootState } from "@store";
 import { getRequestStatus } from "@store/enhancers/requests";
 import { ID } from "@store/interfaces/store";
+import { resolveURI } from "@services/utils/uri-utils";
 import {
   selectAppConfig,
   selectReconciliators,
@@ -523,22 +524,10 @@ const getMetadata = (cell: Cell, cellContext: Context) => {
     const base = cellContext?.uri;
     const metaId = item.id.split(":")[1];
 
-    let url = null;
-
-    if (base) {
-      if (base.includes("openstreetmap")) {
-        const [lat, lon] = metaId.split(",");
-        const zoom = 12;
-        if (item.name?.value.includes(",")) {
-          url = `${base}?mlat=${lat}&mlon=${lon}`;
-        } else {
-          const label = encodeURIComponent(item.name?.value);
-          url = `${base}search?query=${label}#map=${zoom}/${lat}/${lon}`;
-        }
-      } else {
-        url = `${base}${metaId}`;
-      }
-    }
+    const url = resolveURI(cellContext, {
+      id: metaId,
+      ...item,
+    });
 
     return {
       ...item,
