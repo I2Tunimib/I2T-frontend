@@ -226,8 +226,8 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
-  const hasColumnClassifier = !!column?.kind && !!column?.nerClassification;
-  const getPropertyInfo = (kind?: string, nerClassification?: string) => {
+  const hasColumnClassifier = !!column?.kind && !!column?.datatype;
+  const getPropertyInfo = (kind?: string, datatype?: string) => {
     const baseUrl = "https://www.wikidata.org/wiki/Special:ListProperties";
 
     if (kind === "entity") {
@@ -237,7 +237,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
       };
     }
     if (kind === "literal") {
-      switch (nerClassification) {
+      switch (datatype) {
         case "DATE":
           return {
             url: `${baseUrl}/time`,
@@ -265,7 +265,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
       label: "Wikidata",
     };
   };
-  const propertyInfo = getPropertyInfo(column?.kind, column?.nerClassification);
+  const propertyInfo = getPropertyInfo(column?.kind, column?.datatype);
 
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
@@ -602,7 +602,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
                       title={
                         hasColumnClassifier
                           ? `List filtered using the Column Classifier schema annotation result (Kind: ${column?.kind}
-                        - Classification: ${column?.nerClassification}).`
+                        - ${column?.kind === "literal" ? "Datatype:" : "Semantic Class:"} ${column?.datatype}).`
                           : ""
                       }
                       placement="right"

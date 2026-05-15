@@ -801,6 +801,17 @@ export const selectColumnKind = createSelector(
     return columnsState.byId[colId]?.kind;
   },
 );
+export const selectColumnDatatype = createSelector(
+  selectSelectedColumnCellsIds,
+  selectMetadataColumnDialogColId,
+  selectRowsState,
+  selectColumnsState,
+  (selectedColumnCells, dialogColId, rowsState, columnsState) => {
+    const colIds = Object.keys(selectedColumnCells);
+    const colId = dialogColId ?? colIds[0];
+    return columnsState.byId[colId]?.datatype;
+  },
+);
 export const selecteSelectedColumnId = createSelector(
   selectSelectedColumnCellsIds,
   selectRowsState,
@@ -841,7 +852,7 @@ export const selectColumnTypes = createSelector(
         metadata.forEach((metaItem) => {
           if (metaItem.type && metaItem.match) {
             console.log("metaItem", metaItem);
-            metaItem.type.forEach(({ id, name }) => {
+            metaItem.type.forEach(({ id, name, uri }) => {
               console.log("name in forEach", name);
               if (acc[id]) {
                 acc[id] = {
@@ -852,6 +863,7 @@ export const selectColumnTypes = createSelector(
                 acc[id] = {
                   id,
                   label: name as any,
+                  uri,
                   count: 1,
                   match: metaItem.match,
                 };
@@ -899,6 +911,7 @@ export const selectColumnTypes = createSelector(
               map[currentColType[i].id] = {
                 id: currentColType[i].id,
                 label: currentColType[i].name as any,
+                uri: currentColType[i].uri,
                 match: currentColType[i].match,
                 count: 0,
               };
@@ -940,6 +953,7 @@ export const selectColumnTypes = createSelector(
           const t = {
             id: type.id,
             label: type.name,
+            uri: type.uri,
             count: 0,
             percentage: "0.00",
             match: !!type.match,

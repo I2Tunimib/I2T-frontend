@@ -9,13 +9,16 @@ import {
   Stack,
   Tab,
   Tabs,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { FC, ReactNode, SyntheticEvent, useState } from "react";
+import { FC, ReactNode, SyntheticEvent, useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { selectAppConfig, selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
 import {
+  selectCurrentCol,
   selectColumnKind,
+  selectColumnDatatype,
   selectColumnRole,
   selectIsViewOnly,
   selectMetadataColumnDialogColId,
@@ -23,6 +26,7 @@ import {
 } from "@store/slices/table/table.selectors";
 import {
   updateColumnKind,
+  updateColumnDatatype,
   updateColumnRole,
   updateUI,
 } from "@store/slices/table/table.slice";
@@ -69,11 +73,14 @@ const Content = () => {
   const { API } = useAppSelector(selectAppConfig);
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const kind = useAppSelector(selectColumnKind);
+  const datatype = useAppSelector(selectColumnDatatype);
   const currentColId = useAppSelector(selectMetadataColumnDialogColId);
   const [currentKind, setCurrentKind] = useState(kind);
+  const [currentDatatype, setCurrentDatatype] = useState(datatype || "none");
   const role = useAppSelector(selectColumnRole);
   const [currentRole, setCurrentRole] = useState(role);
   const metadata = useAppSelector(selectColumnCellMetadataTableFormat);
+  const column = useAppSelector(selectCurrentCol);
   const currentService = metadata?.column?.reconciler || null;
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const dispatch = useAppDispatch();
@@ -156,10 +163,20 @@ const Content = () => {
     }
   };
   const handleKindChange = (event: SelectChangeEvent<string>) => {
-    setCurrentKind(event.target.value);
+    const newKind = event.target.value;
+    if (newKind === currentKind) return;
+    setCurrentKind(newKind);
     const edit = updateColumnKind({
       colId: currentColId,
-      kind: event.target.value,
+      kind: newKind,
+    });
+    handleAddEdit(edit, true, true);
+  };
+  const handleDatatypeChange = (event: SelectChangeEvent<string>) => {
+    setCurrentDatatype(event.target.value);
+    const edit = updateColumnDatatype({
+      colId: currentColId,
+      datatype: event.target.value,
     });
     handleAddEdit(edit, true, true);
   };
@@ -180,6 +197,34 @@ const Content = () => {
       dispatch(updateUI({ openMetadataColumnDialog: false }));
     }
   };
+
+  const entityDatatypes = ["PERSON", "PLACE", "ORGANIZATION", "EVENT", "OTHER"];
+  const literalDatatypes = ["DATE", "NUMBER", "STRING"];
+  const OTHER_TOOLTIP = "Includes: Work of Art, Product, Law, Language, Facilities (FAC), and Nationalities/Groups (NORP).";
+
+  useEffect(() => {
+    if (currentDatatype === "none") return;
+    const isDatatypeInvalid =
+      (currentKind === "entity" && !entityDatatypes.includes(currentDatatype.toLowerCase())) ||
+      (currentKind === "literal" && !literalDatatypes.includes(currentDatatype.toLowerCase()));
+    if (isDatatypeInvalid) {
+      setCurrentDatatype("none");
+      const editDatatype = updateColumnDatatype({
+        colId: currentColId,
+        datatype: "none",
+      });
+      handleAddEdit(editDatatype, true, true);
+    }
+  }, [currentKind, currentDatatype, currentColId]);
+
+  useEffect(() => {
+    if (column) {
+      setCurrentKind(prev => (prev === "none" || !prev) ? (column.kind || "none") : prev);
+      setCurrentDatatype(prev => (prev === "none" || !prev) ? (column.datatype || "none") : prev);
+      setCurrentRole(prev => (prev === "none" || !prev) ? (column.role || "none") : prev);
+    }
+  }, [column]);
+
   return (
     <Stack>
       <Stack direction="row" alignItems="center" marginTop="16px" gap="8px">
@@ -191,11 +236,11 @@ const Content = () => {
           </InputLabel>
         </Stack>
         <InputLabel style={{ marginLeft: 16 }} id="kind-select-label">
-          Column Kind:
+          Kind:
         </InputLabel>
         <Select
           labelId="kind-select-label"
-          value={currentKind}
+          value={currentKind ?? "none"}
           onChange={handleKindChange}
           variant="outlined"
           size="small"
@@ -204,8 +249,53 @@ const Content = () => {
           <MenuItem value="literal">Literal</MenuItem>
           <MenuItem value="none">Undefined</MenuItem>
         </Select>
+        <InputLabel style={{ marginLeft: 8 }} id="datatype-select-label">
+          {(currentKind === "literal" || currentKind === "none") ? "Datatype:" : "Semantic Class:"}
+        </InputLabel>
+        <Tooltip
+          title={currentKind === "none" ? "Please first define column kind" : ""}
+          arrow
+        >
+          <span>
+            <Select
+              labelId="datatype-select-label"
+              value={currentDatatype}
+              onChange={handleDatatypeChange}
+              variant="outlined"
+              size="small"
+              disabled={currentKind === "none"}
+              displayEmpty
+              renderValue={(selected) => {
+                if (selected === "none" || !selected) return "Undefined";
+                const labelText = (selected as string).toUpperCase();
+                if (selected === "other") {
+                  return (
+                    <Tooltip title={OTHER_TOOLTIP} placement="bottom" arrow>
+                      <span style={{ display: 'block', width: '100%', minWidth: '60px' }}>
+                        {labelText}
+                      </span>
+                    </Tooltip>
+                  );
+                }
+                return labelText;
+              }}
+            >
+              {(currentKind === "entity" ? entityDatatypes : literalDatatypes).map((datatype) => (
+                <MenuItem key={datatype} value={datatype} >
+                  {datatype === "other" ? (
+                    <Tooltip title={OTHER_TOOLTIP} placement="right" arrow>
+                      <span style={{ width: '100%', display: 'block' }}>{datatype}</span>
+                    </Tooltip>
+                  ) : (
+                    datatype
+                  )}
+                </MenuItem>
+              ))}
+            </Select>
+          </span>
+        </Tooltip>
         <InputLabel style={{ marginLeft: 8 }} id="role-select-label">
-          Column Role:
+          Role:
         </InputLabel>
 
         <Select
@@ -283,7 +373,11 @@ const Content = () => {
           </Stack>
         </Stack>
         <TabPanel value={value} index={0}>
-          <TypeTab addEdit={handleAddEdit} />
+          <TypeTab
+            addEdit={handleAddEdit}
+            currentKind={currentKind}
+            currentDatatype={currentDatatype}
+          />
         </TabPanel>
         <TabPanel value={value} index={1}>
           <PropertyTab addEdit={handleAddEdit} setCurrentRole={setCurrentRole} />

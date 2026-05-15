@@ -117,6 +117,7 @@ export interface Column {
   metadata: ColumnMetadata[];
   kind?: string;
   role?: string;
+  datatype?: string;
   reconciler?: string;
 }
 /**

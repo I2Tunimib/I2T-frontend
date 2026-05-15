@@ -43,7 +43,7 @@ const ButtonShortcut: FC<ButtonShortcutProps> = ({
         ? { background: "#fde0e3", color: "#9b0f15" }
         : undefined;
   return (
-    <Tooltip title={tooltipText ?? ""} placement="top">
+    <Tooltip title={tooltipText ?? ""} placement="bottom">
       <div
         className={clsx(
           styles.Container,

@@ -1,3 +1,5 @@
+import axios from "axios";
+
 type KGInfoEntry = {
   uri: string;
   groupName?: string;
@@ -137,5 +139,47 @@ export async function fetchTypeAndDescription(
   } catch (err) {
     console.error("fetchTypeAndDescription frontend error:", err);
     return { name: "", description: "", type: [] };
+  }
+}
+
+export async function searchQudtUnits(searchTerm, limit = 20) {
+  if (!searchTerm) return [];
+  const qudtEndpoint = import.meta.env.VITE_QUDT_SPARQL_ENDPOINT;
+
+  const query = `
+    PREFIX qudt: <http://qudt.org/schema/qudt/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    
+    SELECT DISTINCT ?unit ?label WHERE {
+      ?unit a qudt:Unit .
+      ?unit rdfs:label ?label .
+      FILTER(lang(?label) = "en")
+      FILTER(CONTAINS(LCASE(STR(?label)), LCASE("${searchTerm}")))
+    }
+    ORDER BY ASC(STRLEN(STR(?label)))
+    LIMIT ${limit}
+  `;
+
+  try {
+    const response = await axios.get(qudtEndpoint, {
+      params: { query, format: "json" },
+      timeout: 10000
+    });
+
+    return response.data.results.bindings.map((b) => {
+      const fullUri = b.unit.value;
+      const parts = fullUri.split('/');
+      const id = parts.pop();
+      const prefix = parts.pop();
+
+      return {
+        id: `${prefix}:${id}`,
+        label: b.label.value,
+        uri: fullUri
+      };
+    });
+  } catch (error) {
+    console.error("QUDT Unit Search error:", error);
+    return [];
   }
 }

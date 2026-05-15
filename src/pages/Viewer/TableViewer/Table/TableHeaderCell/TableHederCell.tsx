@@ -28,13 +28,14 @@ import { sortFunctions } from "../Table/sort/sortFns";
 
 const SortButton = styled(IconButton)({});
 
-const getKind = (kind: string) => {
+const getKind = (kind: string, datatype?: string) => {
+  const datatypeSuffix = datatype && datatype !== "none" ? ` (${datatype})` : "";
   if (kind === "entity") {
     return (
       <ButtonShortcut
         aria-label="kind-entity"
         text="E"
-        tooltipText="Named Entity"
+        tooltipText={`Named Entity${datatypeSuffix}`}
         size="xs"
         variant="flat"
         color="blue"
@@ -46,7 +47,7 @@ const getKind = (kind: string) => {
       <ButtonShortcut
         aria-label="kind-literal"
         text="L"
-        tooltipText="Literal"
+        tooltipText={`Literal${datatypeSuffix}`}
         size="xs"
         variant="flat"
         color="green"
@@ -499,7 +500,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         </SortButton>
                       </Tooltip>
                     </Stack>
-                    {columnData.kind && getKind(columnData.kind)}
+                    {columnData.kind && getKind(columnData.kind, columnData?.datatype)}
                     {columnData.role && (
                       <ButtonShortcut
                         aria-label="role-subject"

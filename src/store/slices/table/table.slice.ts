@@ -299,9 +299,9 @@ export const tableSlice = createSliceWithRequests({
           id: cleanId,
           label: col.label?.replace(/^\uFEFF/, "").trim() ?? cleanId,
           kind: result.kind_classification[cleanId] ?? col.kind ?? "unknown",
-          nerClassification:
+          datatype:
             result.ner_classification[cleanId] ??
-            col.nerClassification ??
+            col.datatype ??
             "unknown",
         };
       });
@@ -1153,6 +1153,25 @@ export const tableSlice = createSliceWithRequests({
         },
         (draft) => {
           // do not include in undo history
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        },
+      );
+    },
+    updateColumnDatatype: (
+      state,
+      action: PayloadAction<Payload<{ colId: ID; datatype: string }>>,
+    ) => {
+      const { colId, datatype } = action.payload;
+      const column = getColumn(state, colId);
+      return produceWithPatch(
+        state,
+        true,
+        (draft) => {
+          const columnToUpdate = getColumn(draft, colId);
+          draft.entities.columns.byId[colId].datatype = datatype;
+        },
+        (draft) => {
           draft.entities.tableInstance.lastModifiedDate =
             new Date().toISOString();
         },
@@ -2713,6 +2732,7 @@ export const {
   autoMatching,
   refineMatching,
   updateColumnKind,
+  updateColumnDatatype,
   updateColumnRole,
   updateColumnSelection,
   updateRowSelection,

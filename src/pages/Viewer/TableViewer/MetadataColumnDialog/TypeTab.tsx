@@ -1,9 +1,11 @@
 import styled from "@emotion/styled";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
+  Autocomplete,
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   IconButton,
@@ -13,7 +15,8 @@ import {
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import { KG_INFO, fetchTypeAndDescription, searchQudtUnits } from "@services/utils/kg-info";
 import { createWikidataURI } from "@services/utils/uri-utils";
 import {
   selectAppConfig,
@@ -144,6 +147,8 @@ interface TypeTabProps {
   // function used to pass to the main component the
   // actions to do in order to persist the modifications
   addEdit: Function;
+  currentKind?: string;
+  currentDatatype?: string;
 }
 
 interface NewMetadata {
@@ -151,7 +156,7 @@ interface NewMetadata {
   name: string;
   uri?: string;
 }
-const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
+const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) => {
   const [selected, setSelected] = useState<SelectedTypeState[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
@@ -163,6 +168,12 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
   const currentService = rawData?.service?.prefix || "";
   const [selectedPrefix, setSelectedPrefix] = useState<string>(currentService || "");
+  const [unitOptions, setUnitOptions] = useState<{id: string, label: string, uri: string}[]>([]);
+  const [unitInputValue, setUnitInputValue] = useState("");
+  const [isSearchingUnit, setIsSearchingUnit] = useState(false);
+  const [localAddedTypes, setLocalAddedTypes] = useState<any[]>([]);
+  const kind = currentKind;
+  const datatype = currentDatatype;
 
   useEffect(() => {
     if (currentService) {
@@ -240,11 +251,14 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     const allColumnTypes = [
       ...(types.allTypes || []),
       ...(column.metadata[0]?.additionalTypes || []),
+      ...localAddedTypes,
     ];
 
     const uniqueTypesMap: Record<string, any> = {};
     allColumnTypes.forEach((type) => {
-      uniqueTypesMap[type.id] = type;
+      if (!uniqueTypesMap[type.id] || (!uniqueTypesMap[type.id].uri && type.uri)) {
+        uniqueTypesMap[type.id] = type;
+      }
     });
     const allTypes = Object.values(uniqueTypesMap);
 
@@ -259,18 +273,19 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
               (t: any) => t.id === type.id,
             ),
         );
+        const isQudt = type.id && type.id.includes("unit:");
         return {
           selected:
             selected.some((item) => item.id === type.id) ||
             column.metadata[0]?.additionalTypes?.some(
               (t: any) => t.id === type.id,
             ),
-          id: isValidWikidataId(type.id) ? "wd:" + type.id : type.id,
+          id: isQudt ? type.id : (isValidWikidataId(type.id) ? "wd:" + type.id : type.id),
           name: {
             value: type.label || type.name,
-            uri: createWikidataURI(type.id) || type.uri,
+            uri: type.uri || type.name?.uri || (isQudt ? null : createWikidataURI(type.id)),
           },
-          percentage: Number(type.percentage || 100).toFixed(0) + "%",
+          percentage: isQudt ? "100%" : (Number(type.percentage || 100).toFixed(0) + "%"),
           // match: "",
         };
       })
@@ -417,11 +432,12 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           uri: constructedUri || formState.uri,
         };
         // Add the new type to the column metadata
-        dispatch(addColumnType({ colId, newTypes: [newType] }));
+        addEdit(addColumnType({ colId, newTypes: [newType] }));
         // Ensure the column's main type list is updated (id + name) so selectors/readers see it
-        dispatch(updateColumnType([{ id: finalId, name: formState.name }]));
+        addEdit(updateColumnType([{ id: finalId, name: formState.name }]));
         // Also mark the newly added type as matched so checkboxes reflect selection/save
-        dispatch(updateColumnTypeMatches({ typeIds: [finalId] }));
+        addEdit(updateColumnTypeMatches({ typeIds: [finalId] }));
+        setLocalAddedTypes(prev => [...prev, newType]);
         // Auto-select the newly added type in the local component state so UI updates immediately
         setSelected((prev) => {
           // avoid duplicates
@@ -567,23 +583,51 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     },
     {},
   );
-const handleTypesInService = () => {
-  const serviceInfo = servicesByPrefix[selectedPrefix.replace(/:$/, "")];
-  if (!serviceInfo) {
-    console.error("No service info found for prefix:", selectedPrefix);
-    return;
-  }
-  let url = "";
-  if (serviceInfo?.searchTypesPattern) {
-    url = serviceInfo.searchTypesPattern.replace(
-      "{label}",
-      encodeURIComponent(rawData.column.id),
-    );
-  } else if (serviceInfo?.listTypes) {
-    url = serviceInfo.listTypes;
-  } else return;
-  window.open(url, "_blank", "noopener,noreferrer");
-};
+
+  const handleUnitSearch = async (query: string) => {
+    if (!query) {
+      setUnitOptions([]);
+      return;
+    }
+    setIsSearchingUnit(true);
+    try {
+      const results = await searchQudtUnits(query);
+      setUnitOptions(results);
+    } finally {
+      setIsSearchingUnit(false);
+    }
+  };
+
+  useEffect(() => {
+    if (kind === "literal" && datatype === "NUMBER" && colId) {
+      const initialQuery = colId.replace(/_/g, ' ');
+      setUnitInputValue(initialQuery);
+      handleUnitSearch(initialQuery);
+    }
+  }, [colId]);
+
+  const handleSelectUnit = (unit: {id: string, label: string, uri: string}) => {
+    const newType = {
+      id: unit.id,
+      label: unit.label,
+      name: unit.label,
+      uri: unit.uri,
+      percentage: 100
+    };
+    addEdit(addColumnType({ colId, newTypes: [newType] }));
+    setLocalAddedTypes(prev => [...prev, newType]);
+    setSelected(prev => {
+      if (prev.some(p => p.id === newType.id)) return prev;
+      return [...prev, { ...newType, count: 1, percentage: "100" }];
+    });
+  };
+
+  useEffect(() => {
+    if (selected && selected.length > 0) {
+      const mappedTypes = selected.map((item) => item.id);
+      addEdit(updateColumnTypeMatches({ typeIds: mappedTypes }), true, true);
+    }
+  }, [selected]);
 
   return types ? (
     <Stack position="sticky" top="0" zIndex={10} bgcolor="#FFF">
@@ -598,79 +642,103 @@ const handleTypesInService = () => {
           <Stack
             position="relative"
             direction="column"
-            alignItems="flex-start"
             flexWrap="wrap"
             padding="0px 16px"
             gap={1}
           >
-            <Stack direction="row" gap={1} alignItems="center">
-              <Tooltip open={showTooltip} title="Add type" placement="right">
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onMouseLeave={handleTooltipClose}
-                  onMouseEnter={handleTooltipOpen}
-                  onClick={handleShowAdd}
+            {kind === "literal" && datatype === "NUMBER" ? (
+              <Stack spacing={2}>
+                <Box
                   sx={{
-                    textTransform: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
+                    padding: "12px 16px",
+                    bgcolor: "#f0f7ff",
+                    borderLeft: "4px solid #2196f3",
+                    borderRadius: "4px",
                   }}
                 >
-                  Add column type
-                  <AddRoundedIcon
-                    sx={{
-                      transition: "transform 150ms ease-out",
-                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
-                    }}
-                  />
-                </Button>
-              </Tooltip>
-              {showAdd ? (
-                !!selectedPrefix ? (
-                  servicesByPrefix[selectedPrefix]?.searchTypesPattern ? (
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={handleTypesInService}
-                      sx={{ textTransform: "none" }}
+                  <Typography variant="subtitle2" fontWeight="bold" color="#0d47a1">
+                    Unit type via QUDT Ontology
+                  </Typography>
+                  <Typography variant="body2" color="#0d47a1">
+                    Define the unit of measure (e.g., Celsius, Kilograms) for the data in this column.
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: 'block', color: '#0d47a1', opacity: 0.8 }}>
+                    For more information, see: {" "}
+                    <a
+                      href="https://qudt.org/vocab/unit/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'inherit', fontStyle: 'italic' }}
                     >
-                      Search "{rawData?.column?.id}" in {KG_INFO[selectedPrefix].groupName}
-                    </Button>
-                  ) : servicesByPrefix[selectedPrefix]?.listTypes ? (
-                    <Button
+                      qudt.org/vocab/unit
+                    </a>
+                  </Typography>
+                </Box>
+                <Autocomplete
+                  fullWidth
+                  options={unitOptions}
+                  loading={isSearchingUnit}
+                  inputValue={unitInputValue}
+                  onInputChange={(_, value) => {
+                    setUnitInputValue(value)
+                    handleUnitSearch(value);
+                  }}
+                  onChange={(_, value) => value && handleSelectUnit(value)}
+                  getOptionLabel={(option) => (typeof option === 'string' ? option : option.label || "")}
+                  freeSolo
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Search for a Unit"
+                      placeholder="Start typing to search..."
                       variant="outlined"
-                      color="primary"
-                      onClick={handleTypesInService}
-                      sx={{ textTransform: "none" }}
-                    >
-                      View list of {KG_INFO[selectedPrefix].groupName} types
-                    </Button>
-                  ) : null
-                ) : (
-                  // fallback when no service → Wikidata
+                      size="small"
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <IconButton size="small" disabled sx={{ p: '4px', mr: 1 }}>
+                            <FilterListRoundedIcon fontSize="small" />
+                          </IconButton>
+                        ),
+                        endAdornment: (
+                          <>
+                            {isSearchingUnit ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              </Stack>
+            ) : (
+              <Stack direction="row" alignItems="center" >
+                <Tooltip open={showTooltip} title="Add type" placement="right">
                   <Button
                     variant="outlined"
                     color="primary"
-                    onClick={() => {
-                      const wikidataPattern =
-                        "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
-                      const url = wikidataPattern.replace(
-                        "{label}",
-                        encodeURIComponent(rawData?.column?.id || ""),
-                      );
-                      window.open(url, "_blank", "noopener,noreferrer");
+                    onMouseLeave={handleTooltipClose}
+                    onMouseEnter={handleTooltipOpen}
+                    onClick={handleShowAdd}
+                    sx={{
+                      textTransform: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
                     }}
-                    sx={{ textTransform: "none" }}
                   >
-                    Search "{rawData?.column?.id}" in{" "}
-                    {KG_INFO["wd"].groupName || "Wikidata"}
+                    Add column type
+                    <AddRoundedIcon
+                      sx={{
+                        transition: "transform 150ms ease-out",
+                        transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                      }}
+                    />
                   </Button>
-                )
-              ) : null}
-            </Stack>
-            {showAdd && (
+                </Tooltip>
+              </Stack>
+            )}
+            {showAdd && !(kind === "literal" && datatype?.toUpperCase() === "NUMBER") && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
                 <AddMetadataForm
                   currentService={currentService}
