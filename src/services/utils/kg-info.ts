@@ -57,9 +57,8 @@ export const KG_INFO: Record<string, KGInfoEntry> = {
 export const getGroupFromId = (id: string): string => {
   if (Object.keys(KG_INFO).includes(id)) {
     return KG_INFO[id].groupName;
-  } else {
-    return "";
   }
+  return "";
 };
 export const getGroupFromUri = (uri: string): string => {
   const keys = Object.keys(KG_INFO);
@@ -104,15 +103,15 @@ export const getPrefixIfAvailable = (uri: string, id: string): string => {
   }
   if (!prefix) {
     return "";
-  } else {
-    return prefix;
   }
+  return prefix;
 };
 
 export async function fetchTypeAndDescription(
   prefix: string,
   id: string,
   label?: string,
+  context?: string,
 ) {
   const base = import.meta.env.VITE_BACKEND_API_URL;
   let res;
@@ -128,7 +127,8 @@ export async function fetchTypeAndDescription(
       return await res.json();
     }
     if (prefix === "geo") {
-      res = await fetch(`${base}/metadata/geonames?id=${id}`);
+      const url = `${base}/metadata/geonames?id=${id}${context ? `&context=${context}` : ""}`;
+      res = await fetch(url);
       return await res.json();
     }
     if (prefix === "geoCoord") {

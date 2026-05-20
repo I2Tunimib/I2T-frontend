@@ -733,6 +733,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
     // Cell reconciliated -> service's prefix
     if (cell?.reconciler && servicesById[cell?.reconciler]?.searchPattern) {
+      const activePrefixId = reconciliators.find((rec) => rec.prefix === formSelectedPrefix)?.id;
+      if (activePrefixId !== cell?.reconciler) {
+        return servicesById[activePrefixId];
+      }
       return servicesById[cell?.reconciler];
     }
     // Cell not reconciliated -> prefix selected in the form

@@ -702,15 +702,13 @@ export const selectColumnCellMetadataTableFormat = createSelector(
       const column = cols.byId[colId];
       console.log("obtained column", column);
       if (column.metadata.length > 0) {
-        if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
-          const cellContext = column.metadata[0].entity[0].id.split(":")[0];
-          const service = reconciliators.byId[cellContext];
-          if (service) {
-            return {
-              column,
-              service,
-            };
-          }
+        const cellContext = column.reconciler;
+        const service = reconciliators.byId[cellContext];
+        if (service) {
+          return {
+            column,
+            service,
+          };
         } else if (
           column.metadata[0].property &&
           column.metadata[0].property.length > 0
@@ -730,7 +728,6 @@ export const selectColumnCellMetadataTableFormat = createSelector(
           ...column,
           metadata: [
             {
-              entity: [],
               property: [],
             },
           ],

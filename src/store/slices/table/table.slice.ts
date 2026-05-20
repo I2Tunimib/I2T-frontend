@@ -2183,8 +2183,12 @@ export const tableSlice = createSliceWithRequests({
 
               colIds.forEach((colId) => {
                 const column = getColumn(draft, colId);
-                if (column && column.kind !== "entity") {
-                  column.kind = "entity";
+                if (column) {
+                  column.reconciler = reconcilerId;
+                  column.context = {};
+                  if (column.kind !== "entity") {
+                    column.kind = "entity";
+                  }
                 }
               });
 
@@ -2200,10 +2204,17 @@ export const tableSlice = createSliceWithRequests({
 
                   if (previousContext) {
                     // decrement previous
-                    column.context[previousContext] = decrementContextCounters(
-                      column.context[previousContext],
+                    const safePreviousContext = column.context[previousContext] || createContext({});
+                    const updatedContext = decrementContextCounters(
+                      safePreviousContext,
                       cell,
                     );
+
+                    if (updatedContext.total <= 0 && updatedContext.reconciliated <= 0) {
+                      delete column.context[previousContext];
+                    } else {
+                      column.context[previousContext] = updatedContext;
+                    }
                   }
                   // assign new reconciliator and metadata
                   // cell.metadata.reconciliator.id = reconciliator.id;

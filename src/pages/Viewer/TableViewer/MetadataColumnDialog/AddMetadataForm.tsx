@@ -58,7 +58,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
   }, [watchedPrefix, onPrefixChange]);
 
   useEffect(() => {
-    if (currentService !== undefined) {
+    if (currentService !== undefined && context !== "typeTab") {
       reset({ prefix: currentService });
       setCustomPrefix("");
     }
@@ -82,7 +82,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
               result = await response.json();
             }
           } else {
-            result = await fetchTypeAndDescription(cleanPrefix, id, "");
+            result = await fetchTypeAndDescription(cleanPrefix, id, "", context);
           }
 
           if (result && result.name) {
@@ -91,6 +91,8 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
               setValue("osmId", result.osmId);
               setValue("osmType", result.osmType);
             }
+          } else {
+            setValue("name", "");
           }
         } catch (err) {
           console.error("Error in fetching name:", err);
