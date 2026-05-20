@@ -214,6 +214,14 @@ const SubToolbar = ({
   const selectedColumnIds = useAppSelector(selectSelectedColumnIdsAsArray);
   const reconciliationCells = useAppSelector(selectReconciliationCells);
 
+  const isCurrentColumnLiteral = useMemo(() => {
+    const colId = selectedColId || (selectedColumnIds && selectedColumnIds[0]);
+    if (!colId || !columns) return false;
+    const currentColumn = columns.find((col) => col.id === colId);
+    const kind = currentColumn?.data?.kind || currentColumn?.kind;
+    return kind === "literal";
+  }, [selectedColId, selectedColumnIds, columns]);
+
   // Build groups from services using the `group` property if present (fallback to "Other Services")
   const serviceGroups = useMemo(() => {
     const groups = new Map<string, Array<any>>();
@@ -500,7 +508,9 @@ const SubToolbar = ({
               title={
                 !isCellSelected
                   ? "Select a column to enable Reconcile function"
-                  : "Reconcile selected column(s)"
+                  : isCurrentColumnLiteral
+                    ? "Reconciliation is not available for literal columns"
+                    : "Reconcile selected column(s)"
               }
               arrow
             >
@@ -510,7 +520,7 @@ const SubToolbar = ({
                     textTransform: "none",
                   }}
                   color="primary"
-                  disabled={!isCellSelected}
+                  disabled={!isCellSelected || isCurrentColumnLiteral}
                   onClick={() =>
                     dispatch(updateUI({ openReconciliateDialog: true }))
                   }

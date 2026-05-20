@@ -16,8 +16,8 @@ import {
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
-import { KG_INFO, fetchTypeAndDescription, searchQudtUnits } from "@services/utils/kg-info";
-import { createWikidataURI } from "@services/utils/uri-utils";
+import { KG_INFO, searchQudtUnits, searchW3CFormats } from "@services/utils/kg-info";
+import { createWikidataURI, extractIdFromUri, resolveURI } from "@services/utils/uri-utils";
 import {
   selectAppConfig,
   selectReconciliatorsAsArray,
@@ -40,6 +40,7 @@ import {
 import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
+import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
@@ -168,9 +169,9 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
   const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
   const currentService = rawData?.service?.prefix || "";
   const [selectedPrefix, setSelectedPrefix] = useState<string>(currentService || "");
-  const [unitOptions, setUnitOptions] = useState<{id: string, label: string, uri: string}[]>([]);
-  const [unitInputValue, setUnitInputValue] = useState("");
-  const [isSearchingUnit, setIsSearchingUnit] = useState(false);
+  const [typeOptions, setTypeOptions] = useState<{id: string, label: string, uri: string}[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [localAddedTypes, setLocalAddedTypes] = useState<any[]>([]);
   const kind = currentKind;
   const datatype = currentDatatype;
@@ -274,18 +275,19 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
             ),
         );
         const isQudt = type.id && type.id.includes("unit:");
+        const isTime = type.id && type.id.includes("xsd:");
         return {
           selected:
             selected.some((item) => item.id === type.id) ||
             column.metadata[0]?.additionalTypes?.some(
               (t: any) => t.id === type.id,
             ),
-          id: isQudt ? type.id : (isValidWikidataId(type.id) ? "wd:" + type.id : type.id),
+          id: (isQudt || isTime) ? type.id : (isValidWikidataId(type.id) ? "wd:" + type.id : type.id),
           name: {
             value: type.label || type.name,
             uri: type.uri || type.name?.uri || (isQudt ? null : createWikidataURI(type.id)),
           },
-          percentage: isQudt ? "100%" : (Number(type.percentage || 100).toFixed(0) + "%"),
+          percentage: (isQudt || isTime) ? "100%" : (Number(type.percentage || 100).toFixed(0) + "%"),
           // match: "",
         };
       })
@@ -343,118 +345,46 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     dependencies: [selected, types, colId],
   });
   const onSubmitNewMetadata = (formState: NewMetadata) => {
-    if (formState.uri) {
-      const prefix = formState?.prefix;
-      //console.log("onSubmitNewMetadata prefix", prefix);
-      let idFromUri = "";
+    const { prefix, uri, name } = formState;
+    const cleanPrefix = prefix.replace(/:$/, "");
+    // Extract id from URI for type and description fetching
+    const idFromUri = extractIdFromUri(uri, cleanPrefix);
+    const reconciliator = reconciliators.find(
+      (recon) => recon.prefix === cleanPrefix,
+    );
 
-        // Robust extraction strategy:
-        // 1) Try to parse as URL and prefer fragment (#id) if present.
-        // 2) Otherwise use the last non-empty path segment.
-        // 3) Apply special cases for known prefixes (wd, geo, geoCoord).
-        // 4) If parsing fails, fallback to string token extraction.
-        try {
-          const url = new URL(formState.uri);
-          console.log("url", url);
+    const finalId = cleanPrefix === "geo" ? `${idFromUri}` : `${cleanPrefix}:${idFromUri}`;
+    const finalUri = cleanPrefix === "geo" ? "" : resolveURI(reconciliator, { id: idFromUri });
 
-          // Prefer fragment (after #)
-          if (url.hash && url.hash.length > 1) {
-            idFromUri = url.hash.slice(1);
-          } else {
-            // Last non-empty path segment
-            const pathParts = url.pathname.split("/").filter(Boolean);
-            if (pathParts.length > 0) {
-              idFromUri = pathParts[pathParts.length - 1];
-            } else {
-              // No path segments - try to use pathname without leading/trailing slashes
-              idFromUri = url.pathname.replace(/^\/+|\/+$/g, "");
-            }
-          }
+    const newType = {
+      id: finalId,
+      uri: finalUri,
+      name: formState.name,
+    };
 
-          // Apply known special cases when needed (prefer the above result if present)
-          if (
-            (!idFromUri || idFromUri === "") &&
-            prefix &&
-            prefix.startsWith("wd")
-          ) {
-            // e.g. https://www.wikidata.org/wiki/Q18711
-            idFromUri = url.pathname.split("/").filter(Boolean).pop() || "";
-          } else if ((!idFromUri || idFromUri === "") && prefix === "geo") {
-            // e.g. https://www.geonames.org/3117735/madrid.html -> 3117735
-            const parts = url.pathname.split("/").filter(Boolean);
-            idFromUri =
-              parts[0] === undefined
-                ? ""
-                : parts[0] || parts[parts.length - 1] || "";
-          }
-
-          // If still empty, try to extract something from the query params (last value)
-          if (!idFromUri) {
-            const params = new URLSearchParams(url.search);
-            const lastKey = Array.from(params.keys()).pop();
-            if (lastKey) {
-              idFromUri = params.get(lastKey) || "";
-            }
-          }
-
-          // Final fallback: stringify pathname+search+hash trimmed
-          if (!idFromUri) {
-            idFromUri = (
-              url.pathname +
-              (url.search || "") +
-              (url.hash || "")
-            ).replace(/^\/+/, "");
-          }
-        } catch (err) {
-          // Not a valid URL - fallback heuristics on the raw string
-          console.warn("Invalid URI, fallback to extracting last token", err);
-          const trimmed = formState.uri.trim();
-          if (trimmed.includes("#")) {
-            idFromUri = trimmed.split("#").pop() || trimmed;
-          } else {
-            const parts = trimmed.split("/").filter(Boolean);
-            idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
-          }
-        }
+    // Add the new type to the column metadata
+    addEdit(addColumnType({ colId, newTypes: [newType] }));
+    // Ensure the column's main type list is updated (id + name) so selectors/readers see it
+    addEdit(updateColumnType([{ id: finalId, name: formState.name }]));
+    // Also mark the newly added type as matched so checkboxes reflect selection/save
+    addEdit(updateColumnTypeMatches({ typeIds: [finalId] }));
+    setLocalAddedTypes((prev) => [...prev, newType]);
+    // Auto-select the newly added type in the local component state so UI updates immediately
+    setSelected((prev) => {
+      // avoid duplicates
+      if (prev.some((p) => p.id === finalId)) {
+        return prev;
       }
-
-      const sanitizedPrefix = prefix ? String(prefix).replace(/:+$/, "") : "";
-      const finalId = idFromUri.includes(":")
-        ? idFromUri
-        : sanitizedPrefix
-          ? `${sanitizedPrefix}:${idFromUri}`
-          : idFromUri;
-
-      if (prefix) {
-        const newType = {
+      return [
+        ...prev,
+        {
           id: finalId,
-          name: formState.name,
-          uri: constructedUri || formState.uri,
-        };
-        // Add the new type to the column metadata
-        addEdit(addColumnType({ colId, newTypes: [newType] }));
-        // Ensure the column's main type list is updated (id + name) so selectors/readers see it
-        addEdit(updateColumnType([{ id: finalId, name: formState.name }]));
-        // Also mark the newly added type as matched so checkboxes reflect selection/save
-        addEdit(updateColumnTypeMatches({ typeIds: [finalId] }));
-        setLocalAddedTypes(prev => [...prev, newType]);
-        // Auto-select the newly added type in the local component state so UI updates immediately
-        setSelected((prev) => {
-          // avoid duplicates
-          if (prev.some((p) => p.id === finalId)) {
-            return prev;
-          }
-          return [
-            ...prev,
-            {
-              id: finalId,
-              label: formState.name,
-              count: 1,
-              percentage: "100",
-            },
-          ];
-        });
-      }
+          label: formState.name,
+          count: 1,
+          percentage: "100",
+        },
+      ];
+    });
   };
 
   const handleRowTypeCheck = (row: any) => {
@@ -584,40 +514,57 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     {},
   );
 
-  const handleUnitSearch = async (query: string) => {
+  const handleMetadataSearch = async (query: string) => {
     if (!query) {
-      setUnitOptions([]);
+      setTypeOptions([]);
       return;
     }
-    setIsSearchingUnit(true);
+    setIsSearching(true);
     try {
-      const results = await searchQudtUnits(query);
-      setUnitOptions(results);
+      let results = [];
+      if (datatype === "NUMBER") {
+        results = await searchQudtUnits(query);
+      } else if (datatype === "DATE") {
+        const finalTerm = !query ? "date" : query;
+        results = await searchW3CFormats(finalTerm, datatype);
+      } else if (datatype === "STRING") {
+        const finalTerm = !query ? "string" : query;
+        results = await searchW3CFormats(finalTerm, datatype);
+      }
+      setTypeOptions(results);
     } finally {
-      setIsSearchingUnit(false);
+      setIsSearching(false);
     }
   };
 
   useEffect(() => {
-    if (kind === "literal" && datatype === "NUMBER" && colId) {
-      const initialQuery = colId.replace(/_/g, ' ');
-      setUnitInputValue(initialQuery);
-      handleUnitSearch(initialQuery);
+    if (kind === "literal" && colId) {
+      if (datatype === "NUMBER") {
+        const initialQuery = colId.replace(/_/g, ' ');
+        setInputValue(initialQuery);
+        handleMetadataSearch(initialQuery);
+      } else if (datatype === "DATE") {
+        setInputValue("date");
+        handleMetadataSearch("date");
+      } else if (datatype === "STRING") {
+        setInputValue("string");
+        handleMetadataSearch("string");
+      }
     }
-  }, [colId]);
+  }, [colId, datatype, kind]);
 
-  const handleSelectUnit = (unit: {id: string, label: string, uri: string}) => {
+  const handleSelectOption = (option: {id: string, label: string, uri: string}) => {
     const newType = {
-      id: unit.id,
-      label: unit.label,
-      name: unit.label,
-      uri: unit.uri,
+      id: option.id,
+      label: option.label,
+      name: option.label,
+      uri: option.uri,
       percentage: 100
     };
     addEdit(addColumnType({ colId, newTypes: [newType] }));
-    setLocalAddedTypes(prev => [...prev, newType]);
-    setSelected(prev => {
-      if (prev.some(p => p.id === newType.id)) return prev;
+    setLocalAddedTypes((prev) => [...prev, newType]);
+    setSelected((prev) => {
+      if (prev.some((p) => p.id === newType.id)) return prev;
       return [...prev, { ...newType, count: 1, percentage: "100" }];
     });
   };
@@ -628,6 +575,56 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
       addEdit(updateColumnTypeMatches({ typeIds: mappedTypes }), true, true);
     }
   }, [selected]);
+
+  const literalTypesConfig = {
+    NUMBER: {
+      title: "Unit type via QUDT Ontology",
+      description: "Define the unit of measure (e.g., Celsius, Kilograms) for the data in this column.",
+      url: "https://qudt.org/vocab/unit/",
+      urlLabel: "qudt.org/vocab/unit",
+      label: "Search for a Unit"
+    },
+    DATE: {
+      title: "Date/Time Format via W3C XML Schema (XSD)",
+      description: "Define the specific data format standard (e.g., date, dateTime) to parse this column.",
+      url: "https://www.w3.org/TR/xmlschema-2/",
+      urlLabel: "w3.org/TR/xmlschema-2/",
+      label: "Search for Validation Format"
+    },
+    STRING: {
+      title: "String Format via W3C XML Schema (XSD)",
+      description: "Define the specific string format standard (e.g., string, token) to parse this column.",
+      url: "https://www.w3.org/TR/xmlschema-2/",
+      urlLabel: "w3.org/TR/xmlschema-2/",
+      label: "Search for Text Format"
+    }
+  };
+
+  const currentConfig = literalTypesConfig[datatype] || {
+    title: "",
+    description: "",
+    url: "",
+    urlLabel: "",
+    label: ""
+  };
+
+  const handleTypesInService = () => {
+    const serviceInfo = servicesByPrefix[selectedPrefix.replace(/:$/, "")];
+    if (!serviceInfo) {
+      console.error("No service info found for prefix:", selectedPrefix);
+      return;
+    }
+    let url = "";
+    if (serviceInfo?.searchTypesPattern) {
+      url = serviceInfo.searchTypesPattern.replace(
+        "{label}",
+        encodeURIComponent(rawData.column.id),
+      );
+    } else if (serviceInfo?.listTypes) {
+      url = serviceInfo.listTypes;
+    } else return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   return types ? (
     <Stack position="sticky" top="0" zIndex={10} bgcolor="#FFF">
@@ -646,73 +643,101 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
             padding="0px 16px"
             gap={1}
           >
-            {kind === "literal" && datatype === "NUMBER" ? (
+            {kind === "literal" ? (
               <Stack spacing={2}>
-                <Box
-                  sx={{
-                    padding: "12px 16px",
-                    bgcolor: "#f0f7ff",
-                    borderLeft: "4px solid #2196f3",
-                    borderRadius: "4px",
-                  }}
-                >
-                  <Typography variant="subtitle2" fontWeight="bold" color="#0d47a1">
-                    Unit type via QUDT Ontology
-                  </Typography>
-                  <Typography variant="body2" color="#0d47a1">
-                    Define the unit of measure (e.g., Celsius, Kilograms) for the data in this column.
-                  </Typography>
-                  <Typography variant="caption" sx={{ display: 'block', color: '#0d47a1', opacity: 0.8 }}>
-                    For more information, see: {" "}
-                    <a
-                      href="https://qudt.org/vocab/unit/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: 'inherit', fontStyle: 'italic' }}
-                    >
-                      qudt.org/vocab/unit
-                    </a>
-                  </Typography>
-                </Box>
-                <Autocomplete
-                  fullWidth
-                  options={unitOptions}
-                  loading={isSearchingUnit}
-                  inputValue={unitInputValue}
-                  onInputChange={(_, value) => {
-                    setUnitInputValue(value)
-                    handleUnitSearch(value);
-                  }}
-                  onChange={(_, value) => value && handleSelectUnit(value)}
-                  getOptionLabel={(option) => (typeof option === 'string' ? option : option.label || "")}
-                  freeSolo
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Search for a Unit"
-                      placeholder="Start typing to search..."
-                      variant="outlined"
-                      size="small"
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <IconButton size="small" disabled sx={{ p: '4px', mr: 1 }}>
-                            <FilterListRoundedIcon fontSize="small" />
-                          </IconButton>
-                        ),
-                        endAdornment: (
-                          <>
-                            {isSearchingUnit ? <CircularProgress color="inherit" size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
+                {datatype && literalTypesConfig[datatype] && (
+                  <>
+                    <Box
+                      sx={{
+                        padding: "16px",
+                        bgcolor: "#f0f7ff",
+                        borderLeft: "4px solid #2196f3",
+                        borderRadius: "4px",
                       }}
+                    >
+                      <Typography variant="subtitle2" fontWeight="bold" color="#0d47a1">
+                        {currentConfig.title}
+                      </Typography>
+                      <Typography variant="body2" color="#0d47a1">
+                        {currentConfig.description}
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block', color: '#0d47a1', opacity: 0.8 }}>
+                        For more information, see:{" "}
+                        <a
+                          href={currentConfig.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: 'inherit', fontStyle: 'italic' }}
+                        >
+                          {currentConfig.urlLabel}
+                        </a>
+                      </Typography>
+                    </Box>
+                    <Autocomplete
+                      fullWidth
+                      options={typeOptions}
+                      loading={isSearching}
+                      inputValue={inputValue}
+                      onInputChange={(_, value) => {
+                        setInputValue(value);
+                        handleMetadataSearch(value);
+                      }}
+                      onChange={(_, value) => value && handleSelectOption(value)}
+                      getOptionLabel={(option) => (typeof option === 'string' ? option : option.label || "")}
+                      freeSolo
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={currentConfig.label}
+                          placeholder="Start typing to search..."
+                          variant="outlined"
+                          size="small"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <IconButton size="small" disabled sx={{ p: '4px', mr: 1 }}>
+                                <FilterListRoundedIcon fontSize="small" />
+                              </IconButton>
+                            ),
+                            endAdornment: (
+                              <>
+                                {isSearching ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
                     />
-                  )}
-                />
+                  </>
+                )}
+                {datatype === "none" && (
+                  <Box
+                    sx={{
+                      padding: "16px",
+                      bgcolor: "#fff3e0",
+                      borderLeft: "4px solid #e65100",
+                      borderRadius: "4px",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1
+                    }}
+                  >
+                    <TipsAndUpdatesOutlinedIcon sx={{ color: "#e65100" }} />
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight="bold" color="#5d4037">
+                        Define the Datatype
+                      </Typography>
+                      <Typography variant="body2" color="#5d4037">
+                        The datatype for this literal column is currently undefined. Please define a valid datatype
+                        to configure its validation format or unit properties.
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
               </Stack>
             ) : (
-              <Stack direction="row" alignItems="center" >
+              <Stack direction="row" alignItems="center" spacing={1}>
                 <Tooltip open={showTooltip} title="Add type" placement="right">
                   <Button
                     variant="outlined"
@@ -736,9 +761,51 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
                     />
                   </Button>
                 </Tooltip>
+                {showAdd ? (
+                  !!selectedPrefix ? (
+                    servicesByPrefix[selectedPrefix]?.searchTypesPattern ? (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleTypesInService}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Search "{rawData?.column?.id}" in {KG_INFO[selectedPrefix].groupName}
+                      </Button>
+                    ) : servicesByPrefix[selectedPrefix]?.listTypes ? (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleTypesInService}
+                        sx={{ textTransform: "none" }}
+                      >
+                        View list of {KG_INFO[selectedPrefix].groupName} types
+                      </Button>
+                    ) : null
+                  ) : (
+                    // fallback when no service → Wikidata
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => {
+                        const wikidataPattern =
+                          "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
+                        const url = wikidataPattern.replace(
+                          "{label}",
+                          encodeURIComponent(rawData?.column?.id || ""),
+                        );
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Search "{rawData?.column?.id}" in{" "}
+                      {KG_INFO["wd"].groupName || "Wikidata"}
+                    </Button>
+                  )
+                ) : null}
               </Stack>
             )}
-            {showAdd && !(kind === "literal" && datatype?.toUpperCase() === "NUMBER") && (
+            {showAdd && kind && (kind !== "literal") && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
                 <AddMetadataForm
                   currentService={currentService}

@@ -63,7 +63,7 @@ export const createOSMURI = (base, data: { osmId: string; osmType: string; }) =>
 
 export const resolveURI = (reconciliator: any, item: any) => {
   const cleanId = item.id?.includes(":") ? item.id.split(":")[1] : item.id;
-  const baseUri = item.uri || reconciliator.uri;
+  const baseUri = item?.uri || reconciliator?.uri;
 
   if (item.osmId && item.osmType) {
     return createOSMURI(baseUri, {

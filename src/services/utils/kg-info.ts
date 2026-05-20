@@ -142,7 +142,7 @@ export async function fetchTypeAndDescription(
   }
 }
 
-export async function searchQudtUnits(searchTerm, limit = 20) {
+export async function searchQudtUnits(searchTerm: string) {
   if (!searchTerm) return [];
   const qudtEndpoint = import.meta.env.VITE_QUDT_SPARQL_ENDPOINT;
 
@@ -157,7 +157,7 @@ export async function searchQudtUnits(searchTerm, limit = 20) {
       FILTER(CONTAINS(LCASE(STR(?label)), LCASE("${searchTerm}")))
     }
     ORDER BY ASC(STRLEN(STR(?label)))
-    LIMIT ${limit}
+    LIMIT 20
   `;
 
   try {
@@ -182,4 +182,24 @@ export async function searchQudtUnits(searchTerm, limit = 20) {
     console.error("QUDT Unit Search error:", error);
     return [];
   }
+}
+
+const W3C_DATE_TYPES = ["duration", "dateTime", "time", "date", "gYearMonth", "gYear", "gMonthDay", "gDay", "gMonth"];
+const W3C_STRING_TYPES = ["string", "token", "anyURI"];
+
+export async function searchW3CFormats(searchTerm: string, datatype: string) {
+  const term = searchTerm.trim().toLowerCase();
+
+  const types = datatype === "DATE" ? W3C_DATE_TYPES : W3C_STRING_TYPES;
+  const allFormats = types.map((id) => ({
+    id: `xsd:${id}`,
+    label: `${id} (W3C Format)`,
+    uri: `https://www.w3.org/TR/xmlschema-2/#${id}`
+  }));
+
+  if (!term || term === "date" || term === "string") {
+    return allFormats;
+  }
+
+  return allFormats.filter((format) => format.id.toLowerCase().includes(term));
 }

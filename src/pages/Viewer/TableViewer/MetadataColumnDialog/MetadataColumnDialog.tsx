@@ -205,9 +205,9 @@ const Content = () => {
   useEffect(() => {
     if (currentDatatype === "none") return;
     const isDatatypeInvalid =
-      (currentKind === "entity" && !entityDatatypes.includes(currentDatatype.toLowerCase())) ||
-      (currentKind === "literal" && !literalDatatypes.includes(currentDatatype.toLowerCase()));
-    if (isDatatypeInvalid) {
+      (currentKind === "entity" && !entityDatatypes.includes(currentDatatype)) ||
+      (currentKind === "literal" && !literalDatatypes.includes(currentDatatype));
+    if (isDatatypeInvalid || currentKind === "none") {
       setCurrentDatatype("none");
       const editDatatype = updateColumnDatatype({
         colId: currentColId,
@@ -219,9 +219,9 @@ const Content = () => {
 
   useEffect(() => {
     if (column) {
-      setCurrentKind(prev => (prev === "none" || !prev) ? (column.kind || "none") : prev);
-      setCurrentDatatype(prev => (prev === "none" || !prev) ? (column.datatype || "none") : prev);
-      setCurrentRole(prev => (prev === "none" || !prev) ? (column.role || "none") : prev);
+      setCurrentKind((prev) => ((prev === "none" || !prev) ? (column.kind || "none") : prev));
+      setCurrentDatatype((prev) => ((prev === "none" || !prev) ? (column.datatype || "none") : prev));
+      setCurrentRole((prev) => ((prev === "none" || !prev) ? (column.role || "none") : prev));
     }
   }, [column]);
 
@@ -268,7 +268,7 @@ const Content = () => {
               renderValue={(selected) => {
                 if (selected === "none" || !selected) return "Undefined";
                 const labelText = (selected as string).toUpperCase();
-                if (selected === "other") {
+                if (selected === "OTHER") {
                   return (
                     <Tooltip title={OTHER_TOOLTIP} placement="bottom" arrow>
                       <span style={{ display: 'block', width: '100%', minWidth: '60px' }}>
@@ -280,14 +280,14 @@ const Content = () => {
                 return labelText;
               }}
             >
-              {(currentKind === "entity" ? entityDatatypes : literalDatatypes).map((datatype) => (
-                <MenuItem key={datatype} value={datatype} >
-                  {datatype === "other" ? (
+              {(currentKind === "entity" ? entityDatatypes : literalDatatypes).map((datatypeOption) => (
+                <MenuItem key={datatypeOption} value={datatypeOption}>
+                  {datatypeOption === "OTHER" ? (
                     <Tooltip title={OTHER_TOOLTIP} placement="right" arrow>
-                      <span style={{ width: '100%', display: 'block' }}>{datatype}</span>
+                      <span style={{ width: '100%', display: 'block' }}>{datatypeOption}</span>
                     </Tooltip>
                   ) : (
-                    datatype
+                    datatypeOption
                   )}
                 </MenuItem>
               ))}
@@ -365,9 +365,13 @@ const Content = () => {
                     currentService}
                 </Typography>
               </Typography>
+            ) : column?.kind === "literal" ? (
+              <Typography color="text.secondary">
+                Reconciliation is not available for literal columns.
+              </Typography>
             ) : (
               <Typography color="text.secondary">
-                This column has not been reconciled yet
+                This column has not been reconciled yet.
               </Typography>
             )}
           </Stack>
