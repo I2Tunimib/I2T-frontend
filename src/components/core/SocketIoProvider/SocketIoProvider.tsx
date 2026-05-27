@@ -6,8 +6,14 @@ const SocketIoProvider: FC<{}> = ({ children }) => {
   const [state, setState] = useState<Socket>();
 
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_BACKEND_DOMAIN || "", {
-      transports: ["polling"],
+    const backend =
+      import.meta.env.VITE_BACKEND_API_URL ||
+      import.meta.env.VITE_BACKEND_DOMAIN ||
+      "http://localhost:3003";
+    // ensure no trailing slash
+    const base = backend.replace(/\/+$/, "");
+    const socket = io(base, {
+      transports: ["websocket", "polling"],
       upgrade: true,
       reconnection: true,
       reconnectionDelay: 1000,

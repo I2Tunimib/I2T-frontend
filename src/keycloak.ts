@@ -110,6 +110,23 @@ let serverTokenPayload: Record<string, any> | undefined;
 /* Helper: check server-side session (backend must expose /api/auth/keycloak/me) */
 async function checkServerSession(): Promise<boolean> {
   try {
+    // If Keycloak redirected back with an error in the URL fragment, clear it and return false
+    if (
+      typeof window !== "undefined" &&
+      window.location &&
+      window.location.hash
+    ) {
+      if (window.location.hash.includes("error=")) {
+        try {
+          const cleanUrl = window.location.pathname + window.location.search;
+          history.replaceState(null, "", cleanUrl);
+        } catch (e) {
+          // ignore
+        }
+        return false;
+      }
+    }
+
     // If Keycloak redirected back with the access token in the URL fragment (#access_token=...),
     // capture it into localStorage so client-side code can use it (simple fallback).
     if (
