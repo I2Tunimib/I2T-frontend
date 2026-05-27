@@ -1,46 +1,53 @@
-import {
-  useMemo, useCallback,
-  MouseEvent,
-  useState,
-  useEffect
-} from 'react';
+import { useMemo, useCallback, MouseEvent, useState, useEffect } from "react";
 import {
   redo,
-  undo, updateCellLabel, updateCellSelection,
+  undo,
+  updateCellLabel,
+  updateCellSelection,
   updateColumnCellsSelection,
   updateColumnSelection,
   updateRowSelection,
   updateUI,
   updateColumnVisibility,
-} from '@store/slices/table/table.slice';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { HotKeys } from 'react-hotkeys';
+} from "@store/slices/table/table.slice";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import { HotKeys } from "react-hotkeys";
 import {
   selectDataTableFormat,
-  selectSelectedColumnIds, selectSelectedRowIds,
+  selectSelectedColumnIds,
+  selectSelectedRowIds,
   selectSelectedCellIds,
-  selectIsDenseView, selectSearchStatus,
-  selectGetTableStatus, selectIsUnsaved,
-  selectIsHeaderExpanded, selectExpandedCellsIds,
-  selectExpandedColumnsIds, selectEditableCellsIds,
+  selectIsDenseView,
+  selectSearchStatus,
+  selectGetTableStatus,
+  selectIsUnsaved,
+  selectIsHeaderExpanded,
+  selectExpandedCellsIds,
+  selectExpandedColumnsIds,
+  selectEditableCellsIds,
   selectSelectedColumnCellsIds,
   selectCurrentTable,
   selectSettings,
-} from '@store/slices/table/table.selectors';
-import { useHistory, useParams } from 'react-router-dom';
-import { saveTable } from '@store/slices/table/table.thunk';
-import { ID } from '@store/interfaces/store';
-import { RouteLeaveGuard } from '@components/kit';
-import clsx from 'clsx';
-import { Table } from '../Table';
+} from "@store/slices/table/table.selectors";
+import { useHistory, useParams } from "react-router-dom";
+import { saveTable } from "@store/slices/table/table.thunk";
+import { ID } from "@store/interfaces/store";
+import { RouteLeaveGuard } from "@components/kit";
+import clsx from "clsx";
+import { Table } from "../Table";
 // import Toolbar from '../../Viewer/Toolbar';
-import styles from './TableViewer.module.scss';
-import { TableCell } from '../Table/interfaces/table';
-import { ContextMenuCell, ContextMenuColumn, ContextMenuRow } from '../Menus/ContextMenus';
-import SubToolbar from '../SubToolbar';
+import styles from "./TableViewer.module.scss";
+import { TableCell } from "../Table/interfaces/table";
+import {
+  ContextMenuCell,
+  ContextMenuColumn,
+  ContextMenuRow,
+} from "../Menus/ContextMenus";
+import SubToolbar from "../SubToolbar";
+import DependenciesPanel from "../DependenciesPanel";
 
 interface MenuState {
-  status: Record<string, boolean>
+  status: Record<string, boolean>;
   data: any | undefined;
 }
 
@@ -48,15 +55,15 @@ const initialMenuState: MenuState = {
   status: {
     cell: false,
     row: false,
-    column: false
+    column: false,
   },
-  data: {}
+  data: {},
 };
 
 const keyMap = {
-  SAVE: 'ctrl+s',
-  UNDO: 'ctrl+z',
-  REDO: 'ctrl+shift+z'
+  SAVE: "ctrl+s",
+  UNDO: "ctrl+z",
+  REDO: "ctrl+shift+z",
 };
 
 const TableViewer = () => {
@@ -64,7 +71,10 @@ const TableViewer = () => {
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
   const history = useHistory();
-  const { datasetId, tableId } = useParams<{ datasetId: string, tableId: string }>();
+  const { datasetId, tableId } = useParams<{
+    datasetId: string;
+    tableId: string;
+  }>();
   const currentTable = useAppSelector(selectCurrentTable);
   const { columns, rows } = useAppSelector(selectDataTableFormat);
   const { loading } = useAppSelector(selectGetTableStatus);
@@ -81,30 +91,44 @@ const TableViewer = () => {
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const settings = useAppSelector(selectSettings);
   const columnVisibilityRedux = useAppSelector(
-      (state) => state.table.ui.columnVisibility
+    (state) => state.table.ui.columnVisibility,
   );
 
-  useEffect(() => {
-    if (!currentTable) return;
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-    if (currentTable.mantisStatus === 'PENDING' || currentTable.schemaStatus === 'PENDING') {
-      dispatch(updateUI({ settings: {
-        ...settings,
-        isViewOnly: true
-      } }));
+  const togglePanel = useCallback(() => {
+    setIsPanelOpen((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (
+      currentTable.mantisStatus === "PENDING" ||
+      currentTable.schemaStatus === "PENDING"
+    ) {
+      dispatch(
+        updateUI({
+          settings: {
+            ...settings,
+            isViewOnly: true,
+          },
+        }),
+      );
     }
   }, [currentTable]);
 
   /**
- * Keyboard shortcut handlers
- */
+   * Keyboard shortcut handlers
+   */
   const saveWork = useCallback((event: KeyboardEvent | undefined) => {
     if (event) {
       event.preventDefault();
       if (unsavedChanges) {
-        dispatch(saveTable({
-          datasetId, tableId
-        }))
+        dispatch(
+          saveTable({
+            datasetId,
+            tableId,
+          }),
+        )
           .unwrap()
           .then((res) => {
             history.push(res.id);
@@ -123,7 +147,7 @@ const TableViewer = () => {
   const keyHandlers = {
     SAVE: saveWork,
     UNDO: undoOperation,
-    REDO: redoOperation
+    REDO: redoOperation,
   };
 
   /**
@@ -148,27 +172,33 @@ const TableViewer = () => {
   /**
    * Handle selection of a column.
    */
-  const handleSelectedColumnChange = useCallback((event: MouseEvent, id: ID) => {
-    if (id !== 'index') {
-      if (event.type !== 'contextmenu') {
-        if (event.ctrlKey || event.metaKey) {
-          dispatch(updateColumnSelection({ id, multi: true }));
-        } else {
-          dispatch(updateColumnSelection({ id }));
+  const handleSelectedColumnChange = useCallback(
+    (event: MouseEvent, id: ID) => {
+      if (id !== "index") {
+        if (event.type !== "contextmenu") {
+          if (event.ctrlKey || event.metaKey) {
+            dispatch(updateColumnSelection({ id, multi: true }));
+          } else {
+            dispatch(updateColumnSelection({ id }));
+          }
         }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
-  const handleSelectedColumnCellChange = useCallback((event: MouseEvent, id: ID) => {
-    if (id !== 'index') {
-      if (event.ctrlKey || event.metaKey) {
-        dispatch(updateColumnCellsSelection({ id, multi: true }));
-      } else {
-        dispatch(updateColumnCellsSelection({ id }));
+  const handleSelectedColumnCellChange = useCallback(
+    (event: MouseEvent, id: ID) => {
+      if (id !== "index") {
+        if (event.ctrlKey || event.metaKey) {
+          dispatch(updateColumnCellsSelection({ id, multi: true }));
+        } else {
+          dispatch(updateColumnCellsSelection({ id }));
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   /**
    * Handle update of cell values.
@@ -187,43 +217,56 @@ const TableViewer = () => {
       top: y,
       right: x,
       bottom: y,
-      left: x
+      left: x,
     });
   }, []);
 
   /**
    * Handle cell / column right click.
    */
-  const handleCellRightClick = useCallback((e: MouseEvent<HTMLElement>, type: 'cell' | 'column' | 'row' | null, id: string) => {
-    e.preventDefault();
-    if (id !== 'index') {
-      if (type === 'cell') {
-        dispatch(updateCellSelection({ id }));
-      } else if (type === 'row') {
-        dispatch(updateRowSelection({ id }));
-      } else {
-        if (!selectedColumns[id]) {
-          dispatch(updateColumnSelection({ id }));
+  const handleCellRightClick = useCallback(
+    (
+      e: MouseEvent<HTMLElement>,
+      type: "cell" | "column" | "row" | null,
+      id: string,
+    ) => {
+      e.preventDefault();
+      if (id !== "index") {
+        if (type === "cell") {
+          dispatch(updateCellSelection({ id }));
+        } else if (type === "row") {
+          dispatch(updateRowSelection({ id }));
+        } else {
+          if (!selectedColumns[id]) {
+            dispatch(updateColumnSelection({ id }));
+          }
         }
+
+        const status = Object.keys(menuState.status).reduce(
+          (acc, key) => ({
+            ...acc,
+            [key]: key === type,
+          }),
+          {},
+        );
+        const data = { id };
+        setMenuState({ status, data });
+
+        // create a virtual anchor element for the menu
+        const { clientX, clientY } = e;
+        const virtualElement = {
+          // clientWidth: clientX,
+          // clientHeight: clientY,
+          getBoundingClientRect: generateGetBoundingClientRect(
+            clientX,
+            clientY,
+          ),
+        };
+        setAnchorEl(virtualElement);
       }
-
-      const status = Object.keys(menuState.status).reduce((acc, key) => ({
-        ...acc,
-        [key]: key === type
-      }), {});
-      const data = { id };
-      setMenuState({ status, data });
-
-      // create a virtual anchor element for the menu
-      const { clientX, clientY } = e;
-      const virtualElement = {
-        // clientWidth: clientX,
-        // clientHeight: clientY,
-        getBoundingClientRect: generateGetBoundingClientRect(clientX, clientY)
-      };
-      setAnchorEl(virtualElement);
-    }
-  }, [selectedColumns, dispatch]);
+    },
+    [selectedColumns, dispatch],
+  );
 
   /**
    * Close contextual menu.
@@ -235,66 +278,75 @@ const TableViewer = () => {
   /**
    * Properties to pass to each header.
    */
-  const getHeaderProps = useCallback((header: any) => {
-    return {
-      id: header.id,
-      selected: !!selectedColumns[header.id] || !!selectedColumnCells[header.id],
-      expanded: !!expandedColumnsIds[header.id],
-      settings,
-      data: header.column.columnDef,
-      handleCellRightClick,
-      handleSelectedColumnChange,
-      handleSelectedColumnCellChange
-    };
-  }, [
-    settings,
-    selectedColumns,
-    selectedColumnCells,
-    expandedColumnsIds
-  ]);
+  const getHeaderProps = useCallback(
+    (header: any) => {
+      return {
+        id: header.id,
+        selected:
+          !!selectedColumns[header.id] || !!selectedColumnCells[header.id],
+        expanded: !!expandedColumnsIds[header.id],
+        settings,
+        data: header.column.columnDef,
+        handleCellRightClick,
+        handleSelectedColumnChange,
+        handleSelectedColumnCellChange,
+      };
+    },
+    [settings, selectedColumns, selectedColumnCells, expandedColumnsIds],
+  );
 
   /**
    * Properties to pass to each cell.
    */
-  const getCellProps = useCallback(({
-    column, row, value, ...props
-  }: TableCell) => {
-    const cellId = `${row.id}$${column.id}`;
-    const selected = !!selectedCells[cellId] || !!selectedRows[row.id];
-    const expanded = !!expandedColumnsIds[cellId.split('$')[1]];
-    const editable = !!editableCellsIds[cellId];
-    return {
-      column,
-      row,
-      value,
-      selected,
-      expanded,
-      editable,
+  const getCellProps = useCallback(
+    ({ column, row, value, ...props }: TableCell) => {
+      const cellId = `${row.id}$${column.id}`;
+      const selected = !!selectedCells[cellId] || !!selectedRows[row.id];
+      const expanded = !!expandedColumnsIds[cellId.split("$")[1]];
+      const editable = !!editableCellsIds[cellId];
+      return {
+        column,
+        row,
+        value,
+        selected,
+        expanded,
+        editable,
+        settings,
+        handleSelectedRowChange,
+        handleSelectedCellChange,
+        handleCellRightClick,
+        updateTableData,
+      };
+    },
+    [
       settings,
-      handleSelectedRowChange,
-      handleSelectedCellChange,
-      handleCellRightClick,
-      updateTableData
-    };
-  }, [
-    settings,
-    selectedCells,
-    selectedRows,
-    expandedColumnsIds,
-    editableCellsIds
-  ]);
+      selectedCells,
+      selectedRows,
+      expandedColumnsIds,
+      editableCellsIds,
+    ],
+  );
 
-  const getGlobalProps = useCallback(() => ({
-    dense: isDenseView
-  }), [isDenseView]);
+  const getGlobalProps = useCallback(
+    () => ({
+      dense: isDenseView,
+    }),
+    [isDenseView],
+  );
 
   const columnsTable = useMemo(() => columns, [columns]);
   const rowsTable = useMemo(() => rows, [rows]);
   const searchFilterTable = useMemo(() => searchFilter, [searchFilter]);
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
-  const [columnPinning, setColumnPinning] = useState<{ left: string[] }>({ left: ['index'] });
-  const [columnOrder, setColumnOrder] = useState<string[]>(columnsTable.map((col) => (col.id)));
+  const [columnPinning, setColumnPinning] = useState<{ left: string[] }>({
+    left: ["index"],
+  });
+  const [columnOrder, setColumnOrder] = useState<string[]>(
+    columnsTable.map((col) => col.id),
+  );
 
   useEffect(() => {
     const visibility: Record<string, boolean> = {};
@@ -305,78 +357,92 @@ const TableViewer = () => {
   }, [columns, columnVisibilityRedux]);
 
   const handleColumnVisibilityChange = useCallback(
-      (newVisibility: Record<string, boolean>) => {
-        setColumnVisibility(newVisibility);
-        Object.entries(newVisibility).forEach(([id, isVisible]) => {
-          dispatch(updateColumnVisibility({ id, isVisible }));
-        });
-      },
-      [dispatch]
+    (newVisibility: Record<string, boolean>) => {
+      setColumnVisibility(newVisibility);
+      Object.entries(newVisibility).forEach(([id, isVisible]) => {
+        dispatch(updateColumnVisibility({ id, isVisible }));
+      });
+    },
+    [dispatch],
   );
 
-  useEffect(() => setColumnOrder(columnsTable.map((col) => col.id)), [columnsTable]);
+  useEffect(
+    () => setColumnOrder(columnsTable.map((col) => col.id)),
+    [columnsTable],
+  );
 
   return (
-    <HotKeys className={styles.HotKeysContainer} keyMap={keyMap} handlers={keyHandlers}>
+    <HotKeys
+      className={styles.HotKeysContainer}
+      keyMap={keyMap}
+      handlers={keyHandlers}
+    >
       <SubToolbar
         columns={columnsTable}
         columnVisibility={columnVisibility}
         setColumnVisibility={handleColumnVisibilityChange}
         columnSizing={columnSizing}
         setColumnSizing={setColumnSizing}
+        onTogglePanel={togglePanel}
+        isPanelOpen={isPanelOpen}
       />
-      <div className={clsx(
-        styles.TableContainer,
-        {
-          [styles.HeaderExpanded]: isHeaderExpanded
-        }
-      )}>
-        <Table
-          data={rowsTable}
-          columns={columnsTable}
-          tableSettings={settings}
-          searchFilter={searchFilterTable}
-          columnVisibility={columnVisibility}
-          setColumnVisibility={handleColumnVisibilityChange}
-          columnSizing={columnSizing}
-          setColumnSizing={setColumnSizing}
-          columnPinning={columnPinning}
-          setColumnPinning={setColumnPinning}
-          columnOrder={columnOrder}
-          setColumnOrder={setColumnOrder}
-          headerExpanded={isHeaderExpanded}
-          getGlobalProps={getGlobalProps}
-          dense={isDenseView}
-          // getFirstHeaderProps={getFirstHeaderProps}
-          getHeaderProps={(col) => ({
-            ...getHeaderProps(col),
-            handleCellRightClick,
-            handleSelectedColumnChange,
-            handleSelectedColumnCellChange,
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <div
+          className={clsx(styles.TableContainer, {
+            [styles.HeaderExpanded]: isHeaderExpanded,
           })}
-          getCellProps={getCellProps}
-        />
-        <ContextMenuCell
-          open={menuState.status.cell}
-          anchorElement={anchorEl}
-          handleClose={handleMenuClose}
-          data={menuState.data}
-        />
-        <ContextMenuColumn
-          open={menuState.status.column}
-          anchorElement={anchorEl}
-          handleClose={handleMenuClose}
-          data={menuState.data}
-          columns={columnsTable}
-          columnVisibility={columnVisibility}
-          setColumnVisibility={handleColumnVisibilityChange}
-          columnPinning={columnPinning}
-          setColumnPinning={setColumnPinning}
-        />
-        <ContextMenuRow
-          open={menuState.status.row}
-          anchorElement={anchorEl}
-          handleClose={handleMenuClose}
+        >
+          <Table
+            data={rowsTable}
+            columns={columnsTable}
+            tableSettings={settings}
+            searchFilter={searchFilterTable}
+            columnVisibility={columnVisibility}
+            setColumnVisibility={handleColumnVisibilityChange}
+            columnSizing={columnSizing}
+            setColumnSizing={setColumnSizing}
+            columnPinning={columnPinning}
+            setColumnPinning={setColumnPinning}
+            columnOrder={columnOrder}
+            setColumnOrder={setColumnOrder}
+            headerExpanded={isHeaderExpanded}
+            getGlobalProps={getGlobalProps}
+            dense={isDenseView}
+            // getFirstHeaderProps={getFirstHeaderProps}
+            getHeaderProps={(col) => ({
+              ...getHeaderProps(col),
+              handleCellRightClick,
+              handleSelectedColumnChange,
+              handleSelectedColumnCellChange,
+            })}
+            getCellProps={getCellProps}
+          />
+          <ContextMenuCell
+            open={menuState.status.cell}
+            anchorElement={anchorEl}
+            handleClose={handleMenuClose}
+            data={menuState.data}
+          />
+          <ContextMenuColumn
+            open={menuState.status.column}
+            anchorElement={anchorEl}
+            handleClose={handleMenuClose}
+            data={menuState.data}
+            columns={columnsTable}
+            columnVisibility={columnVisibility}
+            setColumnVisibility={handleColumnVisibilityChange}
+            columnPinning={columnPinning}
+            setColumnPinning={setColumnPinning}
+          />
+          <ContextMenuRow
+            open={menuState.status.row}
+            anchorElement={anchorEl}
+            handleClose={handleMenuClose}
+          />
+        </div>
+        <DependenciesPanel
+          open={isPanelOpen}
+          onClose={() => setIsPanelOpen(false)}
         />
       </div>
       <RouteLeaveGuard

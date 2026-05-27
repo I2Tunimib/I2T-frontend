@@ -27,6 +27,7 @@ import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
+import AccountTreeRoundedIcon from "@mui/icons-material/AccountTreeRounded";
 import {
   addTutorialBox,
   deleteSelected,
@@ -160,12 +161,16 @@ const SubToolbar = ({
   setColumnVisibility,
   columnSizing,
   setColumnSizing,
+  onTogglePanel,
+  isPanelOpen,
 }: {
   columns: any[];
   columnVisibility: Record<string, boolean>;
   setColumnVisibility: (v: Record<string, boolean>) => void;
   columnSizing: Record<string, number>;
   setColumnSizing: (v: Record<string, number>) => void;
+  onTogglePanel?: () => void;
+  isPanelOpen?: boolean;
 }) => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
@@ -644,6 +649,17 @@ const SubToolbar = ({
             onSearchChange={handleSearch}
             className={styles.Search}
           />
+          {onTogglePanel && (
+            <IconButtonTooltip
+              tooltipText={
+                isPanelOpen
+                  ? "Close dependencies panel"
+                  : "Open dependencies panel"
+              }
+              Icon={AccountTreeRoundedIcon}
+              onClick={onTogglePanel}
+            />
+          )}
         </Stack>
       </ToolbarActions>
       {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}

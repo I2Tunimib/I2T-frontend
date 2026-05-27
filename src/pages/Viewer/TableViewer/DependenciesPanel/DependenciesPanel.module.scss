@@ -1,0 +1,50 @@
+.Header {
+    background: #fafafa;
+    min-height: 36px;
+}
+
+.Legend {
+    background: #fafafa;
+}
+
+.LegendDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.Tabs {
+    background: #fafafa;
+    min-height: 40px;
+
+    :global(.MuiTab-root) {
+        min-height: 40px;
+    }
+}
+
+.Body {
+    font-size: 0.875rem;
+}
+
+.NodeCard {
+    background: #f5f5f5;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.NodeId {
+    display: block;
+    font-family: monospace;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+/* Tree view — fills all remaining height so ForceGraph2D has a real canvas size */
+.TreeContainer {
+    flex: 1;
+    width: 100%;
+    min-height: 400px;
+    overflow: hidden;
+}

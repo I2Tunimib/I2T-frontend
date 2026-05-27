@@ -34,6 +34,17 @@ export type ApiConfig = {
     AUTH_VERIFY: Endpoint;
     AUTH_ME: Endpoint;
     TRACK: Endpoint;
+    GET_DEPENDENCIES: Endpoint;
+    GET_OPERATION_DOWNSTREAM_DEPS: Endpoint;
+    DELETE_OPERATION: Endpoint;
+    // ACL endpoints
+    ADD_VIEWER: Endpoint;
+    REMOVE_VIEWER: Endpoint;
+    ADD_EDITOR: Endpoint;
+    REMOVE_EDITOR: Endpoint;
+    SET_VISIBILITY: Endpoint;
+    // Users
+    SEARCH_USERS: Endpoint;
   };
 };
 
@@ -96,6 +107,15 @@ const CONFIG: AppConfig = {
       ],
       COMPLIANCE: {
         path: "/dataset/:datasetId/table/:tableId/compliance",
+      },
+      GET_DEPENDENCIES: {
+        path: "/dataset/:datasetId/table/:tableId/dependencies",
+      },
+      GET_OPERATION_DOWNSTREAM_DEPS: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId/downstream",
+      },
+      DELETE_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId",
       },
       EXPORT: [
         {
@@ -185,6 +205,15 @@ const CONFIG: AppConfig = {
       TRACK: {
         path: "/dataset/track/:idDataset/:idTable",
       },
+
+      // ACL endpoints
+      ADD_VIEWER: { path: "/dataset/:datasetId/acl/viewers" },
+      REMOVE_VIEWER: { path: "/dataset/:datasetId/acl/viewers" },
+      ADD_EDITOR: { path: "/dataset/:datasetId/acl/editors" },
+      REMOVE_EDITOR: { path: "/dataset/:datasetId/acl/editors" },
+      SET_VISIBILITY: { path: "/dataset/:datasetId/acl/visibility" },
+      // Users search
+      SEARCH_USERS: { path: "/auth/users?q=:query" },
     },
   },
 };

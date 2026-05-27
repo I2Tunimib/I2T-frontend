@@ -71,6 +71,7 @@ export interface FormInputParams {
     | "select"
     | "selectColumnAll"
     | "selectColumns"
+    | "selectPrefix"
     | "multipleColumnSelect"
     | "checkbox";
   rules: string[];

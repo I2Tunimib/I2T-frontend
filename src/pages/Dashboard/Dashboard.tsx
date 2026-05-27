@@ -1,62 +1,78 @@
 import {
-  Breadcrumbs, Button, IconButton, LinearProgress, Stack, Typography, useMediaQuery
-} from '@mui/material';
-import { MainLayout } from '@components/layout';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { FC, useEffect, useState } from 'react';
-import { IconButtonTooltip, SplitButton } from '@components/core';
+  Breadcrumbs,
+  Button,
+  IconButton,
+  LinearProgress,
+  Stack,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
+import { MainLayout } from "@components/layout";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import { FC, useEffect, useState } from "react";
+import { IconButtonTooltip, SplitButton } from "@components/core";
 import {
-  Link, Redirect, Route, Switch, useHistory, useRouteMatch
-} from 'react-router-dom';
-import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+  Link,
+  Redirect,
+  Route,
+  Switch,
+  useHistory,
+  useRouteMatch,
+} from "react-router-dom";
+import ArrowBackIosRoundedIcon from "@mui/icons-material/ArrowBackIosRounded";
 import {
-  annotate, deleteDataset,
-  deleteTable, getDataset
-} from '@store/slices/datasets/datasets.thunk';
+  annotate,
+  deleteDataset,
+  deleteTable,
+  getDataset,
+} from "@store/slices/datasets/datasets.thunk";
 import {
   selectCurrentDataset,
   selectGetAllDatasetsStatus,
-  selectIsHelpDialogOpen
-} from '@store/slices/datasets/datasets.selectors';
-import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
-import { Status as CompletionStatus } from '@store/slices/datasets/interfaces/datasets';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import clsx from 'clsx';
-import { selectAppConfig } from '@store/slices/config/config.selectors';
-import { updateUI } from '@store/slices/datasets/datasets.slice';
-import ToolbarContent from './ToolbarContent';
-import styles from './Dashboard.module.scss';
-import Datasets from './Datasets/Datasets';
-import Tables from './Tables';
-import UploadDataset from './UploadDataset/UploadDataset';
-import UploadTable from './UploadTable/UploadTable';
-import HelpDialog from './HelpDialog/HelpDialog';
+  selectIsHelpDialogOpen,
+} from "@store/slices/datasets/datasets.selectors";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
+import { Status as CompletionStatus } from "@store/slices/datasets/interfaces/datasets";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import clsx from "clsx";
+import { selectAppConfig } from "@store/slices/config/config.selectors";
+import { updateUI } from "@store/slices/datasets/datasets.slice";
+import ToolbarContent from "./ToolbarContent";
+import styles from "./Dashboard.module.scss";
+import Datasets from "./Datasets/Datasets";
+import Tables from "./Tables";
+import UploadDataset from "./UploadDataset/UploadDataset";
+import UploadTable from "./UploadTable/UploadTable";
+import HelpDialog from "./HelpDialog/HelpDialog";
 
 export const calcPercentage = (status: CompletionStatus) => {
-  const total = Object.keys(status)
-    .reduce((acc, key) => status[key as keyof CompletionStatus] + acc, 0);
+  const total = Object.keys(status).reduce(
+    (acc, key) => status[key as keyof CompletionStatus] + acc,
+    0,
+  );
   const value = (status.DONE / total) * 100;
   return value > 100 ? 100 : value;
 };
 
 interface SelectedRowsState {
-  kind: 'dataset' | 'table';
+  kind: "dataset" | "table";
   rows: any[];
 }
 
 const Dashboard: FC<any> = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<SelectedRowsState | null>(null);
+  const [selectedRows, setSelectedRows] = useState<SelectedRowsState | null>(
+    null,
+  );
   const dispatch = useAppDispatch();
-  const {
-    path,
-    url
-  } = useRouteMatch();
-  const matches = useMediaQuery('(max-width:1365px)');
+  const { path, url } = useRouteMatch();
+  const matches = useMediaQuery("(max-width:1365px)");
   const currentDataset = useAppSelector(selectCurrentDataset);
   const helpDialogOpen = useAppSelector(selectIsHelpDialogOpen);
   const history = useHistory();
-  const { loading: loadingDatasets } = useAppSelector(selectGetAllDatasetsStatus);
+  const { loading: loadingDatasets } = useAppSelector(
+    selectGetAllDatasetsStatus,
+  );
   const { API } = useAppSelector(selectAppConfig);
 
   useEffect(() => {
@@ -71,7 +87,9 @@ const Dashboard: FC<any> = () => {
     }
   }, [matches]);
 
-  const handleSelectedRowsChange = (state: { kind: 'dataset' | 'table', rows: any[] } | null) => {
+  const handleSelectedRowsChange = (
+    state: { kind: "dataset" | "table"; rows: any[] } | null,
+  ) => {
     setSelectedRows(state);
   };
 
@@ -79,7 +97,7 @@ const Dashboard: FC<any> = () => {
     if (selectedRows) {
       const { kind, rows } = selectedRows;
 
-      if (kind === 'dataset') {
+      if (kind === "dataset") {
         rows.forEach(({ id }) => {
           dispatch(deleteDataset({ datasetId: id }));
         });
@@ -89,25 +107,32 @@ const Dashboard: FC<any> = () => {
         });
       }
     }
+    setSelectedRows(null);
   };
 
   const startProcess = (option: string) => {
-    const endpoint = API.ENDPOINTS.PROCESS_START.find((value) => value.name === option);
+    const endpoint = API.ENDPOINTS.PROCESS_START.find(
+      (value) => value.name === option,
+    );
     if (endpoint) {
       if (selectedRows) {
         const { kind, rows } = selectedRows;
-        if (kind === 'dataset') {
-          dispatch(annotate({
-            name: endpoint.name || '',
-            idDataset: rows.map((row) => row.id),
-            idTable: []
-          }));
+        if (kind === "dataset") {
+          dispatch(
+            annotate({
+              name: endpoint.name || "",
+              idDataset: rows.map((row) => row.id),
+              idTable: [],
+            }),
+          );
         } else {
-          dispatch(annotate({
-            name: endpoint.name || '',
-            idDataset: [currentDataset.id],
-            idTable: rows.map((row) => row.id)
-          }));
+          dispatch(
+            annotate({
+              name: endpoint.name || "",
+              idDataset: [currentDataset.id],
+              idTable: rows.map((row) => row.id),
+            }),
+          );
         }
       }
     }
@@ -117,8 +142,8 @@ const Dashboard: FC<any> = () => {
   if (currentDataset) {
     breadcrumbsDatasetProps = {
       component: Link,
-      to: '/datasets',
-      className: clsx([styles.BreadcrumbsItem, styles.BreadcrumbsLink])
+      to: "/datasets",
+      className: clsx([styles.BreadcrumbsItem, styles.BreadcrumbsLink]),
     };
   }
 
@@ -126,38 +151,51 @@ const Dashboard: FC<any> = () => {
     <MainLayout
       ToolbarContent={<ToolbarContent />}
       sidebarCollapsed={sidebarCollapsed}
-      sibebarCollapseChange={() => setSidebarCollapsed((old) => !old)}>
+      sibebarCollapseChange={() => setSidebarCollapsed((old) => !old)}
+    >
       <div className={styles.Header}>
         <div className={styles.Column}>
-          <div className={clsx(
-            styles.Row
-          )}>
-            <Breadcrumbs separator={<Typography fontSize="24px" color="textSecondary">/</Typography>}>
+          <div className={clsx(styles.Row)}>
+            <Breadcrumbs
+              separator={
+                <Typography fontSize="24px" color="textSecondary">
+                  /
+                </Typography>
+              }
+            >
               <Stack direction="row" alignItems="center" gap="5px">
                 {currentDataset && (
-                  <IconButton size="small" onClick={() => history.push('/datasets')}>
+                  <IconButton
+                    size="small"
+                    onClick={() => history.push("/datasets")}
+                  >
                     <ArrowBackIosRoundedIcon fontSize="medium" />
                   </IconButton>
                 )}
                 <Typography
                   className={styles.BreadcrumbsItem}
                   {...breadcrumbsDatasetProps}
-                  variant="h6">
+                  variant="h6"
+                >
                   Datasets
                 </Typography>
               </Stack>
               {currentDataset && (
-                <Typography
-                  className={styles.BreadcrumbsItem}
-                  variant="h6">
+                <Typography className={styles.BreadcrumbsItem} variant="h6">
                   {currentDataset.name}
                 </Typography>
               )}
             </Breadcrumbs>
           </div>
+          {/*DELETE TABLE/DATASETS*/}
           <div className={clsx(styles.Row, styles.SubHeader)}>
             {API.ENDPOINTS.DELETE_DATASET && (
-              <IconButtonTooltip onClick={handleDelete} tooltipText="Delete" Icon={DeleteRoundedIcon} disabled={!selectedRows} />
+              <IconButtonTooltip
+                onClick={handleDelete}
+                tooltipText="Delete"
+                Icon={DeleteRoundedIcon}
+                disabled={!selectedRows}
+              />
             )}
             {selectedRows && (
               <div className={styles.NSelected}>
@@ -165,41 +203,43 @@ const Dashboard: FC<any> = () => {
                 &nbsp;selected
               </div>
             )}
-            {API.ENDPOINTS.PROCESS_START && API.ENDPOINTS.PROCESS_START.length > 0 && (
-              <SplitButton
-                prefix="Start process:"
-                handleClick={startProcess}
-                disabled={!selectedRows || selectedRows.rows.length === 0}
-                options={API.ENDPOINTS.PROCESS_START.map(({ name }) => name)} />
-            )}
+            {API.ENDPOINTS.PROCESS_START &&
+              API.ENDPOINTS.PROCESS_START.length > 0 && (
+                <SplitButton
+                  prefix="Start process:"
+                  handleClick={startProcess}
+                  disabled={!selectedRows || selectedRows.rows.length === 0}
+                  options={API.ENDPOINTS.PROCESS_START.map(({ name }) => name)}
+                />
+              )}
           </div>
         </div>
-        {!currentDataset && API.ENDPOINTS.UPLOAD_DATASET
-                && (
-                <Button
-                  size="small"
-                  component="label"
-                  startIcon={<AddRoundedIcon />}
-                  color="primary"
-                  onClick={() => dispatch(updateUI({ uploadDatasetDialogOpen: true }))}
-                  variant="text">
-                  New Dataset
-                </Button>
-                )
-        }
-        {currentDataset && API.ENDPOINTS.UPLOAD_TABLE
-                && (
-                <Button
-                  size="small"
-                  component="label"
-                  startIcon={<AddRoundedIcon />}
-                  color="primary"
-                  onClick={() => dispatch(updateUI({ uploadTableDialogOpen: true }))}
-                  variant="text">
-                  New Table
-                </Button>
-                )
-        }
+        {!currentDataset && API.ENDPOINTS.UPLOAD_DATASET && (
+          <Button
+            size="small"
+            component="label"
+            startIcon={<AddRoundedIcon />}
+            color="primary"
+            onClick={() =>
+              dispatch(updateUI({ uploadDatasetDialogOpen: true }))
+            }
+            variant="text"
+          >
+            New Dataset
+          </Button>
+        )}
+        {currentDataset && API.ENDPOINTS.UPLOAD_TABLE && (
+          <Button
+            size="small"
+            component="label"
+            startIcon={<AddRoundedIcon />}
+            color="primary"
+            onClick={() => dispatch(updateUI({ uploadTableDialogOpen: true }))}
+            variant="text"
+          >
+            New Table
+          </Button>
+        )}
       </div>
       <div className={styles.TableContainer}>
         <Switch>
@@ -207,8 +247,11 @@ const Dashboard: FC<any> = () => {
             <Datasets onSelectionChange={handleSelectedRowsChange} />
           </Route>
           <Route path={`${path}/:datasetId/tables`}>
-            {loadingDatasets === false
-              ? <Tables onSelectionChange={handleSelectedRowsChange} /> : <LinearProgress />}
+            {loadingDatasets === false ? (
+              <Tables onSelectionChange={handleSelectedRowsChange} />
+            ) : (
+              <LinearProgress />
+            )}
           </Route>
           <Redirect from="*" to="/datasets" />
         </Switch>
@@ -217,7 +260,8 @@ const Dashboard: FC<any> = () => {
       <UploadTable />
       <HelpDialog
         open={helpDialogOpen}
-        onClose={() => dispatch(updateUI({ helpDialogOpen: false }))} />
+        onClose={() => dispatch(updateUI({ helpDialogOpen: false }))}
+      />
     </MainLayout>
   );
 };
