@@ -181,6 +181,45 @@ const datasetAPI = {
       },
     );
   },
+
+  // ACL endpoints
+  addViewer: (datasetId: string, userId: string) => {
+    return apiClient.post(
+      apiEndpoint({ endpoint: "ADD_VIEWER", paramsValue: { datasetId } }),
+      { userId },
+      { headers: { ...getAuthHeader() } },
+    );
+  },
+
+  removeViewer: (datasetId: string, userId: string) => {
+    return apiClient.delete(
+      apiEndpoint({ endpoint: "REMOVE_VIEWER", paramsValue: { datasetId } }),
+      { data: { userId }, headers: { ...getAuthHeader() } },
+    );
+  },
+
+  addEditor: (datasetId: string, userId: string) => {
+    return apiClient.post(
+      apiEndpoint({ endpoint: "ADD_EDITOR", paramsValue: { datasetId } }),
+      { userId },
+      { headers: { ...getAuthHeader() } },
+    );
+  },
+
+  removeEditor: (datasetId: string, userId: string) => {
+    return apiClient.delete(
+      apiEndpoint({ endpoint: "REMOVE_EDITOR", paramsValue: { datasetId } }),
+      { data: { userId }, headers: { ...getAuthHeader() } },
+    );
+  },
+
+  setVisibility: (datasetId: string, visibility: string) => {
+    return apiClient.post(
+      apiEndpoint({ endpoint: "SET_VISIBILITY", paramsValue: { datasetId } }),
+      { visibility },
+      { headers: { ...getAuthHeader() } },
+    );
+  },
 };
 
 export default datasetAPI;

@@ -5,6 +5,9 @@ const dateFormats = [
   "dd-MM-yyyy", "dd/MM/yyyy", "dd.MM.yyyy", "ddMMyyyy",
   "MM-dd-yyyy", "MM/dd/yyyy", "MM.dd.yyyy", "MMddyyyy",
   "d MMMM yyyy", "dd MMMM yyyy", "MMMM d, yyyy", "MMMM dd, yyyy",
+  "dd/MM/yy", "dd-MM-yy", "dd.MM.yy",
+  "MM/dd/yy", "MM-dd-yy", "MM.dd.yy",
+  "yy/MM/dd", "yy-MM-dd", "yy.MM.dd",
 ];
 
 const timeFormats = [
