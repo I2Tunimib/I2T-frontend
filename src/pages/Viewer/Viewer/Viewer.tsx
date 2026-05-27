@@ -5,7 +5,7 @@ import {
   selectCurrentTable,
   selectGetTableStatus,
 } from "@store/slices/table/table.selectors";
-import { getTable } from "@store/slices/table/table.thunk";
+import { getTable, getDependencies } from "@store/slices/table/table.thunk";
 import {
   FC,
   useCallback,
@@ -79,6 +79,9 @@ const Viewer: FC<unknown> = () => {
       // dispatch(restoreInitialState());
       dispatch(getTable({ tableId, datasetId }))
         .unwrap()
+        .then(() => {
+          dispatch(getDependencies({ tableId, datasetId }));
+        })
         .catch((err) => history.push("/404"));
     }
   }, [tableId, datasetId]);

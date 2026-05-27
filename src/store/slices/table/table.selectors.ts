@@ -24,6 +24,8 @@ const selectRowsState = (state: RootState) => state.table.entities.rows;
 const selectUIState = (state: RootState) => state.table.ui;
 const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
+export const selectDependencies = (state: RootState) =>
+  state.table.dependencies;
 const selectReconciliatorById = (state: RootState, { value }: any) => {
   // return reconId ? state.config.entities.reconciliators.byId[reconId] : undefined;
   return undefined;
@@ -453,24 +455,23 @@ export const selectIsExtendButtonEnabled = createSelector(
   ({ selectedColumnsIds, selectedCellIds }, columns) => {
     const colIds = Object.keys(selectedColumnsIds);
     const cellIds = Object.keys(selectedCellIds);
-    if (colIds.length === 0) {
-      return false;
-    }
+
+    // Accept explicit column selection OR individual cell selection (cell click
+    // clears selectedColumnsIds via selectOneCell, so we must check both).
+    const effectiveColIds =
+      colIds.length > 0
+        ? colIds
+        : cellIds.map((cellId) => getIdsFromCell(cellId)[1]);
+
+    if (effectiveColIds.length === 0) return false;
+
+    // All selected cells must belong to one of the effective columns.
     const onlyColsSelected = !cellIds.some((cellId) => {
-      const [_, colId] = getIdsFromCell(cellId);
-      return !(colId in selectedColumnsIds);
+      const [, colId] = getIdsFromCell(cellId);
+      return !effectiveColIds.includes(colId);
     });
 
     return onlyColsSelected;
-    // if (onlyColsSelected) {
-    //   return colIds.some((colId) => {
-    //     const { context } = columns.byId[colId];
-    //     const totalReconciliated = Object.keys(context)
-    //       .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
-    //     return totalReconciliated > 0;
-    //   });
-    // }
-    // return false;
   },
 );
 
@@ -495,19 +496,31 @@ export const selectIsModifyButtonEnabled = createSelector(
 export const selectAreCellReconciliated = createSelector(
   selectUIState,
   selectColumnsState,
-  ({ selectedColumnsIds }, columns) => {
-    const colIds = Object.keys(selectedColumnsIds);
+  selectRowsState,
+  (
+    { selectedColumnsIds, selectedCellIds, selectedColumnCellsIds },
+    columns,
+    rows,
+  ) => {
+    // Collect column IDs from every selection surface: explicit column
+    // selection, individual cell selection, and column-cell selection.
+    // selectOneCell clears selectedColumnsIds, so we must check all three.
+    const colIdSet = new Set<string>([
+      ...Object.keys(selectedColumnsIds),
+      ...Object.keys(selectedCellIds).map(
+        (cellId) => getIdsFromCell(cellId)[1],
+      ),
+      ...Object.keys(selectedColumnCellsIds),
+    ]);
 
-    return colIds.some((colId) => {
-      if (columns.byId[colId] && columns.byId[colId].context) {
-        const { context } = columns.byId[colId];
-        const totalReconciliated = Object.keys(context).reduce(
-          (acc, ctx) => acc + context[ctx].reconciliated,
-          0,
-        );
-        return totalReconciliated > 0;
-      }
-      return false;
+    return [...colIdSet].some((colId) => {
+      if (!columns.byId[colId]) return false;
+      // Check directly on the actual cell annotation meta rather than relying
+      // on the context reconciliated counter, which can be stale or miskeyed.
+      return rows.allIds.some((rowId) => {
+        const cell = rows.byId[rowId]?.cells?.[colId];
+        return cell?.annotationMeta?.match?.value === true;
+      });
     });
   },
 );

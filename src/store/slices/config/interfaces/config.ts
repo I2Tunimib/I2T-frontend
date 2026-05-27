@@ -70,6 +70,7 @@ export interface FormInputParams {
     | "textArea"
     | "select"
     | "selectColumns"
+    | "selectPrefix"
     | "multipleColumnSelect"
     | "checkbox";
   rules: string[];

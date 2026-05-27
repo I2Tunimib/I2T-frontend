@@ -3,6 +3,7 @@ import { RequestEnhancedState } from "@store/enhancers/requests";
 import { UndoEnhancedState } from "@store/enhancers/undo";
 import { ID, BaseState } from "@store/interfaces/store";
 import { Reconciliator } from "@store/slices/config/interfaces/config";
+import { DependencyGraph } from "./table";
 
 /**
  * Table slice state.
@@ -15,6 +16,7 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
     rows: RowState;
   };
   ui: TableUIState;
+  dependencies: DependencyGraph | null;
 }
 
 export interface CurrentTableState extends TableInstance {}
@@ -310,6 +312,48 @@ export interface AddColumnTypePayload {
 }
 
 export interface UpdateCurrentTablePayload extends Partial<TableInstance> {}
+
+// ---------------------------------------------------------------------------
+// Dependencies (returned by the backend middleware after every service call)
+// ---------------------------------------------------------------------------
+
+export interface DependencyNode {
+  id: string;
+  children: string[];
+  parents: string[];
+  supportChildren?: string[];
+  supportParents?: string[];
+  [key: string]: any;
+}
+
+export interface DependencyOperation {
+  id: string;
+  opNumber?: number;
+  timestamp?: string;
+  operationType: "RECONCILIATION" | "EXTENSION" | "MODIFICATION" | string;
+  columnName?: string;
+  /** Generic fallback (older log entries) */
+  service?: string;
+  /** Set for RECONCILIATION operations */
+  reconciler?: string;
+  /** Set for EXTENSION operations */
+  extender?: string;
+  /** Set for MODIFICATION operations */
+  modifier?: string;
+  /** True if this operation was committed before the last table save */
+  consolidated?: boolean;
+  [key: string]: any;
+}
+
+export interface DependencyGraph {
+  datasetId: string;
+  tableId: string;
+  columns: Record<string, any>;
+  operationsCount: number;
+  latestTableData: any;
+  nodes: Record<string, DependencyNode>;
+  operations: DependencyOperation[];
+}
 
 export interface DeleteSelectedPayload {}
 

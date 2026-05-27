@@ -62,9 +62,23 @@ const GDPRContent: FC<GDPRContentProps> = () => {
 
   const { complianceStatus, compliance: complianceResult } = tableInstance;
 
-  // Parse compliance result
+  // Parse compliance result.
+  // The response is: [{ table: {...} }, { ColA: {...}, ColB: {...}, ... }]
+  // All column results are merged into a single object at index 1, so we
+  // must iterate over its keys rather than over the array items.
   const tableInfo = complianceResult?.[0]?.table;
-  const columnResults = complianceResult?.slice(1) || [];
+  const columnResults: { name: string; analysis: any }[] =
+    complianceResult
+      ?.slice(1)
+      .flatMap((item: any) =>
+        Object.entries(item).map(([name, analysis]) => ({ name, analysis })),
+      )
+      .filter(
+        ({ analysis }) =>
+          analysis !== null &&
+          typeof analysis === "object" &&
+          "classification" in analysis,
+      ) ?? [];
 
   const getGDPRColor = (gdpr: string) => {
     if (gdpr === "noGDPR") return "success";
@@ -168,9 +182,7 @@ const GDPRContent: FC<GDPRContentProps> = () => {
           </Typography>
           <Paper sx={{ maxHeight: "400px", overflow: "auto" }}>
             <List>
-              {columnResults.map((colResult: any, index: number) => {
-                const columnName = Object.keys(colResult)[0];
-                const analysis = colResult[columnName];
+              {columnResults.map(({ name: columnName, analysis }, index) => {
                 return (
                   <div key={columnName}>
                     <ListItem

@@ -58,12 +58,14 @@ import {
   UpdateSelectedColumnPayload,
   UpdateSelectedRowPayload,
   UpdateColumnTypeMatchesPayload,
+  DependencyGraph,
 } from "./interfaces/table";
 import {
   automaticAnnotation,
   extend,
   ExtendThunkResponseProps,
   getTable,
+  getDependencies,
   reconcile,
   modify,
   saveTable,
@@ -170,6 +172,7 @@ const initialState: TableState = {
     tutorialBBoxes: {},
     tutorialStep: 1,
   },
+  dependencies: null,
   _requests: { byId: {}, allIds: [] },
   _draft: {
     patches: [],
@@ -1974,6 +1977,39 @@ export const tableSlice = createSliceWithRequests({
         },
       );
     },
+    clearColumnReconciliation: (
+      state,
+      action: PayloadAction<{ colId: ID }>,
+    ) => {
+      const { colId } = action.payload;
+      return produceWithPatch(state, false, (draft) => {
+        const column = getColumn(draft, colId);
+        if (!column) return;
+        column.context = {};
+        column.annotationMeta = {
+          annotated: false,
+          match: { value: false },
+          highestScore: 0,
+          lowestScore: 0,
+        };
+        column.status = ColumnStatus.EMPTY;
+        delete (column as any).reconciler;
+        draft.entities.rows.allIds.forEach((rowId) => {
+          const cell = draft.entities.rows.byId[rowId]?.cells?.[colId];
+          if (cell) {
+            cell.metadata = [];
+            cell.annotationMeta = {
+              annotated: false,
+              match: { value: false },
+              highestScore: 0,
+              lowestScore: 0,
+            };
+          }
+        });
+        updateNumberOfReconciliatedCells(draft);
+        updateScoreBoundaries(draft);
+      });
+    },
     deleteRow: (state, action: PayloadAction<Payload<DeleteRowPayload>>) => {
       const { undoable = true, rowId } = action.payload;
       return produceWithPatch(
@@ -2051,6 +2087,12 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<{ id: string; isVisible: boolean }>,
     ) => {
       state.ui.columnVisibility[action.payload.id] = action.payload.isVisible;
+    },
+    updateDependencies: (
+      state,
+      action: PayloadAction<DependencyGraph | null>,
+    ) => {
+      state.dependencies = action.payload;
     },
   },
   extraRules: (builder) =>
@@ -2368,6 +2410,9 @@ export const tableSlice = createSliceWithRequests({
       })
       .addCase(tableCompliance.rejected, (state) => {
         state.entities.tableInstance.complianceStatus = "ERROR";
+      })
+      .addCase(getDependencies.fulfilled, (state, action) => {
+        state.dependencies = action.payload ?? null;
       })
       .addCase(
         extend.fulfilled,
@@ -2714,6 +2759,7 @@ export const {
   updateUI,
   addTutorialBox,
   deleteColumn,
+  clearColumnReconciliation,
   deleteRow,
   deleteSelected,
   updateTable,
@@ -2723,6 +2769,7 @@ export const {
   redo,
   updateColumnVisibility,
   updateSchema,
+  updateDependencies,
 } = tableSlice.actions;
 
 export default tableSlice.reducer;
