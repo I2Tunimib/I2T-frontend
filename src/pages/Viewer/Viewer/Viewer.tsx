@@ -5,7 +5,10 @@ import {
   selectCurrentTable,
   selectGetTableStatus,
 } from "@store/slices/table/table.selectors";
+import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
+import { updateUI } from "@store/slices/table/table.slice";
+import datasetAPI from "@services/api/datasets";
 import {
   FC,
   useCallback,
@@ -64,6 +67,7 @@ const Viewer: FC<unknown> = () => {
   const currentTable = useAppSelector(selectCurrentTable);
   const dispatch = useAppDispatch();
   const socket = useSocketIo();
+  const auth = useAppSelector(selectIsLoggedIn);
 
   useEffect(() => {
     if (tableId && datasetId) {
@@ -73,6 +77,46 @@ const Viewer: FC<unknown> = () => {
       }
     }
   }, [view, tableId, datasetId]);
+
+  useEffect(() => {
+    if (!datasetId) return;
+
+    let cancelled = false;
+
+    const getDatasetPermissions = async () => {
+      try {
+        const response = await datasetAPI.getDatasetInfo({ datasetId });
+        const dataset = response.data;
+        const currentUserId = auth.user?.id;
+        const isOwner =
+          dataset &&
+          currentUserId !== undefined &&
+          String(dataset.userId) === String(currentUserId);
+        const isEditor =
+          dataset &&
+          Array.isArray(dataset.editors) &&
+          currentUserId !== undefined &&
+          dataset.editors.map(String).includes(String(currentUserId));
+        const canEdit = Boolean(
+          dataset && (dataset.visibility === "public" || isOwner || isEditor),
+        );
+
+        if (!cancelled) {
+          dispatch(updateUI({ settings: { isViewOnly: !canEdit } }));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          dispatch(updateUI({ settings: { isViewOnly: true } }));
+        }
+      }
+    };
+
+    getDatasetPermissions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [datasetId, auth.user?.id, auth.loggedIn, dispatch]);
 
   useEffect(() => {
     if (tableId && datasetId) {

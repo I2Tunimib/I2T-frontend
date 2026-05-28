@@ -1005,133 +1005,94 @@ export const deleteOperationAndRedo = createAsyncThunk(
 
     if (!tableInstance.id || !tableInstance.idDataset) return;
 
-    // Snapshot the dependency data before deletion so we know what was removed
-    const depColumns = (state.table as any).dependencies?.columns ?? {};
-    const depOperations: DependencyOperation[] =
-      (state.table as any).dependencies?.operations ?? [];
-
-    // 1. Remove the operation (backend cascades to all downstream deps)
+    // Single DELETE call — backend handles redo internally and returns everything
     const deleteResult = await tableAPI.deleteOperation({
       datasetId: String(tableInstance.idDataset),
       tableId: String(tableInstance.id),
       opId,
     });
-    const deletedIds = new Set<string>(deleteResult.data?.deleted ?? [opId]);
 
-    // 1b. Remove columns created by deleted EXTENSION ops
+    const { deleted = [opId], reconResults = [], dependencies } = deleteResult.data ?? {};
+    const deletedIds = new Set<string>(deleted);
+
+    // Remove columns created by deleted EXTENSION ops
+    const depColumns = (state.table as any).dependencies?.columns ?? {};
     Object.entries(depColumns).forEach(([colLabel, colInfo]: [string, any]) => {
       if (colInfo?.createdBy && deletedIds.has(colInfo.createdBy)) {
-        const colId = columns.allIds.find(
-          (id) => columns.byId[id]?.label === colLabel,
-        );
+        const colId = columns.allIds.find((id) => columns.byId[id]?.label === colLabel);
         if (colId) dispatch(deleteColumn({ colId }));
       }
     });
 
-    // 1c. Clear reconciliation metadata for columns whose RECONCILIATION op was deleted
-    const deletedReconCols = new Set<string>(
-      depOperations
-        .filter(
-          (op) =>
-            deletedIds.has(op.id) &&
-            op.operationType === "RECONCILIATION" &&
-            op.columnName,
-        )
-        .map((op) => op.columnName as string),
-    );
-    deletedReconCols.forEach((colName) => {
-      const cId = columns.allIds.find(
-        (id) => columns.byId[id]?.label === colName,
-      );
-      if (cId) dispatch(clearColumnReconciliation({ colId: cId }));
-    });
+    // Clear reconciliation metadata for columns whose recon op was deleted
+    // (those that had no surviving recon will stay cleared; those that did will be re-set below)
+    const depOperations: DependencyOperation[] = (state.table as any).dependencies?.operations ?? [];
+    depOperations
+      .filter((op) => deletedIds.has(op.id) && op.operationType === "RECONCILIATION" && op.columnName)
+      .forEach((op) => {
+        const cId = columns.allIds.find((id) => columns.byId[id]?.label === op.columnName);
+        if (cId) dispatch(clearColumnReconciliation({ colId: cId }));
+      });
 
-    // 2. Refresh the dependency graph in the store
-    const depsResult = await dispatch(
-      getDependencies({
-        tableId: tableInstance.id,
-        datasetId: tableInstance.idDataset,
-      }),
-    );
-    const updatedDeps = depsResult.payload as DependencyGraph | undefined;
+    // Update dependency graph in store
+    if (dependencies) {
+      dispatch(updateUI({ key: "dependencies", value: dependencies } as any));
+    }
 
-    // 3. For each reconciliation column that was cleared, redo the last
-    //    remaining reconciliation if one still exists in the updated dep graph.
-    //
-    //    IMPORTANT: build the full redo queue first, then sort it by ascending
-    //    opNumber before executing.  This guarantees that any column used as
-    //    support context by another column (support can come from other cols) is
-    //    re-reconciled first, so its fresh metadata is present in the store when
-    //    the dependent column's reconciliation request is made.
-    if (deletedReconCols.size === 0) return;
-
+    // Dispatch reconcile.fulfilled for each redo result from the backend
     const freshState = getState() as RootState;
-    const allUpdatedOps = (updatedDeps?.operations ??
-      []) as DependencyOperation[];
-
-    // Build (colName → lastRecon) entries, drop columns with no surviving
-    // reconciliation, then sort oldest-first so support deps come before the
-    // columns that depend on them.
-    const redoQueue = [...deletedReconCols]
-      .map((colName) => ({
-        colName,
-        lastRecon: allUpdatedOps
-          .filter(
-            (rec) =>
-              rec.columnName === colName &&
-              rec.operationType === "RECONCILIATION",
-          )
-          .sort((a, b) => (b.opNumber ?? 0) - (a.opNumber ?? 0))[0] as
-          | DependencyOperation
-          | undefined,
-      }))
-      .filter(
-        (entry): entry is { colName: string; lastRecon: DependencyOperation } =>
-          !!entry.lastRecon?.reconciler,
-      )
-      // Ascending opNumber: older ops (potential support sources) come first.
-      .sort(
-        (a, b) => (a.lastRecon.opNumber ?? 0) - (b.lastRecon.opNumber ?? 0),
-      );
-
-    for (const { colName, lastRecon } of redoQueue) {
+    for (const { serviceId, reconData } of reconResults) {
       const reconciliator =
-        freshState.config.entities.reconciliators?.byId?.[
-          lastRecon.reconciler!
-        ];
-      if (!reconciliator) continue;
-
-      const cId = freshState.table.entities.columns.allIds.find(
-        (id) => freshState.table.entities.columns.byId[id]?.label === colName,
-      );
-      if (!cId) continue;
-
-      dispatch(updateUI({ selectedColumnsIds: { [cId]: true } }));
-
-      // Build items exactly as the UI does: column header + every individual
-      // cell so that mapToUnique on the backend deduplicates them by label and
-      // the request transformer receives all distinct cell values, not just the
-      // column header.
-      const colItems = [
-        { id: cId, label: freshState.table.entities.columns.byId[cId].label },
-        ...freshState.table.entities.rows.allIds
-          .map((rowId) => ({
-            id: `${rowId}$${cId}`,
-            label:
-              freshState.table.entities.rows.byId[rowId]?.cells?.[cId]?.label ??
-              "",
-          }))
-          .filter((item) => item.label !== ""),
-      ];
-
-      await dispatch(
-        reconcile({
-          items: colItems,
-          reconciliator,
-          formValues: lastRecon.additionalData ?? {},
-          silent: true,
-        }),
+        (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ?? null;
+      dispatch(
+        reconcile.fulfilled(
+          { data: reconData, reconciliator, undoable: false },
+          "redo",
+          { items: [], reconciliator, formValues: {} } as any,
+        ),
       );
     }
+
+    // Refresh dependencies from backend to ensure store is up to date
+    dispatch(getDependencies({ tableId: tableInstance.id, datasetId: tableInstance.idDataset }));
   },
 );
+
+export const redoOperationFromLog = createAsyncThunk(
+  `${ACTION_PREFIX}/redoOperationFromLog`,
+  async (
+    { opId }: { opId: string },
+    { getState, dispatch },
+  ) => {
+    const state = getState() as RootState;
+    const { tableInstance } = state.table.entities;
+
+    if (!tableInstance.id || !tableInstance.idDataset) return;
+
+    const response = await tableAPI.redoOperation({
+      datasetId: String(tableInstance.idDataset),
+      tableId: String(tableInstance.id),
+      opId,
+    });
+
+    const { serviceId, dependencies: _deps, ...reconcileData } = response.data;
+
+    // Refresh dependency graph
+    dispatch(getDependencies({ tableId: tableInstance.id, datasetId: tableInstance.idDataset }));
+
+    // Look up reconciliator so the fulfilled handler can build metadata correctly
+    const freshState = getState() as RootState;
+    const reconciliator =
+      (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ?? null;
+
+    // Dispatch reconcile.fulfilled directly so the exact same reducer runs
+    dispatch(
+      reconcile.fulfilled(
+        { data: reconcileData, reconciliator, undoable: false },
+        "redo",
+        { items: [], reconciliator, formValues: {} } as any,
+      ),
+    );
+  },
+);
+

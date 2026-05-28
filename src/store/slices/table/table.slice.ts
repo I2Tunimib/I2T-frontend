@@ -1930,7 +1930,15 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<Payload<Partial<TableUIState>>>,
     ) => {
       const { undoable, ...rest } = action.payload;
-      state.ui = { ...state.ui, ...rest };
+      if (rest.settings) {
+        state.ui = {
+          ...state.ui,
+          ...rest,
+          settings: { ...state.ui.settings, ...rest.settings },
+        };
+      } else {
+        state.ui = { ...state.ui, ...rest };
+      }
     },
     addTutorialBox: (
       state,

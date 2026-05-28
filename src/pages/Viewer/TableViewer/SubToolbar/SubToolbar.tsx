@@ -445,7 +445,7 @@ const SubToolbar = ({
             aria-label="open-metadata-dialog-subtoolbar"
             tooltipText="Manage metadata"
             Icon={SettingsEthernetRoundedIcon}
-            disabled={!isMetadataButtonEnabled}
+            disabled={!isMetadataButtonEnabled || isViewOnly}
             onClick={handleMetadataDialogAction}
           />
           {API.ENDPOINTS.SAVE && !isViewOnly && (

@@ -37,6 +37,7 @@ export type ApiConfig = {
     GET_DEPENDENCIES: Endpoint;
     GET_OPERATION_DOWNSTREAM_DEPS: Endpoint;
     DELETE_OPERATION: Endpoint;
+    REDO_OPERATION: Endpoint;
     // ACL endpoints
     ADD_VIEWER: Endpoint;
     REMOVE_VIEWER: Endpoint;
@@ -116,6 +117,9 @@ const CONFIG: AppConfig = {
       },
       DELETE_OPERATION: {
         path: "/dataset/:datasetId/table/:tableId/operation/:opId",
+      },
+      REDO_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId/redo",
       },
       EXPORT: [
         {
