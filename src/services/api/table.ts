@@ -382,6 +382,21 @@ const tableAPI = {
       },
     ),
 
+  redoOperation: (params: Record<string, string | number>) =>
+    apiClient.post<any>(
+      apiEndpoint({
+        endpoint: "REDO_OPERATION",
+        paramsValue: params,
+      }),
+      {},
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    ),
+
   getChallengeTable: (datasetName: string, tableName: string) =>
     apiClient.get(
       `/tables/challenge/datasets/${datasetName}/tables/${tableName}`,

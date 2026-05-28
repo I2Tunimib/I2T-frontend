@@ -13,9 +13,12 @@ import { ButtonShortcut } from "@components/kit";
 import { ColumnStatus } from "@store/slices/table/interfaces/table";
 import { RootState } from "@store";
 import { connect } from "react-redux";
-import { selectColumnReconciliators } from "@store/slices/table/table.selectors";
+import {
+  selectColumnReconciliators,
+  selectIsViewOnly,
+} from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
-import { useAppDispatch } from "@hooks/store";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { forwardRef, useCallback, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
 import { StatusBadge } from "@components/core";
@@ -179,8 +182,6 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
     const getBadgeStatus = useCallback(
       (column: any) => {
-        console.log("*** get badge status col", column);
-
         // Safely extract annotationMeta fields with defaults to avoid runtime errors
         const annotated = !!column?.annotationMeta?.annotated;
         const match = column?.annotationMeta?.match ?? {};
@@ -281,7 +282,12 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       return "";
     };
 
+    const isViewOnly = useAppSelector(selectIsViewOnly);
+
     const handleMetadataDialogAction = (colId: string) => {
+      if (isViewOnly) {
+        return;
+      }
       dispatch(
         updateUI({
           openMetadataColumnDialog: true,
@@ -385,11 +391,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     if (!isAlreadySelected) {
                       handleSelectedColumnCellChange(e, id);
                     }
-                    handleMetadataDialogAction(header.column.id);
+                    if (!isViewOnly) {
+                      handleMetadataDialogAction(header.column.id);
+                    }
                   }}
                   className={styles.ColumnManageButton}
                   sx={{ marginBottom: 15 }}
                   size="small"
+                  disabled={isViewOnly}
                   title=""
                 >
                   <SettingsEthernetRoundedIcon fontSize="medium" />

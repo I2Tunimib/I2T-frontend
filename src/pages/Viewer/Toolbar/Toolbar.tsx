@@ -240,11 +240,13 @@ const Toolbar = () => {
           <>
             <Button
               onClick={() =>
+                !isViewOnly &&
                 dispatch(updateUI({ openComplianceStatusDialog: true }))
               }
               variant="contained"
               color="primary"
               size="medium"
+              disabled={isViewOnly}
               startIcon={<AssignmentTurnedInOutlined />}
             >
               Compliance
@@ -255,11 +257,13 @@ const Toolbar = () => {
           <>
             <Button
               onClick={() =>
+                !isViewOnly &&
                 dispatch(updateUI({ openAutoAnnotationDialog: true }))
               }
               variant="contained"
               size="medium"
               disabled={
+                isViewOnly ||
                 loadingAutomaticAnnotation ||
                 (currentTable &&
                   (currentTable.mantisStatus === "PENDING" ||
