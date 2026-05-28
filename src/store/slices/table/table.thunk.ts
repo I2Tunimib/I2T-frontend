@@ -1012,25 +1012,39 @@ export const deleteOperationAndRedo = createAsyncThunk(
       opId,
     });
 
-    const { deleted = [opId], reconResults = [], dependencies } = deleteResult.data ?? {};
+    const {
+      deleted = [opId],
+      reconResults = [],
+      dependencies,
+    } = deleteResult.data ?? {};
     const deletedIds = new Set<string>(deleted);
 
     // Remove columns created by deleted EXTENSION ops
     const depColumns = (state.table as any).dependencies?.columns ?? {};
     Object.entries(depColumns).forEach(([colLabel, colInfo]: [string, any]) => {
       if (colInfo?.createdBy && deletedIds.has(colInfo.createdBy)) {
-        const colId = columns.allIds.find((id) => columns.byId[id]?.label === colLabel);
+        const colId = columns.allIds.find(
+          (id) => columns.byId[id]?.label === colLabel,
+        );
         if (colId) dispatch(deleteColumn({ colId }));
       }
     });
 
     // Clear reconciliation metadata for columns whose recon op was deleted
     // (those that had no surviving recon will stay cleared; those that did will be re-set below)
-    const depOperations: DependencyOperation[] = (state.table as any).dependencies?.operations ?? [];
+    const depOperations: DependencyOperation[] =
+      (state.table as any).dependencies?.operations ?? [];
     depOperations
-      .filter((op) => deletedIds.has(op.id) && op.operationType === "RECONCILIATION" && op.columnName)
+      .filter(
+        (op) =>
+          deletedIds.has(op.id) &&
+          op.operationType === "RECONCILIATION" &&
+          op.columnName,
+      )
       .forEach((op) => {
-        const cId = columns.allIds.find((id) => columns.byId[id]?.label === op.columnName);
+        const cId = columns.allIds.find(
+          (id) => columns.byId[id]?.label === op.columnName,
+        );
         if (cId) dispatch(clearColumnReconciliation({ colId: cId }));
       });
 
@@ -1043,7 +1057,8 @@ export const deleteOperationAndRedo = createAsyncThunk(
     const freshState = getState() as RootState;
     for (const { serviceId, reconData } of reconResults) {
       const reconciliator =
-        (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ?? null;
+        (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ??
+        null;
       dispatch(
         reconcile.fulfilled(
           { data: reconData, reconciliator, undoable: false },
@@ -1054,16 +1069,18 @@ export const deleteOperationAndRedo = createAsyncThunk(
     }
 
     // Refresh dependencies from backend to ensure store is up to date
-    dispatch(getDependencies({ tableId: tableInstance.id, datasetId: tableInstance.idDataset }));
+    dispatch(
+      getDependencies({
+        tableId: tableInstance.id,
+        datasetId: tableInstance.idDataset,
+      }),
+    );
   },
 );
 
 export const redoOperationFromLog = createAsyncThunk(
   `${ACTION_PREFIX}/redoOperationFromLog`,
-  async (
-    { opId }: { opId: string },
-    { getState, dispatch },
-  ) => {
+  async ({ opId }: { opId: string }, { getState, dispatch }) => {
     const state = getState() as RootState;
     const { tableInstance } = state.table.entities;
 
@@ -1078,12 +1095,18 @@ export const redoOperationFromLog = createAsyncThunk(
     const { serviceId, dependencies: _deps, ...reconcileData } = response.data;
 
     // Refresh dependency graph
-    dispatch(getDependencies({ tableId: tableInstance.id, datasetId: tableInstance.idDataset }));
+    dispatch(
+      getDependencies({
+        tableId: tableInstance.id,
+        datasetId: tableInstance.idDataset,
+      }),
+    );
 
     // Look up reconciliator so the fulfilled handler can build metadata correctly
     const freshState = getState() as RootState;
     const reconciliator =
-      (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ?? null;
+      (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ??
+      null;
 
     // Dispatch reconcile.fulfilled directly so the exact same reducer runs
     dispatch(
@@ -1095,4 +1118,3 @@ export const redoOperationFromLog = createAsyncThunk(
     );
   },
 );
-
