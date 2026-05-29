@@ -41,10 +41,10 @@ The tests are organized into logical directories to separate UI components, core
  ┃ ┃ ┃ ┣ 📜modification.spec.ts
  ┃ ┃ ┃ ┗ 📜reconciliation.spec.ts
  ┃ ┃ ┗ 📂user-tasks
- ┃ ┃ ┃ ┣ 📜task_full_workflow.spec.ts
+ ┃ ┃ ┃ ┣ 📜task_enrichment_workflow.spec.ts
  ┃ ┃ ┃ ┗ 📜task_reconcile_revision.spec.ts
  ┃ ┣ 📂user-tasks
- ┃ ┃ ┣ 📜task_full_workflow.spec.ts
+ ┃ ┃ ┣ 📜task_enrichment_workflow.spec.ts
  ┃ ┃ ┣ 📜task_reconcile_revision.spec.ts
  ┃ ┃ ┗ 📜task_schema_annotation.spec.ts
  ┃ ┗ 📂utils

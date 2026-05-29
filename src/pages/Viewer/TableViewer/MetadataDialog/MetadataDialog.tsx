@@ -565,7 +565,10 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         console.warn("OSM Proxy failed", err);
       }
     } else {
-      finalUri = resolveURI(reconciliator, { id: idFromUri });
+      if (reconciliator) {
+        finalUri = resolveURI(reconciliator, { id: idFromUri });
+      }
+      finalUri = uri;
     }
 
     let description = "";

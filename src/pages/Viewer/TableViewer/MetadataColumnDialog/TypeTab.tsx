@@ -354,7 +354,11 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     );
 
     const finalId = cleanPrefix === "geo" ? `${idFromUri}` : `${cleanPrefix}:${idFromUri}`;
-    const finalUri = cleanPrefix === "geo" ? "" : resolveURI(reconciliator, { id: idFromUri });
+    let finalUri = "";
+    if (reconciliator) {
+      finalUri = cleanPrefix === "geo" ? "" : resolveURI(reconciliator, { id: idFromUri });
+    }
+    finalUri = uri;
 
     const newType = {
       id: finalId,

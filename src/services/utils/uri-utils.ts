@@ -62,6 +62,10 @@ export const createOSMURI = (base, data: { osmId: string; osmType: string; }) =>
 };
 
 export const resolveURI = (reconciliator: any, item: any) => {
+  if (!reconciliator) {
+    return item?.uri || "";
+  }
+
   const cleanId = item.id?.includes(":") ? item.id.split(":")[1] : item.id;
   const baseUri = item?.uri || reconciliator?.uri;
 
@@ -76,6 +80,10 @@ export const resolveURI = (reconciliator: any, item: any) => {
     return item.uri;
   }
 
+  if (baseUri.includes("wiki") && cleanId?.startsWith("P")) {
+    return `${baseUri}Property:${cleanId}`;
+  }
+
   return buildURI(baseUri, cleanId);
 };
 
@@ -87,9 +95,11 @@ export const extractIdFromUri = (uri: string, prefix: string): string => {
     try {
       const url = new URL(trimmedUri);
 
-      // Wikidata: [https://www.wikidata.org/wiki/Q2807](https://www.wikidata.org/wiki/Q2807) -> Q2807
+      // Wikidata: https://www.wikidata.org/wiki/Q2807 -> Q2807
+      // Wikidata: https://www.wikidata.org/wiki/Property:P17 -> P17
       if (prefix.startsWith("wd")) {
-        return url.pathname.split("/").pop() || "";
+        const lastPart = url.pathname.split("/").pop() || "";
+        return lastPart.replace(/^Property:/i, "");
       }
 
       // GeoNames: https://www.geonames.org/3117735/madrid.html -> 3117735
