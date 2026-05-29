@@ -961,29 +961,34 @@ export const tableSlice = createSliceWithRequests({
             state,
             undoable,
             (draft) => {
-              const columnToUpdate = getColumn(draft, colId);
               const { id, match, name, uri, obj, description, ...rest } = value;
               const isMatching = match === "true";
 
+              const isLiteralInverted = value.inverted === true;
+              const subjectColId = isLiteralInverted ? value.obj : colId;
+              const objectColId = isLiteralInverted ? colId : value.obj;
+
+              const columnToUpdate = getColumn(draft, subjectColId);
+
               for (let i = 0; i < draft.entities.columns.allIds.length; i++) {
                 const currentId = draft.entities.columns.allIds[i];
-                if (currentId !== colId) {
+                if (currentId !== subjectColId) {
                   draft.entities.columns.byId[currentId].role = undefined;
                 }
               }
-              draft.entities.columns.byId[colId].role = "subject";
+              draft.entities.columns.byId[subjectColId].role = "subject";
 
               if (
                 columnToUpdate.metadata.length > 0 &&
                 columnToUpdate.metadata[0].property &&
                 columnToUpdate.metadata[0].property.length > 0 &&
-                draft.entities.columns.byId[colId].metadata &&
-                draft.entities.columns.byId[colId].metadata[0].property
+                draft.entities.columns.byId[subjectColId].metadata &&
+                draft.entities.columns.byId[subjectColId].metadata[0].property
               ) {
                 if (isMatching) {
-                  draft.entities.columns.byId[colId].metadata[0].property =
+                  draft.entities.columns.byId[subjectColId].metadata[0].property =
                     draft.entities.columns.byId[
-                      colId
+                      subjectColId
                     ].metadata[0].property?.map((item) => ({
                       ...item,
                       match: true,
@@ -994,19 +999,20 @@ export const tableSlice = createSliceWithRequests({
               const newMeta = {
                 //id: `${prefix}:${id}`,
                 id: `${id}`,
-                obj: value.obj,
+                obj: objectColId,
                 match: isMatching,
                 name,
+                uri,
                 description: value.description,
                 ...rest,
               };
 
-              draft.entities.columns.byId[colId].metadata = [
+              draft.entities.columns.byId[subjectColId].metadata = [
                 {
-                  ...draft.entities.columns.byId[colId].metadata[0],
+                  ...draft.entities.columns.byId[subjectColId].metadata[0],
                   role: "subject",
                   property: [
-                    ...(draft.entities.columns.byId[colId].metadata[0]
+                    ...(draft.entities.columns.byId[subjectColId].metadata[0]
                       ?.property || []),
                     newMeta,
                   ],

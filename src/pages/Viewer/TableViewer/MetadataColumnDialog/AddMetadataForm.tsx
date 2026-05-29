@@ -25,6 +25,7 @@ export interface AddMetadataFormProps {
   onSubmit: (data: any) => void;
   context: "metadataDialog" | "typeTab" | "propertyTab";
   otherColumns?: { id: string; label: string; value: string }[];
+  isLiteralColumn?: boolean;
 }
 
 const AddMetadataForm: FC<AddMetadataFormProps> = ({
@@ -33,6 +34,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
   onSubmit,
   context,
   otherColumns,
+  isLiteralColumn = false,
 }) => {
   const { handleSubmit, reset, register, control, setValue, watch } = useForm({
     defaultValues: {
@@ -152,7 +154,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
           />
         </FormControl>
       </Tooltip>
-      {watchedPrefix === "custom" && (
+      {watchedPrefix === "custom" ? (
         <Stack direction="row" gap={1} alignItems="center">
           <TextField
             sx={{ minWidth: 150, flex: "1 1 150px" }}
@@ -179,114 +181,117 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
             OK
           </Button>
         </Stack>
-      )}
-      <TextField
-        sx={{
-          minWidth: 300,
-          flex: context === "typeTab" ? "1 1 150px" : "1 1 300px",
-        }}
-        size="small"
-        label="Uri"
-        required
-        variant="outlined"
-        {...register("uri", {
-          onBlur: (e) => {}
-        })}
-      />
-      <Tooltip title={isFetchingName ? "Fetching name from URI..." : "Enter a name"} arrow placement="top">
-        <TextField
-          sx={{
-            minWidth: 150,
-            flex: context === "typeTab" ? "1 1 30px" : "1 1 150px",
-            "& .MuiInputBase-root.Mui-disabled": {
-              backgroundColor: "rgba(0, 0, 0, 0.03)"
-            }
-          }}
-          size="small"
-          label="Name"
-          required
-          variant="outlined"
-          {...register("name")}
-          disabled={isFetchingName}
-          InputLabelProps={{
-            shrink: isFetchingName || !!watch("name")
-          }}
-          InputProps={{
-            endAdornment: isFetchingName ? (
-              <InputAdornment position="end">
-                <CircularProgress size={16} color="inherit" />
-              </InputAdornment>
-            ) : null,
-          }}
-        />
-      </Tooltip>
-      {context === "propertyTab" && (
-        <Tooltip title="Select the referenced column" arrow placement="top">
-          <FormControl
-            sx={{ minWidth: 200, flex: "1 1 200px" }}
-            fullWidth
-            size="small"
-          >
-            <Controller
-              name="obj"
-              control={control}
-              defaultValue=""
-              rules={{ required: true }}
-              render={({ field }) => (
-                <SelectColumns
-                  {...field}
-                  id="obj"
-                  label="Obj *"
-                  options={otherColumns || []}
-                  noGap={true}
-                />
-              )}
-            />
-          </FormControl>
-        </Tooltip>
-      )}
-      {context !== "typeTab" && (
+      ) : (
         <>
-          <Tooltip
-            title="Enter the score value, from 0.00 to 1.00"
-            arrow
-            placement="top"
-          >
+          <TextField
+            sx={{
+              minWidth: 300,
+              flex: context === "typeTab" ? "1 1 150px" : "1 1 300px",
+            }}
+            size="small"
+            label="Uri"
+            required
+            variant="outlined"
+            {...register("uri", {
+              onBlur: (e) => {}
+            })}
+          />
+          <Tooltip title={isFetchingName ? "Fetching name from URI..." : "Enter a name"} arrow placement="top">
             <TextField
-              sx={{ minWidth: 100, flex: "1 1 50px" }}
+              sx={{
+                minWidth: 150,
+                flex: context === "typeTab" ? "1 1 30px" : "1 1 150px",
+                "& .MuiInputBase-root.Mui-disabled": {
+                  backgroundColor: "rgba(0, 0, 0, 0.03)"
+                }
+              }}
               size="small"
-              label="Score"
+              label="Name"
+              required
               variant="outlined"
-              {...register("score")}
+              {...register("name")}
+              disabled={isFetchingName}
+              InputLabelProps={{
+                shrink: isFetchingName || !!watch("name")
+              }}
+              InputProps={{
+                endAdornment: isFetchingName ? (
+                  <InputAdornment position="end">
+                    <CircularProgress size={16} color="inherit" />
+                  </InputAdornment>
+                ) : null,
+              }}
             />
           </Tooltip>
-          <FormControl size="small" sx={{ minWidth: 100, flex: "1 1 50px" }}>
-            <InputLabel>Match</InputLabel>
-            <Controller
-              name="match"
-              control={control}
-              render={({ field }) => (
-                <Select {...field} label="Match">
-                  <MenuItem value="true">true</MenuItem>
-                  <MenuItem value="false">false</MenuItem>
-                </Select>
-              )}
-            />
-          </FormControl>
+          {context === "propertyTab" && (
+            <Tooltip title={isLiteralColumn ? "Select the subject column" : "Select the referenced column"} arrow placement="top">
+              <FormControl
+                sx={{ minWidth: 200, flex: "1 1 200px" }}
+                fullWidth
+                size="small"
+              >
+                <Controller
+                  name="obj"
+                  control={control}
+                  defaultValue=""
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <SelectColumns
+                      {...field}
+                      id="obj"
+                      label={isLiteralColumn ? "Subj *" : "Obj *"}
+                      options={otherColumns || []}
+                      noGap={true}
+                    />
+                  )}
+                />
+              </FormControl>
+            </Tooltip>
+          )}
+          {context !== "typeTab" && (
+            <>
+              <Tooltip
+                title="Enter the score value, from 0.00 to 1.00"
+                arrow
+                placement="top"
+              >
+                <TextField
+                  sx={{ minWidth: 100, flex: "1 1 50px" }}
+                  size="small"
+                  label="Score"
+                  variant="outlined"
+                  {...register("score")}
+                />
+              </Tooltip>
+              <FormControl size="small" sx={{ minWidth: 100, flex: "1 1 50px" }}>
+                <InputLabel>Match</InputLabel>
+                <Controller
+                  name="match"
+                  control={control}
+                  render={({ field }) => (
+                    <Select {...field} label="Match">
+                      <MenuItem value="true">true</MenuItem>
+                      <MenuItem value="false">false</MenuItem>
+                    </Select>
+                  )}
+                />
+              </FormControl>
+            </>
+          )}
+          <Button
+            type="submit"
+            size="small"
+            variant="contained"
+            sx={{
+              height: 40,
+              padding: "0 16px",
+              textTransform: "none",
+            }}
+          >
+            Add
+          </Button>
         </>
       )}
-      <Button
-        type="submit"
-        size="small"
-        variant="contained"
-        sx={{
-          height: 40,
-          padding: "0 16px",
-          textTransform: "none",
-        }}
-      >
-        Add
-      </Button>
     </Stack>
   );
 };
