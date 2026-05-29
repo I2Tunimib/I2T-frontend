@@ -38,6 +38,7 @@ const NormalCell: FC<NormalCellProps> = ({
   expanded,
 }) => {
   const dispatch = useAppDispatch();
+  const isViewOnly = useAppSelector(selectIsViewOnly);
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -74,7 +75,8 @@ const NormalCell: FC<NormalCellProps> = ({
   };
 
   const maxChars = columnSize > 200 ? Math.floor(columnSize / 7) : 50;
-  const truncatedLabel = label.length > maxChars ? (label.slice(0, maxChars - 3) + "…") : (label);
+  const truncatedLabel =
+    label.length > maxChars ? label.slice(0, maxChars - 3) + "…" : label;
 
   const getLabel = useCallback(() => {
     // Check if value and metadata exist before accessing
