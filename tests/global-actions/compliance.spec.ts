@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, getOrCreateDataset, getOrCreateTable } from '../utils/setup.utils';
+import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
   const urlLocal = '/';
@@ -23,18 +24,15 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Compliance', async ({ page, context }) => {
-  const complianceBtn = page.getByRole('button', { name: 'Compliance', exact: true });
-  const closeBtn = page.getByRole('button', { name: 'Close', exact: true });
-  const checkBtn = page.getByRole('button', { name: 'Check Compliance', exact: true });
-  const checkAgainBtn = page.getByRole('button', { name: 'Check Again', exact: true });
+  const ui = getComponents(page);
   const purpose = page.getByRole('textbox', { name: 'Purpose' });
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
   test.setTimeout(100000);
 
   //Open Compliance Dialog
-  await expect(complianceBtn).toBeVisible();
-  await complianceBtn.click();
+  await expect(ui.complianceBtn).toBeVisible();
+  await ui.complianceBtn.click();
   await expect(page.getByRole('heading', { name: 'Compliance Check' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Compliance type' }).click();
   await page.getByRole('option', { name: 'GDPR (General Data Protection Regulation)' }).click();
@@ -43,12 +41,12 @@ test('Compliance', async ({ page, context }) => {
   await purpose.press('ControlOrMeta+a');
   await purpose.fill('The purpose is to prepare a dataset suitable for studying air pollution exposure in proximity to schools and children\'s residences, while ensuring compliance with the GDPR, in particular Articles 4 and 25.');
 
-  if (await checkBtn.isVisible()) {
+  if (await ui.checkBtn.isVisible()) {
     console.log("Check Compliance first time");
-    await checkBtn.click();
-  } else if (await checkAgainBtn.isVisible()) {
+    await ui.checkBtn.click();
+  } else if (await ui.checkAgainBtn.isVisible()) {
     console.log("Check Again");
-    await checkAgainBtn.click();
+    await ui.checkAgainBtn.click();
   }
 
   //View results
@@ -57,7 +55,7 @@ test('Compliance', async ({ page, context }) => {
   console.log('Compliance GDPR checked.');
 
   //Check badge
-  await closeBtn.click();
+  await ui.closeBtn.click();
 
   const chilIdBadge = page
     .getByRole('columnheader', { name: 'ChildID' })

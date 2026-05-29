@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, getOrCreateDataset, getOrCreateTable } from '../utils/setup.utils';
+import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
   const urlLocal = '/';
@@ -25,9 +26,10 @@ test.beforeEach(async ({ page }) => {
 test('Edit right-click', async ({ page }) => {
   const arsenalCell = page.getByRole('gridcell', { name: 'Arsenal' });
   const editCell = page.getByRole('gridcell', { name: 'test' });
+  const ui = getComponents(page);
 
   await arsenalCell.click({ button: 'right' });
-  await page.getByText('Edit').click();
+  await ui.editBtn.click();
 
   await page.getByLabel('edit-cell').fill('test');
   await page.keyboard.press('Enter');
@@ -37,39 +39,42 @@ test('Edit right-click', async ({ page }) => {
 
 test('Reconcile row right-click', async ({ page }) => {
   const arsenalCell = page.getByRole('gridcell', { name: 'Arsenal' });
+  const ui = getComponents(page);
 
   await arsenalCell.click({ button: 'right' });
-  await page.getByText('Reconciliate cell').click();
+  await ui.reconcileCellBtn.click();
   await expect(page.getByRole('heading', { name: 'Reconciliation' })).toBeVisible();
 });
 
 test('Manage Metadat row  right-click', async ({ page }) => {
   const arsenalCell = page.getByRole('gridcell', { name: 'Arsenal' });
+  const ui = getComponents(page);
 
   await arsenalCell.click({ button: 'right' });
-  await page.getByText('Manage metadata').click();
+  await ui.manageMetaBtn.click();
   await expect(page.getByRole('heading', { name: 'Arsenal' })).toBeVisible();
 });
 
 test('Delete row right-click', async ({ page }) => {
   const arsenalCell = page.getByRole('gridcell', { name: 'Arsenal' });
+  const ui = getComponents(page);
 
   await arsenalCell.click({ button: 'right' });
-  await page.getByText('Delete row').click();
+  await ui.deleteRowBtn.click();
   await expect(arsenalCell).not.toBeVisible();
 });
 
 test('Delete column right-click', async ({ page }) => {
   const arsenalCell = page.getByRole('gridcell', { name: 'Arsenal' });
   const columnFootball = page.getByRole('columnheader', { name: 'Football Club' });
-  const visibilityBtn = page.getByRole('button', { name: 'visibility-column' });
+  const ui = getComponents(page);
 
   await arsenalCell.click({ button: 'right' });
-  await page.getByText('Delete column').click();
+  await ui.deleteBtn.click();
   await expect(columnFootball).not.toBeVisible();
   console.log('Column deleted.');
 
-  await visibilityBtn.click();
+  await ui.visibilityBtn.click();
   await expect(page.getByRole('menu')).toBeVisible();
   await expect(columnFootball).not.toBeVisible();
 });

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, getOrCreateDataset, getOrCreateTable } from '../utils/setup.utils';
+import { getComponents } from '../utils/components.utils';
 
 test.beforeEach(async ({ page }) => {
   const urlLocal = '/';
@@ -23,19 +24,13 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Pin Column', async ({ page }) => {
-  const columnManager = page.getByRole('columnheader', { name: 'Manager' });
+  const ui = getComponents(page);
 
-  await columnManager.hover();
-  await columnManager.getByLabel('pin-column').click();
-  await columnManager.hover();
-  await expect(columnManager.getByLabel('unpin-column')).toBeVisible();
+  await ui.pinColumn(page, 'Manager', false).click();
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Manager');
   console.log('Column pinned.');
 
-  await columnManager.hover();
-  await columnManager.getByLabel('unpin-column').click();
-  await columnManager.hover();
-  await expect(columnManager.getByLabel('pin-column')).toBeVisible();
+  await ui.unpinColumn(page, 'Manager', false).click();
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Football Club');
   console.log('Column unpinned.');
 });
@@ -43,9 +38,7 @@ test('Pin Column', async ({ page }) => {
 test('Sort Alphabetical', async ({ page }) => {
   const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
   const sortBtn = columnSupplier.getByLabel('sort-alphabetical');
-  const pumaCell = page.getByRole('gridcell', { name: 'Puma' }).first();
-  const adidasCell = page.getByRole('gridcell', { name: 'Adidas' }).first();
-  const underArmourCell = page.getByRole('gridcell', { name: 'Under Armour' }).first();
+  const ui = getComponents(page);
 
   await columnSupplier.hover();
   await sortBtn.hover();
@@ -53,21 +46,21 @@ test('Sort Alphabetical', async ({ page }) => {
   await sortBtn.click();
   await sortBtn.hover();
   await expect(page.getByRole('tooltip', { name: 'Sort Z → A' })).toBeVisible();
-  await expect(adidasCell).toBeVisible();
+  await expect(ui.cell('Adidas')).toBeVisible();
   console.log('Values sorted A->Z.');
 
   await columnSupplier.hover();
   await sortBtn.click();
   await sortBtn.hover();
   await expect(page.getByRole('tooltip', { name: 'Reset order' })).toBeVisible();
-  await expect(underArmourCell).toBeVisible();
+  await expect(ui.cell('Under Armour')).toBeVisible();
   console.log('Values sorted Z->A.');
 
   await columnSupplier.hover();
   await sortBtn.click();
   await sortBtn.hover();
   await expect(page.getByRole('tooltip', { name: 'Sort A → Z' })).toBeVisible();
-  await expect(pumaCell).toBeVisible();
+  await expect(ui.cell('Puma')).toBeVisible();
   console.log('Sort resetted.');
 });
 
@@ -103,62 +96,42 @@ test('Sort Reconciliation Score', async ({ page }) => {
 });
 
 test('Modify Column right-click', async ({ page }) => {
-  const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
-
-  await columnSupplier.click({ button: 'right' });
-  await page.getByText('Modify column').click();
-  await expect(page.getByRole('heading', { name: 'Modification' })).toBeVisible();
+  const ui = getComponents(page);
+  await ui.enrichColumn(page, 'Supplier', 'Modification');
 });
 
 test('Reconcile Column right-click', async ({ page }) => {
-  const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
-
-  await columnSupplier.click({ button: 'right' });
-  await page.getByText('Reconcile column').click();
-  await expect(page.getByRole('heading', { name: 'Reconciliation' })).toBeVisible();
+  const ui = getComponents(page);
+  await ui.enrichColumn(page, 'Supplier', 'Reconciliation');
 });
 
 test('Extend Column right-click', async ({ page }) => {
-  const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
-
-  await columnSupplier.click({ button: 'right' });
-  await page.getByText('Extend column').click();
-  await expect(page.getByRole('heading', { name: 'Extension' })).toBeVisible();
+  const ui = getComponents(page);
+  await ui.enrichColumn(page, 'Supplier', 'Extension');
 });
 
 test('Pin Column right-click', async ({ page }) => {
-  const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
+  const ui = getComponents(page);
 
-  await columnSupplier.click({ button: 'right' });
-  await page.getByText('Pin column').click();
+  await ui.pinColumn(page, 'Supplier', true);
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Supplier');
   console.log('Column pinned.');
 
-  await columnSupplier.click({ button: 'right' });
-  await page.getByText('Unpin column').click();
+  await ui.unpinColumn(page, 'Supplier', true);
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Football Club');
   console.log('Column unpinned.');
 });
 
 test('Hide Column right-click', async ({ page }) => {
-  const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
+  const ui = getComponents(page);
 
-  await columnSupplier.click({ button: 'right' });
-  await page.getByText('Hide column').click();
-  await expect(columnSupplier).not.toBeVisible();
+  await ui.hideColumn(page, 'Supplier');
   console.log('Column hidden.');
 });
 
 test('Delete Column right-click', async ({ page }) => {
-  const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
-  const visibilityBtn = page.getByRole('button', { name: 'visibility-column' });
+  const ui = getComponents(page);
 
-  await columnSupplier.click({ button: 'right' });
-  await page.getByText('Delete column').click();
-  await expect(columnSupplier).not.toBeVisible();
+  await ui.deleteColumn(page, 'Supplier');
   console.log('Column deleted.');
-
-  await visibilityBtn.click();
-  await expect(page.getByRole('menu')).toBeVisible();
-  await expect(columnSupplier).not.toBeVisible();
 });

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, getOrCreateDataset, getOrCreateTable } from '../utils/setup.utils';
+import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
   const urlLocal = '/';
@@ -23,20 +24,19 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Toggle view', async ({ page }) => {
-  const accessibleView = page.getByRole('button', { name: 'accessible-view' });
-  const denseView = page.getByRole('button', { name: 'dense-view' });
+  const ui = getComponents(page);
 
-  await accessibleView.click();
-  await expect(denseView).toBeVisible();
+  await ui.accessibleViewBtn.click();
+  await expect(ui.denseViewBtn).toBeVisible();
   console.log('Accessible view chenged.');
 
-  await denseView.click();
-  await expect(accessibleView).toBeVisible();
+  await ui.denseViewBtn.click();
+  await expect(ui.accessibleViewBtn).toBeVisible();
   console.log('Dense view changed.');
 });
 
 test('Visibility', async ({ page }) => {
-  const visibilityBtn = page.getByRole('button', { name: 'visibility-column' });
+  const ui = getComponents(page);
   const columnFootball = page.getByRole('columnheader', { name: 'Football Club' });
   const columnManager = page.getByRole('columnheader', { name: 'Manager' });
   const columnTeamCaptain = page.getByRole('columnheader', { name: 'Team Captain' });
@@ -46,7 +46,7 @@ test('Visibility', async ({ page }) => {
   const columnMatchCountry = page.getByRole('columnheader', { name: 'Match Country' });
 
   //Open Visibility menu
-  await visibilityBtn.click();
+  await ui.visibilityBtn.click();
   await expect(page.getByRole('menu')).toBeVisible();
 
   //Hide Football column
@@ -72,13 +72,13 @@ test('Visibility', async ({ page }) => {
 });
 
 test('Filter Reconciliation Status', async ({ page }) => {
-  const filterBtn = page.getByRole('button', { name: 'filter-rows' });
+  const ui = getComponents(page);
   const pumaRow = page.getByRole('row').filter({ hasText: 'Puma' });
   const nikeRow = page.getByRole('row').filter({ hasText: 'Nike' });
   const ubstadtRow = page.getByRole('row').filter({ hasText: 'Ubstadt-Weiher' });
 
   //Uncheck Matches
-  await filterBtn.click();
+  await ui.filterBtn.click();
   await page.getByRole('listitem').filter({ hasText: /^Matches$/ }).getByRole('checkbox').uncheck();
   await page.getByRole('listitem').filter({ hasText: /^Ambiguous$/ }).getByRole('checkbox').uncheck();
   console.log('Matches unchecked.');
@@ -93,7 +93,7 @@ test('Filter Reconciliation Status', async ({ page }) => {
   console.log('Rows filtered.');
 
   //Uncheck Miss matches
-  await filterBtn.click();
+  await ui.filterBtn.click();
   await page.getByRole('listitem').filter({ hasText: 'Miss matches' }).getByRole('checkbox').uncheck();
   console.log('Miss matches unchecked.');
   await page.keyboard.press('Escape');
@@ -102,7 +102,7 @@ test('Filter Reconciliation Status', async ({ page }) => {
   await expect(page.getByText('Total rows: 0', { exact: true })).toBeVisible();
 
   //No filter - Check Matches and Miss matches
-  await filterBtn.click();
+  await ui.filterBtn.click();
   await page.getByRole('listitem').filter({ hasText: /^Matches$/ }).getByRole('checkbox').check();
   await page.getByRole('listitem').filter({ hasText: 'Miss matches' }).getByRole('checkbox').check();
   await page.keyboard.press('Escape');
@@ -113,13 +113,13 @@ test('Filter Reconciliation Status', async ({ page }) => {
 });
 
 test('Seach Labels', async ({ page }) => {
-  const searchBar = page.getByRole('textbox', { name: 'Search table, metadata...' });
+  const ui = getComponents(page);
   const pumaRow = page.getByRole('row').filter({ hasText: 'Puma' });
-
+  const searchBar = page.getByRole('textbox', { name: 'Search table, metadata...' });
   //Search for Puma
   await searchBar.click();
   await searchBar.fill('Puma');
-  await page.getByRole('button', { name: 'Puma' }).click();
+  await ui.labelBtn('Puma').click();
   await expect(searchBar).toHaveValue('Puma');
 
   //Puma cells
@@ -130,17 +130,18 @@ test('Seach Labels', async ({ page }) => {
 });
 
 test('Seach Metadata Name', async ({ page }) => {
+  const ui = getComponents(page);
   const searchBar = page.getByRole('textbox', { name: 'Search table, metadata...' });
 
   //Switch to metadata name
-  await page.getByRole('button', { name: 'label' }).click();
-  await page.getByRole('button', { name: 'metaName' }).click();
+  await ui.labelBtn.click();
+  await ui.metaNameBtn.click();
   console.log('Switched to metadata name.');
 
   //Search for Balance
   await searchBar.click();
   await searchBar.fill('Balance');
-  await page.getByRole('button', { name: 'Balance' }).click();
+  await ui.labelCellBtn('Balance').click();
   await expect(page.getByRole('link', { name: 'New Balance' })).toBeVisible();
   console.log('Rows filtered.');
 
@@ -152,13 +153,13 @@ test('Seach Metadata Name', async ({ page }) => {
 
 test('Seach Metadata Type', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const searchBar = page.getByRole('textbox', { name: 'Search table, metadata...' });
   const columnFootball = page.getByRole('columnheader', { name: 'Football Club' });
-  const metadataBtn = page.getByRole('button', { name: 'open-metadata-dialog-subtoolbar' });
 
   //Switch to metadata type
-  await page.getByRole('button', { name: 'label' }).click();
-  await page.getByRole('button', { name: 'metaType' }).click();
+  await ui.labelBtn.click();
+  await ui.metaType.click();
   console.log('Switched to metadata type.');
 
   //Search for association football club
@@ -167,7 +168,7 @@ test('Seach Metadata Type', async ({ page }) => {
   await expect(page.getByText('association football club')).toBeVisible({ timeout: 100000 });
   await expect(page.getByText('association football player')).toBeVisible({ timeout: 100000 });
   await expect(page.getByText('association football coach')).toBeVisible({ timeout: 100000 });
-  await page.getByRole('button', { name: 'association football club' }).click();
+  await ui.labelCellBtn('association football club').click();
   await expect(searchBar).toHaveValue('association football club', { timeout: 100000 });
 
   //Football Club column highlighted
@@ -180,13 +181,14 @@ test('Seach Metadata Type', async ({ page }) => {
 
   //Check in Metadata Dialog
   await columnFootball.click();
-  await metadataBtn.click();
+  await ui.metadataBtn.click();
   await expect(page.getByRole('link', { name: 'association football club' })).toBeVisible();
   console.log('Metadata type "association football club" checked.');
 });
 
 test('Expand Header', async ({ page }) => {
-  await page.getByRole('button', { name: 'expand-header' }).click();
+  const ui = getComponents(page);
+  await ui.expandHeaderBtn.click();
 
   //Check arrows
   await expect(page.getByText('head coach')).toBeVisible();
@@ -195,9 +197,10 @@ test('Expand Header', async ({ page }) => {
 
 test('Expand Column', async ({ page }) => {
   const columnFootball = page.getByRole('columnheader', { name: 'Football Club' });
+  const ui = getComponents(page);
 
   await columnFootball.click();
-  await page.getByRole('button', { name: 'expand-cell' }).click();
+  await ui.expandCellBtn.click();
 
   //Check metadata
   await expect(page.getByRole('link', { name: 'wd:Q9617 (Arsenal)' })).toBeVisible();
@@ -206,9 +209,10 @@ test('Expand Column', async ({ page }) => {
 
 test('Expand Cell', async ({ page }) => {
   const arsenalCell = page.getByRole('gridcell', { name: 'Arsenal' });
+  const ui = getComponents(page);
 
   await arsenalCell.click();
-  await page.getByRole('button', { name: 'expand-cell' }).click();
+  await ui.expandCellBtn.click();
 
   //Check metadata
   await expect(page.getByRole('link', { name: 'wd:Q9617 (Arsenal)' })).toBeVisible();
@@ -217,23 +221,24 @@ test('Expand Cell', async ({ page }) => {
 
 test('Delete Column - Undo/Redo', async ({ page }) => {
   const columnFootball = page.getByRole('columnheader', { name: 'Football Club' });
+  const ui = getComponents(page);
 
   await columnFootball.click();
-  await page.getByRole('button', { name: 'delete-selected' }).click();
+  await ui.deteleSelectedBtn.click();
   await expect(columnFootball).not.toBeVisible();
   console.log('Column "Football Club" deleted.');
 
-  await page.getByRole('button', { name: 'undo' }).click();
+  await ui.undoBtn.click();
   await expect(columnFootball).toBeVisible();
   console.log('Operation Undo.');
 
-  await page.getByRole('button', { name: 'redo' }).click();
+  await ui.redoBtn.click();
   await expect(columnFootball).not.toBeVisible();
   console.log('Operation Redo.');
 });
 
 test('Refine Matching Type', async ({ page }) => {
-  const refinementBtn = page.getByRole('button', { name: 'open-refinement-dialog' });
+  const ui = getComponents(page);
   const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
   const pumaCell = page.getByRole('gridcell', { name: 'Puma' }).first();
   const supplierStatus = page
@@ -242,48 +247,48 @@ test('Refine Matching Type', async ({ page }) => {
 
   //Select column
   await columnSupplier.click();
-  await expect(refinementBtn).toBeEnabled();
+  await expect(ui.refinementBtn).toBeEnabled();
 
   //Open Refinement Dialog
-  await refinementBtn.click();
-  await expect(page.getByText('Type refine matching')).toBeVisible();
-  await page.getByRole('button', { name: 'business' }).click();
+  await ui.refinementBtn.click();
+  await expect(ui.typeRefineText).toBeVisible();
+  await ui.labelCellBtn('business').click();
   console.log('Type "business" selected.');
 
   //Verify status
   await expect(page.getByText('100.00%')).toBeVisible();
   console.log('All cells reconciled.');
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await ui.confirmBtn.click();
   await expect(pumaCell.getByLabel('status-match-refinement')).toBeVisible();
   await expect(supplierStatus).toBeVisible({ timeout: 10000 });
   console.log('Refine successfully.');
 
   //Verify type
   await pumaCell.click();
-  await page.getByRole('button', { name: 'open-metadata-dialog-subtoolbar' }).click();
+  await ui.metadataBtn.click();
   await expect(page.getByRole('heading', { name: 'Puma' })).toBeVisible();
-  await page.getByRole('button', { name: '(5) 👉' }).click();
+  await ui.showTypesNumberBtn('5').click();
   await expect(page.getByText('business')).toBeVisible();
   console.log('Checked for "Puma".');
 });
 
 test('Refine Matching Score', async ({ page }) => {
-  const refinementBtn = page.getByRole('button', { name: 'open-refinement-dialog' });
+  const ui = getComponents(page);
   const columnMatchLocation = page.getByRole('columnheader', { name: 'Match Location' });
   const ubstadtCell = page.getByRole('gridcell', { name: 'Ubstadt-Weiher' }).first();
 
   //Select column
   await columnMatchLocation.click();
-  await refinementBtn.click();
+  await ui.refinementBtn.click();
 
   //Open Refinement Dialog
-  await expect(page.getByText('Type refine matching')).toBeVisible();
-  await page.getByText('Score refine matching').click();
+  await expect(ui.typeRefineText).toBeVisible();
+  await ui.scoreRefineText.click();
   await page.locator('.MuiSlider-track').click();
   await page.locator('.MuiSlider-track').click();
   await expect(page.getByText('0.09')).toBeVisible();
   console.log('Set score at 0.09.');
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await ui.confirmBtn.click();
 
   //Verify status
   await expect(ubstadtCell.getByLabel('status-match-refinement')).toBeVisible();
@@ -291,7 +296,7 @@ test('Refine Matching Score', async ({ page }) => {
 
   //Verify score
   await ubstadtCell.click();
-  await page.getByRole('button', { name: 'open-metadata-dialog-subtoolbar' }).click();
+  await ui.metadataBtn.click();
   await expect(page.getByRole('cell', { name: '0.11' })).toBeVisible();
   console.log('Checked for "Ubstadt-Weiher".');
 });

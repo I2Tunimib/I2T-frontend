@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login } from "../utils/setup.utils";
+import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
   const urlLocal = '/';
@@ -13,13 +14,13 @@ test('Create dataset & Upload table', async ({ page }) => {
   const timestamp = new Date().getTime();
   const datasetName = `Test_${timestamp}`;
   const tableName = 'table_sample';
-  const confirmBtn = page.getByRole('button', { name: 'Confirm' });
+  const ui = getComponents(page);
 
   //Create dataset
-  await page.getByRole('button', { name: 'New dataset' }).click();
+  await ui.datasetBtn.click();
   await expect(page.getByRole('heading', { name: 'Add dataset' })).toBeVisible();
   await page.getByLabel('Dataset name').fill(datasetName);
-  await confirmBtn.click();
+  await ui.confirmBtn.click();
 
   //Open dataset
   await page.getByRole('link', { name: datasetName, exact: true }).click();
@@ -27,18 +28,18 @@ test('Create dataset & Upload table', async ({ page }) => {
   console.log('Dataset created.');
 
   //Upload table
-  await page.getByRole('button', { name: 'New table' }).click();
+  await ui.tableBtn.click();
   await expect(page.getByRole('heading', { name: 'Add table' })).toBeVisible();
 
   //File path
   const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Select file (.csv or .json)' }).click();
+  await ui.fileBtn.click();
   const fileChooser = await fileChooserPromise;
   // Please provide your local base directory path below
   const baseDirectory = 'FILE_PATH';
   const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
   await fileChooser.setFiles(filePath);
-  await confirmBtn.click();
+  await ui.confirmBtn.click();
 
   //Open table
   await page.getByRole('link', { name: tableName, exact: true }).click();
@@ -52,19 +53,19 @@ test('Create dataset with same name (Auto-rename check)', async ({ page }) => {
   test.setTimeout(120000);
   const baseName = 'DatasetTest';
   const expectedRename = 'DatasetTest_1';
-  const confirmBtn = page.getByRole('button', { name: 'Confirm' });
+  const ui = getComponents(page);
 
   //Create first dataset
-  await page.getByRole('button', { name: 'New dataset' }).click();
+  await ui.datasetBtn.click();
   await expect(page.getByRole('heading', { name: 'Add dataset' })).toBeVisible();
   await page.getByLabel('Dataset name').fill(baseName);
-  await confirmBtn.click();
+  await ui.confirmBtn.click();
   await expect(page.getByText(baseName)).toBeVisible();
 
   //Create second dataset with same name
-  await page.getByRole('button', { name: 'New dataset' }).click();
+  await ui.datasetBtn.click();
   await page.getByLabel('Dataset name').fill(baseName);
-  await confirmBtn.click();
+  await ui.confirmBtn.click();
 
   //Auto-rename dataset
   await expect(page.getByText(expectedRename)).toBeVisible();
@@ -78,28 +79,28 @@ test('Upload table with same name (Auto-rename check)', async ({ page }) => {
   // Please provide your local base directory path below
   const baseDirectory = 'FILE_PATH';
   const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
-  const confirmBtn = page.getByRole('button', { name: 'Confirm' });
+  const ui = getComponents(page);
 
   //Dataset opened
   await page.getByRole('link', { name: 'Dataset_test', exact: true }).click();
   console.log('Dataset "Dataset_test" opened.');
 
   //Upload first table
-  await page.getByRole('button', { name: 'New table' }).click();
+  await ui.tableBtn.click();
   await expect(page.getByRole('heading', { name: 'Add table' })).toBeVisible();
   const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: 'Select file (.csv or .json)' }).click();
+  await ui.fileBtn.click();
   const fileChooser = await fileChooserPromise;
   await fileChooser.setFiles(filePath);
-  await confirmBtn.click();
+  await ui.confirmBtn.click();
   await expect(page.getByText(baseName)).toBeVisible();
 
   //Upload second table with same name
-  await page.getByRole('button', { name: 'New table' }).click();
+  await ui.tableBtn.click();
   await expect(page.getByRole('heading', { name: 'Add table' })).toBeVisible();
-  await page.getByRole('button', { name: 'Select file (.csv or .json)' }).click();
+  await ui.fileBtn.click();
   await fileChooser.setFiles(filePath);
-  await confirmBtn.click();
+  await ui.confirmBtn.click();
 
   //Auto-rename table
   await expect(page.getByText(expectedRename)).toBeVisible();
@@ -108,17 +109,14 @@ test('Upload table with same name (Auto-rename check)', async ({ page }) => {
 
 test('Help Link', async ({ page }) => {
   test.setTimeout(120000);
-  const nextBtn = page.getByRole('button', { name: 'Next' });
-  const doneBtn = page.getByRole('button', { name: 'Done' });
-  const helpBtn = page.getByRole('button', { name: 'help' });
-  const helpDatasetBtn = page.getByRole('button', { name: 'help-dataset' });
+  const ui = getComponents(page);
 
   await test.step('General Help from Dashboard', async () => {
-    await helpBtn.click();
+    await ui.helpBtn.click();
     await expect(page.getByRole('heading', { name: 'Upload a dataset' })).toBeVisible();
-    await nextBtn.click();
+    await ui.nextBtn.click();
     await expect(page.getByRole('heading', { name: 'Upload a table' })).toBeVisible();
-    await doneBtn.click();
+    await ui.doneBtn.click();
 
     //Back to Dashboard
     await expect(page.getByRole('heading', { name: 'Datasets' })).toBeVisible();
@@ -127,21 +125,21 @@ test('Help Link', async ({ page }) => {
 
   await test.step('Contextual Help inside Add Dataset Dialog', async () => {
     //Open Add dataset dialog
-    await page.getByRole('button', { name: 'New Dataset' }).click();
+    await ui.datasetBtn.click();
     await expect(page.getByRole('heading', { name: 'Add dataset' })).toBeVisible();
 
     //Open contextual help
-    await helpDatasetBtn.click();
+    await ui.helpDatasetBtn.click();
     await expect(page.getByRole('heading', { name: 'Upload a dataset' })).toBeVisible();
-    await nextBtn.click();
+    await ui.nextBtn.click();
     await expect(page.getByRole('heading', { name: 'Upload a table' })).toBeVisible();
-    await doneBtn.click();
+    await ui.doneBtn.click();
 
     //Back to Add dataset dialog
     await expect(page.getByRole('heading', { name: 'Add dataset' })).toBeVisible();
 
     //Back to Dashboard
-    await page.getByRole('button', { name: 'Cancel' }).click();
+    await ui.cancelBtn.click();
     await expect(page.getByRole('heading', { name: 'Datasets' })).toBeVisible();
     console.log('Contextual Help inside Add Dataset Dialog checked.');
   });
@@ -169,9 +167,9 @@ test('Search Table', async ({ page }) => {
 });
 
 test('Logout', async ({ page }) => {
-  const userMenu = page.getByRole('button', { name: 'user-menu' });
-  await userMenu.click();
-  await page.getByText('Logout').click();
+  const ui = getComponents(page);
+  await ui.userMenuBtn.click();
+  await ui.logoutBtn.click();
 
   //Back to Landing page
   await expect(page).toHaveURL('/');

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, getOrCreateDataset, getOrCreateTable } from '../utils/setup.utils';
+import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
   const urlChronos = 'http://vm.chronos.disco.unimib.it:3001/';
@@ -21,8 +22,10 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Export JSON Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -31,14 +34,16 @@ test('Export JSON Format', async ({ page }) => {
   await page.getByRole('option', { name: 'JSON (W3C Compliant)' }).click();
 
   //Downloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('JSON exported.');
 });
 
 test('Export CSV Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -47,14 +52,16 @@ test('Export CSV Format', async ({ page }) => {
   await page.getByRole('option', { name: 'CSV' }).click();
 
   //Downloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('CSV exported.');
 });
 
 test('Export RDF turtle Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -71,14 +78,16 @@ test('Export RDF turtle Format', async ({ page }) => {
   await page.getByRole('radio', { name: 'All (Including all matching' }).check();
 
   //Donwloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('RDF turtle exported.');
 });
 
 test('Export RDF XML Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -95,14 +104,16 @@ test('Export RDF XML Format', async ({ page }) => {
   await page.getByRole('radio', { name: 'All (Including all matching' }).check();
 
   //Downloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('RDF XML exported.');
 });
 
 test('Export RDF JSON-LD Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -119,14 +130,16 @@ test('Export RDF JSON-LD Format', async ({ page }) => {
   await page.getByRole('radio', { name: 'All (Including all matching' }).check();
 
   //Downloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('RDF JSON-LD exported.');
 });
 
 test('Export RDF TriG Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -141,14 +154,16 @@ test('Export RDF TriG Format', async ({ page }) => {
   await page.getByRole('textbox', { name: '@base URI' }).fill('http://example.org/');
   await expect(page.getByRole('textbox', { name: '@base URI' })).toHaveValue('http://example.org/');
   await page.getByRole('radio', { name: 'All (Including all matching' }).check();
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('RDF TriG exported.');
 });
 
 test('Export RDF TriX Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -165,14 +180,16 @@ test('Export RDF TriX Format', async ({ page }) => {
   await page.getByRole('radio', { name: 'All (Including all matching' }).check();
 
   //Downloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('RDF TriX exported.');
 });
 
 test('Export RDF N-Quads Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -189,14 +206,16 @@ test('Export RDF N-Quads Format', async ({ page }) => {
   await page.getByRole('radio', { name: 'All (Including all matching' }).check();
 
   //Downloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('RDF N-Quads exported.');
 });
 
 test('Export RDF N-Triples Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Table' }).click();
@@ -213,35 +232,39 @@ test('Export RDF N-Triples Format', async ({ page }) => {
   await page.getByRole('radio', { name: 'All (Including all matching' }).check();
 
   //Downloading
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('RDF N-Triples exported.');
 });
 
 test('Export Python Pipeline Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Pipeline' }).click();
   await expect(page.getByRole('combobox', { name: 'Export format' })).toBeEnabled();
   await page.getByRole('combobox', { name: 'Export format' }).click();
   await page.getByRole('option', { name: 'Python pipeline' }).click();
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('Python Pipeline exported.');
 });
 
 test('Export Jupyter Pipeline Format', async ({ page }) => {
+  const ui = getComponents(page);
+
   //Open Export dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.export.click();
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Export type' }).click();
   await page.getByRole('option', { name: 'Pipeline' }).click();
   await expect(page.getByRole('combobox', { name: 'Export format' })).toBeEnabled();
   await page.getByRole('combobox', { name: 'Export format' }).click();
   await page.getByRole('option', { name: 'Jupyter notebook pipeline' }).click();
-  await expect(page.getByRole('button', { name: 'Confirm' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
   console.log('Jupyter Pipeline exported.');
 });

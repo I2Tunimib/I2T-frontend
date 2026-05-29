@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, getOrCreateDataset, getOrCreateTable } from '../utils/setup.utils';
+import { getComponents } from "../utils/components.utils";
 
 test.describe('Test in local', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,6 +17,7 @@ test.describe('Test in local', () => {
 
   test('Modification: Custom - Join', async ({ page }) => {
     test.setTimeout(120000);
+    const ui = getComponents(page);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
@@ -27,14 +29,13 @@ test.describe('Test in local', () => {
     console.log('Table opened.');
 
     const columnMatchLoc = page.getByRole('columnheader', { name: 'Match Location' });
-    const genAIBtn = page.getByRole('button', { name: 'Gen AI' });
     const selectService = page.getByText('Choose a service of the selected type...');
 
     await columnMatchLoc.click();
     console.log('Column "Match Location" selected.');
 
-    await expect(genAIBtn).toBeEnabled();
-    await genAIBtn.click();
+    await expect(ui.genAIBtn).toBeEnabled();
+    await ui.genAIBtn.click();
 
     await page.getByText('Choose a service type...').click();
     await page.getByRole('option', { name: 'Modification', exact: true }).click();
@@ -47,7 +48,7 @@ test.describe('Test in local', () => {
     await page.getByRole('radio', { name: 'Join multiple' }).check();
     await page.locator('#mui-component-select-columnToJoin').click();
     await page.getByRole('option', { name: 'Match Country', exact: true }).click();
-    await page.getByRole('listbox').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('listbox').click();
     console.log('Column "Match Country" selected as additional column.');
 
     await expect(page.getByRole('combobox', { name: 'Match Country' })).toBeVisible();
@@ -55,7 +56,7 @@ test.describe('Test in local', () => {
     const prompt = page.getByRole('textbox', { name: 'Modification prompt' });
     await prompt.click();
     await prompt.fill('Merge Match Location and Match Country into a joined column using a comma as separator. Trim spaces and capitalize properly.');
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('dialog').click();
     console.log('Modification in process.');
 
     await expect(page.getByText('column processed')).toBeVisible({ timeout: 100000 });
@@ -65,6 +66,7 @@ test.describe('Test in local', () => {
 
   test('Modification: Custom - Split', async ({ page }) => {
     test.setTimeout(120000);
+    const ui = getComponents(page);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
@@ -76,14 +78,13 @@ test.describe('Test in local', () => {
     console.log('Table opened.');
 
     const columnManager = page.getByRole('columnheader', { name: 'Manager' });
-    const genAIBtn = page.getByRole('button', { name: 'Gen AI' });
     const selectService = page.getByText('Choose a service of the selected type...');
 
     await columnManager.click();
     console.log('Column "Manager" selected.');
 
-    await expect(genAIBtn).toBeEnabled();
-    await genAIBtn.click();
+    await expect(ui.genAIBtn).toBeEnabled();
+    await ui.genAIBtn.click();
 
     await page.getByText('Choose a service type...').click();
     await page.getByRole('option', { name: 'Modification', exact: true }).click();
@@ -101,7 +102,7 @@ test.describe('Test in local', () => {
     const prompt = page.getByRole('textbox', { name: 'Modification prompt' });
     await prompt.click();
     await prompt.fill('From \'Manager\' extract name, and surname. Return values exactly as: Manager_Name | Manager_Surname.');
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('dialog').click();
     console.log('Modification in process.');
 
     await expect(page.getByText('columns processed')).toBeVisible({ timeout: 100000 });
@@ -112,6 +113,7 @@ test.describe('Test in local', () => {
 
   test('Modification: Custom - Edit', async ({ page }) => {
     test.setTimeout(120000);
+    const ui = getComponents(page);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
@@ -123,14 +125,13 @@ test.describe('Test in local', () => {
     console.log('Table opened.');
 
     const columnMatchDate = page.getByRole('columnheader', { name: 'Match Date' });
-    const genAIBtn = page.getByRole('button', { name: 'Gen AI' });
     const selectService = page.getByText('Choose a service of the selected type...');
 
     await columnMatchDate.click();
     console.log('Column "Match Date" selected.');
 
-    await expect(genAIBtn).toBeEnabled();
-    await genAIBtn.click();
+    await expect(ui.genAIBtn).toBeEnabled();
+    await ui.genAIBtn.click();
 
     await page.getByText('Choose a service type...').click();
     await page.getByRole('option', { name: 'Modification', exact: true }).click();
@@ -144,7 +145,7 @@ test.describe('Test in local', () => {
     const prompt = page.getByRole('textbox', { name: 'Modification prompt' });
     await prompt.click();
     await prompt.fill('Standardize dates to ISO format (YYYY-MM-DD). If missing, return an empty string.');
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('dialog').click();
     console.log('Modification in process.');
 
     await expect(page.getByText('column processed')).toBeVisible({ timeout: 100000 });
@@ -154,6 +155,7 @@ test.describe('Test in local', () => {
 
   test('Reconciliation: Custom', async ({ page }) => {
     test.setTimeout(120000);
+    const ui = getComponents(page);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
@@ -165,14 +167,13 @@ test.describe('Test in local', () => {
     console.log('Table opened.');
 
     const columnMatchLoc = page.getByRole('columnheader', { name: 'Match Location' });
-    const genAIBtn = page.getByRole('button', { name: 'Gen AI' });
     const selectService = page.getByText('Choose a service of the selected type...');
 
     await columnMatchLoc.click();
     console.log('Column "Match Location" selected.');
 
-    await expect(genAIBtn).toBeEnabled();
-    await genAIBtn.click();
+    await expect(ui.genAIBtn).toBeEnabled();
+    await ui.genAIBtn.click();
 
     await page.getByText('Choose a service type...').click();
     await page.getByRole('option', { name: 'Reconciliation', exact: true }).click();
@@ -188,17 +189,18 @@ test.describe('Test in local', () => {
     await page.getByRole('textbox', { name: 'Base URI' }).fill('https://www.geonames.org/');
     await page.getByRole('textbox', { name: 'Reconciliation prompt' }).click();
     await page.getByRole('textbox', { name: 'Reconciliation prompt' }).fill('Match this location to a GeoNames entity. Return the entity ID, name, description, and confidence score (0-100).');
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('dialog').click();
     console.log('Reconciliation in process.');
 
     await expect(page.getByText('Reconciliation completed')).toBeVisible({ timeout: 100000 });
-    await page.getByRole('button', { name: 'expand-cell' }).click();
+    await ui.expandCellBtn.click();
     await expect(page.getByRole('link', { name: 'geo:2890473 (Kirchheim unter Teck)' }).first()).toBeVisible();
     console.log('Reconciliation successfully.');
   });
 
   test('Reconciliation: Custom - Wikidata', async ({ page }) => {
     test.setTimeout(120000);
+    const ui = getComponents(page);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
@@ -210,14 +212,13 @@ test.describe('Test in local', () => {
     console.log('Table opened.');
 
     const columnMatchLoc = page.getByRole('columnheader', { name: 'Match Location' });
-    const genAIBtn = page.getByRole('button', { name: 'Gen AI' });
     const selectService = page.getByText('Choose a service of the selected type...');
 
     await columnMatchLoc.click();
     console.log('Column "Match Location" selected.');
 
-    await expect(genAIBtn).toBeEnabled();
-    await genAIBtn.click();
+    await expect(ui.genAIBtn).toBeEnabled();
+    await ui.genAIBtn.click();
 
     await page.getByText('Choose a service type...').click();
     await page.getByRole('option', { name: 'Reconciliation', exact: true }).click();
@@ -229,21 +230,22 @@ test.describe('Test in local', () => {
 
     await page.locator('#mui-component-select-additionalColumns').click();
     await page.getByRole('option', { name: 'Match Country', exact: true }).click();
-    await page.getByRole('listbox').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('listbox').click();
     console.log('Column "Match Country" selected as additional column.');
 
     await expect(page.getByRole('combobox', { name: 'Match Country' })).toBeVisible();
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('dialog').click();
     console.log('Reconciliation in process.');
 
     await expect(page.getByText('Reconciliation completed')).toBeVisible({ timeout: 100000 });
-    await page.getByRole('button', { name: 'expand-cell' }).click();
+    await ui.expandCellBtn.click();
     await expect(page.getByRole('link', { name: 'wd:Q14866 (Kirchheim unter Teck)' }).first()).toBeVisible();
     console.log('Reconciliation successfully.');
   });
 
   test('Extension: COFOG', async ({ page }) => {
     test.setTimeout(120000);
+    const ui = getComponents(page);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_extensionGen.json`;
@@ -255,29 +257,27 @@ test.describe('Test in local', () => {
     console.log('Table opened.');
 
     const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
-    const extendBtn = page.getByRole('button', { name: 'Extend' });
-    const genAIBtn = page.getByRole('button', { name: 'Gen AI' });
     const selectServiceExt = page.getByText('Choose an extension service...');
     const selectServiceGen = page.getByText('Choose a service of the selected type...');
 
     await columnSupplier.click();
     console.log('Column "Supplier" selected.');
 
-    await expect(extendBtn).toBeEnabled();
-    await extendBtn.click();
+    await expect(ui.extensionBtn).toBeEnabled();
+    await ui.extensionBtn.click();
     await selectServiceExt.click();
     await page.getByRole('option', { name: 'Annotation properties (Wikidata)', exact: true }).click();
     await expect(page.getByText('An extender that extracts Wikidata metadata')).toBeVisible();
     console.log('Annotation properties (Wikidata) selected.');
     await page.getByRole('checkbox', { name: 'Description of entities' }).check();
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmComponentBtn('dialog').click();
     console.log('Extension in process.');
 
     await expect(page.getByText('column added')).toBeVisible();
     console.log('Extension successfully.');
 
-    await expect(genAIBtn).toBeEnabled();
-    await genAIBtn.click();
+    await expect(ui.genAIBtn).toBeEnabled();
+    await ui.genAIBtn.click();
 
     await page.getByText('Choose a service type...').click();
     await page.getByRole('option', { name: 'Extension', exact: true }).click();
@@ -289,7 +289,7 @@ test.describe('Test in local', () => {
 
     await page.locator('#mui-component-select-description').click();
     await page.locator('#menu-description').getByText('description_Supplier').click();
-    await page.getByRole('button', { name: 'Confirm' }).click();
+    await ui.confirmBtn.click();
     await expect(page.getByText('columns added')).toBeVisible({ timeout: 100000 });
     await expect(page.getByRole('columnheader', { name: 'COFOG Category' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Confidence' })).toBeVisible();
@@ -299,6 +299,7 @@ test.describe('Test in local', () => {
 
   test('Extension: Custom', async ({ page }) => {
     test.setTimeout(120000);
+    const ui = getComponents(page);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
@@ -309,16 +310,14 @@ test.describe('Test in local', () => {
     await expect(tableNameInput).toHaveValue(tableName);
     console.log('Table opened.');
 
-    const confirmBtn = page.getByRole('button', { name: 'Confirm' });
     const columnMatchCountry = page.getByRole('columnheader', { name: 'Match Country' });
-    const genAIBtn = page.getByRole('button', { name: 'Gen AI' });
     const selectService = page.getByText('Choose a service of the selected type...');
 
     await columnMatchCountry.click();
     console.log('Column "Match Country" selected.');
 
-    await expect(genAIBtn).toBeEnabled();
-    await genAIBtn.click();
+    await expect(ui.genAIBtn).toBeEnabled();
+    await ui.genAIBtn.click();
 
     await page.getByText('Choose a service type...').click();
     await page.getByRole('option', { name: 'Extension', exact: true }).click();
@@ -334,7 +333,7 @@ test.describe('Test in local', () => {
     await prompt.click();
     await prompt.fill('Count the characters and return as Supplier_Length.');
 
-    await confirmBtn.click();
+    await ui.confirmBtn.click();
     await expect(page.getByText('column added')).toBeVisible({ timeout: 100000 });
     await expect(page.getByRole('columnheader', { name: 'Supplier_Length' })).toBeVisible();
   });
@@ -342,6 +341,7 @@ test.describe('Test in local', () => {
 
 test('Extension: CH', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const urlChronos = 'http://vm.chronos.disco.unimib.it:3001/';
   const datasetName = 'Evaluation';
   const tableName = 'table_extension';
@@ -365,8 +365,8 @@ test('Extension: CH', async ({ page }) => {
   await page.locator('th').filter({ hasText: 'Supplier' }).click();
   console.log('Column "Supplier" selected.');
 
-  await expect(page.getByRole('button', { name: 'Gen AI' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Gen AI' }).click();
+  await expect(ui.genAIBtn).toBeEnabled();
+  await ui.genAIBtn.click();
 
   await page.getByText('Choose a service type...').click();
   await page.getByRole('option', { name: 'Extension', exact: true }).click();
@@ -375,7 +375,7 @@ test('Extension: CH', async ({ page }) => {
   await page.getByRole('option', { name: 'CH Matching - Private', exact: true }).click();
   await expect(page.getByText('An LLM-based Open Opportunities company house matching service')).toBeVisible();
   console.log('CH Matching - Private selected.');
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
+  await ui.confirmComponentBtn('dialog').click();
   console.log('Extension in process.');
 
   await expect(page.getByText('columns added')).toBeVisible({ timeout: 100000 });

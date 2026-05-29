@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login, getOrCreateDataset, getOrCreateTable } from '../utils/setup.utils';
+import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
   const urlLocal = '/';
@@ -24,11 +25,12 @@ test.beforeEach(async ({ page }) => {
 
 test('Video Introduction', async ({ page }) => {
   test.setTimeout(150000);
+  const ui = getComponents(page);
+
   //Open Help dialog
-  const helpBtn = page.getByRole('button', { name: 'help-dialog' });
-  await helpBtn.click();
+  await ui.helpDialogBtn.click();
   await expect(page.getByRole('dialog', { name: 'Welcome' })).toBeVisible();
-  await page.getByRole('button', { name: 'Video introduction' }).click();
+  await ui.videoBtn.click();
 
   //Open video on Youtube
   const pageYoutubePromise = page.waitForEvent('popup');
@@ -40,73 +42,71 @@ test('Video Introduction', async ({ page }) => {
 
 test('Tutorial', async ({ page }) => {
   test.setTimeout(150000);
-  const helpBtn = page.getByRole('button', { name: 'help-dialog' });
-  const nextBtn = page.getByRole('button', { name: 'Next', exact: true });
-  const doneBtn = page.getByRole('button', { name: 'Done', exact: true });
+  const ui = getComponents(page);
   const helpDialog = page.getByRole('dialog', { name: 'Welcome' });
   const tableNameInput = page.getByLabel('Table name');
   const tableName = 'table_help';
 
-  await helpBtn.click();
+  await ui.helpDialogBtn.click();
   await expect(helpDialog).toBeVisible();
 
   //Introduction
-  await page.getByRole('button', { name: 'Start tutorial' }).click();
+  await ui.startTutorialBtn.click();
   await expect(page.getByRole('heading', { name: 'Tutorial Contents' })).toBeVisible();
 
   //Toolbar - Global Actions
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Global Actions' })).toBeVisible();
 
   //Toolbar - Visualization
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Visualization' })).toBeVisible();
 
   //Link to Table Viewer
-  await page.getByRole('button', { name: 'open-table-viewer' }).click();
+  await ui.tableViewerBtn.click();
   await expect(page.getByRole('heading', { name: 'Contextual Actions' })).toBeVisible({ timeout: 10000 });
 
   //Back to Toolbar - Visualization
-  await page.getByRole('button', { name: 'Visualization' }).click();
+  await ui.visualizationBtn.click();
   await expect(page.getByRole('heading', { name: 'Visualization' })).toBeVisible({ timeout: 10000 });
 
   //Link to Graph Visualization Tutorial
-  await page.getByRole('button', { name: 'open-graph-visualization-tutorial' }).click();
+  await ui.graphTutorialBtn.click();
   await expect(page.getByRole('dialog', { name: 'Graph Visualization' })).toBeVisible({ timeout: 10000 });
 
   //Graph Visualization Tutorial
-  await page.getByRole('button', { name: 'Start tutorial' }).click();
+  await ui.startTutorialBtn.click();
   await expect(page.getByRole('heading', { name: 'Tutorial Contents' })).toBeVisible({ timeout: 10000 });
 
   //Back to Table Viewer
-  await page.getByRole('button', { name: 'Back' }).click();
+  await ui.backBtn.click();
   await page.getByRole('dialog').press('Escape');
   await expect(tableNameInput).toBeVisible({ timeout: 10000 });
   await expect(tableNameInput).toHaveValue(tableName);
 
   //Back to Tutorial
-  await helpBtn.click();
+  await ui.helpDialogBtn.click();
   await expect(page.getByRole('heading', { name: 'Tutorial Contents' })).toBeVisible({ timeout: 10000 });
 
   //Toolbar - Comnpliance
-  await page.getByRole('button', { name: 'Toolbar' }).click();
-  await expect(page.getByRole('button', { name: 'Compliance' })).toBeVisible({ timeout: 10000 });
-  await page.getByRole('button', { name: 'Compliance' }).click();
+  await ui.toolbarBtn.click();
+  await expect(ui.complianceBtn).toBeVisible({ timeout: 10000 });
+  await ui.complianceBtn.click();
   await expect(page.getByRole('heading', { name: 'Compliance' })).toBeVisible({ timeout: 10000 });
 
   //Link to Discover Service - GDPR
   await page.getByRole('button', { name: 'open-GDPR' }).click();
   await expect(page.getByRole('heading', { name: 'GDPR' })).toBeVisible({ timeout: 10000 });
-  await doneBtn.click();
+  await ui.doneBtn.click();
 
   //Back to Tutorial - Introduction
-  await page.getByRole('button', { name: 'Start tutorial' }).click();
+  await ui.startTutorialBtn.click();
   await expect(page.getByRole('heading', { name: 'Tutorial Contents' })).toBeVisible({ timeout: 10000 });
 
   //Toolbar - Automatic Annotation
-  await page.getByRole('button', { name: 'Toolbar' }).click();
-  await expect(page.getByRole('button', { name: 'Toolbar' })).toBeVisible({ timeout: 10000 });
-  await page.getByRole('button', { name: 'Automatic Annotation' }).click();
+  await ui.toolbarBtn.click();
+  await expect(ui.toolbarBtn).toBeVisible({ timeout: 10000 });
+  await ui.autoAnnotationTutorialBtn.click();
   await expect(page.getByRole('heading', { name: 'Automatic Annotation' })).toBeVisible({ timeout: 10000 });
 
   //Link to Reconciliation - Semantic Table Interpretation
@@ -114,7 +114,7 @@ test('Tutorial', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Semantic Table Interpretation' })).toBeVisible({ timeout: 10000 });
 
   //Back to Toolbar - Automatic Annotation
-  await page.getByRole('button', { name: 'Automatic Annotation' }).click();
+  await ui.autoAnnotationTutorialBtn.click();
   await expect(page.getByRole('heading', { name: 'Automatic Annotation' })).toBeVisible({ timeout: 10000 });
 
   //Link to Reconciliation - Schema Annotation
@@ -126,7 +126,7 @@ test('Tutorial', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible({ timeout: 10000 });
 
   //Table Viewer - Contextual Actions
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Contextual Actions' })).toBeVisible();
 
   //Link to Matching Revision - Group of Cells Refinement
@@ -138,7 +138,7 @@ test('Tutorial', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Search and Navigation' })).toBeVisible({ timeout: 10000 });
 
   //Table Viewer - Filtering and Column Visibility
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Filtering and Column Visibility' })).toBeVisible();
 
   //Link to Reconciliation - Annotation Symbols
@@ -150,59 +150,59 @@ test('Tutorial', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Column Header Actions' })).toBeVisible({ timeout: 10000 });
 
   //Modification
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Modification' })).toBeVisible();
 
   //Reconciliation - Introduction
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   //Reconciliation - Semantic Table Interpretation (Automatic)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Semantic Table Interpretation (Automatic)' })).toBeVisible();
 
   //Reconciliation - Service-based Reconciliation
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Service-based Reconciliation' })).toBeVisible();
 
   //Reconciliation - Manual Reconciliation
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Manual Reconciliation' })).toBeVisible();
 
   //Reconciliation - Schema Annotation
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Schema Annotation' })).toBeVisible();
 
   //Reconciliation - Annotation Symbols
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Annotation Symbols' })).toBeVisible();
 
   //Matching Revision - Introduction
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   //Matching Revision - Single Cell Entity Matching Revision
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Single Cell Entity Matching Revision' })).toBeVisible();
 
   //Matching Revision - Group of Cells Refinement
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Group of Cells Refinement' })).toBeVisible();
 
   //Extension
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Extension' })).toBeVisible();
 
   //Generative AI
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Generative AI' })).toBeVisible();
 
   //Tutorial completed
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Tutorial completed!' })).toBeVisible();
 
   //Back to Help dialog
-  await doneBtn.click();
+  await ui.doneBtn.click();
   await expect(helpDialog).toBeVisible();
   await helpDialog.press('Escape');
   console.log('Tutorial checked.');
@@ -214,99 +214,97 @@ test('Tutorial', async ({ page }) => {
 
 test('Discover Services', async ({ page }) => {
   test.setTimeout(120000);
-  const helpBtn = page.getByRole('button', { name: 'help-dialog' });
-  const nextBtn = page.getByRole('button', { name: 'Next', exact: true });
-  const doneBtn = page.getByRole('button', { name: 'Done', exact: true });
+  const ui = getComponents(page);
   const helpDialog = page.getByRole('dialog', { name: 'Welcome' });
   const tableNameInput = page.getByLabel('Table name');
   const tableName = `table_help`;
 
-  await helpBtn.click();
+  await ui.helpDialogBtn.click();
   await expect(helpDialog).toBeVisible();
   //Discover Services
   await page.getByRole('button', { name: 'Discover Services' }).click();
   //Introduction
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
   //Modification - Data Cleaning
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Data Cleaning' })).toBeVisible();
   //Modification - Date Formatter
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Date Formatter' })).toBeVisible();
   //Modification - Pseudoanonymization
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Pseudoanonymization' })).toBeVisible();
   //Modification - Regular Expression Modifier
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Regular Expression Modifier' })).toBeVisible();
   //Modification - Text to columns / Columns to text
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Text to columns / Columns to text' })).toBeVisible();
   //Modification - Text to rows
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Text to rows' })).toBeVisible();
   //Reconciliation - Geocoding: Geo Coordinates (GeoNames)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Geocoding: Geo Coordinates (GeoNames)' })).toBeVisible();
   //Reconciliation - Geocoding: Geo Coordinates (HERE)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Geocoding: Geo Coordinates (HERE)' })).toBeVisible();
   //Reconciliation - Linking: GeoNames (GeoNames)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Linking: GeoNames (GeoNames)' })).toBeVisible();
   //Reconciliation - Linking: In-Table Linking
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Linking: In-Table Linking' })).toBeVisible();
   //Reconciliation - Linking: Wikidata (Alligator)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Linking: Wikidata (Alligator)' })).toBeVisible();
   //Reconciliation - Linking: Wikidata (OpenRefine)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Linking: Wikidata (OpenRefine)' })).toBeVisible();
   //Extension - Annotation properties
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Annotation properties' })).toBeVisible();
   //Extension - Annotation properties (Wikidata)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Annotation properties (Wikidata)' })).toBeVisible();
   //Extension - Geo Properties (Wikidata)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Geo Properties (Wikidata)' })).toBeVisible();
   //Extension - Geo Route (HERE)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Geo Route (HERE)' })).toBeVisible();
   //Extension - Meteo Properties (OpenMeteo)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Meteo Properties (OpenMeteo)' })).toBeVisible();
   //Extension - SPARQL (Wikidata)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'SPARQL (Wikidata)' })).toBeVisible();
   //Extension - Wikidata properties
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Wikidata properties' })).toBeVisible();
   //Gen AI - Modification - Custom (LLM Modifier)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Custom (LLM Modifier)' })).toBeVisible();
   //Gen AI - Reconciliation - Custom (LLM Reconciler)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Custom (LLM Reconciler)' })).toBeVisible();
   //Gen AI - Reconciliation - Custom Wikidata (LLM Reconciler)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Custom Wikidata (LLM Reconciler)' })).toBeVisible();
   //Gen AI - Extension - CH Matching - Private
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'CH Matching - Private' })).toBeVisible();
   //Gen AI - Extension - COFOG (LLM Classifier)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'COFOG (LLM Classifier)' })).toBeVisible();
   //Gen AI - Extension - Custom (LLM Extender)
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Custom (LLM Extender)' })).toBeVisible();
   //Compliance - GDPR
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'GDPR' })).toBeVisible();
   //Back to Help dialog
-  await doneBtn.click();
+  await ui.doneBtn.click();
   await expect(helpDialog).toBeVisible();
   await helpDialog.press('Escape');
   console.log('Discover Services checked.');
@@ -318,12 +316,13 @@ test('Discover Services', async ({ page }) => {
 
 test('Compliance Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const complianceDialog = page.getByRole('dialog', { name: 'Compliance Check' });
   const tableNameInput = page.getByLabel('Table name');
   const tableName = `table_help`;
 
   //Open Compliance Dialog
-  await page.getByRole('button', { name: 'Compliance' }).click();
+  await ui.ComplianceBtn.click();
   await expect(complianceDialog).toBeVisible();
 
   //Open Compliance in Tutorial
@@ -343,7 +342,7 @@ test('Compliance Link', async ({ page }) => {
   //Back to Compliance Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(complianceDialog).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await ui.cancelBtn.click();
 
   //Back to Table View
   await expect(tableNameInput).toBeVisible();
@@ -352,12 +351,13 @@ test('Compliance Link', async ({ page }) => {
 
 test('Automatic Annotation Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const automaticAnnotationDialog = page.getByRole('dialog', { name: 'Automatic Annotation' });
   const tableNameInput = page.getByLabel('Table name');
   const tableName = `table_help`;
 
   //Open Automatic Annotation Dialog
-  await page.getByRole('button', { name: 'Automatic Annotation' }).click();
+  await ui.autoAnnotationTutorialBtn.click();
   await expect(automaticAnnotationDialog).toBeVisible();
 
   //Open Automatic Annotation in Tutorial
@@ -368,7 +368,7 @@ test('Automatic Annotation Link', async ({ page }) => {
   //Back to Automatic Annotation Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(automaticAnnotationDialog).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await ui.cancelBtn.click();
 
   //Back to Table View
   await expect(tableNameInput).toBeVisible();
@@ -377,12 +377,13 @@ test('Automatic Annotation Link', async ({ page }) => {
 
 test('Export Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const exportDialog = page.getByRole('dialog', { name: 'Export' });
   const tableNameInput = page.getByLabel('Table name');
   const tableName = `table_help`;
 
   //Open Export Dialog
-  await page.getByRole('button', { name: 'Export' }).click();
+  await ui.exportBtn.click();
   await expect(exportDialog).toBeVisible();
 
   //Open Export in Tutorial
@@ -393,7 +394,7 @@ test('Export Link', async ({ page }) => {
   //Back to Export Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(exportDialog).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await ui.cancelBtn.click();
 
   //Back to Table View
   await expect(tableNameInput).toBeVisible();
@@ -402,6 +403,7 @@ test('Export Link', async ({ page }) => {
 
 test('Modify Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const modificationDialog = page.getByRole('dialog', { name: 'Modification' });
   const modificationHeading = page.getByRole('heading', { name: 'Modification' });
   const column = page.getByRole('columnheader', { name: 'Football Club' });
@@ -414,8 +416,8 @@ test('Modify Link', async ({ page }) => {
   console.log('Column "Football Club" selected.');
 
   //Open Modification Dialog
-  await expect(page.getByRole('button', { name: 'Modify' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Modify' }).click();
+  await expect(ui.modificationBtn).toBeEnabled();
+  await ui.modificationBtn.click();
   await expect(modificationDialog).toBeVisible();
 
   //Open Modification in Tutorial
@@ -435,7 +437,7 @@ test('Modify Link', async ({ page }) => {
   //Back to Modification Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(modificationHeading).toBeVisible();
-  await page.getByRole('button', { name: 'close' }).click();
+  await ui.closeBtn.click();
 
   //Back to Table View
   await expect(tableNameInput).toBeVisible();
@@ -444,6 +446,7 @@ test('Modify Link', async ({ page }) => {
 
 test('Reconcile Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const reconciliationDialog = page.getByRole('dialog', { name: 'Reconciliation' });
   const reconciliationHeading = page.getByRole('heading', { name: 'Reconciliation' });
   const column = page.getByRole('columnheader', { name: 'Football Club' });
@@ -456,8 +459,8 @@ test('Reconcile Link', async ({ page }) => {
   console.log('Column "Football Club" selected.');
 
   //Open Reconciliation Dialog
-  await expect(page.getByRole('button', { name: 'Reconcile' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Reconcile' }).click();
+  await expect(ui.reconciliationBtn).toBeEnabled();
+  await ui.reconciliationBtn.click();
   await expect(reconciliationDialog).toBeVisible();
 
   //Open Reconciliation in Tutorial
@@ -477,7 +480,7 @@ test('Reconcile Link', async ({ page }) => {
   //Back to Reconciliation Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(reconciliationHeading).toBeVisible();
-  await page.getByRole('button', { name: 'close' }).click();
+  await ui.closeBtn.click();
 
   //Back to Table View
   await expect(tableNameInput).toBeVisible();
@@ -486,6 +489,7 @@ test('Reconcile Link', async ({ page }) => {
 
 test('Extend Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const extensionDialog = page.getByRole('dialog', { name: 'Extension' });
   const extensionHeading = page.getByRole('heading', { name: 'Extension' });
   const column = page.getByRole('columnheader', { name: 'Football Club' });
@@ -498,8 +502,8 @@ test('Extend Link', async ({ page }) => {
   console.log('Column "Football Club" selected.');
 
   //Open Extension Dialog
-  await expect(page.getByRole('button', { name: 'Extend' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Extend' }).click();
+  await expect(ui.extensionBtn).toBeEnabled();
+  await ui.extensionBtn.click();
   await expect(extensionDialog).toBeVisible();
 
   //Open Extension in Tutorial
@@ -519,7 +523,7 @@ test('Extend Link', async ({ page }) => {
   //Back to Extension Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(extensionHeading).toBeVisible();
-  await page.getByRole('button', { name: 'close' }).click();
+  await ui.closeBtn.click();
 
   //Back to Table View
   await expect(tableNameInput).toBeVisible();
@@ -528,6 +532,7 @@ test('Extend Link', async ({ page }) => {
 
 test('Gen AI Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const genAIDialog = page.getByRole('dialog', { name: 'Services - Gen AI' });
   const genAIHeading = page.getByRole('heading', { name: 'Services - Gen AI' });
   const column = page.getByRole('columnheader', { name: 'Football Club' });
@@ -540,8 +545,8 @@ test('Gen AI Link', async ({ page }) => {
   console.log('Column "Football Club" selected.');
 
   //Open GenAI Dialog
-  await expect(page.getByRole('button', { name: 'Gen AI' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Gen AI' }).click();
+  await expect(ui.genAIBtn).toBeEnabled();
+  await ui.genAIBtn.click();
   await expect(genAIDialog).toBeVisible();
 
   //Open GenAI in Tutorial
@@ -561,13 +566,14 @@ test('Gen AI Link', async ({ page }) => {
   //Back to GenAI Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(genAIHeading).toBeVisible();
-  await page.getByRole('button', { name: 'close' }).click();
+  await ui.closeBtn.click();
   await expect(tableNameInput).toBeVisible();
   await expect(tableNameInput).toHaveValue(tableName);
 });
 
 test('Metadata Cell Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const cellHeading = page.getByRole('heading', { name: 'Arsenal' });
   const tableNameInput = page.getByLabel('Table name');
   const tableName = `table_help`;
@@ -584,7 +590,7 @@ test('Metadata Cell Link', async ({ page }) => {
   //Back to Metadata Dialog
   await page.getByRole('dialog').press('Escape');
   await expect(cellHeading).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await ui.cancelBtn.click();
 
   //Back to Table View
   await expect(tableNameInput).toBeVisible();
@@ -593,6 +599,7 @@ test('Metadata Cell Link', async ({ page }) => {
 
 test('Refinement Link', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const refinementHeading = page.getByRole('heading', { name: 'Refine matching' });
   const column = page.getByRole('columnheader', { name: 'Football Club' });
   const tableNameInput = page.getByLabel('Table name');
@@ -604,7 +611,7 @@ test('Refinement Link', async ({ page }) => {
   console.log('Column "Football Club" selected.');
 
   //Open Refinement Dialog
-  await page.getByRole('button', { name: 'open-refinement-dialog' }).click();
+  await ui.refinementBtn.click();
   await expect(refinementHeading).toBeVisible();
 
   //Open Refinement in Tutorial
@@ -621,32 +628,31 @@ test('Refinement Link', async ({ page }) => {
 
 test('Graph Visualization', async ({ page }) => {
   test.setTimeout(120000);
+  const ui = getComponents(page);
   const graphHeading = page.getByRole('heading', { name: 'Graph Visualization' });
-  const nextBtn = page.getByRole('button', { name: 'Next', exact: true });
-  const doneBtn = page.getByRole('button', { name: 'Done', exact: true });
   const tableNameInput = page.getByLabel('Table name');
   const tableName = `table_help`;
 
   //Open Graph View
-  await page.getByRole('button', { name: 'right aligned' }).click();
+  await ui.rightAlignedBtn.click();
   await expect(page.getByRole('heading', { name: 'Graph Info' })).toBeVisible();
 
   //Open Graph Tutorial
-  await page.getByRole('button', { name: 'open-graph-tutorial' }).click();
+  await ui.graphTutorialBtn.click();
   await expect(graphHeading).toBeVisible();
-  await page.getByRole('button', { name: 'Start tutorial' }).click();
+  await ui.startTutorialBtn.click();
   await expect(page.getByRole('heading', { name: 'Tutorial Contents' })).toBeVisible();
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Graph Area' })).toBeVisible();
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Sidebar' })).toBeVisible();
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Graph info' })).toBeVisible();
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Selected Node/Link Details' })).toBeVisible();
-  await nextBtn.click();
+  await ui.nextBtn.click();
   await expect(page.getByRole('heading', { name: 'Column Values' })).toBeVisible();
-  await doneBtn.click();
+  await ui.doneBtn.click();
 
   //Back to Graph View
   await expect(graphHeading).toBeVisible();

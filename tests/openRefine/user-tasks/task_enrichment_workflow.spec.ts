@@ -146,7 +146,7 @@ test('Full Workflow', async ({ page }) => {
     await page.getByRole('link', { name: 'Edit column' }).click();
     await page.getByRole('link', { name: 'Add column based on this' }).click();
     await page.getByRole('textbox', { name: 'New column name' }).click();
-    await page.getByRole('textbox', { name: 'New column name' }).fill('max temp');
+    await page.getByRole('textbox', { name: 'New column name' }).fill('min temp');
     await page.getByRole('textbox', { name: 'Expression' }).click();
     await page.getByRole('textbox', { name: 'Expression' }).press('ControlOrMeta+a');
     await page.getByRole('textbox', { name: 'Expression' }).fill('parseJson(value).daily.temperature_2m_min[0]');
