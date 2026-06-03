@@ -1,6 +1,6 @@
-import { Dataset, Meta, Table } from '@services/api/datasets';
-import { RequestEnhancedState } from '@store/enhancers/requests';
-import { BaseState, ID } from '@store/interfaces/store';
+import { Dataset, Meta, Table } from "@services/api/datasets";
+import { RequestEnhancedState } from "@store/enhancers/requests";
+import { BaseState, ID } from "@store/interfaces/store";
 
 /**
  * State which holds all datasets with their tables and UI state for dialogs.
@@ -8,11 +8,11 @@ import { BaseState, ID } from '@store/interfaces/store';
 export interface DatasetsState extends RequestEnhancedState {
   entities: {
     currentDatasetId: string;
-    metaDatasets: Meta<Dataset>,
-    metaTables: Meta<Table>,
+    metaDatasets: Meta<Dataset>;
+    metaTables: Meta<Table>;
     datasets: DatasetsInstancesState;
     tables: TablesInstancesState;
-  },
+  };
   ui: DatasetsUIState;
 }
 
@@ -30,11 +30,11 @@ export interface DatasetsUIState {
 /**
  * State which holds datasets instances.
  */
-export interface DatasetsInstancesState extends BaseState<DatasetInstance> { }
+export interface DatasetsInstancesState extends BaseState<DatasetInstance> {}
 /**
  * State which holds tables for a dataset.
  */
-export interface TablesInstancesState extends BaseState<TableInstance> { }
+export interface TablesInstancesState extends BaseState<TableInstance> {}
 
 /**
  * A dataset instance.
@@ -49,6 +49,11 @@ export interface DatasetInstance {
   stdDevRows: number;
   stdDevCols: number;
   tables: ID[];
+  // ACL fields (populated from API)
+  userId?: string;
+  visibility?: "private" | "public";
+  viewers?: string[];
+  editors?: string[];
 }
 
 /**
@@ -63,6 +68,10 @@ export interface TableInstance {
   nCols: number;
   nCells: number;
   nCellsReconciliated: number;
+  // ACL fields (populated from API)
+  visibility?: "private" | "public" | null;
+  viewers?: string[];
+  editors?: string[];
 }
 
 export interface Status {
@@ -74,5 +83,5 @@ export interface Status {
 export enum StatusTable {
   TODO,
   DOING,
-  DONE
+  DONE,
 }

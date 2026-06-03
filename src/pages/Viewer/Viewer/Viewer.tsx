@@ -79,7 +79,7 @@ const Viewer: FC<unknown> = () => {
   }, [view, tableId, datasetId]);
 
   useEffect(() => {
-    if (!datasetId) return;
+    if (!datasetId || !tableId) return;
 
     let cancelled = false;
 
@@ -88,18 +88,46 @@ const Viewer: FC<unknown> = () => {
         const response = await datasetAPI.getDatasetInfo({ datasetId });
         const dataset = response.data;
         const currentUserId = auth.user?.id;
+        const uid = String(currentUserId);
+
         const isOwner =
           dataset &&
           currentUserId !== undefined &&
-          String(dataset.userId) === String(currentUserId);
-        const isEditor =
+          String(dataset.userId) === uid;
+
+        // Dataset owner always has full edit access
+        if (isOwner) {
+          if (!cancelled)
+            dispatch(updateUI({ settings: { isViewOnly: false } }));
+          return;
+        }
+
+        const isDatasetEditor =
           dataset &&
           Array.isArray(dataset.editors) &&
           currentUserId !== undefined &&
-          dataset.editors.map(String).includes(String(currentUserId));
-        const canEdit = Boolean(
-          dataset && (dataset.visibility === "public" || isOwner || isEditor),
+          dataset.editors.map(String).includes(uid);
+
+        const datasetCanEdit = Boolean(
+          dataset && (dataset.visibility === "public" || isDatasetEditor),
         );
+
+        // Check table-level ACL to apply the most-restrictive rule
+        let canEdit = datasetCanEdit;
+        try {
+          const tableResp = await datasetAPI.getTableAcl(datasetId, tableId);
+          const table = tableResp.data as any;
+          if (table.visibility === "private") {
+            // Table is private: only explicit table editors can edit
+            const isTableEditor =
+              Array.isArray(table.editors) &&
+              table.editors.map(String).includes(uid);
+            canEdit = datasetCanEdit && isTableEditor;
+          }
+          // null (inherit) or "public": dataset-level permission already applies
+        } catch {
+          // If table ACL is unavailable, fall back to dataset-level
+        }
 
         if (!cancelled) {
           dispatch(updateUI({ settings: { isViewOnly: !canEdit } }));
@@ -116,7 +144,7 @@ const Viewer: FC<unknown> = () => {
     return () => {
       cancelled = true;
     };
-  }, [datasetId, auth.user?.id, auth.loggedIn, dispatch]);
+  }, [datasetId, tableId, auth.user?.id, auth.loggedIn, dispatch]);
 
   useEffect(() => {
     if (tableId && datasetId) {

@@ -44,6 +44,12 @@ export type ApiConfig = {
     ADD_EDITOR: Endpoint;
     REMOVE_EDITOR: Endpoint;
     SET_VISIBILITY: Endpoint;
+    GET_TABLE_ACL: Endpoint;
+    ADD_TABLE_VIEWER: Endpoint;
+    REMOVE_TABLE_VIEWER: Endpoint;
+    ADD_TABLE_EDITOR: Endpoint;
+    REMOVE_TABLE_EDITOR: Endpoint;
+    SET_TABLE_VISIBILITY: Endpoint;
     // Users
     SEARCH_USERS: Endpoint;
   };
@@ -216,6 +222,22 @@ const CONFIG: AppConfig = {
       ADD_EDITOR: { path: "/dataset/:datasetId/acl/editors" },
       REMOVE_EDITOR: { path: "/dataset/:datasetId/acl/editors" },
       SET_VISIBILITY: { path: "/dataset/:datasetId/acl/visibility" },
+      GET_TABLE_ACL: { path: "/dataset/:datasetId/table/:tableId/acl" },
+      ADD_TABLE_VIEWER: {
+        path: "/dataset/:datasetId/table/:tableId/acl/viewers",
+      },
+      REMOVE_TABLE_VIEWER: {
+        path: "/dataset/:datasetId/table/:tableId/acl/viewers",
+      },
+      ADD_TABLE_EDITOR: {
+        path: "/dataset/:datasetId/table/:tableId/acl/editors",
+      },
+      REMOVE_TABLE_EDITOR: {
+        path: "/dataset/:datasetId/table/:tableId/acl/editors",
+      },
+      SET_TABLE_VISIBILITY: {
+        path: "/dataset/:datasetId/table/:tableId/acl/visibility",
+      },
       // Users search
       SEARCH_USERS: { path: "/auth/users?q=:query" },
     },
