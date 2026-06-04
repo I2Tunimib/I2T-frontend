@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
-import { KG_INFO, searchQudtUnits, searchW3CFormats } from "@services/utils/kg-info";
+import { KG_INFO, fetchTypeAndDescription, searchQudtUnits, searchW3CFormats } from "@services/utils/kg-info";
 import { createWikidataURI, extractIdFromUri, resolveURI } from "@services/utils/uri-utils";
 import {
   selectAppConfig,
@@ -357,8 +357,9 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     let finalUri = "";
     if (reconciliator) {
       finalUri = cleanPrefix === "geo" ? "" : resolveURI(reconciliator, { id: idFromUri });
+    } else {
+      finalUri = uri;
     }
-    finalUri = uri;
 
     const newType = {
       id: finalId,
@@ -647,7 +648,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
             padding="0px 16px"
             gap={1}
           >
-            {kind === "literal" ? (
+            {kind === "literal" && (
               <Stack spacing={2}>
                 {datatype && literalTypesConfig[datatype] && (
                   <>
@@ -740,23 +741,23 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
                   </Box>
                 )}
               </Stack>
-            ) : (
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Tooltip open={showTooltip} title="Add type" placement="right">
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    onMouseLeave={handleTooltipClose}
-                    onMouseEnter={handleTooltipOpen}
-                    onClick={handleShowAdd}
-                    sx={{
-                      textTransform: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                    }}
-                  >
-                    Add column type
+            )}
+            <Stack direction="row" alignItems="center" marginTop="8px" spacing={1}>
+              <Tooltip open={showTooltip} title="Add type" placement="right">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onMouseLeave={handleTooltipClose}
+                  onMouseEnter={handleTooltipOpen}
+                  onClick={handleShowAdd}
+                  sx={{
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  Add column type
                     <AddRoundedIcon
                       sx={{
                         transition: "transform 150ms ease-out",
@@ -808,8 +809,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
                   )
                 ) : null}
               </Stack>
-            )}
-            {showAdd && kind && (kind !== "literal") && (
+            {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
                 <AddMetadataForm
                   currentService={currentService}
