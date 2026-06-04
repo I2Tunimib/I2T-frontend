@@ -92,7 +92,15 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
             labelId="select-match"
             label={label}
             {...props}
-            sx={noGap ? { height: 40 } : {}}
+            sx={{
+                ...(noGap ? { height: 40 } : {}),
+                "& .MuiSelect-select": {
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  pr: "32px !important",
+                },
+              }}
           >
             {options.map((option) => (
               <MenuItem
@@ -101,9 +109,23 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
                 disabled={option.disabled}
               >
                 <Box display="flex" alignItems="center" width="100%">
-                  <span style={{ flex: 1 }}>{option.label}</span>
+                  <span
+                    style={{
+                      flex: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      minWidth: 0
+                    }}
+                  >
+                    {option.label}
+                  </span>
                   {noGap && option.kind && option.kind !== "" && (
-                    <Box display="flex" justifyContent="flex-end">
+                    <Box
+                      display="flex"
+                      justifyContent="flex-end"
+                      sx={{ pl: 1, flexShrink: 0 }}
+                    >
                       {getKind(option.kind)}
                     </Box>
                   )}
@@ -154,7 +176,7 @@ export const SelectColumns = forwardRef<
     return {
       ...option,
       label: isSelected ? `${option.label} (selected)` : option.label,
-      disabled: isSelected,
+      disabled: option.colFixed ? true : isSelected,
     };
   });
   return <Select ref={ref} options={modifiedOptions} {...props} />;

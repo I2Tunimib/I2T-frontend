@@ -77,7 +77,12 @@ import {
   reconcile,
   modify,
 } from "@store/slices/table/table.thunk";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
+import {
+  selectAppConfig,
+  selectExtendersAsArray,
+  selectReconciliatorsAsArray,
+  selectModifiersAsArray,
+} from "@store/slices/config/config.selectors";
 import {
   Extender,
   Reconciliator,
@@ -93,12 +98,6 @@ import UnifiedDialog from "../UnifiedDialog/UnifiedDialog";
 import MetadataColumnDialog from "../MetadataColumnDialog/MetadataColumnDialog";
 import RefineMatchingDialog from "../RefineMatching/RefineMatchingDialog";
 // import ModifyDialog from "../ModifyDialog/ModifyDialog";
-import {
-  selectExtendersAsArray,
-  selectReconciliatorsAsArray,
-  selectModifiersAsArray,
-} from "@store/slices/config/config.selectors";
-import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import GroupServiceDialog from "../GroupServiceDialog/GroupServiceDialog";
 
 const tags = [
@@ -288,6 +287,7 @@ const SubToolbar = ({
         updateUI({
           openMetadataColumnDialog: true,
           metadataColumnDialogColId: selectedColId,
+          metadataColumnDialogInitialTab: 0,
         }),
       );
     }
@@ -465,7 +465,7 @@ const SubToolbar = ({
             onClick={() => dispatch(updateSelectedCellExpanded({}))}
           />
           <IconButtonTooltip
-            aria-label='expand-header'
+            aria-label="expand-header"
             tooltipText="Expand header"
             Icon={UnfoldMoreRoundedIcon}
             onClick={() =>

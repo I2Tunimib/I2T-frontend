@@ -25,7 +25,8 @@ export interface AddMetadataFormProps {
   onSubmit: (data: any) => void;
   context: "metadataDialog" | "typeTab" | "propertyTab";
   otherColumns?: { id: string; label: string; value: string }[];
-  isLiteralColumn?: boolean;
+  colId?: string;
+  columnKind?: string;
 }
 
 const AddMetadataForm: FC<AddMetadataFormProps> = ({
@@ -34,8 +35,10 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
   onSubmit,
   context,
   otherColumns,
-  isLiteralColumn = false,
+  colId,
+  columnKind = "",
 }) => {
+  const isLiteral = columnKind === "literal";
   const { handleSubmit, reset, register, control, setValue, watch } = useForm({
     defaultValues: {
       prefix: "",
@@ -44,7 +47,8 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
       uri: "",
       score: 1.0,
       match: "true",
-      obj: "",
+      subj: isLiteral ? "" : colId,
+      obj: isLiteral ? colId : "",
     },
   });
   const [customPrefix, setCustomPrefix] = useState("");
@@ -117,6 +121,47 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
       gap={1}
       onSubmit={handleSubmit(onSubmit)}
     >
+      {context === "propertyTab" && watchedPrefix !== "custom" && (
+        <Tooltip title="Select the subject column" arrow placement="top">
+          <FormControl
+            sx={{ minWidth: 150, flex: "1 1 200px" }}
+            fullWidth
+            size="small"
+          >
+            <Controller
+              name="subj"
+              control={control}
+              defaultValue={isLiteral ? "" : colId}
+              rules={{ required: true }}
+              render={({ field }) => {
+                const finalOptions = isLiteral
+                  ? otherColumns || []
+                  : [
+                    {
+                      id: colId,
+                      value: colId,
+                      label: colId,
+                      kind: columnKind,
+                      colFixed: false,
+                    },
+                    ...(otherColumns || []),
+                  ];
+
+                return (
+                  <SelectColumns
+                    {...field}
+                    id="subj"
+                    label="Subj *"
+                    options={finalOptions}
+                    noGap={true}
+                    disabled={!isLiteral}
+                  />
+                );
+              }}
+            />
+          </FormControl>
+        </Tooltip>
+      )}
       <Tooltip
         title={
           !!currentService
@@ -129,7 +174,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
         placement="top"
       >
         <FormControl
-          sx={{ minWidth: 200, flex: "1 1 200px" }}
+          sx={{ minWidth: 150, flex: "1 1 200px" }}
           fullWidth
           size="small"
         >
@@ -224,26 +269,42 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
             />
           </Tooltip>
           {context === "propertyTab" && (
-            <Tooltip title={isLiteralColumn ? "Select the subject column" : "Select the referenced column"} arrow placement="top">
+            <Tooltip title="Select the referenced column" arrow placement="top">
               <FormControl
-                sx={{ minWidth: 200, flex: "1 1 200px" }}
+                sx={{ minWidth: 150, flex: "1 1 200px" }}
                 fullWidth
                 size="small"
               >
                 <Controller
                   name="obj"
                   control={control}
-                  defaultValue=""
+                  defaultValue={isLiteral ? colId : ""}
                   rules={{ required: true }}
-                  render={({ field }) => (
-                    <SelectColumns
-                      {...field}
-                      id="obj"
-                      label={isLiteralColumn ? "Subj *" : "Obj *"}
-                      options={otherColumns || []}
-                      noGap={true}
-                    />
-                  )}
+                  render={({ field }) => {
+                    const finalOptions = isLiteral
+                      ? [
+                        {
+                          id: colId,
+                          value: colId,
+                          label: colId,
+                          kind: columnKind,
+                          colFixed: true,
+                        },
+                        ...(otherColumns || []),
+                      ]
+                      : otherColumns || [];
+
+                    return (
+                      <SelectColumns
+                        {...field}
+                        id="obj"
+                        label="Obj *"
+                        options={finalOptions}
+                        noGap={true}
+                        disabled={isLiteral}
+                      />
+                    );
+                  }}
                 />
               </FormControl>
             </Tooltip>
@@ -256,14 +317,14 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
                 placement="top"
               >
                 <TextField
-                  sx={{ minWidth: 100, flex: "1 1 50px" }}
+                  sx={{ minWidth: 60, flex: "1 1 50px" }}
                   size="small"
                   label="Score"
                   variant="outlined"
                   {...register("score")}
                 />
               </Tooltip>
-              <FormControl size="small" sx={{ minWidth: 100, flex: "1 1 50px" }}>
+              <FormControl size="small" sx={{ minWidth: 90, flex: "1 1 50px" }}>
                 <InputLabel>Match</InputLabel>
                 <Controller
                   name="match"

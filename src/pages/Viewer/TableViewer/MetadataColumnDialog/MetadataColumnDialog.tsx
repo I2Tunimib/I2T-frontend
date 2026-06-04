@@ -88,7 +88,8 @@ const Content = () => {
   const handleChange = (event: SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
-
+  const initialTab = useAppSelector((state: any) => state.table.ui.metadataColumnDialogInitialTab);
+  const [isInitialMount, setIsInitialMount] = useState(true);
   /**
    * Function used to remove the last edit of a specific type from the editsState array,
    * used in cases like updating the column type, where only the last
@@ -222,6 +223,21 @@ const Content = () => {
       setCurrentKind((prev) => ((prev === "none" || !prev) ? (column.kind || "none") : prev));
       setCurrentDatatype((prev) => ((prev === "none" || !prev) ? (column.datatype || "none") : prev));
       setCurrentRole((prev) => ((prev === "none" || !prev) ? (column.role || "none") : prev));
+
+      if (isInitialMount) {
+        if (initialTab === 1) {
+          setValue(1);
+        } else {
+          setValue(0);
+        }
+        setIsInitialMount(false);
+      }
+    }
+  }, [column, initialTab, isInitialMount]);
+
+  useEffect(() => {
+    if (!column) {
+      setIsInitialMount(true);
     }
   }, [column]);
 
@@ -384,7 +400,12 @@ const Content = () => {
           />
         </TabPanel>
         <TabPanel value={value} index={1}>
-          <PropertyTab addEdit={handleAddEdit} setCurrentRole={setCurrentRole} />
+          <PropertyTab
+            addEdit={handleAddEdit}
+            setCurrentRole={setCurrentRole}
+            currentKind={currentKind}
+            currentDatatype={currentDatatype}
+          />
         </TabPanel>
       </Stack>
     </Stack>

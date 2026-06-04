@@ -295,6 +295,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         updateUI({
           openMetadataColumnDialog: true,
           metadataColumnDialogColId: colId,
+          metadataColumnDialogInitialTab: 0,
         }),
       );
     };

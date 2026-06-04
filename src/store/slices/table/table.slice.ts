@@ -146,6 +146,7 @@ const initialState: TableState = {
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
+    metadataColumnDialogInitialTab: 0,
     openExportDialog: false,
     openComplianceStatusDialog: false,
     openAutoAnnotationDialog: false,
@@ -908,6 +909,17 @@ export const tableSlice = createSliceWithRequests({
 
                 const isMatching = match === "true";
 
+                if (!columnToUpdate.context) {
+                  columnToUpdate.context = {};
+                }
+                if (!columnToUpdate.context[prefix]) {
+                  columnToUpdate.context[prefix] = {
+                    reconciliated: 0,
+                    total: 0,
+                    uri: uri.substring(0, uri.lastIndexOf("/") + 1),
+                  };
+                }
+
                 if (
                   columnToUpdate.metadata.length > 0 &&
                   columnToUpdate.metadata[0].entity &&
@@ -964,34 +976,41 @@ export const tableSlice = createSliceWithRequests({
             state,
             undoable,
             (draft) => {
-              const { id, match, name, uri, obj, description, ...rest } = value;
+              const columnToUpdate = getColumn(draft, colId);
+              const { id, match, name, uri, obj, subj, description, ...rest } = value;
               const isMatching = match === "true";
 
-              const isLiteralInverted = value.inverted === true;
-              const subjectColId = isLiteralInverted ? value.obj : colId;
-              const objectColId = isLiteralInverted ? colId : value.obj;
-
-              const columnToUpdate = getColumn(draft, subjectColId);
+              if (!columnToUpdate.context) {
+                columnToUpdate.context = {};
+              }
+              if (!columnToUpdate.context[prefix]) {
+                const baseUri = uri.substring(0, uri.lastIndexOf("/") + 1);
+                columnToUpdate.context[prefix] = {
+                  reconciliated: 0,
+                  total: 0,
+                  uri: uri.includes("wiki") ? `${baseUri}Property:` : baseUri,
+                };
+              }
 
               for (let i = 0; i < draft.entities.columns.allIds.length; i++) {
                 const currentId = draft.entities.columns.allIds[i];
-                if (currentId !== subjectColId) {
+                if (currentId !== subj) {
                   draft.entities.columns.byId[currentId].role = undefined;
                 }
               }
-              draft.entities.columns.byId[subjectColId].role = "subject";
+              draft.entities.columns.byId[subj].role = "subject";
 
               if (
                 columnToUpdate.metadata.length > 0 &&
                 columnToUpdate.metadata[0].property &&
                 columnToUpdate.metadata[0].property.length > 0 &&
-                draft.entities.columns.byId[subjectColId].metadata &&
-                draft.entities.columns.byId[subjectColId].metadata[0].property
+                draft.entities.columns.byId[subj].metadata &&
+                draft.entities.columns.byId[subj].metadata[0].property
               ) {
                 if (isMatching) {
-                  draft.entities.columns.byId[subjectColId].metadata[0].property =
+                  draft.entities.columns.byId[subj].metadata[0].property =
                     draft.entities.columns.byId[
-                      subjectColId
+                      subj
                     ].metadata[0].property?.map((item) => ({
                       ...item,
                       match: true,
@@ -1002,7 +1021,8 @@ export const tableSlice = createSliceWithRequests({
               const newMeta = {
                 //id: `${prefix}:${id}`,
                 id: `${id}`,
-                obj: objectColId,
+                subj,
+                obj,
                 match: isMatching,
                 name,
                 uri,
@@ -1010,12 +1030,12 @@ export const tableSlice = createSliceWithRequests({
                 ...rest,
               };
 
-              draft.entities.columns.byId[subjectColId].metadata = [
+              draft.entities.columns.byId[subj].metadata = [
                 {
-                  ...draft.entities.columns.byId[subjectColId].metadata[0],
+                  ...draft.entities.columns.byId[subj].metadata[0],
                   role: "subject",
                   property: [
-                    ...(draft.entities.columns.byId[subjectColId].metadata[0]
+                    ...(draft.entities.columns.byId[subj].metadata[0]
                       ?.property || []),
                     newMeta,
                   ],
