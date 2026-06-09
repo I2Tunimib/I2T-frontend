@@ -395,18 +395,6 @@ const TableAclDialog: FC<Props> = ({
                       filterSelectedOptions
                       sx={{
                         flex: 1,
-                        "& .MuiAutocomplete-inputRoot": {
-                          paddingTop: 6,
-                          paddingBottom: 6,
-                          minHeight: 40,
-                        },
-                        "& .MuiChip-root": {
-                          height: 28,
-                          fontSize: "0.85rem",
-                        },
-                        "& .MuiAutocomplete-endAdornment": {
-                          top: "calc(50% - 12px)",
-                        },
                       }}
                       ListboxProps={{ style: { maxHeight: 240 } }}
                       renderTags={(value: any[], getTagProps) =>
@@ -431,7 +419,6 @@ const TableAclDialog: FC<Props> = ({
                           onChange={(e) => setQuery(e.target.value)}
                           InputProps={{
                             ...params.InputProps,
-                            sx: { height: 36 },
                           }}
                         />
                       )}
@@ -447,7 +434,15 @@ const TableAclDialog: FC<Props> = ({
                       value={section}
                       onChange={(e) => setSection(e.target.value as any)}
                       SelectProps={{ native: true }}
-                      sx={{ width: 120 }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "40px",
+                        },
+                        "& input": {
+                          height: "40px",
+                          padding: "0 12px",
+                        },
+                      }}
                     >
                       <option value="viewer">Viewer</option>
                       <option value="editor">Editor</option>
