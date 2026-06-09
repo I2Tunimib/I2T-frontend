@@ -241,6 +241,13 @@ const TableAclDialog: FC<Props> = ({
                   Only the dataset owner can modify table access control
                 </Typography>
               )}
+              {datasetVisibility === "private" && (
+                <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+                  ⚠️ Dataset is private, so table can only be <b>Inherit</b> or{" "}
+                  <b>Private</b>. Public tables cannot override a private
+                  dataset.
+                </Typography>
+              )}
               <FormControl component="fieldset" disabled={!isOwner}>
                 <RadioGroup
                   value={visibility === null ? "inherit" : visibility}
@@ -263,6 +270,7 @@ const TableAclDialog: FC<Props> = ({
                   <FormControlLabel
                     value="public"
                     control={<Radio />}
+                    disabled={datasetVisibility === "private"}
                     label="Public (all users with dataset access can view)"
                   />
                 </RadioGroup>

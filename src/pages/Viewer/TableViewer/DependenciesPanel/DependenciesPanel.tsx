@@ -490,7 +490,7 @@ const OP_TYPE_LABEL: Record<string, string> = {
   RECONCILIATION: "Reconciliation",
   EXTENSION: "Extension",
   MODIFICATION: "Modification",
-  PROPAGATE_TYPE: "Propagate Type",
+  PROPAGATE_TYPE: "Propagate Annotation",
 };
 
 // Mirrors OP_COLORS used in the graph canvas exactly
