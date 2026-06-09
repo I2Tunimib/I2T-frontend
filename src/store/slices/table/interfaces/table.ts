@@ -53,6 +53,7 @@ export interface TableUIState {
   openAutoAnnotationDialog: boolean;
   openMetadataColumnDialog: boolean;
   metadataColumnDialogColId: string | null;
+  metadataColumnDialogInitialTab: number;
   openHelpDialog: boolean;
   openGraphTutorialDialog: boolean;
   helpStart: "rec" | "ext" | "tutorial";
@@ -119,6 +120,7 @@ export interface Column {
   metadata: ColumnMetadata[];
   kind?: string;
   role?: string;
+  datatype?: string;
   reconciler?: string;
 }
 /**

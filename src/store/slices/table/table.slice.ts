@@ -6,7 +6,7 @@ import tableAPI, {
 } from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
-import { buildURI } from "@services/utils/uri-utils";
+import { resolveURI } from "@services/utils/uri-utils";
 //import { RootState, store } from "@store";
 import { createSliceWithRequests } from "@store/enhancers/requests";
 import {
@@ -146,6 +146,7 @@ const initialState: TableState = {
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
+    metadataColumnDialogInitialTab: 0,
     openExportDialog: false,
     openComplianceStatusDialog: false,
     openAutoAnnotationDialog: false,
@@ -302,9 +303,9 @@ export const tableSlice = createSliceWithRequests({
           id: cleanId,
           label: col.label?.replace(/^\uFEFF/, "").trim() ?? cleanId,
           kind: result.kind_classification[cleanId] ?? col.kind ?? "unknown",
-          nerClassification:
+          datatype:
             result.ner_classification[cleanId] ??
-            col.nerClassification ??
+            col.datatype ??
             "unknown",
         };
       });
@@ -908,6 +909,17 @@ export const tableSlice = createSliceWithRequests({
 
                 const isMatching = match === "true";
 
+                if (!columnToUpdate.context) {
+                  columnToUpdate.context = {};
+                }
+                if (!columnToUpdate.context[prefix]) {
+                  columnToUpdate.context[prefix] = {
+                    reconciliated: 0,
+                    total: 0,
+                    uri: uri.substring(0, uri.lastIndexOf("/") + 1),
+                  };
+                }
+
                 if (
                   columnToUpdate.metadata.length > 0 &&
                   columnToUpdate.metadata[0].entity &&
@@ -965,28 +977,40 @@ export const tableSlice = createSliceWithRequests({
             undoable,
             (draft) => {
               const columnToUpdate = getColumn(draft, colId);
-              const { id, match, name, uri, obj, description, ...rest } = value;
+              const { id, match, name, uri, obj, subj, description, ...rest } = value;
               const isMatching = match === "true";
+
+              if (!columnToUpdate.context) {
+                columnToUpdate.context = {};
+              }
+              if (!columnToUpdate.context[prefix]) {
+                const baseUri = uri.substring(0, uri.lastIndexOf("/") + 1);
+                columnToUpdate.context[prefix] = {
+                  reconciliated: 0,
+                  total: 0,
+                  uri: uri.includes("wiki") ? `${baseUri}Property:` : baseUri,
+                };
+              }
 
               for (let i = 0; i < draft.entities.columns.allIds.length; i++) {
                 const currentId = draft.entities.columns.allIds[i];
-                if (currentId !== colId) {
+                if (currentId !== subj) {
                   draft.entities.columns.byId[currentId].role = undefined;
                 }
               }
-              draft.entities.columns.byId[colId].role = "subject";
+              draft.entities.columns.byId[subj].role = "subject";
 
               if (
                 columnToUpdate.metadata.length > 0 &&
                 columnToUpdate.metadata[0].property &&
                 columnToUpdate.metadata[0].property.length > 0 &&
-                draft.entities.columns.byId[colId].metadata &&
-                draft.entities.columns.byId[colId].metadata[0].property
+                draft.entities.columns.byId[subj].metadata &&
+                draft.entities.columns.byId[subj].metadata[0].property
               ) {
                 if (isMatching) {
-                  draft.entities.columns.byId[colId].metadata[0].property =
+                  draft.entities.columns.byId[subj].metadata[0].property =
                     draft.entities.columns.byId[
-                      colId
+                      subj
                     ].metadata[0].property?.map((item) => ({
                       ...item,
                       match: true,
@@ -997,19 +1021,21 @@ export const tableSlice = createSliceWithRequests({
               const newMeta = {
                 //id: `${prefix}:${id}`,
                 id: `${id}`,
-                obj: value.obj,
+                subj,
+                obj,
                 match: isMatching,
                 name,
+                uri,
                 description: value.description,
                 ...rest,
               };
 
-              draft.entities.columns.byId[colId].metadata = [
+              draft.entities.columns.byId[subj].metadata = [
                 {
-                  ...draft.entities.columns.byId[colId].metadata[0],
+                  ...draft.entities.columns.byId[subj].metadata[0],
                   role: "subject",
                   property: [
-                    ...(draft.entities.columns.byId[colId].metadata[0]
+                    ...(draft.entities.columns.byId[subj].metadata[0]
                       ?.property || []),
                     newMeta,
                   ],
@@ -1156,6 +1182,25 @@ export const tableSlice = createSliceWithRequests({
         },
         (draft) => {
           // do not include in undo history
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        },
+      );
+    },
+    updateColumnDatatype: (
+      state,
+      action: PayloadAction<Payload<{ colId: ID; datatype: string }>>,
+    ) => {
+      const { colId, datatype } = action.payload;
+      const column = getColumn(state, colId);
+      return produceWithPatch(
+        state,
+        true,
+        (draft) => {
+          const columnToUpdate = getColumn(draft, colId);
+          draft.entities.columns.byId[colId].datatype = datatype;
+        },
+        (draft) => {
           draft.entities.tableInstance.lastModifiedDate =
             new Date().toISOString();
         },
@@ -2214,8 +2259,12 @@ export const tableSlice = createSliceWithRequests({
 
               colIds.forEach((colId) => {
                 const column = getColumn(draft, colId);
-                if (column && column.kind !== "entity") {
-                  column.kind = "entity";
+                if (column) {
+                  column.reconciler = reconcilerId;
+                  column.context = {};
+                  if (column.kind !== "entity") {
+                    column.kind = "entity";
+                  }
                 }
               });
 
@@ -2231,10 +2280,17 @@ export const tableSlice = createSliceWithRequests({
 
                   if (previousContext) {
                     // decrement previous
-                    column.context[previousContext] = decrementContextCounters(
-                      column.context[previousContext],
+                    const safePreviousContext = column.context[previousContext] || createContext({});
+                    const updatedContext = decrementContextCounters(
+                      safePreviousContext,
                       cell,
                     );
+
+                    if (updatedContext.total <= 0 && updatedContext.reconciliated <= 0) {
+                      delete column.context[previousContext];
+                    } else {
+                      column.context[previousContext] = updatedContext;
+                    }
                   }
                   // assign new reconciliator and metadata
                   // cell.metadata.reconciliator.id = reconciliator.id;
@@ -2244,16 +2300,18 @@ export const tableSlice = createSliceWithRequests({
                   );
                   cell.metadata = metadata.map(({ id, name, ...rest }) => {
                     const [_, metaId] = id.split(":");
+                    const computedUri = resolveURI(effectiveReconciliator, {
+                      id: metaId,
+                      label: name,
+                      ...rest
+                    });
                     console.log("rest of the item", rest);
                     return {
                       id,
                       name: {
                         value: name as unknown as string,
                         //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                        uri: buildURI(
-                          effectiveReconciliator.uri || rest.uri,
-                          metaId,
-                        ),
+                        uri: computedUri,
                       },
                       ...rest,
                     };
@@ -2289,15 +2347,17 @@ export const tableSlice = createSliceWithRequests({
                     column.metadata[0].entity = metadata.map(
                       ({ id, name, ...rest }) => {
                         const [_, metaId] = id.split(":");
+                        const computedUri = resolveURI(effectiveReconciliator, {
+                          id: metaId,
+                          label: name,
+                          ...rest
+                        });
                         return {
                           id,
                           name: {
                             value: name as unknown as string,
                             //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(
-                              effectiveReconciliator.uri || rest.uri,
-                              metaId,
-                            ),
+                            uri: computedUri,
                           },
                           ...rest,
                         };
@@ -2359,17 +2419,18 @@ export const tableSlice = createSliceWithRequests({
                       }),
                       entity: metadata.map(({ id, name, ...rest }) => {
                         const [_, metaId] = id.split(":");
+                        const computedUri = resolveURI(effectiveReconciliator, {
+                          id: metaId,
+                          label: name,
+                          ...rest
+                        });
                         return {
                           id,
                           name: {
                             value: name as unknown as string,
-                            //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(
-                              effectiveReconciliator.uri || rest.uri,
-                              metaId,
-                            ),
-                          },
-                          ...rest,
+                            uri: computedUri,
+                            ...rest,
+                          }
                         };
                       }),
                     };
@@ -2667,7 +2728,13 @@ export const tableSlice = createSliceWithRequests({
                   // add rows
 
                   draft.entities.rows.allIds.forEach((rowId) => {
+                    const oldCell = draft.entities.rows.byId[rowId].cells[newColId];
+                    const incomingCellData = cells[rowId];
                     const newCell = createCell(rowId, newColId, cells[rowId]);
+                    if (oldCell) {
+                      newCell.metadata = oldCell.metadata;
+                      newCell.annotationMeta = oldCell.annotationMeta;
+                    }
                     if (newCell.metadata.length === 0) {
                       newCell.annotationMeta = {
                         annotated: false,
@@ -2755,6 +2822,7 @@ export const {
   autoMatching,
   refineMatching,
   updateColumnKind,
+  updateColumnDatatype,
   updateColumnRole,
   updateColumnSelection,
   updateRowSelection,

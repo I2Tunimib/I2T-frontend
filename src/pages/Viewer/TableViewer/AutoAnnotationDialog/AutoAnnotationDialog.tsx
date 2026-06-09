@@ -85,6 +85,7 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Automatic Annotation</DialogTitle>
         <IconButton
+          aria-label="open-automatic-annotation-tutorial"
           sx={{
             color: "rgba(0, 0, 0, 0.54)",
             marginRight: "20px",

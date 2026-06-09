@@ -52,13 +52,15 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { SelectColumns } from "@components/core/DynamicForm/formComponents/Select";
 import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
 import { Property } from "@store/slices/table";
+import { extractIdFromUri, resolveURI } from "@services/utils/uri-utils";
+import { useSnackbar } from "notistack";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
 
 const DeferredTable = deferMounting(CustomTable);
 
-const makeData = (column: Column | undefined) => {
+const makeData = (column: Column | undefined, isLiteral: boolean) => {
   if (!column) {
     return {
       columns: [],
@@ -76,6 +78,7 @@ const makeData = (column: Column | undefined) => {
     selected: { label: "Selected", type: "checkBox" },
     id: { label: "ID" },
     name: { label: "Name", type: "link" },
+    subj: { label: "Subj" /*, type:'link' */ },
     obj: { label: "Obj" /*, type:'link' */ },
     description: { label: "Description" },
     match: { label: "Match", type: "tag" },
@@ -97,23 +100,28 @@ const makeData = (column: Column | undefined) => {
   */
   const newMetadata = metadata.map((item, index) => {
     if (item.obj !== null && item.obj !== undefined) {
-      const [prefix, id] = item.id.split(":");
-      const resourceContext = column.context[prefix];
-      if (resourceContext) {
-        return {
-          ...item,
-          selected: item.match,
-          name: { value: item.name, uri: `${resourceContext.uri}${id}` },
-          description: item.description || "",
-        };
+      const nameValue = item.name && typeof item.name === "object"
+        ? (item.name as any).value
+        : item.name;
+
+      let finalUri = "";
+      if (item.name && typeof item.name === "object" && (item.name as any).uri) {
+        finalUri = (item.name as any).uri;
+      } else if (item.uri) {
+        finalUri = item.uri;
       } else {
-        return {
-          ...item,
-          selected: item.match,
-          name: { value: item.name, uri: "" },
-          description: item.description || "",
-        };
+        const [prefix, id] = item.id.split(":");
+        const resourceContext = column.context[prefix];
+        if (resourceContext) {
+          finalUri = `${resourceContext.uri}${id}`;
+        }
       }
+      return {
+        ...item,
+        selected: item.match,
+        name: { value: nameValue || "", uri: finalUri },
+        description: item.description || "",
+      };
     }
     return item;
   });
@@ -183,6 +191,7 @@ const hasColumnMetadata = (column: Column | undefined) => {
 interface NewMetadata {
   id?: string;
   name: string;
+  subj: string;
   obj: string;
   description: string;
   score: number;
@@ -194,16 +203,23 @@ interface PropertyTabProps {
   // actions to do in order to persist the modifications
   addEdit: Function;
   setCurrentRole: (role: string) => void;
+  currentKind: string;
+  currentDatatype: string;
 }
-const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
+const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKind, currentDatatype }) => {
   const column = useAppSelector(selectCurrentCol);
+  const allRowIds = useAppSelector((state: any) => state.table.entities.rows.allIds || []);
+  const effectiveKind = currentKind || column?.kind || "none";
+  const effectiveDatatype = currentDatatype || column?.datatype || "none";
+  const currentColumnId = column?.id;
+  const isLiteral = effectiveKind === "literal";
   const {
     state,
     setState,
     memoizedState: { columns, data },
   } = usePrepareTable({
     selector: selectCurrentCol,
-    makeData,
+    makeData: (col) => makeData(col, isLiteral),
     dependencies: [column],
   });
 
@@ -219,15 +235,18 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
     column?.metadata?.[0]?.property?.[0]?.id?.split(":")?.[0] || "";
 
   const options = useAppSelector(selectColumnsAsSelectOptions);
-  const currentColumnId = column?.id;
-  const otherColumns = options.filter((opt) => opt.value !== currentColumnId);
-  type Item = { id: string; label: string; value: string };
+
+  const otherColumns = options.filter((opt: any) => opt.value !== currentColumnId && (!isLiteral || opt.kind === "entity"));
 
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  const hasColumnClassifier = !!column?.kind && !!column?.nerClassification;
-  const getPropertyInfo = (kind?: string, nerClassification?: string) => {
+  const currentColumnOptions = options.find((opt: any) => opt.value === currentColumnId);
+  const currentColumnKind = currentColumnOptions?.kind || "";
+
+  const hasColumnClassifier = !!effectiveKind && !!effectiveDatatype;
+  const getPropertyInfo = (kind?: string, datatype?: string) => {
     const baseUrl = "https://www.wikidata.org/wiki/Special:ListProperties";
 
     if (kind === "entity") {
@@ -237,7 +256,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
       };
     }
     if (kind === "literal") {
-      switch (nerClassification) {
+      switch (datatype) {
         case "DATE":
           return {
             url: `${baseUrl}/time`,
@@ -265,7 +284,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
       label: "Wikidata",
     };
   };
-  const propertyInfo = getPropertyInfo(column?.kind, column?.nerClassification);
+  const propertyInfo = getPropertyInfo(effectiveKind, effectiveDatatype);
 
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
@@ -444,18 +463,36 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
   const onSubmitNewMetadata = async (formState: Property) => {
     if (!column) return;
     if (column.metadata) {
-      const { prefix } = formState;
-      let idFromUri = "";
-      try {
-        const url = new URL(formState.uri);
-        console.log("url", url);
-        if (prefix.startsWith("wd")) {
-          // es. https://www.wikidata.org/wiki/Property:P286
-          idFromUri = url.pathname.split("/").pop().split(":")[1];
-        }
-      } catch (err) {
-        console.log("Invalid URI, fallback to id", err);
+      const { prefix, uri, name, subj, obj } = formState;
+      const cleanPrefix = prefix.replace(/:$/, "");
+      const idFromUri = extractIdFromUri(uri, cleanPrefix);
+      const reconciliator = reconciliators.find(
+        (recon) => recon.prefix === cleanPrefix,
+      );
+      const finalId = `${cleanPrefix}:${idFromUri}`;
+
+      const existingProperties = column?.metadata?.[0]?.property || [];
+
+      const isDuplicate = existingProperties.some((prop: any) => {
+        const existingId = prop.id.includes(":") ? prop.id.split(":")[1] : prop.id;
+        return existingId === idFromUri && prop.subj === subj && prop.obj === obj;
+      });
+
+      if (isDuplicate) {
+        enqueueSnackbar(`Property ${idFromUri} already exists for this Subject and Object!`, {
+          variant: "error",
+          autoHideDuration: 4000,
+        });
+        return;
       }
+
+      let finalUri = "";
+      if (reconciliator) {
+        finalUri = resolveURI(reconciliator, { id: idFromUri });
+      } else {
+        finalUri = uri;
+      }
+      console.log("finalUri", finalUri);
 
       let description = "";
       try {
@@ -474,14 +511,64 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
           colId: column.id,
           type: "property",
           prefix,
-          value: { ...formState, id: `${prefix}:${idFromUri}`, description },
+          value: { ...formState, id: finalId, uri: finalUri, description },
         }),
         true,
       );
-      addEdit(updateColumnRole({ colId: column.id, role: "subject" }), true, true);
+      addEdit(updateColumnRole({ colId: subj, role: "subject" }), true, true);
       reset();
       setCurrentRole("subject");
       setShowAdd(false);
+
+      if (isLiteral) {
+        dispatch(
+          updateUI({
+            openMetadataColumnDialog: false,
+            metadataColumnDialogColId: null,
+            selectedColumnsIds: {},
+            selectedColumnCellsIds: {},
+            selectedCellIds: {},
+            selectedRowsIds: {},
+          })
+        );
+
+        enqueueSnackbar("Property added successfully!", {
+          variant: "success",
+          autoHideDuration: 5000,
+          action: (snackbarId) => (
+            <Button
+              size="small"
+              color="inherit"
+              variant="outlined"
+              sx={{ textTransform: "none", borderColor: "rgba(255,255,255,0.5)", color: "#fff" }}
+              onClick={() => {
+                closeSnackbar(snackbarId);
+
+                const selectedCellColIds: Record<string, boolean> = {};
+                if (allRowIds && allRowIds.length > 0) {
+                  allRowIds.forEach((rowId: string | number) => {
+                    selectedCellColIds[`${rowId}$${subj}`] = true;
+                  });
+                }
+
+                dispatch(
+                  updateUI({
+                    selectedColumnsIds: { [subj]: true },
+                    selectedColumnCellsIds: { [subj]: true },
+                    selectedCellIds: selectedCellColIds,
+                    selectedRowsIds: {},
+                    openMetadataColumnDialog: true,
+                    metadataColumnDialogColId: subj,
+                    metadataColumnDialogInitialTab: 1,
+                  })
+                );
+              }}
+            >
+              View
+            </Button>
+          ),
+        });
+      }
     }
   };
 
@@ -548,46 +635,47 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
             padding="0px 16px"
             gap={1}
           >
-            {column.kind === "literal" && (
+            {isLiteral && (
               <Typography color="text.secondary">
-                Properties can only be assigned to entity columns. Literal columns can be selected as object
-                (target column) when defining a property on an entity column.
+                Properties can only be assigned to entity columns. Literal columns can be selected as object (target
+                column) when defining a property on an entity column.
+                <br />
+                However, by defining the subject column,
+                the property will be automatically created and added to that corresponding subject column.
               </Typography>
             )}
             <Stack direction="row" gap={1} alignItems="center">
-              {column.kind !== "literal" && (
-                <Tooltip
-                  open={showTooltip}
-                  title="Add property"
-                  placement="right"
+              <Tooltip
+                open={showTooltip}
+                title="Add property"
+                placement="right"
+              >
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onMouseLeave={handleTooltipClose}
+                  onMouseEnter={handleTooltipOpen}
+                  onClick={handleShowAdd}
+                  sx={{
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
                 >
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    onMouseLeave={handleTooltipClose}
-                    onMouseEnter={handleTooltipOpen}
-                    onClick={handleShowAdd}
+                  {isLiteral ? "Add column property in an Entity Column" : "Add column property"}
+                  <AddRoundedIcon
                     sx={{
-                      textTransform: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
+                      transition: "transform 150ms ease-out",
+                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
                     }}
-                  >
-                    Add column property
-                    <AddRoundedIcon
-                      sx={{
-                        transition: "transform 150ms ease-out",
-                        transform: showAdd ? "rotate(45deg)" : "rotate(0)",
-                      }}
-                    />
-                  </Button>
-                </Tooltip>
-              )}
-              {(column.kind === "literal" || showAdd) && (
+                  />
+                </Button>
+              </Tooltip>
+              {showAdd && (
                 <>
-                  {!!currentService &&
-                  servicesByPrefix[currentService]?.listProps ? (
+                  {(!!currentService &&
+                  servicesByPrefix[currentService]?.listProps) && !hasColumnClassifier ? (
                     <Button
                       variant="outlined"
                       color="primary"
@@ -601,8 +689,8 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
                     <Tooltip
                       title={
                         hasColumnClassifier
-                          ? `List filtered using the Column Classifier schema annotation result (Kind: ${column?.kind}
-                        - Classification: ${column?.nerClassification}).`
+                          ? `List filtered using the Column Classifier schema annotation result (Kind: ${effectiveKind}
+                        - ${isLiteral ? "Datatype:" : "Semantic Class:"} ${effectiveDatatype}).`
                           : ""
                       }
                       placement="right"
@@ -639,22 +727,26 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole }) => {
                   onSubmit={onSubmitNewMetadata}
                   otherColumns={otherColumns || []}
                   context="propertyTab"
+                  colId={currentColumnId}
+                  columnKind={currentColumnKind}
                 />
               </Box>
             )}
           </Stack>
         )
       }
-      <DeferredTable
-        flexGrow={1}
-        stickyHeaderTop="61.5px"
-        columns={columns}
-        data={data}
-        loading={loading}
-        onSelectedRowChange={handleSelectedRowChange}
-        onSelectedRowDeleteRequest={handleSelectedRowDelete}
-        showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
-      />
+      {!isLiteral && (
+        <DeferredTable
+          flexGrow={1}
+          stickyHeaderTop="61.5px"
+          columns={columns}
+          data={data}
+          loading={loading}
+          onSelectedRowChange={handleSelectedRowChange}
+          onSelectedRowDeleteRequest={handleSelectedRowDelete}
+          showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
+        />
+      )}
     </>
   );
 };

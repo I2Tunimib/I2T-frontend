@@ -339,6 +339,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
         <DialogTitle>Extension</DialogTitle>
         <Stack direction="row" alignItems="flex-end">
           <IconButton
+            aria-label="open-extension-tutorial"
             sx={{
               color: "rgba(0, 0, 0, 0.54)",
             }}
@@ -355,6 +356,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
             <HelpOutlineRounded />
           </IconButton>
           <IconButton
+            aria-label="close"
             sx={{
               color: "rgba(0, 0, 0, 0.54)",
               marginRight: "20px",
@@ -370,6 +372,7 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
         <Stack direction="row" alignItems="center">
           <DialogContentText>Select a service to extend with:</DialogContentText>
           <IconButton
+            aria-label="open-extension-discover"
             size="small"
             onClick={() => {
               dispatch(

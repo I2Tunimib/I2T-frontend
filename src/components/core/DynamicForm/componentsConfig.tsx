@@ -5,7 +5,7 @@ import {
 import CheckboxGroup from "./formComponents/CheckboxGroup";
 import RadioGroupComponent from "./formComponents/RadioGroupComponent";
 import InputText from "./formComponents/InputText";
-import { Select, SelectColumns, SelectPrefix } from "./formComponents/Select";
+import { Select, SelectColumnAll, SelectColumns, SelectPrefix } from "./formComponents/Select";
 import TextArea from "./formComponents/TextArea";
 import { MultipleColumnSelect } from "./formComponents/MultipleColumnSelect";
 
@@ -77,6 +77,7 @@ const evaluateCondition = (
 export const FORM_COMPONENTS = {
   text: InputText,
   select: Select,
+  selectColumnAll: SelectColumnAll,
   selectColumns: SelectColumns,
   selectPrefix: SelectPrefix,
   multipleColumnSelect: MultipleColumnSelect,
@@ -127,6 +128,8 @@ export const getDefaultValues = (extender: Extender) => {
       } else if (inputType === "checkbox") {
         acc[id] = defaultValue || [];
       } else if (inputType === "radio") {
+        acc[id] = defaultValue || "";
+      } else if (inputType === "selectColumnAll") {
         acc[id] = defaultValue || "";
       } else if (inputType === "selectColumns") {
         acc[id] = defaultValue || ""; //TODO: cange back to ""

@@ -20,6 +20,7 @@ interface TableHeaderCellExpandedProps {
   metadata: ColumnMetadata[];
   kind: string;
   role: string;
+  datatype: string;
 }
 
 const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
@@ -27,6 +28,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
   metadata,
   kind,
   role,
+  datatype,
 }) => {
   const [typesExpanded, setTypesExpanded] = useState(false);
   const [propertiesExpanded, setPropertiesExpanded] = useState(false);

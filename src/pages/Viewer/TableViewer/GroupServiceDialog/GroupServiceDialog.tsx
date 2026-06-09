@@ -322,6 +322,7 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
         </DialogTitle>
         <Stack direction="row" alignItems="flex-end">
           <IconButton
+            aria-label="open-genAI-tutorial"
             sx={{
               color: "rgba(0, 0, 0, 0.54)",
             }}
@@ -338,6 +339,7 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
             <HelpOutlineRounded />
           </IconButton>
           <IconButton
+            aria-label="close"
             sx={{
               color: "rgba(0, 0, 0, 0.54)",
               marginRight: "20px",
@@ -355,6 +357,7 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
             Choose the type of service from this group:
           </DialogContentText>
           <IconButton
+            aria-label="open-genAI-discover"
             size="small"
             onClick={() => {
               dispatch(

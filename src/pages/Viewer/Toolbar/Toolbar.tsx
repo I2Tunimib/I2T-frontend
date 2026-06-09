@@ -307,11 +307,13 @@ const Toolbar = () => {
             </Button>
           )}
           <IconButtonTooltip
+            aria-label="settings"
             tooltipText="Settings"
             Icon={SettingsIcon}
             onClick={() => dispatch(updateUI({ settingsDialog: true }))}
           />
           <IconButtonTooltip
+            aria-label="help-dialog"
             tooltipText="Help"
             onClick={() => dispatch(updateUI({ openHelpDialog: true }))}
             Icon={HelpOutlineRoundedIcon}

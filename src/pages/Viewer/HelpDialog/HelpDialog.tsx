@@ -241,6 +241,7 @@ const chapters: Chapter[] = [
                     </Box>
                     For a detailed explanation of table-based interactions, refer to Section {" "}
                     <Link
+                      aria-label="open-table-viewer"
                       component="button"
                       underline="hover"
                       role="button"
@@ -284,6 +285,7 @@ const chapters: Chapter[] = [
                     </Box>
                     For a detailed explanation of graph-based interactions and features, refer to {" "}
                     <Link
+                      aria-label="open-graph-visualization-tutorial"
                       component="button"
                       underline="hover"
                       role="button"
@@ -319,6 +321,7 @@ const chapters: Chapter[] = [
                 if your data processing aligns with European privacy standards. For a detailed explanation,
                 refer to {" "}
                 <Link
+                  aria-label="open-GDPR"
                   component="button"
                   underline="hover"
                   role="button"
@@ -356,6 +359,7 @@ const chapters: Chapter[] = [
                   Processes the entire table using a specific service like Alligator (Semantic Table Interpretation).
                   This is currently the primary method for full-scale interpretation. For further details, refer to Section{" "}
                   <Link
+                    aria-label="open-semantic-table-interpretation"
                     component="button"
                     underline="hover"
                     role="button"
@@ -371,6 +375,7 @@ const chapters: Chapter[] = [
                   Focuses exclusively on the table columns using a specific services, such as the Column Classifier.
                   To learn more, refer to Section{" "}
                   <Link
+                    aria-label="open-schema-annotation"
                     component="button"
                     underline="hover"
                     role="button"
@@ -456,6 +461,7 @@ const chapters: Chapter[] = [
                   <b>Refine matching: </b>
                   Part of the enrichment process. For more details, refer to Section{" "}
                   <Link
+                    aria-label="open-group-cells-refinement"
                     component="button"
                     underline="hover"
                     role="button"
@@ -570,13 +576,14 @@ const chapters: Chapter[] = [
             <Typography component="div">
               For more details on the annotation symbols, please refer to Section{" "}
               <Link
+                aria-label="open-annotation-symbols"
                 component="button"
                 underline="hover"
                 role="button"
                 sx={{ cursor: "pointer" }}
                 onClick={() => goToByLabel("Reconciliation", "Annotation Symbols", goTo)}
               >
-                <b>5.5 Annotation Symbols</b>
+                <b>5.6 Annotation Symbols</b>
               </Link>
               {" "}of this tutorial.
             </Typography>
@@ -631,9 +638,21 @@ const chapters: Chapter[] = [
                   <b>Sort by match score</b> to prioritize cells with fully reconciled entities or unmatched ones.
                 </li>
               </List>
-              Column headers also show the data <b> kind </b>, whether they contains entities or literal values, the
-              <b> Reconciliation service </b> name, and the status indicating whether they were fully, partially,
-              or not reconciled.
+              Column headers also show the following data:
+              <List>
+                <li>
+                  <b>Kind</b>, whether they contains entities or literal values.
+                </li>
+                <li>
+                  <b>Reconciliation service </b> name.
+                </li>
+                <li>
+                  <b>Reconciliation status</b>, indicating whether they were fully, partially, or not reconciled.
+                </li>
+                <li>
+                  <b>Compliance check status</b>, indicating whether the column is compliance against privacy standars or legal regulations.
+                </li>
+              </List>
             </Typography>
           </Stack>
         ),

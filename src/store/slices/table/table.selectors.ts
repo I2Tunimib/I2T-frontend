@@ -3,6 +3,7 @@ import { floor } from "@services/utils/math";
 import { RootState } from "@store";
 import { getRequestStatus } from "@store/enhancers/requests";
 import { ID } from "@store/interfaces/store";
+import { resolveURI } from "@services/utils/uri-utils";
 import {
   selectAppConfig,
   selectReconciliators,
@@ -532,13 +533,20 @@ const getMetadata = (cell: Cell, cellContext: Context) => {
     return [];
   }
 
-  const metadata = cell.metadata.map((item) => ({
-    ...item,
-    url:
-      cellContext !== undefined
-        ? `${cellContext.uri}${item.id.split(":")[1]}`
-        : null,
-  }));
+  const metadata = cell.metadata.map((item) => {
+    const base = cellContext?.uri;
+    const metaId = item.id.split(":")[1];
+
+    const url = resolveURI(cellContext, {
+      id: metaId,
+      ...item,
+    });
+
+    return {
+      ...item,
+      url,
+    };
+  });
 
   if (cell.annotationMeta && !cell.annotationMeta.match) {
     return metadata;
@@ -707,15 +715,13 @@ export const selectColumnCellMetadataTableFormat = createSelector(
       const column = cols.byId[colId];
       console.log("obtained column", column);
       if (column.metadata.length > 0) {
-        if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
-          const cellContext = column.metadata[0].entity[0].id.split(":")[0];
-          const service = reconciliators.byId[cellContext];
-          if (service) {
-            return {
-              column,
-              service,
-            };
-          }
+        const cellContext = column.reconciler;
+        const service = reconciliators.byId[cellContext];
+        if (service) {
+          return {
+            column,
+            service,
+          };
         } else if (
           column.metadata[0].property &&
           column.metadata[0].property.length > 0
@@ -735,7 +741,6 @@ export const selectColumnCellMetadataTableFormat = createSelector(
           ...column,
           metadata: [
             {
-              entity: [],
               property: [],
             },
           ],
@@ -806,6 +811,17 @@ export const selectColumnKind = createSelector(
     return columnsState.byId[colId]?.kind;
   },
 );
+export const selectColumnDatatype = createSelector(
+  selectSelectedColumnCellsIds,
+  selectMetadataColumnDialogColId,
+  selectRowsState,
+  selectColumnsState,
+  (selectedColumnCells, dialogColId, rowsState, columnsState) => {
+    const colIds = Object.keys(selectedColumnCells);
+    const colId = dialogColId ?? colIds[0];
+    return columnsState.byId[colId]?.datatype;
+  },
+);
 export const selecteSelectedColumnId = createSelector(
   selectSelectedColumnCellsIds,
   selectRowsState,
@@ -846,7 +862,7 @@ export const selectColumnTypes = createSelector(
         metadata.forEach((metaItem) => {
           if (metaItem.type && metaItem.match) {
             console.log("metaItem", metaItem);
-            metaItem.type.forEach(({ id, name }) => {
+            metaItem.type.forEach(({ id, name, uri }) => {
               console.log("name in forEach", name);
               if (acc[id]) {
                 acc[id] = {
@@ -857,6 +873,7 @@ export const selectColumnTypes = createSelector(
                 acc[id] = {
                   id,
                   label: name as any,
+                  uri,
                   count: 1,
                   match: metaItem.match,
                 };
@@ -904,6 +921,7 @@ export const selectColumnTypes = createSelector(
               map[currentColType[i].id] = {
                 id: currentColType[i].id,
                 label: currentColType[i].name as any,
+                uri: currentColType[i].uri,
                 match: currentColType[i].match,
                 count: 0,
               };
@@ -945,6 +963,7 @@ export const selectColumnTypes = createSelector(
           const t = {
             id: type.id,
             label: type.name,
+            uri: type.uri,
             count: 0,
             percentage: "0.00",
             match: !!type.match,

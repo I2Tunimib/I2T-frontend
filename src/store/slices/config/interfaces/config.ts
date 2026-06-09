@@ -69,6 +69,7 @@ export interface FormInputParams {
     | "text"
     | "textArea"
     | "select"
+    | "selectColumnAll"
     | "selectColumns"
     | "selectPrefix"
     | "multipleColumnSelect"

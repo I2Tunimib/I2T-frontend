@@ -17,6 +17,7 @@ import {
 } from "@components/core/DynamicForm/formComponents/Select";
 import { Controller, useForm } from "react-hook-form";
 import { fetchTypeAndDescription } from "@services/utils/kg-info";
+import { extractIdFromUri } from "@services/utils/uri-utils";
 
 export interface AddMetadataFormProps {
   onPrefixChange?: (prefix: string) => void;
@@ -24,6 +25,8 @@ export interface AddMetadataFormProps {
   onSubmit: (data: any) => void;
   context: "metadataDialog" | "typeTab" | "propertyTab";
   otherColumns?: { id: string; label: string; value: string }[];
+  colId?: string;
+  columnKind?: string;
 }
 
 const AddMetadataForm: FC<AddMetadataFormProps> = ({
@@ -32,7 +35,10 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
   onSubmit,
   context,
   otherColumns,
+  colId,
+  columnKind = "",
 }) => {
+  const isLiteral = columnKind === "literal";
   const { handleSubmit, reset, register, control, setValue, watch } = useForm({
     defaultValues: {
       prefix: "",
@@ -41,7 +47,8 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
       uri: "",
       score: 1.0,
       match: "true",
-      obj: "",
+      subj: isLiteral ? "" : colId,
+      obj: isLiteral ? colId : "",
     },
   });
   const [customPrefix, setCustomPrefix] = useState("");
@@ -57,7 +64,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
   }, [watchedPrefix, onPrefixChange]);
 
   useEffect(() => {
-    if (currentService !== undefined) {
+    if (currentService !== undefined && context !== "typeTab") {
       reset({ prefix: currentService });
       setCustomPrefix("");
     }
@@ -65,47 +72,38 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
 
   console.log("AddMetadataForm currentService", currentService);
 
-  const extractIdFromUri = (uri: string, prefix: string) => {
-    try {
-      const url = new URL(uri);
-      if (prefix.startsWith("wd")) {
-        return url.pathname.split("/").pop()?.split(":").pop() || "";
-      }
-      if (prefix.startsWith("geo")) {
-        if (prefix.startsWith("geo")) {
-          const parts = url.pathname.split("/").filter(Boolean);
-          return parts[0] || "";
-        }
-      }
-      return url.pathname.split("/").filter(Boolean).pop() || "";
-    } catch (e) {
-      return "";
-    }
-  };
-
   useEffect(() => {
     const fetchNameFromUri = async () => {
-      if (watchedUri) {
-        let id = "";
-        if (watchedUri.startsWith("https") && watchedPrefix) {
-          id = extractIdFromUri(watchedUri, watchedPrefix);
-        } else {
-          id = watchedUri;
-        }
-        if (id) {
-          try {
-            setIsFetchingName(true);
-            const result = await fetchTypeAndDescription(watchedPrefix.replace(/:$/, ""), id, "");
-            console.log("result", result);
-
-            if (result && result.name) {
-              setValue("name", result.name);
+      if (!watchedUri || !watchedPrefix) return;
+      const cleanPrefix = watchedPrefix.replace(/:$/, "");
+      const id = extractIdFromUri(watchedUri, cleanPrefix);
+      if (id) {
+        try {
+          setIsFetchingName(true);
+          let result;
+          if (cleanPrefix === "geoCoord" || cleanPrefix === "georss") {
+            const base = import.meta.env.VITE_BACKEND_API_URL;
+            const response = await fetch(`${base}/metadata/osm?id=${encodeURIComponent(id)}`);
+            if (response.ok) {
+              result = await response.json();
             }
-          } catch (err) {
-            console.error("Errore nel recupero automatico del nome:", err);
-          } finally {
-            setIsFetchingName(false);
+          } else {
+            result = await fetchTypeAndDescription(cleanPrefix, id, "", context);
           }
+
+          if (result && result.name) {
+            setValue("name", result.name);
+            if (result.osmId && result.osmType) {
+              setValue("osmId", result.osmId);
+              setValue("osmType", result.osmType);
+            }
+          } else {
+            setValue("name", "");
+          }
+        } catch (err) {
+          console.error("Error in fetching name:", err);
+        } finally {
+          setIsFetchingName(false);
         }
       }
     };
@@ -123,6 +121,47 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
       gap={1}
       onSubmit={handleSubmit(onSubmit)}
     >
+      {context === "propertyTab" && watchedPrefix !== "custom" && (
+        <Tooltip title="Select the subject column" arrow placement="top">
+          <FormControl
+            sx={{ minWidth: 150, flex: "1 1 200px" }}
+            fullWidth
+            size="small"
+          >
+            <Controller
+              name="subj"
+              control={control}
+              defaultValue={isLiteral ? "" : colId}
+              rules={{ required: true }}
+              render={({ field }) => {
+                const finalOptions = isLiteral
+                  ? otherColumns || []
+                  : [
+                    {
+                      id: colId,
+                      value: colId,
+                      label: colId,
+                      kind: columnKind,
+                      colFixed: false,
+                    },
+                    ...(otherColumns || []),
+                  ];
+
+                return (
+                  <SelectColumns
+                    {...field}
+                    id="subj"
+                    label="Subj *"
+                    options={finalOptions}
+                    noGap={true}
+                    disabled={!isLiteral}
+                  />
+                );
+              }}
+            />
+          </FormControl>
+        </Tooltip>
+      )}
       <Tooltip
         title={
           !!currentService
@@ -135,7 +174,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
         placement="top"
       >
         <FormControl
-          sx={{ minWidth: 200, flex: "1 1 200px" }}
+          sx={{ minWidth: 150, flex: "1 1 200px" }}
           fullWidth
           size="small"
         >
@@ -160,7 +199,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
           />
         </FormControl>
       </Tooltip>
-      {watchedPrefix === "custom" && (
+      {watchedPrefix === "custom" ? (
         <Stack direction="row" gap={1} alignItems="center">
           <TextField
             sx={{ minWidth: 150, flex: "1 1 150px" }}
@@ -187,114 +226,133 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
             OK
           </Button>
         </Stack>
-      )}
-      <TextField
-        sx={{
-          minWidth: 300,
-          flex: context === "typeTab" ? "1 1 150px" : "1 1 300px",
-        }}
-        size="small"
-        label="Uri"
-        required
-        variant="outlined"
-        {...register("uri", {
-          onBlur: (e) => {}
-        })}
-      />
-      <Tooltip title={isFetchingName ? "Fetching name from URI..." : "Enter a name"} arrow placement="top">
-        <TextField
-          sx={{
-            minWidth: 150,
-            flex: context === "typeTab" ? "1 1 30px" : "1 1 150px",
-            "& .MuiInputBase-root.Mui-disabled": {
-              backgroundColor: "rgba(0, 0, 0, 0.03)"
-            }
-          }}
-          size="small"
-          label="Name"
-          required
-          variant="outlined"
-          {...register("name")}
-          disabled={isFetchingName}
-          InputLabelProps={{
-            shrink: isFetchingName || !!watch("name")
-          }}
-          InputProps={{
-            endAdornment: isFetchingName ? (
-              <InputAdornment position="end">
-                <CircularProgress size={16} color="inherit" />
-              </InputAdornment>
-            ) : null,
-          }}
-        />
-      </Tooltip>
-      {context === "propertyTab" && (
-        <Tooltip title="Select the referenced column" arrow placement="top">
-          <FormControl
-            sx={{ minWidth: 200, flex: "1 1 200px" }}
-            fullWidth
-            size="small"
-          >
-            <Controller
-              name="obj"
-              control={control}
-              defaultValue=""
-              rules={{ required: true }}
-              render={({ field }) => (
-                <SelectColumns
-                  {...field}
-                  id="obj"
-                  label="Obj *"
-                  options={otherColumns || []}
-                  noGap={true}
-                />
-              )}
-            />
-          </FormControl>
-        </Tooltip>
-      )}
-      {context !== "typeTab" && (
+      ) : (
         <>
-          <Tooltip
-            title="Enter the score value, from 0.00 to 1.00"
-            arrow
-            placement="top"
-          >
+          <TextField
+            sx={{
+              minWidth: 300,
+              flex: context === "typeTab" ? "1 1 150px" : "1 1 300px",
+            }}
+            size="small"
+            label="Uri"
+            required
+            variant="outlined"
+            {...register("uri", {
+              onBlur: (e) => {}
+            })}
+          />
+          <Tooltip title={isFetchingName ? "Fetching name from URI..." : "Enter a name"} arrow placement="top">
             <TextField
-              sx={{ minWidth: 100, flex: "1 1 50px" }}
+              sx={{
+                minWidth: 150,
+                flex: context === "typeTab" ? "1 1 30px" : "1 1 150px",
+                "& .MuiInputBase-root.Mui-disabled": {
+                  backgroundColor: "rgba(0, 0, 0, 0.03)"
+                }
+              }}
               size="small"
-              label="Score"
+              label="Name"
+              required
               variant="outlined"
-              {...register("score")}
+              {...register("name")}
+              disabled={isFetchingName}
+              InputLabelProps={{
+                shrink: isFetchingName || !!watch("name")
+              }}
+              InputProps={{
+                endAdornment: isFetchingName ? (
+                  <InputAdornment position="end">
+                    <CircularProgress size={16} color="inherit" />
+                  </InputAdornment>
+                ) : null,
+              }}
             />
           </Tooltip>
-          <FormControl size="small" sx={{ minWidth: 100, flex: "1 1 50px" }}>
-            <InputLabel>Match</InputLabel>
-            <Controller
-              name="match"
-              control={control}
-              render={({ field }) => (
-                <Select {...field} label="Match">
-                  <MenuItem value="true">true</MenuItem>
-                  <MenuItem value="false">false</MenuItem>
-                </Select>
-              )}
-            />
-          </FormControl>
+          {context === "propertyTab" && (
+            <Tooltip title="Select the referenced column" arrow placement="top">
+              <FormControl
+                sx={{ minWidth: 150, flex: "1 1 200px" }}
+                fullWidth
+                size="small"
+              >
+                <Controller
+                  name="obj"
+                  control={control}
+                  defaultValue={isLiteral ? colId : ""}
+                  rules={{ required: true }}
+                  render={({ field }) => {
+                    const finalOptions = isLiteral
+                      ? [
+                        {
+                          id: colId,
+                          value: colId,
+                          label: colId,
+                          kind: columnKind,
+                          colFixed: true,
+                        },
+                        ...(otherColumns || []),
+                      ]
+                      : otherColumns || [];
+
+                    return (
+                      <SelectColumns
+                        {...field}
+                        id="obj"
+                        label="Obj *"
+                        options={finalOptions}
+                        noGap={true}
+                        disabled={isLiteral}
+                      />
+                    );
+                  }}
+                />
+              </FormControl>
+            </Tooltip>
+          )}
+          {context !== "typeTab" && (
+            <>
+              <Tooltip
+                title="Enter the score value, from 0.00 to 1.00"
+                arrow
+                placement="top"
+              >
+                <TextField
+                  sx={{ minWidth: 60, flex: "1 1 50px" }}
+                  size="small"
+                  label="Score"
+                  variant="outlined"
+                  {...register("score")}
+                />
+              </Tooltip>
+              <FormControl size="small" sx={{ minWidth: 90, flex: "1 1 50px" }}>
+                <InputLabel>Match</InputLabel>
+                <Controller
+                  name="match"
+                  control={control}
+                  render={({ field }) => (
+                    <Select {...field} label="Match">
+                      <MenuItem value="true">true</MenuItem>
+                      <MenuItem value="false">false</MenuItem>
+                    </Select>
+                  )}
+                />
+              </FormControl>
+            </>
+          )}
+          <Button
+            type="submit"
+            size="small"
+            variant="contained"
+            sx={{
+              height: 40,
+              padding: "0 16px",
+              textTransform: "none",
+            }}
+          >
+            Add
+          </Button>
         </>
       )}
-      <Button
-        type="submit"
-        size="small"
-        variant="contained"
-        sx={{
-          height: 40,
-          padding: "0 16px",
-          textTransform: "none",
-        }}
-      >
-        Add
-      </Button>
     </Stack>
   );
 };

@@ -382,6 +382,7 @@ const GraphViewer: FC = () => {
           </div>
           <div className={styles.LinkLabel}>
             <IconButtonTooltip
+              aria-label="open-graph-tutorial"
               tooltipText="Graph visualization tutorial"
               onClick={() => dispatch(updateUI({ openGraphTutorialDialog: true }))}
               Icon={HelpOutlineRoundedIcon}

@@ -31,12 +31,14 @@ import { sortFunctions } from "../Table/sort/sortFns";
 
 const SortButton = styled(IconButton)({});
 
-const getKind = (kind: string) => {
+const getKind = (kind: string, datatype?: string) => {
+  const datatypeSuffix = datatype && datatype !== "none" ? ` (${datatype})` : "";
   if (kind === "entity") {
     return (
       <ButtonShortcut
+        aria-label="kind-entity"
         text="E"
-        tooltipText="Named Entity"
+        tooltipText={`Named Entity${datatypeSuffix}`}
         size="xs"
         variant="flat"
         color="blue"
@@ -46,8 +48,9 @@ const getKind = (kind: string) => {
   if (kind === "literal") {
     return (
       <ButtonShortcut
+        aria-label="kind-literal"
         text="L"
-        tooltipText="Literal"
+        tooltipText={`Literal${datatypeSuffix}`}
         size="xs"
         variant="flat"
         color="green"
@@ -292,6 +295,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         updateUI({
           openMetadataColumnDialog: true,
           metadataColumnDialogColId: colId,
+          metadataColumnDialogInitialTab: 0,
         }),
       );
     };
@@ -363,6 +367,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   arrow
                 >
                   <IconButton
+                    aria-label={header.column.getIsPinned() ? 'unpin-column' : 'pin-column'}
                     onClick={(e) => {
                       e.stopPropagation();
                       const isAlreadySelected = !!selected;
@@ -409,6 +414,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   <div className={styles.Row}>
                     {shouldShowBadge() && (
                       <StatusBadge
+                        aria-label={`status-${getBadgeStatus(columnData)}`}
                         status={getBadgeStatus(columnData)}
                         size="small"
                         marginRight="5px"
@@ -436,6 +442,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
+                          aria-label="sort-alphabetical"
                           onClick={(e) => {
                             e.stopPropagation();
                             const isAlreadySelected = !!selected;
@@ -470,6 +477,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
+                          aria-label="sort-score"
                           onClick={(e) => {
                             e.stopPropagation();
                             const isAlreadySelected = !!selected;
@@ -502,9 +510,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         </SortButton>
                       </Tooltip>
                     </Stack>
-                    {columnData.kind && getKind(columnData.kind)}
+                    {columnData.kind && getKind(columnData.kind, columnData?.datatype)}
                     {columnData.role && (
                       <ButtonShortcut
+                        aria-label="role-subject"
                         className={styles.SubjectLabel}
                         tooltipText={capitalize(columnData.role)}
                         text={columnData.role[0].toUpperCase()}
@@ -535,6 +544,7 @@ Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
                               sx={{ display: "inline-flex" }}
                             >
                               <ButtonShortcut
+                                aria-label="compliance-badge"
                                 text={
                                   complianceInfo.action === "noChange"
                                     ? "C"
