@@ -78,7 +78,6 @@ const makeData = (column: Column | undefined, isLiteral: boolean) => {
     selected: { label: "Selected", type: "checkBox" },
     id: { label: "ID" },
     name: { label: "Name", type: "link" },
-    subj: { label: "Subj" /*, type:'link' */ },
     obj: { label: "Obj" /*, type:'link' */ },
     description: { label: "Description" },
     match: { label: "Match", type: "tag" },
@@ -246,45 +245,67 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
   const currentColumnKind = currentColumnOptions?.kind || "";
 
   const hasColumnClassifier = !!effectiveKind && !!effectiveDatatype;
-  const getPropertyInfo = (kind?: string, datatype?: string) => {
-    const baseUrl = "https://www.wikidata.org/wiki/Special:ListProperties";
+  const getPropertyInfo = (kind?: string, datatype?: string, service: string) => {
+    const baseUrlWiki = "https://www.wikidata.org/wiki/Special:ListProperties";
+    const baseUrlSchema = KG_INFO["schema"].uri;
+
+    let wiki = { url: baseUrlWiki, label: "Wikidata" };
+    let schemaOptions: Array<{ url: string; label: string }> = [
+      { url: `${baseUrlSchema}/docs/full.html`, label: "Schema.org" }
+    ];
 
     if (kind === "entity") {
-      return {
-        url: `${baseUrl}/wikibase-item`,
-        label: "Items",
-      };
-    }
-    if (kind === "literal") {
-      switch (datatype) {
-        case "DATE":
-          return {
-            url: `${baseUrl}/time`,
-            label: "Point in time",
-          };
-        case "NUMBER":
-          return {
-            url: `${baseUrl}/quantity`,
-            label: "Quantity",
-          };
-        case "STRING":
-          return {
-            url: `${baseUrl}/string`,
-            label: "String",
-          };
+      wiki = { url: `${baseUrlWiki}/wikibase-item`, label: "Items" };
+
+      switch (datatype?.toUpperCase()) {
+        case "PERSON":
+          schemaOptions = [{ url: `${baseUrlSchema}Person`, label: "Person" }];
+          break;
+        case "ORGANIZATION":
+          schemaOptions = [{ url: `${baseUrlSchema}Organization`, label: "Organization" }];
+          break;
+        case "PLACE":
+          schemaOptions = [{ url: `${baseUrlSchema}Place`, label: "Place" }];
+          break;
+        case "EVENT":
+          schemaOptions = [{ url: `${baseUrlSchema}Event`, label: "Event" }];
+          break;
         default:
-          return {
-            url: baseUrl,
-            label: "Wikidata",
-          };
+          schemaOptions = [{ url: `${baseUrlSchema}Thing`, label: "Thing" }];
+          break;
+      }
+    } else if (kind === "literal") {
+      switch (datatype?.toUpperCase()) {
+        case "DATE":
+          wiki = { url: `${baseUrlWiki}/time`, label: "Point in time" };
+          schemaOptions = [
+            { url: `${baseUrlSchema}Date`, label: "Date" },
+            { url: `${baseUrlSchema}DateTime`, label: "DateTime" },
+            { url: `${baseUrlSchema}Time`, label: "Time" }
+          ];
+          break;
+        case "NUMBER":
+          wiki = { url: `${baseUrlWiki}/quantity`, label: "Quantity" };
+          schemaOptions = [
+            { url: `${baseUrlSchema}Number`, label: "Number" },
+            { url: `${baseUrlSchema}Quantity`, label: "Quantity" }
+          ];
+          break;
+        case "STRING":
+          wiki = { url: `${baseUrlWiki}/string`, label: "String" };
+          schemaOptions = [{ url: `${baseUrlSchema}Text`, label: "Text" }];
+          break;
+        default:
+          wiki = { url: baseUrlWiki, label: "Wikidata" };
+          schemaOptions = [{ url: `${baseUrlSchema}DataType`, label: "DataType" }];
+          break;
       }
     }
-    return {
-      url: baseUrl,
-      label: "Wikidata",
-    };
+
+    return { wiki, schemaOptions };
   };
-  const propertyInfo = getPropertyInfo(effectiveKind, effectiveDatatype);
+
+  const { wiki: wikiInfo, schemaOptions } = getPropertyInfo(effectiveKind, effectiveDatatype);
 
   const { handleSubmit, reset, register, control } = useForm<NewMetadata>({
     defaultValues: {
@@ -644,6 +665,11 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
                 the property will be automatically created and added to that corresponding subject column.
               </Typography>
             )}
+            {showAdd && (
+              <Typography color="text.secondary">
+                Browse external property lists filtered by the current column schema to manually add a specific property.
+              </Typography>
+            )}
             <Stack direction="row" gap={1} alignItems="center">
               <Tooltip
                 open={showTooltip}
@@ -687,13 +713,8 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
                     </Button>
                   ) : (
                     <Tooltip
-                      title={
-                        hasColumnClassifier
-                          ? `List filtered using the Column Classifier schema annotation result (Kind: ${effectiveKind}
-                        - ${isLiteral ? "Datatype:" : "Semantic Class:"} ${effectiveDatatype}).`
-                          : ""
-                      }
-                      placement="right"
+                      title={`List filtered using the current kind and ${isLiteral ? "datatype" : "semantic class"}`}
+                      placement="bottom"
                       arrow
                     >
                       <span>
@@ -702,21 +723,43 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
                           color="primary"
                           onClick={() =>
                             window.open(
-                              propertyInfo.url,
+                              wikiInfo.url,
                               "_blank",
                               "noopener,noreferrer",
                             )
                           }
                           sx={{ textTransform: "none" }}
                         >
-                          View list of Wikidata properties
+                          Wikidata
                           {hasColumnClassifier
-                            ? ` for ${propertyInfo.label}`
+                            ? `: ${wikiInfo.label}`
                             : ""}
                         </Button>
                       </span>
                     </Tooltip>
                   )}
+                  {schemaOptions.map((option, idx) => (
+                    <Tooltip
+                      key={`${option.label}-${idx}`}
+                      title={`List filtered using the current kind and ${isLiteral ? "datatype" : "semantic class"}`}
+                      placement="top"
+                      arrow
+                    >
+                      <span>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => window.open(option.url, "_blank", "noopener,noreferrer")}
+                          sx={{ textTransform: "none" }}
+                        >
+                          Schema.org
+                          {hasColumnClassifier
+                            ? `: ${option.label}`
+                            : ""}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  ))}
                 </>
               )}
             </Stack>

@@ -52,6 +52,9 @@ export const KG_INFO: Record<string, KGInfoEntry> = {
   atokaPeople: {
     uri: "https://atoka.io/public/en/people/-/",
   },
+  schema: {
+    uri: "https://schema.org/",
+  },
 };
 
 export const getGroupFromId = (id: string): string => {
@@ -96,7 +99,7 @@ export const getPrefixIfAvailable = (uri: string, id: string): string => {
       const key = keys[i];
       console.log("key", key);
       if (KG_INFO[key].uri.includes(matchingUrl)) {
-        prefix = key + ":";
+        prefix = `${key}:`;
         break;
       }
     }
