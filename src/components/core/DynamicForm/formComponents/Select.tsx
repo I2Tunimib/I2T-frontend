@@ -73,6 +73,7 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
       setValue,
       onChange,
       noGap = false,
+      value,
       ...props
     },
     ref,
@@ -81,26 +82,41 @@ export const Select = forwardRef<HTMLInputElement, SelectProps>(
 
     const error = Boolean(errors[id]);
 
+    const selectedOption = options.find((opt) => opt.value === value);
+    const selectedLabel = selectedOption ? selectedOption.label : String(value ?? "");
     return (
       <Stack gap={noGap ? 0 : "10px"}>
         <InputDescription description={description} infoText={infoText} />
-        <FormControl error={error}>
-          <InputLabel sx={noGap ? { top: "-6px" } : {}}>{label}</InputLabel>
+        <FormControl
+          error={error}
+          fullWidth
+          title={selectedLabel}
+          sx={{ width: "100%", position: "relative" }}
+        >
+          <InputLabel
+            sx={{
+              ...(noGap ? { top: "-6px" } : {}),
+              pointerEvents: "none",
+            }}
+          >
+            {label}
+          </InputLabel>
           <SelectMaterial
+            {...props}
             inputRef={ref}
             onChange={onChange}
             labelId="select-match"
             label={label}
-            {...props}
+            value={value ?? ""}
             sx={{
-                ...(noGap ? { height: 40 } : {}),
-                "& .MuiSelect-select": {
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  pr: "32px !important",
-                },
-              }}
+              ...(noGap ? { height: 40 } : {}),
+              "& .MuiSelect-select": {
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                pr: "32px !important",
+              },
+          }}
           >
             {options.map((option) => (
               <MenuItem

@@ -122,21 +122,20 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
       onSubmit={handleSubmit(onSubmit)}
     >
       {context === "propertyTab" && watchedPrefix !== "custom" && (
-        <Tooltip title="Select the subject column" arrow placement="top">
-          <FormControl
-            sx={{ minWidth: 150, flex: "1 1 200px" }}
-            fullWidth
-            size="small"
-          >
-            <Controller
-              name="subj"
-              control={control}
-              defaultValue={isLiteral ? "" : colId}
-              rules={{ required: true }}
-              render={({ field }) => {
-                const finalOptions = isLiteral
-                  ? otherColumns || []
-                  : [
+        <FormControl
+          sx={{ minWidth: 150, flex: "1 1 200px" }}
+          fullWidth
+          size="small"
+        >
+          <Controller
+            name="subj"
+            control={control}
+            defaultValue={isLiteral ? "" : colId}
+            rules={{ required: true }}
+            render={({ field }) => {
+              const finalOptions = isLiteral
+                ? otherColumns || []
+                : [
                     {
                       id: colId,
                       value: colId,
@@ -147,20 +146,20 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
                     ...(otherColumns || []),
                   ];
 
-                return (
-                  <SelectColumns
-                    {...field}
-                    id="subj"
-                    label="Subj *"
-                    options={finalOptions}
-                    noGap={true}
-                    disabled={!isLiteral}
-                  />
-                );
-              }}
-            />
-          </FormControl>
-        </Tooltip>
+              return (
+                <SelectColumns
+                  {...field}
+                  id="subj"
+                  label="Subj *"
+                  options={finalOptions}
+                  value={field.value}
+                  noGap={true}
+                  disabled={!isLiteral}
+                />
+              );
+            }}
+          />
+        </FormControl>
       )}
       <Tooltip
         title={
@@ -269,20 +268,19 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
             />
           </Tooltip>
           {context === "propertyTab" && (
-            <Tooltip title="Select the referenced column" arrow placement="top">
-              <FormControl
-                sx={{ minWidth: 150, flex: "1 1 200px" }}
-                fullWidth
-                size="small"
-              >
-                <Controller
-                  name="obj"
-                  control={control}
-                  defaultValue={isLiteral ? colId : ""}
-                  rules={{ required: true }}
-                  render={({ field }) => {
-                    const finalOptions = isLiteral
-                      ? [
+            <FormControl
+              sx={{ minWidth: 150, flex: "1 1 200px" }}
+              fullWidth
+              size="small"
+            >
+              <Controller
+                name="obj"
+                control={control}
+                defaultValue={isLiteral ? colId : ""}
+                rules={{ required: true }}
+                render={({ field }) => {
+                  const finalOptions = isLiteral
+                    ? [
                         {
                           id: colId,
                           value: colId,
@@ -292,22 +290,22 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
                         },
                         ...(otherColumns || []),
                       ]
-                      : otherColumns || [];
+                    : otherColumns || [];
 
-                    return (
-                      <SelectColumns
-                        {...field}
-                        id="obj"
-                        label="Obj *"
-                        options={finalOptions}
-                        noGap={true}
-                        disabled={isLiteral}
-                      />
-                    );
-                  }}
-                />
-              </FormControl>
-            </Tooltip>
+                  return (
+                    <SelectColumns
+                      {...field}
+                      id="obj"
+                      label="Obj *"
+                      value={field.value}
+                      options={finalOptions}
+                      noGap={true}
+                      disabled={isLiteral}
+                    />
+                  );
+                }}
+              />
+            </FormControl>
           )}
           {context !== "typeTab" && (
             <>
