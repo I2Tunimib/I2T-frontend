@@ -123,6 +123,14 @@ const CONFIG: AppConfig = {
       },
       EXPORT: [
         {
+          path: "/dataset/:datasetId/table/:tableId/export?format=schema_w3c",
+          name: "JSON Schema (W3C Compliant)",
+          params: {
+            extension: "json",
+            postDownload: (data: any) => JSON.stringify(data, null, 2),
+          },
+        },
+        {
           path: "/dataset/:datasetId/table/:tableId/export?format=w3c",
           name: "JSON (W3C Compliant)",
           params: {

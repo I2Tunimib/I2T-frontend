@@ -298,7 +298,18 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
         <Stack gap="10px" mt={1}>
           {mode === "reconcile" ? (
             <FormControl className="field">
-              <Select value={selectedGroup || ""} onChange={handleGroupChange} displayEmpty variant="outlined" MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }} renderValue={(selected) => (selected ? selected : <em style={{ color: "rgba(0,0,0,0.38)" }}>Choose a service group...</em>)}>
+              <Select
+                value={selectedGroup || ""}
+                onChange={handleGroupChange}
+                displayEmpty
+                variant="outlined"
+                MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }}
+                renderValue={(selected) => selected || (
+                  <em style={{ color: "rgba(0,0,0,0.38)" }}>
+                    Choose a service group...
+                  </em>
+                )}
+              >
                 <MenuItem disabled value="">
                   <em>Choose a service group...</em>
                 </MenuItem>
@@ -318,11 +329,22 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
                 variant="outlined"
                 MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }}
                 renderValue={(selected) => {
-                  if (!selected) return <em style={{ color: "rgba(0,0,0,0.38)" }}>Choose a service...</em>;
+                  if (!selected) {
+                    return (
+                      <em style={{ color: "rgba(0,0,0,0.38)" }}>
+                        Choose {mode === "reconcile" ? "a reconciliation" : mode === "modify" ? "a modification" : "an extension"} service...
+                      </em>
+                    );
+                  }
                   const sel = uniqueServices.find((s) => s.id === selected);
                   return sel ? sel.name : "";
                 }}
               >
+                <MenuItem disabled value="">
+                  <em>
+                    Choose {mode === "reconcile" ? "a reconciliation" : mode === "modify" ? "a modification" : "an extension"} service...
+                  </em>
+                </MenuItem>
                 {uniqueServices.map((svc) => (
                   <MenuItem key={svc.id} value={svc.id} onClick={() => setCurrentService(svc)}>
                     {svc.name}

@@ -76,7 +76,8 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   }, [API, isOpen]);
 
   const filteredFormats = API.ENDPOINTS.EXPORT.filter(({ name }) => {
-    if (type === "table") return !name.toLowerCase().includes("pipeline");
+    if (type === "schema") return name.toLowerCase().includes("schema");
+    if (type === "table") return !name.toLowerCase().includes("schema") && !name.toLowerCase().includes("pipeline");
     if (type === "pipeline") return name.toLowerCase().includes("pipeline");
     return true;
   });
@@ -256,6 +257,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             onChange={handleTypeChange}
             variant="outlined"
           >
+            <MenuItem value="schema">Schema</MenuItem>
             <MenuItem value="table">Table</MenuItem>
             <MenuItem value="pipeline">Pipeline</MenuItem>
           </Select>
