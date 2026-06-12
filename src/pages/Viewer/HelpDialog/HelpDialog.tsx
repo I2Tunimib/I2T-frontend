@@ -45,6 +45,8 @@ import modification from "../../../assets/modification.gif";
 import schemaAnnotation from "../../../assets/schema-annotation.gif";
 import serviceReconciliation from "../../../assets/service-reconciliation.gif";
 import generativeAi from "../../../assets/generative-ai.gif";
+import semanticTriple from "../../../assets/semantic-triple.png";
+import manualSchemaAnnotation from "../../../assets/manual-schema-annotation.gif";
 
 type HelpDialogProps = DialogProps;
 
@@ -380,16 +382,16 @@ const chapters: Chapter[] = [
                     underline="hover"
                     role="button"
                     sx={{ cursor: "pointer" }}
-                    onClick={() => goToByLabel("Reconciliation", "Schema Annotation", goTo)}
+                    onClick={() => goToByLabel("Schema Annotation", "Automatic Annotation", goTo)}
                   >
-                    <b>5.5 Schema Annotation</b>
+                    <b>4. Schema Annotation</b>
                   </Link>
                   {" "}of this tutorial.
                 </li>
               </List>
               Once the process is complete, the table updates automatically. For Full table annotation, cells are
-              populated with predicted entities and metadata; for Schema annotation, columns are updated with Named
-              Entity Recognition (NER) and kind classifications.
+              populated with predicted entities and metadata; for Schema annotation, columns are updated with Datatype/Semantic
+              Class and kind classifications.
             </Typography>
           </Stack>
         ),
@@ -660,6 +662,100 @@ const chapters: Chapter[] = [
     ],
   },
   {
+    label: "Schema Annotation",
+    pages: [
+      {
+        label: "Automatic Annotation",
+        Description: () => (
+          <Stack gap="10px">
+            <Typography component="div">
+              Simply click on the <ButtonText> Automatic Annotation </ButtonText> button in the Toolbar.
+              Then, choose "Schema" as target and "Column Classifier" as method.
+              <br /><br />
+              This process automatically identifies the <b> Kind </b> of the column (e.g., whether it contains entities
+              or literal values) and assigns a <b> Datatype or Semantic Class </b> based on the cell values:
+              <List>
+                <li>
+                  <b>For entities: </b> It distinguishes between PERSON, PLACE, ORGANIZATION, EVENT, or OTHER;
+                </li>
+                <li>
+                  <b>For literals: </b> It distinguishes between NUMBER, DATE, or STRING;
+                </li>
+              </List>
+              This classification is crucial as it guides the system in suggesting only the most relevant Wikidata
+              properties to your data type.
+              <br /><br />
+              Once the task is completed, you will receive a notification via a pop-up in the bottom-left corner of the screen.
+            </Typography>
+            <Img src={schemaAnnotation} />
+          </Stack>
+        ),
+      },
+      {
+        label: "Manual Annotation",
+        Description: () => (
+          <Stack gap="10px">
+            <Typography component="div">
+              The Schema Annotation can be done manually for each column by defining its semantic data: Kind, Datatype
+              or Semantic Class, Types and Properties. Simply click the
+              <SettingsEthernetRoundedIcon
+                sx={{
+                  margin: "0px 3px",
+                  verticalAlign: "middle",
+                }}
+              />
+              icon of a column to open the "Manage Metadata Column" dialog.
+              <br /><br />
+              <Typography variant="h6" component="h3" sx={{mb: 1, fontWeight: 'bold'}}>
+                Adding a Column Type
+              </Typography>
+              Simply click on the <ButtonText> Add column type </ButtonText> button to add a specific type. Browse
+              external knowledge bases, such as Wikidata, to search for the desired type and fill in the required input.
+              <br /><br />
+              When working with literal datatypes, SemT-X provides tailored tools to handle formatting and scales:
+              <List>
+                <li>
+                  <b>QUDT Ontology (for NUMBER): </b> Search and assign official units of measure (e.g., <i>Count</i>,
+                  <i>Length</i>, <i>Degree Celsius</i>).
+                  For more details, click <a href='https://www.qudt.org/' target='_blank'>here</a>
+                </li>
+                <li>
+                  <b>XML Schema (for STRING/DATE): </b> Aligns data validation with standard XML Schema structures.
+                  For more details, click <a href='https://www.w3.org/TR/xmlschema-2/' target='_blank'>here</a>.
+                </li>
+              </List>
+              <b>Note: </b> Column types are automatically added during a reconciliation or extension step. In this
+              case, based on the property extracted, some information are automatically defined, such as column types
+              and cell metadata are automatically added.
+              <br /><br />
+              <Typography variant="h6" component="h3" sx={{mb: 1, fontWeight: 'bold'}}>
+                Adding a Column Property
+              </Typography>
+              Simply click on the <ButtonText> Add column property </ButtonText> button to add a specific property.
+              Browse external property lists, such as Wikidata and Schema.org, filtered automatically according to the
+              current schema.
+              <br /><br />
+              Manually adding properties links columns together by defining the following <b>semantic triple</b>:
+              <Box display="flex" justifyContent="center" my={1} margin="8px">
+                <Img src={semanticTriple} style={{width: "70%"}}/>
+              </Box>
+              As properties can only be assigned to <b>Entity</b> column, <b>Literal</b> columns can only be selected
+              as <i>Object</i>.
+              <br /><br />
+              When dealing with Literal columns, simply define the <i>Subject</i> by choosing from the Entity columns;
+              the property will be automatically created and added to that corresponding <i>Subject</i> column.
+              <br /><br />
+              <b>Note: </b> Column properties are automatically added when providing support columns as context during
+              the reconciliation step. Also, during the extension step, properties are automatically added when extracting
+              additional information.
+            </Typography>
+            <Img src={manualSchemaAnnotation} />
+          </Stack>
+        ),
+      },
+    ],
+  },
+  {
     label: "Modification",
     pages: [
       {
@@ -697,8 +793,8 @@ const chapters: Chapter[] = [
                     </li>
                     <li>
                       <b>Schema Annotation: </b>
-                      Automatically identifies the data kind and assigns a Named Entity Recognition classification to
-                      each column.
+                      Automatically identifies the kind and assigns a datatype for literals or a semantic class
+                      for entities to each column.
                     </li>
                   </SubList>
                 </li>
@@ -762,33 +858,6 @@ const chapters: Chapter[] = [
               Propagate </ButtonText> button.
             </Typography>
             <Img src={manualReconciliation} />
-          </Stack>
-        ),
-      },
-      {
-        label: "Schema Annotation",
-        Description: () => (
-          <Stack gap="10px">
-            <Typography component="div">
-              Simply click on the <ButtonText> Automatic Annotation </ButtonText> button in the Toolbar.
-              Then, choose "Schema" as target and "Column Classifier" as method.
-              <br /><br />
-              This process automatically identifies the <b> Kind </b> of the column (e.g., whether it contains entities
-              or literal values) and assigns a <b> NER Classification </b> based on the cell values:
-              <List>
-                <li>
-                  <b>For entities: </b> It distinguishes between PERSON, LOCATION, ORGANIZATION, or OTHER;
-                </li>
-                <li>
-                  <b>For literals: </b> It distinguishes between NUMBER, DATE, or STRING;
-                </li>
-              </List>
-              This classification is crucial as it guides the system in suggesting only the most relevant Wikidata
-              properties to your data type.
-              <br /><br />
-              Once the task is completed, you will receive a notification via a pop-up in the bottom-left corner of the screen.
-            </Typography>
-            <Img src={schemaAnnotation} />
           </Stack>
         ),
       },

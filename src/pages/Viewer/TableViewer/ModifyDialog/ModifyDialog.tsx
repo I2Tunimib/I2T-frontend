@@ -295,7 +295,7 @@ const ModifyDialog: FC<ModifyDialogProps> = ({ open, handleClose }) => {
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "tutorial",
-                  tutorialStep: 11,
+                  tutorialStep: 13,
                 }),
               );
             }}
