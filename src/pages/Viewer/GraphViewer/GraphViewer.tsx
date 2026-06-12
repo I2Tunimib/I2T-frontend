@@ -132,7 +132,7 @@ const GraphViewer: FC = () => {
 
     const nodeLabels = new Set(nodes.map((n) => n.label));
 
-    let links = Object.values(schema).flatMap((th: any) => {
+    const rawLinks = Object.values(schema).flatMap((th: any) => {
       return (th.metadata ?? []).flatMap((m: any) => {
         return (m.property ?? []).map((p: any) => {
           const sourceLabel = clean(th.label);
@@ -140,12 +140,11 @@ const GraphViewer: FC = () => {
 
           if (nodeLabels.has(sourceLabel) && nodeLabels.has(targetLabel)) {
             return {
-              id: `${sourceLabel}-${targetLabel}`,
+              id: `${sourceLabel}->${targetLabel}_${p.id}`,
               source: sourceLabel,
               target: targetLabel,
               label: p.name,
               propID: p.id,
-              curvature: 0
             };
           }
           return null;
@@ -153,22 +152,50 @@ const GraphViewer: FC = () => {
       });
     }).filter((l): l is any => l !== null);
 
-    links = links.map((link) => {
-      const duplicates = links.filter((l) =>
-        (l.source === link.source && l.target === link.target) ||
-        (l.source === link.target && l.target === link.source));
+    const links = rawLinks.map((link) => {
+      const sId = link.source;
+      const tId = link.target;
+
+      const hasInverse = rawLinks.some((l) => {
+        return l.source === tId && l.target === sId;
+      });
+
       return {
         ...link,
-        curvature: duplicates.length > 1 ? 0.2 : 0.1
+        curvature: hasInverse ? 0.25 : 0
       };
     });
 
-    const finalLinks = links;
-
     console.log('nodes', nodes);
-    console.log('finalLinks', finalLinks);
+    console.log('links', links);
 
-    return { nodes, links: finalLinks };
+    return { nodes, links };
+  }, [w3cData]);
+
+  const multiPropsMap = useMemo(() => {
+    const map: Record<string, Array<{ propID: string; label: string }>> = {};
+    if (!w3cData) return map;
+
+    const schema = w3cData[0];
+    const clean = (str: string) => str?.trim().replace(/^\uFEFF/, '');
+
+    Object.values(schema).forEach((th: any) => {
+      (th.metadata ?? []).forEach((m: any) => {
+        (m.property ?? []).forEach((p: any) => {
+          const sourceLabel = clean(th.label);
+          const targetLabel = clean(p.obj);
+          const pairKey = `${sourceLabel}->${targetLabel}`;
+
+          if (!map[pairKey]) {
+            map[pairKey] = [];
+          }
+          if (!map[pairKey].some((item) => item.propID === p.id)) {
+            map[pairKey].push({ propID: p.id, label: p.name });
+          }
+        });
+      });
+    });
+    return map;
   }, [w3cData]);
 
   const handleShowLinkLabel = () => {
@@ -198,6 +225,10 @@ const GraphViewer: FC = () => {
     return !graphData.links.some((l) =>
       (typeof l.source === 'object' ? l.source.label : l.source) === node.label ||
       (typeof l.target === 'object' ? l.target.label : l.target) === node.label);
+  };
+
+  const hasTypes = (node: any) => {
+    return node && Array.isArray(node.types) && node.types.length > 0;
   };
 
   useEffect(() => {
@@ -454,7 +485,18 @@ const GraphViewer: FC = () => {
             setSelectedNode(node);
             setSelectedLink(null);
           }}
-          linkLabel={(link: any) => (showLinkLabels ? `${link.propID}` : `${link.propID} ${link.label}`)}
+          linkLabel={(link: any) => {
+            const sId = typeof link.source === 'object' ? link.source.label : link.source;
+            const tId = typeof link.target === 'object' ? link.target.label : link.target;
+            const allPropsList = multiPropsMap[`${sId}->${tId}`] || [];
+
+            if (allPropsList.length > 1) {
+              return allPropsList
+                .map((p) => `<strong>${p.propID}</strong> ${p.label}`)
+                .join('<br/>');
+            }
+            return (showLinkLabels ? `${link.propID}` : `${link.propID} ${link.label}`);
+          }}
           linkCurvature={(link) => {
             return link.curvature > 0.1 ? 0.25 : 0;
           }}
@@ -468,7 +510,15 @@ const GraphViewer: FC = () => {
 
             const source = typeof link.source === 'object' ? link.source : null;
             const target = typeof link.target === 'object' ? link.target : null;
-            if (!source || !target) return;
+            if (!source?.label || !target?.label) return;
+
+            const sId = source.label;
+            const tId = target.label;
+
+            const allPropsList = multiPropsMap[`${sId}->${tId}`] || [];
+            if (allPropsList.length > 1 && allPropsList[0].propID !== link.propID) {
+              return;
+            }
 
             const sx = source.x;
             const sy = source.y;
@@ -484,7 +534,11 @@ const GraphViewer: FC = () => {
             ctx.fillStyle = '#555';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(link.label, mx, my);
+
+            const badgeCount = allPropsList.length > 1 ? ` (+${allPropsList.length - 1})` : '';
+            const displayText = `${allPropsList[0]?.label || link.label}${badgeCount}`;
+
+            ctx.fillText(displayText, mx, my);
             ctx.restore();
           }}
           onLinkClick={(link) => {
@@ -505,11 +559,13 @@ const GraphViewer: FC = () => {
               </Typography>
               <Typography
                 className={styles.ToggleIcon}
-                onClick={() => setShowNodes(!showNodes)}
+                onClick={() => nodesLength > 0 && setShowNodes(!showNodes)}
               >
-                {showNodes
-                  ? <Typography component="span" variant="body2" color="text.secondary">Hide list</Typography>
-                  : <Typography component="span" variant="body2" color="text.secondary">Show list</Typography>
+                {nodesLength > 0
+                  ? showNodes
+                    ? <Typography component="span" variant="body2" color="text.secondary">Hide list</Typography>
+                    : <Typography component="span" variant="body2" color="text.secondary">Show list</Typography>
+                  : <Typography component="span" variant="body2" color="text.secondary">Empty</Typography>
                 }
               </Typography>
             </div>
@@ -531,11 +587,13 @@ const GraphViewer: FC = () => {
               </Typography>
               <Typography
                 className={styles.ToggleIcon}
-                onClick={() => setShowLinks(!showLinks)}
+                onClick={() => linksLength > 0 && setShowLinks(!showLinks)}
               >
-                {showLinks
-                  ? <Typography component="span" variant="body2" color="text.secondary">Hide list</Typography>
-                  : <Typography component="span" variant="body2" color="text.secondary">Show list</Typography>
+                {linksLength > 0
+                  ? showLinks
+                    ? <Typography component="span" variant="body2" color="text.secondary">Hide list</Typography>
+                    : <Typography component="span" variant="body2" color="text.secondary">Show list</Typography>
+                  : <Typography component="span" variant="body2" color="text.secondary">Empty</Typography>
                 }
               </Typography>
             </div>
@@ -547,7 +605,17 @@ const GraphViewer: FC = () => {
                   const targetId = typeof l.target === 'object' ? l.target.label : l.target;
                   return (
                     <li key={idx}>
-                      {sourceId} → {targetId} (<strong>{l.propID}</strong> - {l.label})
+                      {sourceId} → {targetId}
+                      <div style={{ paddingLeft: '16px', marginTop: '8px', marginBottom: '8px' }}>
+                        {(multiPropsMap[`${sourceId}->${targetId}`] || [{
+                          propID: l.propID,
+                          label: l.label
+                        }]).map((p: any, pIdx: number) => (
+                          <li key={pIdx}>
+                            <strong>{p.propID}</strong> - {p.label}
+                          </li>
+                        ))}
+                      </div>
                     </li>
                   );
                 })}
@@ -716,71 +784,116 @@ const GraphViewer: FC = () => {
               </div>
             </>
           )}
-          {selectedLink && (
-            <div ref={linkSectionRef} className={`${styles.Section} ${styles.ScrollTarget}`}>
-              <div className={styles.ToggleRow}>
-                <h3>Link: {selectedLink.label}</h3>
-                <Typography
-                  className={styles.ToggleIcon}
-                  onClick={() => setSelectedLink(null)}
-                >
-                  −
-                </Typography>
+          {selectedLink && (() => {
+            const sId = typeof selectedLink.source === 'object' ? selectedLink.source.label : selectedLink.source;
+            const tId = typeof selectedLink.target === 'object' ? selectedLink.target.label : selectedLink.target;
+
+            const allProps = multiPropsMap[`${sId}->${tId}`] || [
+              {
+                propID: selectedLink.propID,
+                label: selectedLink.label
+              }
+            ];
+
+            return (
+              <div ref={linkSectionRef} className={`${styles.Section} ${styles.ScrollTarget}`}>
+                <div className={styles.ToggleRow}>
+                  <h3>
+                    Link{allProps.length === 1 ? `: ${selectedLink.label}` : `Group: (${allProps.length})`}
+                  </h3>
+                  <Typography
+                    className={styles.ToggleIcon}
+                    onClick={() => setSelectedLink(null)}
+                  >
+                    −
+                  </Typography>
+                </div>
+                <div className={styles.ToggleRow}>
+                  <Typography>
+                    <strong>Source: </strong>
+                    {selectedLink.source.label || selectedLink.source}
+                  </Typography>
+                  {hasTypes(selectedLink.source) && (
+                    <Typography
+                      className={styles.ToggleIcon}
+                      onClick={() => setShowSourceTypes(!showSourceTypes)}
+                    >
+                      {showSourceTypes
+                        ? <Typography component="span" variant="body2" color="text.secondary">Hide types</Typography>
+                        : <Typography component="span" variant="body2" color="text.secondary">Show types</Typography>
+                      }
+                    </Typography>
+                  )}
+                </div>
+                {showSourceTypes && hasTypes(selectedLink.source) && (
+                  <ul className={styles.List}>
+                    {selectedLink.source.types.map((t: any) => (
+                      <li key={t.id}>
+                        {t.name} ({t.id})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {showSourceTypes && (
+                  <ul className={styles.List}>
+                    {selectedLink.source.types.map((t: any) => (
+                      <li key={t.id}>
+                        {t.name} ({t.id})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className={styles.ToggleRow}>
+                  <Typography>
+                    <strong>Target: </strong>
+                    {selectedLink.target.label || selectedLink.target}
+                  </Typography>
+                  {hasTypes(selectedLink.target) && (
+                    <Typography
+                      className={styles.ToggleIcon}
+                      onClick={() => setShowTargetTypes(!showTargetTypes)}
+                    >
+                      {showTargetTypes
+                        ? <Typography component="span" variant="body2" color="text.secondary">Hide types</Typography>
+                        : <Typography component="span" variant="body2" color="text.secondary">Show types</Typography>
+                      }
+                    </Typography>
+                  )}
+                </div>
+                {showTargetTypes && hasTypes(selectedLink.target) && (
+                  <ul className={styles.List}>
+                    {selectedLink.target.types.map((t: any) => (
+                      <li key={t.id}>
+                        {t.name} ({t.id})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {allProps.length === 1 ? (
+                  <div>
+                    <Typography>
+                      <strong>Metadata ID: </strong>{allProps[0].propID}
+                    </Typography>
+                  </div>
+                ) : (
+                  <div>
+                    <Typography>
+                      <strong>Metadatas:</strong>
+                    </Typography>
+                    <ul className={styles.List}>
+                      {allProps.map((p: any, idx: number) => (
+                        <li key={idx}>
+                          <Typography>
+                            <strong>{p.propID}</strong> - {p.label}
+                          </Typography>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-              <Typography>
-                <strong>Metadata: </strong>
-                {selectedLink.propID}
-              </Typography>
-              <div className={styles.ToggleRow}>
-                <Typography>
-                  <strong>Source: </strong>
-                  {selectedLink.source.label || selectedLink.source}
-                </Typography>
-                <Typography
-                  className={styles.ToggleIcon}
-                  onClick={() => setShowSourceTypes(!showSourceTypes)}
-                >
-                  {showSourceTypes
-                    ? <Typography component="span" variant="body2" color="text.secondary">Hide types</Typography>
-                    : <Typography component="span" variant="body2" color="text.secondary">Show types</Typography>
-                  }
-                </Typography>
-              </div>
-              {showSourceTypes && (
-                <ul className={styles.List}>
-                  {selectedLink.source.types.map((t: any) => (
-                    <li key={t.id}>
-                      {t.name} ({t.id})
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className={styles.ToggleRow}>
-                <Typography>
-                  <strong>Target: </strong>
-                  {selectedLink.target.label || selectedLink.target}
-                </Typography>
-                <Typography
-                  className={styles.ToggleIcon}
-                  onClick={() => setShowTargetTypes(!showTargetTypes)}
-                >
-                  {showTargetTypes
-                    ? <Typography component="span" variant="body2" color="text.secondary">Hide types</Typography>
-                    : <Typography component="span" variant="body2" color="text.secondary">Show types</Typography>
-                  }
-                </Typography>
-              </div>
-              {showTargetTypes && (
-                <ul className={styles.List}>
-                  {selectedLink.target.types.map((t: any) => (
-                    <li key={t.id}>
-                      {t.name} ({t.id})
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
       <GraphTutorialDialog open={openGraphTutorialDialog} onClose={handleCloseGraphTutorial} />
