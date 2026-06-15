@@ -68,13 +68,14 @@ const GraphViewer: FC = () => {
   const [showMetrics, setShowMetrics] = useState(false);
   const [showSourceTypes, setShowSourceTypes] = useState(false);
   const [showTargetTypes, setShowTargetTypes] = useState(false);
-  const [showLinkLabels, setShowLinkLabels] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [selectedLink, setSelectedLink] = useState<any | null>(null);
   const nodeSectionRef = useRef<HTMLDivElement | null>(null);
   const linkSectionRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<ForceGraphMethods | null>(null);
   const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
+  const isExportOpen = useAppSelector((state) => state.table.ui.openExportDialog);
+  const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
 
   useEffect(() => {
     dispatch(
@@ -122,6 +123,7 @@ const GraphViewer: FC = () => {
       return {
         label: clean(th.label),
         kind: th.kind,
+        datatype: th.datatype,
         role: th.role,
         metadata: typeHighestScore?.id ?? th.metadata?.[0]?.id ?? undefined,
         types,
@@ -199,7 +201,7 @@ const GraphViewer: FC = () => {
   }, [w3cData]);
 
   const handleShowLinkLabel = () => {
-    setShowLinkLabels((prev) => !prev);
+    dispatch(updateUI({ showLinkLabels: !showLinkLabels }));
   };
 
   const nodesLength = graphData.nodes.length;
@@ -331,9 +333,44 @@ const GraphViewer: FC = () => {
     }
   ], [graphData, nodesLength, linksLength, density, rolesDistribution]);
 
-  if (!nodesLength) {
-    return <div className={styles.Empty}>No semantic schema available</div>;
-  }
+  useEffect(() => {
+    if (isExportOpen) {
+      const timer = setTimeout(() => {
+        let graphSnapshot = '';
+        const canvas = document.querySelector(`.${styles.GraphWrapper} canvas`) as HTMLCanvasElement | null;
+        if (canvas) {
+          graphSnapshot = canvas.toDataURL('image/png');
+        }
+
+        const cleanGraphData = {
+          nodes: graphData.nodes.map((n) => ({
+            label: n.label,
+            kind: n.kind,
+            datatype: n.datatype,
+            role: n.role,
+            types: n.types,
+          })),
+          links: graphData.links.map((l) => ({
+            id: l.id,
+            source: typeof l.source === 'object' ? (l.source as any).label : l.source,
+            target: typeof l.target === 'object' ? (l.target as any).label : l.target,
+            label: l.label,
+            propID: l.propID,
+          })),
+        };
+
+        dispatch(
+          updateUI({
+            currentGraphSnapshot: graphSnapshot,
+            currentGraphData: cleanGraphData,
+            currentMetrics: metrics,
+          })
+        );
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isExportOpen, showLinkLabels, graphData, metrics, dispatch]);
 
   const handleCloseGraphTutorial = () => {
     dispatch(updateUI({ openGraphTutorialDialog: false }));
@@ -352,6 +389,10 @@ const GraphViewer: FC = () => {
       graphRef.current.zoom(currentZoom * 0.8);
     }
   };
+
+  if (!nodesLength) {
+    return <div className={styles.Empty}>No semantic schema available</div>;
+  }
 
   return (
     <div className={styles.Container}>
@@ -432,7 +473,7 @@ const GraphViewer: FC = () => {
                 }
               }}
             >
-              {showLinkLabels ? "Hide link label" : "Show link label"}
+              {showLinkLabels ? "Hide link labels" : "Show link labels"}
             </Button>
           </div>
         </div>
@@ -440,6 +481,7 @@ const GraphViewer: FC = () => {
           graphData={graphData}
           ref={graphRef}
           nodeId="label"
+          preserveDrawingBuffer={true}
           nodeLabel={(node: any) => {
             const typeHighestScore = node.types?.reduce((prev: any, curr: any) => {
               return (curr.score > (prev?.score ?? -Infinity)) ? curr : prev;
@@ -606,7 +648,7 @@ const GraphViewer: FC = () => {
                   return (
                     <li key={idx}>
                       {sourceId} → {targetId}
-                      <div style={{ paddingLeft: '16px', marginTop: '8px', marginBottom: '8px' }}>
+                      <div style={{ paddingLeft: '16px', marginTop: '6px', marginBottom: '6px' }}>
                         {(multiPropsMap[`${sourceId}->${targetId}`] || [{
                           propID: l.propID,
                           label: l.label
@@ -633,8 +675,7 @@ const GraphViewer: FC = () => {
             </div>
 
             {showMetrics && (
-              <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '8', marginTop: '8px' }}>
+              <div className={styles.MetricsContainer}>
                 {metrics.map((m) => (
                   <div key={m.name} className={styles.Metrics}>
                     {m.name === 'Roles Distribution' ? (
@@ -697,6 +738,10 @@ const GraphViewer: FC = () => {
                 <Typography>
                   <strong>Kind: </strong>
                   {selectedNode.kind || '-'}
+                </Typography>
+                <Typography>
+                  <strong>{selectedNode.kind === "literal" ? "Datatype: " : "Semantic Class: "}</strong>
+                  {selectedNode.datatype || '-'}
                 </Typography>
                 <Typography>
                   <strong>Role: </strong>
@@ -799,7 +844,7 @@ const GraphViewer: FC = () => {
               <div ref={linkSectionRef} className={`${styles.Section} ${styles.ScrollTarget}`}>
                 <div className={styles.ToggleRow}>
                   <h3>
-                    Link{allProps.length === 1 ? `: ${selectedLink.label}` : `Group: (${allProps.length})`}
+                    {allProps.length === 1 ? `Link: ${selectedLink.label}` : `Group of Links (${allProps.length})`}
                   </h3>
                   <Typography
                     className={styles.ToggleIcon}

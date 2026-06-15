@@ -249,11 +249,34 @@ h2, h3 {
   scroll-margin-top: 16px;
 }
 
+.MetricsContainer {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
 .Metrics {
-  padding: 8px;
+  padding: 12px 16px;
   background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.Metrics:not(:last-child) {
+  border-bottom: 1px solid #edf2f7;
+}
+
+.Metrics:first-of-type {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.Metrics:last-of-type {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .NodeLabel {

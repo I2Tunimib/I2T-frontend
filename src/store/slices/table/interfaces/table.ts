@@ -38,6 +38,32 @@ export interface TableInstance {
   compliance?: any;
 }
 
+export interface GraphNode {
+  label: string;
+  kind: string;
+  datatype: string;
+  role: string;
+  metadata?: string;
+  types: any[];
+  properties: any[];
+  values: string[];
+}
+
+export interface GraphLink {
+  id: string;
+  source: any;
+  target: any;
+  label: string;
+  propID: string;
+  curvature?: number;
+}
+
+export interface GraphMetric {
+  name: string;
+  value: any;
+  description: string;
+}
+
 /**
  * Table UI state.
  */
@@ -49,6 +75,13 @@ export interface TableUIState {
   openModificationDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
+  showLinkLabels: boolean;
+  currentGraphSnapshot: string;
+  currentGraphData: {
+    nodes: GraphNode[];
+    links: GraphLink[];
+  } | null;
+  currentMetrics: GraphMetric[] | null;
   openComplianceStatusDialog: boolean;
   openAutoAnnotationDialog: boolean;
   openMetadataColumnDialog: boolean;

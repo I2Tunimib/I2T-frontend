@@ -7,19 +7,17 @@ import {
 } from "@store/slices/table/table.selectors";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
-import { updateUI } from "@store/slices/table/table.slice";
 import datasetAPI from "@services/api/datasets";
 import {
   FC,
   useCallback,
   useEffect,
-  useState,
-  useLayoutEffect,
   useRef,
 } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { LinearProgress, Stack } from "@mui/material";
 import {
+  updateUI,
   restoreInitialState,
   updateCurrentTable,
 } from "@store/slices/table/table.slice";
@@ -208,6 +206,12 @@ const Viewer: FC<unknown> = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (view && ALLOWED_QUERY.includes(view)) {
+      dispatch(updateUI({ view: view as "table" | "graph" | "raw" }));
+    }
+  }, [view, dispatch]);
 
   const Switch = useCallback(() => {
     if (view) {

@@ -131,6 +131,14 @@ const CONFIG: AppConfig = {
           },
         },
         {
+          path: "/dataset/:datasetId/table/:tableId/export?format=report_html",
+          name: "HTML Schema Report",
+          params: {
+            extension: "html",
+            postDownload: (data: any) => data,
+          },
+        },
+        {
           path: "/dataset/:datasetId/table/:tableId/export?format=w3c",
           name: "JSON (W3C Compliant)",
           params: {
