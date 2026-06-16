@@ -50,6 +50,9 @@ export type ApiConfig = {
     ADD_TABLE_EDITOR: Endpoint;
     REMOVE_TABLE_EDITOR: Endpoint;
     SET_TABLE_VISIBILITY: Endpoint;
+    // Table locks
+    ACQUIRE_TABLE_LOCK: Endpoint;
+    RELEASE_TABLE_LOCK: Endpoint;
     // Users
     SEARCH_USERS: Endpoint;
   };
@@ -238,6 +241,9 @@ const CONFIG: AppConfig = {
       SET_TABLE_VISIBILITY: {
         path: "/dataset/:datasetId/table/:tableId/acl/visibility",
       },
+      // Table locks
+      ACQUIRE_TABLE_LOCK: { path: "/dataset/lock/:tableId/acquire" },
+      RELEASE_TABLE_LOCK: { path: "/dataset/lock/:tableId/release" },
       // Users search
       SEARCH_USERS: { path: "/auth/users?q=:query" },
     },

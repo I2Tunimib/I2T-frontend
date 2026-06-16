@@ -71,7 +71,6 @@ const Viewer: FC<unknown> = () => {
 
   useEffect(() => {
     if (tableId && datasetId) {
-      // redirect for parameters not allowed
       if (!view && ALLOWED_QUERY.indexOf(view) === -1) {
         history.push(`/datasets/${datasetId}/tables/${tableId}?view=table`);
       }
@@ -83,8 +82,9 @@ const Viewer: FC<unknown> = () => {
 
     let cancelled = false;
 
-    const getDatasetPermissions = async () => {
+    const checkPermissionsAndAcquireLock = async () => {
       try {
+        // 1. Determine if this user has edit rights (ACL check)
         const response = await datasetAPI.getDatasetInfo({ datasetId });
         const dataset = response.data;
         const currentUserId = auth.user?.id;
@@ -95,66 +95,80 @@ const Viewer: FC<unknown> = () => {
           currentUserId !== undefined &&
           String(dataset.userId) === uid;
 
-        // Dataset owner always has full edit access
-        if (isOwner) {
-          if (!cancelled)
-            dispatch(updateUI({ settings: { isViewOnly: false } }));
-          return;
-        }
-
         const isDatasetEditor =
           dataset &&
           Array.isArray(dataset.editors) &&
           currentUserId !== undefined &&
           dataset.editors.map(String).includes(uid);
 
+        // Owner always has dataset-level edit rights; also respect visibility/editors
         const datasetCanEdit = Boolean(
-          dataset && (dataset.visibility === "public" || isDatasetEditor),
+          dataset &&
+          (isOwner || dataset.visibility === "public" || isDatasetEditor),
         );
 
-        // Check table-level ACL to apply the most-restrictive rule
         let canEdit = datasetCanEdit;
         try {
           const tableResp = await datasetAPI.getTableAcl(datasetId, tableId);
           const table = tableResp.data as any;
           if (table.visibility === "private") {
-            // Table is private: only explicit table editors can edit
             const isTableEditor =
               Array.isArray(table.editors) &&
               table.editors.map(String).includes(uid);
             canEdit = datasetCanEdit && isTableEditor;
           }
-          // null (inherit) or "public": dataset-level permission already applies
         } catch {
-          // If table ACL is unavailable, fall back to dataset-level
+          // fall back to dataset-level
         }
 
-        if (!cancelled) {
-          dispatch(updateUI({ settings: { isViewOnly: !canEdit } }));
+        // 2. No edit rights → view only, done
+        if (!canEdit) {
+          if (!cancelled)
+            dispatch(updateUI({ settings: { isViewOnly: true } }));
+          return;
         }
-      } catch (error) {
+
+        // 3. Has edit rights → MUST acquire the lock (including owners)
+        //    The lock is the single source of truth for concurrent editing.
+        const lockResponse = await datasetAPI.acquireTableLock(tableId);
         if (!cancelled) {
-          dispatch(updateUI({ settings: { isViewOnly: true } }));
+          if (lockResponse.data?.acquired === true) {
+            dispatch(updateUI({ settings: { isViewOnly: false } }));
+          } else {
+            // Lock is held by someone else
+            dispatch(updateUI({ settings: { isViewOnly: true } }));
+          }
         }
+      } catch {
+        // Any failure (network, lock error) → safe default is view-only
+        if (!cancelled) dispatch(updateUI({ settings: { isViewOnly: true } }));
       }
     };
 
-    getDatasetPermissions();
+    checkPermissionsAndAcquireLock();
 
     return () => {
       cancelled = true;
     };
   }, [datasetId, tableId, auth.user?.id, auth.loggedIn, dispatch]);
 
+  // Release lock when leaving the table
+  useEffect(() => {
+    return () => {
+      if (tableId) {
+        datasetAPI.releaseTableLock(tableId).catch(() => {});
+      }
+    };
+  }, [tableId]);
+
   useEffect(() => {
     if (tableId && datasetId) {
-      // dispatch(restoreInitialState());
       dispatch(getTable({ tableId, datasetId }))
         .unwrap()
         .then(() => {
           dispatch(getDependencies({ tableId, datasetId }));
         })
-        .catch((err) => history.push("/404"));
+        .catch(() => history.push("/404"));
     }
   }, [tableId, datasetId]);
 
@@ -163,10 +177,7 @@ const Viewer: FC<unknown> = () => {
     if (!socket || !datasetId || !tableId) return;
 
     const handleComplianceDone = (data: any) => {
-      // Check if this event is for the current table
-      if (data.datasetId !== datasetId || data.tableId !== tableId) {
-        return;
-      }
+      if (data.datasetId !== datasetId || data.tableId !== tableId) return;
 
       if (refSnack.current) {
         closeSnackbar(refSnack.current);
@@ -177,22 +188,17 @@ const Viewer: FC<unknown> = () => {
         enqueueSnackbar("GDPR compliance check completed successfully!", {
           variant: "success",
         });
-
-        // Update the table with the new compliance data
         dispatch(updateCurrentTable(data.table));
       } else if (data.status === "ERROR") {
         enqueueSnackbar(
           data.error || "GDPR compliance check failed. Please try again.",
           { variant: "error" },
         );
-
-        // Update status to ERROR
         dispatch(updateCurrentTable({ complianceStatus: "ERROR" }));
       }
     };
 
     socket.on("compliance-done", handleComplianceDone);
-
     return () => {
       socket.off("compliance-done", handleComplianceDone);
     };
@@ -220,10 +226,7 @@ const Viewer: FC<unknown> = () => {
           <span>{message}</span>
           <LoaderAnnoation />
         </Stack>,
-        {
-          persist: true,
-          variant: "info",
-        },
+        { persist: true, variant: "info" },
       );
     }
   }, [currentTable]);

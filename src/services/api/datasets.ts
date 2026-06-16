@@ -282,6 +282,20 @@ const datasetAPI = {
       { visibility },
       { headers: { ...getAuthHeader() } },
     ),
+
+  acquireTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({ endpoint: "ACQUIRE_TABLE_LOCK", paramsValue: { tableId } }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  releaseTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({ endpoint: "RELEASE_TABLE_LOCK", paramsValue: { tableId } }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
 };
 
 export default datasetAPI;

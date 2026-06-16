@@ -28,6 +28,7 @@ import {
   selectSelectedColumnCellsIds,
   selectCurrentTable,
   selectSettings,
+  selectIsViewOnly,
 } from "@store/slices/table/table.selectors";
 import { useHistory, useParams } from "react-router-dom";
 import { saveTable } from "@store/slices/table/table.thunk";
@@ -45,6 +46,7 @@ import {
 } from "../Menus/ContextMenus";
 import SubToolbar from "../SubToolbar";
 import DependenciesPanel from "../DependenciesPanel";
+import { Alert } from "@mui/material";
 
 interface MenuState {
   status: Record<string, boolean>;
@@ -90,6 +92,7 @@ const TableViewer = () => {
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const settings = useAppSelector(selectSettings);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
   const columnVisibilityRedux = useAppSelector(
     (state) => state.table.ui.columnVisibility,
   );
@@ -386,6 +389,12 @@ const TableViewer = () => {
         onTogglePanel={togglePanel}
         isPanelOpen={isPanelOpen}
       />
+      {isViewOnly && (
+        <Alert severity="warning" sx={{ mb: 0, borderRadius: 0 }}>
+          This table is being edited by another user. You are viewing in
+          read-only mode.
+        </Alert>
+      )}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div
           className={clsx(styles.TableContainer, {
