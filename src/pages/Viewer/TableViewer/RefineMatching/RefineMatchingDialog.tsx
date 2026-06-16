@@ -61,7 +61,7 @@ const RefineMatchingDialog: FC<RefineMatchingProps> = ({
       updateUI({
         openHelpDialog: true,
         helpStart: "tutorial",
-        tutorialStep: 20
+        tutorialStep: 21
       })
     );
     handleClose();

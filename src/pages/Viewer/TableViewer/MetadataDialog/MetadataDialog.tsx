@@ -819,7 +819,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
                   updateUI({
                     openHelpDialog: true,
                     helpStart: "tutorial",
-                    tutorialStep: 19,
+                    tutorialStep: cell?.annotationMeta?.annotated ? 20 : 17,
                   }),
                 )
               }

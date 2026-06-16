@@ -30,7 +30,8 @@ import {
   updateColumnRole,
   updateUI,
 } from "@store/slices/table/table.slice";
-import { ConfirmationDialog } from "@components/core";
+import { ConfirmationDialog, IconButtonTooltip } from "@components/core";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import TypeTab from "./TypeTab";
 import PropertyTab from "./PropertyTab";
 
@@ -353,6 +354,20 @@ const Content = () => {
               />
             </>
           )}
+          <IconButtonTooltip
+            aria-label="open-metadata-column-tutorial"
+            tooltipText="Help"
+            onClick={() =>
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "tutorial",
+                  tutorialStep: 12,
+                }),
+              )
+            }
+            Icon={HelpOutlineRoundedIcon}
+          />
         </Stack>
       </Stack>
       <Tabs

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { FC, useEffect, useRef, useState, forwardRef, Ref, ReactElement } from "react";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Dialog,
@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { HelpOutlineRounded } from "@mui/icons-material";
 import { TransitionProps as TP } from "@mui/material/transitions";
-import { forwardRef, Ref, ReactElement } from "react";
 import { SquaredBox } from "@components/core";
 import DynamicForm from "@components/core/DynamicForm/DynamicForm";
 import { updateUI } from "@store/slices/table/table.slice";
@@ -80,15 +79,6 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
   // promise refs for aborting
   const reconcileReqRef = useRef<any>(null);
 
-  useEffect(() => {
-    // build grouped services depending on mode
-    if (mode === "reconcile") buildReconciliatorGroups();
-    else buildSimpleGroups();
-    // reset selections when mode changes
-    setSelectedGroup(null);
-    setCurrentService(null);
-  }, [mode, reconciliators, modifiers, extenders]);
-
   function buildReconciliatorGroups() {
     const map = new Map<string, Reconciliator[]>();
     const names = new Set<string>();
@@ -126,6 +116,15 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
     setGrouped(groupedMap);
     setUniqueGroups(Array.from(groupedMap.keys()));
   }
+
+  useEffect(() => {
+    // build grouped services depending on mode
+    if (mode === "reconcile") buildReconciliatorGroups();
+    else buildSimpleGroups();
+    // reset selections when mode changes
+    setSelectedGroup(null);
+    setCurrentService(null);
+  }, [mode, reconciliators, modifiers, extenders]);
 
   const handleGroupChange = (e: SelectChangeEvent<string>) => {
     setSelectedGroup(e.target.value || null);
@@ -172,15 +171,22 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
             variant: "info",
             autoHideDuration: 8000,
             action: (key) => (
-              <button
-                style={{ color: "#fff", fontWeight: "bold" }}
+              <IconButton
+                size="small"
+                sx={{ color: "#fff", fontWeight: "bold" }}
                 onClick={() => {
-                  dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 15 }));
+                  dispatch(
+                    updateUI({
+                      openHelpDialog: true,
+                      helpStart: "tutorial",
+                      tutorialStep: 18,
+                    }),
+                  );
                   closeSnackbar(key);
                 }}
               >
-                HERE
-              </button>
+                <HelpOutlineRounded />
+              </IconButton>
             ),
           });
         })
@@ -266,7 +272,7 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
         <IconButton
           sx={{ color: "rgba(0, 0, 0, 0.54)", marginRight: "20px" }}
           onClick={() => {
-            const tutorialStep = mode === "reconcile" ? 11 : mode === "modify" ? 10 : 19;
+            const tutorialStep = mode === "reconcile" ? 16 : mode === "modify" ? 13 : 22;
             dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep }));
           }}
         >
@@ -292,7 +298,18 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
         <Stack gap="10px" mt={1}>
           {mode === "reconcile" ? (
             <FormControl className="field">
-              <Select value={selectedGroup || ""} onChange={handleGroupChange} displayEmpty variant="outlined" MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }} renderValue={(selected) => (selected ? selected : <em style={{ color: "rgba(0,0,0,0.38)" }}>Choose a service group...</em>)}>
+              <Select
+                value={selectedGroup || ""}
+                onChange={handleGroupChange}
+                displayEmpty
+                variant="outlined"
+                MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }}
+                renderValue={(selected) => selected || (
+                  <em style={{ color: "rgba(0,0,0,0.38)" }}>
+                    Choose a service group...
+                  </em>
+                )}
+              >
                 <MenuItem disabled value="">
                   <em>Choose a service group...</em>
                 </MenuItem>
@@ -305,11 +322,29 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
             </FormControl>
           ) : (
             <FormControl className="field">
-              <Select value={currentService ? currentService.id : ""} onChange={handleSimpleServiceSelect} displayEmpty variant="outlined" MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }} renderValue={(selected) => {
-                if (!selected) return <em style={{ color: "rgba(0,0,0,0.38)" }}>Choose a service...</em>;
-                const sel = uniqueServices.find((s) => s.id === selected);
-                return sel ? sel.name : "";
-              }}>
+              <Select
+                value={currentService ? currentService.id : ""}
+                onChange={handleSimpleServiceSelect}
+                displayEmpty
+                variant="outlined"
+                MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }}
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <em style={{ color: "rgba(0,0,0,0.38)" }}>
+                        Choose {mode === "reconcile" ? "a reconciliation" : mode === "modify" ? "a modification" : "an extension"} service...
+                      </em>
+                    );
+                  }
+                  const sel = uniqueServices.find((s) => s.id === selected);
+                  return sel ? sel.name : "";
+                }}
+              >
+                <MenuItem disabled value="">
+                  <em>
+                    Choose {mode === "reconcile" ? "a reconciliation" : mode === "modify" ? "a modification" : "an extension"} service...
+                  </em>
+                </MenuItem>
                 {uniqueServices.map((svc) => (
                   <MenuItem key={svc.id} value={svc.id} onClick={() => setCurrentService(svc)}>
                     {svc.name}
@@ -321,6 +356,9 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
 
           {mode === "reconcile" && (
             <FormControl className="field" disabled={!selectedGroup}>
+              <DialogContentText paddingTop="8px" paddingBottom="12px">
+                Select a specific service of the selected group:
+              </DialogContentText>
               <Select value={(currentService && (currentService as any).id) || ""} onChange={handleServiceChange} displayEmpty variant="outlined" MenuProps={{ PaperProps: { style: { maxHeight: "400px" } } }} renderValue={(selected) => (selected ? (servicesForSelectedGroup.find((s: any) => s.id === selected)?.name ?? "") : <em style={{ color: "rgba(0,0,0,0.38)" }}>Choose a reconciliation service...</em>)}>
                 <MenuItem disabled value="">
                   <em>Choose a reconciliation service...</em>

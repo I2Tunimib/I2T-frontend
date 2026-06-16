@@ -148,6 +148,10 @@ const initialState: TableState = {
     metadataColumnDialogColId: null,
     metadataColumnDialogInitialTab: 0,
     openExportDialog: false,
+    showLinkLabels: false,
+    currentGraphSnapshot: "",
+    currentGraphData: null,
+    currentMetrics: null,
     openComplianceStatusDialog: false,
     openAutoAnnotationDialog: false,
     openHelpDialog: false,
@@ -2562,22 +2566,71 @@ export const tableSlice = createSliceWithRequests({
               updateNumberOfReconciliatedCells(draft);
               //add additional meta if needed (up to now only properties)
               if (originalColMeta && originalColMeta.originalColName) {
-                if (
-                  draft.entities.columns.byId[originalColMeta.originalColName]
-                    .metadata[0].property
-                ) {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = [
-                    ...draft.entities.columns.byId[
-                      originalColMeta.originalColName
-                    ].metadata[0].property,
-                    ...originalColMeta.properties,
-                  ];
-                } else {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = originalColMeta.properties;
+                const mainColId = originalColMeta.originalColName;
+                const columnToUpdate = draft.entities.columns.byId[mainColId];
+
+                if (columnToUpdate) {
+                  if (!columnToUpdate.context) {
+                    columnToUpdate.context = {};
+                  }
+
+                  if (!columnToUpdate.context.wd) {
+                    columnToUpdate.context.wd = {
+                      reconciliated: 0,
+                      total: 0,
+                      uri: 'https://www.wikidata.org/wiki/Property:',
+                    };
+                  }
+
+                  if (columnToUpdate.metadata && columnToUpdate.metadata.length > 0) {
+                    if (originalColMeta.types && originalColMeta.types.length > 0) {
+                      if (!columnToUpdate.metadata[0].type) {
+                        columnToUpdate.metadata[0].type = [];
+                      }
+
+                      const addedTypes = originalColMeta.types.map((typeMeta: any) => {
+                        const cleanTypeId = typeMeta.id.includes(':') ? typeMeta.id.split(':')[1] : typeMeta.id;
+
+                        return {
+                          ...typeMeta,
+                          id: typeMeta.id,
+                          name: typeMeta.name,
+                          uri: `https://www.wikidata.org/wiki/${cleanTypeId}`
+                        };
+                      });
+
+                      addedTypes.forEach((newType) => {
+                        const typeExists = columnToUpdate.metadata[0].type.some((t: any) => t.id === newType.id);
+                        if (!typeExists) {
+                          columnToUpdate.metadata[0].type.push(newType);
+                        }
+                      });
+                    }
+                  }
+
+                  if (!columnToUpdate.metadata[0].property) {
+                    columnToUpdate.metadata[0].property = [];
+                  }
+
+                  const addedProperties = originalColMeta.properties.map((prop: any) => {
+                    console.log("prop", prop);
+                    const cleanId = prop.id.includes(':') ? prop.id.split(':')[1] : prop.id;
+
+                    return {
+                      ...prop,
+                      id: prop.id,
+                      uri: `https://www.wikidata.org/wiki/Property:${cleanId}`,
+                    };
+                  });
+
+                  addedProperties.forEach((newProp) => {
+                    const propertyExists = columnToUpdate.metadata[0].property.some(
+                      (p: any) => p.id === newProp.id && p.obj === newProp.obj
+                    );
+                    if (!propertyExists) {
+                      columnToUpdate.metadata[0].property.push(newProp);
+                    }
+                  });
                 }
               }
             },

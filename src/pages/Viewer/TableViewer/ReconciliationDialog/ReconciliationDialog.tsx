@@ -246,7 +246,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                     updateUI({
                       openHelpDialog: true,
                       helpStart: "tutorial",
-                      tutorialStep: 17,
+                      tutorialStep: 18,
                     }),
                   );
                   closeSnackbar(key);
@@ -301,7 +301,7 @@ const ReconciliateDialog: FC<ReconciliationDialogProps> = ({
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "tutorial",
-                  tutorialStep: 12,
+                  tutorialStep: 16,
                 }),
               );
             }}
