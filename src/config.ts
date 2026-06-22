@@ -28,6 +28,7 @@ export type ApiConfig = {
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
     COMPLIANCE: Endpoint;
+    DOWNLOAD_COMPLIANCE_REPORT: Endpoint;
     EXPORT: Endpoint[];
     AUTH_SIGNIN: Endpoint;
     AUTH_SIGNUP: Endpoint;
@@ -117,6 +118,9 @@ const CONFIG: AppConfig = {
       ],
       COMPLIANCE: {
         path: "/dataset/:datasetId/table/:tableId/compliance",
+      },
+      DOWNLOAD_COMPLIANCE_REPORT: {
+        path: "/dataset/:datasetId/table/:tableId/compliance/:reportIndex",
       },
       GET_DEPENDENCIES: {
         path: "/dataset/:datasetId/table/:tableId/dependencies",

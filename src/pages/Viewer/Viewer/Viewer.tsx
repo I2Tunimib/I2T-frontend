@@ -186,7 +186,12 @@ const Viewer: FC<unknown> = () => {
         enqueueSnackbar("GDPR compliance check completed successfully!", {
           variant: "success",
         });
-        dispatch(updateCurrentTable(data.table));
+        dispatch(
+          updateCurrentTable({
+            complianceStatus: "DONE",
+            complianceReports: data.complianceReports,
+          })
+        );
       } else if (data.status === "ERROR") {
         enqueueSnackbar(
           data.error || "GDPR compliance check failed. Please try again.",

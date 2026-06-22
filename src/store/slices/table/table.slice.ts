@@ -2474,9 +2474,10 @@ export const tableSlice = createSliceWithRequests({
         },
       )
       .addCase(tableCompliance.fulfilled, (state, action) => {
-        // Don't set to DONE here - wait for WebSocket event
-        // The API only confirms the job started, not that it's complete
-        state.entities.tableInstance.complianceStatus = "PENDING";
+        // Only set PENDING if the socket event hasn't already resolved it
+        if (state.entities.tableInstance.complianceStatus !== "DONE") {
+          state.entities.tableInstance.complianceStatus = "PENDING";
+        }
       })
       .addCase(tableCompliance.pending, (state) => {
         state.entities.tableInstance.complianceStatus = "PENDING";

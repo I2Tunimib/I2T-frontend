@@ -89,20 +89,17 @@ if (!rootElement) throw new Error('Root element not found');
 const root = ReactDOM.createRoot(rootElement);
 
 root.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <StyledEngineProvider injectFirst>
-          <ThemeProvider theme={theme}>
-            <SnackbarProvider maxSnack={3}>
-              <SocketIoProvider>
-                <App />
-              </SocketIoProvider>
-            </SnackbarProvider>
-          </ThemeProvider>
-        </StyledEngineProvider>
-      </BrowserRouter>
-    </Provider>
-  </React.StrictMode>
-
+  <Provider store={store}>
+    <BrowserRouter>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <SnackbarProvider maxSnack={3}>
+            <SocketIoProvider>
+              <App />
+            </SocketIoProvider>
+          </SnackbarProvider>
+        </ThemeProvider>
+      </StyledEngineProvider>
+    </BrowserRouter>
+  </Provider>
 );

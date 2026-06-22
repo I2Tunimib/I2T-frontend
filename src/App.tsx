@@ -29,14 +29,22 @@ declare global {
  * after a dev-server restart) and responds with a hard page reload so the
  * browser fetches fresh chunks instead of crashing into the catch-all redirect.
  */
+const CHUNK_RELOAD_KEY = "chunkErrorReloaded";
+
 class ChunkErrorBoundary extends Component<
   { children: React.ReactNode },
-  { reloading: boolean }
+  { crashed: boolean }
 > {
-  state = { reloading: false };
+  state = { crashed: false };
+
+  // Clear the reload flag once we mount successfully so future dev-server
+  // restarts still get one retry.
+  componentDidMount() {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+  }
 
   static getDerivedStateFromError() {
-    return { reloading: true };
+    return { crashed: true };
   }
 
   componentDidCatch(error: Error) {
@@ -45,18 +53,17 @@ class ChunkErrorBoundary extends Component<
       msg.includes("dynamically imported module") ||
       msg.includes("Failed to fetch") ||
       msg.includes("error loading");
-    if (isChunkError) {
-      // Full reload fetches fresh chunk hashes from the Vite dev server.
+    if (isChunkError && !sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+      // First failure — reload once hoping Vite serves fresh chunks.
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
       window.location.reload();
-    } else {
-      // Non-chunk error — don't reload, just let it surface.
-      this.setState({ reloading: false });
     }
+    // Otherwise (already reloaded, or non-chunk error): leave crashed=true
+    // so we render nothing instead of re-mounting the broken subtree.
   }
 
   render() {
-    // While reloading, render nothing (the page is about to refresh anyway).
-    if (this.state.reloading) return null;
+    if (this.state.crashed) return null;
     return this.props.children;
   }
 }

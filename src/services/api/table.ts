@@ -197,6 +197,21 @@ const tableAPI = {
       },
     );
   },
+  downloadComplianceReport: (params: Record<string, string | number> = {}, format: "json" | "md" = "json") => {
+    const url = apiEndpoint({
+      endpoint: "DOWNLOAD_COMPLIANCE_REPORT",
+      paramsValue: { ...params },
+    });
+    return apiClient.get<Blob>(
+      `${url}?format=${format}`,
+      {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    );
+  },
   getDependencies: (params: Record<string, string | number> = {}) => {
     return apiClient.get<any>(
       apiEndpoint({

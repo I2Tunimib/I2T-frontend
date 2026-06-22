@@ -72,7 +72,7 @@ export interface TableInstance {
   // Display properties (computed by backend)
   completion?: { total: number; value: number };
   headerTypeMatching?: { total: number; value: number };
-  nProperties?: number;
+  nProperties?: number | string;
   // ACL fields (populated from API)
   visibility?: "private" | "public" | null;
   viewers?: string[];
