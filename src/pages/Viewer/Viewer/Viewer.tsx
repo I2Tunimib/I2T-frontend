@@ -8,12 +8,7 @@ import {
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
 import datasetAPI from "@services/api/datasets";
-import {
-  FC,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+import { FC, useCallback, useEffect, useRef } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { LinearProgress, Stack } from "@mui/material";
 import {
@@ -104,12 +99,11 @@ const Viewer: FC<unknown> = () => {
           dataset &&
           (isOwner || dataset.visibility === "public" || isDatasetEditor),
         );
-
         let canEdit = datasetCanEdit;
         try {
           const tableResp = await datasetAPI.getTableAcl(datasetId, tableId);
           const table = tableResp.data as any;
-          if (table.visibility === "private") {
+          if (table.visibility === "private" && isOwner === false) {
             const isTableEditor =
               Array.isArray(table.editors) &&
               table.editors.map(String).includes(uid);
@@ -121,8 +115,7 @@ const Viewer: FC<unknown> = () => {
 
         // 2. No edit rights → view only, done
         if (!canEdit) {
-          if (!cancelled)
-            dispatch(updateUI({ settings: { isViewOnly: true } }));
+          dispatch(updateUI({ settings: { isViewOnly: true } }));
           return;
         }
 
@@ -190,7 +183,7 @@ const Viewer: FC<unknown> = () => {
           updateCurrentTable({
             complianceStatus: "DONE",
             complianceReports: data.complianceReports,
-          })
+          }),
         );
       } else if (data.status === "ERROR") {
         enqueueSnackbar(

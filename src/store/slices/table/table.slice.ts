@@ -308,9 +308,7 @@ export const tableSlice = createSliceWithRequests({
           label: col.label?.replace(/^\uFEFF/, "").trim() ?? cleanId,
           kind: result.kind_classification[cleanId] ?? col.kind ?? "unknown",
           datatype:
-            result.ner_classification[cleanId] ??
-            col.datatype ??
-            "unknown",
+            result.ner_classification[cleanId] ?? col.datatype ?? "unknown",
         };
       });
 
@@ -981,7 +979,8 @@ export const tableSlice = createSliceWithRequests({
             undoable,
             (draft) => {
               const columnToUpdate = getColumn(draft, colId);
-              const { id, match, name, uri, obj, subj, description, ...rest } = value;
+              const { id, match, name, uri, obj, subj, description, ...rest } =
+                value;
               const isMatching = match === "true";
 
               if (!columnToUpdate.context) {
@@ -1013,12 +1012,12 @@ export const tableSlice = createSliceWithRequests({
               ) {
                 if (isMatching) {
                   draft.entities.columns.byId[subj].metadata[0].property =
-                    draft.entities.columns.byId[
-                      subj
-                    ].metadata[0].property?.map((item) => ({
-                      ...item,
-                      match: true,
-                    }));
+                    draft.entities.columns.byId[subj].metadata[0].property?.map(
+                      (item) => ({
+                        ...item,
+                        match: true,
+                      }),
+                    );
                 }
               }
 
@@ -2284,13 +2283,17 @@ export const tableSlice = createSliceWithRequests({
 
                   if (previousContext) {
                     // decrement previous
-                    const safePreviousContext = column.context[previousContext] || createContext({});
+                    const safePreviousContext =
+                      column.context[previousContext] || createContext({});
                     const updatedContext = decrementContextCounters(
                       safePreviousContext,
                       cell,
                     );
 
-                    if (updatedContext.total <= 0 && updatedContext.reconciliated <= 0) {
+                    if (
+                      updatedContext.total <= 0 &&
+                      updatedContext.reconciliated <= 0
+                    ) {
                       delete column.context[previousContext];
                     } else {
                       column.context[previousContext] = updatedContext;
@@ -2307,7 +2310,7 @@ export const tableSlice = createSliceWithRequests({
                     const computedUri = resolveURI(effectiveReconciliator, {
                       id: metaId,
                       label: name,
-                      ...rest
+                      ...rest,
                     });
                     console.log("rest of the item", rest);
                     return {
@@ -2354,7 +2357,7 @@ export const tableSlice = createSliceWithRequests({
                         const computedUri = resolveURI(effectiveReconciliator, {
                           id: metaId,
                           label: name,
-                          ...rest
+                          ...rest,
                         });
                         return {
                           id,
@@ -2426,7 +2429,7 @@ export const tableSlice = createSliceWithRequests({
                         const computedUri = resolveURI(effectiveReconciliator, {
                           id: metaId,
                           label: name,
-                          ...rest
+                          ...rest,
                         });
                         return {
                           id,
@@ -2434,7 +2437,7 @@ export const tableSlice = createSliceWithRequests({
                             value: name as unknown as string,
                             uri: computedUri,
                             ...rest,
-                          }
+                          },
                         };
                       }),
                     };
@@ -2467,6 +2470,7 @@ export const tableSlice = createSliceWithRequests({
           if (mantisStatus) {
             state.entities.tableInstance.mantisStatus = mantisStatus;
           }
+          console.log("[debug locked table schema status]", schemaStatus);
           if (schemaStatus) {
             state.entities.tableInstance.schemaStatus = schemaStatus;
           }
@@ -2579,29 +2583,41 @@ export const tableSlice = createSliceWithRequests({
                     columnToUpdate.context.wd = {
                       reconciliated: 0,
                       total: 0,
-                      uri: 'https://www.wikidata.org/wiki/Property:',
+                      uri: "https://www.wikidata.org/wiki/Property:",
                     };
                   }
 
-                  if (columnToUpdate.metadata && columnToUpdate.metadata.length > 0) {
-                    if (originalColMeta.types && originalColMeta.types.length > 0) {
+                  if (
+                    columnToUpdate.metadata &&
+                    columnToUpdate.metadata.length > 0
+                  ) {
+                    if (
+                      originalColMeta.types &&
+                      originalColMeta.types.length > 0
+                    ) {
                       if (!columnToUpdate.metadata[0].type) {
                         columnToUpdate.metadata[0].type = [];
                       }
 
-                      const addedTypes = originalColMeta.types.map((typeMeta: any) => {
-                        const cleanTypeId = typeMeta.id.includes(':') ? typeMeta.id.split(':')[1] : typeMeta.id;
+                      const addedTypes = originalColMeta.types.map(
+                        (typeMeta: any) => {
+                          const cleanTypeId = typeMeta.id.includes(":")
+                            ? typeMeta.id.split(":")[1]
+                            : typeMeta.id;
 
-                        return {
-                          ...typeMeta,
-                          id: typeMeta.id,
-                          name: typeMeta.name,
-                          uri: `https://www.wikidata.org/wiki/${cleanTypeId}`
-                        };
-                      });
+                          return {
+                            ...typeMeta,
+                            id: typeMeta.id,
+                            name: typeMeta.name,
+                            uri: `https://www.wikidata.org/wiki/${cleanTypeId}`,
+                          };
+                        },
+                      );
 
                       addedTypes.forEach((newType) => {
-                        const typeExists = columnToUpdate.metadata[0].type.some((t: any) => t.id === newType.id);
+                        const typeExists = columnToUpdate.metadata[0].type.some(
+                          (t: any) => t.id === newType.id,
+                        );
                         if (!typeExists) {
                           columnToUpdate.metadata[0].type.push(newType);
                         }
@@ -2613,21 +2629,27 @@ export const tableSlice = createSliceWithRequests({
                     columnToUpdate.metadata[0].property = [];
                   }
 
-                  const addedProperties = originalColMeta.properties.map((prop: any) => {
-                    console.log("prop", prop);
-                    const cleanId = prop.id.includes(':') ? prop.id.split(':')[1] : prop.id;
+                  const addedProperties = originalColMeta.properties.map(
+                    (prop: any) => {
+                      console.log("prop", prop);
+                      const cleanId = prop.id.includes(":")
+                        ? prop.id.split(":")[1]
+                        : prop.id;
 
-                    return {
-                      ...prop,
-                      id: prop.id,
-                      uri: `https://www.wikidata.org/wiki/Property:${cleanId}`,
-                    };
-                  });
+                      return {
+                        ...prop,
+                        id: prop.id,
+                        uri: `https://www.wikidata.org/wiki/Property:${cleanId}`,
+                      };
+                    },
+                  );
 
                   addedProperties.forEach((newProp) => {
-                    const propertyExists = columnToUpdate.metadata[0].property.some(
-                      (p: any) => p.id === newProp.id && p.obj === newProp.obj
-                    );
+                    const propertyExists =
+                      columnToUpdate.metadata[0].property.some(
+                        (p: any) =>
+                          p.id === newProp.id && p.obj === newProp.obj,
+                      );
                     if (!propertyExists) {
                       columnToUpdate.metadata[0].property.push(newProp);
                     }
@@ -2782,7 +2804,8 @@ export const tableSlice = createSliceWithRequests({
                   // add rows
 
                   draft.entities.rows.allIds.forEach((rowId) => {
-                    const oldCell = draft.entities.rows.byId[rowId].cells[newColId];
+                    const oldCell =
+                      draft.entities.rows.byId[rowId].cells[newColId];
                     const incomingCellData = cells[rowId];
                     const newCell = createCell(rowId, newColId, cells[rowId]);
                     if (oldCell) {

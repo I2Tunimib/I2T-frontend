@@ -296,6 +296,16 @@ const datasetAPI = {
       {},
       { headers: { ...getAuthHeader() } },
     ),
+
+  forceReleaseTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "FORCE_RELEASE_TABLE_LOCK",
+        paramsValue: { tableId },
+      }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
 };
 
 export default datasetAPI;
