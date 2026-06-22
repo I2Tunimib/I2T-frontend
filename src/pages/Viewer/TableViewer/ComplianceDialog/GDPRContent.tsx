@@ -28,25 +28,33 @@ import {
   Download,
   Article,
 } from "@mui/icons-material";
-import {
-  selectCurrentTable,
-} from "@store/slices/table/table.selectors";
+import { selectCurrentTable } from "@store/slices/table/table.selectors";
 import { tableCompliance } from "@store/slices/table/table.thunk";
 import { FC, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ComplianceReport } from "@store/slices/table/interfaces/table";
 import tableAPI from "@services/api/table";
 
-interface GDPRContentProps {}
+interface GDPRContentProps {
+  tableId?: string;
+  datasetId?: string;
+}
 
-const GDPRContent: FC<GDPRContentProps> = () => {
+const GDPRContent: FC<GDPRContentProps> = ({
+  tableId: propTableId,
+  datasetId: propDatasetId,
+}) => {
   const [purpose, setPurpose] = useState<string>("General data processing");
   const [selectedReportIndex, setSelectedReportIndex] = useState<number>(-1);
   const dispatch = useAppDispatch();
-  const { datasetId, tableId } = useParams<{
+  const { datasetId: paramDatasetId, tableId: paramTableId } = useParams<{
     datasetId: string;
     tableId: string;
   }>();
+
+  // Use props if provided, otherwise fall back to URL params
+  const datasetId = propDatasetId || paramDatasetId;
+  const tableId = propTableId || paramTableId;
   const tableInstance = useAppSelector(selectCurrentTable);
 
   const handleConfirm = () => {
@@ -62,7 +70,8 @@ const GDPRContent: FC<GDPRContentProps> = () => {
 
   const handleDownload = async (format: "json" | "md") => {
     if (!datasetId || !tableId) return;
-    const reportIndex = selectedReportIndex >= 0 ? selectedReportIndex : "latest";
+    const reportIndex =
+      selectedReportIndex >= 0 ? selectedReportIndex : "latest";
     try {
       const response = await tableAPI.downloadComplianceReport(
         { datasetId, tableId, reportIndex },
@@ -80,7 +89,11 @@ const GDPRContent: FC<GDPRContentProps> = () => {
     }
   };
 
-  const { complianceStatus, complianceReports, compliance: legacyCompliance } = tableInstance;
+  const {
+    complianceStatus,
+    complianceReports,
+    compliance: legacyCompliance,
+  } = tableInstance;
 
   // Select the last report by default whenever reports change
   useEffect(() => {
@@ -91,12 +104,15 @@ const GDPRContent: FC<GDPRContentProps> = () => {
 
   // Resolve the active compliance result
   const activeReport: ComplianceReport | null =
-    complianceReports && complianceReports.length > 0 && selectedReportIndex >= 0
+    complianceReports &&
+    complianceReports.length > 0 &&
+    selectedReportIndex >= 0
       ? complianceReports[selectedReportIndex]
       : null;
 
   // Fall back to legacy compliance field for older tables
-  const complianceResult: any[] | null = activeReport?.result ?? legacyCompliance ?? null;
+  const complianceResult: any[] | null =
+    activeReport?.result ?? legacyCompliance ?? null;
 
   const tableInfo = complianceResult?.[0]?.table;
   const columnResults: { name: string; analysis: any }[] =
@@ -133,7 +149,8 @@ const GDPRContent: FC<GDPRContentProps> = () => {
   };
 
   const hasMultipleReports = complianceReports && complianceReports.length > 1;
-  const isResultAvailable = complianceStatus === "DONE" && complianceResult && tableInfo;
+  const isResultAvailable =
+    complianceStatus === "DONE" && complianceResult && tableInfo;
 
   return (
     <Box>
@@ -166,7 +183,12 @@ const GDPRContent: FC<GDPRContentProps> = () => {
 
       {isResultAvailable && (
         <Box sx={{ marginTop: 2 }}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ marginBottom: 2 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{ marginBottom: 2 }}
+          >
             {hasMultipleReports && (
               <FormControl fullWidth>
                 <InputLabel id="report-select-label">Report</InputLabel>
@@ -174,14 +196,21 @@ const GDPRContent: FC<GDPRContentProps> = () => {
                   labelId="report-select-label"
                   value={selectedReportIndex}
                   label="Report"
-                  onChange={(e) => setSelectedReportIndex(Number(e.target.value))}
+                  onChange={(e) =>
+                    setSelectedReportIndex(Number(e.target.value))
+                  }
                   size="small"
                 >
                   {complianceReports!.map((report, index) => (
                     <MenuItem key={index} value={index}>
                       {formatReportLabel(report, index)}
                       {index === complianceReports!.length - 1 && (
-                        <Chip label="latest" size="small" sx={{ ml: 1 }} color="primary" />
+                        <Chip
+                          label="latest"
+                          size="small"
+                          sx={{ ml: 1 }}
+                          color="primary"
+                        />
                       )}
                     </MenuItem>
                   ))}

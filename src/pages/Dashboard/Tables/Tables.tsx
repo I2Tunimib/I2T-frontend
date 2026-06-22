@@ -2,7 +2,10 @@ import React, { FC, useCallback, useEffect } from "react";
 import deferMounting from "@components/HOC";
 import { TableListView } from "@components/kit";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { ReadMoreRounded } from "@mui/icons-material";
+import {
+  ReadMoreRounded,
+  AssignmentTurnedInOutlined,
+} from "@mui/icons-material";
 import { Button, IconButton, LinearProgress, Stack } from "@mui/material";
 import { ID } from "@store/interfaces/store";
 import {
@@ -14,6 +17,8 @@ import { getTablesByDataset } from "@store/slices/datasets/datasets.thunk";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { Link, useParams } from "react-router-dom";
 import TableAclDialog from "@components/core/TableAclDialog/TableAclDialog";
+import ComplianceDialog from "@pages/Viewer/TableViewer/ComplianceDialog";
+import { updateUI, updateCurrentTable } from "@store/slices/table/table.slice";
 import globalStyles from "@styles/globals.module.scss";
 import { useTableCollection } from "../useTableCollection";
 
@@ -62,6 +67,25 @@ const Tables: FC<TablesProps> = ({ onSelectionChange }) => {
   const Actions = useCallback(
     ({ mediaMatch, row }: { mediaMatch: boolean; row: any }) => {
       const [aclOpen, setAclOpen] = React.useState(false);
+      const [complianceTableId, setComplianceTableId] = React.useState<
+        string | null
+      >(null);
+
+      const handleComplianceClick = () => {
+        setComplianceTableId(String(row.original.id));
+        // Update Redux store with the table info for compliance check
+        dispatch(
+          updateCurrentTable({
+            id: row.original.id,
+            name: row.original.name,
+            complianceStatus: row.original.complianceStatus,
+            complianceReports: row.original.complianceReports,
+            compliance: row.original.compliance,
+          }),
+        );
+        dispatch(updateUI({ openComplianceStatusDialog: true }));
+      };
+
       return (
         <>
           <Stack direction="row" gap="8px" className={globalStyles.Actions}>
@@ -94,6 +118,14 @@ const Tables: FC<TablesProps> = ({ onSelectionChange }) => {
                 Access
               </Button>
             )}
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handleComplianceClick}
+              startIcon={<AssignmentTurnedInOutlined />}
+            >
+              Compliance
+            </Button>
           </Stack>
           {isDatasetOwner && (
             <TableAclDialog
@@ -103,6 +135,12 @@ const Tables: FC<TablesProps> = ({ onSelectionChange }) => {
               tableId={String(row.original.id)}
               datasetVisibility={datasetVisibility}
               onChange={() => dispatch(getTablesByDataset({ datasetId }))}
+            />
+          )}
+          {complianceTableId && (
+            <ComplianceDialog
+              tableId={complianceTableId}
+              datasetId={String(datasetId)}
             />
           )}
         </>
