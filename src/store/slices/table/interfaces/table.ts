@@ -83,6 +83,7 @@ export interface TableUIState {
   } | null;
   currentMetrics: GraphMetric[] | null;
   openComplianceStatusDialog: boolean;
+  initialComplianceType: string;
   openAutoAnnotationDialog: boolean;
   openMetadataColumnDialog: boolean;
   metadataColumnDialogColId: string | null;

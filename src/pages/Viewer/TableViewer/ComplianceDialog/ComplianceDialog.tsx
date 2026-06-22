@@ -25,16 +25,20 @@ const ComplianceDialog: FC = () => {
   const [complianceType, setComplianceType] = useState<string>("");
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectComplianceDialogStatus);
+  const initialComplianceType = useAppSelector((state: any) => state.table.ui.initialComplianceType);
 
   const handleClose = () => {
     dispatch(updateUI({ openComplianceStatusDialog: false }));
   };
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setComplianceType(initialComplianceType || "");
+    } else {
       setComplianceType("");
+      dispatch(updateUI({ initialComplianceType: "" }));
     }
-  }, [isOpen]);
+  }, [isOpen, initialComplianceType, dispatch]);
 
   const handleTypeChange = (e: SelectChangeEvent<string>) => {
     setComplianceType(e.target.value);
