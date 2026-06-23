@@ -6,6 +6,8 @@ import {
   Stack,
   Typography,
   useMediaQuery,
+  ToggleButton,
+  ToggleButtonGroup
 } from "@mui/material";
 import { MainLayout } from "@components/layout";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
@@ -34,6 +36,8 @@ import {
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { Status as CompletionStatus } from "@store/slices/datasets/interfaces/datasets";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
+import ViewModuleRoundedIcon from "@mui/icons-material/ViewModuleRounded";
 import clsx from "clsx";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import { updateUI } from "@store/slices/datasets/datasets.slice";
@@ -64,6 +68,7 @@ const Dashboard: FC<any> = () => {
   const [selectedRows, setSelectedRows] = useState<SelectedRowsState | null>(
     null,
   );
+  const [viewType, setViewType] = useState<'list' | 'card'>('list');
   const dispatch = useAppDispatch();
   const { path, url } = useRouteMatch();
   const matches = useMediaQuery("(max-width:1365px)");
@@ -214,32 +219,71 @@ const Dashboard: FC<any> = () => {
               )}
           </div>
         </div>
-        {!currentDataset && API.ENDPOINTS.UPLOAD_DATASET && (
-          <Button
-            size="small"
-            component="label"
-            startIcon={<AddRoundedIcon />}
-            color="primary"
-            onClick={() =>
-              dispatch(updateUI({ uploadDatasetDialogOpen: true }))
-            }
-            variant="text"
-          >
-            New Dataset
-          </Button>
-        )}
-        {currentDataset && API.ENDPOINTS.UPLOAD_TABLE && (
-          <Button
-            size="small"
-            component="label"
-            startIcon={<AddRoundedIcon />}
-            color="primary"
-            onClick={() => dispatch(updateUI({ uploadTableDialogOpen: true }))}
-            variant="text"
-          >
-            New Table
-          </Button>
-        )}
+        <Stack direction="row" alignItems="center" gap="12px">
+          {!currentDataset && API.ENDPOINTS.UPLOAD_DATASET && (
+            <Button
+              size="small"
+              component="label"
+              startIcon={<AddRoundedIcon />}
+              color="primary"
+              onClick={() =>
+                dispatch(updateUI({ uploadDatasetDialogOpen: true }))
+              }
+              variant="outlined"
+            >
+              New Dataset
+            </Button>
+          )}
+          {currentDataset && API.ENDPOINTS.UPLOAD_TABLE && (
+            <Button
+              size="small"
+              component="label"
+              startIcon={<AddRoundedIcon />}
+              color="primary"
+              onClick={() => dispatch(updateUI({ uploadTableDialogOpen: true }))}
+              variant="outlined"
+            >
+              New Table
+            </Button>
+          )}
+          {currentDataset && (
+            <ToggleButtonGroup
+              value={viewType}
+              exclusive
+              onChange={(_, next) => next && setViewType(next)}
+              size="small"
+              aria-label="view type"
+              sx={{
+                height: "30px",
+                "& .MuiToggleButton-root": {
+                  color: "text.disabled",
+                  borderColor: "#94b3e4",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    backgroundColor: "rgba(27, 116, 228, 0.04)",
+                  },
+                  "&.Mui-selected": {
+                    color: "primary.main",
+                    borderColor: "primary.main",
+                    backgroundColor: "rgba(27, 116, 228, 0.08)",
+                    zIndex: 1,
+                    "&:hover": {
+                      borderColor: "primary.dark",
+                      backgroundColor: "#ecf0f3",
+                    }
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="list" aria-label="list view">
+                <ViewListRoundedIcon fontSize="small" />
+              </ToggleButton>
+              <ToggleButton value="card" aria-label="card view">
+                <ViewModuleRoundedIcon fontSize="small" />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          )}
+        </Stack>
       </div>
       <div className={styles.TableContainer}>
         <Switch>
@@ -248,7 +292,7 @@ const Dashboard: FC<any> = () => {
           </Route>
           <Route path={`${path}/:datasetId/tables`}>
             {loadingDatasets === false ? (
-              <Tables onSelectionChange={handleSelectedRowsChange} />
+              <Tables onSelectionChange={handleSelectedRowsChange} viewType={viewType} />
             ) : (
               <LinearProgress />
             )}

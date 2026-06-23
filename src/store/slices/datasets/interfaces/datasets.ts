@@ -51,6 +51,19 @@ export interface DatasetInstance {
   tables: ID[];
 }
 
+export interface TableGraphNode {
+  id: string;
+  label: string;
+  role: 'subject' | 'object' | string;
+  kind: 'literal' | 'entity' | string;
+}
+
+export interface TableGraphLink {
+  source: string;
+  target: string;
+  label?: string;
+}
+
 /**
  * A table instance.
  */
@@ -63,6 +76,10 @@ export interface TableInstance {
   nCols: number;
   nCells: number;
   nCellsReconciliated: number;
+  graphData?: {
+    nodes: TableGraphNode[];
+    links: TableGraphLink[];
+  }
 }
 
 export interface Status {

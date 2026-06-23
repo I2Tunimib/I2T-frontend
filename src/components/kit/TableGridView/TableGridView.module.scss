@@ -1,0 +1,72 @@
+.card {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  background-color: #ffffff;
+
+  &:hover {
+    transform: translateY(-2px);
+    background-color: #FFFFFF;
+    border-color: #1B74E4;
+  }
+}
+
+.cardAction {
+  display: flex;
+  height: 100%;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px;
+
+  &:last-child {
+    padding-bottom: 16px !important;
+  }
+}
+
+.headerContainer {
+  overflow: hidden;
+}
+
+.tableName {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.columnsIcon {
+  font-size: 16px;
+}
+
+.columnsBox {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 8px 12px;
+  height: 60px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.columnsText {
+  display: block;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.graphContainer {
+  height: 260px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  align-items: center;
+}
+
+.graphImage {
+  width: 100%;
+  object-fit: contain;
+}

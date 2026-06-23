@@ -66,8 +66,8 @@ export const CELL_COMPONENTS_TYPES: Record<CellComponent, CellComponentProps> = 
               <span>Value: {value}</span>
             </Stack>
           }
-          placement="left">
-          <Stack direction="row" gap="18px">
+          placement="right">
+          <Stack direction="row" gap="18px" sx={{ width: 'fit-content' }}>
             <Battery value={(value / total) * 100} />
           </Stack>
         </Tooltip>
