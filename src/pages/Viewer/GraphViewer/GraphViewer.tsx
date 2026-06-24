@@ -923,7 +923,7 @@ const GraphViewer: FC = () => {
                 ) : (
                   <div>
                     <Typography>
-                      <strong>Metadatas:</strong>
+                      <strong>Metadata:</strong>
                     </Typography>
                     <ul className={styles.List}>
                       {allProps.map((p: any, idx: number) => (

@@ -1,5 +1,6 @@
 import {
   Button,
+  Box,
   Dialog,
   DialogProps,
   InputLabel,
@@ -32,6 +33,9 @@ import {
 } from "@store/slices/table/table.slice";
 import { ConfirmationDialog, IconButtonTooltip } from "@components/core";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
+import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
+import PrivacyTipRoundedIcon from "@mui/icons-material/PrivacyTipRounded";
 import TypeTab from "./TypeTab";
 import PropertyTab from "./PropertyTab";
 
@@ -91,6 +95,8 @@ const Content = () => {
   };
   const initialTab = useAppSelector((state: any) => state.table.ui.metadataColumnDialogInitialTab);
   const [isInitialMount, setIsInitialMount] = useState(true);
+  const compliance = useAppSelector((state: any) => state.table.entities.tableInstance.compliance);
+  const complianceStatus = useAppSelector((state: any) => state.table.entities.tableInstance.complianceStatus);
   /**
    * Function used to remove the last edit of a specific type from the editsState array,
    * used in cases like updating the column type, where only the last
@@ -241,6 +247,58 @@ const Content = () => {
       setIsInitialMount(true);
     }
   }, [column]);
+
+  const currentColumnCompliance = (() => {
+    if (!compliance || complianceStatus !== "DONE" || !compliance.length || !currentColId) {
+      return null;
+    }
+    const columnResults = compliance.slice(1) || [];
+    const columnCompliance = columnResults.find((colResult: any) => {
+      const key = Object.keys(colResult)[0];
+      return key === currentColId;
+    });
+
+    if (columnCompliance) {
+      const key = Object.keys(columnCompliance)[0];
+      return columnCompliance[key];
+    }
+    return null;
+  })();
+
+  const getComplianceBoxConfig = (classification: string, action: string) => {
+    switch (classification) {
+      case "personalData":
+        return {
+          bgColor: "#ffebee",
+          borderColor: "#c62828",
+          textColor: "#b71c1c",
+          Icon: PrivacyTipRoundedIcon,
+        };
+      case "quasiIdentifiers":
+        return {
+          bgColor: "#fff3e0",
+          borderColor: "#ef6c00",
+          textColor: "#e65100",
+          Icon: SecurityRoundedIcon,
+        };
+      case "nonPersonalData":
+        return {
+          bgColor: "#e8f5e9",
+          borderColor: "#2e7d32",
+          textColor: "#1b5e20",
+          Icon: GavelRoundedIcon,
+        };
+      case "anonymousData":
+        return {
+          bgColor: "#e0f2f1",
+          borderColor: "#00695c",
+          textColor: "#004d40",
+          Icon: GavelRoundedIcon,
+        };
+      default:
+        return null;
+    }
+  };
 
   return (
     <Stack>
@@ -405,6 +463,62 @@ const Content = () => {
                 This column has not been reconciled yet.
               </Typography>
             )}
+            {complianceStatus === "DONE" && currentColumnCompliance && (() => {
+              const boxConfig = getComplianceBoxConfig(
+                currentColumnCompliance.classification,
+                currentColumnCompliance.action
+              );
+              if (!boxConfig) return null;
+              const { bgColor, borderColor, textColor, Icon } = boxConfig;
+
+              const isCompliant = currentColumnCompliance.action === "noChange";
+
+              return (
+                <Box
+                  sx={{
+                    padding: "16px",
+                    backgroundColor: bgColor,
+                    borderLeft: `4px solid ${borderColor}`,
+                    borderRadius: "4px",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1.5,
+                    marginRight: "16px",
+                    marginTop: "12px"
+                  }}
+                >
+                  <Icon sx={{ color: borderColor, marginTop: "2px" }} />
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight="bold" color={textColor}>
+                      GDPR Compliance Check
+                    </Typography>
+                    <Typography variant="body2">
+                      The column contains <i>{currentColumnCompliance.classification}</i> and is <i>{isCompliant ? "GDPR compliant" : "GDPR NON-compliant"}</i>.
+                      Check directly in the{" "}
+                      <Box
+                        component="span"
+                        onClick={() => {
+                          dispatch(updateUI({ openMetadataColumnDialog: false }));
+                          dispatch(updateUI({ initialComplianceType: "GDPR" }));
+                          dispatch(updateUI({ openComplianceStatusDialog: true }));
+                        }}
+                        sx={{
+                          fontStyle: "italic",
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                          "&:hover": {
+                            opacity: 0.8,
+                          },
+                        }}
+                      >
+                        GDPR Compliance Report
+                      </Box>
+                      .
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })()}
           </Stack>
         </Stack>
         <TabPanel value={value} index={0}>

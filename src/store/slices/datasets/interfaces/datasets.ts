@@ -56,6 +56,19 @@ export interface DatasetInstance {
   editors?: string[];
 }
 
+export interface TableGraphNode {
+  id: string;
+  label: string;
+  role: 'subject' | 'object' | string;
+  kind: 'literal' | 'entity' | string;
+}
+
+export interface TableGraphLink {
+  source: string;
+  target: string;
+  label?: string;
+}
+
 /**
  * A table instance.
  */
@@ -68,6 +81,10 @@ export interface TableInstance {
   nCols: number;
   nCells: number;
   nCellsReconciliated: number;
+  graphData?: {
+    nodes: TableGraphNode[];
+    links: TableGraphLink[];
+  }
   lastModifiedDate?: string;
   // Display properties (computed by backend)
   completion?: { total: number; value: number };

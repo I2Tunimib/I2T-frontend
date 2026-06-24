@@ -138,6 +138,21 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       return null;
     }, [compliance, complianceStatus, children]);
 
+    const getComplianceClassificationBadge = (classification: string) => {
+      switch (classification) {
+        case "personalData":
+          return { text: "PD", color: "crimson", label: "Personal Data" };
+        case "quasiIdentifiers":
+          return { text: "QI", color: "orange", label: "Quasi Identifier" };
+        case "nonPersonalData":
+          return { text: "NPD", color: "teal", label: "Non-Personal Data" };
+        case "anonymousData":
+          return { text: "AD", color: "green", label: "Anonymous Data" };
+        default:
+          return null;
+      }
+    };
+
     const {
       attributes,
       listeners,
@@ -537,30 +552,52 @@ Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
                           </Box>
                         );
 
+                        const classifBadge = getComplianceClassificationBadge(complianceInfo.classification);
                         return (
-                          <Tooltip title={tooltipContent} arrow placement="top">
-                            <Box
-                              component="span"
-                              sx={{ display: "inline-flex" }}
+                          <Stack direction="row" alignItems="center">
+                            <Tooltip title={tooltipContent} arrow placement="top">
+                              <Box
+                                component="span"
+                                sx={{ display: "inline-flex" }}
+                              >
+                                <ButtonShortcut
+                                  aria-label="compliance-badge"
+                                  text={
+                                    complianceInfo.action === "noChange"
+                                      ? "C"
+                                      : "C̸"
+                                  }
+                                  tooltipText=""
+                                  size="xs"
+                                  variant="flat"
+                                  color={
+                                    complianceInfo.action === "noChange"
+                                      ? "teal"
+                                      : "crimson"
+                                }
+                                />
+                              </Box>
+                            </Tooltip>
+                            <Tooltip
+                              title={`${classifBadge.label} (Confidence: ${(complianceInfo.score * 100).toFixed(0)}%)`}
+                              arrow
+                              placement="top"
                             >
-                              <ButtonShortcut
-                                aria-label="compliance-badge"
-                                text={
-                                  complianceInfo.action === "noChange"
-                                    ? "C"
-                                    : "C̸"
-                                }
-                                tooltipText=""
-                                size="xs"
-                                variant="flat"
-                                color={
-                                  complianceInfo.action === "noChange"
-                                    ? "teal"
-                                    : "crimson"
-                                }
-                              />
-                            </Box>
-                          </Tooltip>
+                              <Box
+                                component="span"
+                                sx={{ display: "inline-flex" }}
+                              >
+                                <ButtonShortcut
+                                  aria-label="compliance-classification"
+                                  text={classifBadge.text}
+                                  tooltipText=""
+                                  size="xs"
+                                  variant="flat"
+                                  color={classifBadge.color}
+                                />
+                              </Box>
+                            </Tooltip>
+                          </Stack>
                         );
                       })()}
                   </div>
