@@ -7,8 +7,8 @@ const SocketIoProvider: FC<{}> = ({ children }) => {
 
   useEffect(() => {
     const backend =
-      import.meta.env.VITE_BACKEND_API_URL ||
       import.meta.env.VITE_BACKEND_DOMAIN ||
+      import.meta.env.VITE_BACKEND_API_URL?.replace(/\/api\/?$/, "") ||
       "http://localhost:3003";
     // ensure no trailing slash
     const base = backend.replace(/\/+$/, "");

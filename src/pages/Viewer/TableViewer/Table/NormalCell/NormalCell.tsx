@@ -74,9 +74,17 @@ const NormalCell: FC<NormalCellProps> = ({
     return "warn";
   };
 
+  const safeLabel =
+    typeof label === "string"
+      ? label
+      : label && typeof label === "object"
+      ? label.value ?? label.label ?? JSON.stringify(label)
+      : String(label ?? "");
   const maxChars = columnSize > 200 ? Math.floor(columnSize / 7) : 50;
   const truncatedLabel =
-    label.length > maxChars ? label.slice(0, maxChars - 3) + "…" : label;
+    safeLabel.length > maxChars
+      ? safeLabel.slice(0, maxChars - 3) + "…"
+      : safeLabel;
 
   const getLabel = useCallback(() => {
     // Check if value and metadata exist before accessing

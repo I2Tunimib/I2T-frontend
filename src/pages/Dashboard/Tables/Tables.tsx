@@ -86,6 +86,22 @@ const Tables: FC<TablesProps> = ({
     initialState: { pagination: { pageSize: 4 } }
   });
 
+  const auth = useAppSelector(selectIsLoggedIn);
+  const currentUserId = auth?.user?.id;
+
+  // Get current dataset to check ownership
+  const { rows: datasetRows } = useTableCollection(selectDatasets);
+  const currentDataset = datasetRows.find(
+    (r: any) => String(r.id) === String(datasetId),
+  );
+  const isDatasetOwner =
+    currentUserId !== undefined &&
+    currentDataset !== undefined &&
+    String(currentUserId) === String((currentDataset as any).userId);
+  const datasetVisibility: "private" | "public" | undefined = (
+    currentDataset as any
+  )?.visibility;
+
   useEffect(() => {
     dispatch(getTablesByDataset({ datasetId }));
   }, [datasetId]);
@@ -98,7 +114,7 @@ const Tables: FC<TablesProps> = ({
     if (selectedRows.length === 0) {
       onSelectionChange(null);
     } else {
-      onSelectionChange({ kind: 'table', rows: selectedRows });
+      onSelectionChange({ kind: "table", rows: selectedRows });
     }
   };
 

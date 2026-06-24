@@ -220,6 +220,92 @@ const datasetAPI = {
       { headers: { ...getAuthHeader() } },
     );
   },
+
+  // Table ACL endpoints
+  getTableAcl: (datasetId: string, tableId: string) =>
+    apiClient.get(
+      apiEndpoint({
+        endpoint: "GET_TABLE_ACL",
+        paramsValue: { datasetId, tableId },
+      }),
+      { clearCacheEntry: true, headers: { ...getAuthHeader() } },
+    ),
+
+  addTableViewer: (datasetId: string, tableId: string, userId: string) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "ADD_TABLE_VIEWER",
+        paramsValue: { datasetId, tableId },
+      }),
+      { userId },
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  removeTableViewer: (datasetId: string, tableId: string, userId: string) =>
+    apiClient.delete(
+      apiEndpoint({
+        endpoint: "REMOVE_TABLE_VIEWER",
+        paramsValue: { datasetId, tableId },
+      }),
+      { data: { userId }, headers: { ...getAuthHeader() } },
+    ),
+
+  addTableEditor: (datasetId: string, tableId: string, userId: string) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "ADD_TABLE_EDITOR",
+        paramsValue: { datasetId, tableId },
+      }),
+      { userId },
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  removeTableEditor: (datasetId: string, tableId: string, userId: string) =>
+    apiClient.delete(
+      apiEndpoint({
+        endpoint: "REMOVE_TABLE_EDITOR",
+        paramsValue: { datasetId, tableId },
+      }),
+      { data: { userId }, headers: { ...getAuthHeader() } },
+    ),
+
+  setTableVisibility: (
+    datasetId: string,
+    tableId: string,
+    visibility: string | null,
+  ) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "SET_TABLE_VISIBILITY",
+        paramsValue: { datasetId, tableId },
+      }),
+      { visibility },
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  acquireTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({ endpoint: "ACQUIRE_TABLE_LOCK", paramsValue: { tableId } }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  releaseTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({ endpoint: "RELEASE_TABLE_LOCK", paramsValue: { tableId } }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  forceReleaseTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "FORCE_RELEASE_TABLE_LOCK",
+        paramsValue: { tableId },
+      }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
 };
 
 export default datasetAPI;

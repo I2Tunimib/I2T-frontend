@@ -23,7 +23,7 @@ import ListAltRoundedIcon from "@mui/icons-material/ListAltRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
-import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import { useAppSelector, useAppDispatch } from "@hooks/store";
 import { selectDependencies } from "@store/slices/table/table.selectors";
@@ -52,6 +52,7 @@ interface DependenciesPanelProps {
 }
 
 const DRAWER_DEFAULT_WIDTH_VW = 50;
+const DRAWER_DEFAULT_WIDTH_LIST_VW = 35;
 const DRAWER_MIN_WIDTH = 280;
 const DRAWER_MAX_WIDTH_VW = 90;
 const NODE_R = 16;
@@ -76,7 +77,7 @@ const OP_COLORS: Record<string, string> = {
   RECONCILIATION: "#2ecc71",
   EXTENSION: "#3498db",
   MODIFICATION: "#e67e22",
-  PROPAGATE_TYPE: "#9b59b6",
+  PROPAGATE_TYPE: "#1abc9c",
 };
 
 const OP_ABBREV: Record<string, string> = {
@@ -101,8 +102,7 @@ function darkenColor(hex: string, amount = 0.45): string {
 
 function opColor(op: DependencyOperation | undefined): string {
   if (!op) return "#1976d2";
-  const base = OP_COLORS[op.operationType] ?? "#888";
-  return op.consolidated ? darkenColor(base) : base;
+  return OP_COLORS[op.operationType] ?? "#888";
 }
 
 function opAbbrev(op: DependencyOperation | undefined): string {
@@ -386,17 +386,6 @@ const TreeView = ({
         ctx.fillText(col, node.x, lineY);
       }
 
-      // Dashed outer ring for consolidated (saved) nodes
-      if (!isRoot && op?.consolidated) {
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, r + 2.5, 0, 2 * Math.PI);
-        ctx.strokeStyle = "rgba(160, 160, 160, 0.75)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 2]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
       ctx.restore();
     },
     [opMap, highlightedNodes, hoveredNodeId],
@@ -427,9 +416,7 @@ const TreeView = ({
           if (n.id === "root") return "root";
           const op = opMap[n.id];
           const label = opLabel(op);
-          return op?.consolidated
-            ? `${label} [saved — cannot be removed]`
-            : label;
+          return label;
         }}
         nodeCanvasObjectMode={() => "replace"}
         nodeCanvasObject={paintNode}
@@ -442,12 +429,14 @@ const TreeView = ({
         enableNodeDrag={false}
         onNodeClick={(node: any) => {
           if (node.id === "root") return;
-          if (opMap[node.id]?.consolidated) return;
           onNodeDeleteRequest?.(node.id);
         }}
         onNodeHover={(node: any) => setHoveredNodeId(node ? node.id : null)}
         linkColor={(link: any) => {
           if (!isSupportLinkVisible(link)) return "transparent";
+          // Support links are drawn as dashed lines by linkCanvasObject;
+          // keep the default renderer invisible to avoid a solid underline.
+          if (link.support) return "transparent";
           if (highlightedNodes !== null) {
             const src =
               typeof link.source === "object" ? link.source.id : link.source;
@@ -457,7 +446,7 @@ const TreeView = ({
               return "rgba(180,180,180,0.1)";
             }
           }
-          return link.support ? SUPPORT_LINK_COLOR : LINK_COLOR;
+          return LINK_COLOR;
         }}
         linkWidth={(link: any) => (link.support ? 1 : 1.5)}
         linkDirectionalArrowLength={(link: any) =>
@@ -487,6 +476,7 @@ const TreeView = ({
           ctx.restore();
         }}
         backgroundColor="#fafafa"
+        maxZoom={2}
       />
     </Box>
   );
@@ -500,7 +490,7 @@ const OP_TYPE_LABEL: Record<string, string> = {
   RECONCILIATION: "Reconciliation",
   EXTENSION: "Extension",
   MODIFICATION: "Modification",
-  PROPAGATE_TYPE: "Propagate Type",
+  PROPAGATE_TYPE: "Propagate Annotation",
 };
 
 // Mirrors OP_COLORS used in the graph canvas exactly
@@ -508,7 +498,7 @@ const OP_CHIP_HEX: Record<string, string> = {
   RECONCILIATION: "#2ecc71",
   EXTENSION: "#3498db",
   MODIFICATION: "#e67e22",
-  PROPAGATE_TYPE: "#9b59b6",
+  PROPAGATE_TYPE: "#1abc9c",
 };
 
 function opChipSx(
@@ -547,8 +537,7 @@ const NodeCard = ({
   const isLeaf =
     (node.children?.length ?? 0) === 0 &&
     (node.supportChildren?.length ?? 0) === 0;
-  const isLeafMod = isLeaf && op?.operationType === "MODIFICATION";
-  const isConsolidated = op?.consolidated === true;
+  const isLeafMod = false;
 
   return (
     <Box className={styles.NodeCard}>
@@ -612,46 +601,31 @@ const NodeCard = ({
               )}
             </IconButton>
           )}
-          {!isRoot &&
-            onDelete &&
-            (isConsolidated ? (
-              <Tooltip title="Consolidated — committed before last save, cannot be removed">
-                <span>
-                  <IconButton
-                    size="small"
-                    disabled
-                    sx={{ p: 0.25, color: "text.disabled" }}
-                    aria-label="Consolidated operation"
-                  >
-                    <LockRoundedIcon sx={{ fontSize: 15 }} />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            ) : (
-              <Tooltip
-                title={
-                  isLeafMod
-                    ? "Modification leaf operations cannot be removed"
-                    : "Remove operation"
-                }
-              >
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={isLeafMod || isDeleting ? undefined : onDelete}
-                    disabled={isLeafMod || isDeleting}
-                    sx={{ p: 0.25, color: "error.main" }}
-                    aria-label="Remove operation"
-                  >
-                    {isDeleting ? (
-                      <CircularProgress size={13} color="inherit" />
-                    ) : (
-                      <DeleteRoundedIcon sx={{ fontSize: 15 }} />
-                    )}
-                  </IconButton>
-                </span>
-              </Tooltip>
-            ))}
+          {!isRoot && onDelete && (
+            <Tooltip
+              title={
+                isLeafMod
+                  ? "Modification leaf operations cannot be removed"
+                  : "Remove operation"
+              }
+            >
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={isLeafMod || isDeleting ? undefined : onDelete}
+                  disabled={isLeafMod || isDeleting}
+                  sx={{ p: 0.25, color: "error.main" }}
+                  aria-label="Remove operation"
+                >
+                  {isDeleting ? (
+                    <CircularProgress size={13} color="inherit" />
+                  ) : (
+                    <DeleteRoundedIcon sx={{ fontSize: 15 }} />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Stack>
       </Stack>
 
@@ -851,11 +825,9 @@ const DependenciesPanel = ({ open, onClose }: DependenciesPanelProps) => {
       if (!dependencies) return;
       const node = dependencies.nodes[nodeId];
       const op = opMap[nodeId];
-      if (op?.consolidated) return;
       const isLeaf =
         (node?.children?.length ?? 0) === 0 &&
         (node?.supportChildren?.length ?? 0) === 0;
-      if (isLeaf && op?.operationType === "MODIFICATION") return;
 
       setPendingDeleteId(nodeId);
 
@@ -910,7 +882,11 @@ const DependenciesPanel = ({ open, onClose }: DependenciesPanelProps) => {
   const [tab, setTab] = useState(0);
 
   const [drawerWidth, setDrawerWidth] = useState(
-    Math.round((DRAWER_DEFAULT_WIDTH_VW / 100) * window.innerWidth),
+    Math.round(
+      ((tab === 0 ? DRAWER_DEFAULT_WIDTH_LIST_VW : DRAWER_DEFAULT_WIDTH_VW) /
+        100) *
+        window.innerWidth,
+    ),
   );
   const isResizing = useRef(false);
   const startX = useRef(0);
@@ -1020,19 +996,38 @@ const DependenciesPanel = ({ open, onClose }: DependenciesPanelProps) => {
               variant="filled"
             />
           )}
-          <Stack direction="row" alignItems="center" gap={1} ml={0.5}>
-            {Object.entries(OP_TYPE_LABEL).map(([type, label]) => (
-              <Stack key={type} direction="row" alignItems="center" gap={0.4}>
-                <Box
-                  className={styles.LegendDot}
-                  sx={{ background: OP_COLORS[type] }}
-                />
-                <Typography variant="caption" color="text.secondary">
-                  {label}
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
+          <Tooltip
+            title={
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                {Object.entries(OP_TYPE_LABEL).map(([type, label]) => (
+                  <Stack
+                    key={type}
+                    direction="row"
+                    alignItems="center"
+                    gap={0.75}
+                  >
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        backgroundColor: OP_COLORS[type],
+                      }}
+                    />
+                    <Typography variant="caption">{label}</Typography>
+                  </Stack>
+                ))}
+              </Box>
+            }
+          >
+            <IconButton
+              size="small"
+              sx={{ p: 0.5 }}
+              aria-label="Dependency legend"
+            >
+              <HelpOutlineRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
         <IconButton size="small" onClick={onClose} aria-label="Close panel">
           <CloseRoundedIcon fontSize="small" />

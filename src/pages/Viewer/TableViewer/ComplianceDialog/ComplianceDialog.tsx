@@ -21,7 +21,15 @@ import { selectComplianceDialogStatus } from "@store/slices/table/table.selector
 import { updateUI } from "@store/slices/table/table.slice";
 import GDPRContent from "./GDPRContent";
 
-const ComplianceDialog: FC = () => {
+interface ComplianceDialogProps {
+  tableId?: string;
+  datasetId?: string;
+}
+
+const ComplianceDialog: FC<ComplianceDialogProps> = ({
+  tableId,
+  datasetId,
+}) => {
   const [complianceType, setComplianceType] = useState<string>("");
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectComplianceDialogStatus);
@@ -60,7 +68,7 @@ const ComplianceDialog: FC = () => {
                 openHelpDialog: true,
                 helpStart: "tutorial",
                 tutorialStep: 4,
-              })
+              }),
             );
           }}
         >
@@ -97,13 +105,15 @@ const ComplianceDialog: FC = () => {
             onChange={handleTypeChange}
             variant="outlined"
           >
-            <MenuItem value="GDPR">GDPR (General Data Protection Regulation)</MenuItem>
+            <MenuItem value="GDPR">
+              GDPR (General Data Protection Regulation)
+            </MenuItem>
           </Select>
         </FormControl>
 
         {complianceType === "GDPR" && (
           <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #eee" }}>
-            <GDPRContent />
+            <GDPRContent tableId={tableId} datasetId={datasetId} />
           </Box>
         )}
       </DialogContent>

@@ -8,12 +8,7 @@ import {
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
 import datasetAPI from "@services/api/datasets";
-import {
-  FC,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+import { FC, useCallback, useEffect, useRef } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { LinearProgress, Stack } from "@mui/material";
 import {
@@ -69,7 +64,6 @@ const Viewer: FC<unknown> = () => {
 
   useEffect(() => {
     if (tableId && datasetId) {
-      // redirect for parameters not allowed
       if (!view && ALLOWED_QUERY.indexOf(view) === -1) {
         history.push(`/datasets/${datasetId}/tables/${tableId}?view=table`);
       }
@@ -77,54 +71,95 @@ const Viewer: FC<unknown> = () => {
   }, [view, tableId, datasetId]);
 
   useEffect(() => {
-    if (!datasetId) return;
+    if (!datasetId || !tableId) return;
 
     let cancelled = false;
 
-    const getDatasetPermissions = async () => {
+    const checkPermissionsAndAcquireLock = async () => {
       try {
+        // 1. Determine if this user has edit rights (ACL check)
         const response = await datasetAPI.getDatasetInfo({ datasetId });
         const dataset = response.data;
         const currentUserId = auth.user?.id;
+        const uid = String(currentUserId);
+
         const isOwner =
           dataset &&
           currentUserId !== undefined &&
-          String(dataset.userId) === String(currentUserId);
-        const isEditor =
+          String(dataset.userId) === uid;
+
+        const isDatasetEditor =
           dataset &&
           Array.isArray(dataset.editors) &&
           currentUserId !== undefined &&
-          dataset.editors.map(String).includes(String(currentUserId));
-        const canEdit = Boolean(
-          dataset && (dataset.visibility === "public" || isOwner || isEditor),
-        );
+          dataset.editors.map(String).includes(uid);
 
-        if (!cancelled) {
-          dispatch(updateUI({ settings: { isViewOnly: !canEdit } }));
+        // Owner always has dataset-level edit rights; also respect visibility/editors
+        const datasetCanEdit = Boolean(
+          dataset &&
+          (isOwner || dataset.visibility === "public" || isDatasetEditor),
+        );
+        let canEdit = datasetCanEdit;
+        try {
+          const tableResp = await datasetAPI.getTableAcl(datasetId, tableId);
+          const table = tableResp.data as any;
+          if (table.visibility === "private" && isOwner === false) {
+            const isTableEditor =
+              Array.isArray(table.editors) &&
+              table.editors.map(String).includes(uid);
+            canEdit = datasetCanEdit && isTableEditor;
+          }
+        } catch {
+          // fall back to dataset-level
         }
-      } catch (error) {
-        if (!cancelled) {
+
+        // 2. No edit rights → view only, done
+        if (!canEdit) {
           dispatch(updateUI({ settings: { isViewOnly: true } }));
+          return;
         }
+
+        // 3. Has edit rights → MUST acquire the lock (including owners)
+        //    The lock is the single source of truth for concurrent editing.
+        const lockResponse = await datasetAPI.acquireTableLock(tableId);
+        if (!cancelled) {
+          if (lockResponse.data?.acquired === true) {
+            dispatch(updateUI({ settings: { isViewOnly: false } }));
+          } else {
+            // Lock is held by someone else
+            dispatch(updateUI({ settings: { isViewOnly: true } }));
+          }
+        }
+      } catch {
+        // Any failure (network, lock error) → safe default is view-only
+        if (!cancelled) dispatch(updateUI({ settings: { isViewOnly: true } }));
       }
     };
 
-    getDatasetPermissions();
+    checkPermissionsAndAcquireLock();
 
     return () => {
       cancelled = true;
     };
-  }, [datasetId, auth.user?.id, auth.loggedIn, dispatch]);
+  }, [datasetId, tableId, auth.user?.id, auth.loggedIn, dispatch]);
+
+  // Release lock when leaving the table
+  useEffect(() => {
+    return () => {
+      if (tableId) {
+        datasetAPI.releaseTableLock(tableId).catch(() => {});
+      }
+    };
+  }, [tableId]);
 
   useEffect(() => {
     if (tableId && datasetId) {
-      // dispatch(restoreInitialState());
       dispatch(getTable({ tableId, datasetId }))
         .unwrap()
         .then(() => {
           dispatch(getDependencies({ tableId, datasetId }));
         })
-        .catch((err) => history.push("/404"));
+        .catch(() => history.push("/404"));
     }
   }, [tableId, datasetId]);
 
@@ -133,10 +168,7 @@ const Viewer: FC<unknown> = () => {
     if (!socket || !datasetId || !tableId) return;
 
     const handleComplianceDone = (data: any) => {
-      // Check if this event is for the current table
-      if (data.datasetId !== datasetId || data.tableId !== tableId) {
-        return;
-      }
+      if (data.datasetId !== datasetId || data.tableId !== tableId) return;
 
       if (refSnack.current) {
         closeSnackbar(refSnack.current);
@@ -147,22 +179,22 @@ const Viewer: FC<unknown> = () => {
         enqueueSnackbar("GDPR compliance check completed successfully!", {
           variant: "success",
         });
-
-        // Update the table with the new compliance data
-        dispatch(updateCurrentTable(data.table));
+        dispatch(
+          updateCurrentTable({
+            complianceStatus: "DONE",
+            complianceReports: data.complianceReports,
+          }),
+        );
       } else if (data.status === "ERROR") {
         enqueueSnackbar(
           data.error || "GDPR compliance check failed. Please try again.",
           { variant: "error" },
         );
-
-        // Update status to ERROR
         dispatch(updateCurrentTable({ complianceStatus: "ERROR" }));
       }
     };
 
     socket.on("compliance-done", handleComplianceDone);
-
     return () => {
       socket.off("compliance-done", handleComplianceDone);
     };
@@ -190,10 +222,7 @@ const Viewer: FC<unknown> = () => {
           <span>{message}</span>
           <LoaderAnnoation />
         </Stack>,
-        {
-          persist: true,
-          variant: "info",
-        },
+        { persist: true, variant: "info" },
       );
     }
   }, [currentTable]);

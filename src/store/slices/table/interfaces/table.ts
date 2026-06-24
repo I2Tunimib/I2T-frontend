@@ -35,7 +35,14 @@ export interface TableInstance {
   mantisStatus?: "PENDING" | "DONE";
   schemaStatus?: "PENDING" | "DONE";
   complianceStatus?: "PENDING" | "DONE" | "ERROR";
-  compliance?: any;
+  compliance?: any; // legacy — kept for backward compatibility
+  complianceReports?: ComplianceReport[];
+}
+
+export interface ComplianceReport {
+  userId: string | null;
+  date: string;
+  result: any[];
 }
 
 export interface GraphNode {

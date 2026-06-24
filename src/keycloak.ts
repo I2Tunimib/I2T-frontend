@@ -207,9 +207,12 @@ export function initKeycloak(options?: InitOptions): Promise<boolean> {
       return false;
     }
 
-    // Client-side initialization using keycloak-js (preserve original behavior)
+    // Client-side initialization using keycloak-js.
+    // Do NOT use onLoad:"check-sso" without silentCheckSsoRedirectUri — it does a
+    // full-page redirect in keycloak-js v26+ which causes a reload loop when combined
+    // with the ChunkErrorBoundary. Omitting onLoad means keycloak just checks for an
+    // existing token in sessionStorage without any redirect.
     const initOptions: KeycloakInitOptions = {
-      onLoad: "check-sso",
       pkceMethod: "S256",
       promiseType: "native",
     } as KeycloakInitOptions;
@@ -264,7 +267,8 @@ export function initKeycloak(options?: InitOptions): Promise<boolean> {
         options?.onAuthenticated?.();
         return true;
       }
-      _initPromise = null;
+      // Do NOT reset _initPromise here — resetting it lets callers retry init,
+      // which causes repeated redirects/API calls on every component remount.
       options?.onAuthenticated?.();
       return false;
     }

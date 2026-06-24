@@ -15,42 +15,50 @@ import {
   Paper,
   List,
   ListItem,
+  Select,
+  MenuItem,
+  InputLabel,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import {
-  HelpOutlineRounded,
   CheckCircle,
   Warning,
   Error as ErrorIcon,
-  Info,
+  Download,
+  Article,
 } from "@mui/icons-material";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
-import {
-  selectComplianceDialogStatus,
-  selectCurrentTable,
-  selectExportDialogStatus,
-  selectIsUnsaved,
-} from "@store/slices/table/table.selectors";
-import { updateUI } from "@store/slices/table/table.slice";
+import { selectCurrentTable } from "@store/slices/table/table.selectors";
 import { tableCompliance } from "@store/slices/table/table.thunk";
 import { FC, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { ComplianceReport } from "@store/slices/table/interfaces/table";
+import tableAPI from "@services/api/table";
 
-interface GDPRContentProps {}
+interface GDPRContentProps {
+  tableId?: string;
+  datasetId?: string;
+}
 
-const GDPRContent: FC<GDPRContentProps> = () => {
+const GDPRContent: FC<GDPRContentProps> = ({
+  tableId: propTableId,
+  datasetId: propDatasetId,
+}) => {
   const [purpose, setPurpose] = useState<string>("General data processing");
+  const [selectedReportIndex, setSelectedReportIndex] = useState<number>(-1);
   const dispatch = useAppDispatch();
-  const { datasetId, tableId } = useParams<{
+  const { datasetId: paramDatasetId, tableId: paramTableId } = useParams<{
     datasetId: string;
     tableId: string;
   }>();
+
+  // Use props if provided, otherwise fall back to URL params
+  const datasetId = propDatasetId || paramDatasetId;
+  const tableId = propTableId || paramTableId;
   const tableInstance = useAppSelector(selectCurrentTable);
 
   const handleConfirm = () => {
-    if (!datasetId || !tableId) {
-      return;
-    }
-
+    if (!datasetId || !tableId) return;
     dispatch(
       tableCompliance({
         datasetId,
@@ -60,12 +68,52 @@ const GDPRContent: FC<GDPRContentProps> = () => {
     );
   };
 
-  const { complianceStatus, compliance: complianceResult } = tableInstance;
+  const handleDownload = async (format: "json" | "md") => {
+    if (!datasetId || !tableId) return;
+    const reportIndex =
+      selectedReportIndex >= 0 ? selectedReportIndex : "latest";
+    try {
+      const response = await tableAPI.downloadComplianceReport(
+        { datasetId, tableId, reportIndex },
+        format,
+      );
+      const ext = format === "md" ? "md" : "json";
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `compliance_report_${reportIndex}.${ext}`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // silently fail — user will see no file
+    }
+  };
 
-  // Parse compliance result.
-  // The response is: [{ table: {...} }, { ColA: {...}, ColB: {...}, ... }]
-  // All column results are merged into a single object at index 1, so we
-  // must iterate over its keys rather than over the array items.
+  const {
+    complianceStatus,
+    complianceReports,
+    compliance: legacyCompliance,
+  } = tableInstance;
+
+  // Select the last report by default whenever reports change
+  useEffect(() => {
+    if (complianceReports && complianceReports.length > 0) {
+      setSelectedReportIndex(complianceReports.length - 1);
+    }
+  }, [complianceReports?.length]);
+
+  // Resolve the active compliance result
+  const activeReport: ComplianceReport | null =
+    complianceReports &&
+    complianceReports.length > 0 &&
+    selectedReportIndex >= 0
+      ? complianceReports[selectedReportIndex]
+      : null;
+
+  // Fall back to legacy compliance field for older tables
+  const complianceResult: any[] | null =
+    activeReport?.result ?? legacyCompliance ?? null;
+
   const tableInfo = complianceResult?.[0]?.table;
   const columnResults: { name: string; analysis: any }[] =
     complianceResult
@@ -87,20 +135,22 @@ const GDPRContent: FC<GDPRContentProps> = () => {
     return "default";
   };
 
-  const getClassificationColor = (classification: string) => {
-    if (classification === "personalData") return "error";
-    if (classification === "quasiIdentifiers") return "warning";
-    if (classification === "nonPersonalData") return "success";
-    if (classification === "anonymousData") return "success";
-    return "default";
-  };
-
   const getActionColor = (action: string) => {
     if (action === "remove") return "error";
     if (action === "pseudonymize") return "warning";
     if (action === "noChange") return "success";
     return "default";
   };
+
+  const formatReportLabel = (report: ComplianceReport, index: number) => {
+    const date = new Date(report.date).toLocaleString();
+    const user = report.userId ? `User ${report.userId}` : "Unknown user";
+    return `Report ${index + 1} — ${date} by ${user}`;
+  };
+
+  const hasMultipleReports = complianceReports && complianceReports.length > 1;
+  const isResultAvailable =
+    complianceStatus === "DONE" && complianceResult && tableInfo;
 
   return (
     <Box>
@@ -131,8 +181,54 @@ const GDPRContent: FC<GDPRContentProps> = () => {
         </Alert>
       )}
 
-      {complianceStatus === "DONE" && complianceResult && tableInfo && (
+      {isResultAvailable && (
         <Box sx={{ marginTop: 2 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{ marginBottom: 2 }}
+          >
+            {hasMultipleReports && (
+              <FormControl fullWidth>
+                <InputLabel id="report-select-label">Report</InputLabel>
+                <Select
+                  labelId="report-select-label"
+                  value={selectedReportIndex}
+                  label="Report"
+                  onChange={(e) =>
+                    setSelectedReportIndex(Number(e.target.value))
+                  }
+                  size="small"
+                >
+                  {complianceReports!.map((report, index) => (
+                    <MenuItem key={index} value={index}>
+                      {formatReportLabel(report, index)}
+                      {index === complianceReports!.length - 1 && (
+                        <Chip
+                          label="latest"
+                          size="small"
+                          sx={{ ml: 1 }}
+                          color="primary"
+                        />
+                      )}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+            <Tooltip title="Download as JSON">
+              <IconButton onClick={() => handleDownload("json")} size="small">
+                <Download />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Download as Markdown">
+              <IconButton onClick={() => handleDownload("md")} size="small">
+                <Article />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
           {/* Table Overview Card */}
           <Card sx={{ marginBottom: 3 }}>
             <CardContent>

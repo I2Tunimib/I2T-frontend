@@ -118,16 +118,27 @@ export const getColumnMetadata = (metadata: ColumnMetadata[]): any => {
   });
 };
 
+const normalizeLabel = (label: any): string => {
+  if (typeof label === "string") return label;
+  if (label && typeof label === "object") {
+    if (typeof label.value === "string") return label.value;
+    if (typeof label.label === "string") return label.label;
+    if (typeof label.uri === "string") return label.uri;
+    return JSON.stringify(label);
+  }
+  return String(label ?? "");
+};
+
 export const createCell = (
   rowId: string,
   colId: string,
-  newCell: ExtendedColumnCell | null
+  newCell: ExtendedColumnCell | null,
 ) => {
   if (newCell) {
     console.log("createCell", newCell);
     return {
       id: `${rowId}$${colId}`,
-      label: newCell.label,
+      label: normalizeLabel(newCell.label),
       metadata: getMetadata(newCell.metadata),
       ...getAnnotationMeta(newCell.metadata),
     };

@@ -28,6 +28,7 @@ import {
   selectSelectedColumnCellsIds,
   selectCurrentTable,
   selectSettings,
+  selectIsViewOnly,
 } from "@store/slices/table/table.selectors";
 import { useHistory, useParams } from "react-router-dom";
 import { saveTable } from "@store/slices/table/table.thunk";
@@ -45,6 +46,10 @@ import {
 } from "../Menus/ContextMenus";
 import SubToolbar from "../SubToolbar";
 import DependenciesPanel from "../DependenciesPanel";
+import { Alert, Button, Stack } from "@mui/material";
+import datasetAPI from "@services/api/datasets";
+import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
+import { selectDatasets } from "@store/slices/datasets/datasets.selectors";
 
 interface MenuState {
   status: Record<string, boolean>;
@@ -90,9 +95,21 @@ const TableViewer = () => {
   const isDenseView = useAppSelector(selectIsDenseView);
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const settings = useAppSelector(selectSettings);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
   const columnVisibilityRedux = useAppSelector(
     (state) => state.table.ui.columnVisibility,
   );
+
+  const auth = useAppSelector(selectIsLoggedIn);
+  const currentUserId = auth?.user?.id;
+
+  // Check if current user is dataset owner
+  const datasets = useAppSelector((state) => state.datasets);
+  const currentDataset = datasets?.entities?.byId?.[datasetId];
+  const isDatasetOwner =
+    currentUserId !== undefined &&
+    currentDataset !== undefined &&
+    String(currentUserId) === String(currentDataset.userId);
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -101,10 +118,24 @@ const TableViewer = () => {
   }, []);
 
   useEffect(() => {
+    console.log(
+      "[debug useeffect tableviewer DEP:currentTable mantisStatus]",
+      currentTable.mantisStatus !== undefined,
+    );
+    console.log(
+      "[debug useeffect tableviewer DEP:currentTable schemaStatus]",
+      currentTable.schemaStatus !== undefined,
+    );
+
     if (
-      currentTable.mantisStatus === "PENDING" ||
-      currentTable.schemaStatus === "PENDING"
+      (currentTable.mantisStatus !== undefined &&
+        currentTable.mantisStatus === "PENDING") ||
+      (currentTable.mantisStatus !== undefined &&
+        currentTable.schemaStatus === "PENDING")
     ) {
+      console.log(
+        "dispatched readonly from tableviewer useEffect[currentTable]",
+      );
       dispatch(
         updateUI({
           settings: {
@@ -386,6 +417,42 @@ const TableViewer = () => {
         onTogglePanel={togglePanel}
         isPanelOpen={isPanelOpen}
       />
+      {isViewOnly && (
+        <Alert severity="warning" sx={{ mb: 0, borderRadius: 0 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <span>
+              This table is being edited by another user. You are viewing in
+              read-only mode.
+            </span>
+            {isDatasetOwner && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={async () => {
+                  try {
+                    await datasetAPI.forceReleaseTableLock(tableId);
+                    // Try to acquire lock again
+                    const lockResponse =
+                      await datasetAPI.acquireTableLock(tableId);
+                    if (lockResponse.data?.acquired === true) {
+                      dispatch(updateUI({ settings: { isViewOnly: false } }));
+                    }
+                  } catch (error) {
+                    console.error("Failed to force release lock:", error);
+                  }
+                }}
+                sx={{ ml: 2, whiteSpace: "nowrap" }}
+              >
+                Force Unlock
+              </Button>
+            )}
+          </Stack>
+        </Alert>
+      )}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div
           className={clsx(styles.TableContainer, {
