@@ -20,7 +20,12 @@ import {
   Typography,
 } from '@mui/material';
 import { ID } from '@store/interfaces/store';
-import { selectCurrentDatasetTables, selectGetTablesDatasetStatus } from '@store/slices/datasets/datasets.selectors';
+import {
+  selectCurrentDatasetTables,
+  selectGetTablesDatasetStatus,
+  selectDatasets,
+} from '@store/slices/datasets/datasets.selectors';
+import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTablesByDataset } from '@store/slices/datasets/datasets.thunk';
 import {
   FC, useCallback, useEffect, useState, useMemo

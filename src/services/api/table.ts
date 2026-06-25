@@ -61,6 +61,7 @@ const tableAPI = {
   exportTable: (
     format: string,
     params: Record<string, string | number> = {},
+    payload?: any,
   ) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
@@ -73,6 +74,13 @@ const tableAPI = {
 
       headers["X-Table-Dataset-Info"] =
         `tableId:${cleanTableId};datasetId:${cleanDatasetId}`;
+    }
+    if (payload) {
+      return apiClient.post(
+        apiEndpoint({ endpoint: "EXPORT", subEndpoint: format, paramsValue: params }),
+        payload,
+        { headers, responseType: 'blob' }
+      );
     }
     return apiClient.get<any>(
       apiEndpoint({
