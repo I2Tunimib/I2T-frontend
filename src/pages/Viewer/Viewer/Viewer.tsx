@@ -1,5 +1,8 @@
 import { useQuery } from "@hooks/router";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
+import { useGraphData } from "@hooks/graphData/useGraphData";
+import { useGraphPhysics } from "@hooks/graphData/useGraphPhysics";
+import { GraphRenderer } from "@components/kit/GraphRenderer/GraphRenderer";
 import TableViewer from "@pages/Viewer/TableViewer";
 import {
   selectCurrentTable,
@@ -8,7 +11,7 @@ import {
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
 import datasetAPI from "@services/api/datasets";
-import { FC, useCallback, useEffect, useRef } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { LinearProgress, Stack } from "@mui/material";
 import {
@@ -19,7 +22,6 @@ import {
 import deferMounting from "@components/HOC";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { isEmptyObject } from "@services/utils/objects-utils";
-import { Loader } from "@components/core";
 import styled from "@emotion/styled";
 import { keyframes } from "@emotion/react";
 import useSocketIo from "@components/core/SocketIoProvider/useSocketIo";
@@ -61,6 +63,61 @@ const Viewer: FC<unknown> = () => {
   const dispatch = useAppDispatch();
   const socket = useSocketIo();
   const auth = useAppSelector(selectIsLoggedIn);
+  const {
+    graphData,
+    multiPropsMap,
+    metrics,
+    isNodeIsolated,
+  } = useGraphData(datasetId, tableId);
+  const graphContainerRef = useRef<HTMLDivElement>(null);
+  console.log("graphData", graphData);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedLink, setSelectedLink] = useState(null);
+  const graphRef = useRef(null);
+  const isExportOpen = useAppSelector((state) => state.table.ui.openExportDialog);
+  const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
+
+  useGraphPhysics(graphRef, graphData, isNodeIsolated);
+
+  useEffect(() => {
+    if (isExportOpen) {
+      const timer = setTimeout(() => {
+        const container = graphContainerRef.current;
+        const canvas = container?.querySelector('canvas');
+        let graphSnapshot = '';
+        if (canvas) {
+          graphSnapshot = canvas.toDataURL('image/png');
+        }
+
+        const cleanGraphData = {
+          nodes: graphData.nodes.map((n) => ({
+            label: n.label,
+            kind: n.kind,
+            datatype: n.datatype,
+            role: n.role,
+            types: n.types,
+          })),
+          links: graphData.links.map((l) => ({
+            id: l.id,
+            source: typeof l.source === 'object' ? (l.source as any).label : l.source,
+            target: typeof l.target === 'object' ? (l.target as any).label : l.target,
+            label: l.label,
+            propID: l.propID,
+          })),
+        };
+
+        dispatch(
+          updateUI({
+            currentGraphSnapshot: graphSnapshot,
+            currentGraphData: cleanGraphData,
+            currentMetrics: metrics,
+          })
+        );
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isExportOpen, showLinkLabels, graphData, metrics, dispatch]);
 
   useEffect(() => {
     if (tableId && datasetId) {
@@ -260,6 +317,30 @@ const Viewer: FC<unknown> = () => {
   return (
     <>
       <Toolbar />
+      {view !== "graph" && (
+      <div style={{
+        position: 'absolute',
+        height: '1000px',
+        width: '1000px',
+        opacity: 0,
+        pointerEvents: 'none'
+      }}>
+        <GraphRenderer
+          graphRef={graphRef}
+          graphData={graphData}
+          multiPropsMap={multiPropsMap}
+          showLinkLabels={showLinkLabels}
+          onNodeClick={(node: any) => {
+            setSelectedNode(node);
+            setSelectedLink(null);
+          }}
+          onLinkClick={(link: any) => {
+            setSelectedLink(link);
+            setSelectedNode(null);
+          }}
+        />
+      </div>
+      )}
       {!loading ? <>{Switch()}</> : <LinearProgress />}
     </>
   );

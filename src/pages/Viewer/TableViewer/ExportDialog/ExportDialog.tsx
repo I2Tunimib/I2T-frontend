@@ -27,7 +27,6 @@ import {
   selectCurrentTable,
   selectExportDialogStatus,
   selectIsUnsaved,
-  selectCurrentView,
 } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { exportTable } from "@store/slices/table/table.thunk";
@@ -64,7 +63,6 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const graphData = useAppSelector((state) => state.table.ui.currentGraphData || { nodes: [], links: [] });
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
   const metrics = useAppSelector((state) => state.table.ui.currentMetrics || []);
-  const currentView = useAppSelector(selectCurrentView);
 
   const handleClose = () => {
     dispatch(updateUI({ openExportDialog: false }));
@@ -191,12 +189,18 @@ const ExportDialog: FC<ExportDialogProps> = () => {
     }
 
     if (format.includes("Schema Report")) {
+      let finalSnapshot = graphSnapshot;
+      const canvas = document.querySelector('canvas');
+      if (canvas) {
+        finalSnapshot = canvas.toDataURL('image/png');
+      }
+
       const payload = {
         format: format === "HTML Schema Report" ? "report_html" : "report_md",
         tableName,
         datasetId,
         tableId,
-        graphSnapshot,
+        graphSnapshot: finalSnapshot,
         graphData,
         metrics,
       };
@@ -323,17 +327,14 @@ const ExportDialog: FC<ExportDialogProps> = () => {
               const isPipeline =
                 name === "Python pipeline" ||
                 name === "Jupyter notebook pipeline";
-              const isSchemaReport = name === "HTML Schema Report" || name === "Markdown Schema Report";
-              const isDisabled = (isPipeline && isUnsaved) || (isSchemaReport && currentView !== "graph");
+              const isDisabled = isPipeline && isUnsaved;
 
               // For disabled items, wrap with Tooltip
               if (isDisabled) {
                 return (
                   <Tooltip
                     key={path}
-                    title={isPipeline
-                      ? "You must save your changes before generating a pipeline"
-                      : "You must switch to the Graph View tab before exporting the Schema Report"}
+                    title="You must save your changes before generating a pipeline"
                     placement="right"
                   >
                     <span>
@@ -342,7 +343,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                         disabled={isDisabled}
                         sx={{ color: "text.disabled", fontStyle: "italic" }}
                       >
-                        {name} {isPipeline ? "(save required)" : "(To enable switch to Graph View tab)"}
+                        {name} (save required)
                       </MenuItem>
                     </span>
                   </Tooltip>
