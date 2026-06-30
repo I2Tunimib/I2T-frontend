@@ -8,7 +8,10 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { ReadMoreRounded } from '@mui/icons-material';
+import { ReadMoreRounded, AssignmentTurnedInOutlined } from '@mui/icons-material';
+import { updateUI } from '@store/slices/table/table.slice';
+import { getTable } from '@store/slices/table/table.thunk';
+import ComplianceDialog from '@pages/Viewer/TableViewer/ComplianceDialog';
 import {
   Button,
   Box,
@@ -20,7 +23,8 @@ import {
   Typography,
 } from '@mui/material';
 import { ID } from '@store/interfaces/store';
-import { selectCurrentDatasetTables, selectGetTablesDatasetStatus } from '@store/slices/datasets/datasets.selectors';
+import { selectCurrentDatasetTables, selectGetTablesDatasetStatus, selectDatasets } from '@store/slices/datasets/datasets.selectors';
+import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
 import { getTablesByDataset } from '@store/slices/datasets/datasets.thunk';
 import {
   FC, useCallback, useEffect, useState, useMemo
@@ -149,12 +153,21 @@ const Tables: FC<TablesProps> = ({
             Explore
           </Button>
         )}
+        <Button
+          size="small"
+          variant="contained"
+          color="primary"
+          startIcon={<AssignmentTurnedInOutlined />}
+          onClick={() => dispatch(updateUI({ openComplianceStatusDialog: true }))}>
+          Compliance
+        </Button>
       </Stack>
     );
-  }, [datasetId, viewType]);
+  }, [datasetId, viewType, dispatch]);
 
   return (
     <>
+      <ComplianceDialog datasetId={datasetId} />
       {loading ? (
         <LinearProgress />
       ) : viewType === 'list' ? (
