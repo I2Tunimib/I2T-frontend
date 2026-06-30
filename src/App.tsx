@@ -10,6 +10,7 @@ import {
   updateTableSocket,
   updateSchemaSocket,
 } from "@store/slices/table/table.thunk";
+import { updateCurrentTable } from "@store/slices/table/table.slice";
 import { GetTableResponse, GetSchemaResponse } from "@services/api/table";
 import { Button } from "@mui/material";
 import { getRedirects, getRoutes } from "./routes";
@@ -199,6 +200,18 @@ const App = () => {
                 )
               : undefined,
         });
+      });
+      socket.on("compliance-done", (data: any) => {
+        if (data.status === "DONE") {
+          dispatch(
+            updateCurrentTable({
+              complianceStatus: "DONE",
+              complianceReports: data.complianceReports,
+            }),
+          );
+        } else if (data.status === "ERROR") {
+          dispatch(updateCurrentTable({ complianceStatus: "ERROR" }));
+        }
       });
     }
   }, [socket]);

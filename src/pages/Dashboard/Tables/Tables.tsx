@@ -81,6 +81,8 @@ const Tables: FC<TablesProps> = ({
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(selectGetTablesDatasetStatus);
   const [snapshots, setSnapshots] = useState<Record<string, string>>({});
+  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined);
+  const [isLoadingTableData, setIsLoadingTableData] = useState(false);
 
   const table = useReactTable({
     data: rows,
@@ -157,8 +159,19 @@ const Tables: FC<TablesProps> = ({
           size="small"
           variant="contained"
           color="primary"
-          startIcon={<AssignmentTurnedInOutlined />}
-          onClick={() => dispatch(updateUI({ openComplianceStatusDialog: true }))}>
+          startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
+          disabled={isLoadingTableData}
+          onClick={async () => {
+            setSelectedTableId(row.original.id);
+            setIsLoadingTableData(true);
+            try {
+              await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+            } catch {
+              // open dialog anyway on error
+            }
+            setIsLoadingTableData(false);
+            dispatch(updateUI({ openComplianceStatusDialog: true }));
+          }}>
           Compliance
         </Button>
       </Stack>
@@ -167,7 +180,7 @@ const Tables: FC<TablesProps> = ({
 
   return (
     <>
-      <ComplianceDialog datasetId={datasetId} />
+      <ComplianceDialog datasetId={datasetId} tableId={selectedTableId} />
       {loading ? (
         <LinearProgress />
       ) : viewType === 'list' ? (
