@@ -8,7 +8,7 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { ReadMoreRounded, AssignmentTurnedInOutlined, AccountTreeRounded } from '@mui/icons-material';
+import { ReadMoreRounded, AssignmentTurnedInOutlined, AccountTreeRounded, LockOutlined, LockOpenOutlined } from '@mui/icons-material';
 import { updateUI } from '@store/slices/table/table.slice';
 import { getTable, getDependencies } from '@store/slices/table/table.thunk';
 import ComplianceDialog from '@pages/Viewer/TableViewer/ComplianceDialog';
@@ -21,6 +21,7 @@ import {
   LinearProgress,
   Pagination,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { ID } from '@store/interfaces/store';
@@ -136,10 +137,34 @@ const Tables: FC<TablesProps> = ({
     return rows.every((table) => !!snapshots[table.id]);
   }, [rows, snapshots]);
 
+  const getTablePermission = useCallback((tableRow: any): 'rw' | 'ro' => {
+    if (isDatasetOwner) return 'rw';
+    if (currentUserId) {
+      const uid = String(currentUserId);
+      const tableEditors: string[] = tableRow?.editors?.map(String) ?? [];
+      const tableViewers: string[] = tableRow?.viewers?.map(String) ?? [];
+      if (tableEditors.includes(uid)) return 'rw';
+      if (tableViewers.includes(uid)) return 'ro';
+      const datasetEditors: string[] = (currentDataset as any)?.editors?.map(String) ?? [];
+      const datasetViewers: string[] = (currentDataset as any)?.viewers?.map(String) ?? [];
+      if (datasetEditors.includes(uid)) return 'rw';
+      if (datasetViewers.includes(uid)) return 'ro';
+    }
+    return 'ro';
+  }, [isDatasetOwner, currentUserId, currentDataset]);
+
   const Actions = useCallback(({ mediaMatch, row, targetView }) => {
     const viewMode = targetView || (viewType === 'card' ? 'graph' : 'table');
+    const perm = getTablePermission(row.original);
     return (
-      <Stack direction="row" gap="5px" className={globalStyles.Actions}>
+      <Stack direction="row" gap="5px" alignItems="center" className={globalStyles.Actions}>
+        <Tooltip title={perm === 'rw' ? 'Read & Write' : 'Read Only'}>
+          <Box sx={{ display: 'flex', alignItems: 'center', color: perm === 'rw' ? 'success.main' : 'action.disabled' }}>
+            {perm === 'rw'
+              ? <LockOpenOutlined fontSize="small" />
+              : <LockOutlined fontSize="small" />}
+          </Box>
+        </Tooltip>
         {mediaMatch ? (
           <IconButton
             color="primary"
@@ -198,7 +223,7 @@ const Tables: FC<TablesProps> = ({
         </Button>
       </Stack>
     );
-  }, [datasetId, viewType, dispatch]);
+  }, [datasetId, viewType, dispatch, getTablePermission]);
 
   return (
     <>
