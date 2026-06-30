@@ -117,7 +117,7 @@ const GraphViewer: FC = () => {
             currentMetrics: metrics,
           })
         );
-      }, 100);
+      }, 500);
 
       return () => clearTimeout(timer);
     }
@@ -243,7 +243,7 @@ const GraphViewer: FC = () => {
           graphData={graphData}
           multiPropsMap={multiPropsMap}
           showLinkLabels={showLinkLabels}
-          graphRef={graphRef}
+          ref={graphRef}
           onNodeClick={(node: any) => {
             setSelectedNode(node);
             setSelectedLink(null);

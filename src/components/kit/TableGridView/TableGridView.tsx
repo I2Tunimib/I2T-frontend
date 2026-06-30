@@ -58,7 +58,6 @@ const TableGridView: FC<TableCardViewProps> = ({ table, datasetId, action, graph
                 {typesPercentage(table.headerTypeMatching)}
               </Stack>
             </Stack>
-            {action}
           </Stack>
           <Stack direction="column" gap="8px">
             <Stack direction="row" alignItems="center" gap="8px" color="text.secondary">

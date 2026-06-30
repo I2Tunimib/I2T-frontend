@@ -1,4 +1,5 @@
 import ForceGraph2D from 'react-force-graph-2d';
+import { forwardRef } from 'react';
 
 function wrapText(
   ctx: CanvasRenderingContext2D,
@@ -29,20 +30,23 @@ function wrapText(
   return lines;
 }
 
-export const GraphRenderer = ({
+export const GraphRenderer = forwardRef<any, any>(({
   graphData,
-  multiPropsMap,
+  multiPropsMap = {},
   showLinkLabels,
   onNodeClick,
   onLinkClick,
-  graphRef,
-}) => {
+  isPreview = false,
+  scale = 1,
+  ...props
+}, ref) => {
   return (
     <ForceGraph2D
       graphData={graphData}
-      ref={graphRef}
+      ref={ref}
       nodeId="label"
       preserveDrawingBuffer={true}
+      cooldownTicks={isPreview ? 20 : 200}
       nodeLabel={(node: any) => {
         const typeHighestScore = node.types?.reduce((prev: any, curr: any) => {
           return (curr.score > (prev?.score ?? -Infinity)) ? curr : prev;
@@ -52,7 +56,7 @@ export const GraphRenderer = ({
       }}
       nodeCanvasObjectMode={() => 'replace'}
       nodeCanvasObject={(node: any, ctx) => {
-        const RADIUS = 12;
+        const RADIUS = isPreview ? 6 * scale : 12;
         ctx.fillStyle =
           node.role === 'subject'
             ? '#2ecc71'
@@ -62,21 +66,23 @@ export const GraphRenderer = ({
         ctx.beginPath();
         ctx.arc(node.x, node.y, RADIUS, 0, 2 * Math.PI);
         ctx.fill();
-        const baseFontSize = 4;
-        const fontSize = Math.min(baseFontSize, RADIUS * 0.75);
-        ctx.font = `${fontSize}px Roboto`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const maxTextWidth = (RADIUS - 4) * 1.8;
-        const lines = wrapText(ctx, node.label, maxTextWidth);
-        const lineHeight = fontSize * 1.1;
-        const totalHeight = lineHeight * lines.length;
-        const startY = node.y - totalHeight / 2 + lineHeight / 2;
+        if (!isPreview) {
+          const baseFontSize = 4;
+          const fontSize = Math.min(baseFontSize, RADIUS * 0.75);
+          ctx.font = `${fontSize}px Roboto`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const maxTextWidth = (RADIUS - 4) * 1.8;
+          const lines = wrapText(ctx, node.label, maxTextWidth);
+          const lineHeight = fontSize * 1.1;
+          const totalHeight = lineHeight * lines.length;
+          const startY = node.y - totalHeight / 2 + lineHeight / 2;
 
-        lines.forEach((line, i) => {
-          ctx.fillText(line, node.x, startY + i * lineHeight);
-        });
+          lines.forEach((line, i) => {
+            ctx.fillText(line, node.x, node.y + (i - (lines.length - 1) / 2) * (fontSize * 1.1));
+          });
+        }
       }}
       nodePointerAreaPaint={(node, color, ctx) => {
         ctx.fillStyle = color;
@@ -106,7 +112,7 @@ export const GraphRenderer = ({
       linkColor={() => 'rgba(150,150,150,0.7)'}
       linkCanvasObjectMode={() => 'after'}
       linkCanvasObject={(link: any, ctx) => {
-        if (!showLinkLabels) return;
+        if (isPreview || !showLinkLabels) return;
 
         const source = typeof link.source === 'object' ? link.source : null;
         const target = typeof link.target === 'object' ? link.target : null;
@@ -141,8 +147,9 @@ export const GraphRenderer = ({
         ctx.restore();
       }}
       onLinkClick={onLinkClick}
+      {...props}
     />
   );
-};
+});
 
 export default GraphRenderer;

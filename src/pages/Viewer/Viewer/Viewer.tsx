@@ -70,7 +70,6 @@ const Viewer: FC<unknown> = () => {
     isNodeIsolated,
   } = useGraphData(datasetId, tableId);
   const graphContainerRef = useRef<HTMLDivElement>(null);
-  console.log("graphData", graphData);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedLink, setSelectedLink] = useState(null);
   const graphRef = useRef(null);
@@ -322,11 +321,12 @@ const Viewer: FC<unknown> = () => {
         position: 'absolute',
         height: '1000px',
         width: '1000px',
-        opacity: 0,
+        top: '-9999px',
+        left: '-9999px',
         pointerEvents: 'none'
       }}>
         <GraphRenderer
-          graphRef={graphRef}
+          ref={graphRef}
           graphData={graphData}
           multiPropsMap={multiPropsMap}
           showLinkLabels={showLinkLabels}
