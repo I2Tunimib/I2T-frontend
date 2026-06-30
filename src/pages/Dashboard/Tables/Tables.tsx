@@ -8,10 +8,11 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { ReadMoreRounded, AssignmentTurnedInOutlined } from '@mui/icons-material';
+import { ReadMoreRounded, AssignmentTurnedInOutlined, AccountTreeRounded } from '@mui/icons-material';
 import { updateUI } from '@store/slices/table/table.slice';
-import { getTable } from '@store/slices/table/table.thunk';
+import { getTable, getDependencies } from '@store/slices/table/table.thunk';
 import ComplianceDialog from '@pages/Viewer/TableViewer/ComplianceDialog';
+import DependenciesPanel from '@pages/Viewer/TableViewer/DependenciesPanel';
 import {
   Button,
   Box,
@@ -83,6 +84,8 @@ const Tables: FC<TablesProps> = ({
   const [snapshots, setSnapshots] = useState<Record<string, string>>({});
   const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined);
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
+  const [isDependenciesPanelOpen, setIsDependenciesPanelOpen] = useState(false);
+  const [isLoadingDeps, setIsLoadingDeps] = useState(false);
 
   const table = useReactTable({
     data: rows,
@@ -174,6 +177,25 @@ const Tables: FC<TablesProps> = ({
           }}>
           Compliance
         </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          color="primary"
+          startIcon={isLoadingDeps ? <CircularProgress size={14} color="inherit" /> : <AccountTreeRounded />}
+          disabled={isLoadingDeps}
+          onClick={async () => {
+            setIsLoadingDeps(true);
+            try {
+              await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+              await dispatch(getDependencies({ tableId: row.original.id, datasetId })).unwrap();
+            } catch {
+              // open panel anyway on error
+            }
+            setIsLoadingDeps(false);
+            setIsDependenciesPanelOpen(true);
+          }}>
+          Dependencies
+        </Button>
       </Stack>
     );
   }, [datasetId, viewType, dispatch]);
@@ -181,76 +203,84 @@ const Tables: FC<TablesProps> = ({
   return (
     <>
       <ComplianceDialog datasetId={datasetId} tableId={selectedTableId} />
-      {loading ? (
-        <LinearProgress />
-      ) : viewType === 'list' ? (
-        <DeferredTable
-          columns={columns}
-          data={rows}
-          Actions={Actions}
-          onChangeRowSelected={handleRowSelection}
-        />
-      ) : (
-        <>
-          {!isGridReady ? (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '400px',
-                gap: 2
-              }}
-            >
-              {rows.map((table) => {
-                if (snapshots[table.id]) return null;
-                return (
-                  <GraphSnapshotTaker
-                    key={table.id}
-                    table={table}
-                    onSnapshotReady={(imgUrl) => handleSnapshotReady(table.id, imgUrl)}
-                  />
-                );
-              })}
-              <CircularProgress size={40} />
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                Fetching graph previews...
-              </Typography>
-            </Box>
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 400 }}>
+        <Box sx={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+          {loading ? (
+            <LinearProgress />
+          ) : viewType === 'list' ? (
+            <DeferredTable
+              columns={columns}
+              data={rows}
+              Actions={Actions}
+              onChangeRowSelected={handleRowSelection}
+            />
           ) : (
             <>
-              <Box
-                display="grid"
-                gridTemplateColumns="repeat(auto-fill, minmax(320px, 1fr))"
-                gap="20px"
-                padding="24px"
-              >
-                {table.getRowModel().rows.map((row) => (
-                  <TableGridView
-                    key={row.original.id}
-                    table={row.original}
-                    datasetId={datasetId}
-                    graphSnapshot={snapshots[row.original.id]}
-                    action={Actions({
-                      mediaMatch: false,
-                      row,
-                      targetView: 'graph'
-                    })}
+              {!isGridReady ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '400px',
+                    gap: 2
+                  }}
+                >
+                  {rows.map((table) => {
+                    if (snapshots[table.id]) return null;
+                    return (
+                      <GraphSnapshotTaker
+                        key={table.id}
+                        table={table}
+                        onSnapshotReady={(imgUrl) => handleSnapshotReady(table.id, imgUrl)}
+                      />
+                    );
+                  })}
+                  <CircularProgress size={40} />
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Fetching graph previews...
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  <Box
+                    display="grid"
+                    gridTemplateColumns="repeat(auto-fill, minmax(320px, 1fr))"
+                    gap="20px"
+                    padding="24px"
+                  >
+                    {table.getRowModel().rows.map((row) => (
+                      <TableGridView
+                        key={row.original.id}
+                        table={row.original}
+                        datasetId={datasetId}
+                        graphSnapshot={snapshots[row.original.id]}
+                        action={Actions({
+                          mediaMatch: false,
+                          row,
+                          targetView: 'graph'
+                        })}
+                      />
+                    ))}
+                  </Box>
+                  <Footer
+                    pageIndex={table.getState().pagination.pageIndex}
+                    pageCount={table.getPageCount()}
+                    gotoPage={table.setPageIndex}
+                    nextPage={table.nextPage}
+                    previousPage={table.previousPage}
                   />
-                ))}
-              </Box>
-              <Footer
-                pageIndex={table.getState().pagination.pageIndex}
-                pageCount={table.getPageCount()}
-                gotoPage={table.setPageIndex}
-                nextPage={table.nextPage}
-                previousPage={table.previousPage}
-              />
+                </>
+              )}
             </>
           )}
-        </>
-      )}
+        </Box>
+        <DependenciesPanel
+          open={isDependenciesPanelOpen}
+          onClose={() => setIsDependenciesPanelOpen(false)}
+        />
+      </Box>
     </>
   );
 };
