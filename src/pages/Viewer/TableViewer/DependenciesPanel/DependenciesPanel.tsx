@@ -49,6 +49,7 @@ import styles from "./DependenciesPanel.module.scss";
 interface DependenciesPanelProps {
   open: boolean;
   onClose: () => void;
+  readonly?: boolean;
 }
 
 const DRAWER_DEFAULT_WIDTH_VW = 50;
@@ -807,7 +808,7 @@ const ListView = ({
 // Main panel
 // ---------------------------------------------------------------------------
 
-const DependenciesPanel = ({ open, onClose }: DependenciesPanelProps) => {
+const DependenciesPanel = ({ open, onClose, readonly = false }: DependenciesPanelProps) => {
   const dependencies = useAppSelector(selectDependencies);
   const dispatch = useAppDispatch();
   const opMap = useMemo(
@@ -1069,7 +1070,7 @@ const DependenciesPanel = ({ open, onClose }: DependenciesPanelProps) => {
           >
             <ListView
               deps={dependencies}
-              onDeleteRequest={handleDeleteRequest}
+              onDeleteRequest={readonly ? undefined : handleDeleteRequest}
               deletingNodeId={deleteInProgress ? pendingDeleteId : null}
             />
           </Box>
@@ -1083,7 +1084,7 @@ const DependenciesPanel = ({ open, onClose }: DependenciesPanelProps) => {
             <TreeView
               deps={dependencies}
               visible={tab === 1}
-              onNodeDeleteRequest={handleDeleteRequest}
+              onNodeDeleteRequest={readonly ? undefined : handleDeleteRequest}
             />
           </Box>
         </>

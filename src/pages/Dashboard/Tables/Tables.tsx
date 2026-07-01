@@ -304,6 +304,7 @@ const Tables: FC<TablesProps> = ({
         <DependenciesPanel
           open={isDependenciesPanelOpen}
           onClose={() => setIsDependenciesPanelOpen(false)}
+          readonly
         />
       </Box>
     </>
