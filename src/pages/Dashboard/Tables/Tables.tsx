@@ -8,7 +8,11 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { ReadMoreRounded } from '@mui/icons-material';
+import { ReadMoreRounded, AssignmentTurnedInOutlined, AccountTreeRounded, LockOutlined, LockOpenOutlined } from '@mui/icons-material';
+import { updateUI } from '@store/slices/table/table.slice';
+import { getTable, getDependencies } from '@store/slices/table/table.thunk';
+import ComplianceDialog from '@pages/Viewer/TableViewer/ComplianceDialog';
+import DependenciesPanel from '@pages/Viewer/TableViewer/DependenciesPanel';
 import {
   Button,
   Box,
@@ -17,6 +21,7 @@ import {
   LinearProgress,
   Pagination,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { ID } from '@store/interfaces/store';
@@ -82,6 +87,10 @@ const Tables: FC<TablesProps> = ({
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(selectGetTablesDatasetStatus);
   const [snapshots, setSnapshots] = useState<Record<string, string>>({});
+  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined);
+  const [isLoadingTableData, setIsLoadingTableData] = useState(false);
+  const [isDependenciesPanelOpen, setIsDependenciesPanelOpen] = useState(false);
+  const [isLoadingDeps, setIsLoadingDeps] = useState(false);
 
   const table = useReactTable({
     data: rows,
@@ -132,10 +141,34 @@ const Tables: FC<TablesProps> = ({
     return rows.every((table) => !!snapshots[table.id]);
   }, [rows, snapshots]);
 
+  const getTablePermission = useCallback((tableRow: any): 'rw' | 'ro' => {
+    if (isDatasetOwner) return 'rw';
+    if (currentUserId) {
+      const uid = String(currentUserId);
+      const tableEditors: string[] = tableRow?.editors?.map(String) ?? [];
+      const tableViewers: string[] = tableRow?.viewers?.map(String) ?? [];
+      if (tableEditors.includes(uid)) return 'rw';
+      if (tableViewers.includes(uid)) return 'ro';
+      const datasetEditors: string[] = (currentDataset as any)?.editors?.map(String) ?? [];
+      const datasetViewers: string[] = (currentDataset as any)?.viewers?.map(String) ?? [];
+      if (datasetEditors.includes(uid)) return 'rw';
+      if (datasetViewers.includes(uid)) return 'ro';
+    }
+    return 'ro';
+  }, [isDatasetOwner, currentUserId, currentDataset]);
+
   const Actions = useCallback(({ mediaMatch, row, targetView }) => {
     const viewMode = targetView || (viewType === 'card' ? 'graph' : 'table');
+    const perm = getTablePermission(row.original);
     return (
-      <Stack direction="row" gap="5px" className={globalStyles.Actions}>
+      <Stack direction="row" gap="5px" alignItems="center" className={globalStyles.Actions}>
+        <Tooltip title={perm === 'rw' ? 'Read & Write' : 'Read Only'}>
+          <Box sx={{ display: 'flex', alignItems: 'center', color: perm === 'rw' ? 'success.main' : 'action.disabled' }}>
+            {perm === 'rw'
+              ? <LockOpenOutlined fontSize="small" />
+              : <LockOutlined fontSize="small" />}
+          </Box>
+        </Tooltip>
         {mediaMatch ? (
           <IconButton
             color="primary"
@@ -154,82 +187,134 @@ const Tables: FC<TablesProps> = ({
             Explore
           </Button>
         )}
+        {viewType === 'list' && (
+          <>
+            <Button
+              size="small"
+              variant="contained"
+              color="primary"
+              startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
+              disabled={isLoadingTableData}
+              onClick={async () => {
+                setSelectedTableId(row.original.id);
+                setIsLoadingTableData(true);
+                try {
+                  await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+                } catch {
+                  // open dialog anyway on error
+                }
+                setIsLoadingTableData(false);
+                dispatch(updateUI({ openComplianceStatusDialog: true }));
+              }}>
+              Compliance
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="primary"
+              startIcon={isLoadingDeps ? <CircularProgress size={14} color="inherit" /> : <AccountTreeRounded />}
+              disabled={isLoadingDeps}
+              onClick={async () => {
+                setIsLoadingDeps(true);
+                try {
+                  await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+                  await dispatch(getDependencies({ tableId: row.original.id, datasetId })).unwrap();
+                } catch {
+                  // open panel anyway on error
+                }
+                setIsLoadingDeps(false);
+                setIsDependenciesPanelOpen(true);
+              }}>
+              Dependencies
+            </Button>
+          </>
+        )}
       </Stack>
     );
-  }, [datasetId, viewType]);
+  }, [datasetId, viewType, dispatch, getTablePermission]);
 
   return (
     <>
-      {loading ? (
-        <LinearProgress />
-      ) : viewType === 'list' ? (
-        <DeferredTable
-          columns={columns}
-          data={rows}
-          Actions={Actions}
-          onChangeRowSelected={handleRowSelection}
-        />
-      ) : (
-        <>
-          {!isGridReady ? (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '400px',
-                gap: 2
-              }}
-            >
-              {rows.map((table) => {
-                if (snapshots[table.id]) return null;
-                return (
-                  <GraphSnapshotTaker
-                    key={table.id}
-                    table={table}
-                    onSnapshotReady={(imgUrl) => handleSnapshotReady(table.id, imgUrl)}
-                  />
-                );
-              })}
-              <CircularProgress size={40} />
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                Fetching graph previews...
-              </Typography>
-            </Box>
+      <ComplianceDialog datasetId={datasetId} tableId={selectedTableId} />
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 400 }}>
+        <Box sx={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+          {loading ? (
+            <LinearProgress />
+          ) : viewType === 'list' ? (
+            <DeferredTable
+              columns={columns}
+              data={rows}
+              Actions={Actions}
+              onChangeRowSelected={handleRowSelection}
+            />
           ) : (
             <>
-              <Box
-                display="grid"
-                gridTemplateColumns="repeat(auto-fill, minmax(320px, 1fr))"
-                gap="20px"
-                padding="24px"
-              >
-                {table.getRowModel().rows.map((row) => (
-                  <TableGridView
-                    key={row.original.id}
-                    table={row.original}
-                    datasetId={datasetId}
-                    graphSnapshot={snapshots[row.original.id]}
-                    action={Actions({
-                      mediaMatch: false,
-                      row,
-                      targetView: 'graph'
-                    })}
+              {!isGridReady ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '400px',
+                    gap: 2
+                  }}
+                >
+                  {rows.map((table) => {
+                    if (snapshots[table.id]) return null;
+                    return (
+                      <GraphSnapshotTaker
+                        key={table.id}
+                        table={table}
+                        onSnapshotReady={(imgUrl) => handleSnapshotReady(table.id, imgUrl)}
+                      />
+                    );
+                  })}
+                  <CircularProgress size={40} />
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Fetching graph previews...
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  <Box
+                    display="grid"
+                    gridTemplateColumns="repeat(auto-fill, minmax(320px, 1fr))"
+                    gap="20px"
+                    padding="24px"
+                  >
+                    {table.getRowModel().rows.map((row) => (
+                      <TableGridView
+                        key={row.original.id}
+                        table={row.original}
+                        datasetId={datasetId}
+                        graphSnapshot={snapshots[row.original.id]}
+                        action={Actions({
+                          mediaMatch: false,
+                          row,
+                          targetView: 'graph'
+                        })}
+                      />
+                    ))}
+                  </Box>
+                  <Footer
+                    pageIndex={table.getState().pagination.pageIndex}
+                    pageCount={table.getPageCount()}
+                    gotoPage={table.setPageIndex}
+                    nextPage={table.nextPage}
+                    previousPage={table.previousPage}
                   />
-                ))}
-              </Box>
-              <Footer
-                pageIndex={table.getState().pagination.pageIndex}
-                pageCount={table.getPageCount()}
-                gotoPage={table.setPageIndex}
-                nextPage={table.nextPage}
-                previousPage={table.previousPage}
-              />
+                </>
+              )}
             </>
           )}
-        </>
-      )}
+        </Box>
+        <DependenciesPanel
+          open={isDependenciesPanelOpen}
+          onClose={() => setIsDependenciesPanelOpen(false)}
+          readonly
+        />
+      </Box>
     </>
   );
 };
