@@ -183,44 +183,48 @@ const Tables: FC<TablesProps> = ({
             Explore
           </Button>
         )}
-        <Button
-          size="small"
-          variant="contained"
-          color="primary"
-          startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
-          disabled={isLoadingTableData}
-          onClick={async () => {
-            setSelectedTableId(row.original.id);
-            setIsLoadingTableData(true);
-            try {
-              await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
-            } catch {
-              // open dialog anyway on error
-            }
-            setIsLoadingTableData(false);
-            dispatch(updateUI({ openComplianceStatusDialog: true }));
-          }}>
-          Compliance
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          color="primary"
-          startIcon={isLoadingDeps ? <CircularProgress size={14} color="inherit" /> : <AccountTreeRounded />}
-          disabled={isLoadingDeps}
-          onClick={async () => {
-            setIsLoadingDeps(true);
-            try {
-              await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
-              await dispatch(getDependencies({ tableId: row.original.id, datasetId })).unwrap();
-            } catch {
-              // open panel anyway on error
-            }
-            setIsLoadingDeps(false);
-            setIsDependenciesPanelOpen(true);
-          }}>
-          Dependencies
-        </Button>
+        {viewType === 'list' && (
+          <>
+            <Button
+              size="small"
+              variant="contained"
+              color="primary"
+              startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
+              disabled={isLoadingTableData}
+              onClick={async () => {
+                setSelectedTableId(row.original.id);
+                setIsLoadingTableData(true);
+                try {
+                  await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+                } catch {
+                  // open dialog anyway on error
+                }
+                setIsLoadingTableData(false);
+                dispatch(updateUI({ openComplianceStatusDialog: true }));
+              }}>
+              Compliance
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="primary"
+              startIcon={isLoadingDeps ? <CircularProgress size={14} color="inherit" /> : <AccountTreeRounded />}
+              disabled={isLoadingDeps}
+              onClick={async () => {
+                setIsLoadingDeps(true);
+                try {
+                  await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+                  await dispatch(getDependencies({ tableId: row.original.id, datasetId })).unwrap();
+                } catch {
+                  // open panel anyway on error
+                }
+                setIsLoadingDeps(false);
+                setIsDependenciesPanelOpen(true);
+              }}>
+              Dependencies
+            </Button>
+          </>
+        )}
       </Stack>
     );
   }, [datasetId, viewType, dispatch, getTablePermission]);
