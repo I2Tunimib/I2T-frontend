@@ -4,7 +4,6 @@ import { useGraphData } from "@hooks/graphData/useGraphData";
 import { useGraphPhysics } from "@hooks/graphData/useGraphPhysics";
 import { selectGraphTutorialDialogStatus } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
-import { useParams } from 'react-router-dom';
 import { ForceGraphMethods } from 'react-force-graph-2d';
 import { Divider, Typography, Tooltip, Button, IconButton, CircularProgress } from '@mui/material';
 import { IconButtonTooltip } from "@components/core";
@@ -32,9 +31,14 @@ const getNodeColor = (node: any) => {
   return '#3498db';
 };
 
-const GraphViewer: FC = () => {
+interface GraphViewerProps {
+  datasetId?: string;
+  tableId?: string;
+  isDialog?: boolean;
+}
+
+const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => {
   const dispatch = useAppDispatch();
-  const { datasetId, tableId } = useParams<{ datasetId: string; tableId: string }>();
   const {
     graphData,
     nodesLength,
@@ -157,7 +161,7 @@ const GraphViewer: FC = () => {
   }
 
   return (
-    <div className={styles.Container}>
+    <div className={`${styles.Container} ${isDialog ? styles.DialogContainer : ''}`}>
       <div className={styles.GraphWrapper}>
         <div className={styles.Zooming}>
           <Tooltip title="Zoom in" placement="left" arrow>

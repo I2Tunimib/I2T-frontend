@@ -304,14 +304,14 @@ const Viewer: FC<unknown> = () => {
         case "table":
           return <DeferredTableViewer />;
         case "graph":
-          return <DeferredGraphViewer />;
+          return <DeferredGraphViewer datasetId={datasetId} tableId={tableId} />;
         case "raw":
           return <DeferredW3CViewer />;
         default:
           return null;
       }
     }
-  }, [view]);
+  }, [view, datasetId, tableId]);
 
   return (
     <>

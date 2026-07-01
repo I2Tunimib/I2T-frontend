@@ -8,10 +8,11 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { ReadMoreRounded, AssignmentTurnedInOutlined, AccountTreeRounded, LockOutlined, LockOpenOutlined } from '@mui/icons-material';
+import { ReadMoreRounded, AssignmentTurnedInOutlined, AccountTreeRounded, LockOutlined, LockOpenOutlined, ShareOutlined } from '@mui/icons-material';
 import { updateUI } from '@store/slices/table/table.slice';
 import { getTable, getDependencies } from '@store/slices/table/table.thunk';
 import ComplianceDialog from '@pages/Viewer/TableViewer/ComplianceDialog';
+import GraphDialog from '@pages/Viewer/TableViewer/GraphDialog';
 import DependenciesPanel from '@pages/Viewer/TableViewer/DependenciesPanel';
 import {
   Button,
@@ -138,7 +139,7 @@ const Tables: FC<TablesProps> = ({
 
   const isGridReady = useMemo(() => {
     if (rows.length === 0) return true;
-    return rows.every((table) => !!snapshots[table.id]);
+    return rows.every((t) => !!snapshots[t.id]);
   }, [rows, snapshots]);
 
   const getTablePermission = useCallback((tableRow: any): 'rw' | 'ro' => {
@@ -210,6 +211,24 @@ const Tables: FC<TablesProps> = ({
             </Button>
             <Button
               size="small"
+              variant="contained"
+              color="primary"
+              startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <ShareOutlined />}
+              disabled={isLoadingTableData}
+              onClick={async () => {
+                setSelectedTableId(row.original.id);
+                setIsLoadingTableData(true);
+                try {
+                  await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+                } catch {
+                }
+                setIsLoadingTableData(false);
+                dispatch(updateUI({ openGraphDialog: true }));
+              }}>
+              Schema
+            </Button>
+            <Button
+              size="small"
               variant="outlined"
               color="primary"
               startIcon={isLoadingDeps ? <CircularProgress size={14} color="inherit" /> : <AccountTreeRounded />}
@@ -236,6 +255,7 @@ const Tables: FC<TablesProps> = ({
   return (
     <>
       <ComplianceDialog datasetId={datasetId} tableId={selectedTableId} />
+      <GraphDialog datasetId={datasetId} tableId={selectedTableId} />
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 400 }}>
         <Box sx={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
           {loading ? (
@@ -260,13 +280,13 @@ const Tables: FC<TablesProps> = ({
                     gap: 2
                   }}
                 >
-                  {rows.map((table) => {
-                    if (snapshots[table.id]) return null;
+                  {rows.map((t) => {
+                    if (snapshots[t.id]) return null;
                     return (
                       <GraphSnapshotTaker
-                        key={table.id}
-                        table={table}
-                        onSnapshotReady={(imgUrl) => handleSnapshotReady(table.id, imgUrl)}
+                        key={t.id}
+                        table={t}
+                        onSnapshotReady={(imgUrl) => handleSnapshotReady(t.id, imgUrl)}
                       />
                     );
                   })}

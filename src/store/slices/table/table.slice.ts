@@ -152,6 +152,7 @@ const initialState: TableState = {
     currentGraphSnapshot: "",
     currentGraphData: null,
     currentMetrics: null,
+    openGraphDialog: false,
     openComplianceStatusDialog: false,
     initialComplianceType: "",
     openAutoAnnotationDialog: false,
