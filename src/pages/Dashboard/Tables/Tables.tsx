@@ -1,18 +1,25 @@
-import deferMounting from '@components/HOC';
-import TableListView from '@components/kit/TableListView/TableListView';
-import TableGridView from '@components/kit/TableGridView/TableGridView';
-import GraphSnapshotTaker from '@components/kit/GraphSnapshotTaker/GraphSnapshotTaker';
+import deferMounting from "@components/HOC";
+import TableListView from "@components/kit/TableListView/TableListView";
+import TableGridView from "@components/kit/TableGridView/TableGridView";
+import GraphSnapshotTaker from "@components/kit/GraphSnapshotTaker/GraphSnapshotTaker";
 import {
   useReactTable,
   getCoreRowModel,
   getPaginationRowModel,
-} from '@tanstack/react-table';
-import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { ReadMoreRounded, AssignmentTurnedInOutlined, AccountTreeRounded, LockOutlined, LockOpenOutlined } from '@mui/icons-material';
-import { updateUI } from '@store/slices/table/table.slice';
-import { getTable, getDependencies } from '@store/slices/table/table.thunk';
-import ComplianceDialog from '@pages/Viewer/TableViewer/ComplianceDialog';
-import DependenciesPanel from '@pages/Viewer/TableViewer/DependenciesPanel';
+} from "@tanstack/react-table";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import {
+  ReadMoreRounded,
+  AssignmentTurnedInOutlined,
+  AccountTreeRounded,
+  LockOutlined,
+  LockOpenOutlined,
+} from "@mui/icons-material";
+import { updateUI } from "@store/slices/table/table.slice";
+import { getTable, getDependencies } from "@store/slices/table/table.thunk";
+import { selectComplianceDialogStatus } from "@store/slices/table/table.selectors";
+import ComplianceDialog from "@pages/Viewer/TableViewer/ComplianceDialog";
+import DependenciesPanel from "@pages/Viewer/TableViewer/DependenciesPanel";
 import {
   Button,
   Box,
@@ -23,18 +30,20 @@ import {
   Stack,
   Tooltip,
   Typography,
-} from '@mui/material';
-import { ID } from '@store/interfaces/store';
-import { selectCurrentDatasetTables, selectGetTablesDatasetStatus, selectDatasets } from '@store/slices/datasets/datasets.selectors';
-import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
-import { getTablesByDataset } from '@store/slices/datasets/datasets.thunk';
+} from "@mui/material";
+import { ID } from "@store/interfaces/store";
 import {
-  FC, useCallback, useEffect, useState, useMemo
-} from 'react';
-import { Link, useParams } from 'react-router-dom';
-import globalStyles from '@styles/globals.module.scss';
+  selectCurrentDatasetTables,
+  selectGetTablesDatasetStatus,
+  selectDatasets,
+} from "@store/slices/datasets/datasets.selectors";
+import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
+import { getTablesByDataset } from "@store/slices/datasets/datasets.thunk";
+import { FC, useCallback, useEffect, useState, useMemo } from "react";
+import { Link, useParams } from "react-router-dom";
+import globalStyles from "@styles/globals.module.scss";
 import styles from "@components/kit/TableListView/TableListView.module.scss";
-import { useTableCollection } from '../useTableCollection';
+import { useTableCollection } from "../useTableCollection";
 
 interface FooterProps {
   pageIndex: number;
@@ -49,7 +58,7 @@ const Footer: FC<FooterProps> = ({
   pageCount,
   gotoPage,
   nextPage,
-  previousPage
+  previousPage,
 }) => {
   const handleChange = (event: any, page: number) => {
     gotoPage(page - 1);
@@ -62,38 +71,50 @@ const Footer: FC<FooterProps> = ({
         count={pageCount}
         page={pageIndex + 1}
         showFirstButton
-        showLastButton />
+        showLastButton
+      />
     </div>
   );
 };
 
 interface TablesProps {
-  onSelectionChange: (state: { kind: 'dataset' | 'table', rows: any[] } | null) => void;
-  viewType: 'list' | 'card';
+  onSelectionChange: (
+    state: { kind: "dataset" | "table"; rows: any[] } | null,
+  ) => void;
+  viewType: "list" | "card";
 }
 
 const DeferredTable = deferMounting(TableListView);
 
-const Tables: FC<TablesProps> = ({
-  onSelectionChange,
-  viewType
-}) => {
+const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   const { columns, rows } = useTableCollection(selectCurrentDatasetTables);
   const { datasetId } = useParams<{ datasetId: ID }>();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(selectGetTablesDatasetStatus);
   const [snapshots, setSnapshots] = useState<Record<string, string>>({});
-  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined);
+  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(
+    undefined,
+  );
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
   const [isDependenciesPanelOpen, setIsDependenciesPanelOpen] = useState(false);
   const [isLoadingDeps, setIsLoadingDeps] = useState(false);
+  const [highlightedTableId, setHighlightedTableId] = useState<
+    string | undefined
+  >(undefined);
+  const isComplianceOpen = useAppSelector(selectComplianceDialogStatus);
+
+  useEffect(() => {
+    if (!isComplianceOpen && !isDependenciesPanelOpen) {
+      setHighlightedTableId(undefined);
+    }
+  }, [isComplianceOpen, isDependenciesPanelOpen]);
 
   const table = useReactTable({
     data: rows,
     columns: [],
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 4 } }
+    initialState: { pagination: { pageSize: 4 } },
   });
 
   const auth = useAppSelector(selectIsLoggedIn);
@@ -137,123 +158,185 @@ const Tables: FC<TablesProps> = ({
     return rows.every((table) => !!snapshots[table.id]);
   }, [rows, snapshots]);
 
-  const getTablePermission = useCallback((tableRow: any): 'rw' | 'ro' => {
-    if (isDatasetOwner) return 'rw';
-    if (currentUserId) {
-      const uid = String(currentUserId);
-      const tableEditors: string[] = tableRow?.editors?.map(String) ?? [];
-      const tableViewers: string[] = tableRow?.viewers?.map(String) ?? [];
-      if (tableEditors.includes(uid)) return 'rw';
-      if (tableViewers.includes(uid)) return 'ro';
-      const datasetEditors: string[] = (currentDataset as any)?.editors?.map(String) ?? [];
-      const datasetViewers: string[] = (currentDataset as any)?.viewers?.map(String) ?? [];
-      if (datasetEditors.includes(uid)) return 'rw';
-      if (datasetViewers.includes(uid)) return 'ro';
-    }
-    return 'ro';
-  }, [isDatasetOwner, currentUserId, currentDataset]);
+  const getTablePermission = useCallback(
+    (tableRow: any): "rw" | "ro" => {
+      if (isDatasetOwner) return "rw";
+      if (currentUserId) {
+        const uid = String(currentUserId);
+        const tableEditors: string[] = tableRow?.editors?.map(String) ?? [];
+        const tableViewers: string[] = tableRow?.viewers?.map(String) ?? [];
+        if (tableEditors.includes(uid)) return "rw";
+        if (tableViewers.includes(uid)) return "ro";
+        const datasetEditors: string[] =
+          (currentDataset as any)?.editors?.map(String) ?? [];
+        const datasetViewers: string[] =
+          (currentDataset as any)?.viewers?.map(String) ?? [];
+        if (datasetEditors.includes(uid)) return "rw";
+        if (datasetViewers.includes(uid)) return "ro";
+      }
+      return "ro";
+    },
+    [isDatasetOwner, currentUserId, currentDataset],
+  );
 
-  const Actions = useCallback(({ mediaMatch, row, targetView }) => {
-    const viewMode = targetView || (viewType === 'card' ? 'graph' : 'table');
-    const perm = getTablePermission(row.original);
-    return (
-      <Stack direction="row" gap="5px" alignItems="center" className={globalStyles.Actions}>
-        <Tooltip title={perm === 'rw' ? 'Read & Write' : 'Read Only'}>
-          <Box sx={{ display: 'flex', alignItems: 'center', color: perm === 'rw' ? 'success.main' : 'action.disabled' }}>
-            {perm === 'rw'
-              ? <LockOpenOutlined fontSize="small" />
-              : <LockOutlined fontSize="small" />}
-          </Box>
-        </Tooltip>
-        {mediaMatch ? (
-          <IconButton
-            color="primary"
-            size="small"
-            component={Link}
-            to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}>
-            <ReadMoreRounded />
-          </IconButton>
-        ) : (
-          <Button
-            size="small"
-            component={Link}
-            to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
-            endIcon={<ReadMoreRounded />}
-            classes={{ endIcon: globalStyles.IconButton }}>
-            Explore
-          </Button>
-        )}
-        {viewType === 'list' && (
-          <>
-            <Button
-              size="small"
-              variant="contained"
+  const rowPropGetter = useCallback(
+    (row: any) => {
+      if (String(row.original?.id) === String(highlightedTableId)) {
+        return { style: { backgroundColor: "rgba(25, 118, 210, 0.08)" } };
+      }
+      return {};
+    },
+    [highlightedTableId],
+  );
+
+  const Actions = useCallback(
+    ({ mediaMatch, row, targetView }) => {
+      const viewMode = targetView || (viewType === "card" ? "graph" : "table");
+      const perm = getTablePermission(row.original);
+      return (
+        <Stack
+          direction="row"
+          gap="5px"
+          alignItems="center"
+          className={globalStyles.Actions}
+        >
+          <Tooltip title={perm === "rw" ? "Read & Write" : "Read Only"}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: perm === "rw" ? "success.main" : "action.disabled",
+              }}
+            >
+              {perm === "rw" ? (
+                <LockOpenOutlined fontSize="small" />
+              ) : (
+                <LockOutlined fontSize="small" />
+              )}
+            </Box>
+          </Tooltip>
+          {mediaMatch ? (
+            <IconButton
               color="primary"
-              startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
-              disabled={isLoadingTableData}
-              onClick={async () => {
-                setSelectedTableId(row.original.id);
-                setIsLoadingTableData(true);
-                try {
-                  await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
-                } catch {
-                  // open dialog anyway on error
-                }
-                setIsLoadingTableData(false);
-                dispatch(updateUI({ openComplianceStatusDialog: true }));
-              }}>
-              Compliance
-            </Button>
-            <Button
               size="small"
-              variant="outlined"
-              color="primary"
-              startIcon={isLoadingDeps ? <CircularProgress size={14} color="inherit" /> : <AccountTreeRounded />}
-              disabled={isLoadingDeps}
-              onClick={async () => {
-                setIsLoadingDeps(true);
-                try {
-                  await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
-                  await dispatch(getDependencies({ tableId: row.original.id, datasetId })).unwrap();
-                } catch {
-                  // open panel anyway on error
+              component={Link}
+              to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
+            >
+              <ReadMoreRounded />
+            </IconButton>
+          ) : (
+            // <Button
+            //   size="small"
+            //   component={Link}
+            //   to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
+            //   endIcon={<ReadMoreRounded />}
+            //   classes={{ endIcon: globalStyles.IconButton }}>
+            //   Explore
+            // </Button>
+            <></>
+          )}
+          {viewType === "list" && (
+            <>
+              <Button
+                size="small"
+                variant="contained"
+                color="primary"
+                startIcon={
+                  isLoadingTableData ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <AssignmentTurnedInOutlined />
+                  )
                 }
-                setIsLoadingDeps(false);
-                setIsDependenciesPanelOpen(true);
-              }}>
-              Dependencies
-            </Button>
-          </>
-        )}
-      </Stack>
-    );
-  }, [datasetId, viewType, dispatch, getTablePermission]);
+                disabled={isLoadingTableData}
+                onClick={async () => {
+                  setSelectedTableId(row.original.id);
+                  setHighlightedTableId(row.original.id);
+                  setIsLoadingTableData(true);
+                  try {
+                    await dispatch(
+                      getTable({ tableId: row.original.id, datasetId }),
+                    ).unwrap();
+                  } catch {
+                    // open dialog anyway on error
+                  }
+                  setIsLoadingTableData(false);
+                  dispatch(updateUI({ openComplianceStatusDialog: true }));
+                }}
+              >
+                Compliance
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="primary"
+                startIcon={
+                  isLoadingDeps ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <AccountTreeRounded />
+                  )
+                }
+                disabled={isLoadingDeps}
+                onClick={async () => {
+                  setHighlightedTableId(row.original.id);
+                  setIsLoadingDeps(true);
+                  try {
+                    await dispatch(
+                      getTable({ tableId: row.original.id, datasetId }),
+                    ).unwrap();
+                    await dispatch(
+                      getDependencies({ tableId: row.original.id, datasetId }),
+                    ).unwrap();
+                  } catch {
+                    // open panel anyway on error
+                  }
+                  setIsLoadingDeps(false);
+                  setIsDependenciesPanelOpen(true);
+                }}
+              >
+                Pipeline
+              </Button>
+            </>
+          )}
+        </Stack>
+      );
+    },
+    [datasetId, viewType, dispatch, getTablePermission],
+  );
 
   return (
     <>
-      <ComplianceDialog datasetId={datasetId} tableId={selectedTableId} />
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 400 }}>
-        <Box sx={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+      <ComplianceDialog
+        datasetId={datasetId}
+        tableId={selectedTableId}
+        readonly
+      />
+      <Box
+        sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 400 }}
+      >
+        <Box sx={{ flex: 1, overflow: "auto", minWidth: 0 }}>
           {loading ? (
             <LinearProgress />
-          ) : viewType === 'list' ? (
+          ) : viewType === "list" ? (
             <DeferredTable
               columns={columns}
               data={rows}
               Actions={Actions}
               onChangeRowSelected={handleRowSelection}
+              rowPropGetter={rowPropGetter}
             />
           ) : (
             <>
               {!isGridReady ? (
                 <Box
                   sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '400px',
-                    gap: 2
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "400px",
+                    gap: 2,
                   }}
                 >
                   {rows.map((table) => {
@@ -262,12 +345,18 @@ const Tables: FC<TablesProps> = ({
                       <GraphSnapshotTaker
                         key={table.id}
                         table={table}
-                        onSnapshotReady={(imgUrl) => handleSnapshotReady(table.id, imgUrl)}
+                        onSnapshotReady={(imgUrl) =>
+                          handleSnapshotReady(table.id, imgUrl)
+                        }
                       />
                     );
                   })}
                   <CircularProgress size={40} />
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontWeight: 500 }}
+                  >
                     Fetching graph previews...
                   </Typography>
                 </Box>
@@ -288,7 +377,7 @@ const Tables: FC<TablesProps> = ({
                         action={Actions({
                           mediaMatch: false,
                           row,
-                          targetView: 'graph'
+                          targetView: "graph",
                         })}
                       />
                     ))}

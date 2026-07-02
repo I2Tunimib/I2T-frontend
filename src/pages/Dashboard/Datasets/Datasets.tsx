@@ -61,15 +61,16 @@ const Datasets: FC<DatasetsProps> = ({ onSelectionChange }) => {
                 <ReadMoreRounded />
               </IconButton>
             ) : (
-              <Button
-                size="small"
-                component={Link}
-                to={`${url}/${row.original.id}/tables`}
-                endIcon={<ReadMoreRounded />}
-                classes={{ endIcon: globalStyles.IconButton }}
-              >
-                Explore
-              </Button>
+              // <Button
+              //   size="small"
+              //   component={Link}
+              //   to={`${url}/${row.original.id}/tables`}
+              //   endIcon={<ReadMoreRounded />}
+              //   classes={{ endIcon: globalStyles.IconButton }}
+              // >
+              //   Explore
+              // </Button>
+              <></>
             )}
 
             {isOwner && (

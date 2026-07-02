@@ -24,11 +24,13 @@ import GDPRContent from "./GDPRContent";
 interface ComplianceDialogProps {
   tableId?: string;
   datasetId?: string;
+  readonly?: boolean;
 }
 
 const ComplianceDialog: FC<ComplianceDialogProps> = ({
   tableId,
   datasetId,
+  readonly = false,
 }) => {
   const [complianceType, setComplianceType] = useState<string>("");
   const dispatch = useAppDispatch();
@@ -55,7 +57,7 @@ const ComplianceDialog: FC<ComplianceDialogProps> = ({
   return (
     <Dialog open={isOpen} onClose={handleClose} maxWidth="md" fullWidth>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <DialogTitle>Compliance Check</DialogTitle>
+        <DialogTitle>{readonly ? "Compliance report" : "Compliance assessment"}</DialogTitle>
         <IconButton
           aria-label="open-compliance-tutorial"
           sx={{
@@ -113,7 +115,7 @@ const ComplianceDialog: FC<ComplianceDialogProps> = ({
 
         {complianceType === "GDPR" && (
           <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #eee" }}>
-            <GDPRContent tableId={tableId} datasetId={datasetId} />
+            <GDPRContent tableId={tableId} datasetId={datasetId} readonly={readonly} />
           </Box>
         )}
       </DialogContent>
