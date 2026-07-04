@@ -34,12 +34,28 @@ export const GraphRenderer = forwardRef<any, any>(({
   graphData,
   multiPropsMap = {},
   showLinkLabels,
+  showCompliance,
   onNodeClick,
   onLinkClick,
   isPreview = false,
   scale = 1,
   ...props
 }, ref) => {
+  const getNodeColor = (node: any) => {
+    if (showCompliance) {
+      switch (node.compliance_classification) {
+        case "personalData": return "crimson";
+        case "quasiIdentifiers": return "orange";
+        case "nonPersonalData": return "teal";
+        case "anonymousData": return "green";
+        default: return "#999";
+      }
+    }
+    if (node.role === 'subject') return '#2ecc71';
+    if (node.kind === 'literal') return '#e67e22';
+    return '#3498db';
+  };
+
   return (
     <ForceGraph2D
       graphData={graphData}
@@ -54,15 +70,11 @@ export const GraphRenderer = forwardRef<any, any>(({
         const typeHighestScoreName = typeHighestScore?.name ?? '';
         return `${node.metadata || ''} ${typeHighestScoreName}`.trim();
       }}
+      nodeColor={getNodeColor}
       nodeCanvasObjectMode={() => 'replace'}
       nodeCanvasObject={(node: any, ctx) => {
         const RADIUS = isPreview ? 6 * scale : 12;
-        ctx.fillStyle =
-          node.role === 'subject'
-            ? '#2ecc71'
-            : node.kind === 'literal'
-              ? '#e67e22'
-              : '#3498db';
+        ctx.fillStyle = getNodeColor(node);
         ctx.beginPath();
         ctx.arc(node.x, node.y, RADIUS, 0, 2 * Math.PI);
         ctx.fill();

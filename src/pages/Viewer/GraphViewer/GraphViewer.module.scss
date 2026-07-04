@@ -120,7 +120,7 @@
   }
 }
 
-.Subject, .Entity, .Literal {
+.Subject, .Entity, .Literal, .PersonalData, .QuasiIdentifier, .NonPersonalData, .AnonymousData {
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -129,6 +129,11 @@
 .Subject { background-color: #2ecc71; }
 .Entity { background-color: #3498db; }
 .Literal { background-color: #e67e22; }
+
+.PersonalData { background-color: crimson; }
+.QuasiIdentifier { background-color: orange; }
+.NonPersonalData { background-color: teal; }
+.AnonymousData { background-color: green; }
 
 .Values {
   position: fixed;

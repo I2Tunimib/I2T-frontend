@@ -5,7 +5,7 @@ import { useGraphPhysics } from "@hooks/graphData/useGraphPhysics";
 import { selectGraphTutorialDialogStatus } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { ForceGraphMethods } from 'react-force-graph-2d';
-import { Divider, Typography, Tooltip, Button, IconButton, CircularProgress } from '@mui/material';
+import { Divider, Typography, Tooltip, Button, IconButton, CircularProgress, Box } from '@mui/material';
 import { IconButtonTooltip } from "@components/core";
 import { GraphRenderer } from "@components/kit/GraphRenderer/GraphRenderer";
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
@@ -13,6 +13,7 @@ import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import RemoveOutlinedIcon from '@mui/icons-material/RemoveOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
 import styled from '@emotion/styled';
 import styles from './GraphViewer.module.scss';
@@ -24,12 +25,6 @@ const InfoIcon = styled(HelpOutlineRoundedIcon)`
   transform: translateY(-50%);
   color: grey;
 `;
-
-const getNodeColor = (node: any) => {
-  if (node.role === 'subject') return '#2ecc71';
-  if (node.kind === 'literal') return '#e67e22';
-  return '#3498db';
-};
 
 interface GraphViewerProps {
   datasetId?: string;
@@ -46,15 +41,18 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
     multiPropsMap,
     metrics,
     loading,
+    w3cData,
     isNodeIsolated,
     getOutgoingLinks,
     getIncomingLinks
   } = useGraphData(datasetId, tableId);
+  const complianceInfo = w3cData[0].compliance;
   const [showNodes, setShowNodes] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
   const [showSourceTypes, setShowSourceTypes] = useState(false);
   const [showTargetTypes, setShowTargetTypes] = useState(false);
+  const [showCompliance, setShowCompliance] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [selectedLink, setSelectedLink] = useState<any | null>(null);
   const nodeSectionRef = useRef<HTMLDivElement | null>(null);
@@ -63,6 +61,21 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
   const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
   const isExportOpen = useAppSelector((state) => state.table.ui.openExportDialog);
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
+
+  const getNodeColor = (node: any) => {
+    if (showCompliance) {
+      switch (node.compliance_classification) {
+        case "personalData": return "crimson";
+        case "quasiIdentifiers": return "orange";
+        case "nonPersonalData": return "teal";
+        case "anonymousData": return "green";
+        default: return "#999";
+      }
+    }
+    if (node.role === 'subject') return '#2ecc71';
+    if (node.kind === 'literal') return '#e67e22';
+    return '#3498db';
+  };
 
   useEffect(() => {
     if (selectedNode && nodeSectionRef.current) {
@@ -204,19 +217,42 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
         </div>
         <div className={styles.TopOverlay}>
           <div className={styles.Legend}>
-            <h4>Legend</h4>
-            <div>
-              <Typography className={styles.Subject} />
-              Subject
-            </div>
-            <div>
-              <Typography className={styles.Entity} />
-              Entity
-            </div>
-            <div>
-              <Typography className={styles.Literal} />
-              Literal
-            </div>
+            <h4>{showCompliance ? "Compliance Legend" : "Legend"}</h4>
+            {showCompliance ? (
+              <>
+                <div>
+                  <Typography className={styles.PersonalData} />
+                  Personal Data
+                </div>
+                <div>
+                  <Typography className={styles.QuasiIdentifier} />
+                  Quasi Identifier
+                </div>
+                <div>
+                  <Typography className={styles.NonPersonalData} />
+                  Non-Personal Data
+                </div>
+                <div>
+                  <Typography className={styles.AnonymousData} />
+                  Anonymous Data
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Typography className={styles.Subject} />
+                  Subject
+                </div>
+                <div>
+                  <Typography className={styles.Entity} />
+                  Entity
+                </div>
+                <div>
+                  <Typography className={styles.Literal} />
+                  Literal
+                </div>
+              </>
+            )}
           </div>
           <div className={styles.LinkLabel}>
             <IconButtonTooltip
@@ -241,12 +277,29 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
             >
               {showLinkLabels ? "Hide link labels" : "Show link labels"}
             </Button>
+            <Button
+              onClick={() => setShowCompliance(!showCompliance)}
+              variant="outlined"
+              color="primary"
+              startIcon={<AssignmentTurnedInOutlinedIcon />}
+              sx={{
+                marginLeft: 1,
+                textTransform: 'none',
+                backgroundColor: '#fff',
+                '&:hover': {
+                  backgroundColor: '#fff'
+                }
+              }}
+            >
+              {showCompliance ? "Hide Compliance" : "Show Compliance"}
+            </Button>
           </div>
         </div>
         <GraphRenderer
           graphData={graphData}
           multiPropsMap={multiPropsMap}
           showLinkLabels={showLinkLabels}
+          showCompliance={showCompliance}
           ref={graphRef}
           onNodeClick={(node: any) => {
             setSelectedNode(node);
@@ -385,6 +438,48 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
             )}
           </div>
           <Divider />
+          {showCompliance && (
+            <>
+              <div className={styles.Section}>
+                <h3>Compliance Summary</h3>
+                <Typography>
+                  <strong>Result: </strong> {complianceInfo?.status === "yesGDPR" ? "GDPR compliant" : "GDPR Non-compliant"}
+                </Typography>
+                <Typography>
+                  <strong>Confidence score: </strong> {Math.round((complianceInfo?.score ?? 0) * 100)}%
+                </Typography>
+                <Typography>
+                  <strong>Reasoning: </strong> {complianceInfo?.reasoning}
+                </Typography>
+                <br />
+                <Typography variant="body2">
+                  <i>
+                    Check directly in the{" "}
+                    <Box
+                      component="span"
+                      onClick={() => {
+                        dispatch(updateUI({ openMetadataColumnDialog: false }));
+                        dispatch(updateUI({ initialComplianceType: "GDPR" }));
+                        dispatch(updateUI({ openComplianceStatusDialog: true }));
+                      }}
+                      sx={{
+                        fontStyle: "italic",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        "&:hover": {
+                          opacity: 0.8,
+                        },
+                      }}
+                    >
+                      GDPR Compliance Report
+                    </Box>
+                    .
+                  </i>
+                </Typography>
+              </div>
+              <Divider />
+            </>
+          )}
           {!selectedNode && !selectedLink && (
             <div className={styles.Section}>
               <Typography variant="body2" color="text.secondary">
@@ -404,6 +499,17 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                     −
                   </Typography>
                 </div>
+                {showCompliance && (
+                  <div className={styles.Section}>
+                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
+                      <i>
+                        The column contains {selectedNode.compliance_classification} and
+                        is {selectedNode.compliance_action === "noChange" ? "GDPR compliant" : "GDPR NON-complaint"} with
+                        a confidence score of {Math.round((selectedNode.compliance_score ?? 0) * 100)}%.
+                      </i>
+                    </Typography>
+                  </div>
+                )}
                 <Typography>
                   <strong>Kind: </strong>
                   {selectedNode.kind || '-'}
@@ -540,15 +646,6 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   )}
                 </div>
                 {showSourceTypes && hasTypes(selectedLink.source) && (
-                  <ul className={styles.List}>
-                    {selectedLink.source.types.map((t: any) => (
-                      <li key={t.id}>
-                        {t.name} ({t.id})
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {showSourceTypes && (
                   <ul className={styles.List}>
                     {selectedLink.source.types.map((t: any) => (
                       <li key={t.id}>

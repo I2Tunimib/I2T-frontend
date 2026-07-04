@@ -21,7 +21,7 @@ export const useGraphData = (datasetId: string, tableId: string) => {
   const graphData = useMemo(() => {
     if (!w3cData) return { nodes: [], links: [] };
 
-    const schema = w3cData[0];
+    const schema = w3cData[0].columns;
     const rows = w3cData.slice(1);
 
     const clean = (str: string) => str?.trim().replace(/^\uFEFF/, '');
@@ -45,7 +45,10 @@ export const useGraphData = (datasetId: string, tableId: string) => {
         metadata: typeHighestScore?.id ?? th.metadata?.[0]?.id ?? undefined,
         types,
         properties: th.metadata?.flatMap((m: any) => m.property ?? []),
-        values
+        values,
+        compliance_classification: th.gdprClassification,
+        compliance_action: th.gdprAction,
+        compliance_score: th.gdprScore,
       };
     });
 
@@ -95,7 +98,7 @@ export const useGraphData = (datasetId: string, tableId: string) => {
     const map: Record<string, Array<{ propID: string; label: string }>> = {};
     if (!w3cData) return map;
 
-    const schema = w3cData[0];
+    const schema = w3cData[0].columns;
     const clean = (str: string) => str?.trim().replace(/^\uFEFF/, '');
 
     Object.values(schema).forEach((th: any) => {
