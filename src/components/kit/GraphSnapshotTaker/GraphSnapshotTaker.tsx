@@ -46,6 +46,7 @@ const GraphSnapshotTaker: FC<GraphSnapshotTakerProps> = ({ table, onSnapshotRead
         height={500}
         scale={1}
         showLinkLabels={false}
+        showCompliance={false}
         onEngineStop={() => {
           setTimeout(() => {
             const canvas = document.querySelector(`#snapshot-canvas-${tableId} canvas`) as HTMLCanvasElement | null;

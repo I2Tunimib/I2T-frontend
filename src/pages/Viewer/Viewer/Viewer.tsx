@@ -75,6 +75,7 @@ const Viewer: FC<unknown> = () => {
   const graphRef = useRef(null);
   const isExportOpen = useAppSelector((state) => state.table.ui.openExportDialog);
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
+  const showCompliance = useAppSelector((state) => state.table.ui.showCompliance);
 
   useGraphPhysics(graphRef, graphData, isNodeIsolated);
 
@@ -116,7 +117,7 @@ const Viewer: FC<unknown> = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [isExportOpen, showLinkLabels, graphData, metrics, dispatch]);
+  }, [isExportOpen, showLinkLabels, showCompliance, graphData, metrics, dispatch]);
 
   useEffect(() => {
     if (tableId && datasetId) {
@@ -330,6 +331,7 @@ const Viewer: FC<unknown> = () => {
           graphData={graphData}
           multiPropsMap={multiPropsMap}
           showLinkLabels={showLinkLabels}
+          showCompliance={showCompliance}
           onNodeClick={(node: any) => {
             setSelectedNode(node);
             setSelectedLink(null);

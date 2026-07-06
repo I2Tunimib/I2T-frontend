@@ -63,6 +63,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const graphData = useAppSelector((state) => state.table.ui.currentGraphData || { nodes: [], links: [] });
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
   const metrics = useAppSelector((state) => state.table.ui.currentMetrics || []);
+  const showCompliance = useAppSelector((state) => state.table.ui.showCompliance);
 
   const handleClose = () => {
     dispatch(updateUI({ openExportDialog: false }));
@@ -124,6 +125,11 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const handleLinkLabelsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value === "true";
     dispatch(updateUI({ showLinkLabels: value }));
+  };
+
+  const handleComplianceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value === "true";
+    dispatch(updateUI({ showCompliance: value }));
   };
 
   const handleConfirm = () => {
@@ -203,6 +209,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
         graphSnapshot: finalSnapshot,
         graphData,
         metrics,
+        showCompliance,
       };
 
       dispatch(
@@ -520,6 +527,17 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 row
                 value={showLinkLabels ? "true" : "false"}
                 onChange={handleLinkLabelsChange}
+              >
+                <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                <FormControlLabel value="false" control={<Radio />} label="No" />
+              </RadioGroup>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="body1">Show compliance in snapshot:</Typography>
+              <RadioGroup
+                row
+                value={showCompliance ? "true" : "false"}
+                onChange={handleComplianceChange}
               >
                 <FormControlLabel value="true" control={<Radio />} label="Yes" />
                 <FormControlLabel value="false" control={<Radio />} label="No" />

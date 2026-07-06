@@ -46,13 +46,11 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
     getOutgoingLinks,
     getIncomingLinks
   } = useGraphData(datasetId, tableId);
-  const complianceInfo = w3cData[0].compliance;
   const [showNodes, setShowNodes] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
   const [showSourceTypes, setShowSourceTypes] = useState(false);
   const [showTargetTypes, setShowTargetTypes] = useState(false);
-  const [showCompliance, setShowCompliance] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [selectedLink, setSelectedLink] = useState<any | null>(null);
   const nodeSectionRef = useRef<HTMLDivElement | null>(null);
@@ -61,6 +59,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
   const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
   const isExportOpen = useAppSelector((state) => state.table.ui.openExportDialog);
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
+  const showCompliance = useAppSelector((state) => state.table.ui.showCompliance);
 
   const getNodeColor = (node: any) => {
     if (showCompliance) {
@@ -138,10 +137,14 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
 
       return () => clearTimeout(timer);
     }
-  }, [isExportOpen, showLinkLabels, graphData, metrics, dispatch]);
+  }, [isExportOpen, showLinkLabels, showCompliance, graphData, metrics, dispatch]);
 
   const handleShowLinkLabel = () => {
     dispatch(updateUI({ showLinkLabels: !showLinkLabels }));
+  };
+
+  const handleShowCompliance = () => {
+    dispatch(updateUI({ showCompliance: !showCompliance }));
   };
 
   const handleCloseGraphTutorial = () => {
@@ -172,6 +175,13 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
   if (graphData.nodes.length === 0) {
     return <div className={styles.Empty}>No semantic schema available</div>;
   }
+
+  const labels = {
+    personalData: "Personal Data",
+    quasiIdentifiers: "Quasi-Identifiers",
+    nonPersonalData: "Non-Personal Data",
+    anonymousData: "Anonymous Data"
+  };
 
   return (
     <div className={`${styles.Container} ${isDialog ? styles.DialogContainer : ''}`}>
@@ -278,7 +288,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
               {showLinkLabels ? "Hide link labels" : "Show link labels"}
             </Button>
             <Button
-              onClick={() => setShowCompliance(!showCompliance)}
+              onClick={handleShowCompliance}
               variant="outlined"
               color="primary"
               startIcon={<AssignmentTurnedInOutlinedIcon />}
@@ -291,7 +301,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                 }
               }}
             >
-              {showCompliance ? "Hide Compliance" : "Show Compliance"}
+              {showCompliance ? "Hide compliance" : "Show compliance"}
             </Button>
           </div>
         </div>
@@ -443,13 +453,18 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
               <div className={styles.Section}>
                 <h3>Compliance Summary</h3>
                 <Typography>
-                  <strong>Result: </strong> {complianceInfo?.status === "yesGDPR" ? "GDPR compliant" : "GDPR Non-compliant"}
+                  <strong>Status: </strong>
+                  {w3cData[0].compliance?.reasoning
+                    ? (w3cData[0].compliance.status === "yesGDPR") ? "GDPR compliant" : "GDPR NON-compliant"
+                    : <i>Compliance check not performed</i>
+                  }
+                </Typography>
+
+                <Typography>
+                  <strong>Confidence score: </strong> {Math.round((w3cData[0].compliance?.score ?? 0) * 100)}%
                 </Typography>
                 <Typography>
-                  <strong>Confidence score: </strong> {Math.round((complianceInfo?.score ?? 0) * 100)}%
-                </Typography>
-                <Typography>
-                  <strong>Reasoning: </strong> {complianceInfo?.reasoning}
+                  <strong>Reasoning: </strong>{w3cData[0].compliance?.reasoning || "-"}
                 </Typography>
                 <br />
                 <Typography variant="body2">
@@ -503,7 +518,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   <div className={styles.Section}>
                     <Typography variant="body2" style={{ marginBottom: "8px" }}>
                       <i>
-                        The column contains {selectedNode.compliance_classification} and
+                        The column contains {labels[selectedNode.compliance_classification]} and
                         is {selectedNode.compliance_action === "noChange" ? "GDPR compliant" : "GDPR NON-complaint"} with
                         a confidence score of {Math.round((selectedNode.compliance_score ?? 0) * 100)}%.
                       </i>
