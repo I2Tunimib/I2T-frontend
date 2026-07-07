@@ -83,7 +83,6 @@ export interface TableUIState {
   openMetadataDialog: boolean;
   openExportDialog: boolean;
   showLinkLabels: boolean;
-  showCompliance: boolean;
   currentGraphSnapshot: string;
   currentGraphSnapshotCompliance: string;
   currentGraphData: {

@@ -51,15 +51,14 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
   const [showMetrics, setShowMetrics] = useState(false);
   const [showSourceTypes, setShowSourceTypes] = useState(false);
   const [showTargetTypes, setShowTargetTypes] = useState(false);
+  const [showCompliance, setShowCompliance] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [selectedLink, setSelectedLink] = useState<any | null>(null);
   const nodeSectionRef = useRef<HTMLDivElement | null>(null);
   const linkSectionRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<ForceGraphMethods | null>(null);
   const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
-  const isExportOpen = useAppSelector((state) => state.table.ui.openExportDialog);
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
-  const showCompliance = useAppSelector((state) => state.table.ui.showCompliance);
 
   const getNodeColor = (node: any) => {
     if (showCompliance) {
@@ -100,51 +99,8 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
     return selectedNode ? getIncomingLinks(selectedNode.label) : [];
   }, [selectedNode, getIncomingLinks]);
 
-  useEffect(() => {
-    if (isExportOpen) {
-      const timer = setTimeout(() => {
-        let graphSnapshot = '';
-        const canvas = document.querySelector(`.${styles.GraphWrapper} canvas`) as HTMLCanvasElement | null;
-        if (canvas) {
-          graphSnapshot = canvas.toDataURL('image/png');
-        }
-
-        const cleanGraphData = {
-          nodes: graphData.nodes.map((n) => ({
-            label: n.label,
-            kind: n.kind,
-            datatype: n.datatype,
-            role: n.role,
-            types: n.types,
-          })),
-          links: graphData.links.map((l) => ({
-            id: l.id,
-            source: typeof l.source === 'object' ? (l.source as any).label : l.source,
-            target: typeof l.target === 'object' ? (l.target as any).label : l.target,
-            label: l.label,
-            propID: l.propID,
-          })),
-        };
-
-        dispatch(
-          updateUI({
-            currentGraphSnapshot: graphSnapshot,
-            currentGraphData: cleanGraphData,
-            currentMetrics: metrics,
-          })
-        );
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isExportOpen, showLinkLabels, showCompliance, graphData, metrics, dispatch]);
-
   const handleShowLinkLabel = () => {
     dispatch(updateUI({ showLinkLabels: !showLinkLabels }));
-  };
-
-  const handleShowCompliance = () => {
-    dispatch(updateUI({ showCompliance: !showCompliance }));
   };
 
   const handleCloseGraphTutorial = () => {
@@ -288,7 +244,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
               {showLinkLabels ? "Hide link labels" : "Show link labels"}
             </Button>
             <Button
-              onClick={handleShowCompliance}
+              onClick={() => setShowCompliance(!showCompliance)}
               variant="outlined"
               color="primary"
               startIcon={<AssignmentTurnedInOutlinedIcon />}
@@ -461,7 +417,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                 </Typography>
 
                 <Typography>
-                  <strong>Confidence score: </strong> {Math.round((w3cData[0].compliance?.score ?? 0) * 100)}%
+                  <strong>Confidence score: </strong>{w3cData[0].compliance?.reasoning ? `${(w3cData[0].compliance.score * 100).toFixed(0)}%` : "-"}
                 </Typography>
                 <Typography>
                   <strong>Reasoning: </strong>{w3cData[0].compliance?.reasoning || "-"}
@@ -514,7 +470,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                     −
                   </Typography>
                 </div>
-                {showCompliance && (
+                {showCompliance && w3cData[0].compliance?.reasoning && (
                   <div className={styles.Section}>
                     <Typography variant="body2" style={{ marginBottom: "8px" }}>
                       <i>

@@ -149,7 +149,6 @@ const initialState: TableState = {
     metadataColumnDialogInitialTab: 0,
     openExportDialog: false,
     showLinkLabels: false,
-    showCompliance: false,
     currentGraphSnapshot: "",
     currentGraphSnapshotCompliance: "",
     currentGraphData: null,

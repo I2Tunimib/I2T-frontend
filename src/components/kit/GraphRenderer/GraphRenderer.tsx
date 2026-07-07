@@ -1,5 +1,6 @@
 import ForceGraph2D from 'react-force-graph-2d';
 import { forwardRef } from 'react';
+import { useGraphPhysics } from "@hooks/graphData/useGraphPhysics";
 
 function wrapText(
   ctx: CanvasRenderingContext2D,
@@ -39,6 +40,7 @@ export const GraphRenderer = forwardRef<any, any>(({
   onLinkClick,
   isPreview = false,
   scale = 1,
+  isNodeIsolated,
   ...props
 }, ref) => {
   const getNodeColor = (node: any) => {
@@ -55,6 +57,10 @@ export const GraphRenderer = forwardRef<any, any>(({
     if (node.kind === 'literal') return '#e67e22';
     return '#3498db';
   };
+
+  if (!isPreview) {
+    useGraphPhysics(ref, graphData, isNodeIsolated);
+  }
 
   return (
     <ForceGraph2D

@@ -32,9 +32,11 @@ import { updateUI } from "@store/slices/table/table.slice";
 import { exportTable } from "@store/slices/table/table.thunk";
 import fileDownload from "js-file-download";
 import { useSnackbar } from "notistack";
-import React, { FC, useState, useEffect } from "react";
+import React, { FC, useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { HelpOutlineRounded } from "@mui/icons-material";
+import { GraphRenderer } from "@components/kit/GraphRenderer/GraphRenderer";
+import { useGraphData } from "@hooks/graphData/useGraphData";
 
 interface ExportDialogProps {}
 
@@ -59,11 +61,19 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const { API } = useAppSelector(selectAppConfig);
   const isUnsaved = useAppSelector(selectIsUnsaved);
   const { enqueueSnackbar } = useSnackbar();
-  const graphSnapshot = useAppSelector((state) => state.table.ui.currentGraphSnapshot) || "";
-  const graphData = useAppSelector((state) => state.table.ui.currentGraphData || { nodes: [], links: [] });
+  const {
+    graphData,
+    multiPropsMap,
+    metrics,
+    isNodeIsolated,
+  } = useGraphData(datasetId, tableId);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedLink, setSelectedLink] = useState(null);
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
-  const metrics = useAppSelector((state) => state.table.ui.currentMetrics || []);
-  const showCompliance = useAppSelector((state) => state.table.ui.showCompliance);
+  const standardContainerRef = useRef<HTMLDivElement>(null);
+  const complianceContainerRef = useRef<HTMLDivElement>(null);
+  const standardRef = useRef<any>(null);
+  const complianceRef = useRef<any>(null);
 
   const handleClose = () => {
     dispatch(updateUI({ openExportDialog: false }));
@@ -125,11 +135,6 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const handleLinkLabelsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value === "true";
     dispatch(updateUI({ showLinkLabels: value }));
-  };
-
-  const handleComplianceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value === "true";
-    dispatch(updateUI({ showCompliance: value }));
   };
 
   const handleConfirm = () => {
@@ -195,21 +200,26 @@ const ExportDialog: FC<ExportDialogProps> = () => {
     }
 
     if (format.includes("Schema Report")) {
-      let finalSnapshot = graphSnapshot;
-      const canvas = document.querySelector('canvas');
-      if (canvas) {
-        finalSnapshot = canvas.toDataURL('image/png');
-      }
+      const getSnapshot = (containerRef: React.RefObject<HTMLDivElement>) => {
+        const container = containerRef.current;
+        const canvas = container?.querySelector('canvas');
+        if (canvas) {
+          return canvas.toDataURL('image/png');
+        }
+        return '';
+      };
 
       const payload = {
         format: format === "HTML Schema Report" ? "report_html" : "report_md",
         tableName,
         datasetId,
         tableId,
-        graphSnapshot: finalSnapshot,
+        graphSnapshots: {
+          standard: getSnapshot(standardContainerRef),
+          compliance: getSnapshot(complianceContainerRef)
+        },
         graphData,
         metrics,
-        showCompliance,
       };
 
       dispatch(
@@ -532,18 +542,53 @@ const ExportDialog: FC<ExportDialogProps> = () => {
                 <FormControlLabel value="false" control={<Radio />} label="No" />
               </RadioGroup>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography variant="body1">Show compliance in snapshot:</Typography>
-              <RadioGroup
-                row
-                value={showCompliance ? "true" : "false"}
-                onChange={handleComplianceChange}
-              >
-                <FormControlLabel value="true" control={<Radio />} label="Yes" />
-                <FormControlLabel value="false" control={<Radio />} label="No" />
-              </RadioGroup>
-            </Box>
           </FormControl>
+        )}
+        {isOpen && (
+          <div style={{
+            position: 'absolute',
+            width: '1000px',
+            top: '-9999px',
+            left: '-9999px',
+            pointerEvents: 'none'
+          }}>
+            <div ref={standardContainerRef}>
+              <GraphRenderer
+                ref={standardRef}
+                graphData={graphData}
+                multiPropsMap={multiPropsMap}
+                showLinkLabels={showLinkLabels}
+                showCompliance={false}
+                onNodeClick={(node: any) => {
+                  setSelectedNode(node);
+                  setSelectedLink(null);
+                }}
+                onLinkClick={(link: any) => {
+                  setSelectedLink(link);
+                  setSelectedNode(null);
+                }}
+                isNodeIsolated={isNodeIsolated}
+              />
+            </div>
+            <div ref={complianceContainerRef}>
+              <GraphRenderer
+                ref={complianceRef}
+                graphData={graphData}
+                multiPropsMap={multiPropsMap}
+                showLinkLabels={showLinkLabels}
+                showCompliance={true}
+                onNodeClick={(node: any) => {
+                  setSelectedNode(node);
+                  setSelectedLink(null);
+                }}
+                onLinkClick={(link: any) => {
+                  setSelectedLink(link);
+                  setSelectedNode(null);
+                }}
+                isNodeIsolated={isNodeIsolated}
+              />
+            </div>
+          </div>
         )}
       </DialogContent>
       <DialogActions>
