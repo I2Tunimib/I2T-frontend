@@ -772,6 +772,7 @@ export type ExtendThunkInputProps = {
 export type ExtendedColumnCell = {
   label: string;
   metadata: BaseMetadata[];
+  annotations?: Record<string, import("../interfaces/table").TextAnnotation[]>;
 };
 type ExtendedColumn = {
   label: string;

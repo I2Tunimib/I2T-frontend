@@ -183,33 +183,22 @@ const datasetAPI = {
   },
 
   // ACL endpoints
-  addViewer: (datasetId: string, userId: string) => {
+  addAclUser: (datasetId: string, userId: string, role: "viewer" | "editor") => {
     return apiClient.post(
-      apiEndpoint({ endpoint: "ADD_VIEWER", paramsValue: { datasetId } }),
-      { userId },
+      apiEndpoint({ endpoint: "ADD_ACL_USER", paramsValue: { datasetId } }),
+      { userId, role },
       { headers: { ...getAuthHeader() } },
     );
   },
 
-  removeViewer: (datasetId: string, userId: string) => {
+  removeAclUser: (
+    datasetId: string,
+    userId: string,
+    role: "viewer" | "editor",
+  ) => {
     return apiClient.delete(
-      apiEndpoint({ endpoint: "REMOVE_VIEWER", paramsValue: { datasetId } }),
-      { data: { userId }, headers: { ...getAuthHeader() } },
-    );
-  },
-
-  addEditor: (datasetId: string, userId: string) => {
-    return apiClient.post(
-      apiEndpoint({ endpoint: "ADD_EDITOR", paramsValue: { datasetId } }),
-      { userId },
-      { headers: { ...getAuthHeader() } },
-    );
-  },
-
-  removeEditor: (datasetId: string, userId: string) => {
-    return apiClient.delete(
-      apiEndpoint({ endpoint: "REMOVE_EDITOR", paramsValue: { datasetId } }),
-      { data: { userId }, headers: { ...getAuthHeader() } },
+      apiEndpoint({ endpoint: "REMOVE_ACL_USER", paramsValue: { datasetId } }),
+      { data: { userId, role }, headers: { ...getAuthHeader() } },
     );
   },
 
@@ -231,42 +220,33 @@ const datasetAPI = {
       { clearCacheEntry: true, headers: { ...getAuthHeader() } },
     ),
 
-  addTableViewer: (datasetId: string, tableId: string, userId: string) =>
+  addTableAclUser: (
+    datasetId: string,
+    tableId: string,
+    userId: string,
+    role: "viewer" | "editor",
+  ) =>
     apiClient.post(
       apiEndpoint({
-        endpoint: "ADD_TABLE_VIEWER",
+        endpoint: "ADD_TABLE_ACL_USER",
         paramsValue: { datasetId, tableId },
       }),
-      { userId },
+      { userId, role },
       { headers: { ...getAuthHeader() } },
     ),
 
-  removeTableViewer: (datasetId: string, tableId: string, userId: string) =>
+  removeTableAclUser: (
+    datasetId: string,
+    tableId: string,
+    userId: string,
+    role: "viewer" | "editor",
+  ) =>
     apiClient.delete(
       apiEndpoint({
-        endpoint: "REMOVE_TABLE_VIEWER",
+        endpoint: "REMOVE_TABLE_ACL_USER",
         paramsValue: { datasetId, tableId },
       }),
-      { data: { userId }, headers: { ...getAuthHeader() } },
-    ),
-
-  addTableEditor: (datasetId: string, tableId: string, userId: string) =>
-    apiClient.post(
-      apiEndpoint({
-        endpoint: "ADD_TABLE_EDITOR",
-        paramsValue: { datasetId, tableId },
-      }),
-      { userId },
-      { headers: { ...getAuthHeader() } },
-    ),
-
-  removeTableEditor: (datasetId: string, tableId: string, userId: string) =>
-    apiClient.delete(
-      apiEndpoint({
-        endpoint: "REMOVE_TABLE_EDITOR",
-        paramsValue: { datasetId, tableId },
-      }),
-      { data: { userId }, headers: { ...getAuthHeader() } },
+      { data: { userId, role }, headers: { ...getAuthHeader() } },
     ),
 
   setTableVisibility: (

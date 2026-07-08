@@ -808,7 +808,11 @@ const ListView = ({
 // Main panel
 // ---------------------------------------------------------------------------
 
-const DependenciesPanel = ({ open, onClose, readonly = false }: DependenciesPanelProps) => {
+const DependenciesPanel = ({
+  open,
+  onClose,
+  readonly = false,
+}: DependenciesPanelProps) => {
   const dependencies = useAppSelector(selectDependencies);
   const dispatch = useAppDispatch();
   const opMap = useMemo(
@@ -987,7 +991,7 @@ const DependenciesPanel = ({ open, onClose, readonly = false }: DependenciesPane
         <Stack direction="row" alignItems="center" gap={1}>
           <AccountTreeRoundedIcon fontSize="small" color="primary" />
           <Typography variant="subtitle1" fontWeight={600}>
-            Dependencies
+            Pipeline
           </Typography>
           {dependencies && (
             <Chip

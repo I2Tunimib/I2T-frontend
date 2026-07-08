@@ -181,6 +181,7 @@ export interface Cell {
   label: string;
   metadata: BaseMetadata[];
   annotationMeta: AnnotationMeta;
+  annotations?: Record<string, TextAnnotation[]>;
 }
 
 export interface AnnotationMeta {
@@ -198,6 +199,22 @@ export interface Context {
   uri: string;
   total: number;
   reconciliated: number;
+}
+
+export interface TextAnnotation {
+  id: number;
+  type: string;
+  target: {
+    selector: {
+      type: "TextPositionSelector";
+      start: number;
+      end: number;
+    };
+  };
+  features: Record<string, any> & {
+    text?: string;
+    entity?: Pick<BaseMetadata, "id" | "name" | "score" | "match">;
+  };
 }
 
 export interface BaseMetadata {

@@ -141,6 +141,7 @@ export const createCell = (
       label: normalizeLabel(newCell.label),
       metadata: getMetadata(newCell.metadata),
       ...getAnnotationMeta(newCell.metadata),
+      ...(newCell.annotations && { annotations: newCell.annotations }),
     };
   }
 

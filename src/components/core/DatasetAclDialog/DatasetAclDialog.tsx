@@ -119,11 +119,9 @@ const DatasetAclDialog: FC<Props> = ({
   const handleAdd = async () => {
     if (!selectedUsersToAdd || selectedUsersToAdd.length === 0) return;
     try {
-      const promises = selectedUsersToAdd.map((u) => {
-        if (section === "viewer")
-          return datasetAPI.addViewer(datasetId, String(u.id));
-        return datasetAPI.addEditor(datasetId, String(u.id));
-      });
+      const promises = selectedUsersToAdd.map((u) =>
+        datasetAPI.addAclUser(datasetId, String(u.id), section),
+      );
       await Promise.all(promises);
       // refresh
       const resp = await datasetAPI.getDatasetInfo({ datasetId });
@@ -140,11 +138,7 @@ const DatasetAclDialog: FC<Props> = ({
 
   const handleRemove = async (targetId: string, kind: "viewer" | "editor") => {
     try {
-      if (kind === "viewer") {
-        await datasetAPI.removeViewer(datasetId, String(targetId));
-      } else {
-        await datasetAPI.removeEditor(datasetId, String(targetId));
-      }
+      await datasetAPI.removeAclUser(datasetId, String(targetId), kind);
       const resp = await datasetAPI.getDatasetInfo({ datasetId });
       setDataset(resp.data);
       if (onChange) onChange();

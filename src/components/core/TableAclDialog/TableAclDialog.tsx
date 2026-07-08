@@ -142,11 +142,9 @@ const TableAclDialog: FC<Props> = ({
   const handleAdd = async () => {
     if (!selectedUsersToAdd || selectedUsersToAdd.length === 0) return;
     try {
-      const promises = selectedUsersToAdd.map((u) => {
-        if (section === "viewer")
-          return datasetAPI.addTableViewer(datasetId, tableId, String(u.id));
-        return datasetAPI.addTableEditor(datasetId, tableId, String(u.id));
-      });
+      const promises = selectedUsersToAdd.map((u) =>
+        datasetAPI.addTableAclUser(datasetId, tableId, String(u.id), section),
+      );
       await Promise.all(promises);
       await refreshAcl();
       setQuery("");
@@ -160,18 +158,12 @@ const TableAclDialog: FC<Props> = ({
 
   const handleRemove = async (targetId: string, kind: "viewer" | "editor") => {
     try {
-      if (kind === "viewer")
-        await datasetAPI.removeTableViewer(
-          datasetId,
-          tableId,
-          String(targetId),
-        );
-      else
-        await datasetAPI.removeTableEditor(
-          datasetId,
-          tableId,
-          String(targetId),
-        );
+      await datasetAPI.removeTableAclUser(
+        datasetId,
+        tableId,
+        String(targetId),
+        kind,
+      );
       await refreshAcl();
     } catch (e: any) {
       console.error(e);

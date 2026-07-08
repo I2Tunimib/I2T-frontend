@@ -38,11 +38,13 @@ import tableAPI from "@services/api/table";
 interface GDPRContentProps {
   tableId?: string;
   datasetId?: string;
+  readonly?: boolean;
 }
 
 const GDPRContent: FC<GDPRContentProps> = ({
   tableId: propTableId,
   datasetId: propDatasetId,
+  readonly = false,
 }) => {
   const [purpose, setPurpose] = useState<string>("General data processing");
   const [selectedReportIndex, setSelectedReportIndex] = useState<number>(-1);
@@ -157,17 +159,19 @@ const GDPRContent: FC<GDPRContentProps> = ({
       <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
         GDPR Configuration
       </Typography>
-      <TextField
-        fullWidth
-        label="Purpose"
-        value={purpose}
-        onChange={(e) => setPurpose(e.target.value)}
-        placeholder="e.g., User analytics, Marketing campaigns, etc."
-        sx={{ marginTop: "20px", marginBottom: "20px" }}
-        multiline
-        rows={2}
-        helperText="Describe how this data will be used"
-      />
+      {!readonly && (
+        <TextField
+          fullWidth
+          label="Purpose"
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
+          placeholder="e.g., User analytics, Marketing campaigns, etc."
+          sx={{ marginTop: "20px", marginBottom: "20px" }}
+          multiline
+          rows={2}
+          helperText="Describe how this data will be used"
+        />
+      )}
 
       {complianceStatus === "PENDING" && (
         <Alert severity="info" icon={<CircularProgress size={20} />}>
@@ -331,7 +335,7 @@ const GDPRContent: FC<GDPRContentProps> = ({
         </Box>
       )}
 
-      {complianceStatus !== "PENDING" && (
+      {!readonly && complianceStatus !== "PENDING" && (
         <FormControl fullWidth sx={{ marginTop: "20px" }}>
           <Button
             variant="contained"

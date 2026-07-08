@@ -11,6 +11,8 @@ import {
   Select,
   SelectChangeEvent,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -48,6 +50,7 @@ import { Cell } from "@tanstack/react-table";
 import {
   BaseMetadata,
   Cell as TableCell,
+  TextAnnotation,
 } from "@store/slices/table/interfaces/table";
 import {
   ConfirmationDialog,
@@ -60,6 +63,7 @@ import { extractIdFromUri, resolveURI, createOSMURI } from "@services/utils/uri-
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
 import AddMetadataForm from "../MetadataColumnDialog/AddMetadataForm";
+import NerAnnotationsTab from "./NerAnnotationsTab";
 //import HelpDialog from "../../HelpDialog/HelpDialog";
 
 const DeferredTable = deferMounting(CustomTable);
@@ -167,6 +171,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [toUpdate, setToUpdate] = useState<boolean>(false);
   const [showConfirmPropagate, setShowConfirmPropagate] =
     useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<number>(0);
   const {
     setState,
     memoizedState: { columns, data },
@@ -755,6 +760,12 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const activeSearchService = getActiveSearchService();
   console.log("ATT activeSearchService", activeSearchService);
 
+  const hasNerAnnotations =
+    !!cell?.annotations &&
+    Object.values(cell.annotations).some(
+      (anns: TextAnnotation[]) => anns.length > 0,
+    );
+
   const handleSearchInService = () => {
     if (!cell?.label || !activeSearchService) return;
 
@@ -828,6 +839,23 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           </Stack>
         </Stack>
         <Divider orientation="horizontal" flexItem />
+        {hasNerAnnotations && (
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+              sx={{ px: 2, borderBottom: 1, borderColor: "divider" }}
+            >
+              <Tab label="Entity Matching" />
+              <Tab label="Text Annotations" />
+            </Tabs>
+          )}
+        {activeTab === 1 && hasNerAnnotations ? (
+          <NerAnnotationsTab
+            label={cell.label}
+            annotations={cell.annotations!}
+          />
+        ) : (
+          <>
         <Box padding="16px">
           {cell.reconciler || isManualMatch ? (
             <Typography color="text.secondary">
@@ -928,6 +956,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
           onRowCheck={handleRowCheck}
         />
+          </>
+        )}
       </Stack>
     </Dialog>
   ) : null;
