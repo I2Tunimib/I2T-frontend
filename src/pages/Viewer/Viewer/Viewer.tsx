@@ -19,7 +19,6 @@ import {
 import deferMounting from "@components/HOC";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { isEmptyObject } from "@services/utils/objects-utils";
-import { Loader } from "@components/core";
 import styled from "@emotion/styled";
 import { keyframes } from "@emotion/react";
 import useSocketIo from "@components/core/SocketIoProvider/useSocketIo";
@@ -248,14 +247,14 @@ const Viewer: FC<unknown> = () => {
         case "table":
           return <DeferredTableViewer />;
         case "graph":
-          return <DeferredGraphViewer />;
+          return <DeferredGraphViewer datasetId={datasetId} tableId={tableId} />;
         case "raw":
           return <DeferredW3CViewer />;
         default:
           return null;
       }
     }
-  }, [view]);
+  }, [view, datasetId, tableId]);
 
   return (
     <>

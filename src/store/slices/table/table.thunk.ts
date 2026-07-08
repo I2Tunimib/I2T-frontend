@@ -79,11 +79,17 @@ export const exportTable = createAsyncThunk(
   async ({
     format,
     params,
+    payload,
   }: {
     format: string;
     params: Record<string, string | number>;
+    payload?: any;
   }) => {
-    const response = await tableAPI.exportTable(format, params);
+    const response = await tableAPI.exportTable(format, params, payload);
+    const isBlob = response.config.responseType === 'blob';
+    if (isBlob) {
+      return { data: response.data, isBlob };
+    }
     return response.data;
   },
 );

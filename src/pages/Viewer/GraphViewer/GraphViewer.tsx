@@ -1,17 +1,19 @@
 import React, { FC, useEffect, useState, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
+import { useGraphData } from "@hooks/graphData/useGraphData";
+import { useGraphPhysics } from "@hooks/graphData/useGraphPhysics";
 import { selectGraphTutorialDialogStatus } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
-import { exportTable } from '@store/slices/table/table.thunk';
-import { useParams } from 'react-router-dom';
-import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
-import { Divider, Typography, Tooltip, Button, IconButton } from '@mui/material';
+import { ForceGraphMethods } from 'react-force-graph-2d';
+import { Divider, Typography, Tooltip, Button, IconButton, CircularProgress, Box } from '@mui/material';
 import { IconButtonTooltip } from "@components/core";
+import { GraphRenderer } from "@components/kit/GraphRenderer/GraphRenderer";
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import RemoveOutlinedIcon from '@mui/icons-material/RemoveOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
 import styled from '@emotion/styled';
 import styles from './GraphViewer.module.scss';
@@ -24,66 +26,54 @@ const InfoIcon = styled(HelpOutlineRoundedIcon)`
   color: grey;
 `;
 
-function wrapText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number
-): string[] {
-  const tokens = text.match(/[^_\-\s]+[-_]?/g) ?? [];
-  const lines: string[] = [];
-
-  let currentLine = tokens[0] || '';
-
-  for (let i = 1; i < tokens.length; i++) {
-    const token = tokens[i];
-    const testLine = currentLine + token;
-
-    if (ctx.measureText(testLine).width <= maxWidth) {
-      currentLine = testLine;
-    } else {
-      lines.push(currentLine);
-      currentLine = token;
-    }
-  }
-
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-
-  return lines;
+interface GraphViewerProps {
+  datasetId?: string;
+  tableId?: string;
+  isDialog?: boolean;
 }
 
-const getNodeColor = (node: any) => {
-  if (node.role === 'subject') return '#2ecc71';
-  if (node.kind === 'literal') return '#e67e22';
-  return '#3498db';
-};
-
-const GraphViewer: FC = () => {
+const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => {
   const dispatch = useAppDispatch();
-  const { datasetId, tableId } = useParams<{ datasetId: string; tableId: string }>();
-  const [w3cData, setW3cData] = useState<any>(null);
+  const {
+    graphData,
+    nodesLength,
+    linksLength,
+    multiPropsMap,
+    metrics,
+    loading,
+    w3cData,
+    isNodeIsolated,
+    getOutgoingLinks,
+    getIncomingLinks
+  } = useGraphData(datasetId, tableId);
   const [showNodes, setShowNodes] = useState(false);
   const [showLinks, setShowLinks] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
   const [showSourceTypes, setShowSourceTypes] = useState(false);
   const [showTargetTypes, setShowTargetTypes] = useState(false);
+  const [showCompliance, setShowCompliance] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [selectedLink, setSelectedLink] = useState<any | null>(null);
   const nodeSectionRef = useRef<HTMLDivElement | null>(null);
   const linkSectionRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<ForceGraphMethods | null>(null);
   const openGraphTutorialDialog = useAppSelector(selectGraphTutorialDialogStatus);
-  const isExportOpen = useAppSelector((state) => state.table.ui.openExportDialog);
   const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
 
-  useEffect(() => {
-    dispatch(
-      exportTable({ format: 'JSON (W3C Compliant)', params: { datasetId, tableId } })
-    )
-      .unwrap()
-      .then(setW3cData);
-  }, [datasetId, tableId]);
+  const getNodeColor = (node: any) => {
+    if (showCompliance) {
+      switch (node.compliance_classification) {
+        case "personalData": return "crimson";
+        case "quasiIdentifiers": return "orange";
+        case "nonPersonalData": return "teal";
+        case "anonymousData": return "green";
+        default: return "#999";
+      }
+    }
+    if (node.role === 'subject') return '#2ecc71';
+    if (node.kind === 'literal') return '#e67e22';
+    return '#3498db';
+  };
 
   useEffect(() => {
     if (selectedNode && nodeSectionRef.current) {
@@ -101,276 +91,17 @@ const GraphViewer: FC = () => {
     }
   }, [selectedNode, selectedLink]);
 
-  const graphData = useMemo(() => {
-    if (!w3cData) return { nodes: [], links: [] };
+  const nodeOutgoingLinks = useMemo(() => {
+    return selectedNode ? getOutgoingLinks(selectedNode.label) : [];
+  }, [selectedNode, getOutgoingLinks]);
 
-    const schema = w3cData[0];
-    const rows = w3cData.slice(1);
-
-    const clean = (str: string) => str?.trim().replace(/^\uFEFF/, '');
-
-    const nodes = Object.values(schema).map((th: any) => {
-      const types = th.metadata?.flatMap((m: any) => m.type ?? []) ?? [];
-      const typeHighestScore = types.length > 0
-        ? types.reduce((highest: any, curr: any) => (curr.score > highest.score ? curr : highest))
-        : undefined;
-      const values = rows.map((row: any) => {
-        const key = th.label;
-        const cell = row[key];
-        return cell?.label ?? 'N/A';
-      });
-
-      return {
-        label: clean(th.label),
-        kind: th.kind,
-        datatype: th.datatype,
-        role: th.role,
-        metadata: typeHighestScore?.id ?? th.metadata?.[0]?.id ?? undefined,
-        types,
-        properties: th.metadata?.flatMap((m: any) => m.property ?? []),
-        values
-      };
-    });
-
-    const nodeLabels = new Set(nodes.map((n) => n.label));
-
-    const rawLinks = Object.values(schema).flatMap((th: any) => {
-      return (th.metadata ?? []).flatMap((m: any) => {
-        return (m.property ?? []).map((p: any) => {
-          const sourceLabel = clean(th.label);
-          const targetLabel = clean(p.obj);
-
-          if (nodeLabels.has(sourceLabel) && nodeLabels.has(targetLabel)) {
-            return {
-              id: `${sourceLabel}->${targetLabel}_${p.id}`,
-              source: sourceLabel,
-              target: targetLabel,
-              label: p.name,
-              propID: p.id,
-            };
-          }
-          return null;
-        });
-      });
-    }).filter((l): l is any => l !== null);
-
-    const links = rawLinks.map((link) => {
-      const sId = link.source;
-      const tId = link.target;
-
-      const hasInverse = rawLinks.some((l) => {
-        return l.source === tId && l.target === sId;
-      });
-
-      return {
-        ...link,
-        curvature: hasInverse ? 0.25 : 0
-      };
-    });
-
-    console.log('nodes', nodes);
-    console.log('links', links);
-
-    return { nodes, links };
-  }, [w3cData]);
-
-  const multiPropsMap = useMemo(() => {
-    const map: Record<string, Array<{ propID: string; label: string }>> = {};
-    if (!w3cData) return map;
-
-    const schema = w3cData[0];
-    const clean = (str: string) => str?.trim().replace(/^\uFEFF/, '');
-
-    Object.values(schema).forEach((th: any) => {
-      (th.metadata ?? []).forEach((m: any) => {
-        (m.property ?? []).forEach((p: any) => {
-          const sourceLabel = clean(th.label);
-          const targetLabel = clean(p.obj);
-          const pairKey = `${sourceLabel}->${targetLabel}`;
-
-          if (!map[pairKey]) {
-            map[pairKey] = [];
-          }
-          if (!map[pairKey].some((item) => item.propID === p.id)) {
-            map[pairKey].push({ propID: p.id, label: p.name });
-          }
-        });
-      });
-    });
-    return map;
-  }, [w3cData]);
+  const nodeIncomingLinks = useMemo(() => {
+    return selectedNode ? getIncomingLinks(selectedNode.label) : [];
+  }, [selectedNode, getIncomingLinks]);
 
   const handleShowLinkLabel = () => {
     dispatch(updateUI({ showLinkLabels: !showLinkLabels }));
   };
-
-  const nodesLength = graphData.nodes.length;
-  const linksLength = graphData.links.length;
-
-  const nodeOutgoingLinks = selectedNode
-    ? graphData.links.filter((l: any) => {
-      const sourceId =
-        typeof l.source === 'object' ? l.source.label : l.source;
-      return sourceId === selectedNode.label;
-    })
-    : [];
-
-  const nodeIncomingLinks = selectedNode
-    ? graphData.links.filter((l: any) => {
-      const targetId =
-        typeof l.target === 'object' ? l.target.label : l.target;
-      return targetId === selectedNode.label;
-    })
-    : [];
-
-  const isNodeIsolated = (node: any) => {
-    return !graphData.links.some((l) =>
-      (typeof l.source === 'object' ? l.source.label : l.source) === node.label ||
-      (typeof l.target === 'object' ? l.target.label : l.target) === node.label);
-  };
-
-  const hasTypes = (node: any) => {
-    return node && Array.isArray(node.types) && node.types.length > 0;
-  };
-
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return;
-    graph.d3Force('link')?.distance(80);
-    graph.d3Force('charge')?.strength(-50);
-    graph.d3Force('isolate', (alpha) => {
-      graphData.nodes.forEach((node) => {
-        if (isNodeIsolated(node) && typeof node === 'object' && 'vx' in node) {
-          node.vx *= 0.2;
-          node.vy *= 0.2;
-        }
-      });
-    });
-    graph.d3ReheatSimulation();
-  }, [graphData]);
-
-  const density = nodesLength > 1 ? linksLength / (nodesLength * (nodesLength - 1)) : 0;
-  const nodeDegrees = useMemo(() => {
-    return graphData.nodes.map((n) => {
-      const degree = graphData.links.filter(
-        (l) => l.source === n.label || l.target === n.label
-      ).length;
-
-      return {
-        label: n.label,
-        degree
-      };
-    });
-  }, [graphData]);
-
-  const minDegree = useMemo(() => {
-    if (!nodeDegrees.length) {
-      return { value: 0, nodes: [] };
-    }
-    const value = Math.min(...nodeDegrees.map((n) => n.degree));
-    const nodes = nodeDegrees.filter((n) => n.degree === value);
-
-    return { value, nodes };
-  }, [nodeDegrees]);
-
-  const maxDegree = useMemo(() => {
-    if (!nodeDegrees.length) {
-      return { value: 0, nodes: [] };
-    }
-    const value = Math.max(...nodeDegrees.map((n) => n.degree));
-    const nodes = nodeDegrees.filter((n) => n.degree === value);
-
-    return { value, nodes };
-  }, [nodeDegrees]);
-
-  const rolesDistribution = useMemo(() => {
-    const counter: Record<string, number> = {};
-    const unknownNodes: string[] = [];
-
-    graphData.nodes.forEach((n) => {
-      const key = n.role || n.kind || 'unknown';
-      counter[key] = (counter[key] || 0) + 1;
-
-      if (key === 'unknown') unknownNodes.push(n.label);
-    });
-
-    const orderedRoles = ['subject', 'entity', 'literal', 'unknown'];
-    return orderedRoles
-      .map((r) => ({
-        role: r,
-        count: counter[r] || 0,
-        unknownNodes: r === 'unknown' ? unknownNodes : []
-      }));
-  }, [graphData.nodes]);
-
-  const metrics = useMemo(() => [
-    {
-      name: 'Density',
-      value: density.toFixed(4),
-      description: 'Measures how connected the graph is relative to the maximum possible. Useful to spot missing relations or sparse datasets.'
-    },
-    {
-      name: 'Average Degree',
-      value: (nodesLength > 0 ? (((2 * linksLength) / nodesLength).toFixed(2)) : '0'),
-      description: 'Average number of relations per node. Nodes with higher degrees are more central or heavily ' +
-        'referenced in the dataset. Helps identify key columns.'
-    },
-    {
-      name: 'Max Degree',
-      value: `${maxDegree.value} (${maxDegree.nodes.map((n) => n.label).join(', ')})`,
-      description: 'Identifies node with the most connections—“hub” column, like a primary key or a frequently referenced entity.'
-    },
-    {
-      name: 'Min Degree',
-      value: `${minDegree.value} (${minDegree.nodes.map((n) => n.label).join(', ')})`,
-      description: 'Represents isolated node (column) with the fewest or no connections—potentially unused or stand-alone data.'
-    },
-    {
-      name: 'Roles Distribution',
-      value: rolesDistribution,
-      description: 'Shows the proportion of different types of nodes. Helps understand the semantic composition' +
-        'of the dataset.'
-    }
-  ], [graphData, nodesLength, linksLength, density, rolesDistribution]);
-
-  useEffect(() => {
-    if (isExportOpen) {
-      const timer = setTimeout(() => {
-        let graphSnapshot = '';
-        const canvas = document.querySelector(`.${styles.GraphWrapper} canvas`) as HTMLCanvasElement | null;
-        if (canvas) {
-          graphSnapshot = canvas.toDataURL('image/png');
-        }
-
-        const cleanGraphData = {
-          nodes: graphData.nodes.map((n) => ({
-            label: n.label,
-            kind: n.kind,
-            datatype: n.datatype,
-            role: n.role,
-            types: n.types,
-          })),
-          links: graphData.links.map((l) => ({
-            id: l.id,
-            source: typeof l.source === 'object' ? (l.source as any).label : l.source,
-            target: typeof l.target === 'object' ? (l.target as any).label : l.target,
-            label: l.label,
-            propID: l.propID,
-          })),
-        };
-
-        dispatch(
-          updateUI({
-            currentGraphSnapshot: graphSnapshot,
-            currentGraphData: cleanGraphData,
-            currentMetrics: metrics,
-          })
-        );
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isExportOpen, showLinkLabels, graphData, metrics, dispatch]);
 
   const handleCloseGraphTutorial = () => {
     dispatch(updateUI({ openGraphTutorialDialog: false }));
@@ -390,12 +121,26 @@ const GraphViewer: FC = () => {
     }
   };
 
-  if (!nodesLength) {
+  const hasTypes = (node: any) => {
+    return node && Array.isArray(node.types) && node.types.length > 0;
+  };
+
+  useGraphPhysics(graphRef, graphData, isNodeIsolated);
+
+  if (loading) return <CircularProgress size={40} />;
+  if (graphData.nodes.length === 0) {
     return <div className={styles.Empty}>No semantic schema available</div>;
   }
 
+  const labels = {
+    personalData: "Personal Data",
+    quasiIdentifiers: "Quasi-Identifiers",
+    nonPersonalData: "Non-Personal Data",
+    anonymousData: "Anonymous Data"
+  };
+
   return (
-    <div className={styles.Container}>
+    <div className={`${styles.Container} ${isDialog ? styles.DialogContainer : ''}`}>
       <div className={styles.GraphWrapper}>
         <div className={styles.Zooming}>
           <Tooltip title="Zoom in" placement="left" arrow>
@@ -438,19 +183,42 @@ const GraphViewer: FC = () => {
         </div>
         <div className={styles.TopOverlay}>
           <div className={styles.Legend}>
-            <h4>Legend</h4>
-            <div>
-              <Typography className={styles.Subject} />
-              Subject
-            </div>
-            <div>
-              <Typography className={styles.Entity} />
-              Entity
-            </div>
-            <div>
-              <Typography className={styles.Literal} />
-              Literal
-            </div>
+            <h4>{showCompliance ? "Compliance Legend" : "Legend"}</h4>
+            {showCompliance ? (
+              <>
+                <div>
+                  <Typography className={styles.PersonalData} />
+                  Personal Data
+                </div>
+                <div>
+                  <Typography className={styles.QuasiIdentifier} />
+                  Quasi Identifier
+                </div>
+                <div>
+                  <Typography className={styles.NonPersonalData} />
+                  Non-Personal Data
+                </div>
+                <div>
+                  <Typography className={styles.AnonymousData} />
+                  Anonymous Data
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Typography className={styles.Subject} />
+                  Subject
+                </div>
+                <div>
+                  <Typography className={styles.Entity} />
+                  Entity
+                </div>
+                <div>
+                  <Typography className={styles.Literal} />
+                  Literal
+                </div>
+              </>
+            )}
           </div>
           <div className={styles.LinkLabel}>
             <IconButtonTooltip
@@ -475,115 +243,35 @@ const GraphViewer: FC = () => {
             >
               {showLinkLabels ? "Hide link labels" : "Show link labels"}
             </Button>
+            <Button
+              onClick={() => setShowCompliance(!showCompliance)}
+              variant="outlined"
+              color="primary"
+              startIcon={<AssignmentTurnedInOutlinedIcon />}
+              sx={{
+                marginLeft: 1,
+                textTransform: 'none',
+                backgroundColor: '#fff',
+                '&:hover': {
+                  backgroundColor: '#fff'
+                }
+              }}
+            >
+              {showCompliance ? "Hide compliance" : "Show compliance"}
+            </Button>
           </div>
         </div>
-        <ForceGraph2D
+        <GraphRenderer
           graphData={graphData}
+          multiPropsMap={multiPropsMap}
+          showLinkLabels={showLinkLabels}
+          showCompliance={showCompliance}
           ref={graphRef}
-          nodeId="label"
-          preserveDrawingBuffer={true}
-          nodeLabel={(node: any) => {
-            const typeHighestScore = node.types?.reduce((prev: any, curr: any) => {
-              return (curr.score > (prev?.score ?? -Infinity)) ? curr : prev;
-            }, null);
-            const typeHighestScoreName = typeHighestScore?.name ?? '';
-            return `${node.metadata || ''} ${typeHighestScoreName}`.trim();
-          }}
-          nodeCanvasObjectMode={() => 'replace'}
-          nodeCanvasObject={(node: any, ctx) => {
-            const RADIUS = 12;
-            ctx.fillStyle =
-              node.role === 'subject'
-                ? '#2ecc71'
-                : node.kind === 'literal'
-                  ? '#e67e22'
-                  : '#3498db';
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, RADIUS, 0, 2 * Math.PI);
-            ctx.fill();
-            const baseFontSize = 4;
-            const fontSize = Math.min(baseFontSize, RADIUS * 0.75);
-            ctx.font = `${fontSize}px Roboto`;
-            ctx.fillStyle = '#fff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const maxTextWidth = (RADIUS - 4) * 1.8;
-            const lines = wrapText(ctx, node.label, maxTextWidth);
-            const lineHeight = fontSize * 1.1;
-            const totalHeight = lineHeight * lines.length;
-            const startY = node.y - totalHeight / 2 + lineHeight / 2;
-
-            lines.forEach((line, i) => {
-              ctx.fillText(line, node.x, startY + i * lineHeight);
-            });
-          }}
-          nodePointerAreaPaint={(node, color, ctx) => {
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 12, 0, 2 * Math.PI);
-            ctx.fill();
-          }}
-          onNodeClick={(node) => {
+          onNodeClick={(node: any) => {
             setSelectedNode(node);
             setSelectedLink(null);
           }}
-          linkLabel={(link: any) => {
-            const sId = typeof link.source === 'object' ? link.source.label : link.source;
-            const tId = typeof link.target === 'object' ? link.target.label : link.target;
-            const allPropsList = multiPropsMap[`${sId}->${tId}`] || [];
-
-            if (allPropsList.length > 1) {
-              return allPropsList
-                .map((p) => `<strong>${p.propID}</strong> ${p.label}`)
-                .join('<br/>');
-            }
-            return (showLinkLabels ? `${link.propID}` : `${link.propID} ${link.label}`);
-          }}
-          linkCurvature={(link) => {
-            return link.curvature > 0.1 ? 0.25 : 0;
-          }}
-          linkDirectionalArrowLength={8}
-          linkDirectionalArrowRelPos={0.9}
-          linkWidth={1}
-          linkColor={() => 'rgba(150,150,150,0.7)'}
-          linkCanvasObjectMode={() => 'after'}
-          linkCanvasObject={(link: any, ctx) => {
-            if (!showLinkLabels) return;
-
-            const source = typeof link.source === 'object' ? link.source : null;
-            const target = typeof link.target === 'object' ? link.target : null;
-            if (!source?.label || !target?.label) return;
-
-            const sId = source.label;
-            const tId = target.label;
-
-            const allPropsList = multiPropsMap[`${sId}->${tId}`] || [];
-            if (allPropsList.length > 1 && allPropsList[0].propID !== link.propID) {
-              return;
-            }
-
-            const sx = source.x;
-            const sy = source.y;
-            const tx = target.x;
-            const ty = target.y;
-
-            // centro del link
-            const mx = (sx + tx) / 2 + link.curvature * (ty - sy);
-            const my = (sy + ty) / 2 - link.curvature * (tx - sx);
-
-            ctx.save();
-            ctx.font = '5px Roboto';
-            ctx.fillStyle = '#555';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            const badgeCount = allPropsList.length > 1 ? ` (+${allPropsList.length - 1})` : '';
-            const displayText = `${allPropsList[0]?.label || link.label}${badgeCount}`;
-
-            ctx.fillText(displayText, mx, my);
-            ctx.restore();
-          }}
-          onLinkClick={(link) => {
+          onLinkClick={(link: any) => {
             setSelectedLink(link);
             setSelectedNode(null);
           }}
@@ -716,6 +404,53 @@ const GraphViewer: FC = () => {
             )}
           </div>
           <Divider />
+          {showCompliance && (
+            <>
+              <div className={styles.Section}>
+                <h3>Compliance Summary</h3>
+                <Typography>
+                  <strong>Status: </strong>
+                  {w3cData[0].compliance?.reasoning
+                    ? (w3cData[0].compliance.status === "yesGDPR") ? "GDPR compliant" : "GDPR NON-compliant"
+                    : <i>Compliance check not performed</i>
+                  }
+                </Typography>
+
+                <Typography>
+                  <strong>Confidence score: </strong>{w3cData[0].compliance?.reasoning ? `${(w3cData[0].compliance.score * 100).toFixed(0)}%` : "-"}
+                </Typography>
+                <Typography>
+                  <strong>Reasoning: </strong>{w3cData[0].compliance?.reasoning || "-"}
+                </Typography>
+                <br />
+                <Typography variant="body2">
+                  <i>
+                    Check directly in the{" "}
+                    <Box
+                      component="span"
+                      onClick={() => {
+                        dispatch(updateUI({ openMetadataColumnDialog: false }));
+                        dispatch(updateUI({ initialComplianceType: "GDPR" }));
+                        dispatch(updateUI({ openComplianceStatusDialog: true }));
+                      }}
+                      sx={{
+                        fontStyle: "italic",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        "&:hover": {
+                          opacity: 0.8,
+                        },
+                      }}
+                    >
+                      GDPR Compliance Report
+                    </Box>
+                    .
+                  </i>
+                </Typography>
+              </div>
+              <Divider />
+            </>
+          )}
           {!selectedNode && !selectedLink && (
             <div className={styles.Section}>
               <Typography variant="body2" color="text.secondary">
@@ -735,6 +470,17 @@ const GraphViewer: FC = () => {
                     −
                   </Typography>
                 </div>
+                {showCompliance && w3cData[0].compliance?.reasoning && (
+                  <div className={styles.Section}>
+                    <Typography variant="body2" style={{ marginBottom: "8px" }}>
+                      <i>
+                        The column contains {labels[selectedNode.compliance_classification]} and
+                        is {selectedNode.compliance_action === "noChange" ? "GDPR compliant" : "GDPR NON-complaint"} with
+                        a confidence score of {Math.round((selectedNode.compliance_score ?? 0) * 100)}%.
+                      </i>
+                    </Typography>
+                  </div>
+                )}
                 <Typography>
                   <strong>Kind: </strong>
                   {selectedNode.kind || '-'}
@@ -871,15 +617,6 @@ const GraphViewer: FC = () => {
                   )}
                 </div>
                 {showSourceTypes && hasTypes(selectedLink.source) && (
-                  <ul className={styles.List}>
-                    {selectedLink.source.types.map((t: any) => (
-                      <li key={t.id}>
-                        {t.name} ({t.id})
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {showSourceTypes && (
                   <ul className={styles.List}>
                     {selectedLink.source.types.map((t: any) => (
                       <li key={t.id}>

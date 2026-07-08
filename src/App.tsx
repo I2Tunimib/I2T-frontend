@@ -167,15 +167,15 @@ const App = () => {
           action:
             location.pathname === tablePath
               ? (key) => (
-                  <Button
-                    sx={{ color: "#ffffff" }}
-                    component={Link}
-                    to={tablePath}
-                    onClick={() => closeSnackbar(key)}
-                  >
-                    view
-                  </Button>
-                )
+                <Button
+                  sx={{ color: "#ffffff" }}
+                  component={Link}
+                  to={tablePath}
+                  onClick={() => closeSnackbar(key)}
+                >
+                  view
+                </Button>
+              )
               : undefined,
         });
       });

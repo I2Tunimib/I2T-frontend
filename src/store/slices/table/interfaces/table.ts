@@ -84,11 +84,13 @@ export interface TableUIState {
   openExportDialog: boolean;
   showLinkLabels: boolean;
   currentGraphSnapshot: string;
+  currentGraphSnapshotCompliance: string;
   currentGraphData: {
     nodes: GraphNode[];
     links: GraphLink[];
   } | null;
   currentMetrics: GraphMetric[] | null;
+  openGraphDialog: boolean;
   openComplianceStatusDialog: boolean;
   initialComplianceType: string;
   openAutoAnnotationDialog: boolean;

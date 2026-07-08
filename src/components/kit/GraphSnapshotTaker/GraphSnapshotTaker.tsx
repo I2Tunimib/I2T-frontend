@@ -1,5 +1,5 @@
 import { FC, useRef, useMemo } from 'react';
-import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
+import { GraphRenderer } from "@components/kit/GraphRenderer/GraphRenderer";
 
 interface GraphSnapshotTakerProps {
   table: {
@@ -10,7 +10,7 @@ interface GraphSnapshotTakerProps {
 }
 
 const GraphSnapshotTaker: FC<GraphSnapshotTakerProps> = ({ table, onSnapshotReady }) => {
-  const graphRef = useRef<ForceGraphMethods | null>(null);
+  const graphRef = useRef<any>(null);
   const tableId = table.id;
 
   const graphGenerated = useMemo(() => {
@@ -19,6 +19,15 @@ const GraphSnapshotTaker: FC<GraphSnapshotTakerProps> = ({ table, onSnapshotRead
     }
     const nodes = table.graph.nodes.map((node) => ({ ...node }));
     const links = table.graph.links.map((link) => ({ ...link }));
+
+    if (table.graph.links.length > 0) {
+      nodes.forEach((node: any, i: number) => {
+        const angle = (i / nodes.length) * Math.PI;
+        node.x = Math.cos(angle) * 100;
+        node.y = Math.sin(angle) * 100;
+      });
+    }
+
     return { nodes, links };
   }, [table?.graph]);
 
@@ -29,14 +38,14 @@ const GraphSnapshotTaker: FC<GraphSnapshotTakerProps> = ({ table, onSnapshotRead
       id={`snapshot-canvas-${tableId}`}
       style={{ position: 'absolute', top: '-9999px', left: '-9999px', width: '300px', height: '300px' }}
     >
-      <ForceGraph2D
+      <GraphRenderer
         ref={graphRef}
         graphData={graphGenerated}
+        isPreview={true}
         width={500}
         height={500}
-        cooldownTicks={table?.graph?.links.length > 0 ? 40 : 20}
-        linkDirectionalArrowLength={8}
-        linkDirectionalArrowRelPos={0.95}
+        scale={1}
+        showLinkLabels={false}
         onEngineStop={() => {
           setTimeout(() => {
             const canvas = document.querySelector(`#snapshot-canvas-${tableId} canvas`) as HTMLCanvasElement | null;
@@ -45,15 +54,6 @@ const GraphSnapshotTaker: FC<GraphSnapshotTakerProps> = ({ table, onSnapshotRead
             }
           }, 50);
         }}
-        nodeCanvasObject={(node: any, ctx) => {
-          const RADIUS = 6;
-          ctx.fillStyle = node.role === 'subject' ? '#2ecc71' : node.kind === 'literal' ? '#e67e22' : '#3498db';
-          ctx.beginPath();
-          ctx.arc(node.x, node.y, RADIUS, 0, 2 * Math.PI);
-          ctx.fill();
-        }}
-        linkColor={() => 'rgba(150,150,150,0.5)'}
-        linkWidth={1.5}
       />
     </div>
   );
