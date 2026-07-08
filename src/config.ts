@@ -40,16 +40,12 @@ export type ApiConfig = {
     DELETE_OPERATION: Endpoint;
     REDO_OPERATION: Endpoint;
     // ACL endpoints
-    ADD_VIEWER: Endpoint;
-    REMOVE_VIEWER: Endpoint;
-    ADD_EDITOR: Endpoint;
-    REMOVE_EDITOR: Endpoint;
+    ADD_ACL_USER: Endpoint;
+    REMOVE_ACL_USER: Endpoint;
     SET_VISIBILITY: Endpoint;
     GET_TABLE_ACL: Endpoint;
-    ADD_TABLE_VIEWER: Endpoint;
-    REMOVE_TABLE_VIEWER: Endpoint;
-    ADD_TABLE_EDITOR: Endpoint;
-    REMOVE_TABLE_EDITOR: Endpoint;
+    ADD_TABLE_ACL_USER: Endpoint;
+    REMOVE_TABLE_ACL_USER: Endpoint;
     SET_TABLE_VISIBILITY: Endpoint;
     // Table locks
     ACQUIRE_TABLE_LOCK: Endpoint;
@@ -193,7 +189,7 @@ const CONFIG: AppConfig = {
           },
         },
         {
-          path: "/dataset/:datasetId/table/:tableId/code?format=python",
+          path: "/dataset/:datasetId/table/:tableId/export?format=python",
           name: "Python pipeline",
           params: {
             extension: "py",
@@ -209,7 +205,7 @@ const CONFIG: AppConfig = {
           },
         },
         {
-          path: "/dataset/:datasetId/table/:tableId/code?format=notebook",
+          path: "/dataset/:datasetId/table/:tableId/export?format=notebook",
           name: "Jupyter notebook pipeline",
           params: {
             extension: "ipynb",
@@ -248,23 +244,15 @@ const CONFIG: AppConfig = {
       },
 
       // ACL endpoints
-      ADD_VIEWER: { path: "/dataset/:datasetId/acl/viewers" },
-      REMOVE_VIEWER: { path: "/dataset/:datasetId/acl/viewers" },
-      ADD_EDITOR: { path: "/dataset/:datasetId/acl/editors" },
-      REMOVE_EDITOR: { path: "/dataset/:datasetId/acl/editors" },
+      ADD_ACL_USER: { path: "/dataset/:datasetId/acl" },
+      REMOVE_ACL_USER: { path: "/dataset/:datasetId/acl" },
       SET_VISIBILITY: { path: "/dataset/:datasetId/acl/visibility" },
       GET_TABLE_ACL: { path: "/dataset/:datasetId/table/:tableId/acl" },
-      ADD_TABLE_VIEWER: {
-        path: "/dataset/:datasetId/table/:tableId/acl/viewers",
+      ADD_TABLE_ACL_USER: {
+        path: "/dataset/:datasetId/table/:tableId/acl",
       },
-      REMOVE_TABLE_VIEWER: {
-        path: "/dataset/:datasetId/table/:tableId/acl/viewers",
-      },
-      ADD_TABLE_EDITOR: {
-        path: "/dataset/:datasetId/table/:tableId/acl/editors",
-      },
-      REMOVE_TABLE_EDITOR: {
-        path: "/dataset/:datasetId/table/:tableId/acl/editors",
+      REMOVE_TABLE_ACL_USER: {
+        path: "/dataset/:datasetId/table/:tableId/acl",
       },
       SET_TABLE_VISIBILITY: {
         path: "/dataset/:datasetId/table/:tableId/acl/visibility",
