@@ -95,7 +95,7 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
               updateUI({
                 openHelpDialog: true,
                 helpStart: "tutorial",
-                tutorialStep: 5,
+                tutorialStep: 4,
               }),
             );
           }}

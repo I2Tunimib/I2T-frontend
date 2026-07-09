@@ -331,7 +331,7 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "tutorial",
-                  tutorialStep: 23,
+                  tutorialStep: 22,
                 }),
               );
             }}
@@ -364,7 +364,7 @@ const GroupServiceDialog: FC<GroupServiceDialogProps> = ({
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "discover",
-                  discoverStep: 21,
+                  discoverStep: 24,
                 }),
               );
             }}

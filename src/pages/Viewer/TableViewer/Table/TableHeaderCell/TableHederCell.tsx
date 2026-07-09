@@ -97,6 +97,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     const { lowerBound } = settings;
     const columnData = header.column.columnDef.data;
     const getColumnComplianceStatus = useCallback(() => {
+      console.log("DEBUG compliance", compliance);
       if (!compliance || complianceStatus !== "DONE" || !compliance.length) {
         return null;
       }
@@ -107,18 +108,12 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
       const isTableCompliant = tableInfo.gdpr === "noGDPR";
 
-      // Get column-specific compliance
-      const columnResults = compliance.slice(1) || [];
-      const columnName = String(children);
-
-      const columnCompliance = columnResults.find((colResult: any) => {
-        const key = Object.keys(colResult)[0];
-        return key === columnName;
-      });
+      const colId = header.column.id;
+      const columnCompliance = compliance.find((item: any) => item.hasOwnProperty(colId));
 
       if (columnCompliance) {
-        const key = Object.keys(columnCompliance)[0];
-        const colData = columnCompliance[key];
+        const colData = columnCompliance[colId];
+        console.log("DEBUG colData", colData);
 
         // Column is compliant if classification is NOT personalData
         // AND action is noChange
@@ -139,15 +134,16 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     }, [compliance, complianceStatus, children]);
 
     const getComplianceClassificationBadge = (classification: string) => {
+      console.log("classification", classification);
       switch (classification) {
         case "personalData":
           return { text: "PD", color: "crimson", label: "Personal Data" };
         case "quasiIdentifiers":
           return { text: "QI", color: "orange", label: "Quasi Identifier" };
         case "nonPersonalData":
-          return { text: "NPD", color: "teal", label: "Non-Personal Data" };
+          return { text: "NPD", color: "forestgreen", label: "Non-Personal Data" };
         case "anonymousData":
-          return { text: "AD", color: "green", label: "Anonymous Data" };
+          return { text: "AD", color: "dodgerblue", label: "Anonymous Data" };
         default:
           return null;
       }
@@ -654,12 +650,18 @@ Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
 
 const mapStateToProps = (state: RootState, props: any) => {
   const columnData = props.header?.column?.columnDef?.data;
+  console.log("DEBUG Mapping state to props:", state.table.entities.tableInstance);
+  const tableInstance = state.table.entities.tableInstance;
+
+  const reports = tableInstance?.complianceReports || [];
+
+  const latestReport = reports.length > 0 ? reports[reports.length - 1] : null;
   return {
     reconciliators: selectColumnReconciliators(state, { data: columnData }),
     rowsState: state.table.entities.rows,
-    tableInstance: state.table.entities.tableInstance,
-    complianceStatus: state.table.entities.tableInstance.complianceStatus,
-    compliance: state.table.entities.tableInstance.compliance,
+    tableInstance: tableInstance,
+    complianceStatus: tableInstance.complianceStatus,
+    compliance: latestReport?.result || [],
   };
 };
 

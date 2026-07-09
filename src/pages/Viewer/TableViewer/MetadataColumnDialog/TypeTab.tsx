@@ -742,7 +742,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
                 )}
               </Stack>
             )}
-            <Stack direction="row" alignItems="center" marginTop="8px" spacing={1}>
+            <Stack direction="row" gap={1} alignItems="center">
               <Tooltip open={showTooltip} title="Add type" placement="right">
                 <Button
                   variant="outlined"

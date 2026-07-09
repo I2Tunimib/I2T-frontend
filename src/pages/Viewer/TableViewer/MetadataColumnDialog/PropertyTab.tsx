@@ -670,7 +670,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
                 Browse external property lists filtered by the current column schema to manually add a specific property.
               </Typography>
             )}
-            <Stack direction="row" gap={1} alignItems="center">
+            <Stack direction="row" gap={1} alignItems="center" marginTop="8px">
               <Tooltip
                 open={showTooltip}
                 title="Add property"

@@ -298,7 +298,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
               updateUI({
                 openHelpDialog: true,
                 helpStart: "tutorial",
-                tutorialStep: 6
+                tutorialStep: 5
               })
             );
           }}

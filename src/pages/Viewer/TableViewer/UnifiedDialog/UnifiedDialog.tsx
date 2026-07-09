@@ -179,7 +179,7 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
                     updateUI({
                       openHelpDialog: true,
                       helpStart: "tutorial",
-                      tutorialStep: 18,
+                      tutorialStep: 17,
                     }),
                   );
                   closeSnackbar(key);
@@ -272,7 +272,7 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
         <IconButton
           sx={{ color: "rgba(0, 0, 0, 0.54)", marginRight: "20px" }}
           onClick={() => {
-            const tutorialStep = mode === "reconcile" ? 16 : mode === "modify" ? 13 : 22;
+            const tutorialStep = mode === "reconcile" ? 15 : mode === "modify" ? 12 : 21;
             dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep }));
           }}
         >
@@ -287,7 +287,7 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
           <IconButton
             size="small"
             onClick={() => {
-              const discoverStep = mode === "reconcile" ? 7 : mode === "modify" ? 0 : 15;
+              const discoverStep = mode === "reconcile" ? 10 : mode === "modify" ? 2 : 16;
               dispatch(updateUI({ openHelpDialog: true, helpStart: "discover", discoverStep }));
             }}
           >
