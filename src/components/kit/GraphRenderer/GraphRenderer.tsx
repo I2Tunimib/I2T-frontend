@@ -48,8 +48,8 @@ export const GraphRenderer = forwardRef<any, any>(({
       switch (node.compliance_classification) {
         case "personalData": return "crimson";
         case "quasiIdentifiers": return "orange";
-        case "nonPersonalData": return "teal";
-        case "anonymousData": return "green";
+        case "nonPersonalData": return "forestgreen";
+        case "anonymousData": return "dodgerblue";
         default: return "#999";
       }
     }

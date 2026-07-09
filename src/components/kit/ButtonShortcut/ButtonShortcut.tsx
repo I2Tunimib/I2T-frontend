@@ -21,7 +21,9 @@ interface ButtonShortcutProps extends HTMLAttributes<HTMLDivElement> {
     | "white"
     | "teal"
     | "crimson"
-    | "orange";
+    | "orange"
+    | "forestgreen"
+    | "dodgerblue";
 }
 
 /**
@@ -44,7 +46,11 @@ const ButtonShortcut: FC<ButtonShortcutProps> = ({
         ? { background: "#fde0e3", color: "#9b0f15" }
         : color === "orange"
           ? { background: "#fde8bc", color: "#da6d00" }
-          : undefined;
+          : color === "forestgreen"
+            ? { background: "#d8ead8", color: "#145a14" }
+            : color === "dodgerblue"
+              ? { background: "#d5e9f3", color: "#0d589f" }
+              : undefined;
   return (
     <Tooltip title={tooltipText ?? ""} placement="bottom">
       <div

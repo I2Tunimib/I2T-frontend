@@ -38,6 +38,7 @@ import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 import PrivacyTipRoundedIcon from "@mui/icons-material/PrivacyTipRounded";
 import TypeTab from "./TypeTab";
 import PropertyTab from "./PropertyTab";
+import styles from './MetadataColumnDialog.module.scss';
 
 type TabPanelProps = {
   children?: ReactNode;
@@ -265,39 +266,14 @@ const Content = () => {
     return null;
   })();
 
-  const getComplianceBoxConfig = (classification: string, action: string) => {
-    switch (classification) {
-      case "personalData":
-        return {
-          bgColor: "#ffebee",
-          borderColor: "#c62828",
-          textColor: "#b71c1c",
-          Icon: PrivacyTipRoundedIcon,
-        };
-      case "quasiIdentifiers":
-        return {
-          bgColor: "#fff3e0",
-          borderColor: "#ef6c00",
-          textColor: "#e65100",
-          Icon: SecurityRoundedIcon,
-        };
-      case "nonPersonalData":
-        return {
-          bgColor: "#e8f5e9",
-          borderColor: "#2e7d32",
-          textColor: "#1b5e20",
-          Icon: GavelRoundedIcon,
-        };
-      case "anonymousData":
-        return {
-          bgColor: "#e0f2f1",
-          borderColor: "#00695c",
-          textColor: "#004d40",
-          Icon: GavelRoundedIcon,
-        };
-      default:
-        return null;
-    }
+  const getComplianceBoxConfig = (classification: string) => {
+    const map: Record<string, { className: string, Icon: any }> = {
+      personalData: { className: styles.personalData, Icon: PrivacyTipRoundedIcon },
+      quasiIdentifiers: { className: styles.quasiIdentifiers, Icon: SecurityRoundedIcon },
+      nonPersonalData: { className: styles.nonPersonalData, Icon: GavelRoundedIcon },
+      anonymousData: { className: styles.anonymousData, Icon: GavelRoundedIcon },
+    };
+    return map[classification] || null;
   };
 
   return (
@@ -420,7 +396,7 @@ const Content = () => {
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "tutorial",
-                  tutorialStep: 12,
+                  tutorialStep: 11,
                 }),
               )
             }
@@ -464,32 +440,16 @@ const Content = () => {
               </Typography>
             )}
             {complianceStatus === "DONE" && currentColumnCompliance && (() => {
-              const boxConfig = getComplianceBoxConfig(
-                currentColumnCompliance.classification,
-                currentColumnCompliance.action
-              );
-              if (!boxConfig) return null;
-              const { bgColor, borderColor, textColor, Icon } = boxConfig;
-
+              const config = getComplianceBoxConfig(currentColumnCompliance.classification);
+              if (!config) return null;
+              const { className, Icon } = config;
               const isCompliant = currentColumnCompliance.action === "noChange";
 
               return (
-                <Box
-                  sx={{
-                    padding: "16px",
-                    backgroundColor: bgColor,
-                    borderLeft: `4px solid ${borderColor}`,
-                    borderRadius: "4px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 1.5,
-                    marginRight: "16px",
-                    marginTop: "12px"
-                  }}
-                >
-                  <Icon sx={{ color: borderColor, marginTop: "2px" }} />
+                <Box className={`${styles.complianceBox} ${className}`}>
+                  <Icon sx={{ marginTop: "2px" }} />
                   <Box>
-                    <Typography variant="subtitle2" fontWeight="bold" color={textColor}>
+                    <Typography variant="subtitle2" fontWeight="bold">
                       GDPR Compliance Check
                     </Typography>
                     <Typography variant="body2">
