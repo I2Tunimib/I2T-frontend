@@ -45,7 +45,7 @@ export const GraphRenderer = forwardRef<any, any>(({
 }, ref) => {
   const getNodeColor = (node: any) => {
     if (showCompliance) {
-      switch (node.compliance_classification) {
+      switch (node.compliance.classification) {
         case "personalData": return "crimson";
         case "quasiIdentifiers": return "orange";
         case "nonPersonalData": return "forestgreen";

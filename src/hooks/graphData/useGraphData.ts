@@ -46,9 +46,11 @@ export const useGraphData = (datasetId: string, tableId: string) => {
         types,
         properties: th.metadata?.flatMap((m: any) => m.property ?? []),
         values,
-        compliance_classification: th.gdprClassification,
-        compliance_action: th.gdprAction,
-        compliance_score: th.gdprScore,
+        compliance: {
+          classification: th?.compliance?.classification ?? "N/A",
+          status: th?.compliance?.status ?? "N/A",
+          score: th?.compliance?.score ?? 0,
+        },
       };
     });
 

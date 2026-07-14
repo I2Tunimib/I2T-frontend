@@ -96,8 +96,8 @@ const Content = () => {
   };
   const initialTab = useAppSelector((state: any) => state.table.ui.metadataColumnDialogInitialTab);
   const [isInitialMount, setIsInitialMount] = useState(true);
-  const compliance = useAppSelector((state: any) => state.table.entities.tableInstance.compliance);
-  const complianceStatus = useAppSelector((state: any) => state.table.entities.tableInstance.complianceStatus);
+  const tableInstance = useAppSelector((state: any) => state.table.entities.tableInstance);
+  const complianceStatus = tableInstance?.complianceStatus;
   /**
    * Function used to remove the last edit of a specific type from the editsState array,
    * used in cases like updating the column type, where only the last
@@ -250,20 +250,17 @@ const Content = () => {
   }, [column]);
 
   const currentColumnCompliance = (() => {
-    if (!compliance || complianceStatus !== "DONE" || !compliance.length || !currentColId) {
+    const reports = tableInstance?.complianceReports || [];
+    const latestReport = reports.length > 0 ? reports[reports.length - 1] : null;
+    const result = latestReport?.result;
+
+    if (!result || complianceStatus !== "DONE" || !currentColId) {
       return null;
     }
-    const columnResults = compliance.slice(1) || [];
-    const columnCompliance = columnResults.find((colResult: any) => {
-      const key = Object.keys(colResult)[0];
-      return key === currentColId;
-    });
 
-    if (columnCompliance) {
-      const key = Object.keys(columnCompliance)[0];
-      return columnCompliance[key];
-    }
-    return null;
+    const columnResult = result.slice(1).find((item) => item.hasOwnProperty(currentColId));
+
+    return columnResult ? columnResult[currentColId] : null;
   })();
 
   const getComplianceBoxConfig = (classification: string) => {
@@ -453,7 +450,7 @@ const Content = () => {
                       GDPR Compliance Check
                     </Typography>
                     <Typography variant="body2">
-                      The column contains <i>{currentColumnCompliance.classification}</i> and is <i>{isCompliant ? "GDPR compliant" : "GDPR NON-compliant"}</i>.
+                      The column contains <i>{currentColumnCompliance.classification}</i> and is <i>{isCompliant ? "GDPR compliant" : "GDPR NON-compliant"}</i> with a confidence score of {Math.round((currentColumnCompliance.score ?? 0) * 100)}%.
                       Check directly in the{" "}
                       <Box
                         component="span"

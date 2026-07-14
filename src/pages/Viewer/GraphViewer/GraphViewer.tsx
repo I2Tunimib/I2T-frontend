@@ -63,7 +63,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
 
   const getNodeColor = (node: any) => {
     if (showCompliance) {
-      switch (node.compliance_classification) {
+      switch (node.compliance.classification) {
         case "personalData": return "crimson";
         case "quasiIdentifiers": return "orange";
         case "nonPersonalData": return "forestgreen";
@@ -487,9 +487,9 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   <div className={styles.Section}>
                     <Typography variant="body2" style={{ marginBottom: "8px" }}>
                       <i>
-                        The column contains {labels[selectedNode.compliance_classification]} and
-                        is {selectedNode.compliance_action === "noChange" ? "GDPR compliant" : "GDPR NON-complaint"} with
-                        a confidence score of {Math.round((selectedNode.compliance_score ?? 0) * 100)}%.
+                        The column contains {labels[selectedNode.compliance.classification]} and
+                        is {selectedNode.compliance.status} with
+                        a confidence score of {Math.round((selectedNode.compliance.score ?? 0) * 100)}%.
                       </i>
                     </Typography>
                   </div>
