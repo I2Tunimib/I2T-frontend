@@ -5,6 +5,7 @@ import {
   LinearProgress,
   Stack,
   Typography,
+  Tooltip,
   useMediaQuery,
   ToggleButton,
   ToggleButtonGroup
@@ -38,6 +39,7 @@ import { Status as CompletionStatus } from "@store/slices/datasets/interfaces/da
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
 import ViewModuleRoundedIcon from "@mui/icons-material/ViewModuleRounded";
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import clsx from "clsx";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import { updateUI } from "@store/slices/datasets/datasets.slice";
@@ -48,6 +50,7 @@ import Tables from "./Tables";
 import UploadDataset from "./UploadDataset/UploadDataset";
 import UploadTable from "./UploadTable/UploadTable";
 import HelpDialog from "./HelpDialog/HelpDialog";
+import W3CViewer from "../Viewer/W3CViewer/W3CViewer";
 
 export const calcPercentage = (status: CompletionStatus) => {
   const total = Object.keys(status).reduce(
@@ -68,7 +71,7 @@ const Dashboard: FC<any> = () => {
   const [selectedRows, setSelectedRows] = useState<SelectedRowsState | null>(
     null,
   );
-  const [viewType, setViewType] = useState<'list' | 'card'>('list');
+  const [viewType, setViewType] = useState<'list' | 'grid' | "raw">('list');
   const dispatch = useAppDispatch();
   const { path, url } = useRouteMatch();
   const matches = useMediaQuery("(max-width:1365px)");
@@ -226,9 +229,7 @@ const Dashboard: FC<any> = () => {
               component="label"
               startIcon={<AddRoundedIcon />}
               color="primary"
-              onClick={() =>
-                dispatch(updateUI({ uploadDatasetDialogOpen: true }))
-              }
+              onClick={() => dispatch(updateUI({ uploadDatasetDialogOpen: true }))}
               variant="outlined"
             >
               New Dataset
@@ -246,53 +247,69 @@ const Dashboard: FC<any> = () => {
               New Table
             </Button>
           )}
-          {currentDataset && (
-            <ToggleButtonGroup
-              value={viewType}
-              exclusive
-              onChange={(_, next) => next && setViewType(next)}
-              size="small"
-              aria-label="view type"
-              sx={{
-                height: "30px",
-                "& .MuiToggleButton-root": {
-                  color: "text.disabled",
-                  borderColor: "#94b3e4",
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    backgroundColor: "rgba(27, 116, 228, 0.04)",
-                  },
-                  "&.Mui-selected": {
-                    color: "primary.main",
-                    borderColor: "primary.main",
-                    backgroundColor: "rgba(27, 116, 228, 0.08)",
-                    zIndex: 1,
-                    "&:hover": {
-                      borderColor: "primary.dark",
-                      backgroundColor: "#ecf0f3",
-                    }
-                  },
+          <ToggleButtonGroup
+            value={viewType}
+            exclusive
+            onChange={(_, next) => next && setViewType(next)}
+            size="small"
+            aria-label="view type"
+            sx={{
+              height: "30px",
+              "& .MuiToggleButton-root": {
+                color: "text.disabled",
+                borderColor: "#94b3e4",
+                "&:hover": {
+                  borderColor: "primary.main",
+                  backgroundColor: "rgba(27, 116, 228, 0.04)",
                 },
-              }}
-            >
+                "&.Mui-selected": {
+                  color: "primary.main",
+                  borderColor: "primary.main",
+                  backgroundColor: "rgba(27, 116, 228, 0.08)",
+                  zIndex: 1,
+                  "&:hover": {
+                    borderColor: "primary.dark",
+                    backgroundColor: "#ecf0f3",
+                  }
+                },
+              },
+            }}
+          >
+            <Tooltip title="List view" placement="bottom">
               <ToggleButton value="list" aria-label="list view">
                 <ViewListRoundedIcon fontSize="small" />
               </ToggleButton>
-              <ToggleButton value="card" aria-label="card view">
-                <ViewModuleRoundedIcon fontSize="small" />
+            </Tooltip>
+            {currentDataset && (
+              <Tooltip title="Grid view" placement="bottom">
+                <ToggleButton value="grid" aria-label="grid view">
+                  <ViewModuleRoundedIcon fontSize="small" />
+                </ToggleButton>
+              </Tooltip>
+            )}
+            <Tooltip title="Raw view" placement="bottom">
+              <ToggleButton value="raw" aria-label="raw view">
+                <CodeRoundedIcon fontSize="small" />
               </ToggleButton>
-            </ToggleButtonGroup>
-          )}
+            </Tooltip>
+          </ToggleButtonGroup>
         </Stack>
       </div>
       <div className={styles.TableContainer}>
         <Switch>
           <Route exact path={path}>
-            <Datasets onSelectionChange={handleSelectedRowsChange} />
+            {viewType === 'raw' ? (
+              <W3CViewer />
+            ) : (
+              <Datasets onSelectionChange={handleSelectedRowsChange} />
+            )}
           </Route>
           <Route path={`${path}/:datasetId/tables`}>
             {loadingDatasets === false ? (
-              <Tables onSelectionChange={handleSelectedRowsChange} viewType={viewType} />
+              <Tables
+                onSelectionChange={handleSelectedRowsChange}
+                viewType={viewType}
+              />
             ) : (
               <LinearProgress />
             )}

@@ -46,6 +46,7 @@ import { Link, useParams } from "react-router-dom";
 import globalStyles from "@styles/globals.module.scss";
 import styles from "@components/kit/TableListView/TableListView.module.scss";
 import { useTableCollection } from "../useTableCollection";
+import W3CViewer from "../../Viewer/W3CViewer/W3CViewer";
 
 interface FooterProps {
   pageIndex: number;
@@ -83,7 +84,7 @@ interface TablesProps {
   onSelectionChange: (
     state: { kind: "dataset" | "table"; rows: any[] } | null,
   ) => void;
-  viewType: "list" | "card";
+  viewType: "list" | "grid" | "raw";
 }
 
 const DeferredTable = deferMounting(TableListView);
@@ -193,7 +194,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
 
   const Actions = useCallback(
     ({ mediaMatch, row, targetView }) => {
-      const viewMode = targetView || (viewType === "card" ? "graph" : "table");
+      const viewMode = targetView || (viewType === "grid" ? "graph" : "table");
       const perm = getTablePermission(row.original);
       return (
         <Stack
@@ -229,24 +230,6 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
             <>
               <Button
                 size="small"
-                variant="contained"
-                color="primary"
-                startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <ShareOutlined />}
-                disabled={isLoadingTableData}
-                onClick={async () => {
-                  setSelectedTableId(row.original.id);
-                  setIsLoadingTableData(true);
-                  try {
-                    await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
-                  } catch {
-                  }
-                  setIsLoadingTableData(false);
-                  dispatch(updateUI({ openGraphDialog: true }));
-                }}>
-                Schema
-              </Button>
-              <Button
-                size="small"
                 variant="outlined"
                 color="primary"
                 startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
@@ -267,6 +250,24 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
                 }}
               >
                 Compliance
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="primary"
+                startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <ShareOutlined />}
+                disabled={isLoadingTableData}
+                onClick={async () => {
+                  setSelectedTableId(row.original.id);
+                  setIsLoadingTableData(true);
+                  try {
+                    await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+                  } catch {
+                  }
+                  setIsLoadingTableData(false);
+                  dispatch(updateUI({ openGraphDialog: true }));
+                }}>
+                Schema
               </Button>
               <Button
                 size="small"
@@ -315,6 +316,8 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
         <Box sx={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
           {loading ? (
             <LinearProgress />
+          ) : viewType === "raw" ? (
+            <W3CViewer />
           ) : viewType === "list" ? (
             <DeferredTable
               columns={columns}

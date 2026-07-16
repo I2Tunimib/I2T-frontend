@@ -260,7 +260,7 @@ const UnifiedDialog: FC<UnifiedDialogProps> = ({ mode, open, handleClose }) => {
   };
 
   // small helpers for UI text and loading states
-  const title = mode === "reconcile" ? "Reconciliation" : mode === "modify" ? "Modify" : "Extension";
+  const title = mode === "reconcile" ? "Reconciliation" : mode === "modify" ? "Modification" : "Extension";
   const loading = mode === "reconcile" ? reconcileStatus.loading : mode === "modify" ? modifyStatus.loading : extendStatus.loading;
 
   const servicesForSelectedGroup = mode === "reconcile" ? grouped.get(selectedGroup || "") || [] : [];
