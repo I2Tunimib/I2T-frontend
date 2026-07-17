@@ -454,10 +454,6 @@ const Content = () => {
                     currentService}
                 </Typography>
               </Typography>
-            ) : column?.kind === "literal" ? (
-              <Typography color="text.secondary">
-                Reconciliation is not available for literal columns.
-              </Typography>
             ) : (
               <Typography color="text.secondary">
                 This column has not been reconciled yet.

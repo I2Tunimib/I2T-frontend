@@ -19,7 +19,7 @@ import {
 } from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { forwardRef, useCallback, useState } from "react";
+import { forwardRef, useCallback, useMemo, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
 import { StatusBadge } from "@components/core";
 import { useSortable } from "@dnd-kit/sortable";
@@ -194,6 +194,19 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
           cell &&
           ((cell.metadata && cell.metadata.length > 0) ||
             (cell.annotationMeta && cell.annotationMeta.annotated))
+        );
+      });
+    }, [id, rowsState]);
+
+    const hasTextAnnotations = useMemo(() => {
+      if (id === "index" || !rowsState?.allIds) return false;
+      return rowsState.allIds.some((rowId: string) => {
+        const cell = rowsState.byId[rowId]?.cells?.[id];
+        return (
+          cell?.annotations &&
+          Object.values(cell.annotations as Record<string, any[]>).some(
+            (anns) => anns.length > 0,
+          )
         );
       });
     }, [id, rowsState]);
@@ -535,6 +548,16 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         variant="flat"
                         color="darkblue"
                         size="xs"
+                      />
+                    )}
+                    {hasTextAnnotations && (
+                      <ButtonShortcut
+                        aria-label="kind-ner"
+                        text="NER"
+                        tooltipText="NER text annotations"
+                        size="xs"
+                        variant="flat"
+                        color="teal"
                       />
                     )}
                     {complianceStatus === "DONE" &&

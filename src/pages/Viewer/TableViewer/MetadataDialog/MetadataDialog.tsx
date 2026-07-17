@@ -58,7 +58,11 @@ import {
   IconButtonTooltip,
 } from "@components/core";
 import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
-import { extractIdFromUri, resolveURI, createOSMURI } from "@services/utils/uri-utils";
+import {
+  extractIdFromUri,
+  resolveURI,
+  createOSMURI,
+} from "@services/utils/uri-utils";
 //import { initial } from "lodash";
 import usePrepareTable from "./usePrepareTable";
 import { getCellComponent } from "./componentsConfig";
@@ -192,6 +196,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showPropagate, setShowPropagate] = useState<boolean>(false);
   const [formSelectedPrefix, setFormSelectedPrefix] = useState<string>("");
+  const [labelExpanded, setLabelExpanded] = useState<boolean>(false);
   const { handleSubmit, reset, register, control } = useForm<FormState>({
     defaultValues: {
       score: 1.0,
@@ -552,7 +557,9 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     if (cleanPrefix === "geoCoord" || cleanPrefix === "georss") {
       try {
         const base = import.meta.env.VITE_BACKEND_API_URL;
-        const response = await fetch(`${base}/metadata/osm?id=${encodeURIComponent(idFromUri)}`);
+        const response = await fetch(
+          `${base}/metadata/osm?id=${encodeURIComponent(idFromUri)}`,
+        );
         if (response.ok) {
           const osmData = await response.json();
           if (osmData.lat && osmData.lon) {
@@ -561,7 +568,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           if (osmData.osmType && osmData.osmId) {
             extraOsmData = {
               osmId: String(osmData.osmId),
-              osmType: osmData.osmType
+              osmType: osmData.osmType,
             };
             finalUri = createOSMURI(reconciliator.uri, extraOsmData);
           }
@@ -580,7 +587,11 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     let type: any[] = [];
 
     try {
-      const result = await fetchTypeAndDescription(cleanPrefix, idFromUri, name);
+      const result = await fetchTypeAndDescription(
+        cleanPrefix,
+        idFromUri,
+        name,
+      );
       description = result.description || "";
       type = result.type || [];
     } catch (err) {
@@ -595,14 +606,16 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       uri: finalUri,
       description,
       type,
-      ...extraOsmData
+      ...extraOsmData,
     };
 
-    dispatch(addCellMetadata({
-      cellId: cell.id,
-      prefix: getCellContext(cell) || cleanPrefix,
-      value: newMetadata,
-    }));
+    dispatch(
+      addCellMetadata({
+        cellId: cell.id,
+        prefix: getCellContext(cell) || cleanPrefix,
+        value: newMetadata,
+      }),
+    );
 
     setSelectedMetadata(newMetadata);
     if (formState.match === "true") {
@@ -741,7 +754,9 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
 
     // Cell reconciliated -> service's prefix
     if (cell?.reconciler && servicesById[cell?.reconciler]?.searchPattern) {
-      const activePrefixId = reconciliators.find((rec) => rec.prefix === formSelectedPrefix)?.id;
+      const activePrefixId = reconciliators.find(
+        (rec) => rec.prefix === formSelectedPrefix,
+      )?.id;
       if (activePrefixId !== cell?.reconciler) {
         return servicesById[activePrefixId];
       }
@@ -780,11 +795,41 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
     <Dialog maxWidth="lg" open={open} onClose={handleCancel}>
       <Stack height="100%" minHeight="600px">
         <Stack direction="row" gap="8px" alignItems="center" padding="16px">
-          <Stack direction="row" alignItems="center" gap={1}>
+          <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
             {cell.annotationMeta && cell.annotationMeta.annotated && (
               <StatusBadge status={getBadgeStatus(cell)} />
             )}
-            <Typography variant="h5">{cell?.label || "N/A"}</Typography>
+            {(() => {
+              const LABEL_LIMIT = 50;
+              const label = cell?.label || "N/A";
+              const isTruncatable = label.length > LABEL_LIMIT;
+              const displayedLabel =
+                isTruncatable && !labelExpanded
+                  ? `${label.slice(0, LABEL_LIMIT)}…`
+                  : label;
+              return (
+                <>
+                  <Typography variant="h5" sx={{ wordBreak: "break-word" }}>
+                    {displayedLabel}
+                  </Typography>
+                  {isTruncatable && (
+                    <Button
+                      size="small"
+                      variant="text"
+                      sx={{
+                        minWidth: 0,
+                        p: 0,
+                        fontSize: "0.75rem",
+                        lineHeight: 1,
+                      }}
+                      onClick={() => setLabelExpanded((v) => !v)}
+                    >
+                      {labelExpanded ? "Show less" : "Show more"}
+                    </Button>
+                  )}
+                </>
+              );
+            })()}
             <Typography color="textSecondary">(Cell label)</Typography>
           </Stack>
           <Stack direction="row" marginLeft="auto" gap="10px">
@@ -840,15 +885,15 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         </Stack>
         <Divider orientation="horizontal" flexItem />
         {hasNerAnnotations && (
-            <Tabs
-              value={activeTab}
-              onChange={(_, v) => setActiveTab(v)}
-              sx={{ px: 2, borderBottom: 1, borderColor: "divider" }}
-            >
-              <Tab label="Entity Matching" />
-              <Tab label="Text Annotations" />
-            </Tabs>
-          )}
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            sx={{ px: 2, borderBottom: 1, borderColor: "divider" }}
+          >
+            <Tab label="Entity Matching" />
+            <Tab label="Text Annotations" />
+          </Tabs>
+        )}
         {activeTab === 1 && hasNerAnnotations ? (
           <NerAnnotationsTab
             label={cell.label}
@@ -856,106 +901,107 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
           />
         ) : (
           <>
-        <Box padding="16px">
-          {cell.reconciler || isManualMatch ? (
-            <Typography color="text.secondary">
-              Reconciliation service:{" "}
-              <Typography
-                component="span"
-                color="primary"
-                sx={{ fontWeight: 500 }}
-              >
-                {isManualMatch
-                  ? "manual"
-                  : cell.reconciler
-                    ? `${
-                        reconciliators.find((rec) => rec.id === cell.reconciler)
-                          .name
-                      }`
-                    : ""}
-              </Typography>
-            </Typography>
-          ) : (
-            <Typography color="text.secondary">
-              This cell has not been reconciled yet
-            </Typography>
-          )}
-        </Box>
-        {API.ENDPOINTS.SAVE && !isViewOnly && (
-          <Stack
-            position="relative"
-            direction="column"
-            alignItems="flex-start"
-            padding="0px 16px"
-            gap={1}
-          >
-            <Stack direction="row" gap={1} alignItems="center">
-              <Tooltip
-                open={showTooltip}
-                title="Add metadata"
-                placement="right"
-              >
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onMouseLeave={handleTooltipClose}
-                  onMouseEnter={handleTooltipOpen}
-                  onClick={handleShowAdd}
-                  sx={{
-                    textTransform: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  Add metadata
-                  <AddRoundedIcon
-                    sx={{
-                      transition: "transform 150ms ease-out",
-                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
-                    }}
-                  />
-                </Button>
-              </Tooltip>
-              {showAdd && activeSearchService && (
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={handleSearchInService}
-                  sx={{ textTransform: "none" }}
-                >
-                  Search "{cell?.label}" in{" "}
-                  {KG_INFO[activeSearchService.prefix].groupName}
-                </Button>
+            <Box padding="16px">
+              {cell.reconciler || isManualMatch ? (
+                <Typography color="text.secondary">
+                  Reconciliation service:{" "}
+                  <Typography
+                    component="span"
+                    color="primary"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {isManualMatch
+                      ? "manual"
+                      : cell.reconciler
+                        ? `${
+                            reconciliators.find(
+                              (rec) => rec.id === cell.reconciler,
+                            ).name
+                          }`
+                        : ""}
+                  </Typography>
+                </Typography>
+              ) : (
+                <Typography color="text.secondary">
+                  This cell has not been reconciled yet
+                </Typography>
               )}
-            </Stack>
-            {showAdd && (
-              <Box sx={{ width: "100%", paddingTop: "8px" }}>
-                <AddMetadataForm
-                  onPrefixChange={setFormSelectedPrefix}
-                  currentService={
-                    cell?.reconciler === "inTableLinker"
-                      ? getPrefixFromCellMetadata()
-                      : servicesById[cell?.reconciler]?.prefix
-                  }
-                  onSubmit={onSubmitNewMetadata}
-                  context="metadataDialog"
-                />
-              </Box>
+            </Box>
+            {API.ENDPOINTS.SAVE && !isViewOnly && (
+              <Stack
+                position="relative"
+                direction="column"
+                alignItems="flex-start"
+                padding="0px 16px"
+                gap={1}
+              >
+                <Stack direction="row" gap={1} alignItems="center">
+                  <Tooltip
+                    open={showTooltip}
+                    title="Add metadata"
+                    placement="right"
+                  >
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onMouseLeave={handleTooltipClose}
+                      onMouseEnter={handleTooltipOpen}
+                      onClick={handleShowAdd}
+                      sx={{
+                        textTransform: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                      }}
+                    >
+                      Add metadata
+                      <AddRoundedIcon
+                        sx={{
+                          transition: "transform 150ms ease-out",
+                          transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                        }}
+                      />
+                    </Button>
+                  </Tooltip>
+                  {showAdd && activeSearchService && (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleSearchInService}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Search "{cell?.label}" in{" "}
+                      {KG_INFO[activeSearchService.prefix].groupName}
+                    </Button>
+                  )}
+                </Stack>
+                {showAdd && (
+                  <Box sx={{ width: "100%", paddingTop: "8px" }}>
+                    <AddMetadataForm
+                      onPrefixChange={setFormSelectedPrefix}
+                      currentService={
+                        cell?.reconciler === "inTableLinker"
+                          ? getPrefixFromCellMetadata()
+                          : servicesById[cell?.reconciler]?.prefix
+                      }
+                      onSubmit={onSubmitNewMetadata}
+                      context="metadataDialog"
+                    />
+                  </Box>
+                )}
+              </Stack>
             )}
-          </Stack>
-        )}
-        <DeferredTable
-          flexGrow={1}
-          columns={columns}
-          data={data}
-          loading={loading}
-          onDeleteRow={handleDeleteRow}
-          onSelectedRowChange={handleSelectedRowChange}
-          onSelectedRowDeleteRequest={handleSelectedRowDelete}
-          showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
-          onRowCheck={handleRowCheck}
-        />
+            <DeferredTable
+              flexGrow={1}
+              columns={columns}
+              data={data}
+              loading={loading}
+              onDeleteRow={handleDeleteRow}
+              onSelectedRowChange={handleSelectedRowChange}
+              onSelectedRowDeleteRequest={handleSelectedRowDelete}
+              showRadio={!!API.ENDPOINTS.SAVE && !isViewOnly}
+              onRowCheck={handleRowCheck}
+            />
           </>
         )}
       </Stack>

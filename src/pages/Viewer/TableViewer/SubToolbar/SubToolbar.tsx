@@ -513,9 +513,7 @@ const SubToolbar = ({
               title={
                 !isCellSelected
                   ? "Select a column to enable Reconcile function"
-                  : isCurrentColumnLiteral
-                    ? "Reconciliation is not available for literal columns"
-                    : "Reconcile selected column(s)"
+                  : "Reconcile selected column(s)"
               }
               arrow
             >
@@ -525,7 +523,7 @@ const SubToolbar = ({
                     textTransform: "none",
                   }}
                   color="primary"
-                  disabled={!isCellSelected || isCurrentColumnLiteral}
+                  disabled={!isCellSelected}
                   onClick={() =>
                     dispatch(updateUI({ openReconciliateDialog: true }))
                   }
