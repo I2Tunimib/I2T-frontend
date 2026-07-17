@@ -2250,6 +2250,7 @@ export const tableSlice = createSliceWithRequests({
               const dataArray = rawArray.filter((item) => item != null) as {
                 id: string;
                 metadata: any[];
+                annotations?: Record<string, import("../interfaces/table").TextAnnotation[]>;
               }[];
 
               const colIds = new Set<string>();
@@ -2274,7 +2275,7 @@ export const tableSlice = createSliceWithRequests({
                 }
               });
 
-              dataArray.forEach(({ id: cellId, metadata }) => {
+              dataArray.forEach(({ id: cellId, metadata, annotations }) => {
                 if (cellId.includes("$")) {
                   const [rowId, colId] = getIdsFromCell(cellId);
                   // get column
@@ -2331,6 +2332,9 @@ export const tableSlice = createSliceWithRequests({
                     ...computeCellAnnotationStats(cell),
                   };
                   cell.reconciler = reconcilerId;
+                  if (annotations && Object.keys(annotations).length > 0) {
+                    cell.annotations = annotations;
+                  }
                   // increment current
                   if (
                     !column.context[prefix] ||
