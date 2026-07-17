@@ -33,8 +33,11 @@ const NER_COLORS: Record<string, string> = {
   DATE: "#a855f7",
   TIME: "#a855f7",
   MISC: "#94a3b8",
+  CARDINAL: "#06b6d4",
+  FAC: "#8b5cf6",
+  QUANTITY: "#ec4899",
 };
-const DEFAULT_COLOR = "#14b8a6";
+const DEFAULT_COLOR = "#ef4444";
 
 const typeColor = (type: string) =>
   NER_COLORS[type.toUpperCase()] ?? DEFAULT_COLOR;
@@ -107,10 +110,42 @@ const NerAnnotationsTab: FC<Props> = ({ label, annotations }) => {
               ? (entity.name as any).value
               : entity?.name;
 
+          const wikidataUrl = (() => {
+            if (!entity?.id) return null;
+            const id = String(entity.id);
+            if (id.startsWith("wd:")) return `https://www.wikidata.org/wiki/${id.slice(3)}`;
+            if (/^Q\d+$/.test(id)) return `https://www.wikidata.org/wiki/${id}`;
+            return null;
+          })();
+
+          const markEl = (
+            <Box
+              component={wikidataUrl ? "a" : "mark"}
+              {...(wikidataUrl
+                ? { href: wikidataUrl, target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+              sx={{
+                backgroundColor: `${color}28`,
+                borderBottom: `2px solid ${color}`,
+                borderRadius: "2px",
+                padding: "1px 3px",
+                cursor: wikidataUrl ? "pointer" : "default",
+                color: "inherit",
+                textDecoration: "none",
+                "&:hover": {
+                  backgroundColor: `${color}45`,
+                  ...(wikidataUrl && { textDecoration: "underline" }),
+                },
+              }}
+            >
+              {seg.content}
+            </Box>
+          );
+
           return (
             <Tooltip
               key={i}
-              arrow
+              followCursor
               title={
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                   <Typography
@@ -134,22 +169,7 @@ const NerAnnotationsTab: FC<Props> = ({ label, annotations }) => {
                 </Box>
               }
             >
-              <Box
-                component="mark"
-                sx={{
-                  backgroundColor: `${color}28`,
-                  borderBottom: `2px solid ${color}`,
-                  borderRadius: "2px",
-                  padding: "1px 3px",
-                  cursor: "default",
-                  color: "inherit",
-                  "&:hover": {
-                    backgroundColor: `${color}45`,
-                  },
-                }}
-              >
-                {seg.content}
-              </Box>
+              {markEl}
             </Tooltip>
           );
         })}

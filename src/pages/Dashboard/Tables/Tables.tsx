@@ -6,7 +6,7 @@ import {
   useReactTable,
   getCoreRowModel,
   getPaginationRowModel,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   ReadMoreRounded,
@@ -20,7 +20,7 @@ import { updateUI } from "@store/slices/table/table.slice";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
 import { selectComplianceDialogStatus } from "@store/slices/table/table.selectors";
 import ComplianceDialog from "@pages/Viewer/TableViewer/ComplianceDialog";
-import GraphDialog from '@pages/Viewer/TableViewer/GraphDialog';
+import GraphDialog from "@pages/Viewer/TableViewer/GraphDialog";
 import DependenciesPanel from "@pages/Viewer/TableViewer/DependenciesPanel";
 import {
   Button,
@@ -32,8 +32,8 @@ import {
   Stack,
   Tooltip,
   Typography,
-} from '@mui/material';
-import { ID } from '@store/interfaces/store';
+} from "@mui/material";
+import { ID } from "@store/interfaces/store";
 import {
   selectCurrentDatasetTables,
   selectGetTablesDatasetStatus,
@@ -263,10 +263,12 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
                   try {
                     await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
                   } catch {
+                    // open dialog anyway on error
                   }
                   setIsLoadingTableData(false);
                   dispatch(updateUI({ openGraphDialog: true }));
-                }}>
+                }}
+              >
                 Schema
               </Button>
               <Button
@@ -310,10 +312,16 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
 
   return (
     <>
-      <ComplianceDialog datasetId={datasetId} tableId={selectedTableId} />
+      <ComplianceDialog
+        datasetId={datasetId}
+        tableId={selectedTableId}
+        readonly
+      />
       <GraphDialog datasetId={datasetId} tableId={selectedTableId} />
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 400 }}>
-        <Box sx={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+      <Box
+        sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 400 }}
+      >
+        <Box sx={{ flex: 1, overflow: "auto", minWidth: 0 }}>
           {loading ? (
             <LinearProgress />
           ) : viewType === "raw" ? (
