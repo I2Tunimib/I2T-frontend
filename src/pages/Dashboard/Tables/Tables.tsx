@@ -41,10 +41,11 @@ import {
 } from "@store/slices/datasets/datasets.selectors";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTablesByDataset } from "@store/slices/datasets/datasets.thunk";
-import { FC, useCallback, useEffect, useState, useMemo } from "react";
+import React, { FC, useCallback, useEffect, useState, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import globalStyles from "@styles/globals.module.scss";
 import styles from "@components/kit/TableListView/TableListView.module.scss";
+import TableAclDialog from "@components/core/TableAclDialog/TableAclDialog";
 import { useTableCollection } from "../useTableCollection";
 import W3CViewer from "../../Viewer/W3CViewer/W3CViewer";
 
@@ -196,115 +197,137 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
     ({ mediaMatch, row, targetView }) => {
       const viewMode = targetView || (viewType === "grid" ? "graph" : "table");
       const perm = getTablePermission(row.original);
+      const [aclOpen, setAclOpen] = React.useState(false);
       return (
-        <Stack
-          direction="row"
-          gap="5px"
-          alignItems="center"
-          className={globalStyles.Actions}
-        >
-          <Tooltip title={perm === "rw" ? "Read & Write" : "Read Only"}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                color: perm === "rw" ? "success.main" : "action.disabled",
-              }}
-            >
-              {perm === "rw" ? (
-                <LockOpenOutlined fontSize="small" />
-              ) : (
-                <LockOutlined fontSize="small" />
-              )}
-            </Box>
-          </Tooltip>
-          {mediaMatch ? (
-            <IconButton
-              color="primary"
-              size="small"
-              component={Link}
-              to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}>
-              <ReadMoreRounded />
-            </IconButton>
-          ) : (
-            <>
-              <Button
-                size="small"
-                variant="outlined"
-                color="primary"
-                startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
-                disabled={isLoadingTableData}
-                onClick={async () => {
-                  setSelectedTableId(row.original.id);
-                  setHighlightedTableId(row.original.id);
-                  setIsLoadingTableData(true);
-                  try {
-                    await dispatch(
-                      getTable({ tableId: row.original.id, datasetId }),
-                    ).unwrap();
-                  } catch {
-                    // open dialog anyway on error
-                  }
-                  setIsLoadingTableData(false);
-                  dispatch(updateUI({ openComplianceStatusDialog: true }));
+        <>
+          <Stack
+            direction="row"
+            gap="5px"
+            alignItems="center"
+            className={globalStyles.Actions}
+          >
+            <Tooltip title={perm === "rw" ? "Read & Write" : "Read Only"}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: perm === "rw" ? "success.main" : "action.disabled",
                 }}
               >
-                Compliance
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
+                {perm === "rw" ? (
+                  <LockOpenOutlined fontSize="small" />
+                ) : (
+                  <LockOutlined fontSize="small" />
+                )}
+              </Box>
+            </Tooltip>
+            {mediaMatch ? (
+              <IconButton
                 color="primary"
-                startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <ShareOutlined />}
-                disabled={isLoadingTableData}
-                onClick={async () => {
-                  setSelectedTableId(row.original.id);
-                  setIsLoadingTableData(true);
-                  try {
-                    await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
-                  } catch {
-                    // open dialog anyway on error
-                  }
-                  setIsLoadingTableData(false);
-                  dispatch(updateUI({ openGraphDialog: true }));
-                }}
-              >
-                Schema
-              </Button>
-              <Button
                 size="small"
-                variant="outlined"
-                color="primary"
-                startIcon={
-                  isLoadingDeps ? (
-                    <CircularProgress size={14} color="inherit" />
-                  ) : (
-                    <AccountTreeRounded />
-                  )
-                }
-                disabled={isLoadingDeps}
-                onClick={async () => {
-                  setHighlightedTableId(row.original.id);
-                  setIsLoadingDeps(true);
-                  try {
-                    await dispatch(
-                      getTable({ tableId: row.original.id, datasetId }),
-                    ).unwrap();
-                    await dispatch(
-                      getDependencies({ tableId: row.original.id, datasetId }),
-                    ).unwrap();
-                  } catch {
-                    // open panel anyway on error
+                component={Link}
+                to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}>
+                <ReadMoreRounded />
+              </IconButton>
+            ) : (
+              <>
+                {isDatasetOwner && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => setAclOpen(true)}
+                  >
+                    Access
+                  </Button>
+                )}
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
+                  disabled={isLoadingTableData}
+                  onClick={async () => {
+                    setSelectedTableId(row.original.id);
+                    setHighlightedTableId(row.original.id);
+                    setIsLoadingTableData(true);
+                    try {
+                      await dispatch(
+                        getTable({ tableId: row.original.id, datasetId }),
+                      ).unwrap();
+                    } catch {
+                      // open dialog anyway on error
+                    }
+                    setIsLoadingTableData(false);
+                    dispatch(updateUI({ openComplianceStatusDialog: true }));
+                  }}
+                >
+                  Compliance
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <ShareOutlined />}
+                  disabled={isLoadingTableData}
+                  onClick={async () => {
+                    setSelectedTableId(row.original.id);
+                    setIsLoadingTableData(true);
+                    try {
+                      await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
+                    } catch {
+                      // open dialog anyway on error
+                    }
+                    setIsLoadingTableData(false);
+                    dispatch(updateUI({ openGraphDialog: true }));
+                  }}
+                >
+                  Schema
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                  startIcon={
+                    isLoadingDeps ? (
+                      <CircularProgress size={14} color="inherit" />
+                    ) : (
+                      <AccountTreeRounded />
+                    )
                   }
-                  setIsLoadingDeps(false);
-                  setIsDependenciesPanelOpen(true);
-                }}
-              >
-                Pipeline
-              </Button>
-            </>
+                  disabled={isLoadingDeps}
+                  onClick={async () => {
+                    setHighlightedTableId(row.original.id);
+                    setIsLoadingDeps(true);
+                    try {
+                      await dispatch(
+                        getTable({ tableId: row.original.id, datasetId }),
+                      ).unwrap();
+                      await dispatch(
+                        getDependencies({ tableId: row.original.id, datasetId }),
+                      ).unwrap();
+                    } catch {
+                      // open panel anyway on error
+                    }
+                    setIsLoadingDeps(false);
+                    setIsDependenciesPanelOpen(true);
+                  }}
+                >
+                  Pipeline
+                </Button>
+              </>
+            )}
+          </Stack>
+          {isDatasetOwner && (
+            <TableAclDialog
+              open={aclOpen}
+              onClose={() => setAclOpen(false)}
+              datasetId={String(datasetId)}
+              tableId={String(row.original.id)}
+              datasetVisibility={datasetVisibility}
+              onChange={() => dispatch(getTablesByDataset({ datasetId }))}
+            />
           )}
-        </Stack>
+        </>
       );
     },
     [datasetId, viewType, dispatch, getTablePermission],
