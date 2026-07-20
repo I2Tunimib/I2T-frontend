@@ -1729,49 +1729,11 @@ export const tableSlice = createSliceWithRequests({
             columns.byId[colId].metadata[0].type = mergedMain;
           }
 
-          // Ensure additionalTypes exists and merge newTypes there as well
-          if (!columns.byId[colId].metadata[0].additionalTypes) {
-            columns.byId[colId].metadata[0].additionalTypes = newTypes;
-          } else {
-            // Check for existing types with the same ID and replace them
-            const existingTypes =
-              columns.byId[colId].metadata[0].additionalTypes || [];
-            const mergedTypes = [...existingTypes];
-            console.log("existingTypes", existingTypes);
-            console.log("newTypes", newTypes);
-            newTypes.forEach((newType) => {
-              const existingIndex = mergedTypes.findIndex(
-                (existingType) => existingType.id === newType.id,
-              );
-              if (existingIndex !== -1) {
-                // Replace existing type with the same ID
-                mergedTypes[existingIndex] = {
-                  ...mergedTypes[existingIndex],
-                  ...newType,
-                };
-              } else {
-                // Add new type if ID doesn't exist
-                mergedTypes.push(newType);
-              }
-            });
-
-            columns.byId[colId].metadata[0].additionalTypes = mergedTypes;
-          }
-
           // Ensure match flags are set consistently on metadata[0].type entries
           if (columns.byId[colId].metadata[0].type) {
             columns.byId[colId].metadata[0].type = columns.byId[
               colId
             ].metadata[0].type.map((t: any) => ({
-              ...t,
-              match: !!t.match,
-            }));
-          }
-          // Ensure match flags are set on additionalTypes too
-          if (columns.byId[colId].metadata[0].additionalTypes) {
-            columns.byId[colId].metadata[0].additionalTypes = columns.byId[
-              colId
-            ].metadata[0].additionalTypes.map((t: any) => ({
               ...t,
               match: !!t.match,
             }));
@@ -1858,16 +1820,6 @@ export const tableSlice = createSliceWithRequests({
             columns.byId[colId].metadata[0].type = columns.byId[
               colId
             ].metadata[0].type.map((type: any) => ({
-              ...type,
-              match: typeIds.includes(type.id),
-            }));
-          }
-
-          // Also update additionalTypes match property if present
-          if (columns.byId[colId].metadata[0].additionalTypes) {
-            columns.byId[colId].metadata[0].additionalTypes = columns.byId[
-              colId
-            ].metadata[0].additionalTypes.map((type: any) => ({
               ...type,
               match: typeIds.includes(type.id),
             }));

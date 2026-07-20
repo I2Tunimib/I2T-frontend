@@ -251,7 +251,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
   */
     const allColumnTypes = [
       ...(types.allTypes || []),
-      ...(column.metadata[0]?.additionalTypes || []),
       ...localAddedTypes,
     ];
 
@@ -269,19 +268,12 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
           "mapped types",
           type,
           selected,
-          selected.some((item) => item.id === type.id) ||
-            column.metadata[0]?.additionalTypes?.some(
-              (t: any) => t.id === type.id,
-            ),
+          selected.some((item) => item.id === type.id),
         );
         const isQudt = type.id && type.id.includes("unit:");
         const isTime = type.id && type.id.includes("xsd:");
         return {
-          selected:
-            selected.some((item) => item.id === type.id) ||
-            column.metadata[0]?.additionalTypes?.some(
-              (t: any) => t.id === type.id,
-            ),
+          selected: selected.some((item) => item.id === type.id),
           id: (isQudt || isTime) ? type.id : (isValidWikidataId(type.id) ? "wd:" + type.id : type.id),
           name: {
             value: type.label || type.name,
@@ -404,10 +396,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     } else {
       if (types && rawData) {
         const { column } = rawData;
-        const allTypes = [
-          ...(types.allTypes || []),
-          ...(column?.metadata?.[0]?.additionalTypes || []),
-        ];
+        const allTypes = [...(types.allTypes || [])];
         const selectedType = allTypes.find(
           (item) => normalizeTypeId(item.id) === normRowId,
         );
@@ -469,11 +458,26 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
       }
     }
   };
+
   useEffect(() => {
     if (selected && selected.length > 0) {
-      const mappedTypes = selected.map((item) => item.id);
-      const payload = updateColumnType(mappedTypes);
-      addEdit(updateColumnTypeMatches({ typeIds: mappedTypes }), true, true);
+      const mappedTypeIds = selected.map((item) => {
+        return normalizeTypeId(item.id);
+      });
+
+      const newTypesPayload = selected.map((item) => {
+        return {
+          id: normalizeTypeId(item.id),
+          name: item.label,
+          ...(item.uri ? { uri: item.uri } : {}),
+        };
+      });
+
+      const validNewTypes = newTypesPayload.filter((t) => t.id);
+
+      if (mappedTypeIds.length > 0) {
+        addEdit(addColumnType({ colId, newTypes: validNewTypes }), false, true);
+      }
     }
   }, [selected]);
 
@@ -573,13 +577,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
       return [...prev, { ...newType, count: 1, percentage: "100" }];
     });
   };
-
-  useEffect(() => {
-    if (selected && selected.length > 0) {
-      const mappedTypes = selected.map((item) => item.id);
-      addEdit(updateColumnTypeMatches({ typeIds: mappedTypes }), true, true);
-    }
-  }, [selected]);
 
   const literalTypesConfig = {
     NUMBER: {
