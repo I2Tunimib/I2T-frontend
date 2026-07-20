@@ -1039,7 +1039,6 @@ export const tableSlice = createSliceWithRequests({
               draft.entities.columns.byId[subj].metadata = [
                 {
                   ...draft.entities.columns.byId[subj].metadata[0],
-                  role: "subject",
                   property: [
                     ...(draft.entities.columns.byId[subj].metadata[0]
                       ?.property || []),
@@ -2430,22 +2429,6 @@ export const tableSlice = createSliceWithRequests({
                           }));
                         }
                         return [];
-                      }),
-                      entity: metadata.map(({ id, name, ...rest }) => {
-                        const [_, metaId] = id.split(":");
-                        const computedUri = resolveURI(effectiveReconciliator, {
-                          id: metaId,
-                          label: name,
-                          ...rest,
-                        });
-                        return {
-                          id,
-                          name: {
-                            value: name as unknown as string,
-                            uri: computedUri,
-                            ...rest,
-                          },
-                        };
                       }),
                     };
 
