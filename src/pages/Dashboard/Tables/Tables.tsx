@@ -22,6 +22,7 @@ import { selectComplianceDialogStatus } from "@store/slices/table/table.selector
 import ComplianceDialog from "@pages/Viewer/TableViewer/ComplianceDialog";
 import GraphDialog from "@pages/Viewer/TableViewer/GraphDialog";
 import DependenciesPanel from "@pages/Viewer/TableViewer/DependenciesPanel";
+import TableAclDialog from "@components/core/TableAclDialog/TableAclDialog";
 import {
   Button,
   Box,
@@ -100,6 +101,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
   const [isDependenciesPanelOpen, setIsDependenciesPanelOpen] = useState(false);
   const [isLoadingDeps, setIsLoadingDeps] = useState(false);
+  const [aclTableId, setAclTableId] = useState<string | undefined>(undefined);
   const [highlightedTableId, setHighlightedTableId] = useState<
     string | undefined
   >(undefined);
@@ -217,26 +219,27 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
               )}
             </Box>
           </Tooltip>
-          {mediaMatch ? (
-            <IconButton
-              color="primary"
-              size="small"
-              component={Link}
-              to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
-            >
-              <ReadMoreRounded />
-            </IconButton>
-          ) : (
-            <Button
-              size="small"
-              component={Link}
-              to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
-              endIcon={<ReadMoreRounded />}
-              classes={{ endIcon: globalStyles.IconButton }}
-            >
-              Explore
-            </Button>
-          )}
+          {viewType !== "list" &&
+            (mediaMatch ? (
+              <IconButton
+                color="primary"
+                size="small"
+                component={Link}
+                to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
+              >
+                <ReadMoreRounded />
+              </IconButton>
+            ) : (
+              <Button
+                size="small"
+                component={Link}
+                to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
+                endIcon={<ReadMoreRounded />}
+                classes={{ endIcon: globalStyles.IconButton }}
+              >
+                Explore
+              </Button>
+            ))}
           {viewType === "list" && (
             <>
               <Button
@@ -327,12 +330,21 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
               >
                 Pipeline
               </Button>
+              {isDatasetOwner && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setAclTableId(row.original.id)}
+                >
+                  Access
+                </Button>
+              )}
             </>
           )}
         </Stack>
       );
     },
-    [datasetId, viewType, dispatch, getTablePermission],
+    [datasetId, viewType, dispatch, getTablePermission, isDatasetOwner],
   );
 
   return (
@@ -343,6 +355,16 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
         readonly
       />
       <GraphDialog datasetId={datasetId} tableId={selectedTableId} />
+      {aclTableId && (
+        <TableAclDialog
+          open={!!aclTableId}
+          onClose={() => setAclTableId(undefined)}
+          datasetId={datasetId}
+          tableId={aclTableId}
+          datasetVisibility={datasetVisibility}
+          onChange={() => dispatch(getTablesByDataset({ datasetId }))}
+        />
+      )}
       <Box
         sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 400 }}
       >

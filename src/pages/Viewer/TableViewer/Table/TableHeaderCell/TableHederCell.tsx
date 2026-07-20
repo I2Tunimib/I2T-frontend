@@ -553,8 +553,8 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     {hasTextAnnotations && (
                       <ButtonShortcut
                         aria-label="kind-ner"
-                        text="NER"
-                        tooltipText="NER text annotations"
+                        text="AT"
+                        tooltipText="Annotated Text"
                         size="xs"
                         variant="flat"
                         color="teal"
