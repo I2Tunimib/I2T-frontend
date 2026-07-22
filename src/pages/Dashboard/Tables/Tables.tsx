@@ -22,6 +22,7 @@ import { selectComplianceDialogStatus } from "@store/slices/table/table.selector
 import ComplianceDialog from "@pages/Viewer/TableViewer/ComplianceDialog";
 import GraphDialog from "@pages/Viewer/TableViewer/GraphDialog";
 import DependenciesPanel from "@pages/Viewer/TableViewer/DependenciesPanel";
+import TableAclDialog from "@components/core/TableAclDialog/TableAclDialog";
 import {
   Button,
   Box,
@@ -102,6 +103,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
   const [isDependenciesPanelOpen, setIsDependenciesPanelOpen] = useState(false);
   const [isLoadingDeps, setIsLoadingDeps] = useState(false);
+  const [aclTableId, setAclTableId] = useState<string | undefined>(undefined);
   const [highlightedTableId, setHighlightedTableId] = useState<
     string | undefined
   >(undefined);
@@ -199,19 +201,75 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
       const perm = getTablePermission(row.original);
       const [aclOpen, setAclOpen] = React.useState(false);
       return (
-        <>
-          <Stack
-            direction="row"
-            gap="5px"
-            alignItems="center"
-            className={globalStyles.Actions}
-          >
-            <Tooltip title={perm === "rw" ? "Read & Write" : "Read Only"}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  color: perm === "rw" ? "success.main" : "action.disabled",
+        <Stack
+          direction="row"
+          gap="5px"
+          alignItems="center"
+          className={globalStyles.Actions}
+        >
+          <Tooltip title={perm === "rw" ? "Read & Write" : "Read Only"}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: perm === "rw" ? "success.main" : "action.disabled",
+              }}
+            >
+              {perm === "rw" ? (
+                <LockOpenOutlined fontSize="small" />
+              ) : (
+                <LockOutlined fontSize="small" />
+              )}
+            </Box>
+          </Tooltip>
+          {viewType !== "list" &&
+            (mediaMatch ? (
+              <IconButton
+                color="primary"
+                size="small"
+                component={Link}
+                to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
+              >
+                <ReadMoreRounded />
+              </IconButton>
+            ) : (
+              <Button
+                size="small"
+                component={Link}
+                to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}
+                endIcon={<ReadMoreRounded />}
+                classes={{ endIcon: globalStyles.IconButton }}
+              >
+                Explore
+              </Button>
+            ))}
+          {viewType === "list" && (
+            <>
+              <Button
+                size="small"
+                variant="contained"
+                color="primary"
+                startIcon={
+                  isLoadingTableData ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <AssignmentTurnedInOutlined />
+                  )
+                }
+                disabled={isLoadingTableData}
+                onClick={async () => {
+                  setSelectedTableId(row.original.id);
+                  setHighlightedTableId(row.original.id);
+                  setIsLoadingTableData(true);
+                  try {
+                    await dispatch(
+                      getTable({ tableId: row.original.id, datasetId }),
+                    ).unwrap();
+                  } catch {
+                    // open dialog anyway on error
+                  }
+                  setIsLoadingTableData(false);
+                  dispatch(updateUI({ openComplianceStatusDialog: true }));
                 }}
               >
                 {perm === "rw" ? (
@@ -294,43 +352,27 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
                       <AccountTreeRounded />
                     )
                   }
-                  disabled={isLoadingDeps}
-                  onClick={async () => {
-                    setHighlightedTableId(row.original.id);
-                    setIsLoadingDeps(true);
-                    try {
-                      await dispatch(
-                        getTable({ tableId: row.original.id, datasetId }),
-                      ).unwrap();
-                      await dispatch(
-                        getDependencies({ tableId: row.original.id, datasetId }),
-                      ).unwrap();
-                    } catch {
-                      // open panel anyway on error
-                    }
-                    setIsLoadingDeps(false);
-                    setIsDependenciesPanelOpen(true);
-                  }}
+                  setIsLoadingDeps(false);
+                  setIsDependenciesPanelOpen(true);
+                }}
+              >
+                Pipeline
+              </Button>
+              {isDatasetOwner && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setAclTableId(row.original.id)}
                 >
-                  Pipeline
+                  Access
                 </Button>
-              </>
-            )}
-          </Stack>
-          {isDatasetOwner && (
-            <TableAclDialog
-              open={aclOpen}
-              onClose={() => setAclOpen(false)}
-              datasetId={String(datasetId)}
-              tableId={String(row.original.id)}
-              datasetVisibility={datasetVisibility}
-              onChange={() => dispatch(getTablesByDataset({ datasetId }))}
-            />
+              )}
+            </>
           )}
         </>
       );
     },
-    [datasetId, viewType, dispatch, getTablePermission],
+    [datasetId, viewType, dispatch, getTablePermission, isDatasetOwner],
   );
 
   return (
@@ -341,6 +383,16 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
         readonly
       />
       <GraphDialog datasetId={datasetId} tableId={selectedTableId} />
+      {aclTableId && (
+        <TableAclDialog
+          open={!!aclTableId}
+          onClose={() => setAclTableId(undefined)}
+          datasetId={datasetId}
+          tableId={aclTableId}
+          datasetVisibility={datasetVisibility}
+          onChange={() => dispatch(getTablesByDataset({ datasetId }))}
+        />
+      )}
       <Box
         sx={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 400 }}
       >
