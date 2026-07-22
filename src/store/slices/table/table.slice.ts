@@ -1127,6 +1127,7 @@ export const tableSlice = createSliceWithRequests({
                   draft.entities.columns.byId[colId].metadata &&
                   draft.entities.columns.byId[colId].metadata[0].property
                 ) {
+                  draft.entities.columns.byId[colId].role = "";
                   draft.entities.columns.byId[colId].metadata[0].property =
                     draft.entities.columns.byId[
                       colId
@@ -1221,35 +1222,28 @@ export const tableSlice = createSliceWithRequests({
 
       if (
         column.metadata.length > 0 &&
-        column.metadata[0].entity &&
-        column.metadata[0].entity.length > 0
+        column.metadata[0].property &&
+        column.metadata[0].property.length > 0
       ) {
         return produceWithPatch(
           state,
           undoable,
           (draft) => {
             const columnToUpdate = getColumn(draft, colId);
-
-            if (
-              columnToUpdate.metadata.length > 0 &&
-              columnToUpdate.metadata[0].property &&
-              columnToUpdate.metadata[0].property.length > 0
-            ) {
-              columnToUpdate.metadata[0].property.forEach((metaItem) => {
-                if (metaItem.id === metadataId) {
-                  columnToUpdate.annotationMeta = {
-                    ...columnToUpdate.annotationMeta,
-                    match: {
-                      value: !metaItem.match,
-                      ...(!metaItem.match && {
-                        reason: "manual",
-                      }),
-                    },
-                  };
-                  metaItem.match = !metaItem.match;
-                }
-              });
-            }
+            columnToUpdate.metadata[0].property.forEach((metaItem) => {
+              if (metaItem.id === metadataId) {
+                columnToUpdate.annotationMeta = {
+                  ...columnToUpdate.annotationMeta,
+                  match: {
+                    value: !metaItem.match,
+                    ...(!metaItem.match && {
+                      reason: "manual",
+                    }),
+                  },
+                };
+                metaItem.match = !metaItem.match;
+              }
+            });
           },
           (draft) => {
             // do not include in undo history
