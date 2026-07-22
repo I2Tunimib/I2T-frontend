@@ -63,8 +63,8 @@ const Viewer: FC<unknown> = () => {
 
   useEffect(() => {
     if (tableId && datasetId) {
-      if (!view && ALLOWED_QUERY.indexOf(view) === -1) {
-        history.push(`/datasets/${datasetId}/tables/${tableId}?view=table`);
+      if (!view || !ALLOWED_QUERY.includes(view)) {
+        history.replace(`/datasets/${datasetId}/tables/${tableId}?view=table`);
       }
     }
   }, [view, tableId, datasetId]);
