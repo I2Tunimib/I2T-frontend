@@ -892,15 +892,6 @@ export const selectColumnTypes = createSelector(
     // add current type
     const currentColType: any[] = [];
     const currentTypesIds = [];
-    let additionalTypes = [];
-    if (
-      columnsState.byId[colId] &&
-      columnsState.byId[colId].metadata &&
-      columnsState.byId[colId].metadata[0]
-    ) {
-      additionalTypes =
-        columnsState.byId[colId].metadata[0].additionalTypes ?? [];
-    }
     if (columnsState.byId[colId].metadata.length > 0) {
       if (
         columnsState.byId[colId].metadata[0] &&
@@ -930,9 +921,6 @@ export const selectColumnTypes = createSelector(
         }
       }
     }
-    additionalTypes = additionalTypes.filter(
-      (type) => !currentTypesIds.includes(type.id),
-    );
     const totalCount = Object.keys(map).reduce(
       (acc, key) => acc + map[key].count,
       0,
@@ -941,7 +929,6 @@ export const selectColumnTypes = createSelector(
     //TODO: transform into an array
     const selectedType: any[] = [];
 
-    console.log("additional types", additionalTypes, currentTypesIds);
     console.log("currentmap", map);
     const allTypes = Object.keys(map)
       .map((key) => {
@@ -957,24 +944,6 @@ export const selectColumnTypes = createSelector(
         }
         return item;
       })
-      .concat(
-        additionalTypes.map((type) => {
-          // ensure additional types carry a match flag and are treated similarly to existing types
-          const t = {
-            id: type.id,
-            label: type.name,
-            uri: type.uri,
-            count: 0,
-            percentage: "0.00",
-            match: !!type.match,
-          };
-          // if the additional type is already marked as matched, include it in selectedType
-          if (t.match) {
-            selectedType.push(t);
-          }
-          return t;
-        }),
-      )
       .sort((a, b) => b.count - a.count);
 
     return {

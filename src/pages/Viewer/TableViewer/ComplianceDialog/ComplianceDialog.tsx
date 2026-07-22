@@ -69,7 +69,7 @@ const ComplianceDialog: FC<ComplianceDialogProps> = ({
               updateUI({
                 openHelpDialog: true,
                 helpStart: "tutorial",
-                tutorialStep: 4,
+                tutorialStep: 23,
               }),
             );
           }}
@@ -90,7 +90,7 @@ const ComplianceDialog: FC<ComplianceDialogProps> = ({
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "discover",
-                  discoverStep: 27,
+                  discoverStep: 30,
                 }),
               );
             }}

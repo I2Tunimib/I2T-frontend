@@ -146,23 +146,35 @@ const NerAnnotationsTab: FC<Props> = ({ label, annotations }) => {
             <Tooltip
               key={i}
               followCursor
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: "#ffffff",
+                    color: "#1e293b",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+                    borderRadius: "8px",
+                    p: "10px 12px",
+                    border: "1px solid #f0f0f0",
+                  },
+                },
+              }}
               title={
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                   <Typography
                     variant="caption"
-                    sx={{ fontWeight: 700, color }}
+                    sx={{ fontWeight: 700, color, fontSize: "0.9rem" }}
                   >
                     {seg.annotation.type}
                   </Typography>
                   {entityName && (
-                    <Typography variant="caption" sx={{ color: "#fff" }}>{entityName}</Typography>
+                    <Typography variant="caption" sx={{ fontSize: "0.85rem" }}>{entityName}</Typography>
                   )}
                   {entity?.id && (
-                    <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)" }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
                       {entity.id}
                     </Typography>
                   )}
-                  <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)" }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
                     chars {seg.annotation.target.selector.start}–
                     {seg.annotation.target.selector.end}
                   </Typography>

@@ -289,7 +289,7 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
         Description: () => (
           <Stack gap="10px">
             <Typography component="div">
-              Explore available services for the Modification, Reconciliation and Extension.
+              Explore available services for the Modification, Reconciliation, Extension and Compliance.
               <List>
                 <li>
                   <b>Modifiers</b>: Responsible for applying transformation function to the column content (e.g.,
@@ -297,13 +297,22 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
                 </li>
                 <li>
                   <b>Reconcilers</b>: Responsible for aligning or enriching tabular data with semantic metadata. They
-                  match entities from the dataset with corresponding entries from external or internal knowledge sources,
+                  match entities from the dataset with corresponding entries from external or internal knowledge
+                  sources,
                   enabling semantic linking and enhanced interoperability.
                 </li>
                 <li>
                   <b>Extenders</b>: Responsible for adding complementary data or attributes to existing resources, by
                   fetching related information from external systems. They typically operate on columns that have
                   been previously reconciled, enriching them with new metadata or values.
+                </li>
+                <li>
+                  <b>Generative AI </b>: Leverage Large Language Models to perform advanced operations like
+                  intelligent data transformation, improved reconciliation, and extraction.
+                </li>
+                <li>
+                  <b>Compliance</b>: Responsible for evaluating data against regulatory frameworks (e.g., GDPR)
+                  to ensure processing standards are met.
                 </li>
               </List>
             </Typography>
@@ -314,13 +323,13 @@ const DiscoverStepper: FC<{ onDone: () => void; onBackToWelcome: () => void }> =
 
     const processServices = (s: any, macroKey: string) => {
       const rawName = s.name ?? "";
-        const { rawCategory, titleAfterColon } = splitName(rawName);
+      const {rawCategory, titleAfterColon} = splitName(rawName);
 
-        const targetMacro = isGenAI(s) ? "Gen AI" : macroKey;
-        const category = isGenAI(s) ? macroKey : (rawCategory || ROOT_KEY);
-        const displayTitle = titleAfterColon || rawName;
+      const targetMacro = isGenAI(s) ? "Gen AI" : macroKey;
+      const category = isGenAI(s) ? macroKey : (rawCategory || ROOT_KEY);
+      const displayTitle = titleAfterColon || rawName;
 
-        if (!data[targetMacro][category]) data[targetMacro][category] = [];
+      if (!data[targetMacro][category]) data[targetMacro][category] = [];
 
         const stepIndex = allSteps.length;
         data[targetMacro][category].push({

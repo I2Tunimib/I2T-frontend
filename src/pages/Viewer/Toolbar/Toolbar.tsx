@@ -34,7 +34,7 @@ import {
 } from "@store/slices/table/table.selectors";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import BubbleChartRoundedIcon from "@mui/icons-material/BubbleChartRounded";
-import FormatAlignJustifyRoundedIcon from "@mui/icons-material/FormatAlignJustifyRounded";
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import { updateCurrentTable, updateUI } from "@store/slices/table/table.slice";
 import {
   automaticAnnotation,
@@ -227,7 +227,7 @@ const Toolbar = () => {
             </ToggleButton>
             <ToggleButton value="raw" aria-label="centered">
               <Tooltip title="Raw view">
-                <FormatAlignJustifyRoundedIcon fontSize="small" />
+                <CodeRoundedIcon fontSize="small" />
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="graph" aria-label="right aligned">

@@ -310,45 +310,6 @@ const chapters: Chapter[] = [
         },
       },
       {
-        label: "Compliance",
-        Description: () => {
-          const dispatch = useAppDispatch();
-          return (
-            <Stack gap="10px">
-              <Typography component="div">
-                This feature evaluates the current state of your table's compliance with different regulatory frameworks.
-                <br /><br />
-                Click on the <ButtonText>Compliance</ButtonText> button in the Toolbar and simply select one of the
-                available compliance services. Currently, the system supports GDPR assessment, allowing you to determine
-                if your data processing aligns with European privacy standards. For a detailed explanation,
-                refer to {" "}
-                <Link
-                  aria-label="open-GDPR"
-                  component="button"
-                  underline="hover"
-                  role="button"
-                  sx={{ cursor: "pointer" }}
-                  onClick={() => {
-                    dispatch(
-                      updateUI({
-                        openHelpDialog: true,
-                        helpStart: "discover",
-                        discoverStep: 27,
-                      })
-                    );
-                  }}
-                >
-                  <b>GDPR</b>
-                </Link>.
-                <br /><br />
-                This is a long-running asynchronous process, allowing you to continue working on other tables. Once the
-                task is completed, you will receive a notification via a pop-up in the bottom-left corner of the screen.
-              </Typography>
-            </Stack>
-          );
-        },
-      },
-      {
         label: "Automatic Annotation",
         Description: ({ goTo, goToByLabel }) => (
           <Stack gap="10px">
@@ -368,7 +329,7 @@ const chapters: Chapter[] = [
                     sx={{ cursor: "pointer" }}
                     onClick={() => goToByLabel("Reconciliation", "Semantic Table Interpretation (Automatic)", goTo)}
                   >
-                    <b>5.2 Semantic Table Interpretation</b>
+                    <b>6.2 Semantic Table Interpretation</b>
                   </Link>
                   {" "}of this tutorial.
                 </li>
@@ -384,7 +345,7 @@ const chapters: Chapter[] = [
                     sx={{ cursor: "pointer" }}
                     onClick={() => goToByLabel("Schema Annotation", "Automatic Annotation", goTo)}
                   >
-                    <b>4. Schema Annotation</b>
+                    <b>4.1 Schema Annotation</b>
                   </Link>
                   {" "}of this tutorial.
                 </li>
@@ -405,15 +366,21 @@ const chapters: Chapter[] = [
               The available export options include:
               <List>
                 <li>
+                  <b>Schema: </b>
+                  Saves the header data in standard formats such as JSON, or generates a HTML or Markdown Report.
+                </li>
+                <li>
                   <b>Table: </b>
                   Saves the data in standard formats such as CSV, JSON (W3C Compliant) and RDF.
                   <SubList>
                     <li>
-                      For <b> CSV</b>, you can customize the delimiter, quote character, decimal separator, and choose whether
+                      For <b> CSV</b>, you can customize the delimiter, quote character, decimal separator, and choose
+                      whether
                       to include the header.
                     </li>
                     <li>
-                      For <b> RDF</b>, you can specify the serialization format, @base URI, filtering threshold, and match value.
+                      For <b> RDF</b>, you can specify the serialization format, @base URI, filtering threshold, and
+                      match value.
                     </li>
                   </SubList>
                 </li>
@@ -435,7 +402,7 @@ const chapters: Chapter[] = [
     pages: [
       {
         label: "Contextual Actions",
-        Description: ({ goToByLabel, goTo }) => (
+        Description: ({goToByLabel, goTo}) => (
           <Stack gap="10px">
             <Typography component="div">
               Located in the SubToolbar, these actions become active only when you select one or
@@ -470,7 +437,7 @@ const chapters: Chapter[] = [
                     sx={{ cursor: "pointer" }}
                     onClick={() => goToByLabel("Matching Revision", "Group of Cells Refinement", goTo)}
                   >
-                    <b>6.3 Group of Cells Refinement</b>
+                    <b>7.3 Group of Cells Refinement</b>
                   </Link>
                   {" "}of this tutorial.
                 </li>
@@ -585,7 +552,7 @@ const chapters: Chapter[] = [
                 sx={{ cursor: "pointer" }}
                 onClick={() => goToByLabel("Reconciliation", "Annotation Symbols", goTo)}
               >
-                <b>5.6 Annotation Symbols</b>
+                <b>6.5 Annotation Symbols</b>
               </Link>
               {" "}of this tutorial.
             </Typography>
@@ -715,9 +682,9 @@ const chapters: Chapter[] = [
               When working with literal datatypes, SemT-X provides tailored tools to handle formatting and scales:
               <List>
                 <li>
-                  <b>QUDT Ontology (for NUMBER): </b> Search and assign official units of measure (e.g., <i>Count</i>,
-                  <i>Length</i>, <i>Degree Celsius</i>).
-                  For more details, click <a href='https://www.qudt.org/' target='_blank'>here</a>
+                  <b>QUDT Ontology (for NUMBER): </b> Search and assign official units of measure
+                  (e.g., <i>Count</i>, <i>Length</i>, <i>Degree Celsius</i>).
+                  For more details, click <a href='https://www.qudt.org/' target='_blank'>here</a>.
                 </li>
                 <li>
                   <b>XML Schema (for STRING/DATE): </b> Aligns data validation with standard XML Schema structures.
@@ -1072,6 +1039,51 @@ const chapters: Chapter[] = [
     ],
   },
   {
+    label: "Compliance",
+    pages: [
+      {
+        label: "Compliance",
+        Description: () => {
+          const dispatch = useAppDispatch();
+          return (
+            <Stack gap="10px">
+              <Typography component="div">
+                This feature evaluates the current state of your table's compliance with different regulatory
+                frameworks.
+                <br/><br/>
+                Click on the <ButtonText>Compliance</ButtonText> button in the Toolbar and simply select one of the
+                available compliance services. Currently, the system supports GDPR assessment, allowing you to determine
+                if your data processing aligns with European privacy standards. For a detailed explanation,
+                refer to {" "}
+                <Link
+                  aria-label="open-GDPR"
+                  component="button"
+                  underline="hover"
+                  role="button"
+                  sx={{cursor: "pointer"}}
+                  onClick={() => {
+                    dispatch(
+                      updateUI({
+                        openHelpDialog: true,
+                        helpStart: "discover",
+                        discoverStep: 30,
+                      })
+                    );
+                  }}
+                >
+                  <b>GDPR</b>
+                </Link>.
+                <br/><br/>
+                This is a long-running asynchronous process, allowing you to continue working on other tables. Once the
+                task is completed, you will receive a notification via a pop-up in the bottom-left corner of the screen.
+              </Typography>
+            </Stack>
+          );
+        },
+      },
+    ]
+  },
+  {
     label: "",
     pages: [
       {
@@ -1358,7 +1370,7 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
                     Discover services
                   </Button>
                   <Button
-                    onClick={() => window.open("https://www.youtube.com/watch?v=XMfRQueX48M", "_blank")}
+                    onClick={() => window.open("https://www.youtube.com/watch?v=vl11KucxCT0", "_blank")}
                     variant="outlined"
                   >
                     Video introduction

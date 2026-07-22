@@ -228,7 +228,6 @@ export interface BaseMetadata {
   match: boolean;
   score: number;
   type?: BaseMetadata[];
-  additionalTypes?: BaseMetadata[];
 }
 
 export interface ColumnMetadata extends BaseMetadata {

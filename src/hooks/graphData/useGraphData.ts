@@ -27,10 +27,22 @@ export const useGraphData = (datasetId: string, tableId: string) => {
     const clean = (str: string) => str?.trim().replace(/^\uFEFF/, '');
 
     const nodes = Object.values(schema).map((th: any) => {
+      const columnContext = th.context || [];
+      const lastContextEntry = columnContext.length > 0 ? columnContext[columnContext.length - 1] : null;
+
+      const addPrefix = (idStr: string) => {
+        if (!idStr) return undefined;
+        return idStr.includes(':') ? idStr : `${lastContextEntry?.prefix}${idStr}`;
+      };
+
       const types = th.metadata?.flatMap((m: any) => m.type ?? []) ?? [];
       const typeHighestScore = types.length > 0
         ? types.reduce((highest: any, curr: any) => (curr.score > highest.score ? curr : highest))
         : undefined;
+
+      const rawMetadataId = typeHighestScore?.id ?? th.metadata?.[0]?.id;
+      const metadataId = rawMetadataId && rawMetadataId !== "None" ? addPrefix(rawMetadataId) : undefined;
+
       const values = rows.map((row: any) => {
         const key = th.label;
         const cell = row[key];
@@ -42,13 +54,15 @@ export const useGraphData = (datasetId: string, tableId: string) => {
         kind: th.kind,
         datatype: th.datatype,
         role: th.role,
-        metadata: typeHighestScore?.id ?? th.metadata?.[0]?.id ?? undefined,
-        types,
+        metadata: metadataId,
+        types: types.map((t: any) => ({ ...t, id: addPrefix(t.id) })),
         properties: th.metadata?.flatMap((m: any) => m.property ?? []),
         values,
-        compliance_classification: th.gdprClassification,
-        compliance_action: th.gdprAction,
-        compliance_score: th.gdprScore,
+        compliance: {
+          classification: th?.compliance?.classification ?? "N/A",
+          status: th?.compliance?.status ?? "N/A",
+          score: th?.compliance?.score ?? 0,
+        },
       };
     });
 

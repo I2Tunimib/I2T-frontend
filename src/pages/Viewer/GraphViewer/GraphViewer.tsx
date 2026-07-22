@@ -52,6 +52,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
   const [showSourceTypes, setShowSourceTypes] = useState(false);
   const [showTargetTypes, setShowTargetTypes] = useState(false);
   const [showCompliance, setShowCompliance] = useState(false);
+  const [isValuesExpanded, setIsValuesExpanded] = useState(true);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [selectedLink, setSelectedLink] = useState<any | null>(null);
   const nodeSectionRef = useRef<HTMLDivElement | null>(null);
@@ -62,11 +63,11 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
 
   const getNodeColor = (node: any) => {
     if (showCompliance) {
-      switch (node.compliance_classification) {
+      switch (node.compliance.classification) {
         case "personalData": return "crimson";
         case "quasiIdentifiers": return "orange";
-        case "nonPersonalData": return "teal";
-        case "anonymousData": return "green";
+        case "nonPersonalData": return "forestgreen";
+        case "anonymousData": return "dodgerblue";
         default: return "#999";
       }
     }
@@ -155,26 +156,41 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
           </Tooltip>
         </div>
         <div className={styles.Values}>
-          <h4>Column values:</h4>
+          <div className={styles.ToggleRow}>
+            <h4>Column values:</h4>
+            {selectedNode && (
+              <Typography
+                className={styles.ToggleIcon}
+                onClick={() => setIsValuesExpanded(!isValuesExpanded)}
+              >
+                {isValuesExpanded ? '−' : '+'}
+              </Typography>
+            )}
+          </div>
+
           {(selectedNode && selectedNode.values.length > 0) ? (
-            <div className={styles.ValuesContainer}>
-              <table className={styles.ValuesTable}>
-                <thead>
-                  <tr>
-                    <th style={{ backgroundColor: getNodeColor(selectedNode) }}>#</th>
-                    <th style={{ backgroundColor: getNodeColor(selectedNode) }}>{selectedNode.label}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedNode.values.map((v: any, idx: number) => (
-                    <tr key={idx}>
-                      <td>{idx + 1}</td>
-                      <td>{v || 'N/A'}</td>
+            isValuesExpanded ? (
+              <div className={styles.ValuesContainer}>
+                <table className={styles.ValuesTable}>
+                  <thead>
+                    <tr>
+                      <th style={{ backgroundColor: getNodeColor(selectedNode) }}>#</th>
+                      <th style={{ backgroundColor: getNodeColor(selectedNode) }}>{selectedNode.label}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {selectedNode.values.map((v: any, idx: number) => (
+                      <tr key={idx}>
+                        <td>{idx + 1}</td>
+                        <td>{v || 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <Typography variant="body2" color="text.secondary">Values hidden. Click '+' to expand.</Typography>
+            )
           ) : (
             <Typography variant="body2" color="text.secondary">
               Select a node to view column values in the table
@@ -330,22 +346,19 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
 
             {showLinks && (
               <ul className={styles.List}>
-                {graphData.links.map((l: any, idx: number) => {
-                  const sourceId = typeof l.source === 'object' ? l.source.label : l.source;
-                  const targetId = typeof l.target === 'object' ? l.target.label : l.target;
+                {Object.keys(multiPropsMap).map((linkKey, idx) => {
+                  const [sourceId, targetId] = linkKey.split('->');
+                  const properties = multiPropsMap[linkKey];
                   return (
-                    <li key={idx}>
+                    <li key={idx} style={{ marginBottom: '10px' }}>
                       {sourceId} → {targetId}
-                      <div style={{ paddingLeft: '16px', marginTop: '6px', marginBottom: '6px' }}>
-                        {(multiPropsMap[`${sourceId}->${targetId}`] || [{
-                          propID: l.propID,
-                          label: l.label
-                        }]).map((p: any, pIdx: number) => (
+                      <ul style={{ paddingLeft: '16px', marginTop: '4px' }}>
+                        {properties.map((p: any, pIdx: number) => (
                           <li key={pIdx}>
                             <strong>{p.propID}</strong> - {p.label}
                           </li>
                         ))}
-                      </div>
+                      </ul>
                     </li>
                   );
                 })}
@@ -474,9 +487,9 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   <div className={styles.Section}>
                     <Typography variant="body2" style={{ marginBottom: "8px" }}>
                       <i>
-                        The column contains {labels[selectedNode.compliance_classification]} and
-                        is {selectedNode.compliance_action === "noChange" ? "GDPR compliant" : "GDPR NON-complaint"} with
-                        a confidence score of {Math.round((selectedNode.compliance_score ?? 0) * 100)}%.
+                        The column contains {labels[selectedNode.compliance.classification]} and
+                        is {selectedNode.compliance.status} with
+                        a confidence score of {Math.round((selectedNode.compliance.score ?? 0) * 100)}%.
                       </i>
                     </Typography>
                   </div>
@@ -517,11 +530,13 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                 </Typography>
                 {selectedNode.types.length > 0 ? (
                   <>
-                    <Typography><strong>Types:</strong></Typography>
+                    <Typography><strong>Types ({selectedNode.types.length})</strong></Typography>
                     <ul className={styles.List}>
                       {selectedNode.types.map((t: any) => (
                         <li key={t.id}>
-                          {t.name} ({t.id})
+                          <Typography>
+                            <strong>{t.id}</strong> - {t.name}
+                          </Typography>
                         </li>
                       ))}
                     </ul>
@@ -547,7 +562,9 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                       const targetId = typeof l.target === 'object' ? l.target.label : l.target;
                       return (
                         <li key={idx}>
-                          → {targetId} (<strong>{l.propID}</strong> - {l.label})
+                          <Typography>
+                            → {targetId} (<strong>{l.propID}</strong> - {l.label})
+                          </Typography>
                         </li>
                       );
                     })}
@@ -564,7 +581,9 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                       const sourceId = typeof l.source === 'object' ? l.source.label : l.source;
                       return (
                         <li key={idx}>
-                          → {sourceId} (<strong>{l.propID}</strong> - {l.label})
+                          <Typography>
+                            → {sourceId} (<strong>{l.propID}</strong> - {l.label})
+                          </Typography>
                         </li>
                       );
                     })}
@@ -620,7 +639,9 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   <ul className={styles.List}>
                     {selectedLink.source.types.map((t: any) => (
                       <li key={t.id}>
-                        {t.name} ({t.id})
+                        <Typography>
+                          <strong>{t.id}</strong> - {t.name}
+                        </Typography>
                       </li>
                     ))}
                   </ul>
@@ -646,7 +667,9 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   <ul className={styles.List}>
                     {selectedLink.target.types.map((t: any) => (
                       <li key={t.id}>
-                        {t.name} ({t.id})
+                        <Typography>
+                          <strong>{t.id}</strong> - {t.name}
+                        </Typography>
                       </li>
                     ))}
                   </ul>
@@ -654,7 +677,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                 {allProps.length === 1 ? (
                   <div>
                     <Typography>
-                      <strong>Metadata ID: </strong>{allProps[0].propID}
+                      <strong>Metadata: </strong>{allProps[0].propID}
                     </Typography>
                   </div>
                 ) : (
