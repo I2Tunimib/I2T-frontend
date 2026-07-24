@@ -661,7 +661,7 @@ type AutomaticAnnotationThunkInputProps = {
   datasetId: string;
   tableId: string;
   target: "fullTable" | "schema";
-  method: "alligator" | "columnClassifier";
+  method: "alligator";
   useLLM?: boolean;
 };
 
