@@ -1067,7 +1067,7 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<DeleteColumnMetadataPayload>>,
     ) => {
-      const { colId, type, metadataId, undoable = true } = action.payload;
+      const { colId, type, metadataId, obj, undoable = true } = action.payload;
 
       const column = getColumn(state, colId);
 
@@ -1127,13 +1127,14 @@ export const tableSlice = createSliceWithRequests({
                   draft.entities.columns.byId[colId].metadata &&
                   draft.entities.columns.byId[colId].metadata[0].property
                 ) {
-                  draft.entities.columns.byId[colId].role = "";
                   draft.entities.columns.byId[colId].metadata[0].property =
-                    draft.entities.columns.byId[
-                      colId
-                    ].metadata[0].property?.filter(
-                      (item) => item.id !== metadataId,
-                    );
+                    draft.entities.columns.byId[colId].metadata[0].property.filter((item) => {
+                      return !(item.id === metadataId && item.obj === obj);
+                    });
+
+                  if (draft.entities.columns.byId[colId].metadata[0].property.length === 0) {
+                    draft.entities.columns.byId[colId].role = "";
+                  }
                 }
               },
               (draft) => {
@@ -1216,7 +1217,7 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<UpdateColumnMetadataPayload>>,
     ) => {
-      const { metadataId, colId, undoable = true } = action.payload;
+      const { metadataId, obj, colId, undoable = true } = action.payload;
 
       const column = getColumn(state, colId);
 
@@ -1231,7 +1232,7 @@ export const tableSlice = createSliceWithRequests({
           (draft) => {
             const columnToUpdate = getColumn(draft, colId);
             columnToUpdate.metadata[0].property.forEach((metaItem) => {
-              if (metaItem.id === metadataId) {
+              if (metaItem.id === metadataId && metaItem.obj === obj) {
                 columnToUpdate.annotationMeta = {
                   ...columnToUpdate.annotationMeta,
                   match: {

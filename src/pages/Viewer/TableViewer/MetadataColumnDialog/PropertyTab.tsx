@@ -106,9 +106,10 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
   const effectiveDatatype = currentDatatype || column?.datatype || "none";
   const currentColumnId = column?.id;
   const isLiteral = effectiveKind === "literal";
+  const existingProperties = column?.metadata?.[0]?.property || [];
 
   const [selectedMetadata, setSelectedMetadata] = useState<string>("");
-  const [localAddedProperties, setLocalAddedProperties] = useState<any[]>([]);
+  const [localProperties, setLocalProperties] = useState<any[]>(existingProperties);
   const [undoSteps, setUndoSteps] = useState(0);
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
@@ -127,7 +128,11 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
   const currentColumnOptions = options.find((opt: any) => opt.value === currentColumnId);
   const currentColumnKind = currentColumnOptions?.kind || "";
 
-  const makeData = (column: Column | undefined, isLiteral: boolean, localAddedProperties: any[]) => {
+  useEffect(() => {
+    setLocalProperties(existingProperties);
+  }, [column]);
+
+  const makeData = (column: Column | undefined, isLiteral: boolean, currentLocalProps: any[]) => {
     if (!column) {
       return {
         columns: [],
@@ -150,17 +155,14 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
       match: { label: "Match", type: "tag" },
     };
 
-    const existingProperties = column?.metadata?.[0]?.property || [];
-    const allProperties = [...existingProperties, ...localAddedProperties];
-
-    if (allProperties.length === 0) {
+    if (currentLocalProps.length === 0) {
       return {
         columns: [],
         data: [],
       };
     }
 
-    const metadata = allProperties;
+    const metadata = currentLocalProps;
     console.log("column data", column);
     /*
     the following snippet is a workaround because Datamodel of Property (API response JSON) is different
@@ -242,8 +244,8 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
     memoizedState: { columns, data },
   } = usePrepareTable({
     selector: selectCurrentCol,
-    makeData: (col) => makeData(col, isLiteral, localAddedProperties),
-    dependencies: [column, localAddedProperties],
+    makeData: (col) => makeData(col, isLiteral, localProperties),
+    dependencies: [column, localProperties],
   });
 
   const hasColumnClassifier = !!effectiveKind && !!effectiveDatatype;
@@ -316,7 +318,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
     },
   });
 
-  const handleConfirm = (selectedMetadataId: string) => {
+  const handleConfirm = (selectedMetadataId: string, selectedMetadataObj: string) => {
     // update global state if confirmed
     if (column) {
       if (
@@ -330,6 +332,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
         addEdit(
           updateColumnPropertyMetadata({
             metadataId: selectedMetadataId,
+            obj: selectedMetadataObj,
             colId: column.id,
           }),
           false,
@@ -363,18 +366,22 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
     if (row && column) {
       if (column.metadata && column.metadata.length > 0) {
         console.log("deleting prop metadata", row);
+        setLocalProperties((prev) => prev.filter((item) => !(item.id === row.id && item.obj === row.obj)));
         const deleteAction = deleteColumnMetadata({
           metadataId: row.id,
           colId: column.id,
-          type: column.metadata[0].property ? "property" : "entity",
+          obj: row.obj,
+          type: "property",
         });
 
         addEdit(deleteAction, true, false);
-        setCurrentRole("");
+        if (localProperties.length <= 1) {
+          setCurrentRole("none");
+        }
 
         setState((prevState) => ({
           ...prevState,
-          data: prevState.data.filter((item: any) => item.id !== row.id),
+          data: prevState.data.filter((item: any) => !(item.id === row.id && item.obj === row.obj)),
         }));
       }
     }
@@ -415,16 +422,16 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
     (row: any) => {
       if (!row) return;
 
-      setState(({ columns: colState, data: dataState }) => {
-        const newData = dataState
-          .map((item: any) => {
-            // Inverti `match` solo per la riga con lo stesso `id` della riga selezionata
-            if (item.id === row.id) {
+      setLocalProperties((prevProps) => {
+        const updatedProps = prevProps
+          .map((item) => {
+            // Inverti `match` solo per la riga con lo stesso `id` e `obj` della riga selezionata
+            if (item.id === row.id && item.obj === row.obj) {
               const newMatch = !item.match;
               // Aggiorna `selectedMetadata` in base al nuovo valore di `match`
               setSelectedMetadata(newMatch ? row.id : "");
               console.log("selectedMetadata", newMatch ? row.id : "");
-              handleConfirm(row.id);
+              handleConfirm(row.id, row.obj);
               return {
                 ...item,
                 match: newMatch,
@@ -434,40 +441,20 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
 
             // Restituisci le altre righe senza modifiche
             return item;
-          })
+          });
+        return [...updatedProps]
           .sort((a, b) => {
             // Sort by selected status first (selected items come first)
             if (a.selected !== b.selected) {
               return a.selected ? -1 : 1;
             }
             // Then sort by alphabetical order of the name
-            return a.name.value.localeCompare(b.name.value);
+            return a.name.localeCompare(b.name);
           });
-        return {
-          columns: colState,
-          data: newData,
-        };
-      });
-    },
-    [setState, setSelectedMetadata],
+        });
+      },
+    [setLocalProperties, setSelectedMetadata, handleConfirm],
   );
-
-  const fetchMetadata = (service: string) => {
-    const reconciliator = reconciliators.find(
-      (recon) => recon.prefix === service,
-    );
-    if (reconciliator && column) {
-      // dispatch(reconcile({
-      //   baseUrl: reconciliator.relativeUrl,
-      //   items: [{
-      //     id: column.id,
-      //     label: column.label
-      //   }],
-      //   reconciliator,
-      //   contextColumns: []
-      // }));
-    }
-  };
 
   const onSubmitNewMetadata = async (formState: Property) => {
     if (!column) return;
@@ -480,11 +467,9 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
       );
       const finalId = `${cleanPrefix}:${idFromUri}`;
 
-      const existingProperties = column?.metadata?.[0]?.property || [];
-
-      const isDuplicate = existingProperties.some((prop: any) => {
+      const isDuplicate = localProperties.some((prop: any) => {
         const existingId = prop.id.includes(":") ? prop.id.split(":")[1] : prop.id;
-        return existingId === idFromUri && prop.subj === subj && prop.obj === obj;
+        return existingId === idFromUri && prop.obj === obj;
       });
 
       if (isDuplicate) {
@@ -515,23 +500,32 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
         console.error("Error fetching metadata info:", err);
       }
 
-      addEdit(addColumnMetadata({
-        colId: column.id,
-        type: "property",
-        prefix,
-        value: { ...formState, id: finalId, uri: finalUri, description },
-      }), true);
+      const newPropertyItem = {
+        ...formState,
+        id: finalId,
+        uri: finalUri,
+        description: description || "",
+        selected: true,
+      };
 
-      setLocalAddedProperties((prev) => [
-        ...prev,
-        {
-          ...formState,
-          id: finalId,
-          uri: finalUri,
-          description: description || "",
-          selected: true,
-        },
-      ]);
+      if (!isLiteral) {
+        addEdit(addColumnMetadata({
+          colId: column.id,
+          type: "property",
+          prefix,
+          value: { ...formState, id: finalId, uri: finalUri, description },
+        }), true);
+
+        setLocalProperties((prev) => [...prev, newPropertyItem]);
+        reset();
+      } else {
+        dispatch(addColumnMetadata({
+          colId: column.id,
+          type: "property",
+          prefix,
+          value: { ...formState, id: finalId, uri: finalUri, description },
+        }), true);
+      }
 
       reset();
       setCurrentRole("subject");
@@ -761,7 +755,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
                   otherColumns={otherColumns || []}
                   context="propertyTab"
                   colId={currentColumnId}
-                  columnKind={currentColumnKind}
+                  columnKind={effectiveKind}
                 />
               </Box>
             )}
