@@ -14,7 +14,7 @@ import {
   AccountTreeRounded,
   LockOutlined,
   LockOpenOutlined,
-  ShareOutlined,
+  BubbleChartRounded,
 } from "@mui/icons-material";
 import { updateUI } from "@store/slices/table/table.slice";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
@@ -47,6 +47,7 @@ import { Link, useParams } from "react-router-dom";
 import globalStyles from "@styles/globals.module.scss";
 import styles from "@components/kit/TableListView/TableListView.module.scss";
 import { useTableCollection } from "../useTableCollection";
+import W3CViewer from "../../Viewer/W3CViewer/W3CViewer";
 
 interface FooterProps {
   pageIndex: number;
@@ -84,7 +85,7 @@ interface TablesProps {
   onSelectionChange: (
     state: { kind: "dataset" | "table"; rows: any[] } | null,
   ) => void;
-  viewType: "list" | "grid";
+  viewType: "list" | "grid" | "raw";
 }
 
 const DeferredTable = deferMounting(TableListView);
@@ -94,10 +95,10 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   const { datasetId } = useParams<{ datasetId: ID }>();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(selectGetTablesDatasetStatus);
+  const isComplianceOpen = useAppSelector(selectComplianceDialogStatus);
+
   const [snapshots, setSnapshots] = useState<Record<string, string>>({});
-  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined,);
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
   const [isDependenciesPanelOpen, setIsDependenciesPanelOpen] = useState(false);
   const [isLoadingDeps, setIsLoadingDeps] = useState(false);
@@ -105,7 +106,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   const [highlightedTableId, setHighlightedTableId] = useState<
     string | undefined
   >(undefined);
-  const isComplianceOpen = useAppSelector(selectComplianceDialogStatus);
+  const [selectedTables, setSelectedTables] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isComplianceOpen && !isDependenciesPanelOpen) {
@@ -146,6 +147,8 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   }, [viewType]);
 
   const handleRowSelection = (selectedRows: any[]) => {
+    console.log("selectedRows", selectedRows);
+    setSelectedTables(selectedRows);
     if (selectedRows.length === 0) {
       onSelectionChange(null);
     } else {
@@ -244,7 +247,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
             <>
               <Button
                 size="small"
-                variant="contained"
+                variant="outlined"
                 color="primary"
                 startIcon={
                   isLoadingTableData ? (
@@ -273,13 +276,13 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
               </Button>
               <Button
                 size="small"
-                variant="contained"
+                variant="outlined"
                 color="primary"
                 startIcon={
                   isLoadingTableData ? (
                     <CircularProgress size={14} color="inherit" />
                   ) : (
-                    <ShareOutlined />
+                    <BubbleChartRounded />
                   )
                 }
                 disabled={isLoadingTableData}
@@ -371,6 +374,10 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
         <Box sx={{ flex: 1, overflow: "auto", minWidth: 0 }}>
           {loading ? (
             <LinearProgress />
+          ) : viewType === "raw" ? (
+            <W3CViewer
+              externalData={selectedTables.length > 0 ? selectedTables : rows}
+            />
           ) : viewType === "list" ? (
             <DeferredTable
               columns={columns}
@@ -380,7 +387,15 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
               rowPropGetter={rowPropGetter}
             />
           ) : (
-            <>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+                width: "100%",
+                overflow: "hidden"
+              }}
+            >
               {!isGridReady ? (
                 <Box
                   sx={{
@@ -442,7 +457,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
                   />
                 </>
               )}
-            </>
+            </Box>
           )}
         </Box>
         <DependenciesPanel

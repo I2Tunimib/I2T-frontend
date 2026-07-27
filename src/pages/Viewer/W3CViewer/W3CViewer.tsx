@@ -1,14 +1,18 @@
 import useIsMounted from "@hooks/is-mounted/useIsMounted";
 import { useAppDispatch } from "@hooks/store";
 import { exportTable } from "@store/slices/table/table.thunk";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import JsonView from "react18-json-view";
 import datasetAPI from "@services/api/datasets";
 import "react18-json-view/src/style.css";
 import { useParams } from "react-router-dom";
 import styles from "./W3CViewer.module.scss";
 
-const W3CViewer = () => {
+interface W3CViewerProps {
+  externalData?: any;
+}
+
+const W3CViewer : FC<W3CViewerProps> = ({ externalData }) => {
   const [data, setData] = useState<any>();
   const isMounted = useIsMounted();
   const params = useParams<{ datasetId: string; tableId: string }>();
@@ -16,6 +20,11 @@ const W3CViewer = () => {
   const dispatch = useAppDispatch();
 
   async function convertToW3C() {
+    if (externalData) {
+      setData(externalData);
+      return;
+    }
+
     if (params.tableId) {
       const res = await dispatch(
         exportTable({ format: "JSON (W3C Compliant)", params })
@@ -50,7 +59,7 @@ const W3CViewer = () => {
     return () => {
       mounted = false;
     };
-  }, [params.datasetId, params.tableId]);
+  }, [params.datasetId, params.tableId, externalData]);
 
   return (
     <div className={styles.Container}>

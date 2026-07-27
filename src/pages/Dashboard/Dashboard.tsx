@@ -72,6 +72,7 @@ const Dashboard: FC<any> = () => {
     null,
   );
   const [viewType, setViewType] = useState<'list' | 'grid' | "raw">('list');
+  const selectedCount = selectedRows?.kind === "table" ? selectedRows.rows.length : 0;
   const dispatch = useAppDispatch();
   const { path, url } = useRouteMatch();
   const matches = useMediaQuery("(max-width:1365px)");
@@ -287,7 +288,7 @@ const Dashboard: FC<any> = () => {
                 </ToggleButton>
               </Tooltip>
             )}
-            <Tooltip title="Raw view" placement="bottom">
+            <Tooltip title={selectedCount > 0 ? `Raw view (${selectedCount} selected tables)` : "Raw view"} placement="bottom">
               <ToggleButton value="raw" aria-label="raw view">
                 <CodeRoundedIcon fontSize="small" />
               </ToggleButton>
