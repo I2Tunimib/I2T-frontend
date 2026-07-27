@@ -44,6 +44,7 @@ import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlin
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
+import { useSnackbar } from "notistack";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -158,23 +159,49 @@ interface NewMetadata {
   uri?: string;
 }
 const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) => {
+  const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
+  const currentService = rawData?.service?.prefix || "";
+  const kind = currentKind;
+  const datatype = currentDatatype;
+
   const [selected, setSelected] = useState<SelectedTypeState[]>([]);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [showAdd, setShowAdd] = useState<boolean>(false);
-  const isViewOnly = useAppSelector(selectIsViewOnly);
-  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
-  const colId = useAppSelector(
-    (state) => state.table.ui.metadataColumnDialogColId,
-  );
-  const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
-  const currentService = rawData?.service?.prefix || "";
   const [selectedPrefix, setSelectedPrefix] = useState<string>(currentService || "");
   const [typeOptions, setTypeOptions] = useState<{id: string, label: string, uri: string}[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [localAddedTypes, setLocalAddedTypes] = useState<any[]>([]);
-  const kind = currentKind;
-  const datatype = currentDatatype;
+
+  const isViewOnly = useAppSelector(selectIsViewOnly);
+  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
+  const colId = useAppSelector(
+    (state) => state.table.ui.metadataColumnDialogColId,
+  );
+  const types = useAppSelector(selectColumnTypes);
+  const { API } = useAppSelector(selectAppConfig);
+  const dispatch = useAppDispatch();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const {
+    handleSubmit: handleSubmitNewType,
+    reset,
+    register,
+    control,
+  } = useForm<NewMetadata>();
+
+  const allColumnTypes = [
+    ...(types?.allTypes || []),
+    ...localAddedTypes,
+  ];
+
+  const uniqueTypesMap: Record<string, any> = {};
+  allColumnTypes.forEach((type) => {
+    const normId = normalizeTypeId(type.id);
+    if (!uniqueTypesMap[normId] || (!uniqueTypesMap[normId].uri && type.uri)) {
+      uniqueTypesMap[normId] = { ...type, id: normId };
+    }
+  });
+  const allTypes = Object.values(uniqueTypesMap);
 
   useEffect(() => {
     if (currentService) {
@@ -182,16 +209,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     }
   }, [currentService]);
 
-  const {
-    handleSubmit: handleSubmitNewType,
-    reset,
-    register,
-    control,
-  } = useForm<NewMetadata>();
-  const { API } = useAppSelector(selectAppConfig);
-
-  const types = useAppSelector(selectColumnTypes);
-  const dispatch = useAppDispatch();
   const handleTooltipOpen = () => {
     setShowTooltip(!showAdd);
   };
@@ -249,18 +266,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
   from Entity Datamodel
   COULD HAVE SAME DATAMODEL? IN THIS CASE, IT NEEDS TO MAKE A CHANGE IN THE BACKEND APPLICATION
   */
-    const allColumnTypes = [
-      ...(types.allTypes || []),
-      ...localAddedTypes,
-    ];
-
-    const uniqueTypesMap: Record<string, any> = {};
-    allColumnTypes.forEach((type) => {
-      if (!uniqueTypesMap[type.id] || (!uniqueTypesMap[type.id].uri && type.uri)) {
-        uniqueTypesMap[type.id] = type;
-      }
-    });
-    const allTypes = Object.values(uniqueTypesMap);
 
     const newMetadata = allTypes
       .map((type) => {
@@ -270,16 +275,17 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
           selected,
           selected.some((item) => item.id === type.id),
         );
+        const isSelected = selected.some((item) => item.id === type.id);
         const isQudt = type.id && type.id.includes("unit:");
         const isTime = type.id && type.id.includes("xsd:");
         return {
-          selected: selected.some((item) => item.id === type.id),
+          selected: isSelected,
           id: (isQudt || isTime) ? type.id : (isValidWikidataId(type.id) ? "wd:" + type.id : type.id),
           name: {
             value: type.label || type.name,
             uri: type.uri || type.name?.uri || (isQudt ? null : createWikidataURI(type.id)),
           },
-          percentage: (isQudt || isTime) ? "100%" : (Number(type.percentage || 100).toFixed(0) + "%"),
+          percentage: (!isSelected) ? "0%" : (Number(type.percentage || 0).toFixed(0) + "%"),
           // match: "",
         };
       })
@@ -353,6 +359,15 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
       finalUri = uri;
     }
 
+    const typeExists = allTypes.some((type) => type.id === finalId);
+    if (typeExists) {
+      enqueueSnackbar(`Type ${idFromUri} already exists.`, {
+        variant: "error",
+        autoHideDuration: 4000,
+      });
+      return;
+    }
+
     const newType = {
       id: finalId,
       uri: finalUri,
@@ -366,6 +381,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     // Also mark the newly added type as matched so checkboxes reflect selection/save
     addEdit(updateColumnTypeMatches({ typeIds: [finalId] }));
     setLocalAddedTypes((prev) => [...prev, newType]);
+    setShowAdd(false);
     // Auto-select the newly added type in the local component state so UI updates immediately
     setSelected((prev) => {
       // avoid duplicates
@@ -378,7 +394,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
           id: finalId,
           label: formState.name,
           count: 1,
-          percentage: "100",
+          percentage: 100,
         },
       ];
     });
@@ -389,22 +405,27 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     const index = selected.findIndex(
       (item) => normalizeTypeId(item.id) === normRowId,
     );
+    let updatedSelected;
     if (index > -1) {
-      setSelected(
-        selected.filter((item) => normalizeTypeId(item.id) !== normRowId),
-      );
+      updatedSelected = selected.filter((item) => normalizeTypeId(item.id) !== normRowId);
+      setSelected(updatedSelected);
     } else {
       if (types && rawData) {
-        const { column } = rawData;
-        const allTypes = [...(types.allTypes || [])];
         const selectedType = allTypes.find(
           (item) => normalizeTypeId(item.id) === normRowId,
         );
         if (selectedType) {
-          setSelected([...selected, selectedType]);
+          const normalizedSelectedType = {
+            ...selectedType,
+            id: normRowId,
+          };
+          updatedSelected = [...selected, normalizedSelectedType];
+          setSelected(updatedSelected);
         }
       }
     }
+    const mappedTypeIds = updatedSelected.map((item) => normalizeTypeId(item.id));
+    addEdit(updateColumnTypeMatches({ typeIds: mappedTypeIds }));
   };
 
   const handleSelectedRowChange = useCallback(
@@ -574,7 +595,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     setLocalAddedTypes((prev) => [...prev, newType]);
     setSelected((prev) => {
       if (prev.some((p) => p.id === newType.id)) return prev;
-      return [...prev, { ...newType, count: 1, percentage: "100" }];
+      return [...prev, { ...newType, count: 1, percentage: 100 }];
     });
   };
 

@@ -1697,42 +1697,31 @@ export const tableSlice = createSliceWithRequests({
         undoable,
         (draft) => {
           const { columns } = draft.entities;
+
+          if (!columns.byId[colId].metadata || columns.byId[colId].metadata.length === 0) {
+            columns.byId[colId].metadata = [{ type: [] }];
+          }
+
+          if (!columns.byId[colId].metadata[0].type) {
+            columns.byId[colId].metadata[0].type = [];
+          }
           const newTypes = action.payload.newTypes.map((type) => ({
             ...type,
             match: true,
             score: 100,
           }));
 
-          // Ensure metadata[0] exists
-          if (!columns.byId[colId].metadata[0]) {
-            columns.byId[colId].metadata[0] = {
-              type: newTypes,
-            };
-          } else {
-            // Merge newTypes into the main metadata[0].type array (replace same id or append)
-            const existingMainTypes =
-              columns.byId[colId].metadata[0].type || [];
-            const mergedMain = [...existingMainTypes];
-            newTypes.forEach((newType) => {
-              const idx = mergedMain.findIndex((t: any) => t.id === newType.id);
-              if (idx !== -1) {
-                mergedMain[idx] = { ...mergedMain[idx], ...newType };
-              } else {
-                mergedMain.push(newType);
-              }
-            });
-            columns.byId[colId].metadata[0].type = mergedMain;
-          }
-
-          // Ensure match flags are set consistently on metadata[0].type entries
-          if (columns.byId[colId].metadata[0].type) {
-            columns.byId[colId].metadata[0].type = columns.byId[
-              colId
-            ].metadata[0].type.map((t: any) => ({
-              ...t,
-              match: !!t.match,
-            }));
-          }
+          // Merge newTypes into the main metadata[0].type array (replace same id or append)
+          const existingMainTypes =
+            columns.byId[colId].metadata[0].type || [];
+          newTypes.forEach((newType) => {
+            const idx = existingMainTypes.findIndex((t: any) => t.id === newType.id);
+            if (idx !== -1) {
+              existingMainTypes[idx] = { ...existingMainTypes[idx], ...newType };
+            } else {
+              existingMainTypes.push(newType);
+            }
+          });
         },
         (draft) => {
           // do not include in undo history
@@ -1767,7 +1756,7 @@ export const tableSlice = createSliceWithRequests({
             score: 100,
           }));
 
-          if (columns.byId[colId].metadata.length === 0) {
+          if (!columns.byId[colId].metadata || columns.byId[colId].metadata.length === 0) {
             (columns.byId[colId].metadata as any) = [
               {
                 type: newTypes,
@@ -1806,19 +1795,22 @@ export const tableSlice = createSliceWithRequests({
         (draft) => {
           const { columns } = draft.entities;
 
-          if (columns.byId[colId].metadata.length === 0) {
-            return; // No metadata to update
+          if (!columns.byId[colId].metadata || columns.byId[colId].metadata.length === 0) {
+            columns.byId[colId].metadata = [{ type: [] }];
           }
 
           // If there are types already, update their match property
-          if (columns.byId[colId].metadata[0].type) {
-            columns.byId[colId].metadata[0].type = columns.byId[
-              colId
-            ].metadata[0].type.map((type: any) => ({
-              ...type,
-              match: typeIds.includes(type.id),
-            }));
+          if (!columns.byId[colId].metadata[0].type) {
+            columns.byId[colId].metadata[0].type = [];
           }
+          columns.byId[colId].metadata[0].type = columns.byId[colId].metadata[0].type.map((type: any) => {
+            const isSelected = typeIds.includes(type.id);
+            return {
+              ...type,
+              match: isSelected,
+              score: isSelected ? (type.score ?? 100) : 0,
+            };
+          });
         },
         (draft) => {
           // do not include in undo history
