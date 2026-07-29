@@ -1,13 +1,12 @@
-import React, { FC, useEffect, useCallback } from "react";
+import React, { FC, useEffect, useCallback, useMemo } from "react";
 import { TableListView } from "@components/kit";
-import { useAppSelector } from "@hooks/store";
+import { useAppSelector, useAppDispatch } from "@hooks/store";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
-import { useAppDispatch } from "@hooks/store";
 import { selectDatasets } from "@store/slices/datasets/datasets.selectors";
 import { setCurrentDataset } from "@store/slices/datasets/datasets.slice";
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
 import { Link, useRouteMatch } from "react-router-dom";
-import { Button, IconButton, Stack, Dialog } from "@mui/material";
+import { Button, IconButton, Stack } from "@mui/material";
 import DatasetAclDialog from "@components/core/DatasetAclDialog/DatasetAclDialog";
 import { ReadMoreRounded } from "@mui/icons-material";
 import deferMounting from "@components/HOC";
@@ -18,11 +17,12 @@ interface DatasetsProps {
   onSelectionChange: (
     state: { kind: "dataset" | "table"; rows: any[] } | null,
   ) => void;
+  selectedRows?: any[];
 }
 
 const DeferredTable = deferMounting(TableListView);
 
-const Datasets: FC<DatasetsProps> = ({ onSelectionChange }) => {
+const Datasets: FC<DatasetsProps> = ({ onSelectionChange, selectedRows = [] }) => {
   const { columns, rows } = useTableCollection(selectDatasets);
   const { path, url } = useRouteMatch();
   const dispatch = useAppDispatch();
@@ -31,16 +31,26 @@ const Datasets: FC<DatasetsProps> = ({ onSelectionChange }) => {
     dispatch(setCurrentDataset(""));
   }, []);
 
-  const handleRowSelection = (selectedRows: any[]) => {
-    if (selectedRows.length === 0) {
+  const handleRowSelection = (rowsSelected: any[]) => {
+    if (rowsSelected.length === 0) {
       onSelectionChange(null);
     } else {
-      onSelectionChange({ kind: "dataset", rows: selectedRows });
+      onSelectionChange({ kind: "dataset", rows: rowsSelected });
     }
   };
 
   const auth = useAppSelector(selectIsLoggedIn);
   const currentUserId = auth?.user?.id;
+
+  const rowSelection = useMemo(() => {
+    const selection: Record<string, boolean> = {};
+    rows.forEach((row, index) => {
+      if (selectedRows.some((selected) => selected.id === row.id)) {
+        selection[index] = true;
+      }
+    });
+    return selection;
+  }, [rows, selectedRows]);
 
   const Actions = useCallback(
     ({ mediaMatch, row }: { mediaMatch: boolean; row: any }) => {
@@ -105,6 +115,7 @@ const Datasets: FC<DatasetsProps> = ({ onSelectionChange }) => {
       Actions={ActionsWithSelector}
       Icon={<FolderRoundedIcon color="action" />}
       onChangeRowSelected={handleRowSelection}
+      rowSelection={rowSelection}
     />
   );
 };

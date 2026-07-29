@@ -88,6 +88,7 @@ const W3CViewer : FC<W3CViewerProps> = ({ externalData }) => {
           }
           return true;
         }}
+        collapsed={(window.location.pathname.includes('/datasets/') && window.location.pathname.includes('/tables/')) ? undefined : 2}
       />
       {/* <Typography component="pre" variant="caption" className={styles.Pre}>
         {data && JSON.stringify(data, null, 2)}

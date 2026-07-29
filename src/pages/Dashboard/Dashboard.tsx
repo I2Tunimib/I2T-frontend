@@ -21,6 +21,7 @@ import {
   Switch,
   useHistory,
   useRouteMatch,
+  useLocation,
 } from "react-router-dom";
 import ArrowBackIosRoundedIcon from "@mui/icons-material/ArrowBackIosRounded";
 import {
@@ -72,7 +73,7 @@ const Dashboard: FC<any> = () => {
     null,
   );
   const [viewType, setViewType] = useState<'list' | 'grid' | "raw">('list');
-  const selectedCount = selectedRows?.kind === "table" ? selectedRows.rows.length : 0;
+  const selectedCount = selectedRows ? selectedRows.rows.length : 0;
   const dispatch = useAppDispatch();
   const { path, url } = useRouteMatch();
   const matches = useMediaQuery("(max-width:1365px)");
@@ -83,6 +84,7 @@ const Dashboard: FC<any> = () => {
     selectGetAllDatasetsStatus,
   );
   const { API } = useAppSelector(selectAppConfig);
+  const location = useLocation();
 
   useEffect(() => {
     dispatch(getDataset());
@@ -95,6 +97,12 @@ const Dashboard: FC<any> = () => {
       setSidebarCollapsed(false);
     }
   }, [matches]);
+
+  useEffect(() => {
+    if (location.pathname === "/datasets" || location.pathname === "/datasets/") {
+      setViewType("list");
+    }
+  }, [location.pathname]);
 
   const handleSelectedRowsChange = (
     state: { kind: "dataset" | "table"; rows: any[] } | null,
@@ -282,13 +290,13 @@ const Dashboard: FC<any> = () => {
               </ToggleButton>
             </Tooltip>
             {currentDataset && (
-              <Tooltip title="Grid view" placement="bottom">
+              <Tooltip title={selectedCount > 0 ? `Grid view (${selectedCount} selected)` : "Grid view"} placement="bottom">
                 <ToggleButton value="grid" aria-label="grid view">
                   <ViewModuleRoundedIcon fontSize="small" />
                 </ToggleButton>
               </Tooltip>
             )}
-            <Tooltip title={selectedCount > 0 ? `Raw view (${selectedCount} selected tables)` : "Raw view"} placement="bottom">
+            <Tooltip title={selectedCount > 0 ? `Raw view (${selectedCount} selected)` : "Raw view"} placement="bottom">
               <ToggleButton value="raw" aria-label="raw view">
                 <CodeRoundedIcon fontSize="small" />
               </ToggleButton>
@@ -300,9 +308,12 @@ const Dashboard: FC<any> = () => {
         <Switch>
           <Route exact path={path}>
             {viewType === 'raw' ? (
-              <W3CViewer />
+              <W3CViewer externalData={selectedCount > 0 ? selectedRows.rows : undefined} />
             ) : (
-              <Datasets onSelectionChange={handleSelectedRowsChange} />
+              <Datasets
+                onSelectionChange={handleSelectedRowsChange}
+                selectedRows={selectedRows?.kind === "dataset" ? selectedRows.rows : []}
+              />
             )}
           </Route>
           <Route path={`${path}/:datasetId/tables`}>
@@ -310,6 +321,7 @@ const Dashboard: FC<any> = () => {
               <Tables
                 onSelectionChange={handleSelectedRowsChange}
                 viewType={viewType}
+                selectedRows={selectedRows?.kind === "table" ? selectedRows.rows : []}
               />
             ) : (
               <LinearProgress />

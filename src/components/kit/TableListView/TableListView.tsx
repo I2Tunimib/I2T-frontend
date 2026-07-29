@@ -28,6 +28,7 @@ interface TableListViewProps<TData extends object> {
   Icon?: ReactNode;
   onChangeRowSelected: (selectedRows: any[]) => void;
   rowPropGetter?: (row: Row) => any;
+  rowSelection?: Record<string, boolean>;
 }
 
 interface FooterProps {
@@ -102,7 +103,8 @@ const TableListView: FC<TableListViewProps> = ({
   Icon,
   Actions,
   rowPropGetter = defaultPropGetter,
-  onChangeRowSelected
+  onChangeRowSelected,
+  rowSelection,
 }) => {
   const match = useMediaQuery('(max-width:1230px)');
 
@@ -153,6 +155,12 @@ const TableListView: FC<TableListViewProps> = ({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     enableRowSelection: true,
+    initialState: {
+      pagination: {
+        pageSize: 12,
+      },
+      rowSelection: rowSelection || {},
+    }
   });
 
   const paginationProps = {
@@ -168,7 +176,15 @@ const TableListView: FC<TableListViewProps> = ({
   }, [table.getState().rowSelection]);
 
   return (
-    <>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+        overflow: 'hidden'
+      }}
+    >
       <table className={styles.Root}>
         <thead className={styles.THead}>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -188,31 +204,31 @@ const TableListView: FC<TableListViewProps> = ({
                     color="inherit"
                     className={styles.HeaderButton}
                     endIcon={header.column.getIsSorted()
-                        ? header.column.getIsSorted() === 'desc'
-                          ? <ArrowDownwardRoundedIcon color="action" />
-                          : <ArrowUpwardRoundedIcon color="action" />
-                        : null}>
+                      ? header.column.getIsSorted() === 'desc'
+                        ? <ArrowDownwardRoundedIcon color="action" />
+                        : <ArrowUpwardRoundedIcon color="action" />
+                      : null}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </Button>
                 </th>
-                ))}
-           </tr>
+              ))}
+            </tr>
           ))}
         </thead>
-          <tbody>
-            {table.getSortedRowModel().rows.map((row) => (
-              <tr key={row.id} className={styles.Tr} {...rowPropGetter(row)}>
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className={styles.Td}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
+        <tbody>
+          {table.getSortedRowModel().rows.map((row) => (
+            <tr key={row.id} className={styles.Tr} {...rowPropGetter(row)}>
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className={styles.Td}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
           ))}
-          </tbody>
+        </tbody>
       </table>
       <Footer {...paginationProps} />
-    </>
+    </div>
   );
 };
 

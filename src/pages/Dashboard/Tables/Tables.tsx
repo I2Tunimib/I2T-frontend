@@ -86,11 +86,12 @@ interface TablesProps {
     state: { kind: "dataset" | "table"; rows: any[] } | null,
   ) => void;
   viewType: "list" | "grid" | "raw";
+  selectedRows?: any[];
 }
 
 const DeferredTable = deferMounting(TableListView);
 
-const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
+const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [] }) => {
   const { columns, rows } = useTableCollection(selectCurrentDatasetTables);
   const { datasetId } = useParams<{ datasetId: ID }>();
   const dispatch = useAppDispatch();
@@ -106,7 +107,16 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   const [highlightedTableId, setHighlightedTableId] = useState<
     string | undefined
   >(undefined);
-  const [selectedTables, setSelectedTables] = useState<any[]>([]);
+
+  const rowSelection = useMemo(() => {
+    const selection: Record<string, boolean> = {};
+    rows.forEach((row, index) => {
+      if (selectedRows.some((selected) => selected.id === row.id)) {
+        selection[index] = true;
+      }
+    });
+    return selection;
+  }, [rows, selectedRows]);
 
   useEffect(() => {
     if (!isComplianceOpen && !isDependenciesPanelOpen) {
@@ -115,7 +125,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   }, [isComplianceOpen, isDependenciesPanelOpen]);
 
   const table = useReactTable({
-    data: rows,
+    data: selectedRows.length > 0 ? selectedRows : rows,
     columns: [],
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -142,17 +152,11 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
     dispatch(getTablesByDataset({ datasetId }));
   }, [datasetId]);
 
-  useEffect(() => {
-    onSelectionChange(null);
-  }, [viewType]);
-
-  const handleRowSelection = (selectedRows: any[]) => {
-    console.log("selectedRows", selectedRows);
-    setSelectedTables(selectedRows);
-    if (selectedRows.length === 0) {
+  const handleRowSelection = (rowsSelected: any[]) => {
+    if (rowsSelected.length === 0) {
       onSelectionChange(null);
     } else {
-      onSelectionChange({ kind: "table", rows: selectedRows });
+      onSelectionChange({ kind: "table", rows: rowsSelected });
     }
   };
 
@@ -161,9 +165,10 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   };
 
   const isGridReady = useMemo(() => {
-    if (rows.length === 0) return true;
-    return rows.every((t) => !!snapshots[t.id]);
-  }, [rows, snapshots]);
+    const targetRows = selectedRows.length > 0 ? selectedRows : rows;
+    if (targetRows.length === 0) return true;
+    return targetRows.every((t) => !!snapshots[t.id]);
+  }, [selectedRows, snapshots]);
 
   const getTablePermission = useCallback(
     (tableRow: any): "rw" | "ro" => {
@@ -376,7 +381,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
             <LinearProgress />
           ) : viewType === "raw" ? (
             <W3CViewer
-              externalData={selectedTables.length > 0 ? selectedTables : rows}
+              externalData={selectedRows.length > 0 ? selectedRows : rows}
             />
           ) : viewType === "list" ? (
             <DeferredTable
@@ -385,6 +390,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
               Actions={Actions}
               onChangeRowSelected={handleRowSelection}
               rowPropGetter={rowPropGetter}
+              rowSelection={rowSelection}
             />
           ) : (
             <Box
