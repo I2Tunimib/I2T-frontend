@@ -50,6 +50,17 @@ export const MatchCell = ({ getValue }: CellContext<any, any>) => {
   );
 };
 
+export const DeciderTagCell = ({ getValue }: CellContext<any, any>) => {
+  const value = getValue();
+  if (!value) return null;
+
+  return (
+    <span style={{ fontStyle: "italic", color: "#888", fontWeight: "normal" }}>
+      {value}
+    </span>
+  );
+};
+
 export const SubList = (value: any[] = []) => {
   return (
     <Stack direction="row" gap="10px" style={{ width: "100%" }}>
@@ -123,6 +134,7 @@ export const CheckBoxCell = ({
 };
 export const CELL_COMPONENTS_TYPES = {
   tag: MatchCell,
+  deciderTag: DeciderTagCell,
   link: ResourceLink,
   subList: Expander,
   checkBox: CheckBoxCell,

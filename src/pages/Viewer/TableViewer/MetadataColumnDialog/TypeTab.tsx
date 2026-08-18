@@ -41,10 +41,10 @@ import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
 import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
+import { useSnackbar } from "notistack";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
-import { useSnackbar } from "notistack";
 
 const DeferredTable = deferMounting(CustomTable);
 
@@ -236,13 +236,14 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     const metaToView: {
       [key: string]: {
         label?: string;
-        type?: "link" | "subList" | "tag" | "checkBox";
+        type?: "link" | "subList" | "tag" | "deciderTag" | "checkBox";
       };
     } = {
       selected: { label: "Selected", type: "checkBox" },
       id: { label: "ID" },
       name: { label: "Name", type: "link" },
       percentage: { label: "Percentage" },
+      decider: { label: "Decider", type: "deciderTag" },
       // match: { label: "Match", type: "tag" },
     };
 
@@ -273,9 +274,9 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
           "mapped types",
           type,
           selected,
-          selected.some((item) => item.id === type.id),
+          selected.some((item) => normalizeTypeId(item.id) === normalizeTypeId(type.id)),
         );
-        const isSelected = selected.some((item) => item.id === type.id);
+        const isSelected = selected.some((item) => normalizeTypeId(item.id) === normalizeTypeId(type.id));
         const isQudt = type.id && type.id.includes("unit:");
         const isTime = type.id && type.id.includes("xsd:");
         return {
@@ -286,6 +287,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
             uri: type.uri || type.name?.uri || (isQudt ? null : createWikidataURI(type.id)),
           },
           percentage: (!isSelected) ? "0%" : (Number(type.percentage || 0).toFixed(0) + "%"),
+          decider: type.decider !== undefined ? type.decider : "machine",
           // match: "",
         };
       })
@@ -372,14 +374,15 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
       id: finalId,
       uri: finalUri,
       name: formState.name,
+      decider: "human",
     };
 
     // Add the new type to the column metadata
     addEdit(addColumnType({ colId, newTypes: [newType] }));
     // Ensure the column's main type list is updated (id + name) so selectors/readers see it
-    addEdit(updateColumnType([{ id: finalId, name: formState.name }]));
+    //addEdit(updateColumnType([{ id: finalId, name: formState.name }]), false, false);
     // Also mark the newly added type as matched so checkboxes reflect selection/save
-    addEdit(updateColumnTypeMatches({ typeIds: [finalId] }));
+    //addEdit(updateColumnTypeMatches({ typeIds: [finalId] }), false, false);
     setLocalAddedTypes((prev) => [...prev, newType]);
     setShowAdd(false);
     // Auto-select the newly added type in the local component state so UI updates immediately

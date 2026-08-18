@@ -1705,11 +1705,16 @@ export const tableSlice = createSliceWithRequests({
           if (!columns.byId[colId].metadata[0].type) {
             columns.byId[colId].metadata[0].type = [];
           }
-          const newTypes = action.payload.newTypes.map((type) => ({
-            ...type,
-            match: true,
-            score: 100,
-          }));
+          const newTypes = action.payload.newTypes.map((t) => {
+            const { id, uri, ...restType } = t;
+            return {
+              match: true,
+              id: id.includes(":") ? id.split(":")[1] : id,
+              ...restType,
+              score: 0,
+              decider: "human",
+            };
+          });
 
           // Merge newTypes into the main metadata[0].type array (replace same id or append)
           const existingMainTypes =
@@ -1753,7 +1758,7 @@ export const tableSlice = createSliceWithRequests({
           const newTypes = action.payload.map((type) => ({
             ...type,
             match: true,
-            score: 100,
+            score: 0,
           }));
 
           if (!columns.byId[colId].metadata || columns.byId[colId].metadata.length === 0) {
