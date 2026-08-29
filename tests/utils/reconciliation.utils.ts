@@ -9,8 +9,12 @@ export const reconciliationDialog = async (
 ) => {
   const ui = getComponents(page);
 
-  const column = page.locator('#root').getByText(columnName, { exact: true });
-  if (await ui.reconciliationBtn.isDisabled()) {
+  const column = page.getByRole('table').getByText(columnName, { exact: true });
+  const classAttr = await column.getAttribute('class') || '';
+  const isSelected = classAttr.includes('Selected');
+
+  if (!isSelected) {
+    await column.scrollIntoViewIfNeeded();
     await column.click();
   }
 
@@ -30,18 +34,20 @@ export const reconcilerConfig = async (page: Page, additionalColumns: string[]) 
   const ui = getComponents(page);
 
   if (additionalColumns) {
-    const contextSelect = page.locator('#mui-component-select-additionalColumns');
-    await contextSelect.click();
-    for (const column of additionalColumns) {
-      await page.getByRole('option', { name: column, exact: true }).click();
-    }
-    await ui.confirmComponentBtn('listbox').click();
+    if (additionalColumns.length !== 0) {
+      const contextSelect = page.locator('#mui-component-select-additionalColumns');
+      await contextSelect.click();
+      for (const column of additionalColumns) {
+        await page.getByRole('option', {name: column, exact: true}).click();
+      }
+      await ui.confirmComponentBtn('listbox').click();
 
-    if (additionalColumns.length > 2) {
-      const supportColumns = additionalColumns.join(' , ');
-      await expect(page.getByRole('combobox', { name: supportColumns })).toBeVisible({ timeout: 10000 });
-    } else {
-      await expect(page.getByRole('combobox', { name: additionalColumns[0] })).toBeVisible({ timeout: 10000 });
+      if (additionalColumns.length > 2) {
+        const supportColumns = additionalColumns.join(' , ');
+        await expect(page.getByRole('combobox', {name: supportColumns})).toBeVisible({timeout: 10000});
+      } else {
+        await expect(page.getByRole('combobox', {name: additionalColumns[0]})).toBeVisible({timeout: 10000});
+      }
     }
   }
 
@@ -144,7 +150,7 @@ export const selectMetadata = async (
 
   await ui.showTypesBtn.first().click();
   for (const type of types) {
-    await expect(page.getByText(type, { exact: true })).toBeVisible();
+    await expect(page.getByText(type, { exact: true }).first()).toBeVisible();
   }
 
   await ui.linkLabelBtn(cellLabel, types.length).first().click();

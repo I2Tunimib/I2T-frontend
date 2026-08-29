@@ -54,7 +54,7 @@ test('Enrichment Workflow', async ({ page }) => {
   await test.step('Extend Match Location Column', async () => {
     test.setTimeout(120000);
     await extensionDialog(page, 'Match Location', 'Meteo Properties (OpenMeteo)');
-    await meteoPropsConfig(page, 'Match Date', 'Daily, returns values', ['Number of hours with rain'], false);
+    await meteoPropsConfig(page, 'Match Location', 'Match Date', 'Daily', ['Number of hours with rain'], false);
     console.log('Column "Match Location" extended.');
   });
 

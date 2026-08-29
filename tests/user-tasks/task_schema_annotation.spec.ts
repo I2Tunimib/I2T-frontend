@@ -38,7 +38,16 @@ test('Schema Annotation & Graph Visualization', async ({ page, context }) => {
   await test.step('Modify Match Date Column', async () => {
     test.setTimeout(120000);
     await modificationDialog(page, 'Match Date', 'Date Formatter');
-    await dateFormatterConfig(page, 'Match Date', 'ISO', 'Date only (yyyy-MM-dd)');
+    await dateFormatterConfig(
+      page,
+      'Match Date',
+      'ISO',
+      'Date only (yyyy-MM-dd)',
+      false,
+      undefined,
+      false,
+      undefined
+    );
     console.log('Column "Match Date" modified.');
   });
 

@@ -33,7 +33,7 @@ test('Compliance', async ({ page, context }) => {
   //Open Compliance Dialog
   await expect(ui.complianceBtn).toBeVisible();
   await ui.complianceBtn.click();
-  await expect(page.getByRole('heading', { name: 'Compliance Check' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Compliance assessment' })).toBeVisible();
   await page.getByRole('combobox', { name: 'Compliance type' }).click();
   await page.getByRole('option', { name: 'GDPR (General Data Protection Regulation)' }).click();
   await expect(page.getByText('GDPR Configuration')).toBeVisible();

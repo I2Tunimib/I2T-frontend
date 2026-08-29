@@ -119,7 +119,7 @@ test('Seach Labels', async ({ page }) => {
   //Search for Puma
   await searchBar.click();
   await searchBar.fill('Puma');
-  await ui.labelBtn('Puma').click();
+  await ui.labelBtn.click();
   await expect(searchBar).toHaveValue('Puma');
 
   //Puma cells
@@ -159,7 +159,7 @@ test('Seach Metadata Type', async ({ page }) => {
 
   //Switch to metadata type
   await ui.labelBtn.click();
-  await ui.metaType.click();
+  await ui.metaTypeBtn.click();
   console.log('Switched to metadata type.');
 
   //Search for association football club
@@ -224,7 +224,7 @@ test('Delete Column - Undo/Redo', async ({ page }) => {
   const ui = getComponents(page);
 
   await columnFootball.click();
-  await ui.deteleSelectedBtn.click();
+  await ui.deleteSelectedBtn.click();
   await expect(columnFootball).not.toBeVisible();
   console.log('Column "Football Club" deleted.');
 

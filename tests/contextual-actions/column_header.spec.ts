@@ -26,11 +26,11 @@ test.beforeEach(async ({ page }) => {
 test('Pin Column', async ({ page }) => {
   const ui = getComponents(page);
 
-  await ui.pinColumn(page, 'Manager', false).click();
+  await ui.pinColumn('Manager', false);
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Manager');
   console.log('Column pinned.');
 
-  await ui.unpinColumn(page, 'Manager', false).click();
+  await ui.unpinColumn('Manager', false);
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Football Club');
   console.log('Column unpinned.');
 });
@@ -40,6 +40,7 @@ test('Sort Alphabetical', async ({ page }) => {
   const sortBtn = columnSupplier.getByLabel('sort-alphabetical');
   const ui = getComponents(page);
 
+  await columnSupplier.scrollIntoViewIfNeeded();
   await columnSupplier.hover();
   await sortBtn.hover();
   await expect(page.getByRole('tooltip', { name: 'Sort A → Z' })).toBeVisible();
@@ -71,6 +72,7 @@ test('Sort Reconciliation Score', async ({ page }) => {
   const macronCell = page.getByRole('gridcell', { name: 'Macron' }).first();
   const adidasCell = page.getByRole('gridcell', { name: 'Adidas' }).first();
 
+  await columnSupplier.scrollIntoViewIfNeeded();
   await columnSupplier.hover();
   await sortBtn.hover();
   await expect(page.getByRole('tooltip', { name: 'Sort by score: Low → High' })).toBeVisible();
@@ -79,15 +81,11 @@ test('Sort Reconciliation Score', async ({ page }) => {
   await expect(page.getByRole('tooltip', { name: 'Sort by score: High → Low' })).toBeVisible();
   await expect(macronCell).toBeVisible();
   console.log('Values sorted green->red.');
-
-  await columnSupplier.hover();
   await sortBtn.click();
   await sortBtn.hover();
-  await expect(page.getByText('Reset order').nth(1)).toBeVisible();
+  await expect(page.getByRole('tooltip', { name: 'Reset order' })).toBeVisible();
   await expect(adidasCell).toBeVisible();
   console.log('Values sorted red->green.');
-
-  await columnSupplier.hover();
   await sortBtn.click();
   await sortBtn.hover();
   await expect(page.getByRole('tooltip', { name: 'Sort by score: Low → High' })).toBeVisible();
@@ -97,27 +95,27 @@ test('Sort Reconciliation Score', async ({ page }) => {
 
 test('Modify Column right-click', async ({ page }) => {
   const ui = getComponents(page);
-  await ui.enrichColumn(page, 'Supplier', 'Modification');
+  await ui.enrichColumn('Supplier', 'Modification');
 });
 
 test('Reconcile Column right-click', async ({ page }) => {
   const ui = getComponents(page);
-  await ui.enrichColumn(page, 'Supplier', 'Reconciliation');
+  await ui.enrichColumn('Supplier', 'Reconciliation');
 });
 
 test('Extend Column right-click', async ({ page }) => {
   const ui = getComponents(page);
-  await ui.enrichColumn(page, 'Supplier', 'Extension');
+  await ui.enrichColumn('Supplier', 'Extension');
 });
 
 test('Pin Column right-click', async ({ page }) => {
   const ui = getComponents(page);
 
-  await ui.pinColumn(page, 'Supplier', true);
+  await ui.pinColumn('Supplier', true);
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Supplier');
   console.log('Column pinned.');
 
-  await ui.unpinColumn(page, 'Supplier', true);
+  await ui.unpinColumn('Supplier', true);
   await expect(page.getByRole('columnheader').nth(1)).toContainText('Football Club');
   console.log('Column unpinned.');
 });
@@ -125,13 +123,13 @@ test('Pin Column right-click', async ({ page }) => {
 test('Hide Column right-click', async ({ page }) => {
   const ui = getComponents(page);
 
-  await ui.hideColumn(page, 'Supplier');
+  await ui.hideColumn('Supplier');
   console.log('Column hidden.');
 });
 
 test('Delete Column right-click', async ({ page }) => {
   const ui = getComponents(page);
 
-  await ui.deleteColumn(page, 'Supplier');
+  await ui.deleteColumn('Supplier');
   console.log('Column deleted.');
 });

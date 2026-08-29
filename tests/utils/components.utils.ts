@@ -27,6 +27,9 @@ export const getComponents = (page) => ({
   cancelBtn: page.getByRole('button', { name: 'Cancel' }),
   userMenuBtn: page.getByRole('button', { name: 'user-menu' }),
   helpDatasetBtn: page.getByRole('button', { name: 'help-dataset' }),
+  rawViewBtn: page.getByRole('button', { name: 'raw view' }),
+  listViewBtn: page.getByRole('button', { name: 'list view' }),
+  gridViewBtn: page.getByRole('button', { name: 'grid view' }),
   visibilityBtn: page.getByRole('button', { name: 'visibility-column' }),
   accessibleViewBtn: page.getByRole('button', { name: 'accessible-view' }),
   denseViewBtn: page.getByRole('button', { name: 'dense-view' }),
@@ -49,6 +52,8 @@ export const getComponents = (page) => ({
   videoBtn: page.getByRole('button', { name: 'Video introduction' }),
   rightAlignedBtn: page.getByRole('button', { name: 'right aligned' }),
   centeredBtn: page.getByRole('button', { name: 'centered' }),
+  typeTabBtn: page.getByRole('tab', { name: 'Column types' }),
+  propertyTabBtn: page.getByRole('tab', { name: 'Column properties' }),
   addPropertyBtn: page.getByRole('button', { name: 'Add property' }),
   searchBtn: page.getByRole('button', { name: 'Search' }),
   confirmCloseBtn: page.getByRole('button', { name: 'Confirm and Close' }),
@@ -78,6 +83,8 @@ export const getComponents = (page) => ({
   addBtn: page.getByRole('button', { name: 'Add', exact: true }),
   saveBtn: page.getByRole('button', { name: 'Save', exact: true }),
 
+  selectDatasetBtn: (datasetName: string) => page.getByRole('row', { name: `${datasetName}` }).getByRole('checkbox'),
+  selectTableBtn: (tableName: string) => page.getByRole('row', { name: `${tableName}` }).getByRole('checkbox'),
   cell: (cellLabel: string) => page.getByRole('gridcell', { name: cellLabel }).first(),
   searchInWikidataBtn: (label: string) => page.getByRole('button', { name: `Search "${label}" in Wikidata` }),
   labelCellBtn: (label: string) => page.getByRole('button', { name: `${label}` }),
@@ -93,8 +100,9 @@ export const getComponents = (page) => ({
       await column.click({ button: 'right' });
       await ui.pinBtn.click();
     } else {
+      await column.scrollIntoViewIfNeeded();
       await column.hover();
-      await column.getByLabel('pin-column').click();
+      await page.getByRole('button', { name: 'pin-column' }).click();
       await column.hover();
       await expect(column.getByLabel('unpin-column')).toBeVisible();
     }
@@ -106,6 +114,7 @@ export const getComponents = (page) => ({
       await column.click({ button: 'right' });
       await ui.unpinBtn.click();
     } else {
+      await column.scrollIntoViewIfNeeded();
       await column.hover();
       await column.getByLabel('unpin-column').click();
       await column.hover();
