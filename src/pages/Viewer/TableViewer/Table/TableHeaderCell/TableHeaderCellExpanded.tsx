@@ -157,6 +157,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
           () => setPropertiesExpanded(!propertiesExpanded),
           1,
         )}
+      {/*
       <ExpandableList
         messageIfNoContent="Cell doesn't have any entity metadata"
         className={styles.ExpandableList}
@@ -209,6 +210,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
           ))}
         </ExpandableListBody>
       </ExpandableList>
+      */}
     </div>
   ) : null;
 };

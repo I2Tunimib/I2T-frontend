@@ -53,7 +53,21 @@ export const CELL_COMPONENTS_TYPES: Record<CellComponent, CellComponentProps> =
     date: {
       component: (cell) => {
         const value = cell.getValue();
-        return <TimeAgo title="" date={value} />;
+        const abbreviatedFormatter = (value, unit, suffix) => {
+          const unitsMap: Record<string, string> = {
+            second: 's',
+            minute: 'm',
+            hour: 'h',
+            day: 'd',
+            week: 'w',
+            month: 'mo',
+            year: 'y',
+          };
+          const u = unitsMap[unit] || unit;
+          return `${value}${u} ${suffix}`;
+        };
+
+        return <TimeAgo title="" date={value} formatter={abbreviatedFormatter} />;
       },
     },
     tag: {

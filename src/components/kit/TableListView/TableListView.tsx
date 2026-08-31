@@ -216,7 +216,7 @@ const TableListView: FC<TableListViewProps> = ({
           ))}
         </thead>
         <tbody>
-          {table.getSortedRowModel().rows.map((row) => (
+          {table.getRowModel().rows.map((row) => (
             <tr key={row.id} className={styles.Tr} {...rowPropGetter(row)}>
               {row.getVisibleCells().map((cell) => (
                 <td key={cell.id} className={styles.Td}>

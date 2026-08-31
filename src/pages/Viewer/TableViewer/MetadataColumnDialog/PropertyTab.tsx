@@ -300,7 +300,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
           schemaOptions = [{ url: `${baseUrlSchema}Text`, label: "Text" }];
           break;
         default:
-          wiki = { url: baseUrlWiki, label: "Wikidata" };
+          wiki = { url: baseUrlWiki, label: "Items" };
           schemaOptions = [{ url: `${baseUrlSchema}DataType`, label: "DataType" }];
           break;
       }
