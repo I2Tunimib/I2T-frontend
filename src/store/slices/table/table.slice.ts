@@ -982,7 +982,7 @@ export const tableSlice = createSliceWithRequests({
             undoable,
             (draft) => {
               const columnToUpdate = getColumn(draft, colId);
-              const { id, match, name, uri, obj, subj, description, ...rest } =
+              const { id, match, name, uri, obj, subj, description, score, prefix, ...rest } =
                 value;
               const isMatching = match === "true";
 
@@ -1027,12 +1027,11 @@ export const tableSlice = createSliceWithRequests({
               const newMeta = {
                 //id: `${prefix}:${id}`,
                 id: `${id}`,
-                subj,
+                name,
                 obj,
                 match: isMatching,
-                name,
-                uri,
-                description: value.description,
+                score,
+                decider: "human",
                 ...rest,
               };
 

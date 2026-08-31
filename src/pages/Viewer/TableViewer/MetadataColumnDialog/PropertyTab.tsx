@@ -144,7 +144,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
     const metaToView: {
       [key: string]: {
         label?: string;
-        type?: "link" | "subList" | "tag" | "checkBox";
+        type?: "link" | "subList" | "tag" | "deciderTag" | "checkBox";
       };
     } = {
       selected: { label: "Selected", type: "checkBox" },
@@ -153,6 +153,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
       obj: { label: "Obj" /*, type:'link' */ },
       description: { label: "Description" },
       match: { label: "Match", type: "tag" },
+      decider: { label: "Decider", type: "deciderTag" },
     };
 
     if (currentLocalProps.length === 0) {
@@ -192,6 +193,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
           selected: item.match,
           name: { value: nameValue || "", uri: finalUri },
           description: item.description || "",
+          decider: item.decider !== undefined ? item.decider : "machine",
         };
       }
       return item;
@@ -506,6 +508,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
         uri: finalUri,
         description: description || "",
         selected: true,
+        decider: "human",
       };
 
       if (!isLiteral) {

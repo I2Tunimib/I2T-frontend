@@ -238,6 +238,7 @@ export interface ColumnMetadata extends BaseMetadata {
 
 export interface PropertyMetadata extends BaseMetadata {
   obj?: ID;
+  decider?: "machine" | "human";
 }
 
 /**
