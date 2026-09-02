@@ -68,8 +68,6 @@ const DynamicForm: FC<DynamicFormProps> = ({
     activeColumnType = dateFormatterUtils(values);
   }
 
-  console.log("activeColumnType", activeColumnType);
-
   // Watch all form values for dependency checking
   const watchedValues = watch();
   const formatType = watch("formatType");
@@ -80,7 +78,6 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const granularity = watch("granularity");
   const splitRenameMode = watch("splitRenameMode");
   const splitMode = watch("splitMode");
-  console.log("splitDatetime", splitDatetime);
 
   let finalType = "";
 

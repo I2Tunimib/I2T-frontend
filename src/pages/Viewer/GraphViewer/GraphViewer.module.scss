@@ -271,13 +271,19 @@ h2, h3 {
 }
 
 .List {
-  padding: 8px 32px;
+  padding: 4px 0 4px 24px;
   list-style-type: disc;
   margin: 0;
 }
 
 .List li:not(:last-child):not(:only-child) {
   margin-bottom: 4px;
+}
+
+.Sublist {
+  padding: 2px 0 2px 16px;
+  list-style-type: circle;
+  margin: 0;
 }
 
 .Section {
