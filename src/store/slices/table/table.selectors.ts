@@ -894,11 +894,16 @@ export const selectColumnTypes = createSelector(
     // add current type
     const currentColType: any[] = [];
     const currentTypesIds = [];
+    const columnMatchMap: Record<string, boolean> = {};
     if (columnsState.byId[colId].metadata.length > 0) {
       if (
         columnsState.byId[colId].metadata[0] &&
         columnsState.byId[colId].metadata[0].type
       ) {
+        columnsState.byId[colId].metadata[0].type.forEach((t: any) => {
+          const cleanId = t.id.includes(":") ? t.id.split(":")[1] : t.id;
+          columnMatchMap[cleanId] = t.match;
+        });
         const metaItem = columnsState.byId[colId].metadata[0];
         console.log("current meta item", metaItem);
         if (metaItem.type) {
@@ -937,14 +942,16 @@ export const selectColumnTypes = createSelector(
     console.log("currentmap", map);
     const allTypes = Object.keys(map)
       .map((key) => {
+        const isMatched = columnMatchMap[key] !== undefined ? columnMatchMap[key] : map[key].match;
         const item = {
           ...map[key],
+          match: isMatched,
           percentage: (totalCount !== 0
             ? (map[key].count / totalCount) * 100
             : 0
           ).toFixed(2),
         };
-        if (currentColType && item.match) {
+        if (item.match) {
           selectedType.push(item);
         }
         return item;

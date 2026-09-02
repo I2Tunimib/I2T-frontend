@@ -2300,26 +2300,6 @@ export const tableSlice = createSliceWithRequests({
                     Array.isArray(column.metadata) &&
                     column.metadata.length > 0
                   ) {
-                    column.metadata[0].entity = metadata.map(
-                      ({ id, name, ...rest }) => {
-                        const [_, metaId] = id.split(":");
-                        const computedUri = resolveURI(effectiveReconciliator, {
-                          id: metaId,
-                          label: name,
-                          ...rest,
-                        });
-                        return {
-                          id,
-                          name: {
-                            value: name as unknown as string,
-                            //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: computedUri,
-                          },
-                          ...rest,
-                        };
-                      },
-                    );
-                    console.log("current meta", metadata);
                     if (
                       metadata.length > 0 &&
                       metadata.some((m) => m.property)
@@ -2339,16 +2319,6 @@ export const tableSlice = createSliceWithRequests({
                         ...(column.metadata[0].property || []),
                         ...newProps,
                       ];
-                    }
-                    if (column.metadata[0].type) {
-                      column.metadata[0].type = metadata.flatMap((metas) => {
-                        if (metas.type) {
-                          return metas.type.map((type) => ({
-                            ...type,
-                          }));
-                        }
-                        return [];
-                      });
                     }
                   } else if (column && Array.isArray(column.metadata)) {
                     column.metadata[0] = {
@@ -2382,6 +2352,47 @@ export const tableSlice = createSliceWithRequests({
                     //set reconciler id used
                     column.reconciler = reconcilerId;
                   }
+                }
+              });
+              colIds.forEach((colId) => {
+                  const column = getColumn(draft, colId);
+                  if (!column) return;
+
+                  const map: Record<string, { id: string; count: number; label: any; uri: any; match?: any; decider?: string }> = {};
+
+                  draft.entities.rows.allIds.forEach((rowId) => {
+                    const cell = draft.entities.rows.byId[rowId]?.cells[colId];
+                    if (cell && cell.metadata) {
+                      cell.metadata.forEach((metaItem) => {
+                        if (metaItem.type && metaItem.match) {
+                          metaItem.type.forEach(({ id, name, uri }) => {
+                            const cleanId = id.includes(":") ? id.split(":")[1] : id;
+                            if (map[cleanId]) {
+                              map[cleanId].count++;
+                            } else {
+                              map[cleanId] = {
+                                id: cleanId,
+                                label: name,
+                                uri,
+                                count: 1,
+                                match: metaItem.match,
+                                decider: metaItem.decider,
+                              };
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                if (column.metadata && column.metadata[0]?.type) {
+                  column.metadata[0].type = column.metadata[0].type.map((typeItem) => {
+                    const cleanId = typeItem.id.includes(":") ? typeItem.id.split(":")[1] : typeItem.id;
+                    const matchedInfo = map[cleanId];
+                    return {
+                      ...typeItem,
+                      match: matchedInfo ? matchedInfo.match : false,
+                    };
+                  });
                 }
               });
               updateNumberOfReconciliatedCells(draft);
