@@ -22,14 +22,16 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import overviewGraph from "../../../assets/overview-graph.png";
-import graphArea from "../../../assets/graph-area.png";
+import graphView from "../../../assets/graph-view.png";
+import graphDefault from "../../../assets/graph-default.png";
+import graphCompliance from "../../../assets/graph-compliance.png";
 import totalElements from "../../../assets/total-elements.png";
 import metrics from "../../../assets/metrics.png";
 import node from "../../../assets/node.png";
 import link from "../../../assets/link.png";
 import suggestion from "../../../assets/suggestion.png";
 import columnValues from "../../../assets/column-values.png";
+import complianceSummary from "../../../assets/compliance-summary.png";
 import styles from './GraphTutorialDialog.module.scss';
 
 type GraphTutorialDialogProps = DialogProps;
@@ -64,8 +66,7 @@ const ButtonText = styled.span({
   boxShadow: "inset 0 -2px #ebefff",
 });
 
-const IndexButton = styled(Button, { shouldForwardProp: (prop) =>
-    prop !== 'active' })(({ active }: { active?: boolean }) => ({
+const IndexButton = styled(Button, { shouldForwardProp: (prop) => prop !== 'active' })(({ active }: { active?: boolean }) => ({
   textTransform: "none",
   justifyContent: "flex-start",
   fontWeight: active ? "bold" : "normal",
@@ -132,7 +133,7 @@ const steps: Step[] = [
           </List>
         </Typography>
         <Box display="flex" justifyContent="center" my={1}>
-          <Img src={overviewGraph} style={{ width: "100%" }} />
+          <Img src={graphView} style={{ width: "100%" }} />
         </Box>
       </Stack>
     ),
@@ -142,55 +143,100 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
-          At the top left of the Graph Area, there is a legend, which shows the meaning of node colors:
-          <Stack direction="column" spacing={1} sx={{ marginTop: 1 }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <div className={styles.Subject} />
-              <span>
-                <b>Subject: </b>
-                main entities or key columns in the dataset.
-              </span>
-            </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <div className={styles.Entity} />
-              <span>
-                <b>Entity: </b>
-                related objects or semantic concepts connected to Subjects.
-              </span>
-            </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <div className={styles.Literal} />
-              <span>
-                <b>Literal: </b>
-                concrete values from the table (like strings, numbers, or dates).
-              </span>
-            </Stack>
-          </Stack>
-          <br />
-          You can explore and interact with the graph:
+          The Graph Area supports two visualization modes, toggled via the buttons in the top right corner:
           <List>
             <li>
-              Hovering over a node displays its metadata
+              <b>Standard View: </b>
+              The default mode, where node colors are determined by their basic semantic role.
+              <Stack direction="column" spacing={1} sx={{ marginTop: 1 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div className={styles.Subject} />
+                  <span>
+                    <b>Subject: </b>
+                    main entities or key columns in the dataset.
+                  </span>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div className={styles.Entity} />
+                  <span>
+                    <b>Entity: </b>
+                    related objects or semantic concepts connected to Subjects.
+                  </span>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div className={styles.Literal} />
+                  <span>
+                    <b>Literal: </b>
+                    concrete values from the table (like strings, numbers, or dates).
+                  </span>
+                </Stack>
+              </Stack>
+              <Box display="flex" justifyContent="center" my={1}>
+                <Img src={graphDefault} />
+              </Box>
             </li>
             <li>
-              Hovering over a link shows its property and label
+              <b>Compliance View: </b>
+              Activated by clicking the <ButtonText> Show compliance </ButtonText> button. In this mode, node colors are determined by their
+              data privacy classification.
+              <Stack direction="column" spacing={1} sx={{ marginTop: 1 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div className={styles.Personal} />
+                  <span>
+                    <b>Personal Data: </b>
+                    Directly identifies an individual (e.g., name, email)
+                  </span>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div className={styles.QuasiIdentifiers} />
+                  <span>
+                    <b>Quasi-Identifiers: </b>
+                    Could indirectly identify a person when combined with other data.
+                  </span>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div className={styles.NonPersonal} />
+                  <span>
+                    <b>Non-Personal Data: </b>
+                    Organizational or contextual information.
+                  </span>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div className={styles.Anonymous} />
+                  <span>
+                    <b>Anonymous Data: </b>
+                    Fully anonymized data.
+                  </span>
+                </Stack>
+              </Stack>
+              <Box display="flex" justifyContent="center" my={1}>
+                <Img src={graphCompliance} />
+              </Box>
+            </li>
+          </List>
+          <br />
+          You can explore and interact with the graph using the following actions:
+          <List>
+            <li>
+              Hover over a node to display its metadata.
             </li>
             <li>
-              Clicking the
-              <ButtonText> Show link label </ButtonText>
-              button toggles between viewing just the property or both the property and the label, when hovering over a link.
+              Hover over a link to show its property and label.
             </li>
             <li>
-              Selecting a node viewing its detail informations in the Sidebar and Column values in the bottom left og the Graph Area
+              Hide/Show link label to toggle between viewing just the property or both the property and the label when hovering over a link by clicking on the respective button in the top right.
             </li>
             <li>
-              Selecting a link viewing its detail informations in the Sidebar
+              Select a node to view its detailed information in the Sidebar and the corresponding data in the Column Values section.
+            </li>
+            <li>
+              Select a link to view its detailed information in the Sidebar.
+            </li>
+            <li>
+              Show/Hide compliance information to toggle between viewing the default schema and the one integrated with compliance status and classification by clicking on the respective button in the top right.
             </li>
           </List>
         </Typography>
-        <Box display="flex" justifyContent="center" my={1}>
-          <Img src={graphArea} />
-        </Box>
       </Stack>
     ),
   },
@@ -251,6 +297,31 @@ const steps: Step[] = [
             <Img src={metrics} />
           </Stack>
         </Box>
+        <br />
+        <br />
+        <Typography variant="h6" component="h3" sx={{ mb: 1, fontWeight: 'bold' }}>
+          Compliance Summary
+        </Typography>
+        <Typography>
+          When compliance is enabled, this section provides an overview of the dataset's privacy status:
+          <List>
+            <li>
+              <b>Status: </b>
+              Indicates whether the data is GDPR compliant or not, only if a compliance check has been performed.
+            </li>
+            <li>
+              <b>Confidence score: </b>
+              A percentage reflecting the reliability of the classification.
+            </li>
+            <li>
+              <b>Reasoning: </b>
+              A detailed explanation of the findings, including which data types (e.g., personal, quasi-identifiers) were detected and why.
+            </li>
+          </List>
+        </Typography>
+        <Box display="flex" justifyContent="center" my={1}>
+          <Img src={complianceSummary} style={{ width: "40%" }} />
+        </Box>
       </Stack>
     ),
   },
@@ -270,6 +341,12 @@ const steps: Step[] = [
               <b>Selected Node: </b>
               Displays semantic details about the node, including:
               <SubList>
+                <li>
+                  <b>Compliance info: </b>
+                  Summarizes the data classification and its compliance status along with the
+                  confidence score. Only visible when <ButtonText>Show compliance</ButtonText> button is active.
+                  If no check has been performed, the status is marked as <i>Not performed</i>.
+                </li>
                 <li>
                   <b>Kind and role: </b>
                   describing its function in the graph
@@ -316,14 +393,12 @@ const steps: Step[] = [
     Description: () => (
       <Stack gap="10px">
         <Typography component="div">
-          This section is located at the bottom left of the Graph Area and is tightly connected
-          to node selection.
+          Located at the bottom left of the Graph Area, this section is tightly connected to node selection.
           <br />
-          Initially, this area provides a
+          Initially, the area displays a
           <b> suggestion </b>
-          inviting the user to select a node in the graph.
-          Once a node is selected, the table updates automatically to display the values of the corresponding
-          column in the dataset.
+          inviting the user to select a graph element.
+          Once a node is selected, the table updates automatically to display the values of the corresponding column.
           <Box display="flex" justifyContent="center" my={1}>
             <Img src={suggestion} style={{ width: "40%" }} />
           </Box>
@@ -336,7 +411,7 @@ const steps: Step[] = [
             </li>
             <li>
               Check the
-              <b> kind, role and types </b>
+              <b> kind, semantic class for entities or datatype for literals, role and types </b>
               of a node by observing its content.
             </li>
             <li>
@@ -348,6 +423,9 @@ const steps: Step[] = [
           </Box>
           The Column Values table acts as a bridge between the graph representation and the
           concrete data stored in the dataset, supporting both semantic analysis and data quality inspection.
+          <br />
+          This section can be collapsed or expanded using the <ButtonText>+</ButtonText> and <ButtonText>-</ButtonText> buttons
+          in the top right of the panel. When collapsed, it allows for more space to view the graph.
         </Typography>
       </Stack>
     ),

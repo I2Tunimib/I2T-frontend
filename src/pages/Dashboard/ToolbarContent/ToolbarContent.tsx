@@ -1,4 +1,4 @@
-import { Avatar, Chip, IconButton, Stack, Typography } from '@mui/material';
+import { Chip, IconButton, Stack, Typography } from '@mui/material';
 import { Searchbar } from '@components/kit';
 import { FC, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
@@ -8,10 +8,10 @@ import { Link } from 'react-router-dom';
 import { globalSearch } from '@store/slices/datasets/datasets.thunk';
 import { GlobalSearchResult } from '@services/api/datasets';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
-import { updateUI } from '@store/slices/datasets/datasets.slice';
 import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
 import UserAvatar from '@components/kit/UserAvatar';
 import styles from './ToolbarContent.module.scss';
+import ToolbarTutorialDialog from '../ToolbarTutorialDialog/ToolbarTutorialDialog';
 
 const SearchResultItem = styled(Link)({
   display: 'flex',
@@ -35,6 +35,7 @@ const ToolbarContent: FC<any> = () => {
 
   const { API } = useAppSelector(selectAppConfig);
   const dispatch = useAppDispatch();
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   const handleOnChange = (value: string) => {
     if (value) {
@@ -102,7 +103,7 @@ const ToolbarContent: FC<any> = () => {
         sx={{
           color: '#FFF'
         }}
-        onClick={() => dispatch(updateUI({ helpDialogOpen: true }))}>
+        onClick={() => setTutorialOpen(true)}>
         <HelpOutlineRoundedIcon />
       </IconButton>
       {auth.loggedIn && auth.user && (
@@ -110,6 +111,10 @@ const ToolbarContent: FC<any> = () => {
           {auth.user.username.slice(0, 2).toUpperCase()}
         </UserAvatar>
       )}
+      <ToolbarTutorialDialog
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+      />
     </Stack>
   );
 };
