@@ -14,7 +14,7 @@ import {
   AccountTreeRounded,
   LockOutlined,
   LockOpenOutlined,
-  ShareOutlined,
+  BubbleChartRounded,
 } from "@mui/icons-material";
 import { updateUI } from "@store/slices/table/table.slice";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
@@ -42,11 +42,10 @@ import {
 } from "@store/slices/datasets/datasets.selectors";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTablesByDataset } from "@store/slices/datasets/datasets.thunk";
-import React, { FC, useCallback, useEffect, useState, useMemo } from "react";
+import { FC, useCallback, useEffect, useState, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import globalStyles from "@styles/globals.module.scss";
 import styles from "@components/kit/TableListView/TableListView.module.scss";
-import TableAclDialog from "@components/core/TableAclDialog/TableAclDialog";
 import { useTableCollection } from "../useTableCollection";
 import W3CViewer from "../../Viewer/W3CViewer/W3CViewer";
 
@@ -87,19 +86,20 @@ interface TablesProps {
     state: { kind: "dataset" | "table"; rows: any[] } | null,
   ) => void;
   viewType: "list" | "grid" | "raw";
+  selectedRows?: any[];
 }
 
 const DeferredTable = deferMounting(TableListView);
 
-const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
+const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [] }) => {
   const { columns, rows } = useTableCollection(selectCurrentDatasetTables);
   const { datasetId } = useParams<{ datasetId: ID }>();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector(selectGetTablesDatasetStatus);
+  const isComplianceOpen = useAppSelector(selectComplianceDialogStatus);
+
   const [snapshots, setSnapshots] = useState<Record<string, string>>({});
-  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedTableId, setSelectedTableId] = useState<string | undefined>(undefined,);
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
   const [isDependenciesPanelOpen, setIsDependenciesPanelOpen] = useState(false);
   const [isLoadingDeps, setIsLoadingDeps] = useState(false);
@@ -107,7 +107,16 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   const [highlightedTableId, setHighlightedTableId] = useState<
     string | undefined
   >(undefined);
-  const isComplianceOpen = useAppSelector(selectComplianceDialogStatus);
+
+  const rowSelection = useMemo(() => {
+    const selection: Record<string, boolean> = {};
+    rows.forEach((row, index) => {
+      if (selectedRows.some((selected) => selected.id === row.id)) {
+        selection[index] = true;
+      }
+    });
+    return selection;
+  }, [rows, selectedRows]);
 
   useEffect(() => {
     if (!isComplianceOpen && !isDependenciesPanelOpen) {
@@ -116,7 +125,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   }, [isComplianceOpen, isDependenciesPanelOpen]);
 
   const table = useReactTable({
-    data: rows,
+    data: selectedRows.length > 0 ? selectedRows : rows,
     columns: [],
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -143,15 +152,11 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
     dispatch(getTablesByDataset({ datasetId }));
   }, [datasetId]);
 
-  useEffect(() => {
-    onSelectionChange(null);
-  }, [viewType]);
-
-  const handleRowSelection = (selectedRows: any[]) => {
-    if (selectedRows.length === 0) {
+  const handleRowSelection = (rowsSelected: any[]) => {
+    if (rowsSelected.length === 0) {
       onSelectionChange(null);
     } else {
-      onSelectionChange({ kind: "table", rows: selectedRows });
+      onSelectionChange({ kind: "table", rows: rowsSelected });
     }
   };
 
@@ -160,9 +165,10 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
   };
 
   const isGridReady = useMemo(() => {
-    if (rows.length === 0) return true;
-    return rows.every((t) => !!snapshots[t.id]);
-  }, [rows, snapshots]);
+    const targetRows = selectedRows.length > 0 ? selectedRows : rows;
+    if (targetRows.length === 0) return true;
+    return targetRows.every((t) => !!snapshots[t.id]);
+  }, [selectedRows, snapshots]);
 
   const getTablePermission = useCallback(
     (tableRow: any): "rw" | "ro" => {
@@ -199,7 +205,6 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
     ({ mediaMatch, row, targetView }) => {
       const viewMode = targetView || (viewType === "grid" ? "graph" : "table");
       const perm = getTablePermission(row.original);
-      const [aclOpen, setAclOpen] = React.useState(false);
       return (
         <Stack
           direction="row"
@@ -247,7 +252,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
             <>
               <Button
                 size="small"
-                variant="contained"
+                variant="outlined"
                 color="primary"
                 startIcon={
                   isLoadingTableData ? (
@@ -272,85 +277,60 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
                   dispatch(updateUI({ openComplianceStatusDialog: true }));
                 }}
               >
-                {perm === "rw" ? (
-                  <LockOpenOutlined fontSize="small" />
-                ) : (
-                  <LockOutlined fontSize="small" />
-                )}
-              </Box>
-            </Tooltip>
-            {mediaMatch ? (
-              <IconButton
-                color="primary"
+                Compliance
+              </Button>
+              <Button
                 size="small"
-                component={Link}
-                to={`/datasets/${datasetId}/tables/${row.original.id}?view=${viewMode}`}>
-                <ReadMoreRounded />
-              </IconButton>
-            ) : (
-              <>
-                {isDatasetOwner && (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => setAclOpen(true)}
-                  >
-                    Access
-                  </Button>
-                )}
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="primary"
-                  startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <AssignmentTurnedInOutlined />}
-                  disabled={isLoadingTableData}
-                  onClick={async () => {
-                    setSelectedTableId(row.original.id);
-                    setHighlightedTableId(row.original.id);
-                    setIsLoadingTableData(true);
-                    try {
-                      await dispatch(
-                        getTable({ tableId: row.original.id, datasetId }),
-                      ).unwrap();
-                    } catch {
-                      // open dialog anyway on error
-                    }
-                    setIsLoadingTableData(false);
-                    dispatch(updateUI({ openComplianceStatusDialog: true }));
-                  }}
-                >
-                  Compliance
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="primary"
-                  startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <ShareOutlined />}
-                  disabled={isLoadingTableData}
-                  onClick={async () => {
-                    setSelectedTableId(row.original.id);
-                    setIsLoadingTableData(true);
-                    try {
-                      await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
-                    } catch {
-                      // open dialog anyway on error
-                    }
-                    setIsLoadingTableData(false);
-                    dispatch(updateUI({ openGraphDialog: true }));
-                  }}
-                >
-                  Schema
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="primary"
-                  startIcon={
-                    isLoadingDeps ? (
-                      <CircularProgress size={14} color="inherit" />
-                    ) : (
-                      <AccountTreeRounded />
-                    )
+                variant="outlined"
+                color="primary"
+                startIcon={
+                  isLoadingTableData ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <BubbleChartRounded />
+                  )
+                }
+                disabled={isLoadingTableData}
+                onClick={async () => {
+                  setSelectedTableId(row.original.id);
+                  setIsLoadingTableData(true);
+                  try {
+                    await dispatch(
+                      getTable({ tableId: row.original.id, datasetId }),
+                    ).unwrap();
+                  } catch {
+                    // open dialog anyway on error
+                  }
+                  setIsLoadingTableData(false);
+                  dispatch(updateUI({ openGraphDialog: true }));
+                }}
+              >
+                Schema
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="primary"
+                startIcon={
+                  isLoadingDeps ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <AccountTreeRounded />
+                  )
+                }
+                disabled={isLoadingDeps}
+                onClick={async () => {
+                  setHighlightedTableId(row.original.id);
+                  setIsLoadingDeps(true);
+                  try {
+                    await dispatch(
+                      getTable({ tableId: row.original.id, datasetId }),
+                    ).unwrap();
+                    await dispatch(
+                      getDependencies({ tableId: row.original.id, datasetId }),
+                    ).unwrap();
+                  } catch {
+                    // open panel anyway on error
                   }
                   setIsLoadingDeps(false);
                   setIsDependenciesPanelOpen(true);
@@ -369,7 +349,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
               )}
             </>
           )}
-        </>
+        </Stack>
       );
     },
     [datasetId, viewType, dispatch, getTablePermission, isDatasetOwner],
@@ -400,7 +380,9 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
           {loading ? (
             <LinearProgress />
           ) : viewType === "raw" ? (
-            <W3CViewer />
+            <W3CViewer
+              externalData={selectedRows.length > 0 ? selectedRows : rows}
+            />
           ) : viewType === "list" ? (
             <DeferredTable
               columns={columns}
@@ -408,9 +390,18 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
               Actions={Actions}
               onChangeRowSelected={handleRowSelection}
               rowPropGetter={rowPropGetter}
+              rowSelection={rowSelection}
             />
           ) : (
-            <>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+                width: "100%",
+                overflow: "hidden"
+              }}
+            >
               {!isGridReady ? (
                 <Box
                   sx={{
@@ -472,7 +463,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType }) => {
                   />
                 </>
               )}
-            </>
+            </Box>
           )}
         </Box>
         <DependenciesPanel

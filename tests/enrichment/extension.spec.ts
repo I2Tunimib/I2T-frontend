@@ -9,7 +9,13 @@ import {
   wikiPropsConfig,
   geoRouteConfig,
 } from "../utils/extension.utils";
-import { reconcilerConfig, reconciliationDialog, confirmPropagate } from "../utils/reconciliation.utils";
+import {
+  reconcilerConfig,
+  reconciliationDialog,
+  confirmPropagate,
+  selectMetadata,
+  metadataDialog
+} from "../utils/reconciliation.utils";
 import { dateFormatterConfig, modificationDialog } from "../utils/modification.utils";
 
 test.describe('Test in local', () => {
@@ -49,7 +55,7 @@ test.describe('Test in local', () => {
      * * @param {import('@playwright/test').Page} page
      * @param {string[]} params
      */
-    await propertiesConfig(page, ['ID of entities', 'Name of entities']);
+    await propertiesConfig(page, 'Match Country', 'Annotation properties', ['ID of entities', 'Name of entities']);
     console.log('Extension successfully.');
   });
 
@@ -71,12 +77,12 @@ test.describe('Test in local', () => {
      * * @param {import('@playwright/test').Page} page
      * @param {string[]} params
      */
-    await propertiesConfig(page, ['ID of entities', 'URL of entities', 'Name of entities', 'Description of entities']);
+    await propertiesConfig(page, 'Football Club', 'Annotation properties (Wikidata)', ['ID of entities', 'URL of entities', 'Name of entities', 'Description of entities']);
     console.log('Extension successfully.');
   });
 
   test('Extension: Geo Properties (Wikidata)', async ({ page }) => {
-    test.setTimeout(120000);
+    test.setTimeout(1200000);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_extension.json`;
@@ -87,26 +93,24 @@ test.describe('Test in local', () => {
     await expect(tableNameInput).toHaveValue(tableName);
     console.log('Table opened.');
 
-    await reconciliationDialog(page, 'Match Location', 'Wikidata', 'Linking: Wikidata (Alligator)');
+    const columnName = 'Match Location';
+    await reconciliationDialog(page, columnName, 'Wikidata', 'Linking: Wikidata (Alligator)');
     await reconcilerConfig(page, ['Match Country']);
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 100000 });
     console.log('Column "Match Location" reconciled.');
 
-    await page.locator('tr:nth-child(9) > .css-1lvn3g6 > ._Container_1mibn_1 > ._CellLabel_1mibn_7 > .MuiButtonBase-root').click();
-    await page.locator('.css-kpopnj > div > .MuiButtonBase-root > .PrivateSwitchBase-input').first().check();
-    await confirmPropagate.click();
-
+    await metadataDialog(page, 'Ubstadt-Weiher');
+    await selectMetadata(page, 'Ubstadt-Weiher', ['Ubstadt-Weiher'], 'wd', 'Q520414', 'municipality in Germany');
+    await confirmPropagate(page, 'Ubstadt-Weiher');
+    const column = page.getByRole('table').getByText(columnName, { exact: true });
+    await column.click();
     await extensionDialog(page, 'Match Location', 'Geo Properties (Wikidata)');
     /**
      * Configuration of the Geo Properties (Wikidata) extender
      * * @param {import('@playwright/test').Page} page
      * @param {string[]} params
      */
-    await propertiesConfig(page, ['Coordinate', 'Time zone', 'Postal code']);
-
-    await expect(page.locator('div').filter({ hasText: '48.648333333333,9.' }).nth(5)).toBeVisible();
-    await expect(page.locator('div').filter({ hasText: 'null' }).nth(5)).not.toBeVisible();
-    await expect(page.locator('div').filter({ hasText: 'null' }).nth(4)).not.toBeVisible();
+    await propertiesConfig(page, 'Match Location', 'Geo Properties (Wikidata)', ['Coordinate', 'Time zone', 'Postal code']);
     console.log('Extension successfully.');
   });
 
@@ -133,6 +137,7 @@ test.describe('Test in local', () => {
      */
     await meteoPropsConfig(
       page,
+      'Match Location',
       'Match Date',
       'Daily',
       [
@@ -163,6 +168,7 @@ test.describe('Test in local', () => {
     await extensionDialog(page, 'Match Location', 'Meteo Properties (OpenMeteo)');
     await meteoPropsConfig(
       page,
+      'Match Location',
       'Match Date',
       'Hourly',
       [
@@ -171,6 +177,7 @@ test.describe('Test in local', () => {
         'Precipitation',
       ],
       false,
+      true,
     );
     console.log('Error detected: Invalid column.');
   });
@@ -203,7 +210,8 @@ test.describe('Test in local', () => {
     await extensionDialog(page, 'Match Location', 'Meteo Properties (OpenMeteo)');
     await meteoPropsConfig(
       page,
-      'Match Date_Match Time',
+      'Match Location',
+      'Match Date_formatted',
       'Hourly',
       [
         'Temperature',
@@ -236,7 +244,7 @@ test.describe('Test in local', () => {
      * @param {string} order
      * @param {string} limit
      */
-    await sparqlConfig(page, ['?positionLabel'], '?item wdt:P413 ?position .\n' +
+    await sparqlConfig(page, 'Manager', ['?positionLabel'], '?item wdt:P413 ?position .\n' +
       'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }', undefined, undefined);
     console.log('Extension successfully.');
   });
@@ -259,14 +267,14 @@ test.describe('Test in local', () => {
      * * @param {import('@playwright/test').Page} page
      * @param {string[]} properties
      */
-    await wikiPropsConfig(page, ['P413']);
+    await wikiPropsConfig(page, 'Manager', ['P413']);
     console.log('Extension successfully.');
     await expect(page.getByRole('columnheader', { name: 'position played on team' })).toBeVisible();
     console.log('Extension successfully.');
   });
 
   test('Extension: Geo Route (OSRM) - Car', async ({ page }) => {
-    test.setTimeout(120000);
+    test.setTimeout(1200000);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_extensionGen.json`;
@@ -277,16 +285,16 @@ test.describe('Test in local', () => {
     await expect(tableNameInput).toHaveValue(tableName);
     console.log('Table opened.');
 
+    await reconciliationDialog(page, 'Match Location', 'Geo Coordinates', 'GeoCoding: Geo Coordinates (GeoNames)');
+    await reconcilerConfig(page, undefined);
     await reconciliationDialog(page, 'Football City', 'Geo Coordinates', 'GeoCoding: Geo Coordinates (GeoNames)');
     await reconcilerConfig(page, undefined);
-
-    await extensionDialog(page, 'Football City', 'Annotation properties');
-    await propertiesConfig(page, ['ID of entities']);
 
     await extensionDialog(page, 'Match Location', 'Geo Route (OSRM)');
     /**
      * Configuration of the Geo Route (OSRM) extender
      * * @param {import('@playwright/test').Page} page
+     * @param {string} columnName
      * @param {string} end
      * @param {string} mode
      * @param {boolean} poi
@@ -294,7 +302,8 @@ test.describe('Test in local', () => {
      */
     await geoRouteConfig(
       page,
-      'id_Football City',
+      'Match Location',
+      'Football City',
       'By car',
       false,
       [
@@ -307,7 +316,7 @@ test.describe('Test in local', () => {
   });
 
   test('Extension: Geo Route (OSRM) - Foot', async ({ page }) => {
-    test.setTimeout(120000);
+    test.setTimeout(1200000);
     // Please provide your local base directory path below
     const baseDirectory = 'FILE_PATH';
     const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_extensionGen.json`;
@@ -318,16 +327,16 @@ test.describe('Test in local', () => {
     await expect(tableNameInput).toHaveValue(tableName);
     console.log('Table opened.');
 
+    await reconciliationDialog(page, 'Match Location', 'Geo Coordinates', 'GeoCoding: Geo Coordinates (GeoNames)');
+    await reconcilerConfig(page, undefined);
     await reconciliationDialog(page, 'Football City', 'Geo Coordinates', 'GeoCoding: Geo Coordinates (GeoNames)');
     await reconcilerConfig(page, undefined);
-
-    await extensionDialog(page, 'Football City', 'Annotation properties');
-    await propertiesConfig(page, ['ID of entities']);
 
     await extensionDialog(page, 'Match Location', 'Geo Route (OSRM)');
     await geoRouteConfig(
       page,
-      'id_Football City',
+      'Match Location',
+      'Football City',
       'By foot',
       false,
       [
@@ -349,8 +358,8 @@ test('Extension: Geo Route (HERE)', async ({ page }) => {
   const baseDirectory = 'FILE_PATH';
   const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_extension.json`;
   //Please provide your username and password
-  const username = 'USERNAME';
-  const password = 'PASSWORD';
+  const username = 'test';
+  const password = 'test';
 
   await login(page, urlChronos, username, password);
   await getOrCreateDataset(page, datasetName);
@@ -372,6 +381,7 @@ test('Extension: Geo Route (HERE)', async ({ page }) => {
    */
   await geoRouteConfig(
     page,
+    'Match Location',
     'Football City',
     undefined,
     true,

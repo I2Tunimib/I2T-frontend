@@ -17,10 +17,10 @@ const timeFormats = [
 
 export function dateFormatterUtils(values: string[]): "date" | "time" | "datetime" | "unknown" {
   const columnTypes: ("date" | "time" | "datetime" | "unknown")[] = [];
-  let hasDate = false;
-  let hasTime = false;
 
   for (const raw of values) {
+    let hasDate = false;
+    let hasTime = false;
     const str = String(raw ?? "").trim();
     if (str.includes(" ") || str.includes("T")) {
       const [datePart, timePart] = str.split(/[\sT]/);
@@ -48,7 +48,8 @@ export function dateFormatterUtils(values: string[]): "date" | "time" | "datetim
   }
   if (dateCount === columnTypes.length) return "date";
   if (timeCount === columnTypes.length) return "time";
-  return "unknwon";
+  if (datetimeCount === columnTypes.length) return "datetime";
+  return "unknown";
 }
 
 export function filterDetailLevelOptions(

@@ -352,10 +352,10 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   return (
                     <li key={idx} style={{ marginBottom: '10px' }}>
                       {sourceId} → {targetId}
-                      <ul style={{ paddingLeft: '16px', marginTop: '4px' }}>
+                      <ul className={styles.Sublist}>
                         {properties.map((p: any, pIdx: number) => (
                           <li key={pIdx}>
-                            <strong>{p.propID}</strong> - {p.label}
+                            <em>{p.propID}</em> - {p.label}
                           </li>
                         ))}
                       </ul>
@@ -534,9 +534,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                     <ul className={styles.List}>
                       {selectedNode.types.map((t: any) => (
                         <li key={t.id}>
-                          <Typography>
-                            <strong>{t.id}</strong> - {t.name}
-                          </Typography>
+                          <em>{t.id}</em> - {t.name}
                         </li>
                       ))}
                     </ul>
@@ -558,16 +556,25 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                 </Typography>
                 {nodeOutgoingLinks.length > 0 ? (
                   <ul className={styles.List}>
-                    {nodeOutgoingLinks.map((l: any, idx: number) => {
-                      const targetId = typeof l.target === 'object' ? l.target.label : l.target;
-                      return (
-                        <li key={idx}>
-                          <Typography>
-                            → {targetId} (<strong>{l.propID}</strong> - {l.label})
-                          </Typography>
-                        </li>
-                      );
-                    })}
+                    {Object.entries(
+                      nodeOutgoingLinks.reduce((acc: any, l: any) => {
+                        const targetId = typeof l.target === 'object' ? l.target.label : l.target;
+                        if (!acc[targetId]) acc[targetId] = [];
+                        acc[targetId].push(l);
+                        return acc;
+                      }, {})
+                    ).map(([targetId, links]: [string, any], idx: number) => (
+                      <li key={idx} style={{ marginBottom: '8px' }}>
+                        → {targetId}:
+                        <ul className={styles.Sublist}>
+                          {links.map((l: any, pIdx: number) => (
+                            <li key={pIdx}>
+                              <em>{l.propID}</em> - {l.label}
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
                   </ul>
                 ) : (
                   <Typography color="text.secondary">No outgoing links</Typography>
@@ -577,16 +584,25 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                 </Typography>
                 {nodeIncomingLinks.length > 0 ? (
                   <ul className={styles.List}>
-                    {nodeIncomingLinks.map((l: any, idx: number) => {
-                      const sourceId = typeof l.source === 'object' ? l.source.label : l.source;
-                      return (
-                        <li key={idx}>
-                          <Typography>
-                            → {sourceId} (<strong>{l.propID}</strong> - {l.label})
-                          </Typography>
-                        </li>
-                      );
-                    })}
+                    {Object.entries(
+                      nodeIncomingLinks.reduce((acc: any, l: any) => {
+                        const sourceId = typeof l.source === 'object' ? l.source.label : l.source;
+                        if (!acc[sourceId]) acc[sourceId] = [];
+                        acc[sourceId].push(l);
+                        return acc;
+                      }, {})
+                    ).map(([sourceId, links]: [string, any], idx: number) => (
+                      <li key={idx} style={{ marginBottom: '8px' }}>
+                        → {sourceId}:
+                        <ul className={styles.Sublist}>
+                          {links.map((l: any, pIdx: number) => (
+                            <li key={pIdx}>
+                              <em>{l.propID}</em> - {l.label}
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
                   </ul>
                 ) : (
                   <Typography color="text.secondary">No incoming links</Typography>
@@ -618,6 +634,26 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                     −
                   </Typography>
                 </div>
+                {allProps.length === 1 ? (
+                  <div>
+                    <Typography>
+                      <strong>Metadata: </strong>{allProps[0].propID}
+                    </Typography>
+                  </div>
+                ) : (
+                  <div>
+                    <Typography>
+                      <strong>Metadata:</strong>
+                    </Typography>
+                    <ul className={styles.List}>
+                      {allProps.map((p: any, idx: number) => (
+                        <li key={idx}>
+                          <em>{p.propID}</em> - {p.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div className={styles.ToggleRow}>
                   <Typography>
                     <strong>Source: </strong>
@@ -639,9 +675,7 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   <ul className={styles.List}>
                     {selectedLink.source.types.map((t: any) => (
                       <li key={t.id}>
-                        <Typography>
-                          <strong>{t.id}</strong> - {t.name}
-                        </Typography>
+                        <em>{t.id}</em> - {t.name}
                       </li>
                     ))}
                   </ul>
@@ -667,34 +701,10 @@ const GraphViewer: FC<GraphViewerProps> = ({ datasetId, tableId, isDialog }) => 
                   <ul className={styles.List}>
                     {selectedLink.target.types.map((t: any) => (
                       <li key={t.id}>
-                        <Typography>
-                          <strong>{t.id}</strong> - {t.name}
-                        </Typography>
+                        <em>{t.id}</em> - {t.name}
                       </li>
                     ))}
                   </ul>
-                )}
-                {allProps.length === 1 ? (
-                  <div>
-                    <Typography>
-                      <strong>Metadata: </strong>{allProps[0].propID}
-                    </Typography>
-                  </div>
-                ) : (
-                  <div>
-                    <Typography>
-                      <strong>Metadata:</strong>
-                    </Typography>
-                    <ul className={styles.List}>
-                      {allProps.map((p: any, idx: number) => (
-                        <li key={idx}>
-                          <Typography>
-                            <strong>{p.propID}</strong> - {p.label}
-                          </Typography>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
                 )}
               </div>
             );

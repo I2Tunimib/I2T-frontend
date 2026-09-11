@@ -864,18 +864,20 @@ export const selectColumnTypes = createSelector(
             console.log("metaItem", metaItem);
             metaItem.type.forEach(({ id, name, uri }) => {
               console.log("name in forEach", name);
-              if (acc[id]) {
-                acc[id] = {
-                  ...acc[id],
-                  count: ++acc[id].count,
+              const cleanId = id.includes(":") ? id.split(":")[1] : id;
+              if (acc[cleanId]) {
+                acc[cleanId] = {
+                  ...acc[cleanId],
+                  count: ++acc[cleanId].count,
                 };
               } else {
-                acc[id] = {
-                  id,
+                acc[cleanId] = {
+                  id: cleanId,
                   label: name as any,
                   uri,
                   count: 1,
                   match: metaItem.match,
+                  decider: metaItem.decider,
                 };
               }
             });
@@ -885,36 +887,44 @@ export const selectColumnTypes = createSelector(
       },
       {} as Record<
         string,
-        { id: string; count: number; label: string; match?: any }
+        { id: string; count: number; label: string; match?: any; decider?: string }
       >,
     );
     console.log("test map", map);
     // add current type
     const currentColType: any[] = [];
     const currentTypesIds = [];
+    const columnMatchMap: Record<string, boolean> = {};
     if (columnsState.byId[colId].metadata.length > 0) {
       if (
         columnsState.byId[colId].metadata[0] &&
         columnsState.byId[colId].metadata[0].type
       ) {
+        columnsState.byId[colId].metadata[0].type.forEach((t: any) => {
+          const cleanId = t.id.includes(":") ? t.id.split(":")[1] : t.id;
+          columnMatchMap[cleanId] = t.match;
+        });
         const metaItem = columnsState.byId[colId].metadata[0];
         console.log("current meta item", metaItem);
         if (metaItem.type) {
           for (let i = 0; i < metaItem.type.length; i++) {
+            const cleanId = metaItem.type[i].id.includes(":") ? metaItem.type[i].id.split(":")[1] : metaItem.type[i].id;
             currentColType.push(metaItem.type[i]);
-            currentTypesIds.push(metaItem.type[i].id);
+            currentTypesIds.push(cleanId);
           }
         }
         if (currentColType.length > 0) {
           for (let i = 0; i < currentColType.length; i++) {
-            if (!map[currentColType[i].id]) {
-              console.log("current name test ", currentColType[i].name);
-              map[currentColType[i].id] = {
-                id: currentColType[i].id,
+            const cleanId = currentColType[i].id.includes(":") ? currentColType[i].id.split(":")[1] : currentColType[i].id;
+            if (!map[cleanId]) {
+              console.log("current name test ", cleanId.name);
+              map[cleanId] = {
+                id: cleanId,
                 label: currentColType[i].name as any,
                 uri: currentColType[i].uri,
                 match: currentColType[i].match,
                 count: 0,
+                decider: currentColType[i].decider,
               };
             }
           }
@@ -932,14 +942,16 @@ export const selectColumnTypes = createSelector(
     console.log("currentmap", map);
     const allTypes = Object.keys(map)
       .map((key) => {
+        const isMatched = columnMatchMap[key] !== undefined ? columnMatchMap[key] : map[key].match;
         const item = {
           ...map[key],
+          match: isMatched,
           percentage: (totalCount !== 0
             ? (map[key].count / totalCount) * 100
             : 0
           ).toFixed(2),
         };
-        if (currentColType && item.match) {
+        if (item.match) {
           selectedType.push(item);
         }
         return item;

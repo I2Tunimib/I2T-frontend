@@ -107,6 +107,45 @@ test('Upload table with same name (Auto-rename check)', async ({ page }) => {
   console.log(`Success: Table ${baseName} was correctly renamed to ${expectedRename}`);
 });
 
+test('Raw/List view all/selected datasets', async ({ page }) => {
+  test.setTimeout(120000);
+  const baseName = 'DatasetTest';
+  const ui = getComponents(page);
+
+  await ui.rawViewBtn.click();
+  const element = page.getByText(`name: "${baseName}"`).first();
+  await element.scrollIntoViewIfNeeded();
+  await expect(element).toBeVisible();
+  await ui.listViewBtn.click();
+  await expect(page.getByText(`${baseName}`)).toBeVisible();
+
+  await ui.selectDatasetBtn(`${baseName}`).click();
+  await ui.rawViewBtn.click();
+  await expect(element).toBeVisible();
+});
+
+test('Raw/Grid/List view all/selected tables', async ({ page }) => {
+  test.setTimeout(120000);
+  const baseName = 'table_fullTableAnnotation';
+  const ui = getComponents(page);
+
+  await page.getByRole('link', { name: 'Dataset_test', exact: true }).click();
+  await ui.rawViewBtn.click();
+  const element = page.getByText(`name: "${baseName}"`).first();
+  await element.scrollIntoViewIfNeeded();
+  await expect(element).toBeVisible();
+  await ui.gridViewBtn.click();
+  await expect(page.getByRole('link', { name: `${baseName}` })).toBeVisible();
+  await ui.listViewBtn.click();
+  await expect(page.getByText(`${baseName}`)).toBeVisible();
+
+  await ui.selectTableBtn(`${baseName}`).click();
+  await ui.rawViewBtn.click();
+  await expect(element).toBeVisible();
+  await ui.gridViewBtn.click();
+  await expect(page.getByRole('link', { name: `${baseName}` })).toBeVisible();
+});
+
 test('Help Link', async ({ page }) => {
   test.setTimeout(120000);
   const ui = getComponents(page);

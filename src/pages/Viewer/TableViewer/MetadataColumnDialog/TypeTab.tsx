@@ -41,6 +41,7 @@ import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
 import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
+import { useSnackbar } from "notistack";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
@@ -50,9 +51,9 @@ const DeferredTable = deferMounting(CustomTable);
 const normalizeTypeId = (id: string) => {
   if (!id) return id;
   // If already prefixed with wd:, return as-is
-  if (id.startsWith("wd:")) return id;
+  if (id.startsWith("wd:")) return id.split(":")[1];
   // If it's a bare Wikidata id like Q123, normalize to wd:Q123
-  if (/^Q\d+$/.test(id)) return `wd:${id}`;
+  //if (/^Q\d+$/.test(id)) return `wd:${id}`;
   // Otherwise return original id
   return id;
 };
@@ -100,7 +101,8 @@ const RadioButtonsGroup: FC<{
   onChange: (event: ChangeEvent<HTMLInputElement>, checked: boolean) => void;
 }> = ({ selected, types, value, onChange }) => {
   function typeInSelected(id: string) {
-    return selected.some((item) => item.id === id);
+    const normId = normalizeTypeId(id);
+    return selected.some((item) => normalizeTypeId(item.id) === normId);
   }
   return (
     <FormControl component="fieldset">
@@ -158,23 +160,55 @@ interface NewMetadata {
   uri?: string;
 }
 const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) => {
-  const [selected, setSelected] = useState<SelectedTypeState[]>([]);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
-  const [showAdd, setShowAdd] = useState<boolean>(false);
+  const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
+  const currentService = rawData?.service?.prefix || "";
+  const kind = currentKind;
+  const datatype = currentDatatype;
+
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const colId = useAppSelector(
     (state) => state.table.ui.metadataColumnDialogColId,
   );
-  const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
-  const currentService = rawData?.service?.prefix || "";
+  const types = useAppSelector(selectColumnTypes);
+  const { API } = useAppSelector(selectAppConfig);
+  const dispatch = useAppDispatch();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const {
+    handleSubmit: handleSubmitNewType,
+    reset,
+    register,
+    control,
+  } = useForm<NewMetadata>();
+
+  const [selected, setSelected] = useState<SelectedTypeState[]>(types?.selectedType || []);
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [showAdd, setShowAdd] = useState<boolean>(false);
   const [selectedPrefix, setSelectedPrefix] = useState<string>(currentService || "");
   const [typeOptions, setTypeOptions] = useState<{id: string, label: string, uri: string}[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [localAddedTypes, setLocalAddedTypes] = useState<any[]>([]);
-  const kind = currentKind;
-  const datatype = currentDatatype;
+
+  const allColumnTypes = [
+    ...(types?.allTypes || []),
+    ...localAddedTypes,
+  ];
+
+  const uniqueTypesMap: Record<string, any> = {};
+  allColumnTypes.forEach((type) => {
+    const normId = normalizeTypeId(type.id);
+    if (!uniqueTypesMap[normId] || (!uniqueTypesMap[normId].uri && type.uri)) {
+      uniqueTypesMap[normId] = { ...type, id: normId };
+    }
+  });
+  const allTypes = Object.values(uniqueTypesMap);
+
+  useEffect(() => {
+    if (types?.selectedType) {
+      setSelected(types.selectedType);
+    }
+  }, [types]);
 
   useEffect(() => {
     if (currentService) {
@@ -182,16 +216,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     }
   }, [currentService]);
 
-  const {
-    handleSubmit: handleSubmitNewType,
-    reset,
-    register,
-    control,
-  } = useForm<NewMetadata>();
-  const { API } = useAppSelector(selectAppConfig);
-
-  const types = useAppSelector(selectColumnTypes);
-  const dispatch = useAppDispatch();
   const handleTooltipOpen = () => {
     setShowTooltip(!showAdd);
   };
@@ -219,13 +243,14 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     const metaToView: {
       [key: string]: {
         label?: string;
-        type?: "link" | "subList" | "tag" | "checkBox";
+        type?: "link" | "subList" | "tag" | "deciderTag" | "checkBox";
       };
     } = {
       selected: { label: "Selected", type: "checkBox" },
       id: { label: "ID" },
       name: { label: "Name", type: "link" },
       percentage: { label: "Percentage" },
+      decider: { label: "Decider", type: "deciderTag" },
       // match: { label: "Match", type: "tag" },
     };
 
@@ -249,18 +274,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
   from Entity Datamodel
   COULD HAVE SAME DATAMODEL? IN THIS CASE, IT NEEDS TO MAKE A CHANGE IN THE BACKEND APPLICATION
   */
-    const allColumnTypes = [
-      ...(types.allTypes || []),
-      ...localAddedTypes,
-    ];
-
-    const uniqueTypesMap: Record<string, any> = {};
-    allColumnTypes.forEach((type) => {
-      if (!uniqueTypesMap[type.id] || (!uniqueTypesMap[type.id].uri && type.uri)) {
-        uniqueTypesMap[type.id] = type;
-      }
-    });
-    const allTypes = Object.values(uniqueTypesMap);
 
     const newMetadata = allTypes
       .map((type) => {
@@ -268,18 +281,20 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
           "mapped types",
           type,
           selected,
-          selected.some((item) => item.id === type.id),
+          selected.some((item) => normalizeTypeId(item.id) === normalizeTypeId(type.id)),
         );
+        const isSelected = selected.some((item) => normalizeTypeId(item.id) === normalizeTypeId(type.id));
         const isQudt = type.id && type.id.includes("unit:");
         const isTime = type.id && type.id.includes("xsd:");
         return {
-          selected: selected.some((item) => item.id === type.id),
+          selected: isSelected,
           id: (isQudt || isTime) ? type.id : (isValidWikidataId(type.id) ? "wd:" + type.id : type.id),
           name: {
             value: type.label || type.name,
             uri: type.uri || type.name?.uri || (isQudt ? null : createWikidataURI(type.id)),
           },
-          percentage: (isQudt || isTime) ? "100%" : (Number(type.percentage || 100).toFixed(0) + "%"),
+          percentage: (!isSelected) ? "0%" : (Number(type.percentage || 0).toFixed(0) + "%"),
+          decider: type.decider !== undefined ? type.decider : "machine",
           // match: "",
         };
       })
@@ -353,19 +368,30 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
       finalUri = uri;
     }
 
+    const typeExists = allTypes.some((type) => type.id === finalId);
+    if (typeExists) {
+      enqueueSnackbar(`Type ${idFromUri} already exists.`, {
+        variant: "error",
+        autoHideDuration: 4000,
+      });
+      return;
+    }
+
     const newType = {
       id: finalId,
       uri: finalUri,
       name: formState.name,
+      decider: "human",
     };
 
     // Add the new type to the column metadata
     addEdit(addColumnType({ colId, newTypes: [newType] }));
     // Ensure the column's main type list is updated (id + name) so selectors/readers see it
-    addEdit(updateColumnType([{ id: finalId, name: formState.name }]));
+    //addEdit(updateColumnType([{ id: finalId, name: formState.name }]), false, false);
     // Also mark the newly added type as matched so checkboxes reflect selection/save
-    addEdit(updateColumnTypeMatches({ typeIds: [finalId] }));
+    //addEdit(updateColumnTypeMatches({ typeIds: [finalId] }), false, false);
     setLocalAddedTypes((prev) => [...prev, newType]);
+    setShowAdd(false);
     // Auto-select the newly added type in the local component state so UI updates immediately
     setSelected((prev) => {
       // avoid duplicates
@@ -378,7 +404,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
           id: finalId,
           label: formState.name,
           count: 1,
-          percentage: "100",
+          percentage: 100,
         },
       ];
     });
@@ -389,127 +415,27 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     const index = selected.findIndex(
       (item) => normalizeTypeId(item.id) === normRowId,
     );
+    let updatedSelected = [...selected];
     if (index > -1) {
-      setSelected(
-        selected.filter((item) => normalizeTypeId(item.id) !== normRowId),
-      );
+      updatedSelected = selected.filter((item) => normalizeTypeId(item.id) !== normRowId);
+      setSelected(updatedSelected);
     } else {
       if (types && rawData) {
-        const { column } = rawData;
-        const allTypes = [...(types.allTypes || [])];
         const selectedType = allTypes.find(
           (item) => normalizeTypeId(item.id) === normRowId,
         );
         if (selectedType) {
-          setSelected([...selected, selectedType]);
+          const normalizedSelectedType = {
+            ...selectedType,
+            id: normRowId,
+          };
+          updatedSelected = [...selected, normalizedSelectedType];
+          setSelected(updatedSelected);
         }
       }
     }
-  };
-
-  const handleSelectedRowChange = useCallback(
-    (row: any) => {
-      setState(({ columns: colState, data: dataState }) => {
-        if (!row.id) {
-          return { columns: colState, data: dataState };
-        }
-        const selectedRow = dataState.find((item) => item.id === row.id);
-        if (!selectedRow) {
-          return { columns: colState, data: dataState };
-        }
-        const newData = dataState.map((item) => {
-          if (item.id === row.id) {
-            return {
-              ...item,
-              selected: !selectedRow.selected,
-            };
-          }
-          return item;
-        });
-        return {
-          columns: colState,
-          data: newData,
-        };
-      });
-    },
-    [selected, setSelected],
-  );
-
-  const handleChange = (
-    event: ChangeEvent<HTMLInputElement>,
-    checked: boolean,
-  ) => {
-    if (types && types.allTypes) {
-      const value = event.target.value;
-      const normValue = normalizeTypeId(value);
-      if (checked) {
-        const selectedType =
-          (types.allTypes || []).find(
-            (item) => normalizeTypeId(item.id) === normValue,
-          ) || undefined;
-
-        if (selectedType) {
-          setSelected([...selected, selectedType]);
-        }
-      } else {
-        setSelected(
-          selected.filter((item) => normalizeTypeId(item.id) !== normValue),
-        );
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (selected && selected.length > 0) {
-      const mappedTypeIds = selected.map((item) => {
-        return normalizeTypeId(item.id);
-      });
-
-      const newTypesPayload = selected.map((item) => {
-        return {
-          id: normalizeTypeId(item.id),
-          name: item.label,
-          ...(item.uri ? { uri: item.uri } : {}),
-        };
-      });
-
-      const validNewTypes = newTypesPayload.filter((t) => t.id);
-
-      if (mappedTypeIds.length > 0) {
-        addEdit(addColumnType({ colId, newTypes: validNewTypes }), false, true);
-      }
-    }
-  }, [selected]);
-
-  useEffect(() => {
-    if (types && types.selectedType) {
-      console.log("types.selectedType", types.selectedType);
-      setSelected(types.selectedType);
-    }
-  }, [types]);
-
-  const handleConfirm = () => {
-    if (selected && selected.length > 0) {
-      // Prepare payloads using normalized ids:
-      // 1) updateColumnType expects an array of { id, name }
-      const mappedTypesForUpdate = selected.map((item) => ({
-        id: normalizeTypeId(item.id),
-        name: item.label,
-      }));
-      // 2) updateColumnTypeMatches expects { typeIds: string[] }
-      const mappedTypeIds = selected.map((item) => normalizeTypeId(item.id));
-
-      // Dispatch both actions via addEdit so they are treated as edits/undoable
-      // First update the column types themselves (ids + names)
-      addEdit(updateColumnType(mappedTypesForUpdate), true);
-      // Then update the matches for those types
-      addEdit(updateColumnTypeMatches({ typeIds: mappedTypeIds }), true);
-    }
-    dispatch(updateUI({ openMetadataColumnDialog: false }));
-  };
-
-  const handleCancel = () => {
-    dispatch(updateUI({ openMetadataColumnDialog: false }));
+    const mappedTypeIds = updatedSelected.map((item) => normalizeTypeId(item.id));
+    addEdit(updateColumnTypeMatches({ typeIds: mappedTypeIds }));
   };
 
   const servicesByPrefix = (reconciliators || []).reduce<Record<string, any>>(
@@ -574,7 +500,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     setLocalAddedTypes((prev) => [...prev, newType]);
     setSelected((prev) => {
       if (prev.some((p) => p.id === newType.id)) return prev;
-      return [...prev, { ...newType, count: 1, percentage: "100" }];
+      return [...prev, { ...newType, count: 1, percentage: 100 }];
     });
   };
 
@@ -755,57 +681,56 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
                   }}
                 >
                   Add column type
-                    <AddRoundedIcon
-                      sx={{
-                        transition: "transform 150ms ease-out",
-                        transform: showAdd ? "rotate(45deg)" : "rotate(0)",
-                      }}
-                    />
-                  </Button>
-                </Tooltip>
-                {showAdd ? (
-                  !!selectedPrefix ? (
-                    servicesByPrefix[selectedPrefix]?.searchTypesPattern ? (
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleTypesInService}
-                        sx={{ textTransform: "none" }}
-                      >
-                        Search "{rawData?.column?.id}" in {KG_INFO[selectedPrefix].groupName}
-                      </Button>
-                    ) : servicesByPrefix[selectedPrefix]?.listTypes ? (
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleTypesInService}
-                        sx={{ textTransform: "none" }}
-                      >
-                        View list of {KG_INFO[selectedPrefix].groupName} types
-                      </Button>
-                    ) : null
-                  ) : (
-                    // fallback when no service → Wikidata
+                  <AddRoundedIcon
+                    sx={{
+                      transition: "transform 150ms ease-out",
+                      transform: showAdd ? "rotate(45deg)" : "rotate(0)",
+                    }}
+                  />
+                </Button>
+              </Tooltip>
+              {showAdd ? (
+                !!selectedPrefix ? (
+                  servicesByPrefix[selectedPrefix]?.searchTypesPattern ? (
                     <Button
                       variant="outlined"
                       color="primary"
-                      onClick={() => {
-                        const wikidataPattern =
-                          "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
-                        const url = wikidataPattern.replace(
-                          "{label}",
-                          encodeURIComponent(rawData?.column?.id || ""),
-                        );
-                        window.open(url, "_blank", "noopener,noreferrer");
-                      }}
+                      onClick={handleTypesInService}
                       sx={{ textTransform: "none" }}
                     >
-                      Search "{rawData?.column?.id}" in{" "}
-                      {KG_INFO["wd"].groupName || "Wikidata"}
+                      Search "{rawData?.column?.id}" in {KG_INFO[selectedPrefix].groupName}
                     </Button>
-                  )
-                ) : null}
-              </Stack>
+                  ) : servicesByPrefix[selectedPrefix]?.listTypes ? (
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleTypesInService}
+                      sx={{ textTransform: "none" }}
+                    >
+                      View list of {KG_INFO[selectedPrefix].groupName} types
+                    </Button>
+                  ) : null
+                ) : (
+                  // fallback when no service → Wikidata
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => {
+                      const wikidataPattern = "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
+                      const url = wikidataPattern.replace(
+                        "{label}",
+                        encodeURIComponent(rawData?.column?.id || ""),
+                      );
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Search "{rawData?.column?.id}" in{" "}
+                    {KG_INFO["wd"].groupName || "Wikidata"}
+                  </Button>
+                )
+              ) : null}
+            </Stack>
             {showAdd && (
               <Box sx={{ width: "100%", paddingTop: "8px" }}>
                 <AddMetadataForm

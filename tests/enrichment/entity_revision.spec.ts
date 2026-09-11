@@ -33,7 +33,8 @@ test('Entity Matching Revision - Selection', async ({ page }) => {
   console.log('"Liverpool" cell rconciled.');
 });
 
-test('Entity Matching Revision - Search', async ({ page }) => {
+test('Entity Matching Revision - Search', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await metadataDialog(page, 'Arsenal');
   console.log('Manage Metadata for "Arsenal" Cell opened.');
 

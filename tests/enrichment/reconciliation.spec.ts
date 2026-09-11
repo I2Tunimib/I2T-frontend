@@ -43,12 +43,11 @@ test.describe('Test in local', () => {
      * @param {string[]} additionalColumns
      */
     await reconcilerConfig(page, []);
-    await ui.comfirmComponentBtn('dialog').click();
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
     console.log('Column "Match Location" reconciled.');
 
     await ui.expandCellBtn.click();
-    await expect(page.getByRole('link', { name: 'wd:Q183 (Germany)' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'wd:Q183' }).first()).toBeVisible();
   });
 
   test('Reconcile Linking: Wikidata (OpenRefine)', async ({ page }) => {
@@ -70,7 +69,7 @@ test.describe('Test in local', () => {
     console.log('Column "Match Location" reconciled.');
 
     await ui.expandCellBtn.click();
-    await expect(page.getByRole('link', { name: 'wd:Q183 (Germany)' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'wd:Q183' }).first()).toBeVisible();
   });
 
   test('Reconcile Geocoding: Geo Coordinates (GeoNames)', async ({ page }) => {
@@ -89,7 +88,7 @@ test.describe('Test in local', () => {
     await reconciliationDialog(page, 'Match Location', 'Geo Coordinates', 'Geocoding: Geo Coordinates (GeoNames)');
     await reconcilerConfig(page, ['Match Country']);
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
-    await expect(page.getByText('geocodingGeonames')).toBeVisible();
+    await expect(page.getByRole('table').getByText('geocodingGeonames')).toBeVisible();
     console.log('Column "Match Location" reconciled.');
 
     await ui.expandCellBtn.click();
@@ -112,11 +111,11 @@ test.describe('Test in local', () => {
     await reconciliationDialog(page, 'Match Location', 'GeoNames', 'Linking: GeoNames (GeoNames)');
     await reconcilerConfig(page, ['Match Country']);
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
-    await expect(page.getByText('geonames')).toBeVisible();
+    await expect(page.getByRole('table').getByText('geonames')).toBeVisible();
     console.log('Column "Match Location" reconciled.');
 
     await ui.expandCellBtn.click();
-    await expect(page.getByRole('link', { name: 'geo:2890473 (Kirchheim unter' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'geo:2890473' })).toBeVisible();
   });
 
   test('Reconcile Linking: In-Table Linking (Wikidata)', async ({ page }) => {
@@ -141,11 +140,11 @@ test.describe('Test in local', () => {
      */
     await reconcilerInTableConfig(page, 'wd (Wikidata)', 'wikidataId');
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
-    await expect(page.getByText('inTableLinker')).toBeVisible();
+    await expect(page.getByRole('table').getByText('inTableLinker')).toBeVisible();
     console.log('Column "country" reconciled.');
 
     await ui.expandCellBtn.click();
-    await expect(page.getByRole('link', { name: 'wd:Q2807 (Madrid)' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'wd:Q2807' }).first()).toBeVisible();
   });
 
   test('Reconcile Linking: In-Table Linking (GeoNames)', async ({ page }) => {
@@ -164,11 +163,11 @@ test.describe('Test in local', () => {
     await reconciliationDialog(page, 'country', 'In-Table Linking', 'Linking: In-Table Linking');
     await reconcilerInTableConfig(page, 'geo (GeoNames)', 'geonamesId');
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
-    await expect(page.getByText('inTableLinker')).toBeVisible();
+    await expect(page.getByRole('table').getByText('inTableLinker')).toBeVisible();
     console.log('Column "country" reconciled.');
 
     await ui.expandCellBtn.click();
-    await expect(page.getByRole('link', { name: 'geo:3117735 (Madrid)' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'geo:3117735' }).first()).toBeVisible();
   });
 
   test('Reconcile Linking: In-Table Linking (Geocoding GeoNames)', async ({ page }) => {
@@ -187,11 +186,11 @@ test.describe('Test in local', () => {
     await reconciliationDialog(page, 'country', 'In-Table Linking', 'Linking: In-Table Linking');
     await reconcilerInTableConfig(page, 'geoCoord (geoCoding)', 'coordinates');
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
-    await expect(page.getByText('inTableLinker')).toBeVisible();
+    await expect(page.getByRole('table').getByText('inTableLinker')).toBeVisible();
     console.log('Column "country" reconciled.');
 
     await ui.expandCellBtn.click();
-    await expect(page.getByRole('link', { name: 'geoCoord:40.41694444444445,-3.703333333333333 (Madrid)' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'geoCoord:40.41694444444445,-3.703333333333333' }).first()).toBeVisible();
   });
 
   test('Reconcile Linking: In-Table Linking (Geocoding HERE)', async ({ page }) => {
@@ -210,11 +209,11 @@ test.describe('Test in local', () => {
     await reconciliationDialog(page, 'country', 'In-Table Linking', 'Linking: In-Table Linking');
     await reconcilerInTableConfig(page, 'georss (geoCoding)', 'coordinates');
     await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
-    await expect(page.getByText('inTableLinker')).toBeVisible();
+    await expect(page.getByRole('table').getByText('inTableLinker')).toBeVisible();
     console.log('Column "country" reconciled.');
 
     await ui.expandCellBtn.click();
-    await expect(page.getByRole('link', { name: 'georss:40.41694444444445,-3.703333333333333 (Madrid)' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'georss:40.41694444444445,-3.703333333333333' }).first()).toBeVisible();
   });
 });
 

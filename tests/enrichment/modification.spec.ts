@@ -63,23 +63,27 @@ test.describe('Test in local', () => {
     console.log('Removed special character UNDER - ARMOUR -> UNDER ARMOUR.');
 
     //Remove unnecessary whitespace
+    await modificationDialog(page, 'Supplier', 'Data Cleaning');
     await dataCleaningConfig(page, 'Remove unnecessary whitespace');
     console.log('Removed unnecessary whitespace.');
 
     //Convert uppercase
     await expect(page.getByText('Adidas', { exact: true })).toBeVisible();
+    await modificationDialog(page, 'Supplier', 'Data Cleaning');
     await dataCleaningConfig(page, 'Convert to uppercase');
     await expect(page.getByText('ADIDAS', { exact: true }).first()).toBeVisible();
     console.log('Converted to uppercase.');
 
     //Convert lowercase
     await expect(page.getByText('PUMA', { exact: true }).first()).toBeVisible();
+    await modificationDialog(page, 'Supplier', 'Data Cleaning');
     await dataCleaningConfig(page, 'Convert to lowercase');
     await expect(page.getByText('puma', { exact: true }).first()).toBeVisible();
     console.log('Converted to lowercase.');
 
     //Convert titlecase
     await expect(page.getByText('puma', { exact: true }).first()).toBeVisible();
+    await modificationDialog(page, 'Supplier', 'Data Cleaning');
     await dataCleaningConfig(page, 'Convert to titlecase');
     await expect(page.getByText('Puma', { exact: true }).first()).toBeVisible();
     console.log('Converted to uppercase.');

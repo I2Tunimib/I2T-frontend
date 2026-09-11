@@ -23,40 +23,40 @@ test.beforeEach(async ({ page }) => {
   console.log('Table opened.');
 });
 
-test('Column Revision - Kind/Role', async ({ page }) => {
+test('Column Revision - Kind/SemanticClass/Role', async ({ page }) => {
   test.setTimeout(120000);
   const ui = getComponents(page);
-  const columnFootball = page.getByRole('columnheader', { name: 'Football Club' });
+  const columnFootball = page.getByRole('table').getByText('Football Club', { exact: true });
 
   await columnFootball.click();
   console.log('Football Club" selected.');
 
   await ui.metadataBtn.click();
   await expect(page.getByRole('heading', { name: 'Football Club' })).toBeVisible();
-  await page.getByRole('combobox', { name: 'Column Kind:' }).click();
+  await page.getByRole('combobox', { name: 'Kind:' }).click();
   await page.getByRole('option', { name: 'Named Entity' }).click();
-  await page.getByRole('combobox', { name: 'Column Role:' }).click();
+  await page.getByRole('combobox', { name: 'Semantic Class:' }).click();
+  await page.getByRole('option', { name: 'ORGANIZATION' }).click();
+  await page.getByRole('combobox', { name: 'Role:' }).click();
   await page.getByRole('option', { name: 'Subject' }).click();
   await ui.confirmCloseBtn.click();
   await expect(ui.confirmBtn).toBeEnabled();
   await ui.confirmBtn.click();
-  const footballClubKind = page
-    .getByRole('columnheader', { name: /Football Club/i })
-    .getByLabel('kind-entity');
+  await page.getByRole('columnheader', { name: 'Football Club' }).getByLabel('kind-entity').hover();
+  await expect(page.getByText('Named Entity (ORGANIZATION)')).toBeVisible();
   const footballClubRole = page
     .getByRole('columnheader', { name: /Football Club/i })
     .getByLabel('role-subject');
-  await expect(footballClubKind).toBeVisible();
   await expect(footballClubRole).toBeVisible();
   console.log('Football Club" named entity and subject.');
 });
 
-test('Column Revision - Type', async ({ page, context }) => {
+test('Column Revision - Named Entity Type', async ({ page, context }) => {
   const ui = getComponents(page);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
   test.setTimeout(120000);
-  const columnSupplier = page.getByRole('columnheader', { name: 'Supplier' });
+  const columnSupplier = page.getByRole('table').getByText('Supplier', { exact: true });
 
   await columnSupplier.click();
   console.log('Football Club" selected.');
@@ -103,12 +103,45 @@ test('Column Revision - Type', async ({ page, context }) => {
   console.log('Addition of "vendor" type successful.');
 });
 
+test('Column Revision - Literal Type', async ({ page, context }) => {
+  const ui = getComponents(page);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+  test.setTimeout(120000);
+  const columnMatchDate = page.getByRole('table').getByText('Match Date', { exact: true });
+
+  await columnMatchDate.click();
+  console.log('Match Date" selected.');
+
+  await ui.metadataBtn.click();
+  await expect(page.getByRole('tab', { name: 'Column types' })).toBeVisible();
+
+  await page.getByRole('combobox', { name: 'Kind:' }).click();
+  await page.getByRole('option', { name: 'Literal' }).click();
+  await expect(page.getByRole('heading', { name: 'Define the Datatype' })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Datatype:' }).click();
+  await page.getByRole('option', { name: 'DATE' }).click();
+  await expect(page.getByRole('heading', { name: 'Date/Time Format via W3C XML' })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Search for Validation Format' }).click();
+  await page.getByRole('option', { name: 'date (W3C Format)' }).click();
+  await expect(page.getByRole('cell', { name: 'xsd:date' })).toBeVisible();
+  console.log('Type added and selected.');
+
+  await ui.confirmCloseBtn.click();
+  await expect(ui.confirmBtn).toBeEnabled();
+  await ui.confirmBtn.click();
+  console.log('Addition of "vendor" type successful.');
+
+  await page.getByLabel('kind-literal').hover();
+  await expect(page.getByText('Literal (DATE)')).toBeVisible();
+});
+
 test('Column Revision - Property (entity-entity)', async ({ page, context }) => {
   const ui = getComponents(page);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
   test.setTimeout(120000);
-  const columnMatchLoc = page.getByRole('columnheader', { name: 'Match Location' });
+  const columnMatchLoc = page.getByRole('table').getByText('Match Location', { exact: true });
 
   await columnMatchLoc.click();
   console.log('Match Location" selected.');
@@ -117,8 +150,8 @@ test('Column Revision - Property (entity-entity)', async ({ page, context }) => 
   await expect(page.getByRole('heading', { name: 'Match Location' })).toBeVisible();
   await page.getByRole('tab', { name: 'Column properties' }).click();
   await ui.addPropertyBtn.click();
-  await expect(ui.viewBtn).toBeVisible();
-  await ui.viewBtn.click();
+  await expect(page.getByRole('button', { name: 'Wikidata: Items', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Wikidata: Items', exact: true }).click();
 
   const pageWikidataPromise = page.waitForEvent('popup');
   const pageWikidataList = await pageWikidataPromise;
@@ -163,7 +196,7 @@ test('Column Revision - Property (entity-literal)', async ({ page, context }) =>
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
   test.setTimeout(120000);
-  const columnMatchDate = page.getByRole('columnheader', { name: 'Match Date' });
+  const columnMatchDate = page.getByRole('table').getByText('Match Date', { exact: true });
 
   await columnMatchDate.click();
   console.log('Match Date" selected.');
@@ -171,8 +204,10 @@ test('Column Revision - Property (entity-literal)', async ({ page, context }) =>
   await ui.metadataBtn.click();
   await expect(page.getByRole('heading', { name: 'Match Date' })).toBeVisible();
   await page.getByRole('tab', { name: 'Column properties' }).click();
-  await expect(ui.viewBtn).toBeVisible();
-  await ui.viewBtn.click();
+  await expect(page.getByRole('button', { name: 'Add property' })).toBeVisible();
+  await page.getByRole('button', { name: 'Add property' }).click();
+  await expect(page.getByRole('button', { name: 'Wikidata' })).toBeVisible();
+  await page.getByRole('button', { name: 'Wikidata' }).click();
 
   const pageWikidataPromise = page.waitForEvent('popup');
   const pageWikidataList = await pageWikidataPromise;
@@ -181,16 +216,6 @@ test('Column Revision - Property (entity-literal)', async ({ page, context }) =>
   await pageWikidataList.getByRole('link', { name: 'point in time (P585)' }).click();
   await expect(pageWikidataList.locator('#firstHeading').getByText('point in time')).toBeVisible();
   console.log('Property "point in time" found.');
-
-  await ui.cancelBtn.click();
-  const columnMatchLoc = page.getByRole('columnheader', { name: 'Match Location' });
-  await columnMatchLoc.click();
-  console.log('Column "Match Location" selected.');
-
-  await ui.metadataBtn.click();
-  await expect(page.getByRole('heading', { name: 'Match Location' })).toBeVisible();
-  await page.getByRole('tab', { name: 'Column properties' }).click();
-  await ui.addPropertyBtn.click();
 
   const selectPrefix = page.locator('#mui-component-select-prefix');
   await selectPrefix.click();
@@ -210,13 +235,15 @@ test('Column Revision - Property (entity-literal)', async ({ page, context }) =>
 
   await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('point in time');
 
-  const objSelect = page.locator('#mui-component-select-obj');
-  await objSelect.click();
-  await page.getByRole('option', { name: 'Match Date' }).click();
+  const subjSelect = page.locator('#mui-component-select-subj');
+  await subjSelect.click();
+  await page.getByRole('option', { name: 'Match Location' }).click();
   await ui.addBtn.click();
-  await expect(page.getByRole('cell', { name: 'wd:P585' })).toBeVisible();
   console.log('Property added and selected.');
 
-  await ui.confirmCloseBtn.click();
+  await expect(page.getByText('Property added successfully!')).toBeVisible({ timeout: 100000 });
+  await page.getByRole('button', { name: 'View', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Match Location' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'wd:P585' })).toBeVisible();
   console.log('Addition of "point in time" property successful.');
 });

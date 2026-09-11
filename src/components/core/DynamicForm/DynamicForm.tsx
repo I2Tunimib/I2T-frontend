@@ -57,6 +57,17 @@ const DynamicForm: FC<DynamicFormProps> = ({
     defaultValues: getDefaultValues(service),
   });
 
+  let activeColumnType = (service as any).columnType;
+  if (!activeColumnType && selectedColumns.length === 1) {
+    const colId = selectedColumns[0];
+    const values: string[] = [];
+    Object.keys(rows.byId).slice(0, 5).forEach((rowId) => {
+      const cell = rows.byId[rowId].cells[colId];
+      if (cell?.label != null) values.push(String(cell.label).trim());
+    });
+    activeColumnType = dateFormatterUtils(values);
+  }
+
   // Watch all form values for dependency checking
   const watchedValues = watch();
   const formatType = watch("formatType");
@@ -82,7 +93,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
       {
         ...formValue,
         selectedColumns,
-        columnType: service.columnType,
+        columnType: activeColumnType,
         splitDatetime: formValue.splitDatetime,
       },
       () => reset(getDefaultValues(service)),
@@ -131,13 +142,13 @@ const DynamicForm: FC<DynamicFormProps> = ({
       if (param.id === "detailLevel") {
         let options = filterDetailLevelOptions(
           param.options,
-          service.columnType,
+          activeColumnType,
           formatType,
         );
         if (
           selectedColumns.length === 1 &&
           columnToJoin &&
-          service.columnType !== "datetime" &&
+          activeColumnType !== "datetime" &&
           finalType === "datetime"
         ) {
           options = options.filter(
@@ -161,11 +172,12 @@ const DynamicForm: FC<DynamicFormProps> = ({
     });
   }, [
     service.formParams,
-    service.columnType,
+    activeColumnType,
     formatType,
     columnToJoin,
     finalType,
     selectedColumns,
+    rows,
   ]);
 
   return (
@@ -225,7 +237,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
                       control={<Checkbox {...field} checked={field.value} />}
                       label="Join selected columns"
                     />
-                    {field.value && service.columnType !== "datetime" && (
+                    {field.value && activeColumnType !== "datetime" && (
                       <Controller
                         name="separator"
                         control={control}
@@ -241,7 +253,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
             )}
             {selectedColumns.length === 1 &&
               columnToJoin &&
-              service.columnType !== "datetime" &&
+              activeColumnType !== "datetime" &&
               finalType !== "datetime" && (
                 <Controller
                   name="separator"
@@ -252,7 +264,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
                   )}
                 />
               )}
-            {service.columnType === "datetime" &&
+            {activeColumnType === "datetime" &&
               selectedColumns.length === 1 && (
                 <Controller
                   name="splitDatetime"

@@ -56,6 +56,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
 
   const watchedUri = watch("uri");
   const watchedPrefix = watch("prefix");
+  const watchedName = watch("name");
 
   useEffect(() => {
     if (onPrefixChange) {
@@ -69,6 +70,11 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
       setCustomPrefix("");
     }
   }, [currentService, reset]);
+
+  useEffect(() => {
+    setValue("subj", isLiteral ? "" : colId);
+    setValue("obj", isLiteral ? colId : "");
+  }, [columnKind, isLiteral, colId, setValue]);
 
   console.log("AddMetadataForm currentService", currentService);
 
@@ -240,7 +246,7 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
               onBlur: (e) => {}
             })}
           />
-          <Tooltip title={isFetchingName ? "Fetching name from URI..." : "Enter a name"} arrow placement="top">
+          <Tooltip title={isFetchingName ? "Fetching name from URI..." : ""} arrow placement="top">
             <TextField
               sx={{
                 minWidth: 150,
@@ -337,18 +343,27 @@ const AddMetadataForm: FC<AddMetadataFormProps> = ({
               </FormControl>
             </>
           )}
-          <Button
-            type="submit"
-            size="small"
-            variant="contained"
-            sx={{
-              height: 40,
-              padding: "0 16px",
-              textTransform: "none",
-            }}
+          <Tooltip
+            title={isFetchingName ? "Fetching name..." : "Please provide all the required inputs"}
+            arrow
+            placement="top"
           >
-            Add
-          </Button>
+            <span>
+              <Button
+                type="submit"
+                size="small"
+                variant="contained"
+                disabled={isFetchingName || !watchedName}
+                sx={{
+                  height: 40,
+                  padding: "0 16px",
+                  textTransform: "none",
+                }}
+              >
+                Add
+              </Button>
+            </span>
+          </Tooltip>
         </>
       )}
     </Stack>

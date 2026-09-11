@@ -60,112 +60,6 @@ import AddMetadataForm from "./AddMetadataForm";
 
 const DeferredTable = deferMounting(CustomTable);
 
-const makeData = (column: Column | undefined, isLiteral: boolean) => {
-  if (!column) {
-    return {
-      columns: [],
-      data: [],
-    };
-  }
-
-  // const { metaToView } = service;
-  const metaToView: {
-    [key: string]: {
-      label?: string;
-      type?: "link" | "subList" | "tag" | "checkBox";
-    };
-  } = {
-    selected: { label: "Selected", type: "checkBox" },
-    id: { label: "ID" },
-    name: { label: "Name", type: "link" },
-    obj: { label: "Obj" /*, type:'link' */ },
-    description: { label: "Description" },
-    match: { label: "Match", type: "tag" },
-  };
-
-  if (!column.metadata || !column.metadata[0] || !column.metadata[0].property) {
-    return {
-      columns: [],
-      data: [],
-    };
-  }
-
-  const { property: metadata } = column.metadata[0];
-  console.log("column data", column);
-  /*
-  the following snippet is a workaround because Datamodel of Property (API response JSON) is different
-  from Entity Datamodel
-  COULD HAVE SAME DATAMODEL? IN THIS CASE, IT NEEDS TO MAKE A CHANGE IN THE BACKEND APPLICATION
-  */
-  const newMetadata = metadata.map((item, index) => {
-    if (item.obj !== null && item.obj !== undefined) {
-      const nameValue = item.name && typeof item.name === "object"
-        ? (item.name as any).value
-        : item.name;
-
-      let finalUri = "";
-      if (item.name && typeof item.name === "object" && (item.name as any).uri) {
-        finalUri = (item.name as any).uri;
-      } else if (item.uri) {
-        finalUri = item.uri;
-      } else {
-        const [prefix, id] = item.id.split(":");
-        const resourceContext = column.context[prefix];
-        if (resourceContext) {
-          finalUri = `${resourceContext.uri}${id}`;
-        }
-      }
-      return {
-        ...item,
-        selected: item.match,
-        name: { value: nameValue || "", uri: finalUri },
-        description: item.description || "",
-      };
-    }
-    return item;
-  });
-
-  const columns = Object.keys(metaToView).map((key) => {
-    const { label = key, type } = metaToView[key];
-    return {
-      header: label,
-      accessorKey: key,
-      cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
-    };
-  });
-
-  const data = newMetadata
-    .map((metadataItem) => {
-      //const data = metadata.map((metadataItem) => {
-      return Object.keys(metaToView).reduce(
-        (acc, key) => {
-          const value = metadataItem[key as keyof BaseMetadata];
-          if (value !== undefined) {
-            acc[key] = value;
-          } else {
-            acc[key] = null;
-          }
-
-          return acc;
-        },
-        {} as Record<string, any>,
-      );
-    })
-    .sort((a, b) => {
-      // Sort by selected status first (selected items come first)
-      if (a.selected !== b.selected) {
-        return a.selected ? -1 : 1;
-      }
-      // Then sort by alphabetical order of the name
-      return a.name.value.localeCompare(b.name.value);
-    });
-
-  return {
-    columns,
-    data,
-  };
-};
-
 const hasColumnMetadata = (column: Column | undefined) => {
   return !!(
     column &&
@@ -212,37 +106,149 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
   const effectiveDatatype = currentDatatype || column?.datatype || "none";
   const currentColumnId = column?.id;
   const isLiteral = effectiveKind === "literal";
+  const existingProperties = column?.metadata?.[0]?.property || [];
+
+  const [selectedMetadata, setSelectedMetadata] = useState<string>("");
+  const [localProperties, setLocalProperties] = useState<any[]>(existingProperties);
+  const [undoSteps, setUndoSteps] = useState(0);
+  const [showAdd, setShowAdd] = useState<boolean>(false);
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+
+  const { API } = useAppSelector(selectAppConfig);
+  const isViewOnly = useAppSelector(selectIsViewOnly);
+  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
+  const { loading } = useAppSelector(selectReconcileRequestStatus);
+  const settings = useAppSelector(selectSettings);
+  const options = useAppSelector(selectColumnsAsSelectOptions);
+  const dispatch = useAppDispatch();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+  const currentService = column?.metadata?.[0]?.property?.[0]?.id?.split(":")?.[0] || "";
+  const otherColumns = options.filter((opt: any) => opt.value !== currentColumnId && (!isLiteral || opt.kind === "entity"));
+  const currentColumnOptions = options.find((opt: any) => opt.value === currentColumnId);
+  const currentColumnKind = currentColumnOptions?.kind || "";
+
+  useEffect(() => {
+    setLocalProperties(existingProperties);
+  }, [column]);
+
+  const makeData = (column: Column | undefined, isLiteral: boolean, currentLocalProps: any[]) => {
+    if (!column) {
+      return {
+        columns: [],
+        data: [],
+      };
+    }
+
+    // const { metaToView } = service;
+    const metaToView: {
+      [key: string]: {
+        label?: string;
+        type?: "link" | "subList" | "tag" | "deciderTag" | "checkBox";
+      };
+    } = {
+      selected: { label: "Selected", type: "checkBox" },
+      id: { label: "ID" },
+      name: { label: "Name", type: "link" },
+      obj: { label: "Obj" /*, type:'link' */ },
+      description: { label: "Description" },
+      match: { label: "Match", type: "tag" },
+      decider: { label: "Decider", type: "deciderTag" },
+    };
+
+    if (currentLocalProps.length === 0) {
+      return {
+        columns: [],
+        data: [],
+      };
+    }
+
+    const metadata = currentLocalProps;
+    console.log("column data", column);
+    /*
+    the following snippet is a workaround because Datamodel of Property (API response JSON) is different
+    from Entity Datamodel
+    COULD HAVE SAME DATAMODEL? IN THIS CASE, IT NEEDS TO MAKE A CHANGE IN THE BACKEND APPLICATION
+    */
+    const newMetadata = metadata.map((item, index) => {
+      if (item.obj !== null && item.obj !== undefined) {
+        const nameValue = item.name && typeof item.name === "object"
+          ? (item.name as any).value
+          : item.name;
+
+        let finalUri = "";
+        if (item.name && typeof item.name === "object" && (item.name as any).uri) {
+          finalUri = (item.name as any).uri;
+        } else if (item.uri) {
+          finalUri = item.uri;
+        } else {
+          const [prefix, id] = item.id.split(":");
+          const resourceContext = column.context[prefix];
+          if (resourceContext) {
+            finalUri = `${resourceContext.uri}${id}`;
+          }
+        }
+        return {
+          ...item,
+          selected: item.match,
+          name: { value: nameValue || "", uri: finalUri },
+          description: item.description || "",
+          decider: item.decider !== undefined ? item.decider : "machine",
+        };
+      }
+      return item;
+    });
+
+    const columns = Object.keys(metaToView).map((key) => {
+      const { label = key, type } = metaToView[key];
+      return {
+        header: label,
+        accessorKey: key,
+        cell: (cellValue: Cell<{}>) => getCellComponent(cellValue, type),
+      };
+    });
+
+    const data = newMetadata
+      .map((metadataItem) => {
+        //const data = metadata.map((metadataItem) => {
+        return Object.keys(metaToView).reduce(
+          (acc, key) => {
+            const value = metadataItem[key as keyof BaseMetadata];
+            if (value !== undefined) {
+              acc[key] = value;
+            } else {
+              acc[key] = null;
+            }
+
+            return acc;
+          },
+          {} as Record<string, any>,
+        );
+      })
+      .sort((a, b) => {
+        // Sort by selected status first (selected items come first)
+        if (a.selected !== b.selected) {
+          return a.selected ? -1 : 1;
+        }
+        // Then sort by alphabetical order of the name
+        return a.name.value.localeCompare(b.name.value);
+      });
+
+    return {
+      columns,
+      data,
+    };
+  };
+
   const {
     state,
     setState,
     memoizedState: { columns, data },
   } = usePrepareTable({
     selector: selectCurrentCol,
-    makeData: (col) => makeData(col, isLiteral),
-    dependencies: [column],
+    makeData: (col) => makeData(col, isLiteral, localProperties),
+    dependencies: [column, localProperties],
   });
-
-  const [selectedMetadata, setSelectedMetadata] = useState<string>("");
-  const [undoSteps, setUndoSteps] = useState(0);
-  const { API } = useAppSelector(selectAppConfig);
-  const isViewOnly = useAppSelector(selectIsViewOnly);
-  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
-  const { loading } = useAppSelector(selectReconcileRequestStatus);
-  const settings = useAppSelector(selectSettings);
-  const dispatch = useAppDispatch();
-  const currentService =
-    column?.metadata?.[0]?.property?.[0]?.id?.split(":")?.[0] || "";
-
-  const options = useAppSelector(selectColumnsAsSelectOptions);
-
-  const otherColumns = options.filter((opt: any) => opt.value !== currentColumnId && (!isLiteral || opt.kind === "entity"));
-
-  const [showAdd, setShowAdd] = useState<boolean>(false);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-
-  const currentColumnOptions = options.find((opt: any) => opt.value === currentColumnId);
-  const currentColumnKind = currentColumnOptions?.kind || "";
 
   const hasColumnClassifier = !!effectiveKind && !!effectiveDatatype;
   const getPropertyInfo = (kind?: string, datatype?: string, service: string) => {
@@ -296,7 +302,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
           schemaOptions = [{ url: `${baseUrlSchema}Text`, label: "Text" }];
           break;
         default:
-          wiki = { url: baseUrlWiki, label: "Wikidata" };
+          wiki = { url: baseUrlWiki, label: "Items" };
           schemaOptions = [{ url: `${baseUrlSchema}DataType`, label: "DataType" }];
           break;
       }
@@ -314,7 +320,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
     },
   });
 
-  const handleConfirm = (selectedMetadataId: string) => {
+  const handleConfirm = (selectedMetadataId: string, selectedMetadataObj: string) => {
     // update global state if confirmed
     if (column) {
       if (
@@ -328,6 +334,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
         addEdit(
           updateColumnPropertyMetadata({
             metadataId: selectedMetadataId,
+            obj: selectedMetadataObj,
             colId: column.id,
           }),
           false,
@@ -358,36 +365,26 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
   };
 
   const handleSelectedRowDelete = useCallback((row: any) => {
-    if (row) {
-      if (column) {
-        if (column.metadata && column.metadata.length > 0) {
-          console.log("deleting prop metadata", row);
-          if (column.metadata[0].property) {
-            (deleteColumnMetadata({
-              metadataId: row.id,
-              colId: column.id,
-              type: "property",
-            }),
-              true);
+    if (row && column) {
+      if (column.metadata && column.metadata.length > 0) {
+        console.log("deleting prop metadata", row);
+        setLocalProperties((prev) => prev.filter((item) => !(item.id === row.id && item.obj === row.obj)));
+        const deleteAction = deleteColumnMetadata({
+          metadataId: row.id,
+          colId: column.id,
+          obj: row.obj,
+          type: "property",
+        });
 
-            // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'property' }));
-            // setUndoSteps(undoSteps + 1);
-          } else if (column.metadata[0].entity) {
-            (deleteColumnMetadata({
-              metadataId: row.id,
-              colId: column.id,
-              type: "entity",
-            }),
-              true);
-
-            // dispatch(deleteColumnMetadata({ metadataId: row.id, colId: column.id, type: 'entity' }));
-            // setUndoSteps(undoSteps + 1);
-          }
-          setState((prevState) => ({
-            ...prevState,
-            data: prevState.data.filter((item: any) => item.id !== row.id),
-          }));
+        addEdit(deleteAction, true, false);
+        if (localProperties.length <= 1) {
+          setCurrentRole("none");
         }
+
+        setState((prevState) => ({
+          ...prevState,
+          data: prevState.data.filter((item: any) => !(item.id === row.id && item.obj === row.obj)),
+        }));
       }
     }
   }, []);
@@ -427,16 +424,16 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
     (row: any) => {
       if (!row) return;
 
-      setState(({ columns: colState, data: dataState }) => {
-        const newData = dataState
-          .map((item: any) => {
-            // Inverti `match` solo per la riga con lo stesso `id` della riga selezionata
-            if (item.id === row.id) {
+      setLocalProperties((prevProps) => {
+        const updatedProps = prevProps
+          .map((item) => {
+            // Inverti `match` solo per la riga con lo stesso `id` e `obj` della riga selezionata
+            if (item.id === row.id && item.obj === row.obj) {
               const newMatch = !item.match;
               // Aggiorna `selectedMetadata` in base al nuovo valore di `match`
               setSelectedMetadata(newMatch ? row.id : "");
               console.log("selectedMetadata", newMatch ? row.id : "");
-              handleConfirm(row.id);
+              handleConfirm(row.id, row.obj);
               return {
                 ...item,
                 match: newMatch,
@@ -446,40 +443,20 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
 
             // Restituisci le altre righe senza modifiche
             return item;
-          })
+          });
+        return [...updatedProps]
           .sort((a, b) => {
             // Sort by selected status first (selected items come first)
             if (a.selected !== b.selected) {
               return a.selected ? -1 : 1;
             }
             // Then sort by alphabetical order of the name
-            return a.name.value.localeCompare(b.name.value);
+            return a.name.localeCompare(b.name);
           });
-        return {
-          columns: colState,
-          data: newData,
-        };
-      });
-    },
-    [setState, setSelectedMetadata],
+        });
+      },
+    [setLocalProperties, setSelectedMetadata, handleConfirm],
   );
-
-  const fetchMetadata = (service: string) => {
-    const reconciliator = reconciliators.find(
-      (recon) => recon.prefix === service,
-    );
-    if (reconciliator && column) {
-      // dispatch(reconcile({
-      //   baseUrl: reconciliator.relativeUrl,
-      //   items: [{
-      //     id: column.id,
-      //     label: column.label
-      //   }],
-      //   reconciliator,
-      //   contextColumns: []
-      // }));
-    }
-  };
 
   const onSubmitNewMetadata = async (formState: Property) => {
     if (!column) return;
@@ -492,11 +469,9 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
       );
       const finalId = `${cleanPrefix}:${idFromUri}`;
 
-      const existingProperties = column?.metadata?.[0]?.property || [];
-
-      const isDuplicate = existingProperties.some((prop: any) => {
+      const isDuplicate = localProperties.some((prop: any) => {
         const existingId = prop.id.includes(":") ? prop.id.split(":")[1] : prop.id;
-        return existingId === idFromUri && prop.subj === subj && prop.obj === obj;
+        return existingId === idFromUri && prop.obj === obj;
       });
 
       if (isDuplicate) {
@@ -518,7 +493,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
       let description = "";
       try {
         const result = await fetchTypeAndDescription(
-          prefix.replace(/:$/, ""),
+          cleanPrefix,
           idFromUri,
           formState.name,
         );
@@ -527,16 +502,34 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
         console.error("Error fetching metadata info:", err);
       }
 
-      dispatch(
-        addColumnMetadata({
+      const newPropertyItem = {
+        ...formState,
+        id: finalId,
+        uri: finalUri,
+        description: description || "",
+        selected: true,
+        decider: "human",
+      };
+
+      if (!isLiteral) {
+        addEdit(addColumnMetadata({
           colId: column.id,
           type: "property",
           prefix,
           value: { ...formState, id: finalId, uri: finalUri, description },
-        }),
-        true,
-      );
-      addEdit(updateColumnRole({ colId: subj, role: "subject" }), true, true);
+        }), true);
+
+        setLocalProperties((prev) => [...prev, newPropertyItem]);
+        reset();
+      } else {
+        dispatch(addColumnMetadata({
+          colId: column.id,
+          type: "property",
+          prefix,
+          value: { ...formState, id: finalId, uri: finalUri, description },
+        }), true);
+      }
+
       reset();
       setCurrentRole("subject");
       setShowAdd(false);
@@ -721,13 +714,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
                         <Button
                           variant="outlined"
                           color="primary"
-                          onClick={() =>
-                            window.open(
-                              wikiInfo.url,
-                              "_blank",
-                              "noopener,noreferrer",
-                            )
-                          }
+                          onClick={() => window.open(wikiInfo.url, "_blank", "noopener,noreferrer")}
                           sx={{ textTransform: "none" }}
                         >
                           Wikidata
@@ -771,7 +758,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
                   otherColumns={otherColumns || []}
                   context="propertyTab"
                   colId={currentColumnId}
-                  columnKind={currentColumnKind}
+                  columnKind={effectiveKind}
                 />
               </Box>
             )}

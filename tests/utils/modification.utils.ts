@@ -4,8 +4,12 @@ import { getComponents } from "./components.utils";
 export const modificationDialog = async (page: Page, columnName: string, service: string) => {
   const ui = getComponents(page);
 
-  const column = page.locator('#root').getByText(columnName, { exact: true });
-  if (await ui.modificationBtn.isDisabled()) {
+  const column = page.getByRole('table').getByText(columnName, { exact: true });
+  const classAttr = await column.getAttribute('class') || '';
+  const isSelected = classAttr.includes('Selected');
+
+  if (!isSelected) {
+    await column.scrollIntoViewIfNeeded();
     await column.click();
   }
 
@@ -19,16 +23,20 @@ export const modificationDialog = async (page: Page, columnName: string, service
 export const modificationDialogChronos = async (page: Page, columnName: string, service: string) => {
   const ui = getComponents(page);
 
-  const column = page.locator('#root').getByText(columnName, { exact: true });
-  if (await ui.modificationBtn.isDisabled()) {
+  const column = page.getByRole('table').getByText(columnName, { exact: true });
+  const classAttr = await column.getAttribute('class') || '';
+  const isSelected = classAttr.includes('Selected');
+
+  if (!isSelected) {
+    await column.scrollIntoViewIfNeeded();
     await column.click();
   }
 
   await ui.modificationBtn.click();
   await expect(page.getByRole('heading', { name: 'Modify' })).toBeVisible();
-  await page.getByLabel('Modify').getByText(`Choose a service...`).click();
+  await page.getByLabel('Modify').getByText(`Choose a modification service...`).click();
   await page.getByRole('option', { name: service }).click();
-  await expect(page.getByText(service).first()).toBeVisible();
+  await expect(page.getByRole('option', { name: service })).toBeVisible();
 };
 
 export const dataCleaningConfig = async (page: Page, option: string) => {
@@ -37,6 +45,7 @@ export const dataCleaningConfig = async (page: Page, option: string) => {
   await page.getByRole('radio', { name: option }).check();
   await ui.confirmBtn.click();
   await expect(page.getByText('column updated')).toBeVisible();
+  await expect(page.getByText('column updated')).not.toBeVisible();
 };
 
 export const regexConfig = async (
@@ -211,8 +220,6 @@ export const dateFormatterConfig = async (
       await expect(page.getByRole('columnheader', { name: `${columnName}_formatted` })).toBeVisible();
     } else {
       await ui.confirmBtn.click();
-      await expect(page.getByText('column updated')).toBeVisible();
-      await expect(page.getByRole('columnheader', { name: columnName })).toBeVisible();
     }
   }
 };

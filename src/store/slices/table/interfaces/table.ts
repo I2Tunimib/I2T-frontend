@@ -228,6 +228,7 @@ export interface BaseMetadata {
   match: boolean;
   score: number;
   type?: BaseMetadata[];
+  decider?: "machine" | "human";
 }
 
 export interface ColumnMetadata extends BaseMetadata {
@@ -237,6 +238,7 @@ export interface ColumnMetadata extends BaseMetadata {
 
 export interface PropertyMetadata extends BaseMetadata {
   obj?: ID;
+  decider?: "machine" | "human";
 }
 
 /**

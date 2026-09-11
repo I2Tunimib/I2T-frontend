@@ -11,7 +11,7 @@ export const confirmClose = async (page: Page) => {
 export const columnDialog = async (page: Page, columnName: string) => {
   const ui = getComponents(page);
 
-  const column = page.locator('#root').getByText(columnName, { exact: true });
+  const column = page.getByRole('table').getByText(columnName, { exact: true });
   await column.click();
 
   await ui.metadataBtn.click();
@@ -38,9 +38,10 @@ export const addPropertyEntities = async (
 ) => {
   const ui = getComponents(page);
 
+  await expect(ui.addPropertyBtn).toBeVisible();
   await ui.addPropertyBtn.click();
-  await expect(ui.viewBtn).toBeVisible();
-  await ui.viewBtn.click();
+  await expect(page.getByRole('button', { name: 'Wikidata: Items' })).toBeVisible();
+  await page.getByRole('button', { name: 'Wikidata: Items' }).click();
 
   const pageKGPromise = page.waitForEvent('popup');
   const pageKGList = await pageKGPromise;
@@ -65,7 +66,7 @@ export const addPropertyEntities = async (
   await objSelect.click();
   await page.getByRole('option', { name: columnObj }).click();
   await ui.addBtn.click();
-  await expect(page.getByRole('cell', { name: `${prefix}:${propId}` })).toBeVisible();
+  await expect(page.getByRole('cell', { name: `${prefix}:${propId}` })).toBeVisible({ timeout: 100000 });
 
   await confirmClose(page);
 };
@@ -91,8 +92,10 @@ export const checkPropsLiteral = async (
 ) => {
   const ui = getComponents(page);
 
-  await expect(ui.viewBtn).toBeVisible();
-  await ui.viewBtn.click();
+  await expect(ui.addPropertyBtn).toBeVisible();
+  await ui.addPropertyBtn.click();
+  await expect(page.getByRole('button', { name: 'Wikidata: Point in time' })).toBeVisible();
+  await page.getByRole('button', { name: 'Wikidata: Point in time' }).click();
 
   const pageKGPromise = page.waitForEvent('popup');
   const pageKGList = await pageKGPromise;
