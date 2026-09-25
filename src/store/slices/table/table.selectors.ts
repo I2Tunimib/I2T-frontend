@@ -3,6 +3,7 @@ import { floor } from "@services/utils/math";
 import { RootState } from "@store";
 import { getRequestStatus } from "@store/enhancers/requests";
 import { ID } from "@store/interfaces/store";
+import { resolveURI } from "@services/utils/uri-utils";
 import {
   selectAppConfig,
   selectReconciliators,
@@ -24,6 +25,8 @@ const selectRowsState = (state: RootState) => state.table.entities.rows;
 const selectUIState = (state: RootState) => state.table.ui;
 const selectRequests = (state: RootState) => state.table._requests;
 const selectDraftState = (state: RootState) => state.table._draft;
+export const selectDependencies = (state: RootState) =>
+  state.table.dependencies;
 const selectReconciliatorById = (state: RootState, { value }: any) => {
   // return reconId ? state.config.entities.reconciliators.byId[reconId] : undefined;
   return undefined;
@@ -388,6 +391,10 @@ export const selectExportDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openExportDialog,
 );
+export const selectComplianceDialogStatus = createSelector(
+  selectUIState,
+  (ui) => ui.openComplianceStatusDialog,
+);
 export const selectAutoAnnotationDialogStatus = createSelector(
   selectUIState,
   (ui) => ui.openAutoAnnotationDialog,
@@ -449,24 +456,23 @@ export const selectIsExtendButtonEnabled = createSelector(
   ({ selectedColumnsIds, selectedCellIds }, columns) => {
     const colIds = Object.keys(selectedColumnsIds);
     const cellIds = Object.keys(selectedCellIds);
-    if (colIds.length === 0) {
-      return false;
-    }
+
+    // Accept explicit column selection OR individual cell selection (cell click
+    // clears selectedColumnsIds via selectOneCell, so we must check both).
+    const effectiveColIds =
+      colIds.length > 0
+        ? colIds
+        : cellIds.map((cellId) => getIdsFromCell(cellId)[1]);
+
+    if (effectiveColIds.length === 0) return false;
+
+    // All selected cells must belong to one of the effective columns.
     const onlyColsSelected = !cellIds.some((cellId) => {
-      const [_, colId] = getIdsFromCell(cellId);
-      return !(colId in selectedColumnsIds);
+      const [, colId] = getIdsFromCell(cellId);
+      return !effectiveColIds.includes(colId);
     });
 
     return onlyColsSelected;
-    // if (onlyColsSelected) {
-    //   return colIds.some((colId) => {
-    //     const { context } = columns.byId[colId];
-    //     const totalReconciliated = Object.keys(context)
-    //       .reduce((acc, ctx) => acc + context[ctx].reconciliated, 0);
-    //     return totalReconciliated > 0;
-    //   });
-    // }
-    // return false;
   },
 );
 
@@ -491,19 +497,31 @@ export const selectIsModifyButtonEnabled = createSelector(
 export const selectAreCellReconciliated = createSelector(
   selectUIState,
   selectColumnsState,
-  ({ selectedColumnsIds }, columns) => {
-    const colIds = Object.keys(selectedColumnsIds);
+  selectRowsState,
+  (
+    { selectedColumnsIds, selectedCellIds, selectedColumnCellsIds },
+    columns,
+    rows,
+  ) => {
+    // Collect column IDs from every selection surface: explicit column
+    // selection, individual cell selection, and column-cell selection.
+    // selectOneCell clears selectedColumnsIds, so we must check all three.
+    const colIdSet = new Set<string>([
+      ...Object.keys(selectedColumnsIds),
+      ...Object.keys(selectedCellIds).map(
+        (cellId) => getIdsFromCell(cellId)[1],
+      ),
+      ...Object.keys(selectedColumnCellsIds),
+    ]);
 
-    return colIds.some((colId) => {
-      if (columns.byId[colId] && columns.byId[colId].context) {
-        const { context } = columns.byId[colId];
-        const totalReconciliated = Object.keys(context).reduce(
-          (acc, ctx) => acc + context[ctx].reconciliated,
-          0,
-        );
-        return totalReconciliated > 0;
-      }
-      return false;
+    return [...colIdSet].some((colId) => {
+      if (!columns.byId[colId]) return false;
+      // Check directly on the actual cell annotation meta rather than relying
+      // on the context reconciliated counter, which can be stale or miskeyed.
+      return rows.allIds.some((rowId) => {
+        const cell = rows.byId[rowId]?.cells?.[colId];
+        return cell?.annotationMeta?.match?.value === true;
+      });
     });
   },
 );
@@ -515,13 +533,20 @@ const getMetadata = (cell: Cell, cellContext: Context) => {
     return [];
   }
 
-  const metadata = cell.metadata.map((item) => ({
-    ...item,
-    url:
-      cellContext !== undefined
-        ? `${cellContext.uri}${item.id.split(":")[1]}`
-        : null,
-  }));
+  const metadata = cell.metadata.map((item) => {
+    const base = cellContext?.uri;
+    const metaId = item.id.split(":")[1];
+
+    const url = resolveURI(cellContext, {
+      id: metaId,
+      ...item,
+    });
+
+    return {
+      ...item,
+      url,
+    };
+  });
 
   if (cell.annotationMeta && !cell.annotationMeta.match) {
     return metadata;
@@ -690,15 +715,13 @@ export const selectColumnCellMetadataTableFormat = createSelector(
       const column = cols.byId[colId];
       console.log("obtained column", column);
       if (column.metadata.length > 0) {
-        if (column.metadata[0].entity && column.metadata[0].entity.length > 0) {
-          const cellContext = column.metadata[0].entity[0].id.split(":")[0];
-          const service = reconciliators.byId[cellContext];
-          if (service) {
-            return {
-              column,
-              service,
-            };
-          }
+        const cellContext = column.reconciler;
+        const service = reconciliators.byId[cellContext];
+        if (service) {
+          return {
+            column,
+            service,
+          };
         } else if (
           column.metadata[0].property &&
           column.metadata[0].property.length > 0
@@ -718,7 +741,6 @@ export const selectColumnCellMetadataTableFormat = createSelector(
           ...column,
           metadata: [
             {
-              entity: [],
               property: [],
             },
           ],
@@ -789,6 +811,17 @@ export const selectColumnKind = createSelector(
     return columnsState.byId[colId]?.kind;
   },
 );
+export const selectColumnDatatype = createSelector(
+  selectSelectedColumnCellsIds,
+  selectMetadataColumnDialogColId,
+  selectRowsState,
+  selectColumnsState,
+  (selectedColumnCells, dialogColId, rowsState, columnsState) => {
+    const colIds = Object.keys(selectedColumnCells);
+    const colId = dialogColId ?? colIds[0];
+    return columnsState.byId[colId]?.datatype;
+  },
+);
 export const selecteSelectedColumnId = createSelector(
   selectSelectedColumnCellsIds,
   selectRowsState,
@@ -829,19 +862,22 @@ export const selectColumnTypes = createSelector(
         metadata.forEach((metaItem) => {
           if (metaItem.type && metaItem.match) {
             console.log("metaItem", metaItem);
-            metaItem.type.forEach(({ id, name }) => {
+            metaItem.type.forEach(({ id, name, uri }) => {
               console.log("name in forEach", name);
-              if (acc[id]) {
-                acc[id] = {
-                  ...acc[id],
-                  count: ++acc[id].count,
+              const cleanId = id.includes(":") ? id.split(":")[1] : id;
+              if (acc[cleanId]) {
+                acc[cleanId] = {
+                  ...acc[cleanId],
+                  count: ++acc[cleanId].count,
                 };
               } else {
-                acc[id] = {
-                  id,
+                acc[cleanId] = {
+                  id: cleanId,
                   label: name as any,
+                  uri,
                   count: 1,
                   match: metaItem.match,
+                  decider: metaItem.decider,
                 };
               }
             });
@@ -851,53 +887,50 @@ export const selectColumnTypes = createSelector(
       },
       {} as Record<
         string,
-        { id: string; count: number; label: string; match?: any }
+        { id: string; count: number; label: string; match?: any; decider?: string }
       >,
     );
     console.log("test map", map);
     // add current type
     const currentColType: any[] = [];
     const currentTypesIds = [];
-    let additionalTypes = [];
-    if (
-      columnsState.byId[colId] &&
-      columnsState.byId[colId].metadata &&
-      columnsState.byId[colId].metadata[0]
-    ) {
-      additionalTypes =
-        columnsState.byId[colId].metadata[0].additionalTypes ?? [];
-    }
+    const columnMatchMap: Record<string, boolean> = {};
     if (columnsState.byId[colId].metadata.length > 0) {
       if (
         columnsState.byId[colId].metadata[0] &&
         columnsState.byId[colId].metadata[0].type
       ) {
+        columnsState.byId[colId].metadata[0].type.forEach((t: any) => {
+          const cleanId = t.id.includes(":") ? t.id.split(":")[1] : t.id;
+          columnMatchMap[cleanId] = t.match;
+        });
         const metaItem = columnsState.byId[colId].metadata[0];
         console.log("current meta item", metaItem);
         if (metaItem.type) {
           for (let i = 0; i < metaItem.type.length; i++) {
+            const cleanId = metaItem.type[i].id.includes(":") ? metaItem.type[i].id.split(":")[1] : metaItem.type[i].id;
             currentColType.push(metaItem.type[i]);
-            currentTypesIds.push(metaItem.type[i].id);
+            currentTypesIds.push(cleanId);
           }
         }
         if (currentColType.length > 0) {
           for (let i = 0; i < currentColType.length; i++) {
-            if (!map[currentColType[i].id]) {
-              console.log("current name test ", currentColType[i].name);
-              map[currentColType[i].id] = {
-                id: currentColType[i].id,
+            const cleanId = currentColType[i].id.includes(":") ? currentColType[i].id.split(":")[1] : currentColType[i].id;
+            if (!map[cleanId]) {
+              console.log("current name test ", cleanId.name);
+              map[cleanId] = {
+                id: cleanId,
                 label: currentColType[i].name as any,
+                uri: currentColType[i].uri,
                 match: currentColType[i].match,
                 count: 0,
+                decider: currentColType[i].decider,
               };
             }
           }
         }
       }
     }
-    additionalTypes = additionalTypes.filter(
-      (type) => !currentTypesIds.includes(type.id),
-    );
     const totalCount = Object.keys(map).reduce(
       (acc, key) => acc + map[key].count,
       0,
@@ -906,39 +939,23 @@ export const selectColumnTypes = createSelector(
     //TODO: transform into an array
     const selectedType: any[] = [];
 
-    console.log("additional types", additionalTypes, currentTypesIds);
     console.log("currentmap", map);
     const allTypes = Object.keys(map)
       .map((key) => {
+        const isMatched = columnMatchMap[key] !== undefined ? columnMatchMap[key] : map[key].match;
         const item = {
           ...map[key],
+          match: isMatched,
           percentage: (totalCount !== 0
             ? (map[key].count / totalCount) * 100
             : 0
           ).toFixed(2),
         };
-        if (currentColType && item.match) {
+        if (item.match) {
           selectedType.push(item);
         }
         return item;
       })
-      .concat(
-        additionalTypes.map((type) => {
-          // ensure additional types carry a match flag and are treated similarly to existing types
-          const t = {
-            id: type.id,
-            label: type.name,
-            count: 0,
-            percentage: "0.00",
-            match: !!type.match,
-          };
-          // if the additional type is already marked as matched, include it in selectedType
-          if (t.match) {
-            selectedType.push(t);
-          }
-          return t;
-        }),
-      )
       .sort((a, b) => b.count - a.count);
 
     return {

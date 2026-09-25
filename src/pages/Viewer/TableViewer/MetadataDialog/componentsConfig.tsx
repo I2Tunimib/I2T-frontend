@@ -18,10 +18,9 @@ export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
         : cellValue.value
       : cellValue;
 
-  const uri = cellValue?.uri;
-  console.log("cell uri", uri, "displayValue", displayValue);
+  const finalHref = cellValue?.uri || "";
 
-  if (!uri) {
+  if (!finalHref) {
     // If the URI is empty, render plain text instead of a clickable link
     return (
       <Typography variant="body2" color="textSecondary">
@@ -34,7 +33,7 @@ export const ResourceLink = ({ getValue }: CellContext<any, any>) => {
     <Link
       onClick={(event) => event.stopPropagation()}
       title={displayValue}
-      href={uri ?? "#"}
+      href={finalHref ?? "#"}
       target="_blank"
     >
       {displayValue}
@@ -48,6 +47,17 @@ export const MatchCell = ({ getValue }: CellContext<any, any>) => {
     <Tag size="medium" status={value ? "done" : "doing"}>
       {`${value}`}
     </Tag>
+  );
+};
+
+export const DeciderTagCell = ({ getValue }: CellContext<any, any>) => {
+  const value = getValue();
+  if (!value) return null;
+
+  return (
+    <span style={{ fontStyle: "italic", color: "#888", fontWeight: "normal" }}>
+      {value}
+    </span>
   );
 };
 
@@ -124,6 +134,7 @@ export const CheckBoxCell = ({
 };
 export const CELL_COMPONENTS_TYPES = {
   tag: MatchCell,
+  deciderTag: DeciderTagCell,
   link: ResourceLink,
   subList: Expander,
   checkBox: CheckBoxCell,

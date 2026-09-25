@@ -1,18 +1,43 @@
 import useIsMounted from "@hooks/is-mounted/useIsMounted";
 import { useAppDispatch } from "@hooks/store";
 import { exportTable } from "@store/slices/table/table.thunk";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import JsonView from "react18-json-view";
+import datasetAPI from "@services/api/datasets";
 import "react18-json-view/src/style.css";
 import { useParams } from "react-router-dom";
 import styles from "./W3CViewer.module.scss";
 
-const W3CViewer = () => {
+interface W3CViewerProps {
+  externalData?: any;
+}
+
+const W3CViewer : FC<W3CViewerProps> = ({ externalData }) => {
   const [data, setData] = useState<any>();
   const isMounted = useIsMounted();
   const params = useParams<{ datasetId: string; tableId: string }>();
 
   const dispatch = useAppDispatch();
+
+  async function convertToW3C() {
+    if (externalData) {
+      setData(externalData);
+      return;
+    }
+
+    if (params.tableId) {
+      const res = await dispatch(
+        exportTable({ format: "JSON (W3C Compliant)", params })
+      ).unwrap();
+      setData(res);
+    } else if (params.datasetId && window.location.pathname.includes('/tables')) {
+      const res = await datasetAPI.getTablesByDataset({ datasetId: params.datasetId });
+      setData(res.data.collection);
+    } else {
+      const res = await datasetAPI.getDataset();
+      setData(res.data.collection);
+    }
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -34,13 +59,8 @@ const W3CViewer = () => {
     return () => {
       mounted = false;
     };
-  }, []);
-  async function convertToW3C() {
-    const res = await dispatch(
-      exportTable({ format: "JSON (W3C Compliant)", params }),
-    ).unwrap();
-    setData(res);
-  }
+  }, [params.datasetId, params.tableId, externalData]);
+
   return (
     <div className={styles.Container}>
       <JsonView
@@ -68,6 +88,7 @@ const W3CViewer = () => {
           }
           return true;
         }}
+        collapsed={(window.location.pathname.includes('/datasets/') && window.location.pathname.includes('/tables/')) ? undefined : 2}
       />
       {/* <Typography component="pre" variant="caption" className={styles.Pre}>
         {data && JSON.stringify(data, null, 2)}

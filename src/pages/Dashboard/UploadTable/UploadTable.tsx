@@ -89,11 +89,9 @@ const UploadTable = () => {
       <DialogTitle>Add table</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          <p>
-            Select a table to upload. Please refer to the
-            <b> (?) </b>
-            for more information about the supported table formats.
-          </p>
+          Select a table to upload. Please refer to the
+          <b> (?) </b>
+          for more information about the supported table formats.
         </DialogContentText>
         <Stack padding="10px 0" gap="10px">
           <TextField

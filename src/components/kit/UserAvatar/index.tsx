@@ -7,6 +7,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  IconButtonProps,
 } from "@mui/material";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { authLogout } from "@store/slices/auth/auth.thunk";
@@ -14,9 +15,9 @@ import { logoutServer } from "../../../keycloak";
 import { useState, PropsWithChildren, MouseEvent } from "react";
 import { useHistory } from "react-router-dom";
 
-type UserAvatarProps = PropsWithChildren<{}>;
+type UserAvatarProps = PropsWithChildren<IconButtonProps>;
 
-const UserAvatar = ({ children }: UserAvatarProps) => {
+const UserAvatar = ({ children, ...props }: UserAvatarProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const history = useHistory();
@@ -41,7 +42,7 @@ const UserAvatar = ({ children }: UserAvatarProps) => {
 
   return (
     <>
-      <IconButton onClick={handleClick}>
+      <IconButton {...props} onClick={handleClick}>
         <Avatar sx={{ width: 34, height: 34 }}>{children}</Avatar>
       </IconButton>
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>

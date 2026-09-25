@@ -13,10 +13,13 @@ import { ButtonShortcut } from "@components/kit";
 import { ColumnStatus } from "@store/slices/table/interfaces/table";
 import { RootState } from "@store";
 import { connect } from "react-redux";
-import { selectColumnReconciliators } from "@store/slices/table/table.selectors";
+import {
+  selectColumnReconciliators,
+  selectIsViewOnly,
+} from "@store/slices/table/table.selectors";
 import { updateUI } from "@store/slices/table/table.slice";
-import { useAppDispatch } from "@hooks/store";
-import { forwardRef, useCallback, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
+import { forwardRef, useCallback, useMemo, useState } from "react";
 import { capitalize } from "@services/utils/text-utils";
 import { StatusBadge } from "@components/core";
 import { useSortable } from "@dnd-kit/sortable";
@@ -28,12 +31,14 @@ import { sortFunctions } from "../Table/sort/sortFns";
 
 const SortButton = styled(IconButton)({});
 
-const getKind = (kind: string) => {
+const getKind = (kind: string, datatype?: string) => {
+  const datatypeSuffix = datatype && datatype !== "none" ? ` (${datatype})` : "";
   if (kind === "entity") {
     return (
       <ButtonShortcut
+        aria-label="kind-entity"
         text="E"
-        tooltipText="Named Entity"
+        tooltipText={`Named Entity${datatypeSuffix}`}
         size="xs"
         variant="flat"
         color="blue"
@@ -43,8 +48,9 @@ const getKind = (kind: string) => {
   if (kind === "literal") {
     return (
       <ButtonShortcut
+        aria-label="kind-literal"
         text="L"
-        tooltipText="Literal"
+        tooltipText={`Literal${datatypeSuffix}`}
         size="xs"
         variant="flat"
         color="green"
@@ -80,6 +86,9 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       data,
       settings,
       style,
+      tableInstance,
+      complianceStatus,
+      compliance,
     }: any,
     ref,
   ) => {
@@ -87,8 +96,59 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
     const [hover, setHover] = useState<boolean>(false);
     const { lowerBound } = settings;
     const columnData = header.column.columnDef.data;
-    console.log("*** header data props", data);
-    console.log("*** header columnData", columnData);
+    const getColumnComplianceStatus = useCallback(() => {
+      console.log("DEBUG compliance", compliance);
+      if (!compliance || complianceStatus !== "DONE" || !compliance.length) {
+        return null;
+      }
+
+      // Get table-level GDPR status
+      const tableInfo = compliance[0]?.table;
+      if (!tableInfo) return null;
+
+      const isTableCompliant = tableInfo.gdpr === "noGDPR";
+
+      const colId = header.column.id;
+      const columnCompliance = compliance.find((item: any) => item.hasOwnProperty(colId));
+
+      if (columnCompliance) {
+        const colData = columnCompliance[colId];
+        console.log("DEBUG colData", colData);
+
+        // Column is compliant if classification is NOT personalData
+        // AND action is noChange
+        const isColumnCompliant =
+          colData.classification === "nonPersonalData" &&
+          colData.action === "noChange";
+
+        return {
+          isCompliant: isTableCompliant && isColumnCompliant,
+          classification: colData.classification,
+          action: colData.action,
+          reasoning: colData.reasoning,
+          score: colData.score,
+        };
+      }
+
+      return null;
+    }, [compliance, complianceStatus, children]);
+
+    const getComplianceClassificationBadge = (classification: string) => {
+      console.log("classification", classification);
+      switch (classification) {
+        case "personalData":
+          return { text: "PD", color: "crimson", label: "Personal Data" };
+        case "quasiIdentifiers":
+          return { text: "QI", color: "orange", label: "Quasi Identifier" };
+        case "nonPersonalData":
+          return { text: "NPD", color: "forestgreen", label: "Non-Personal Data" };
+        case "anonymousData":
+          return { text: "AD", color: "dodgerblue", label: "Anonymous Data" };
+        default:
+          return null;
+      }
+    };
+
     const {
       attributes,
       listeners,
@@ -134,11 +194,28 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       });
     }, [id, rowsState]);
 
+    const hasTextAnnotations = useMemo(() => {
+      if (id === "index" || !rowsState?.allIds) return false;
+      return rowsState.allIds.some((rowId: string) => {
+        const cell = rowsState.byId[rowId]?.cells?.[id];
+        return (
+          cell?.annotations &&
+          Object.values(cell.annotations as Record<string, any[]>).some(
+            (anns) => anns.length > 0,
+          )
+        );
+      });
+    }, [id, rowsState]);
+
     const getBadgeStatus = useCallback(
       (column: any) => {
-        const {
-          annotationMeta: { annotated, match, highestScore },
-        } = column;
+        // Safely extract annotationMeta fields with defaults to avoid runtime errors
+        const annotated = !!column?.annotationMeta?.annotated;
+        const match = column?.annotationMeta?.match ?? {};
+        const highestScore =
+          typeof column?.annotationMeta?.highestScore === "number"
+            ? column.annotationMeta.highestScore
+            : 0;
 
         // Check if all cells in this column are actually reconciled
         // Skip check for index column
@@ -154,7 +231,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
           // If ALL cells are reconciled, show green badge
           if (allCellsReconciled) {
-            if (match.value) {
+            if (match?.value) {
               switch (match.reason) {
                 case "manual":
                   return "match-manual";
@@ -190,19 +267,25 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
         }
 
         // Below checks are fallback for when rowsState is not available
+        // Ensure metadata exists and is an array before accessing it
         if (
           annotated &&
+          Array.isArray(column?.metadata) &&
           column.metadata.length > 0 &&
-          column.metadata[0].entity &&
+          column.metadata[0]?.entity &&
+          Array.isArray(column.metadata[0].entity) &&
           column.metadata[0].entity.length === 0
         ) {
           return "miss";
         }
 
-        const { isScoreLowerBoundEnabled, scoreLowerBound } = lowerBound;
+        const { isScoreLowerBoundEnabled, scoreLowerBound } = lowerBound || {};
 
         if (isScoreLowerBoundEnabled) {
-          if (scoreLowerBound && highestScore < scoreLowerBound) {
+          if (
+            typeof scoreLowerBound === "number" &&
+            highestScore < scoreLowerBound
+          ) {
             return "miss";
           }
         }
@@ -226,11 +309,17 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
       return "";
     };
 
+    const isViewOnly = useAppSelector(selectIsViewOnly);
+
     const handleMetadataDialogAction = (colId: string) => {
+      if (isViewOnly) {
+        return;
+      }
       dispatch(
         updateUI({
           openMetadataColumnDialog: true,
           metadataColumnDialogColId: colId,
+          metadataColumnDialogInitialTab: 0,
         }),
       );
     };
@@ -302,6 +391,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   arrow
                 >
                   <IconButton
+                    aria-label={header.column.getIsPinned() ? 'unpin-column' : 'pin-column'}
                     onClick={(e) => {
                       e.stopPropagation();
                       const isAlreadySelected = !!selected;
@@ -330,11 +420,14 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     if (!isAlreadySelected) {
                       handleSelectedColumnCellChange(e, id);
                     }
-                    handleMetadataDialogAction(header.column.id);
+                    if (!isViewOnly) {
+                      handleMetadataDialogAction(header.column.id);
+                    }
                   }}
                   className={styles.ColumnManageButton}
                   sx={{ marginBottom: 15 }}
                   size="small"
+                  disabled={isViewOnly}
                   title=""
                 >
                   <SettingsEthernetRoundedIcon fontSize="medium" />
@@ -345,6 +438,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                   <div className={styles.Row}>
                     {shouldShowBadge() && (
                       <StatusBadge
+                        aria-label={`status-${getBadgeStatus(columnData)}`}
                         status={getBadgeStatus(columnData)}
                         size="small"
                         marginRight="5px"
@@ -372,6 +466,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
+                          aria-label="sort-alphabetical"
                           onClick={(e) => {
                             e.stopPropagation();
                             const isAlreadySelected = !!selected;
@@ -406,6 +501,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         arrow
                       >
                         <SortButton
+                          aria-label="sort-score"
                           onClick={(e) => {
                             e.stopPropagation();
                             const isAlreadySelected = !!selected;
@@ -438,9 +534,10 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         </SortButton>
                       </Tooltip>
                     </Stack>
-                    {columnData.kind && getKind(columnData.kind)}
+                    {columnData.kind && getKind(columnData.kind, columnData?.datatype)}
                     {columnData.role && (
                       <ButtonShortcut
+                        aria-label="role-subject"
                         className={styles.SubjectLabel}
                         tooltipText={capitalize(columnData.role)}
                         text={columnData.role[0].toUpperCase()}
@@ -449,6 +546,79 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                         size="xs"
                       />
                     )}
+                    {hasTextAnnotations && (
+                      <ButtonShortcut
+                        aria-label="kind-ner"
+                        text="AT"
+                        tooltipText="Annotated Text"
+                        size="xs"
+                        variant="flat"
+                        color="teal"
+                      />
+                    )}
+                    {complianceStatus === "DONE" &&
+                      (() => {
+                        const complianceInfo = getColumnComplianceStatus();
+                        if (!complianceInfo) return null;
+
+                        const tooltipContent = (
+                          <Box sx={{ whiteSpace: "pre-line" }}>
+                            {`GDPR: ${complianceInfo.action === "noChange" ? "Compliant" : "Non-Compliant"}
+Classification: ${complianceInfo.classification}
+Action: ${complianceInfo.action}
+${complianceInfo.reasoning}
+Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
+                          </Box>
+                        );
+
+                        const classifBadge = getComplianceClassificationBadge(complianceInfo.classification);
+                        return (
+                          <Stack direction="row" alignItems="center">
+                            <Tooltip title={tooltipContent} arrow placement="top">
+                              <Box
+                                component="span"
+                                sx={{ display: "inline-flex" }}
+                              >
+                                <ButtonShortcut
+                                  aria-label="compliance-badge"
+                                  text={
+                                    complianceInfo.action === "noChange"
+                                      ? "C"
+                                      : "C̸"
+                                  }
+                                  tooltipText=""
+                                  size="xs"
+                                  variant="flat"
+                                  color={
+                                    complianceInfo.action === "noChange"
+                                      ? "teal"
+                                      : "crimson"
+                                }
+                                />
+                              </Box>
+                            </Tooltip>
+                            <Tooltip
+                              title={`${classifBadge.label} (Confidence: ${(complianceInfo.score * 100).toFixed(0)}%)`}
+                              arrow
+                              placement="top"
+                            >
+                              <Box
+                                component="span"
+                                sx={{ display: "inline-flex" }}
+                              >
+                                <ButtonShortcut
+                                  aria-label="compliance-classification"
+                                  text={classifBadge.text}
+                                  tooltipText=""
+                                  size="xs"
+                                  variant="flat"
+                                  color={classifBadge.color}
+                                />
+                              </Box>
+                            </Tooltip>
+                          </Stack>
+                        );
+                      })()}
                   </div>
                   {columnData.status === ColumnStatus.RECONCILIATED ? (
                     <Stack
@@ -503,9 +673,18 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
 
 const mapStateToProps = (state: RootState, props: any) => {
   const columnData = props.header?.column?.columnDef?.data;
+  console.log("DEBUG Mapping state to props:", state.table.entities.tableInstance);
+  const tableInstance = state.table.entities.tableInstance;
+
+  const reports = tableInstance?.complianceReports || [];
+
+  const latestReport = reports.length > 0 ? reports[reports.length - 1] : null;
   return {
     reconciliators: selectColumnReconciliators(state, { data: columnData }),
     rowsState: state.table.entities.rows,
+    tableInstance: tableInstance,
+    complianceStatus: tableInstance.complianceStatus,
+    compliance: latestReport?.result || [],
   };
 };
 

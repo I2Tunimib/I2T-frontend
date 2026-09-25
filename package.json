@@ -15,6 +15,7 @@
     "axios": "^0.21.1",
     "axios-cache-adapter": "^2.7.3",
     "clsx": "^1.1.1",
+    "d3-hierarchy": "^3.1.2",
     "date-fns": "^4.1.0",
     "history": "^5.0.1",
     "immer": "^9.0.5",
@@ -61,6 +62,7 @@
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^3.0.0",
+    "@types/d3-hierarchy": "^3.1.7",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.20",
     "@types/node": "^24.3.0",

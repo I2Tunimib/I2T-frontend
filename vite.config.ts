@@ -13,6 +13,13 @@ export default defineConfig({
     strictPort: true,
     open: false,
     host: true,
+    headers: {
+      // Prevent the browser from caching Vite's pre-bundled dep chunks.
+      // Without this, a Vite restart changes the ?v=HASH fingerprint while
+      // the browser still holds the old URL, causing "error loading dynamically
+      // imported module" on every page reload.
+      "Cache-Control": "no-store",
+    },
   },
   plugins: [react(), viteTsconfigPaths(), svgrPlugin()],
   css: {

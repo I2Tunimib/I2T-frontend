@@ -61,6 +61,7 @@ const tableAPI = {
   exportTable: (
     format: string,
     params: Record<string, string | number> = {},
+    payload?: any,
   ) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
@@ -73,6 +74,13 @@ const tableAPI = {
 
       headers["X-Table-Dataset-Info"] =
         `tableId:${cleanTableId};datasetId:${cleanDatasetId}`;
+    }
+    if (payload) {
+      return apiClient.post(
+        apiEndpoint({ endpoint: "EXPORT", subEndpoint: format, paramsValue: params }),
+        payload,
+        { headers, responseType: 'blob' }
+      );
     }
     return apiClient.get<any>(
       apiEndpoint({
@@ -183,6 +191,49 @@ const tableAPI = {
       },
     );
   },
+  makeCompliance: (params: Record<string, string | number> = {}, data: any) => {
+    return apiClient.post<any>(
+      apiEndpoint({
+        endpoint: "COMPLIANCE",
+        paramsValue: { ...params },
+      }),
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    );
+  },
+  downloadComplianceReport: (params: Record<string, string | number> = {}, format: "json" | "md" = "json") => {
+    const url = apiEndpoint({
+      endpoint: "DOWNLOAD_COMPLIANCE_REPORT",
+      paramsValue: { ...params },
+    });
+    return apiClient.get<Blob>(
+      `${url}?format=${format}`,
+      {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    );
+  },
+  getDependencies: (params: Record<string, string | number> = {}) => {
+    return apiClient.get<any>(
+      apiEndpoint({
+        endpoint: "GET_DEPENDENCIES",
+        paramsValue: { ...params },
+      }),
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    );
+  },
   reconcile: (
     baseUrl: string,
     data: any,
@@ -190,6 +241,7 @@ const tableAPI = {
     datasetId?: string,
     columnName?: string,
     cancelToken?: CancelToken,
+    noLog?: boolean,
   ) => {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
@@ -208,10 +260,12 @@ const tableAPI = {
         ? columnName.replace(/\uFEFF/g, "").trim()
         : "";
 
+      // noLog flag is piggybacked onto the already-CORS-allowed header so no
+      // new header is needed (avoids CORS preflight rejection).
       headers["X-Table-Dataset-Info"] =
         `tableId:${cleanTableId};datasetId:${cleanDatasetId}${
           cleanColumnName ? `;columnName:${cleanColumnName}` : ""
-        }`;
+        }${noLog ? ";skipLog=1" : ""}`;
     }
     console.log("Reconciliation request headers:", headers);
 
@@ -324,6 +378,48 @@ const tableAPI = {
     apiClient.post(`/suggestion${baseUrl}`, data),
   getChallengeDatasets: () =>
     apiClient.get<ChallengeTableDataset[]>("/tables/challenge/datasets"),
+  getOperationDownstreamDeps: (params: Record<string, string | number>) =>
+    apiClient.get<{ opId: string; downstreamDeps: string[] }>(
+      apiEndpoint({
+        endpoint: "GET_OPERATION_DOWNSTREAM_DEPS",
+        paramsValue: params,
+      }),
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    ),
+
+  deleteOperation: (params: Record<string, string | number>) =>
+    apiClient.delete<{ deleted: string[] }>(
+      apiEndpoint({
+        endpoint: "DELETE_OPERATION",
+        paramsValue: params,
+      }),
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    ),
+
+  redoOperation: (params: Record<string, string | number>) =>
+    apiClient.post<any>(
+      apiEndpoint({
+        endpoint: "REDO_OPERATION",
+        paramsValue: params,
+      }),
+      {},
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    ),
+
   getChallengeTable: (datasetName: string, tableName: string) =>
     apiClient.get(
       `/tables/challenge/datasets/${datasetName}/tables/${tableName}`,

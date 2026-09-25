@@ -50,8 +50,23 @@ export const isColumnPartialAnnotated = (
   state: Draft<TableState>,
   colId: string,
 ) => {
-  const { context } = getColumn(state, colId);
-  return Object.keys(context).some((key) => context[key].total > 0);
+  // A column is considered partially annotated when at least one cell in the column
+  // contains metadata OR has been manually/automatically annotated (annotationMeta.annotated === true).
+  const rowIds = state.entities.rows.allIds || [];
+  for (let i = 0; i < rowIds.length; i++) {
+    const rowId = rowIds[i];
+    const cell = state.entities.rows.byId[rowId]?.cells?.[colId];
+    if (!cell) continue;
+    // If the cell has any metadata entries or the annotationMeta marks it as annotated,
+    // treat the column as partially annotated.
+    if (
+      (cell.metadata && cell.metadata.length > 0) ||
+      (cell.annotationMeta && cell.annotationMeta.annotated)
+    ) {
+      return true;
+    }
+  }
+  return false;
 };
 
 export const isCellReconciliated = ({ metadata }: Cell) => {

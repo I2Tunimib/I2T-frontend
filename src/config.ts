@@ -27,12 +27,31 @@ export type ApiConfig = {
     SAVE: Endpoint;
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
+    COMPLIANCE: Endpoint;
+    DOWNLOAD_COMPLIANCE_REPORT: Endpoint;
     EXPORT: Endpoint[];
     AUTH_SIGNIN: Endpoint;
     AUTH_SIGNUP: Endpoint;
     AUTH_VERIFY: Endpoint;
     AUTH_ME: Endpoint;
     TRACK: Endpoint;
+    GET_DEPENDENCIES: Endpoint;
+    GET_OPERATION_DOWNSTREAM_DEPS: Endpoint;
+    DELETE_OPERATION: Endpoint;
+    REDO_OPERATION: Endpoint;
+    // ACL endpoints
+    ADD_ACL_USER: Endpoint;
+    REMOVE_ACL_USER: Endpoint;
+    SET_VISIBILITY: Endpoint;
+    GET_TABLE_ACL: Endpoint;
+    ADD_TABLE_ACL_USER: Endpoint;
+    REMOVE_TABLE_ACL_USER: Endpoint;
+    SET_TABLE_VISIBILITY: Endpoint;
+    // Table locks
+    ACQUIRE_TABLE_LOCK: Endpoint;
+    RELEASE_TABLE_LOCK: Endpoint;
+    // Users
+    SEARCH_USERS: Endpoint;
   };
 };
 
@@ -93,7 +112,49 @@ const CONFIG: AppConfig = {
           name: "Endpoint 2",
         },
       ],
+      COMPLIANCE: {
+        path: "/dataset/:datasetId/table/:tableId/compliance",
+      },
+      DOWNLOAD_COMPLIANCE_REPORT: {
+        path: "/dataset/:datasetId/table/:tableId/compliance/:reportIndex",
+      },
+      GET_DEPENDENCIES: {
+        path: "/dataset/:datasetId/table/:tableId/dependencies",
+      },
+      GET_OPERATION_DOWNSTREAM_DEPS: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId/downstream",
+      },
+      DELETE_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId",
+      },
+      REDO_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId/redo",
+      },
       EXPORT: [
+        {
+          path: "/dataset/:datasetId/table/:tableId/export?format=schema_w3c",
+          name: "JSON Schema (W3C Compliant)",
+          params: {
+            extension: "json",
+            postDownload: (data: any) => JSON.stringify(data, null, 2),
+          },
+        },
+        {
+          path: "/dataset/:datasetId/table/:tableId/export?format=report_html",
+          name: "HTML Schema Report",
+          params: {
+            extension: "html",
+            postDownload: (data: any) => data,
+          },
+        },
+        {
+          path: "/dataset/:datasetId/table/:tableId/export?format=report_md",
+          name: "Markdown Schema Report",
+          params: {
+            extension: "md",
+            postDownload: (data: any) => data,
+          },
+        },
         {
           path: "/dataset/:datasetId/table/:tableId/export?format=w3c",
           name: "JSON (W3C Compliant)",
@@ -128,7 +189,7 @@ const CONFIG: AppConfig = {
           },
         },
         {
-          path: "/dataset/:datasetId/table/:tableId/code?format=python",
+          path: "/dataset/:datasetId/table/:tableId/export?format=python",
           name: "Python pipeline",
           params: {
             extension: "py",
@@ -144,7 +205,7 @@ const CONFIG: AppConfig = {
           },
         },
         {
-          path: "/dataset/:datasetId/table/:tableId/code?format=notebook",
+          path: "/dataset/:datasetId/table/:tableId/export?format=notebook",
           name: "Jupyter notebook pipeline",
           params: {
             extension: "ipynb",
@@ -181,6 +242,26 @@ const CONFIG: AppConfig = {
       TRACK: {
         path: "/dataset/track/:idDataset/:idTable",
       },
+
+      // ACL endpoints
+      ADD_ACL_USER: { path: "/dataset/:datasetId/acl" },
+      REMOVE_ACL_USER: { path: "/dataset/:datasetId/acl" },
+      SET_VISIBILITY: { path: "/dataset/:datasetId/acl/visibility" },
+      GET_TABLE_ACL: { path: "/dataset/:datasetId/table/:tableId/acl" },
+      ADD_TABLE_ACL_USER: {
+        path: "/dataset/:datasetId/table/:tableId/acl",
+      },
+      REMOVE_TABLE_ACL_USER: {
+        path: "/dataset/:datasetId/table/:tableId/acl",
+      },
+      SET_TABLE_VISIBILITY: {
+        path: "/dataset/:datasetId/table/:tableId/acl/visibility",
+      },
+      // Table locks
+      ACQUIRE_TABLE_LOCK: { path: "/dataset/lock/:tableId/acquire" },
+      RELEASE_TABLE_LOCK: { path: "/dataset/lock/:tableId/release" },
+      // Users search
+      SEARCH_USERS: { path: "/auth/users?q=:query" },
     },
   },
 };

@@ -11,14 +11,16 @@ import {
   FormControl,
   FormControlLabel,
   FormHelperText,
+  IconButton,
   InputLabel,
   MenuItem,
   Radio,
   RadioGroup,
   Select,
   SelectChangeEvent,
+  Stack,
   Tooltip,
-  Typography, IconButton, Stack,
+  Typography,
 } from "@mui/material";
 import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
@@ -30,9 +32,11 @@ import { updateUI } from "@store/slices/table/table.slice";
 import { exportTable } from "@store/slices/table/table.thunk";
 import fileDownload from "js-file-download";
 import { useSnackbar } from "notistack";
-import { FC, useState, useEffect } from "react";
+import React, { FC, useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { HelpOutlineRounded } from "@mui/icons-material";
+import { GraphRenderer } from "@components/kit/GraphRenderer/GraphRenderer";
+import { useGraphData } from "@hooks/graphData/useGraphData";
 
 interface ExportDialogProps {}
 
@@ -57,6 +61,19 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const { API } = useAppSelector(selectAppConfig);
   const isUnsaved = useAppSelector(selectIsUnsaved);
   const { enqueueSnackbar } = useSnackbar();
+  const {
+    graphData,
+    multiPropsMap,
+    metrics,
+    isNodeIsolated,
+  } = useGraphData(datasetId, tableId);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedLink, setSelectedLink] = useState(null);
+  const showLinkLabels = useAppSelector((state) => state.table.ui.showLinkLabels);
+  const standardContainerRef = useRef<HTMLDivElement>(null);
+  const complianceContainerRef = useRef<HTMLDivElement>(null);
+  const standardRef = useRef<any>(null);
+  const complianceRef = useRef<any>(null);
 
   const handleClose = () => {
     dispatch(updateUI({ openExportDialog: false }));
@@ -76,7 +93,8 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   }, [API, isOpen]);
 
   const filteredFormats = API.ENDPOINTS.EXPORT.filter(({ name }) => {
-    if (type === "table") return !name.toLowerCase().includes("pipeline");
+    if (type === "schema") return name.toLowerCase().includes("schema");
+    if (type === "table") return !name.toLowerCase().includes("schema") && !name.toLowerCase().includes("pipeline");
     if (type === "pipeline") return name.toLowerCase().includes("pipeline");
     return true;
   });
@@ -112,6 +130,11 @@ const ExportDialog: FC<ExportDialogProps> = () => {
 
     // Otherwise update the format
     setFormat(newFormat);
+  };
+
+  const handleLinkLabelsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value === "true";
+    dispatch(updateUI({ showLinkLabels: value }));
   };
 
   const handleConfirm = () => {
@@ -176,6 +199,45 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       apiParams.match = matchValue;
     }
 
+    if (format.includes("Schema Report")) {
+      const getSnapshot = (containerRef: React.RefObject<HTMLDivElement>) => {
+        const container = containerRef.current;
+        const canvas = container?.querySelector('canvas');
+        if (canvas) {
+          return canvas.toDataURL('image/png');
+        }
+        return '';
+      };
+
+      const payload = {
+        format: format === "HTML Schema Report" ? "report_html" : "report_md",
+        tableName,
+        datasetId,
+        tableId,
+        graphSnapshots: {
+          standard: getSnapshot(standardContainerRef),
+          compliance: getSnapshot(complianceContainerRef)
+        },
+        graphData,
+        metrics,
+      };
+
+      dispatch(
+        exportTable({
+          format,
+          params: apiParams,
+          payload,
+        }),
+      )
+        .unwrap()
+        .then((result) => {
+          const extension = format.includes("Markdown") ? "md" : "html";
+          fileDownload(result.data, `${tableName || "report"}.${extension}`);
+        });
+      dispatch(updateUI({ openExportDialog: false }));
+      return;
+    }
+
     dispatch(
       exportTable({
         format,
@@ -226,12 +288,19 @@ const ExportDialog: FC<ExportDialogProps> = () => {
       >
         <DialogTitle>Export</DialogTitle>
         <IconButton
+          aria-label="open-export-tutorial"
           sx={{
             color: "rgba(0, 0, 0, 0.54)",
             marginRight: "20px",
           }}
           onClick={() => {
-            dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 5 }));
+            dispatch(
+              updateUI({
+                openHelpDialog: true,
+                helpStart: "tutorial",
+                tutorialStep: 5
+              })
+            );
           }}
         >
           <HelpOutlineRounded />
@@ -249,6 +318,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
             onChange={handleTypeChange}
             variant="outlined"
           >
+            <MenuItem value="schema">Schema</MenuItem>
             <MenuItem value="table">Table</MenuItem>
             <MenuItem value="pipeline">Pipeline</MenuItem>
           </Select>
@@ -458,6 +528,67 @@ const ExportDialog: FC<ExportDialogProps> = () => {
               </RadioGroup>
             </FormControl>
           </>
+        )}
+        {format.includes("Schema Report") && (
+          <FormControl fullWidth sx={{ marginTop: "20px" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography variant="body1">Show link labels in snapshot:</Typography>
+              <RadioGroup
+                row
+                value={showLinkLabels ? "true" : "false"}
+                onChange={handleLinkLabelsChange}
+              >
+                <FormControlLabel value="true" control={<Radio />} label="Yes" />
+                <FormControlLabel value="false" control={<Radio />} label="No" />
+              </RadioGroup>
+            </Box>
+          </FormControl>
+        )}
+        {isOpen && (
+          <div style={{
+            position: 'absolute',
+            width: '1000px',
+            top: '-9999px',
+            left: '-9999px',
+            pointerEvents: 'none'
+          }}>
+            <div ref={standardContainerRef}>
+              <GraphRenderer
+                ref={standardRef}
+                graphData={graphData}
+                multiPropsMap={multiPropsMap}
+                showLinkLabels={showLinkLabels}
+                showCompliance={false}
+                onNodeClick={(node: any) => {
+                  setSelectedNode(node);
+                  setSelectedLink(null);
+                }}
+                onLinkClick={(link: any) => {
+                  setSelectedLink(link);
+                  setSelectedNode(null);
+                }}
+                isNodeIsolated={isNodeIsolated}
+              />
+            </div>
+            <div ref={complianceContainerRef}>
+              <GraphRenderer
+                ref={complianceRef}
+                graphData={graphData}
+                multiPropsMap={multiPropsMap}
+                showLinkLabels={showLinkLabels}
+                showCompliance={true}
+                onNodeClick={(node: any) => {
+                  setSelectedNode(node);
+                  setSelectedLink(null);
+                }}
+                onLinkClick={(link: any) => {
+                  setSelectedLink(link);
+                  setSelectedNode(null);
+                }}
+                isNodeIsolated={isNodeIsolated}
+              />
+            </div>
+          </div>
         )}
       </DialogContent>
       <DialogActions>

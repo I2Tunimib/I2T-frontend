@@ -110,6 +110,23 @@ let serverTokenPayload: Record<string, any> | undefined;
 /* Helper: check server-side session (backend must expose /api/auth/keycloak/me) */
 async function checkServerSession(): Promise<boolean> {
   try {
+    // If Keycloak redirected back with an error in the URL fragment, clear it and return false
+    if (
+      typeof window !== "undefined" &&
+      window.location &&
+      window.location.hash
+    ) {
+      if (window.location.hash.includes("error=")) {
+        try {
+          const cleanUrl = window.location.pathname + window.location.search;
+          history.replaceState(null, "", cleanUrl);
+        } catch (e) {
+          // ignore
+        }
+        return false;
+      }
+    }
+
     // If Keycloak redirected back with the access token in the URL fragment (#access_token=...),
     // capture it into localStorage so client-side code can use it (simple fallback).
     if (
@@ -190,9 +207,12 @@ export function initKeycloak(options?: InitOptions): Promise<boolean> {
       return false;
     }
 
-    // Client-side initialization using keycloak-js (preserve original behavior)
+    // Client-side initialization using keycloak-js.
+    // Do NOT use onLoad:"check-sso" without silentCheckSsoRedirectUri — it does a
+    // full-page redirect in keycloak-js v26+ which causes a reload loop when combined
+    // with the ChunkErrorBoundary. Omitting onLoad means keycloak just checks for an
+    // existing token in sessionStorage without any redirect.
     const initOptions: KeycloakInitOptions = {
-      onLoad: "check-sso",
       pkceMethod: "S256",
       promiseType: "native",
     } as KeycloakInitOptions;
@@ -247,7 +267,8 @@ export function initKeycloak(options?: InitOptions): Promise<boolean> {
         options?.onAuthenticated?.();
         return true;
       }
-      _initPromise = null;
+      // Do NOT reset _initPromise here — resetting it lets callers retry init,
+      // which causes repeated redirects/API calls on every component remount.
       options?.onAuthenticated?.();
       return false;
     }

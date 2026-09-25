@@ -1,9 +1,11 @@
 import styled from "@emotion/styled";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
+  Autocomplete,
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   IconButton,
@@ -13,9 +15,13 @@ import {
   Typography,
 } from "@mui/material";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
-import { createWikidataURI } from "@services/utils/uri-utils";
-import { selectAppConfig, selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import { KG_INFO, fetchTypeAndDescription, searchQudtUnits, searchW3CFormats } from "@services/utils/kg-info";
+import { createWikidataURI, extractIdFromUri, resolveURI } from "@services/utils/uri-utils";
+import {
+  selectAppConfig,
+  selectReconciliatorsAsArray,
+} from "@store/slices/config/config.selectors";
 import { isValidWikidataId } from "@services/utils/regexs";
 import { BaseMetadata } from "@store/slices/table/interfaces/table";
 import deferMounting from "@components/HOC";
@@ -34,6 +40,8 @@ import {
 import { ChangeEvent, FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Cell } from "@tanstack/react-table";
+import TipsAndUpdatesOutlinedIcon from '@mui/icons-material/TipsAndUpdatesOutlined';
+import { useSnackbar } from "notistack";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
 import usePrepareTable from "../MetadataDialog/usePrepareTable";
 import AddMetadataForm from "./AddMetadataForm";
@@ -43,9 +51,9 @@ const DeferredTable = deferMounting(CustomTable);
 const normalizeTypeId = (id: string) => {
   if (!id) return id;
   // If already prefixed with wd:, return as-is
-  if (id.startsWith("wd:")) return id;
+  if (id.startsWith("wd:")) return id.split(":")[1];
   // If it's a bare Wikidata id like Q123, normalize to wd:Q123
-  if (/^Q\d+$/.test(id)) return `wd:${id}`;
+  //if (/^Q\d+$/.test(id)) return `wd:${id}`;
   // Otherwise return original id
   return id;
 };
@@ -93,7 +101,8 @@ const RadioButtonsGroup: FC<{
   onChange: (event: ChangeEvent<HTMLInputElement>, checked: boolean) => void;
 }> = ({ selected, types, value, onChange }) => {
   function typeInSelected(id: string) {
-    return selected.some((item) => item.id === id);
+    const normId = normalizeTypeId(id);
+    return selected.some((item) => normalizeTypeId(item.id) === normId);
   }
   return (
     <FormControl component="fieldset">
@@ -141,6 +150,8 @@ interface TypeTabProps {
   // function used to pass to the main component the
   // actions to do in order to persist the modifications
   addEdit: Function;
+  currentKind?: string;
+  currentDatatype?: string;
 }
 
 interface NewMetadata {
@@ -148,26 +159,63 @@ interface NewMetadata {
   name: string;
   uri?: string;
 }
-const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
-  const [selected, setSelected] = useState<SelectedTypeState[]>([]);
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
-  const [showAdd, setShowAdd] = useState<boolean>(false);
-  const isViewOnly = useAppSelector(selectIsViewOnly);
-  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
-  const colId = useAppSelector((state) => state.table.ui.metadataColumnDialogColId);
+const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) => {
   const rawData = useAppSelector(selectColumnCellMetadataTableFormat);
   const currentService = rawData?.service?.prefix || "";
+  const kind = currentKind;
+  const datatype = currentDatatype;
 
+  const isViewOnly = useAppSelector(selectIsViewOnly);
+  const reconciliators = useAppSelector(selectReconciliatorsAsArray);
+  const colId = useAppSelector(
+    (state) => state.table.ui.metadataColumnDialogColId,
+  );
+  const types = useAppSelector(selectColumnTypes);
+  const { API } = useAppSelector(selectAppConfig);
+  const dispatch = useAppDispatch();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const {
     handleSubmit: handleSubmitNewType,
     reset,
     register,
     control,
   } = useForm<NewMetadata>();
-  const { API } = useAppSelector(selectAppConfig);
 
-  const types = useAppSelector(selectColumnTypes);
-  const dispatch = useAppDispatch();
+  const [selected, setSelected] = useState<SelectedTypeState[]>(types?.selectedType || []);
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [showAdd, setShowAdd] = useState<boolean>(false);
+  const [selectedPrefix, setSelectedPrefix] = useState<string>(currentService || "");
+  const [typeOptions, setTypeOptions] = useState<{id: string, label: string, uri: string}[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [localAddedTypes, setLocalAddedTypes] = useState<any[]>([]);
+
+  const allColumnTypes = [
+    ...(types?.allTypes || []),
+    ...localAddedTypes,
+  ];
+
+  const uniqueTypesMap: Record<string, any> = {};
+  allColumnTypes.forEach((type) => {
+    const normId = normalizeTypeId(type.id);
+    if (!uniqueTypesMap[normId] || (!uniqueTypesMap[normId].uri && type.uri)) {
+      uniqueTypesMap[normId] = { ...type, id: normId };
+    }
+  });
+  const allTypes = Object.values(uniqueTypesMap);
+
+  useEffect(() => {
+    if (types?.selectedType) {
+      setSelected(types.selectedType);
+    }
+  }, [types]);
+
+  useEffect(() => {
+    if (currentService) {
+      setSelectedPrefix(currentService);
+    }
+  }, [currentService]);
+
   const handleTooltipOpen = () => {
     setShowTooltip(!showAdd);
   };
@@ -195,13 +243,14 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     const metaToView: {
       [key: string]: {
         label?: string;
-        type?: "link" | "subList" | "tag" | "checkBox";
+        type?: "link" | "subList" | "tag" | "deciderTag" | "checkBox";
       };
     } = {
       selected: { label: "Selected", type: "checkBox" },
       id: { label: "ID" },
       name: { label: "Name", type: "link" },
       percentage: { label: "Percentage" },
+      decider: { label: "Decider", type: "deciderTag" },
       // match: { label: "Match", type: "tag" },
     };
 
@@ -225,16 +274,6 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
   from Entity Datamodel
   COULD HAVE SAME DATAMODEL? IN THIS CASE, IT NEEDS TO MAKE A CHANGE IN THE BACKEND APPLICATION
   */
-    const allColumnTypes = [
-      ...(types.allTypes || []),
-      ...(column.metadata[0]?.additionalTypes || []),
-    ];
-
-    const uniqueTypesMap: Record<string, any> = {};
-    allColumnTypes.forEach((type) => {
-      uniqueTypesMap[type.id] = type;
-    });
-    const allTypes = Object.values(uniqueTypesMap);
 
     const newMetadata = allTypes
       .map((type) => {
@@ -242,23 +281,20 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           "mapped types",
           type,
           selected,
-          selected.some((item) => item.id === type.id) ||
-            column.metadata[0]?.additionalTypes?.some(
-              (t: any) => t.id === type.id,
-            ),
+          selected.some((item) => normalizeTypeId(item.id) === normalizeTypeId(type.id)),
         );
+        const isSelected = selected.some((item) => normalizeTypeId(item.id) === normalizeTypeId(type.id));
+        const isQudt = type.id && type.id.includes("unit:");
+        const isTime = type.id && type.id.includes("xsd:");
         return {
-          selected:
-            selected.some((item) => item.id === type.id) ||
-            column.metadata[0]?.additionalTypes?.some(
-              (t: any) => t.id === type.id,
-            ),
-          id: isValidWikidataId(type.id) ? "wd:" + type.id : type.id,
+          selected: isSelected,
+          id: (isQudt || isTime) ? type.id : (isValidWikidataId(type.id) ? "wd:" + type.id : type.id),
           name: {
             value: type.label || type.name,
-            uri: createWikidataURI(type.id) || type.uri,
+            uri: type.uri || type.name?.uri || (isQudt ? null : createWikidataURI(type.id)),
           },
-          percentage: Number(type.percentage || 100).toFixed(0) + "%",
+          percentage: (!isSelected) ? "0%" : (Number(type.percentage || 0).toFixed(0) + "%"),
+          decider: type.decider !== undefined ? type.decider : "machine",
           // match: "",
         };
       })
@@ -316,122 +352,62 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     dependencies: [selected, types, colId],
   });
   const onSubmitNewMetadata = (formState: NewMetadata) => {
-    if (formState.uri) {
-      const prefix = formState?.prefix;
-      //console.log("onSubmitNewMetadata prefix", prefix);
-      let idFromUri = "";
+    const { prefix, uri, name } = formState;
+    const cleanPrefix = prefix.replace(/:$/, "");
+    // Extract id from URI for type and description fetching
+    const idFromUri = extractIdFromUri(uri, cleanPrefix);
+    const reconciliator = reconciliators.find(
+      (recon) => recon.prefix === cleanPrefix,
+    );
 
-      // Robust extraction strategy:
-      // 1) Try to parse as URL and prefer fragment (#id) if present.
-      // 2) Otherwise use the last non-empty path segment.
-      // 3) Apply special cases for known prefixes (wd, geo, geoCoord).
-      // 4) If parsing fails, fallback to string token extraction.
-      try {
-        const url = new URL(formState.uri);
-        console.log("url", url);
-
-        // Prefer fragment (after #)
-        if (url.hash && url.hash.length > 1) {
-          idFromUri = url.hash.slice(1);
-        } else {
-          // Last non-empty path segment
-          const pathParts = url.pathname.split("/").filter(Boolean);
-          if (pathParts.length > 0) {
-            idFromUri = pathParts[pathParts.length - 1];
-          } else {
-            // No path segments - try to use pathname without leading/trailing slashes
-            idFromUri = url.pathname.replace(/^\/+|\/+$/g, "");
-          }
-        }
-
-        // Apply known special cases when needed (prefer the above result if present)
-        if (
-          (!idFromUri || idFromUri === "") &&
-          prefix &&
-          prefix.startsWith("wd")
-        ) {
-          // e.g. https://www.wikidata.org/wiki/Q18711
-          idFromUri = url.pathname.split("/").filter(Boolean).pop() || "";
-        } else if ((!idFromUri || idFromUri === "") && prefix === "geo") {
-          // e.g. https://www.geonames.org/3117735/madrid.html -> 3117735
-          const parts = url.pathname.split("/").filter(Boolean);
-          idFromUri =
-            parts[0] === undefined
-              ? ""
-              : parts[0] || parts[parts.length - 1] || "";
-        } else if ((!idFromUri || idFromUri === "") && prefix === "geoCoord") {
-          // e.g. https://www.google.com/maps/place/lat,long
-          const parts =
-            url.pathname.split("/").filter(Boolean).pop()?.split(",") || [];
-          idFromUri = parts.join(",");
-        }
-
-        // If still empty, try to extract something from the query params (last value)
-        if (!idFromUri) {
-          const params = new URLSearchParams(url.search);
-          const lastKey = Array.from(params.keys()).pop();
-          if (lastKey) {
-            idFromUri = params.get(lastKey) || "";
-          }
-        }
-
-        // Final fallback: stringify pathname+search+hash trimmed
-        if (!idFromUri) {
-          idFromUri = (
-            url.pathname +
-            (url.search || "") +
-            (url.hash || "")
-          ).replace(/^\/+/, "");
-        }
-      } catch (err) {
-        // Not a valid URL - fallback heuristics on the raw string
-        console.warn("Invalid URI, fallback to extracting last token", err);
-        const trimmed = formState.uri.trim();
-        if (trimmed.includes("#")) {
-          idFromUri = trimmed.split("#").pop() || trimmed;
-        } else {
-          const parts = trimmed.split("/").filter(Boolean);
-          idFromUri = parts.length > 0 ? parts[parts.length - 1] : trimmed;
-        }
-      }
-
-      const sanitizedPrefix = prefix ? String(prefix).replace(/:+$/, "") : "";
-      const finalId = idFromUri.includes(":")
-        ? idFromUri
-        : sanitizedPrefix
-          ? `${sanitizedPrefix}:${idFromUri}`
-          : idFromUri;
-
-      if (prefix) {
-        const newType = {
-          id: finalId,
-          name: formState.name,
-          uri: formState.uri,
-        };
-        // Add the new type to the column metadata
-        dispatch(addColumnType({ colId, newTypes: [newType] }));
-        // Ensure the column's main type list is updated (id + name) so selectors/readers see it
-        dispatch(updateColumnType([{ id: finalId, name: formState.name }]));
-        // Also mark the newly added type as matched so checkboxes reflect selection/save
-        dispatch(updateColumnTypeMatches({ typeIds: [finalId] }));
-        // Auto-select the newly added type in the local component state so UI updates immediately
-        setSelected((prev) => {
-          // avoid duplicates
-          if (prev.some((p) => p.id === finalId)) {
-            return prev;
-          }
-          return [
-            ...prev,
-            {
-              id: finalId,
-              label: formState.name,
-              count: 1,
-              percentage: "100",
-            },
-          ];
-        });
-      }
+    const finalId = cleanPrefix === "geo" ? `${idFromUri}` : `${cleanPrefix}:${idFromUri}`;
+    let finalUri = "";
+    if (reconciliator) {
+      finalUri = cleanPrefix === "geo" ? "" : resolveURI(reconciliator, { id: idFromUri });
+    } else {
+      finalUri = uri;
     }
+
+    const typeExists = allTypes.some((type) => type.id === finalId);
+    if (typeExists) {
+      enqueueSnackbar(`Type ${idFromUri} already exists.`, {
+        variant: "error",
+        autoHideDuration: 4000,
+      });
+      return;
+    }
+
+    const newType = {
+      id: finalId,
+      uri: finalUri,
+      name: formState.name,
+      decider: "human",
+    };
+
+    // Add the new type to the column metadata
+    addEdit(addColumnType({ colId, newTypes: [newType] }));
+    // Ensure the column's main type list is updated (id + name) so selectors/readers see it
+    //addEdit(updateColumnType([{ id: finalId, name: formState.name }]), false, false);
+    // Also mark the newly added type as matched so checkboxes reflect selection/save
+    //addEdit(updateColumnTypeMatches({ typeIds: [finalId] }), false, false);
+    setLocalAddedTypes((prev) => [...prev, newType]);
+    setShowAdd(false);
+    // Auto-select the newly added type in the local component state so UI updates immediately
+    setSelected((prev) => {
+      // avoid duplicates
+      if (prev.some((p) => p.id === finalId)) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: finalId,
+          label: formState.name,
+          count: 1,
+          percentage: 100,
+        },
+      ];
+    });
   };
 
   const handleRowTypeCheck = (row: any) => {
@@ -439,131 +415,139 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
     const index = selected.findIndex(
       (item) => normalizeTypeId(item.id) === normRowId,
     );
+    let updatedSelected = [...selected];
     if (index > -1) {
-      setSelected(
-        selected.filter((item) => normalizeTypeId(item.id) !== normRowId),
-      );
+      updatedSelected = selected.filter((item) => normalizeTypeId(item.id) !== normRowId);
+      setSelected(updatedSelected);
     } else {
       if (types && rawData) {
-        const { column } = rawData;
-        const allTypes = [
-          ...(types.allTypes || []),
-          ...(column?.metadata?.[0]?.additionalTypes || []),
-        ];
         const selectedType = allTypes.find(
           (item) => normalizeTypeId(item.id) === normRowId,
         );
         if (selectedType) {
-          setSelected([...selected, selectedType]);
+          const normalizedSelectedType = {
+            ...selectedType,
+            id: normRowId,
+          };
+          updatedSelected = [...selected, normalizedSelectedType];
+          setSelected(updatedSelected);
         }
       }
     }
+    const mappedTypeIds = updatedSelected.map((item) => normalizeTypeId(item.id));
+    addEdit(updateColumnTypeMatches({ typeIds: mappedTypeIds }));
   };
 
-  const handleSelectedRowChange = useCallback(
-    (row: any) => {
-      setState(({ columns: colState, data: dataState }) => {
-        if (!row.id) {
-          return { columns: colState, data: dataState };
-        }
-        const selectedRow = dataState.find((item) => item.id === row.id);
-        if (!selectedRow) {
-          return { columns: colState, data: dataState };
-        }
-        const newData = dataState.map((item) => {
-          if (item.id === row.id) {
-            return {
-              ...item,
-              selected: !selectedRow.selected,
-            };
-          }
-          return item;
-        });
-        return {
-          columns: colState,
-          data: newData,
-        };
-      });
-    },
-    [selected, setSelected],
-  );
-
-  const handleChange = (
-    event: ChangeEvent<HTMLInputElement>,
-    checked: boolean,
-  ) => {
-    if (types && types.allTypes) {
-      const value = event.target.value;
-      const normValue = normalizeTypeId(value);
-      if (checked) {
-        const selectedType =
-          (types.allTypes || []).find(
-            (item) => normalizeTypeId(item.id) === normValue,
-          ) || undefined;
-
-        if (selectedType) {
-          setSelected([...selected, selectedType]);
-        }
-      } else {
-        setSelected(
-          selected.filter((item) => normalizeTypeId(item.id) !== normValue),
-        );
-      }
-    }
-  };
-  useEffect(() => {
-    if (selected && selected.length > 0) {
-      const mappedTypes = selected.map((item) => item.id);
-      const payload = updateColumnType(mappedTypes);
-      addEdit(updateColumnTypeMatches({ typeIds: mappedTypes }), true, true);
-    }
-  }, [selected]);
-
-  useEffect(() => {
-    if (types && types.selectedType) {
-      console.log("types.selectedType", types.selectedType);
-      setSelected(types.selectedType);
-    }
-  }, [types]);
-
-  const handleConfirm = () => {
-    if (selected && selected.length > 0) {
-      // Prepare payloads using normalized ids:
-      // 1) updateColumnType expects an array of { id, name }
-      const mappedTypesForUpdate = selected.map((item) => ({
-        id: normalizeTypeId(item.id),
-        name: item.label,
-      }));
-      // 2) updateColumnTypeMatches expects { typeIds: string[] }
-      const mappedTypeIds = selected.map((item) => normalizeTypeId(item.id));
-
-      // Dispatch both actions via addEdit so they are treated as edits/undoable
-      // First update the column types themselves (ids + names)
-      addEdit(updateColumnType(mappedTypesForUpdate), true);
-      // Then update the matches for those types
-      addEdit(updateColumnTypeMatches({ typeIds: mappedTypeIds }), true);
-    }
-    dispatch(updateUI({ openMetadataColumnDialog: false }));
-  };
-
-  const handleCancel = () => {
-    dispatch(updateUI({ openMetadataColumnDialog: false }));
-  };
-
-  const servicesByPrefix = reconciliators.reduce<Record<string, any>>(
+  const servicesByPrefix = (reconciliators || []).reduce<Record<string, any>>(
     (acc, service) => {
-      acc[service.prefix] = service;
+      if (service?.prefix) {
+        const cleanPrefix = service.prefix.replace(/:$/, "");
+        acc[cleanPrefix] = service;
+      }
       return acc;
     },
     {},
   );
 
+  const handleMetadataSearch = async (query: string) => {
+    if (!query) {
+      setTypeOptions([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      let results = [];
+      if (datatype === "NUMBER") {
+        results = await searchQudtUnits(query);
+      } else if (datatype === "DATE") {
+        const finalTerm = !query ? "date" : query;
+        results = await searchW3CFormats(finalTerm, datatype);
+      } else if (datatype === "STRING") {
+        const finalTerm = !query ? "string" : query;
+        results = await searchW3CFormats(finalTerm, datatype);
+      }
+      setTypeOptions(results);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (kind === "literal" && colId) {
+      if (datatype === "NUMBER") {
+        const initialQuery = colId.replace(/_/g, ' ');
+        setInputValue(initialQuery);
+        handleMetadataSearch(initialQuery);
+      } else if (datatype === "DATE") {
+        setInputValue("date");
+        handleMetadataSearch("date");
+      } else if (datatype === "STRING") {
+        setInputValue("string");
+        handleMetadataSearch("string");
+      }
+    }
+  }, [colId, datatype, kind]);
+
+  const handleSelectOption = (option: {id: string, label: string, uri: string}) => {
+    const newType = {
+      id: option.id,
+      label: option.label,
+      name: option.label,
+      uri: option.uri,
+      percentage: 100
+    };
+    addEdit(addColumnType({ colId, newTypes: [newType] }));
+    setLocalAddedTypes((prev) => [...prev, newType]);
+    setSelected((prev) => {
+      if (prev.some((p) => p.id === newType.id)) return prev;
+      return [...prev, { ...newType, count: 1, percentage: 100 }];
+    });
+  };
+
+  const literalTypesConfig = {
+    NUMBER: {
+      title: "Unit type via QUDT Ontology",
+      description: "Define the unit of measure (e.g., Celsius, Kilograms) for the data in this column.",
+      url: "https://qudt.org/vocab/unit/",
+      urlLabel: "qudt.org/vocab/unit",
+      label: "Search for a Unit"
+    },
+    DATE: {
+      title: "Date/Time Format via W3C XML Schema (XSD)",
+      description: "Define the specific data format standard (e.g., date, dateTime) to parse this column.",
+      url: "https://www.w3.org/TR/xmlschema-2/",
+      urlLabel: "w3.org/TR/xmlschema-2/",
+      label: "Search for Validation Format"
+    },
+    STRING: {
+      title: "String Format via W3C XML Schema (XSD)",
+      description: "Define the specific string format standard (e.g., string, token) to parse this column.",
+      url: "https://www.w3.org/TR/xmlschema-2/",
+      urlLabel: "w3.org/TR/xmlschema-2/",
+      label: "Search for Text Format"
+    }
+  };
+
+  const currentConfig = literalTypesConfig[datatype] || {
+    title: "",
+    description: "",
+    url: "",
+    urlLabel: "",
+    label: ""
+  };
+
   const handleTypesInService = () => {
-    if (!rawData?.column?.id || !currentService) return;
-    const serviceInfo = servicesByPrefix[currentService];
+    const serviceInfo = servicesByPrefix[selectedPrefix.replace(/:$/, "")];
+    if (!serviceInfo) {
+      console.error("No service info found for prefix:", selectedPrefix);
+      return;
+    }
     let url = "";
     if (serviceInfo?.searchTypesPattern) {
-      url = serviceInfo.searchTypesPattern.replace("{label}", encodeURIComponent(rawData.column.id));
+      url = serviceInfo.searchTypesPattern.replace(
+        "{label}",
+        encodeURIComponent(rawData.column.id),
+      );
     } else if (serviceInfo?.listTypes) {
       url = serviceInfo.listTypes;
     } else return;
@@ -583,11 +567,104 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
           <Stack
             position="relative"
             direction="column"
-            alignItems="flex-start"
             flexWrap="wrap"
             padding="0px 16px"
             gap={1}
           >
+            {kind === "literal" && (
+              <Stack spacing={2}>
+                {datatype && literalTypesConfig[datatype] && (
+                  <>
+                    <Box
+                      sx={{
+                        padding: "16px",
+                        bgcolor: "#f0f7ff",
+                        borderLeft: "4px solid #2196f3",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight="bold" color="#0d47a1">
+                        {currentConfig.title}
+                      </Typography>
+                      <Typography variant="body2" color="#0d47a1">
+                        {currentConfig.description}
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block', color: '#0d47a1', opacity: 0.8 }}>
+                        For more information, see:{" "}
+                        <a
+                          href={currentConfig.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: 'inherit', fontStyle: 'italic' }}
+                        >
+                          {currentConfig.urlLabel}
+                        </a>
+                      </Typography>
+                    </Box>
+                    <Autocomplete
+                      fullWidth
+                      options={typeOptions}
+                      loading={isSearching}
+                      inputValue={inputValue}
+                      onInputChange={(_, value) => {
+                        setInputValue(value);
+                        handleMetadataSearch(value);
+                      }}
+                      onChange={(_, value) => value && handleSelectOption(value)}
+                      getOptionLabel={(option) => (typeof option === 'string' ? option : option.label || "")}
+                      freeSolo
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={currentConfig.label}
+                          placeholder="Start typing to search..."
+                          variant="outlined"
+                          size="small"
+                          InputProps={{
+                            ...params.InputProps,
+                            startAdornment: (
+                              <IconButton size="small" disabled sx={{ p: '4px', mr: 1 }}>
+                                <FilterListRoundedIcon fontSize="small" />
+                              </IconButton>
+                            ),
+                            endAdornment: (
+                              <>
+                                {isSearching ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
+                  </>
+                )}
+                {datatype === "none" && (
+                  <Box
+                    sx={{
+                      padding: "16px",
+                      bgcolor: "#fff3e0",
+                      borderLeft: "4px solid #e65100",
+                      borderRadius: "4px",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1
+                    }}
+                  >
+                    <TipsAndUpdatesOutlinedIcon sx={{ color: "#e65100" }} />
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight="bold" color="#5d4037">
+                        Define the Datatype
+                      </Typography>
+                      <Typography variant="body2" color="#5d4037">
+                        The datatype for this literal column is currently undefined. Please define a valid datatype
+                        to configure its validation format or unit properties.
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+              </Stack>
+            )}
             <Stack direction="row" gap={1} alignItems="center">
               <Tooltip open={showTooltip} title="Add type" placement="right">
                 <Button
@@ -600,7 +677,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                     textTransform: "none",
                     display: "flex",
                     alignItems: "center",
-                    gap: 1
+                    gap: 1,
                   }}
                 >
                   Add column type
@@ -613,24 +690,24 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                 </Button>
               </Tooltip>
               {showAdd ? (
-                !!currentService ? (
-                  servicesByPrefix[currentService]?.searchTypesPattern ? (
+                !!selectedPrefix ? (
+                  servicesByPrefix[selectedPrefix]?.searchTypesPattern ? (
                     <Button
                       variant="outlined"
                       color="primary"
                       onClick={handleTypesInService}
                       sx={{ textTransform: "none" }}
                     >
-                      Search in {KG_INFO[currentService].groupName}
+                      Search "{rawData?.column?.id}" in {KG_INFO[selectedPrefix].groupName}
                     </Button>
-                  ) : servicesByPrefix[currentService]?.listTypes ? (
+                  ) : servicesByPrefix[selectedPrefix]?.listTypes ? (
                     <Button
                       variant="outlined"
                       color="primary"
                       onClick={handleTypesInService}
                       sx={{ textTransform: "none" }}
                     >
-                      View list of {KG_INFO[currentService].groupName} types
+                      View list of {KG_INFO[selectedPrefix].groupName} types
                     </Button>
                   ) : null
                 ) : (
@@ -640,12 +717,16 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                     color="primary"
                     onClick={() => {
                       const wikidataPattern = "https://www.wikidata.org/w/index.php?search={label}&title=Special:Search";
-                      const url = wikidataPattern.replace("{label}", encodeURIComponent(rawData?.column?.id || ""));
+                      const url = wikidataPattern.replace(
+                        "{label}",
+                        encodeURIComponent(rawData?.column?.id || ""),
+                      );
                       window.open(url, "_blank", "noopener,noreferrer");
                     }}
                     sx={{ textTransform: "none" }}
                   >
-                    Search "{rawData?.column?.id}" in {KG_INFO["wd"].groupName || "Wikidata"}
+                    Search "{rawData?.column?.id}" in{" "}
+                    {KG_INFO["wd"].groupName || "Wikidata"}
                   </Button>
                 )
               ) : null}
@@ -656,6 +737,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit }) => {
                   currentService={currentService}
                   onSubmit={onSubmitNewMetadata}
                   context="typeTab"
+                  onPrefixChange={setSelectedPrefix}
                 />
               </Box>
             )}

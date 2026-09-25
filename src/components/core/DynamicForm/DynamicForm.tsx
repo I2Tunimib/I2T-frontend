@@ -31,6 +31,7 @@ import {
   getDefaultValues,
   getRules,
   prepareFormInput,
+  shouldShowField,
 } from "./componentsConfig";
 
 export type DynamicFormProps = {
@@ -55,6 +56,20 @@ const DynamicForm: FC<DynamicFormProps> = ({
   const { control, handleSubmit, reset, setValue, formState, watch } = useForm({
     defaultValues: getDefaultValues(service),
   });
+
+  let activeColumnType = (service as any).columnType;
+  if (!activeColumnType && selectedColumns.length === 1) {
+    const colId = selectedColumns[0];
+    const values: string[] = [];
+    Object.keys(rows.byId).slice(0, 5).forEach((rowId) => {
+      const cell = rows.byId[rowId].cells[colId];
+      if (cell?.label != null) values.push(String(cell.label).trim());
+    });
+    activeColumnType = dateFormatterUtils(values);
+  }
+
+  // Watch all form values for dependency checking
+  const watchedValues = watch();
   const formatType = watch("formatType");
   const columnToJoin = watch("columnToJoin");
   const splitDatetime = watch("splitDatetime");
@@ -78,7 +93,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
       {
         ...formValue,
         selectedColumns,
-        columnType: service.columnType,
+        columnType: activeColumnType,
         splitDatetime: formValue.splitDatetime,
       },
       () => reset(getDefaultValues(service)),
@@ -127,13 +142,13 @@ const DynamicForm: FC<DynamicFormProps> = ({
       if (param.id === "detailLevel") {
         let options = filterDetailLevelOptions(
           param.options,
-          service.columnType,
+          activeColumnType,
           formatType,
         );
         if (
           selectedColumns.length === 1 &&
           columnToJoin &&
-          service.columnType !== "datetime" &&
+          activeColumnType !== "datetime" &&
           finalType === "datetime"
         ) {
           options = options.filter(
@@ -157,11 +172,12 @@ const DynamicForm: FC<DynamicFormProps> = ({
     });
   }, [
     service.formParams,
-    service.columnType,
+    activeColumnType,
     formatType,
     columnToJoin,
     finalType,
     selectedColumns,
+    rows,
   ]);
 
   return (
@@ -175,51 +191,41 @@ const DynamicForm: FC<DynamicFormProps> = ({
           </div>
         ) : (
           <>
-            {modifiedFormParams.map(({ id, inputType, ...inputProps }) => {
-              if (service.id === "dateFormatter") {
-                if (id === "customPattern" && formatType !== "custom")
+            {modifiedFormParams.map(
+              ({ id, inputType, dependsOn, ...inputProps }) => {
+                // Check generic dependency using shouldShowField utility
+                const param = { id, inputType, dependsOn, ...inputProps };
+                if (!shouldShowField(param, watchedValues)) {
                   return null;
-                if (id === "detailLevel" && !formatType) return null;
-                if (
-                  id === "outputMode" &&
-                  (selectedColumns.length > 1 || splitDatetime)
-                )
-                  return null;
-                if (id === "detailLevel" && formatType === "custom")
-                  return null;
-                if (
-                  id === "columnToJoin" &&
-                  (selectedColumns.length > 1 ||
-                    service.columnType === "datetime")
-                )
-                  return null;
-              }
-              const FormComponent = FORM_COMPONENTS[inputType];
-              return (
-                <Controller
-                  key={id}
-                  defaultValue=""
-                  rules={getRules(inputProps.rules)}
-                  render={({
-                    field: { selectedColumns: _, ...fieldProps },
-                  }) => (
-                    <FormComponent
-                      id={id}
-                      formState={formState}
-                      reset={reset}
-                      setValue={setValue}
-                      {...fieldProps}
-                      {...(prepareFormInput(inputProps) as any)}
-                      {...(inputType === "selectColumns"
-                        ? { selectedColumns }
-                        : {})}
-                    />
-                  )}
-                  name={id}
-                  control={control}
-                />
-              );
-            })}
+                }
+
+                const FormComponent = FORM_COMPONENTS[inputType];
+                return (
+                  <Controller
+                    key={id}
+                    defaultValue=""
+                    rules={getRules(inputProps.rules)}
+                    render={({
+                      field: { selectedColumns: _, ...fieldProps },
+                    }) => (
+                      <FormComponent
+                        id={id}
+                        formState={formState}
+                        reset={reset}
+                        setValue={setValue}
+                        {...fieldProps}
+                        {...(prepareFormInput(inputProps) as any)}
+                        {...(inputType === "selectColumns"
+                          ? { selectedColumns }
+                          : {})}
+                      />
+                    )}
+                    name={id}
+                    control={control}
+                  />
+                );
+              },
+            )}
             {selectedColumns.length > 1 && (
               <Controller
                 name="joinColumns"
@@ -231,7 +237,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
                       control={<Checkbox {...field} checked={field.value} />}
                       label="Join selected columns"
                     />
-                    {field.value && service.columnType !== "datetime" && (
+                    {field.value && activeColumnType !== "datetime" && (
                       <Controller
                         name="separator"
                         control={control}
@@ -247,7 +253,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
             )}
             {selectedColumns.length === 1 &&
               columnToJoin &&
-              service.columnType !== "datetime" &&
+              activeColumnType !== "datetime" &&
               finalType !== "datetime" && (
                 <Controller
                   name="separator"
@@ -258,7 +264,7 @@ const DynamicForm: FC<DynamicFormProps> = ({
                   )}
                 />
               )}
-            {service.columnType === "datetime" &&
+            {activeColumnType === "datetime" &&
               selectedColumns.length === 1 && (
                 <Controller
                   name="splitDatetime"
@@ -276,46 +282,13 @@ const DynamicForm: FC<DynamicFormProps> = ({
         ))}
       {service.id !== "dateFormatter" &&
         formParams &&
-        formParams.map(({ id, inputType, ...inputProps }) => {
-          if (service.id === "textColumnsTransformer") {
-            if (id === "columnToJoin" && operationType !== "joinOp")
-              return null;
-            if (
-              id === "renameJoinedColumn" &&
-              (!operationType || operationType === "splitOp")
-            )
-              return null;
-            if (
-              id === "splitMode" &&
-              (!operationType || operationType === "joinOp")
-            )
-              return null;
-            if (id === "separator" && !operationType) return null;
-            if (
-              id === "splitDirection" &&
-              (!operationType || !splitMode || splitMode === "separatorAll")
-            )
-              return null;
-            if (
-              id === "renameNewColumnSplit" &&
-              (!operationType ||
-                operationType === "joinOp" ||
-                !splitRenameMode ||
-                splitRenameMode === "auto")
-            )
-              return null;
-            if (
-              id === "splitRenameMode" &&
-              (!operationType || operationType === "joinOp")
-            )
-              return null;
+        formParams.map(({ id, inputType, dependsOn, ...inputProps }) => {
+          // Check generic dependency using shouldShowField utility
+          const param = { id, inputType, dependsOn, ...inputProps };
+          if (!shouldShowField(param, watchedValues)) {
+            return null;
           }
-          if (service.id === "meteoPropertiesOpenMeteo") {
-            if (id === "weatherParams_daily" && granularity !== "daily")
-              return null;
-            if (id === "weatherParams_hourly" && granularity !== "hourly")
-              return null;
-          }
+
           const FormComponent = FORM_COMPONENTS[inputType];
           return (
             <Controller

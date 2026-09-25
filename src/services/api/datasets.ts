@@ -181,6 +181,111 @@ const datasetAPI = {
       },
     );
   },
+
+  // ACL endpoints
+  addAclUser: (datasetId: string, userId: string, role: "viewer" | "editor") => {
+    return apiClient.post(
+      apiEndpoint({ endpoint: "ADD_ACL_USER", paramsValue: { datasetId } }),
+      { userId, role },
+      { headers: { ...getAuthHeader() } },
+    );
+  },
+
+  removeAclUser: (
+    datasetId: string,
+    userId: string,
+    role: "viewer" | "editor",
+  ) => {
+    return apiClient.delete(
+      apiEndpoint({ endpoint: "REMOVE_ACL_USER", paramsValue: { datasetId } }),
+      { data: { userId, role }, headers: { ...getAuthHeader() } },
+    );
+  },
+
+  setVisibility: (datasetId: string, visibility: string) => {
+    return apiClient.post(
+      apiEndpoint({ endpoint: "SET_VISIBILITY", paramsValue: { datasetId } }),
+      { visibility },
+      { headers: { ...getAuthHeader() } },
+    );
+  },
+
+  // Table ACL endpoints
+  getTableAcl: (datasetId: string, tableId: string) =>
+    apiClient.get(
+      apiEndpoint({
+        endpoint: "GET_TABLE_ACL",
+        paramsValue: { datasetId, tableId },
+      }),
+      { clearCacheEntry: true, headers: { ...getAuthHeader() } },
+    ),
+
+  addTableAclUser: (
+    datasetId: string,
+    tableId: string,
+    userId: string,
+    role: "viewer" | "editor",
+  ) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "ADD_TABLE_ACL_USER",
+        paramsValue: { datasetId, tableId },
+      }),
+      { userId, role },
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  removeTableAclUser: (
+    datasetId: string,
+    tableId: string,
+    userId: string,
+    role: "viewer" | "editor",
+  ) =>
+    apiClient.delete(
+      apiEndpoint({
+        endpoint: "REMOVE_TABLE_ACL_USER",
+        paramsValue: { datasetId, tableId },
+      }),
+      { data: { userId, role }, headers: { ...getAuthHeader() } },
+    ),
+
+  setTableVisibility: (
+    datasetId: string,
+    tableId: string,
+    visibility: string | null,
+  ) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "SET_TABLE_VISIBILITY",
+        paramsValue: { datasetId, tableId },
+      }),
+      { visibility },
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  acquireTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({ endpoint: "ACQUIRE_TABLE_LOCK", paramsValue: { tableId } }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  releaseTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({ endpoint: "RELEASE_TABLE_LOCK", paramsValue: { tableId } }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
+
+  forceReleaseTableLock: (tableId: string) =>
+    apiClient.post(
+      apiEndpoint({
+        endpoint: "FORCE_RELEASE_TABLE_LOCK",
+        paramsValue: { tableId },
+      }),
+      {},
+      { headers: { ...getAuthHeader() } },
+    ),
 };
 
 export default datasetAPI;

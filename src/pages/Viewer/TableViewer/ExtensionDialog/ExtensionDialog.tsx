@@ -30,6 +30,7 @@ import React, {
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import {
+  Close,
   //ExpandLess,
   //ExpandMore,
   //HelpCenterRounded,
@@ -336,36 +337,49 @@ const ExtensionDialog: FC<ExtensionDialogProps> = ({ open, handleClose }) => {
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Extension</DialogTitle>
-
-        <IconButton
-          sx={{
-            color: "rgba(0, 0, 0, 0.54)",
-            marginRight: "20px",
-          }}
-          onClick={() => {
-            dispatch(
-              updateUI({
-                openHelpDialog: true,
-                helpStart: "tutorial",
-                tutorialStep: 19,
-              }),
-            );
-          }}
-        >
-          <HelpOutlineRounded />
-        </IconButton>
+        <Stack direction="row" alignItems="flex-end">
+          <IconButton
+            aria-label="open-extension-tutorial"
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+            }}
+            onClick={() => {
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "tutorial",
+                  tutorialStep: 21,
+                }),
+              );
+            }}
+          >
+            <HelpOutlineRounded />
+          </IconButton>
+          <IconButton
+            aria-label="close"
+            sx={{
+              color: "rgba(0, 0, 0, 0.54)",
+              marginRight: "20px",
+              opacity: "0.6",
+            }}
+            onClick={handleClose}
+          >
+            <Close />
+          </IconButton>
+        </Stack>
       </Stack>
       <DialogContent>
         <Stack direction="row" alignItems="center">
-          <DialogContentText>Select an extension service:</DialogContentText>
+          <DialogContentText>Select a service to extend with:</DialogContentText>
           <IconButton
+            aria-label="open-extension-discover"
             size="small"
             onClick={() => {
               dispatch(
                 updateUI({
                   openHelpDialog: true,
                   helpStart: "discover",
-                  discoverStep: 15,
+                  discoverStep: 16,
                 }),
               );
             }}

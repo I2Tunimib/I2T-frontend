@@ -3,6 +3,7 @@ import { RequestEnhancedState } from "@store/enhancers/requests";
 import { UndoEnhancedState } from "@store/enhancers/undo";
 import { ID, BaseState } from "@store/interfaces/store";
 import { Reconciliator } from "@store/slices/config/interfaces/config";
+import { DependencyGraph } from "./table";
 
 /**
  * Table slice state.
@@ -15,6 +16,7 @@ export interface TableState extends RequestEnhancedState, UndoEnhancedState {
     rows: RowState;
   };
   ui: TableUIState;
+  dependencies: DependencyGraph | null;
 }
 
 export interface CurrentTableState extends TableInstance {}
@@ -32,6 +34,41 @@ export interface TableInstance {
   maxMetaScore: number;
   mantisStatus?: "PENDING" | "DONE";
   schemaStatus?: "PENDING" | "DONE";
+  complianceStatus?: "PENDING" | "DONE" | "ERROR";
+  compliance?: any; // legacy — kept for backward compatibility
+  complianceReports?: ComplianceReport[];
+}
+
+export interface ComplianceReport {
+  userId: string | null;
+  date: string;
+  result: any[];
+}
+
+export interface GraphNode {
+  label: string;
+  kind: string;
+  datatype: string;
+  role: string;
+  metadata?: string;
+  types: any[];
+  properties: any[];
+  values: string[];
+}
+
+export interface GraphLink {
+  id: string;
+  source: any;
+  target: any;
+  label: string;
+  propID: string;
+  curvature?: number;
+}
+
+export interface GraphMetric {
+  name: string;
+  value: any;
+  description: string;
 }
 
 /**
@@ -45,9 +82,21 @@ export interface TableUIState {
   openModificationDialog: boolean;
   openMetadataDialog: boolean;
   openExportDialog: boolean;
+  showLinkLabels: boolean;
+  currentGraphSnapshot: string;
+  currentGraphSnapshotCompliance: string;
+  currentGraphData: {
+    nodes: GraphNode[];
+    links: GraphLink[];
+  } | null;
+  currentMetrics: GraphMetric[] | null;
+  openGraphDialog: boolean;
+  openComplianceStatusDialog: boolean;
+  initialComplianceType: string;
   openAutoAnnotationDialog: boolean;
   openMetadataColumnDialog: boolean;
   metadataColumnDialogColId: string | null;
+  metadataColumnDialogInitialTab: number;
   openHelpDialog: boolean;
   openGraphTutorialDialog: boolean;
   helpStart: "rec" | "ext" | "tutorial";
@@ -114,6 +163,7 @@ export interface Column {
   metadata: ColumnMetadata[];
   kind?: string;
   role?: string;
+  datatype?: string;
   reconciler?: string;
 }
 /**
@@ -131,6 +181,7 @@ export interface Cell {
   label: string;
   metadata: BaseMetadata[];
   annotationMeta: AnnotationMeta;
+  annotations?: Record<string, TextAnnotation[]>;
 }
 
 export interface AnnotationMeta {
@@ -150,6 +201,22 @@ export interface Context {
   reconciliated: number;
 }
 
+export interface TextAnnotation {
+  id: number;
+  type: string;
+  target: {
+    selector: {
+      type: "TextPositionSelector";
+      start: number;
+      end: number;
+    };
+  };
+  features: Record<string, any> & {
+    text?: string;
+    entity?: Pick<BaseMetadata, "id" | "name" | "score" | "match">;
+  };
+}
+
 export interface BaseMetadata {
   id: ID;
   name:
@@ -161,7 +228,7 @@ export interface BaseMetadata {
   match: boolean;
   score: number;
   type?: BaseMetadata[];
-  additionalTypes?: BaseMetadata[];
+  decider?: "machine" | "human";
 }
 
 export interface ColumnMetadata extends BaseMetadata {
@@ -171,6 +238,7 @@ export interface ColumnMetadata extends BaseMetadata {
 
 export interface PropertyMetadata extends BaseMetadata {
   obj?: ID;
+  decider?: "machine" | "human";
 }
 
 /**
@@ -307,6 +375,48 @@ export interface AddColumnTypePayload {
 }
 
 export interface UpdateCurrentTablePayload extends Partial<TableInstance> {}
+
+// ---------------------------------------------------------------------------
+// Dependencies (returned by the backend middleware after every service call)
+// ---------------------------------------------------------------------------
+
+export interface DependencyNode {
+  id: string;
+  children: string[];
+  parents: string[];
+  supportChildren?: string[];
+  supportParents?: string[];
+  [key: string]: any;
+}
+
+export interface DependencyOperation {
+  id: string;
+  opNumber?: number;
+  timestamp?: string;
+  operationType: "RECONCILIATION" | "EXTENSION" | "MODIFICATION" | string;
+  columnName?: string;
+  /** Generic fallback (older log entries) */
+  service?: string;
+  /** Set for RECONCILIATION operations */
+  reconciler?: string;
+  /** Set for EXTENSION operations */
+  extender?: string;
+  /** Set for MODIFICATION operations */
+  modifier?: string;
+  /** True if this operation was committed before the last table save */
+  consolidated?: boolean;
+  [key: string]: any;
+}
+
+export interface DependencyGraph {
+  datasetId: string;
+  tableId: string;
+  columns: Record<string, any>;
+  operationsCount: number;
+  latestTableData: any;
+  nodes: Record<string, DependencyNode>;
+  operations: DependencyOperation[];
+}
 
 export interface DeleteSelectedPayload {}
 

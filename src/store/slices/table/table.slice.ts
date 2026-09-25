@@ -6,7 +6,7 @@ import tableAPI, {
 } from "@services/api/table";
 //import { KG_INFO } from '@services/utils/kg-info';
 import { isEmptyObject } from "@services/utils/objects-utils";
-import { buildURI } from "@services/utils/uri-utils";
+import { resolveURI } from "@services/utils/uri-utils";
 //import { RootState, store } from "@store";
 import { createSliceWithRequests } from "@store/enhancers/requests";
 import {
@@ -58,15 +58,18 @@ import {
   UpdateSelectedColumnPayload,
   UpdateSelectedRowPayload,
   UpdateColumnTypeMatchesPayload,
+  DependencyGraph,
 } from "./interfaces/table";
 import {
   automaticAnnotation,
   extend,
   ExtendThunkResponseProps,
   getTable,
+  getDependencies,
   reconcile,
   modify,
   saveTable,
+  tableCompliance,
 } from "./table.thunk";
 import {
   deleteOneColumn,
@@ -143,7 +146,16 @@ const initialState: TableState = {
     openMetadataDialog: false,
     openMetadataColumnDialog: false,
     metadataColumnDialogColId: null,
+    metadataColumnDialogInitialTab: 0,
     openExportDialog: false,
+    showLinkLabels: false,
+    currentGraphSnapshot: "",
+    currentGraphSnapshotCompliance: "",
+    currentGraphData: null,
+    currentMetrics: null,
+    openGraphDialog: false,
+    openComplianceStatusDialog: false,
+    initialComplianceType: "",
     openAutoAnnotationDialog: false,
     openHelpDialog: false,
     openGraphTutorialDialog: false,
@@ -168,6 +180,7 @@ const initialState: TableState = {
     tutorialBBoxes: {},
     tutorialStep: 1,
   },
+  dependencies: null,
   _requests: { byId: {}, allIds: [] },
   _draft: {
     patches: [],
@@ -297,10 +310,8 @@ export const tableSlice = createSliceWithRequests({
           id: cleanId,
           label: col.label?.replace(/^\uFEFF/, "").trim() ?? cleanId,
           kind: result.kind_classification[cleanId] ?? col.kind ?? "unknown",
-          nerClassification:
-            result.ner_classification[cleanId] ??
-            col.nerClassification ??
-            "unknown",
+          datatype:
+            result.ner_classification[cleanId] ?? col.datatype ?? "unknown",
         };
       });
 
@@ -527,6 +538,29 @@ export const tableSlice = createSliceWithRequests({
               ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
               annotated: true,
             };
+
+            // Update column context and counters so that manually added metadata
+            // marks the column as annotated/reconciliated when appropriate.
+            try {
+              const column = getColumn(draft, colId);
+              // Ensure the cell's annotation meta is used to update context counters.
+              // updateContext will create/increment the column.context entry for the cell's context.
+              updateContext(
+                draft,
+                draft.entities.rows.byId[rowId].cells[colId],
+              );
+
+              // Recompute column status and global reconciliated counts
+              column.status = getColumnStatus(draft, colId);
+              updateNumberOfReconciliatedCells(draft);
+            } catch (e) {
+              // Swallow any errors here to avoid breaking the reducer; debugging info can be added if needed.
+              // eslint-disable-next-line no-console
+              console.warn(
+                "Failed to update column context after manual metadata add:",
+                e,
+              );
+            }
           }
           //draft.entities.rows.byId[rowId].cells[colId].metadata = [];
         },
@@ -880,6 +914,17 @@ export const tableSlice = createSliceWithRequests({
 
                 const isMatching = match === "true";
 
+                if (!columnToUpdate.context) {
+                  columnToUpdate.context = {};
+                }
+                if (!columnToUpdate.context[prefix]) {
+                  columnToUpdate.context[prefix] = {
+                    reconciliated: 0,
+                    total: 0,
+                    uri: uri.substring(0, uri.lastIndexOf("/") + 1),
+                  };
+                }
+
                 if (
                   columnToUpdate.metadata.length > 0 &&
                   columnToUpdate.metadata[0].entity &&
@@ -937,51 +982,64 @@ export const tableSlice = createSliceWithRequests({
             undoable,
             (draft) => {
               const columnToUpdate = getColumn(draft, colId);
-              const { id, match, name, uri, obj, description, ...rest } = value;
+              const { id, match, name, uri, obj, subj, description, score, prefix, ...rest } =
+                value;
               const isMatching = match === "true";
+
+              if (!columnToUpdate.context) {
+                columnToUpdate.context = {};
+              }
+              if (!columnToUpdate.context[prefix]) {
+                const baseUri = uri.substring(0, uri.lastIndexOf("/") + 1);
+                columnToUpdate.context[prefix] = {
+                  reconciliated: 0,
+                  total: 0,
+                  uri: uri.includes("wiki") ? `${baseUri}Property:` : baseUri,
+                };
+              }
 
               for (let i = 0; i < draft.entities.columns.allIds.length; i++) {
                 const currentId = draft.entities.columns.allIds[i];
-                if (currentId !== colId) {
+                if (currentId !== subj) {
                   draft.entities.columns.byId[currentId].role = undefined;
                 }
               }
-              draft.entities.columns.byId[colId].role = "subject";
+              draft.entities.columns.byId[subj].role = "subject";
 
               if (
                 columnToUpdate.metadata.length > 0 &&
                 columnToUpdate.metadata[0].property &&
                 columnToUpdate.metadata[0].property.length > 0 &&
-                draft.entities.columns.byId[colId].metadata &&
-                draft.entities.columns.byId[colId].metadata[0].property
+                draft.entities.columns.byId[subj].metadata &&
+                draft.entities.columns.byId[subj].metadata[0].property
               ) {
                 if (isMatching) {
-                  draft.entities.columns.byId[colId].metadata[0].property =
-                    draft.entities.columns.byId[
-                      colId
-                    ].metadata[0].property?.map((item) => ({
-                      ...item,
-                      match: true,
-                    }));
+                  draft.entities.columns.byId[subj].metadata[0].property =
+                    draft.entities.columns.byId[subj].metadata[0].property?.map(
+                      (item) => ({
+                        ...item,
+                        match: true,
+                      }),
+                    );
                 }
               }
 
               const newMeta = {
                 //id: `${prefix}:${id}`,
                 id: `${id}`,
-                obj: value.obj,
-                match: isMatching,
                 name,
-                description: value.description,
+                obj,
+                match: isMatching,
+                score,
+                decider: "human",
                 ...rest,
               };
 
-              draft.entities.columns.byId[colId].metadata = [
+              draft.entities.columns.byId[subj].metadata = [
                 {
-                  ...draft.entities.columns.byId[colId].metadata[0],
-                  role: "subject",
+                  ...draft.entities.columns.byId[subj].metadata[0],
                   property: [
-                    ...(draft.entities.columns.byId[colId].metadata[0]
+                    ...(draft.entities.columns.byId[subj].metadata[0]
                       ?.property || []),
                     newMeta,
                   ],
@@ -1008,7 +1066,7 @@ export const tableSlice = createSliceWithRequests({
       state,
       action: PayloadAction<Payload<DeleteColumnMetadataPayload>>,
     ) => {
-      const { colId, type, metadataId, undoable = true } = action.payload;
+      const { colId, type, metadataId, obj, undoable = true } = action.payload;
 
       const column = getColumn(state, colId);
 
@@ -1069,11 +1127,13 @@ export const tableSlice = createSliceWithRequests({
                   draft.entities.columns.byId[colId].metadata[0].property
                 ) {
                   draft.entities.columns.byId[colId].metadata[0].property =
-                    draft.entities.columns.byId[
-                      colId
-                    ].metadata[0].property?.filter(
-                      (item) => item.id !== metadataId,
-                    );
+                    draft.entities.columns.byId[colId].metadata[0].property.filter((item) => {
+                      return !(item.id === metadataId && item.obj === obj);
+                    });
+
+                  if (draft.entities.columns.byId[colId].metadata[0].property.length === 0) {
+                    draft.entities.columns.byId[colId].role = "";
+                  }
                 }
               },
               (draft) => {
@@ -1133,45 +1193,57 @@ export const tableSlice = createSliceWithRequests({
         },
       );
     },
+    updateColumnDatatype: (
+      state,
+      action: PayloadAction<Payload<{ colId: ID; datatype: string }>>,
+    ) => {
+      const { colId, datatype } = action.payload;
+      const column = getColumn(state, colId);
+      return produceWithPatch(
+        state,
+        true,
+        (draft) => {
+          const columnToUpdate = getColumn(draft, colId);
+          draft.entities.columns.byId[colId].datatype = datatype;
+        },
+        (draft) => {
+          draft.entities.tableInstance.lastModifiedDate =
+            new Date().toISOString();
+        },
+      );
+    },
     updateColumnPropertyMetadata: (
       state,
       action: PayloadAction<Payload<UpdateColumnMetadataPayload>>,
     ) => {
-      const { metadataId, colId, undoable = true } = action.payload;
+      const { metadataId, obj, colId, undoable = true } = action.payload;
 
       const column = getColumn(state, colId);
 
       if (
         column.metadata.length > 0 &&
-        column.metadata[0].entity &&
-        column.metadata[0].entity.length > 0
+        column.metadata[0].property &&
+        column.metadata[0].property.length > 0
       ) {
         return produceWithPatch(
           state,
           undoable,
           (draft) => {
             const columnToUpdate = getColumn(draft, colId);
-
-            if (
-              columnToUpdate.metadata.length > 0 &&
-              columnToUpdate.metadata[0].property &&
-              columnToUpdate.metadata[0].property.length > 0
-            ) {
-              columnToUpdate.metadata[0].property.forEach((metaItem) => {
-                if (metaItem.id === metadataId) {
-                  columnToUpdate.annotationMeta = {
-                    ...columnToUpdate.annotationMeta,
-                    match: {
-                      value: !metaItem.match,
-                      ...(!metaItem.match && {
-                        reason: "manual",
-                      }),
-                    },
-                  };
-                  metaItem.match = !metaItem.match;
-                }
-              });
-            }
+            columnToUpdate.metadata[0].property.forEach((metaItem) => {
+              if (metaItem.id === metadataId && metaItem.obj === obj) {
+                columnToUpdate.annotationMeta = {
+                  ...columnToUpdate.annotationMeta,
+                  match: {
+                    value: !metaItem.match,
+                    ...(!metaItem.match && {
+                      reason: "manual",
+                    }),
+                  },
+                };
+                metaItem.match = !metaItem.match;
+              }
+            });
           },
           (draft) => {
             // do not include in undo history
@@ -1234,6 +1306,14 @@ export const tableSlice = createSliceWithRequests({
     /**
      * Handle deletion of a metadata value.
      * --UNDOABLE ACTION--
+     *
+     * This reducer is robust to different shapes for the incoming metadataId:
+     * - string id
+     * - object with { label, id, value } fields
+     * - array of such values
+     *
+     * It normalizes the incoming metadataId(s) to candidate strings and compares them
+     * to the stored metadata items (which themselves may have string or object ids).
      */
     deleteCellMetadata: (
       state,
@@ -1243,28 +1323,135 @@ export const tableSlice = createSliceWithRequests({
       const { metadataId, cellId, undoable = true } = action.payload;
       const [rowId, colId] = getIdsFromCell(cellId);
 
+      // Normalize incoming metadataId into an array of candidate id strings
+      // Normalization: trim + lowercase, and include token after colon (e.g. "geo:12,34" -> ["geo:12,34","12,34"])
+      const normalizeIncoming = (mid: any): string[] => {
+        const normalizeToken = (t: any): string[] => {
+          if (t == null) return [];
+          const s = String(t).trim().toLowerCase();
+          const tokens: string[] = [];
+          if (s) tokens.push(s);
+          if (s.includes(":")) {
+            const parts = s.split(":");
+            const after = parts.slice(1).join(":").trim();
+            if (after) tokens.push(after);
+          }
+          return tokens;
+        };
+
+        if (mid == null) return [];
+        if (typeof mid === "string") return normalizeToken(mid);
+        if (Array.isArray(mid)) {
+          return mid.flatMap((m) => normalizeIncoming(m));
+        }
+        if (typeof mid === "object") {
+          const candidates: string[] = [];
+          if (mid.label) candidates.push(...normalizeToken(mid.label));
+          if (mid.id) candidates.push(...normalizeToken(mid.id));
+          if (mid.value) candidates.push(...normalizeToken(mid.value));
+          // If object has nested id-like shapes, try to stringify as fallback
+          if (candidates.length === 0)
+            candidates.push(...normalizeToken(JSON.stringify(mid)));
+          // remove duplicates and empty strings
+          return Array.from(new Set(candidates.filter((c) => !!c)));
+        }
+        return normalizeToken(String(mid));
+      };
+
+      const targetIds = normalizeIncoming(metadataId);
+
       return produceWithPatch(
         state,
         undoable,
         (draft) => {
           const column = getColumn(draft, colId);
           const cell = getCell(draft, rowId, colId);
+          if (!cell) return;
           const cellContext = getCellContext(cell);
           let wasMatch = false;
 
-          cell.metadata = cell.metadata.filter((item) => {
-            if (item.id === metadataId) {
-              wasMatch = !!item.match;
+          // DEBUG: show the normalized target ids we will try to match against
+          console.log("deleteCellMetadata targetIds", targetIds);
+
+          // Normalize stored item.id to a list of candidate strings and compare against targetIds
+          const itemIdCandidates = (itemId: any): string[] => {
+            const normalizeToken = (t: any): string[] => {
+              if (t == null) return [];
+              const s = String(t).trim().toLowerCase();
+              const tokens: string[] = [];
+              if (s) tokens.push(s);
+              if (s.includes(":")) {
+                const parts = s.split(":");
+                const after = parts.slice(1).join(":").trim();
+                if (after) tokens.push(after);
+              }
+              return tokens;
+            };
+
+            if (itemId == null) return [""];
+            if (typeof itemId === "string") return normalizeToken(itemId);
+            if (Array.isArray(itemId))
+              return itemId.flatMap((i) => itemIdCandidates(i));
+            if (typeof itemId === "object") {
+              const c: string[] = [];
+              if (itemId.label) c.push(...normalizeToken(itemId.label));
+              if (itemId.id) c.push(...normalizeToken(itemId.id));
+              if (itemId.value) c.push(...normalizeToken(itemId.value));
+              if (c.length === 0)
+                c.push(...normalizeToken(JSON.stringify(itemId)));
+              // deduplicate and remove empty
+              return Array.from(new Set(c.filter((x) => !!x)));
             }
-            return item.id !== metadataId;
+            return normalizeToken(String(itemId));
+          };
+
+          // Debugging: record length before deletion and show matching candidates per item
+          const beforeLen = cell.metadata.length;
+          cell.metadata = cell.metadata.filter((item) => {
+            const candidates = itemIdCandidates(item.id);
+            const matches = candidates.some((cand) => targetIds.includes(cand));
+            // DEBUG: log each candidate comparison
+            console.log("deleteCellMetadata checking item", {
+              rawId: item.id,
+              candidates,
+              targetIds,
+              matches,
+            });
+            if (matches) {
+              wasMatch = !!item.match;
+              return false; // remove this item
+            }
+            return true; // keep
           });
-          if (cell.metadata.length === 0) {
-            column.context[cellContext] = decrementContextTotal(
-              column.context[cellContext],
+          const afterLen = cell.metadata.length;
+          console.log("deleteCellMetadata result", {
+            beforeLen,
+            afterLen,
+            removed: beforeLen - afterLen,
+            wasMatch,
+          });
+
+          // Safeguard: cellContext may be empty or the context key may not exist on the column.
+          // If the context entry does not exist, create a default one so decrement operations are safe.
+          const safeContextKey = cellContext || "";
+          if (safeContextKey) {
+            if (!column.context[safeContextKey]) {
+              // create a context with zeroed counters to avoid undefined access
+              column.context[safeContextKey] = createContext({
+                uri: "",
+                total: 0,
+                reconciliated: 0,
+              });
+            }
+          }
+
+          if (safeContextKey && cell.metadata.length === 0) {
+            column.context[safeContextKey] = decrementContextTotal(
+              column.context[safeContextKey],
             );
             if (wasMatch) {
-              column.context[cellContext] = decrementContextReconciliated(
-                column.context[cellContext],
+              column.context[safeContextKey] = decrementContextReconciliated(
+                column.context[safeContextKey],
               );
               draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
                 ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
@@ -1274,9 +1461,9 @@ export const tableSlice = createSliceWithRequests({
                 },
               };
             }
-          } else if (wasMatch) {
-            column.context[cellContext] = decrementContextReconciliated(
-              column.context[cellContext],
+          } else if (safeContextKey && wasMatch) {
+            column.context[safeContextKey] = decrementContextReconciliated(
+              column.context[safeContextKey],
             );
             draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
               ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
@@ -1285,6 +1472,18 @@ export const tableSlice = createSliceWithRequests({
                 value: false,
               },
             };
+          } else {
+            // If there is no context key (safeContextKey is empty) we skip context counters.
+            // Still ensure cell annotationMeta is updated when a match was removed on a cell with other metadata.
+            if (!safeContextKey && wasMatch) {
+              draft.entities.rows.byId[rowId].cells[colId].annotationMeta = {
+                ...draft.entities.rows.byId[rowId].cells[colId].annotationMeta,
+                annotated: true,
+                match: {
+                  value: false,
+                },
+              };
+            }
           }
           column.status = getColumnStatus(draft, colId);
           updateNumberOfReconciliatedCells(draft);
@@ -1497,80 +1696,36 @@ export const tableSlice = createSliceWithRequests({
         undoable,
         (draft) => {
           const { columns } = draft.entities;
-          const newTypes = action.payload.newTypes.map((type) => ({
-            ...type,
-            match: true,
-            score: 100,
-          }));
 
-          // Ensure metadata[0] exists
-          if (!columns.byId[colId].metadata[0]) {
-            columns.byId[colId].metadata[0] = {
-              type: newTypes,
+          if (!columns.byId[colId].metadata || columns.byId[colId].metadata.length === 0) {
+            columns.byId[colId].metadata = [{ type: [] }];
+          }
+
+          if (!columns.byId[colId].metadata[0].type) {
+            columns.byId[colId].metadata[0].type = [];
+          }
+          const newTypes = action.payload.newTypes.map((t) => {
+            const { id, uri, ...restType } = t;
+            return {
+              match: true,
+              id: id.includes(":") ? id.split(":")[1] : id,
+              ...restType,
+              score: 0,
+              decider: "human",
             };
-          } else {
-            // Merge newTypes into the main metadata[0].type array (replace same id or append)
-            const existingMainTypes =
-              columns.byId[colId].metadata[0].type || [];
-            const mergedMain = [...existingMainTypes];
-            newTypes.forEach((newType) => {
-              const idx = mergedMain.findIndex((t: any) => t.id === newType.id);
-              if (idx !== -1) {
-                mergedMain[idx] = { ...mergedMain[idx], ...newType };
-              } else {
-                mergedMain.push(newType);
-              }
-            });
-            columns.byId[colId].metadata[0].type = mergedMain;
-          }
+          });
 
-          // Ensure additionalTypes exists and merge newTypes there as well
-          if (!columns.byId[colId].metadata[0].additionalTypes) {
-            columns.byId[colId].metadata[0].additionalTypes = newTypes;
-          } else {
-            // Check for existing types with the same ID and replace them
-            const existingTypes =
-              columns.byId[colId].metadata[0].additionalTypes || [];
-            const mergedTypes = [...existingTypes];
-            console.log("existingTypes", existingTypes);
-            console.log("newTypes", newTypes);
-            newTypes.forEach((newType) => {
-              const existingIndex = mergedTypes.findIndex(
-                (existingType) => existingType.id === newType.id,
-              );
-              if (existingIndex !== -1) {
-                // Replace existing type with the same ID
-                mergedTypes[existingIndex] = {
-                  ...mergedTypes[existingIndex],
-                  ...newType,
-                };
-              } else {
-                // Add new type if ID doesn't exist
-                mergedTypes.push(newType);
-              }
-            });
-
-            columns.byId[colId].metadata[0].additionalTypes = mergedTypes;
-          }
-
-          // Ensure match flags are set consistently on metadata[0].type entries
-          if (columns.byId[colId].metadata[0].type) {
-            columns.byId[colId].metadata[0].type = columns.byId[
-              colId
-            ].metadata[0].type.map((t: any) => ({
-              ...t,
-              match: !!t.match,
-            }));
-          }
-          // Ensure match flags are set on additionalTypes too
-          if (columns.byId[colId].metadata[0].additionalTypes) {
-            columns.byId[colId].metadata[0].additionalTypes = columns.byId[
-              colId
-            ].metadata[0].additionalTypes.map((t: any) => ({
-              ...t,
-              match: !!t.match,
-            }));
-          }
+          // Merge newTypes into the main metadata[0].type array (replace same id or append)
+          const existingMainTypes =
+            columns.byId[colId].metadata[0].type || [];
+          newTypes.forEach((newType) => {
+            const idx = existingMainTypes.findIndex((t: any) => t.id === newType.id);
+            if (idx !== -1) {
+              existingMainTypes[idx] = { ...existingMainTypes[idx], ...newType };
+            } else {
+              existingMainTypes.push(newType);
+            }
+          });
         },
         (draft) => {
           // do not include in undo history
@@ -1602,10 +1757,10 @@ export const tableSlice = createSliceWithRequests({
           const newTypes = action.payload.map((type) => ({
             ...type,
             match: true,
-            score: 100,
+            score: 0,
           }));
 
-          if (columns.byId[colId].metadata.length === 0) {
+          if (!columns.byId[colId].metadata || columns.byId[colId].metadata.length === 0) {
             (columns.byId[colId].metadata as any) = [
               {
                 type: newTypes,
@@ -1644,29 +1799,22 @@ export const tableSlice = createSliceWithRequests({
         (draft) => {
           const { columns } = draft.entities;
 
-          if (columns.byId[colId].metadata.length === 0) {
-            return; // No metadata to update
+          if (!columns.byId[colId].metadata || columns.byId[colId].metadata.length === 0) {
+            columns.byId[colId].metadata = [{ type: [] }];
           }
 
           // If there are types already, update their match property
-          if (columns.byId[colId].metadata[0].type) {
-            columns.byId[colId].metadata[0].type = columns.byId[
-              colId
-            ].metadata[0].type.map((type: any) => ({
-              ...type,
-              match: typeIds.includes(type.id),
-            }));
+          if (!columns.byId[colId].metadata[0].type) {
+            columns.byId[colId].metadata[0].type = [];
           }
-
-          // Also update additionalTypes match property if present
-          if (columns.byId[colId].metadata[0].additionalTypes) {
-            columns.byId[colId].metadata[0].additionalTypes = columns.byId[
-              colId
-            ].metadata[0].additionalTypes.map((type: any) => ({
+          columns.byId[colId].metadata[0].type = columns.byId[colId].metadata[0].type.map((type: any) => {
+            const isSelected = typeIds.includes(type.id);
+            return {
               ...type,
-              match: typeIds.includes(type.id),
-            }));
-          }
+              match: isSelected,
+              score: isSelected ? (type.score ?? 100) : 0,
+            };
+          });
         },
         (draft) => {
           // do not include in undo history
@@ -1750,7 +1898,15 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<Payload<Partial<TableUIState>>>,
     ) => {
       const { undoable, ...rest } = action.payload;
-      state.ui = { ...state.ui, ...rest };
+      if (rest.settings) {
+        state.ui = {
+          ...state.ui,
+          ...rest,
+          settings: { ...state.ui.settings, ...rest.settings },
+        };
+      } else {
+        state.ui = { ...state.ui, ...rest };
+      }
     },
     addTutorialBox: (
       state,
@@ -1821,6 +1977,39 @@ export const tableSlice = createSliceWithRequests({
           draft.ui.selectedCellIds = {};
         },
       );
+    },
+    clearColumnReconciliation: (
+      state,
+      action: PayloadAction<{ colId: ID }>,
+    ) => {
+      const { colId } = action.payload;
+      return produceWithPatch(state, false, (draft) => {
+        const column = getColumn(draft, colId);
+        if (!column) return;
+        column.context = {};
+        column.annotationMeta = {
+          annotated: false,
+          match: { value: false },
+          highestScore: 0,
+          lowestScore: 0,
+        };
+        column.status = ColumnStatus.EMPTY;
+        delete (column as any).reconciler;
+        draft.entities.rows.allIds.forEach((rowId) => {
+          const cell = draft.entities.rows.byId[rowId]?.cells?.[colId];
+          if (cell) {
+            cell.metadata = [];
+            cell.annotationMeta = {
+              annotated: false,
+              match: { value: false },
+              highestScore: 0,
+              lowestScore: 0,
+            };
+          }
+        });
+        updateNumberOfReconciliatedCells(draft);
+        updateScoreBoundaries(draft);
+      });
     },
     deleteRow: (state, action: PayloadAction<Payload<DeleteRowPayload>>) => {
       const { undoable = true, rowId } = action.payload;
@@ -1899,6 +2088,12 @@ export const tableSlice = createSliceWithRequests({
       action: PayloadAction<{ id: string; isVisible: boolean }>,
     ) => {
       state.ui.columnVisibility[action.payload.id] = action.payload.isVisible;
+    },
+    updateDependencies: (
+      state,
+      action: PayloadAction<DependencyGraph | null>,
+    ) => {
+      state.dependencies = action.payload;
     },
   },
   extraRules: (builder) =>
@@ -1997,6 +2192,7 @@ export const tableSlice = createSliceWithRequests({
               const dataArray = rawArray.filter((item) => item != null) as {
                 id: string;
                 metadata: any[];
+                annotations?: Record<string, import("../interfaces/table").TextAnnotation[]>;
               }[];
 
               const colIds = new Set<string>();
@@ -2012,12 +2208,16 @@ export const tableSlice = createSliceWithRequests({
 
               colIds.forEach((colId) => {
                 const column = getColumn(draft, colId);
-                if (column && column.kind !== "entity") {
-                  column.kind = "entity";
+                if (column) {
+                  column.reconciler = reconcilerId;
+                  column.context = {};
+                  if (column.kind !== "entity") {
+                    column.kind = "entity";
+                  }
                 }
               });
 
-              dataArray.forEach(({ id: cellId, metadata }) => {
+              dataArray.forEach(({ id: cellId, metadata, annotations }) => {
                 if (cellId.includes("$")) {
                   const [rowId, colId] = getIdsFromCell(cellId);
                   // get column
@@ -2029,10 +2229,21 @@ export const tableSlice = createSliceWithRequests({
 
                   if (previousContext) {
                     // decrement previous
-                    column.context[previousContext] = decrementContextCounters(
-                      column.context[previousContext],
+                    const safePreviousContext =
+                      column.context[previousContext] || createContext({});
+                    const updatedContext = decrementContextCounters(
+                      safePreviousContext,
                       cell,
                     );
+
+                    if (
+                      updatedContext.total <= 0 &&
+                      updatedContext.reconciliated <= 0
+                    ) {
+                      delete column.context[previousContext];
+                    } else {
+                      column.context[previousContext] = updatedContext;
+                    }
                   }
                   // assign new reconciliator and metadata
                   // cell.metadata.reconciliator.id = reconciliator.id;
@@ -2042,16 +2253,18 @@ export const tableSlice = createSliceWithRequests({
                   );
                   cell.metadata = metadata.map(({ id, name, ...rest }) => {
                     const [_, metaId] = id.split(":");
+                    const computedUri = resolveURI(effectiveReconciliator, {
+                      id: metaId,
+                      label: name,
+                      ...rest,
+                    });
                     console.log("rest of the item", rest);
                     return {
                       id,
                       name: {
                         value: name as unknown as string,
                         //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                        uri: buildURI(
-                          effectiveReconciliator.uri || rest.uri,
-                          metaId,
-                        ),
+                        uri: computedUri,
                       },
                       ...rest,
                     };
@@ -2061,6 +2274,9 @@ export const tableSlice = createSliceWithRequests({
                     ...computeCellAnnotationStats(cell),
                   };
                   cell.reconciler = reconcilerId;
+                  if (annotations && Object.keys(annotations).length > 0) {
+                    cell.annotations = annotations;
+                  }
                   // increment current
                   if (
                     !column.context[prefix] ||
@@ -2084,24 +2300,6 @@ export const tableSlice = createSliceWithRequests({
                     Array.isArray(column.metadata) &&
                     column.metadata.length > 0
                   ) {
-                    column.metadata[0].entity = metadata.map(
-                      ({ id, name, ...rest }) => {
-                        const [_, metaId] = id.split(":");
-                        return {
-                          id,
-                          name: {
-                            value: name as unknown as string,
-                            //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(
-                              effectiveReconciliator.uri || rest.uri,
-                              metaId,
-                            ),
-                          },
-                          ...rest,
-                        };
-                      },
-                    );
-                    console.log("current meta", metadata);
                     if (
                       metadata.length > 0 &&
                       metadata.some((m) => m.property)
@@ -2121,16 +2319,6 @@ export const tableSlice = createSliceWithRequests({
                         ...(column.metadata[0].property || []),
                         ...newProps,
                       ];
-                    }
-                    if (column.metadata[0].type) {
-                      column.metadata[0].type = metadata.flatMap((metas) => {
-                        if (metas.type) {
-                          return metas.type.map((type) => ({
-                            ...type,
-                          }));
-                        }
-                        return [];
-                      });
                     }
                   } else if (column && Array.isArray(column.metadata)) {
                     column.metadata[0] = {
@@ -2155,21 +2343,6 @@ export const tableSlice = createSliceWithRequests({
                         }
                         return [];
                       }),
-                      entity: metadata.map(({ id, name, ...rest }) => {
-                        const [_, metaId] = id.split(":");
-                        return {
-                          id,
-                          name: {
-                            value: name as unknown as string,
-                            //uri: `${KG_INFO[prefix as keyof typeof KG_INFO].uri}${metaId}`
-                            uri: buildURI(
-                              effectiveReconciliator.uri || rest.uri,
-                              metaId,
-                            ),
-                          },
-                          ...rest,
-                        };
-                      }),
                     };
 
                     column.annotationMeta = {
@@ -2179,6 +2352,47 @@ export const tableSlice = createSliceWithRequests({
                     //set reconciler id used
                     column.reconciler = reconcilerId;
                   }
+                }
+              });
+              colIds.forEach((colId) => {
+                  const column = getColumn(draft, colId);
+                  if (!column) return;
+
+                  const map: Record<string, { id: string; count: number; label: any; uri: any; match?: any; decider?: string }> = {};
+
+                  draft.entities.rows.allIds.forEach((rowId) => {
+                    const cell = draft.entities.rows.byId[rowId]?.cells[colId];
+                    if (cell && cell.metadata) {
+                      cell.metadata.forEach((metaItem) => {
+                        if (metaItem.type && metaItem.match) {
+                          metaItem.type.forEach(({ id, name, uri }) => {
+                            const cleanId = id.includes(":") ? id.split(":")[1] : id;
+                            if (map[cleanId]) {
+                              map[cleanId].count++;
+                            } else {
+                              map[cleanId] = {
+                                id: cleanId,
+                                label: name,
+                                uri,
+                                count: 1,
+                                match: metaItem.match,
+                                decider: metaItem.decider,
+                              };
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                if (column.metadata && column.metadata[0]?.type) {
+                  column.metadata[0].type = column.metadata[0].type.map((typeItem) => {
+                    const cleanId = typeItem.id.includes(":") ? typeItem.id.split(":")[1] : typeItem.id;
+                    const matchedInfo = map[cleanId];
+                    return {
+                      ...typeItem,
+                      match: matchedInfo ? matchedInfo.match : false,
+                    };
+                  });
                 }
               });
               updateNumberOfReconciliatedCells(draft);
@@ -2200,12 +2414,28 @@ export const tableSlice = createSliceWithRequests({
           if (mantisStatus) {
             state.entities.tableInstance.mantisStatus = mantisStatus;
           }
+          console.log("[debug locked table schema status]", schemaStatus);
           if (schemaStatus) {
             state.entities.tableInstance.schemaStatus = schemaStatus;
           }
           state.ui.settings.isViewOnly = true;
         },
       )
+      .addCase(tableCompliance.fulfilled, (state, action) => {
+        // Only set PENDING if the socket event hasn't already resolved it
+        if (state.entities.tableInstance.complianceStatus !== "DONE") {
+          state.entities.tableInstance.complianceStatus = "PENDING";
+        }
+      })
+      .addCase(tableCompliance.pending, (state) => {
+        state.entities.tableInstance.complianceStatus = "PENDING";
+      })
+      .addCase(tableCompliance.rejected, (state) => {
+        state.entities.tableInstance.complianceStatus = "ERROR";
+      })
+      .addCase(getDependencies.fulfilled, (state, action) => {
+        state.dependencies = action.payload ?? null;
+      })
       .addCase(
         extend.fulfilled,
         (state, action: PayloadAction<Payload<ExtendThunkResponseProps>>) => {
@@ -2285,22 +2515,89 @@ export const tableSlice = createSliceWithRequests({
               updateNumberOfReconciliatedCells(draft);
               //add additional meta if needed (up to now only properties)
               if (originalColMeta && originalColMeta.originalColName) {
-                if (
-                  draft.entities.columns.byId[originalColMeta.originalColName]
-                    .metadata[0].property
-                ) {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = [
-                    ...draft.entities.columns.byId[
-                      originalColMeta.originalColName
-                    ].metadata[0].property,
-                    ...originalColMeta.properties,
-                  ];
-                } else {
-                  draft.entities.columns.byId[
-                    originalColMeta.originalColName
-                  ].metadata[0].property = originalColMeta.properties;
+                const mainColId = originalColMeta.originalColName;
+                const columnToUpdate = draft.entities.columns.byId[mainColId];
+
+                if (columnToUpdate) {
+                  if (!columnToUpdate.context) {
+                    columnToUpdate.context = {};
+                  }
+
+                  if (!columnToUpdate.context.wd) {
+                    columnToUpdate.context.wd = {
+                      reconciliated: 0,
+                      total: 0,
+                      uri: "https://www.wikidata.org/wiki/Property:",
+                    };
+                  }
+
+                  if (
+                    columnToUpdate.metadata &&
+                    columnToUpdate.metadata.length > 0
+                  ) {
+                    if (
+                      originalColMeta.types &&
+                      originalColMeta.types.length > 0
+                    ) {
+                      if (!columnToUpdate.metadata[0].type) {
+                        columnToUpdate.metadata[0].type = [];
+                      }
+
+                      const addedTypes = originalColMeta.types.map(
+                        (typeMeta: any) => {
+                          const cleanTypeId = typeMeta.id.includes(":")
+                            ? typeMeta.id.split(":")[1]
+                            : typeMeta.id;
+
+                          return {
+                            ...typeMeta,
+                            id: typeMeta.id,
+                            name: typeMeta.name,
+                            uri: `https://www.wikidata.org/wiki/${cleanTypeId}`,
+                          };
+                        },
+                      );
+
+                      addedTypes.forEach((newType) => {
+                        const typeExists = columnToUpdate.metadata[0].type.some(
+                          (t: any) => t.id === newType.id,
+                        );
+                        if (!typeExists) {
+                          columnToUpdate.metadata[0].type.push(newType);
+                        }
+                      });
+                    }
+                  }
+
+                  if (!columnToUpdate.metadata[0].property) {
+                    columnToUpdate.metadata[0].property = [];
+                  }
+
+                  const addedProperties = originalColMeta.properties.map(
+                    (prop: any) => {
+                      console.log("prop", prop);
+                      const cleanId = prop.id.includes(":")
+                        ? prop.id.split(":")[1]
+                        : prop.id;
+
+                      return {
+                        ...prop,
+                        id: prop.id,
+                        uri: `https://www.wikidata.org/wiki/Property:${cleanId}`,
+                      };
+                    },
+                  );
+
+                  addedProperties.forEach((newProp) => {
+                    const propertyExists =
+                      columnToUpdate.metadata[0].property.some(
+                        (p: any) =>
+                          p.id === newProp.id && p.obj === newProp.obj,
+                      );
+                    if (!propertyExists) {
+                      columnToUpdate.metadata[0].property.push(newProp);
+                    }
+                  });
                 }
               }
             },
@@ -2451,7 +2748,14 @@ export const tableSlice = createSliceWithRequests({
                   // add rows
 
                   draft.entities.rows.allIds.forEach((rowId) => {
+                    const oldCell =
+                      draft.entities.rows.byId[rowId].cells[newColId];
+                    const incomingCellData = cells[rowId];
                     const newCell = createCell(rowId, newColId, cells[rowId]);
+                    if (oldCell) {
+                      newCell.metadata = oldCell.metadata;
+                      newCell.annotationMeta = oldCell.annotationMeta;
+                    }
                     if (newCell.metadata.length === 0) {
                       newCell.annotationMeta = {
                         annotated: false,
@@ -2471,7 +2775,18 @@ export const tableSlice = createSliceWithRequests({
 
                   // Insert the new column right after the selected column
                   if (!draft.entities.columns.allIds.includes(newColId)) {
-                    draft.entities.columns.allIds.push(newColId);
+                    // If we have a valid selected column index, insert new columns immediately after it,
+                    // preserving the relative order of newly created columns. If selected column index is not found,
+                    // fallback to appending at the end.
+                    const insertIndex =
+                      selectedColumnIndex !== -1
+                        ? selectedColumnIndex + 1 + newColIndex
+                        : draft.entities.columns.allIds.length;
+                    draft.entities.columns.allIds.splice(
+                      insertIndex,
+                      0,
+                      newColId,
+                    );
                   }
                 });
                 updateNumberOfReconciliatedCells(draft);
@@ -2528,6 +2843,7 @@ export const {
   autoMatching,
   refineMatching,
   updateColumnKind,
+  updateColumnDatatype,
   updateColumnRole,
   updateColumnSelection,
   updateRowSelection,
@@ -2540,6 +2856,7 @@ export const {
   updateUI,
   addTutorialBox,
   deleteColumn,
+  clearColumnReconciliation,
   deleteRow,
   deleteSelected,
   updateTable,
@@ -2549,6 +2866,7 @@ export const {
   redo,
   updateColumnVisibility,
   updateSchema,
+  updateDependencies,
 } = tableSlice.actions;
 
 export default tableSlice.reducer;

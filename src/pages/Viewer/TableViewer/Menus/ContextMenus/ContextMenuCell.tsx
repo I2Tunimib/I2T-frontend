@@ -1,19 +1,22 @@
-import { MenuBase, MenuDivider, MenuItemIconLabel } from '@components/core';
-import { MenuBaseProps } from '@components/core/MenuBase';
-import { MenuList } from '@mui/material';
+import { MenuBase, MenuDivider, MenuItemIconLabel } from "@components/core";
+import { MenuBaseProps } from "@components/core/MenuBase";
+import { MenuList } from "@mui/material";
 //import makeStyles from '@mui/styles/makeStyles';
-import styled from '@emotion/styled';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
-import SettingsEthernetRoundedIcon from '@mui/icons-material/SettingsEthernetRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import { FC, useCallback } from 'react';
-import { useAppDispatch } from '@hooks/store';
+import styled from "@emotion/styled";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
+import SettingsEthernetRoundedIcon from "@mui/icons-material/SettingsEthernetRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import { FC, useCallback } from "react";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
-  deleteColumn, deleteRow,
-  updateCellEditable, updateUI
-} from '@store/slices/table/table.slice';
-import { getIdsFromCell } from '@store/slices/table/utils/table.utils';
+  deleteColumn,
+  deleteRow,
+  updateCellEditable,
+  updateUI,
+} from "@store/slices/table/table.slice";
+import { selectIsViewOnly } from "@store/slices/table/table.selectors";
+import { getIdsFromCell } from "@store/slices/table/utils/table.utils";
 
 interface ContextMenuCellProps extends MenuBaseProps {
   data?: any;
@@ -38,6 +41,7 @@ const ContextMenuCell: FC<ContextMenuCellProps> = ({
 }) => {
   //const classes = useMenuStyles();
   const dispatch = useAppDispatch();
+  const isViewOnly = useAppSelector(selectIsViewOnly);
 
   /**
    * Handle edit cell action.
@@ -59,9 +63,14 @@ const ContextMenuCell: FC<ContextMenuCellProps> = ({
    * Handle managae metadata cell action.
    */
   const manageMetadata = useCallback(() => {
+    if (isViewOnly) {
+      handleClose();
+      return;
+    }
+
     dispatch(updateUI({ openMetadataDialog: true }));
     handleClose();
-  }, [handleClose]);
+  }, [handleClose, dispatch, isViewOnly]);
 
   /**
    * Handle delete column action.
@@ -80,36 +89,34 @@ const ContextMenuCell: FC<ContextMenuCellProps> = ({
   }, [id, handleClose]);
 
   return (
-    <MenuBase
-      handleClose={handleClose}
-      {...props}
-    >
-      <StyledMenuList autoFocus //className={classes.list}
+    <MenuBase handleClose={handleClose} {...props}>
+      <StyledMenuList
+        autoFocus //className={classes.list}
       >
-        <MenuItemIconLabel
-          onClick={editCell}
-          Icon={EditRoundedIcon}>
+        <MenuItemIconLabel onClick={editCell} Icon={EditRoundedIcon}>
           Edit
         </MenuItemIconLabel>
-        <MenuItemIconLabel
-          onClick={reconciliateCell}
-          Icon={LinkRoundedIcon}>
+        <MenuItemIconLabel onClick={reconciliateCell} Icon={LinkRoundedIcon}>
           Reconciliate cell
         </MenuItemIconLabel>
         <MenuItemIconLabel
           onClick={manageMetadata}
-          Icon={SettingsEthernetRoundedIcon}>
+          disabled={isViewOnly}
+          Icon={SettingsEthernetRoundedIcon}
+        >
           Manage metadata
         </MenuItemIconLabel>
         <MenuDivider />
         <MenuItemIconLabel
           onClick={deleteOneColumn}
-          Icon={DeleteOutlineRoundedIcon}>
+          Icon={DeleteOutlineRoundedIcon}
+        >
           Delete column
         </MenuItemIconLabel>
         <MenuItemIconLabel
           onClick={deleteOneRow}
-          Icon={DeleteOutlineRoundedIcon}>
+          Icon={DeleteOutlineRoundedIcon}
+        >
           Delete row
         </MenuItemIconLabel>
       </StyledMenuList>

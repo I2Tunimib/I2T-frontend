@@ -1,25 +1,20 @@
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import React, { FC, useState, useEffect, useMemo } from "react";
 import {
-  Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  TextField,
   FormControl,
   FormControlLabel,
-  FormHelperText,
   InputLabel,
   IconButton,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
   SelectChangeEvent,
-  Tooltip,
   Stack,
 } from "@mui/material";
 import { selectAutoAnnotationDialogStatus } from "@store/slices/table/table.selectors";
@@ -33,6 +28,7 @@ interface AutoAnnotationDialogProps {}
 const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
   const [target, setTarget] = useState<string>("");
   const [method, setMethod] = useState<string>("");
+  const [useLLM, setUseLLM] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector(selectAutoAnnotationDialogStatus);
   const { datasetId, tableId } = useParams<{
@@ -49,7 +45,6 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
     if (target === "schema") {
       return [
         { id: "llm", label: "LLM Column Classifier" },
-        { id: "columnClassifier", label: "Column Classifier" },
       ];
     }
     return [];
@@ -62,6 +57,7 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
   useEffect(() => {
     setTarget("");
     setMethod("");
+    setUseLLM(false);
   }, [isOpen]);
 
   const handleTargetChange = (e: SelectChangeEvent<string>) => {
@@ -76,6 +72,7 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
         tableId,
         target,
         method,
+        useLLM,
       }),
     );
 
@@ -87,6 +84,7 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <DialogTitle>Automatic Annotation</DialogTitle>
         <IconButton
+          aria-label="open-automatic-annotation-tutorial"
           sx={{
             color: "rgba(0, 0, 0, 0.54)",
             marginRight: "20px",
@@ -143,6 +141,18 @@ const AutoAnnotationDialog: FC<AutoAnnotationDialogProps> = () => {
             ))}
           </Select>
         </FormControl>
+        {target === "fullTable" && method === "alligator" && (
+          <FormControlLabel
+            sx={{ marginTop: "16px" }}
+            control={
+              <Checkbox
+                checked={useLLM}
+                onChange={(e) => setUseLLM(e.target.checked)}
+              />
+            }
+            label="Use LLM mode (Large Language Model ranking)"
+          />
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>

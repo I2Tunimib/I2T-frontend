@@ -20,8 +20,16 @@ import {
   ColumnState,
   RowState,
   TableState,
+  DependencyGraph,
+  DependencyOperation,
 } from "./interfaces/table";
-import { updateTable, updateSchema, updateUI } from "./table.slice";
+import {
+  updateTable,
+  updateSchema,
+  updateUI,
+  deleteColumn,
+  clearColumnReconciliation,
+} from "./table.slice";
 import { getIdsFromCell } from "./utils/table.utils";
 
 const ACTION_PREFIX = "table";
@@ -58,16 +66,30 @@ export const getTable = createAsyncThunk(
   },
 );
 
+export const getDependencies = createAsyncThunk(
+  `${ACTION_PREFIX}/getDependencies`,
+  async (params: Record<string, string | number>) => {
+    const response = await tableAPI.getDependencies(params);
+    return response.data;
+  },
+);
+
 export const exportTable = createAsyncThunk(
   `${ACTION_PREFIX}/exportTable`,
   async ({
     format,
     params,
+    payload,
   }: {
     format: string;
     params: Record<string, string | number>;
+    payload?: any;
   }) => {
-    const response = await tableAPI.exportTable(format, params);
+    const response = await tableAPI.exportTable(format, params, payload);
+    const isBlob = response.config.responseType === 'blob';
+    if (isBlob) {
+      return { data: response.data, isBlob };
+    }
     return response.data;
   },
 );
@@ -451,7 +473,7 @@ const getRequestFormValuesExtension = (
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
-      if (inputType === "selectColumns") {
+      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else if (inputType === "multipleColumnSelect") {
         requestParams[id] = {};
@@ -482,7 +504,7 @@ const getRequestFormValuesReconciliation = (
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
-      if (inputType === "selectColumns") {
+      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else if (inputType === "multipleColumnSelect") {
         requestParams[id] = {};
@@ -539,7 +561,7 @@ const getRequestFormValuesModification = (
 
   formParams.forEach(({ id, inputType }) => {
     if (formValues[id]) {
-      if (inputType === "selectColumns") {
+      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
         requestParams[id] = getColumnValues(formValues[id], rows);
       } else if (inputType === "multipleColumnSelect") {
         requestParams[id] = {};
@@ -562,12 +584,14 @@ export const reconcile = createAsyncThunk(
       items,
       reconciliator,
       formValues,
+      silent,
     }: {
       items: any;
       reconciliator: Reconciliator;
       formValues: Record<string, any>;
+      silent?: boolean;
     },
-    { getState, signal },
+    { getState, signal, dispatch },
   ) => {
     const { table } = getState() as RootState;
     const { relativeUrl, formParams, id } = reconciliator;
@@ -613,9 +637,21 @@ export const reconcile = createAsyncThunk(
       columnName,
       // pass axios cancel token so the request is cancelled on abort
       source.token,
+      silent,
     );
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { dependencies: _deps, ...reconcileData } = response.data;
+
+    dispatch(
+      getDependencies({
+        tableId: tableInstance.id,
+        datasetId: tableInstance.idDataset,
+      }),
+    );
+
     return {
-      data: response.data,
+      data: reconcileData,
       reconciliator,
     };
   },
@@ -625,7 +661,8 @@ type AutomaticAnnotationThunkInputProps = {
   datasetId: string;
   tableId: string;
   target: "fullTable" | "schema";
-  method: "alligator" | "columnClassifier";
+  method: "alligator";
+  useLLM?: boolean;
 };
 
 type AutomaticAnnotationThunkOutputProps = {
@@ -639,18 +676,41 @@ export const automaticAnnotation = createAsyncThunk<
   AutomaticAnnotationThunkOutputProps,
   AutomaticAnnotationThunkInputProps
 >(`${ACTION_PREFIX}/automaticAnnotation`, async (params, { getState }) => {
-  const { datasetId, tableId, target, method } = params;
+  const { datasetId, tableId, target, method, useLLM } = params;
   const { table } = getState() as any;
   const { entities } = table;
   const data = {
     target,
     method,
+    ...(useLLM !== undefined && { useLLM }),
     rows: entities.rows.byId,
     columns: entities.columns.byId,
     table: entities.tableInstance,
   };
-  const response = await tableAPI.automaticAnnotation(params, data);
+  const response = await tableAPI.automaticAnnotation(
+    { datasetId, tableId, target, method },
+    data,
+  );
   return response.data;
+});
+export type TableComplianceThunkInputProps = {
+  datasetId: string;
+  tableId: string;
+  purpose?: string;
+};
+export type TableComplianceThunkOutputProps = {
+  response: any;
+};
+export const tableCompliance = createAsyncThunk<
+  TableComplianceThunkOutputProps,
+  TableComplianceThunkInputProps
+>(`${ACTION_PREFIX}/compliance`, async (params, { getState }) => {
+  const { datasetId, tableId, purpose } = params;
+  const data = {
+    purpose: purpose || "General data processing",
+  };
+  const response = await tableAPI.makeCompliance({ datasetId, tableId }, data);
+  return { response: response.data };
 });
 export type SuggestThunkInputProps = {
   // rowCellsEntities: any;
@@ -712,6 +772,7 @@ export type ExtendThunkInputProps = {
 export type ExtendedColumnCell = {
   label: string;
   metadata: BaseMetadata[];
+  annotations?: Record<string, import("../interfaces/table").TextAnnotation[]>;
 };
 type ExtendedColumn = {
   label: string;
@@ -746,59 +807,73 @@ export type ExtendThunkResponseProps = {
 export const extend = createAsyncThunk<
   ExtendThunkResponseProps,
   ExtendThunkInputProps
->(`${ACTION_PREFIX}/extend`, async (inputProps, { getState, signal }) => {
-  const { extender, formValues } = inputProps;
-  // get root table states
-  const { table } = getState() as RootState;
-  const { relativeUrl, formParams, id } = extender;
-  const { entities, ui } = table;
-  const { tableInstance, columns } = entities;
+>(
+  `${ACTION_PREFIX}/extend`,
+  async (inputProps, { getState, signal, dispatch }) => {
+    const { extender, formValues } = inputProps;
+    // get root table states
+    const { table } = getState() as RootState;
+    const { relativeUrl, formParams, id } = extender;
+    const { entities, ui } = table;
+    const { tableInstance, columns } = entities;
 
-  // Get the selected column name
-  const selectedColumnIds = Object.keys(ui.selectedColumnsIds);
-  const selectedColumnId = selectedColumnIds[0];
-  const columnName = columns.byId[selectedColumnId]?.label || "";
+    // Get the selected column name
+    const selectedColumnIds = Object.keys(ui.selectedColumnsIds);
+    const selectedColumnId = selectedColumnIds[0];
+    const columnName = columns.byId[selectedColumnId]?.label || "";
 
-  const params = {
-    ...getRequestFormValuesExtension(formParams, formValues, table, extender),
-    // Prefer selected columns explicitly provided by the formValues.
-    // If not present, fall back to extender.selectedColumns (service-level selection).
-    selectedColumns:
-      formValues && formValues.selectedColumns
-        ? formValues.selectedColumns
-        : extender && (extender as any).selectedColumns
-          ? (extender as any).selectedColumns
-          : undefined,
-  };
+    const params = {
+      ...getRequestFormValuesExtension(formParams, formValues, table, extender),
+      // Prefer selected columns explicitly provided by the formValues.
+      // If not present, fall back to extender.selectedColumns (service-level selection).
+      selectedColumns:
+        formValues && formValues.selectedColumns
+          ? formValues.selectedColumns
+          : extender && (extender as any).selectedColumns
+            ? (extender as any).selectedColumns
+            : undefined,
+    };
 
-  // Create axios CancelToken source and wire it to the thunk abort signal
-  const source = axios.CancelToken.source();
-  if (signal.aborted) {
-    source.cancel("Aborted before request");
-    throw new Error("Aborted");
-  }
-  signal.addEventListener("abort", () => {
-    source.cancel("Aborted by user");
-  });
+    // Create axios CancelToken source and wire it to the thunk abort signal
+    const source = axios.CancelToken.source();
+    if (signal.aborted) {
+      source.cancel("Aborted before request");
+      throw new Error("Aborted");
+    }
+    signal.addEventListener("abort", () => {
+      source.cancel("Aborted by user");
+    });
 
-  const response = await tableAPI.extend(
-    relativeUrl,
-    {
-      serviceId: id,
-      ...params,
-    },
-    tableInstance.id,
-    tableInstance.idDataset,
-    columnName,
-    // pass axios cancel token so the request is cancelled on abort
-    source.token,
-  );
-  return {
-    data: response.data,
-    extender,
-    selectedColumnId,
-  };
-});
+    const response = await tableAPI.extend(
+      relativeUrl,
+      {
+        serviceId: id,
+        ...params,
+      },
+      tableInstance.id,
+      tableInstance.idDataset,
+      columnName,
+      // pass axios cancel token so the request is cancelled on abort
+      source.token,
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { dependencies: _deps, ...extendData } = response.data;
+
+    dispatch(
+      getDependencies({
+        tableId: tableInstance.id,
+        datasetId: tableInstance.idDataset,
+      }),
+    );
+
+    return {
+      data: extendData,
+      extender,
+      selectedColumnId,
+    };
+  },
+);
 
 export type ModifyThunkInputProps = {
   modifier: Modifier;
@@ -814,7 +889,7 @@ export type ModifyThunkResponseProps = {
 export const modify = createAsyncThunk<
   ModifyThunkResponseProps,
   ModifyThunkInputProps
->(`${ACTION_PREFIX}/modify`, async (inputProps, { getState }) => {
+>(`${ACTION_PREFIX}/modify`, async (inputProps, { getState, dispatch }) => {
   const { modifier, formValues } = inputProps;
 
   const { table } = getState() as RootState;
@@ -851,8 +926,18 @@ export const modify = createAsyncThunk<
     columnName,
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { dependencies: _deps, ...modifyData } = response.data;
+
+  dispatch(
+    getDependencies({
+      tableId: tableInstance.id,
+      datasetId: tableInstance.idDataset,
+    }),
+  );
+
   return {
-    data: response.data,
+    data: modifyData,
     modifier,
     selectedColumnId,
   };
@@ -913,5 +998,130 @@ export const updateSchemaSocket = createAsyncThunk(
         }),
       );
     }
+  },
+);
+
+export const deleteOperationAndRedo = createAsyncThunk(
+  `${ACTION_PREFIX}/deleteOperationAndRedo`,
+  async (
+    { opId, columnName }: { opId: string; columnName?: string },
+    { getState, dispatch },
+  ) => {
+    const state = getState() as RootState;
+    const { tableInstance, columns } = state.table.entities;
+
+    if (!tableInstance.id || !tableInstance.idDataset) return;
+
+    // Single DELETE call — backend handles redo internally and returns everything
+    const deleteResult = await tableAPI.deleteOperation({
+      datasetId: String(tableInstance.idDataset),
+      tableId: String(tableInstance.id),
+      opId,
+    });
+
+    const {
+      deleted = [opId],
+      reconResults = [],
+      dependencies,
+    } = deleteResult.data ?? {};
+    const deletedIds = new Set<string>(deleted);
+
+    // Remove columns created by deleted EXTENSION ops
+    const depColumns = (state.table as any).dependencies?.columns ?? {};
+    Object.entries(depColumns).forEach(([colLabel, colInfo]: [string, any]) => {
+      if (colInfo?.createdBy && deletedIds.has(colInfo.createdBy)) {
+        const colId = columns.allIds.find(
+          (id) => columns.byId[id]?.label === colLabel,
+        );
+        if (colId) dispatch(deleteColumn({ colId }));
+      }
+    });
+
+    // Clear reconciliation metadata for columns whose recon op was deleted
+    // (those that had no surviving recon will stay cleared; those that did will be re-set below)
+    const depOperations: DependencyOperation[] =
+      (state.table as any).dependencies?.operations ?? [];
+    depOperations
+      .filter(
+        (op) =>
+          deletedIds.has(op.id) &&
+          op.operationType === "RECONCILIATION" &&
+          op.columnName,
+      )
+      .forEach((op) => {
+        const cId = columns.allIds.find(
+          (id) => columns.byId[id]?.label === op.columnName,
+        );
+        if (cId) dispatch(clearColumnReconciliation({ colId: cId }));
+      });
+
+    // Update dependency graph in store
+    if (dependencies) {
+      dispatch(updateUI({ key: "dependencies", value: dependencies } as any));
+    }
+
+    // Dispatch reconcile.fulfilled for each redo result from the backend
+    const freshState = getState() as RootState;
+    for (const { serviceId, reconData } of reconResults) {
+      const reconciliator =
+        (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ??
+        null;
+      dispatch(
+        reconcile.fulfilled(
+          { data: reconData, reconciliator, undoable: false },
+          "redo",
+          { items: [], reconciliator, formValues: {} } as any,
+        ),
+      );
+    }
+
+    // Refresh dependencies from backend to ensure store is up to date
+    dispatch(
+      getDependencies({
+        tableId: tableInstance.id,
+        datasetId: tableInstance.idDataset,
+      }),
+    );
+  },
+);
+
+export const redoOperationFromLog = createAsyncThunk(
+  `${ACTION_PREFIX}/redoOperationFromLog`,
+  async ({ opId }: { opId: string }, { getState, dispatch }) => {
+    const state = getState() as RootState;
+    const { tableInstance } = state.table.entities;
+
+    if (!tableInstance.id || !tableInstance.idDataset) return;
+
+    const response = await tableAPI.redoOperation({
+      datasetId: String(tableInstance.idDataset),
+      tableId: String(tableInstance.id),
+      opId,
+    });
+
+    const { serviceId, dependencies: _deps, ...reconcileData } = response.data;
+
+    // Refresh dependency graph
+    dispatch(
+      getDependencies({
+        tableId: tableInstance.id,
+        datasetId: tableInstance.idDataset,
+      }),
+    );
+
+    // Look up reconciliator so the fulfilled handler can build metadata correctly
+    const freshState = getState() as RootState;
+    const reconciliator =
+      (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ??
+      null;
+
+    // Dispatch reconcile.fulfilled directly so the exact same reducer runs
+    dispatch(
+      reconcile.fulfilled(
+        { data: reconcileData, reconciliator, undoable: false },
+        "redo",
+        { items: [], reconciliator, formValues: {} } as any,
+      ),
+    );
   },
 );

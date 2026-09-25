@@ -12,8 +12,9 @@ import { selectReconciliatorCell } from "@store/slices/table/table.selectors";
 import { RootState } from "@store";
 import { connect } from "react-redux";
 import { BaseMetadata, Cell } from "@store/slices/table/interfaces/table";
-import { useAppDispatch } from "@hooks/store";
+import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { updateUI } from "@store/slices/table/table.slice";
+import { selectIsViewOnly } from "@store/slices/table/table.selectors";
 import EntityLabel from "@components/core/EntityLabel";
 import styles from "./NormalCell.module.scss";
 
@@ -37,6 +38,7 @@ const NormalCell: FC<NormalCellProps> = ({
   expanded,
 }) => {
   const dispatch = useAppDispatch();
+  const isViewOnly = useAppSelector(selectIsViewOnly);
 
   const {
     lowerBound: { isScoreLowerBoundEnabled, scoreLowerBound },
@@ -72,8 +74,17 @@ const NormalCell: FC<NormalCellProps> = ({
     return "warn";
   };
 
+  const safeLabel =
+    typeof label === "string"
+      ? label
+      : label && typeof label === "object"
+      ? label.value ?? label.label ?? JSON.stringify(label)
+      : String(label ?? "");
   const maxChars = columnSize > 200 ? Math.floor(columnSize / 7) : 50;
-  const truncatedLabel = label.length > maxChars ? (label.slice(0, maxChars - 3) + "…") : (label);
+  const truncatedLabel =
+    safeLabel.length > maxChars
+      ? safeLabel.slice(0, maxChars - 3) + "…"
+      : safeLabel;
 
   const getLabel = useCallback(() => {
     // Check if value and metadata exist before accessing
@@ -91,7 +102,12 @@ const NormalCell: FC<NormalCellProps> = ({
     }
     if (label === "null") {
       return (
-        <Typography component="span" color="textSecondary" lineHeight="0" title={label}>
+        <Typography
+          component="span"
+          color="textSecondary"
+          lineHeight="0"
+          title={label}
+        >
           {truncatedLabel}
         </Typography>
       );
@@ -112,7 +128,7 @@ const NormalCell: FC<NormalCellProps> = ({
       }
       return value.metadata.slice(start, end);
     },
-    [value]
+    [value],
   );
 
   return (
@@ -123,15 +139,21 @@ const NormalCell: FC<NormalCellProps> = ({
         })}
       >
         {value && value.annotationMeta && value.annotationMeta.annotated && (
-          <StatusBadge status={getBadgeStatus(value)} />
+          <StatusBadge aria-label={`status-${getBadgeStatus(value)}`} status={getBadgeStatus(value)} />
         )}
         <div className={styles.TextLabel}>{getLabel()}</div>
         <IconButton
-          onClick={() => dispatch(
-            updateUI({
-              openMetadataDialog: true,
-            })
-          )}
+          aria-label="open-metadata-dialog"
+          onClick={() => {
+            if (!isViewOnly) {
+              dispatch(
+                updateUI({
+                  openMetadataDialog: true,
+                }),
+              );
+            }
+          }}
+          disabled={isViewOnly}
           size="small"
           className={styles.ActionButton}
         >

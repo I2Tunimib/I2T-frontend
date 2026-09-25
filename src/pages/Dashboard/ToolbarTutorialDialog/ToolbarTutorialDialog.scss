@@ -1,0 +1,13 @@
+.Subject, .Entity, .Literal, .Personal, .QuasiIdentifiers, .NonPersonal, .Anonymous {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.Subject { background-color: #2ecc71; }
+.Entity { background-color: #3498db; }
+.Literal { background-color: #e67e22; }
+.Personal { background-color: #dc143c; }
+.QuasiIdentifiers { background-color: #ffa500; }
+.NonPersonal { background-color: #228b22; }
+.Anonymous { background-color: #1e90ff; }

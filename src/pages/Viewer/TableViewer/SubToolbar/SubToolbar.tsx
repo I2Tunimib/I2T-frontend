@@ -27,6 +27,7 @@ import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
+import AccountTreeRoundedIcon from "@mui/icons-material/AccountTreeRounded";
 import {
   addTutorialBox,
   deleteSelected,
@@ -69,7 +70,6 @@ import {
   selectSelectedColumnIdsAsArray,
   selectReconciliationCells,
 } from "@store/slices/table/table.selectors";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
   automaticAnnotation,
   filterTable,
@@ -77,29 +77,28 @@ import {
   reconcile,
   modify,
 } from "@store/slices/table/table.thunk";
-import { TableUIState } from "@store/slices/table/interfaces/table";
-import { useParams } from "react-router-dom";
-import { Tag } from "@components/core/TaggedSearch/TagSelect";
-import styles from "./SubToolbar.module.scss";
-import ReconciliateDialog from "../ReconciliationDialog";
-import MetadataDialog from "../MetadataDialog";
-import ExtensionDialog from "../ExtensionDialog";
-import MetadataColumnDialog from "../MetadataColumnDialog/MetadataColumnDialog";
-import RefineMatchingDialog from "../RefineMatching/RefineMatchingDialog";
-import ModifyDialog from "../ModifyDialog/ModifyDialog";
 import {
+  selectAppConfig,
   selectExtendersAsArray,
   selectReconciliatorsAsArray,
   selectModifiersAsArray,
 } from "@store/slices/config/config.selectors";
-import DynamicForm from "@components/core/DynamicForm/DynamicForm";
-import GroupServiceDialog from "../GroupServiceDialog/GroupServiceDialog";
 import {
   Extender,
   Reconciliator,
   Modifier,
 } from "@store/slices/config/interfaces/config";
+import { TableUIState } from "@store/slices/table/interfaces/table";
 import { useSnackbar } from "notistack";
+import { useParams } from "react-router-dom";
+import { Tag } from "@components/core/TaggedSearch/TagSelect";
+import styles from "./SubToolbar.module.scss";
+import MetadataDialog from "../MetadataDialog";
+import UnifiedDialog from "../UnifiedDialog/UnifiedDialog";
+import MetadataColumnDialog from "../MetadataColumnDialog/MetadataColumnDialog";
+import RefineMatchingDialog from "../RefineMatching/RefineMatchingDialog";
+// import ModifyDialog from "../ModifyDialog/ModifyDialog";
+import GroupServiceDialog from "../GroupServiceDialog/GroupServiceDialog";
 
 const tags = [
   {
@@ -161,12 +160,16 @@ const SubToolbar = ({
   setColumnVisibility,
   columnSizing,
   setColumnSizing,
+  onTogglePanel,
+  isPanelOpen,
 }: {
   columns: any[];
   columnVisibility: Record<string, boolean>;
   setColumnVisibility: (v: Record<string, boolean>) => void;
   columnSizing: Record<string, number>;
   setColumnSizing: (v: Record<string, number>) => void;
+  onTogglePanel?: () => void;
+  isPanelOpen?: boolean;
 }) => {
   const dispatch = useAppDispatch();
   const [isAutoMatching, setIsAutoMatching] = useState(false);
@@ -214,6 +217,14 @@ const SubToolbar = ({
   const modifiers = useAppSelector(selectModifiersAsArray);
   const selectedColumnIds = useAppSelector(selectSelectedColumnIdsAsArray);
   const reconciliationCells = useAppSelector(selectReconciliationCells);
+
+  const isCurrentColumnLiteral = useMemo(() => {
+    const colId = selectedColId || (selectedColumnIds && selectedColumnIds[0]);
+    if (!colId || !columns) return false;
+    const currentColumn = columns.find((col) => col.id === colId);
+    const kind = currentColumn?.data?.kind || currentColumn?.kind;
+    return kind === "literal";
+  }, [selectedColId, selectedColumnIds, columns]);
 
   // Build groups from services using the `group` property if present (fallback to "Other Services")
   const serviceGroups = useMemo(() => {
@@ -276,6 +287,7 @@ const SubToolbar = ({
         updateUI({
           openMetadataColumnDialog: true,
           metadataColumnDialogColId: selectedColId,
+          metadataColumnDialogInitialTab: 0,
         }),
       );
     }
@@ -407,18 +419,21 @@ const SubToolbar = ({
         <ActionGroup>
           <IconButtonTooltip
             ref={ref}
+            aria-label="undo"
             tooltipText="Undo"
             Icon={UndoRoundedIcon}
             disabled={!canUndo}
             onClick={() => dispatch(undo())}
           />
           <IconButtonTooltip
+            aria-label="redo"
             tooltipText="Redo"
             Icon={RedoRoundedIcon}
             disabled={!canRedo}
             onClick={() => dispatch(redo())}
           />
           <IconButtonTooltip
+            aria-label="delete-selected"
             tooltipText="Delete selected"
             Icon={DeleteOutlineRoundedIcon}
             disabled={!canDelete}
@@ -427,13 +442,15 @@ const SubToolbar = ({
         </ActionGroup>
         <ActionGroup>
           <IconButtonTooltip
+            aria-label="open-metadata-dialog-subtoolbar"
             tooltipText="Manage metadata"
             Icon={SettingsEthernetRoundedIcon}
-            disabled={!isMetadataButtonEnabled}
+            disabled={!isMetadataButtonEnabled || isViewOnly}
             onClick={handleMetadataDialogAction}
           />
           {API.ENDPOINTS.SAVE && !isViewOnly && (
             <IconButtonTooltip
+              aria-label="open-refinement-dialog"
               tooltipText="Refine matching"
               Icon={PlaylistAddCheckRoundedIcon}
               disabled={!isAutoMatchingEnabled}
@@ -441,12 +458,14 @@ const SubToolbar = ({
             />
           )}
           <IconButtonTooltip
+            aria-label="expand-cell"
             tooltipText="Expand cell"
             Icon={ArrowRightAltRoundedIcon}
             disabled={!isACellSelected}
             onClick={() => dispatch(updateSelectedCellExpanded({}))}
           />
           <IconButtonTooltip
+            aria-label="expand-header"
             tooltipText="Expand header"
             Icon={UnfoldMoreRoundedIcon}
             onClick={() =>
@@ -456,6 +475,7 @@ const SubToolbar = ({
         </ActionGroup>
         <ActionGroup>
           <IconButtonTooltip
+            aria-label={isDenseView ? "accessible-view" : "dense-view"}
             tooltipText={isDenseView ? "Accessible view" : "Dense view"}
             Icon={isDenseView ? ViewStreamRoundedIcon : ReorderRoundedIcon}
             onClick={() => dispatch(updateUI({ denseView: !isDenseView }))}
@@ -551,18 +571,22 @@ const SubToolbar = ({
             {groupNames.map((groupName) => (
               <Tooltip
                 key={groupName}
-                title={`Open services in group: ${groupName}`}
+                title={
+                  !isCellSelected
+                    ? "Select a column to enable Gen AI services"
+                    : "Use a Gen AI service to the selected column(s)"
+                }
                 arrow
               >
                 <span>
                   <Button
-                    sx={{ textTransform: "none", marginLeft: "8px" }}
+                    sx={{ textTransform: "none" }}
                     variant="outlined"
                     onClick={() => {
                       setActiveGroup(groupName);
                       setOpenGroupDialog(true);
                     }}
-                    disabled={isViewOnly}
+                    disabled={isViewOnly || !isCellSelected}
                   >
                     {groupName}
                   </Button>
@@ -580,6 +604,7 @@ const SubToolbar = ({
             />
           )}
           <IconButtonTooltip
+            aria-label="visibility-column"
             tooltipText="Show/hide columns"
             Icon={VisibilityIcon}
             onClick={handleColumnsMenuClick}
@@ -598,6 +623,7 @@ const SubToolbar = ({
             />
           </Menu>
           <IconButtonTooltip
+            aria-label="filter-rows"
             tooltipText="Filter rows"
             Icon={FilterAltOutlinedIcon}
             onClick={handleFilterButtonClick}
@@ -621,10 +647,22 @@ const SubToolbar = ({
             onSearchChange={handleSearch}
             className={styles.Search}
           />
+          {onTogglePanel && (
+            <IconButtonTooltip
+              tooltipText={
+                isPanelOpen
+                  ? "Close dependencies panel"
+                  : "Open dependencies panel"
+              }
+              Icon={AccountTreeRoundedIcon}
+              onClick={onTogglePanel}
+            />
+          )}
         </Stack>
       </ToolbarActions>
       {openMetadataDialog && <MetadataDialog open={openMetadataDialog} />}
-      <ReconciliateDialog
+      <UnifiedDialog
+        mode="reconcile"
         open={openReconciliationDialog}
         handleClose={() => handleExtensionClose("openReconciliateDialog")}
       />
@@ -632,11 +670,13 @@ const SubToolbar = ({
         open={openMetadataColumnDialog}
         onClose={() => handleExtensionClose("openMetadataColumnDialog")}
       />
-      <ExtensionDialog
+      <UnifiedDialog
+        mode="extend"
         open={openExtensionDialog}
         handleClose={() => handleExtensionClose("openExtensionDialog")}
       />
-      <ModifyDialog
+      <UnifiedDialog
+        mode="modify"
         open={openModificationDialog}
         handleClose={() => handleExtensionClose("openModificationDialog")}
       />

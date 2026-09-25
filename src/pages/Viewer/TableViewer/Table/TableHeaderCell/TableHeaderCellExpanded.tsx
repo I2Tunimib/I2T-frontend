@@ -20,6 +20,7 @@ interface TableHeaderCellExpandedProps {
   metadata: ColumnMetadata[];
   kind: string;
   role: string;
+  datatype: string;
 }
 
 const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
@@ -27,6 +28,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
   metadata,
   kind,
   role,
+  datatype,
 }) => {
   const [typesExpanded, setTypesExpanded] = useState(false);
   const [propertiesExpanded, setPropertiesExpanded] = useState(false);
@@ -155,6 +157,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
           () => setPropertiesExpanded(!propertiesExpanded),
           1,
         )}
+      {/*
       <ExpandableList
         messageIfNoContent="Cell doesn't have any entity metadata"
         className={styles.ExpandableList}
@@ -207,6 +210,7 @@ const TableHeaderCellExpanded: FC<TableHeaderCellExpandedProps> = ({
           ))}
         </ExpandableListBody>
       </ExpandableList>
+      */}
     </div>
   ) : null;
 };

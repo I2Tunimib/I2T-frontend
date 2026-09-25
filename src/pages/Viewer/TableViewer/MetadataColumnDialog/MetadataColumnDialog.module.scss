@@ -1,0 +1,15 @@
+.complianceBox {
+  padding: 16px;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-right: 16px;
+  margin-top: 12px;
+  border-left: 4px solid;
+}
+
+.personalData { background-color: #ffebee; border-color: crimson; color: #a30424; }
+.quasiIdentifiers { background-color: #fff3e0; border-color: orange; color: #a05000; }
+.nonPersonalData { background-color: #e8f5e9; border-color: forestgreen; color: #145a14; }
+.anonymousData { background-color: #edf6ff; border-color: dodgerblue; color: #034d95; }

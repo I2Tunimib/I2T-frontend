@@ -57,7 +57,13 @@ const RefineMatchingDialog: FC<RefineMatchingProps> = ({
   };
 
   const handleHelpClick = () => {
-    dispatch(updateUI({ openHelpDialog: true, helpStart: "tutorial", tutorialStep: 16 }));
+    dispatch(
+      updateUI({
+        openHelpDialog: true,
+        helpStart: "tutorial",
+        tutorialStep: 20
+      })
+    );
     handleClose();
   };
 
@@ -87,6 +93,7 @@ const RefineMatchingDialog: FC<RefineMatchingProps> = ({
           </Tabs>
           <Tooltip title="Help">
             <IconButton
+              aria-label="open-refinement-tutorial"
               sx={{
                 color: "rgba(0, 0, 0, 0.54)",
                 marginRight: "8px",

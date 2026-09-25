@@ -10,6 +10,7 @@ const initialState: IConfigState = {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] },
     modifiers: { byId: {}, allIds: [] },
+    complianceServices: { byId: {}, allIds: [] },
   },
   _requests: { byId: {}, allIds: [] },
 };
@@ -20,12 +21,6 @@ export const configSlice = createSliceWithRequests({
   reducers: {},
   extraRules: (builder) =>
     builder.addCase(getConfig.fulfilled, (state, action) => {
-      console.log("Config slice - received payload:", action.payload);
-      console.log(
-        "Config slice - payload keys:",
-        action.payload ? Object.keys(action.payload) : "no payload",
-      );
-
       // Handle different possible response structures
       const payload = (action.payload as any) || {};
 
@@ -34,24 +29,7 @@ export const configSlice = createSliceWithRequests({
         payload.reconciliators || payload.reconcilers || payload.services || [];
       const extenders = payload.extenders || payload.extensions || [];
       const modifiers = payload.modifiers || payload.extensions || [];
-
-      console.log("Config slice - found data:", {
-        reconciliators: {
-          type: typeof reconciliators,
-          isArray: Array.isArray(reconciliators),
-          length: reconciliators?.length,
-        },
-        extenders: {
-          type: typeof extenders,
-          isArray: Array.isArray(extenders),
-          length: extenders?.length,
-        },
-        modifiers: {
-          type: typeof modifiers,
-          isArray: Array.isArray(modifiers),
-          length: modifiers?.length,
-        },
-      });
+      const complianceServices = payload.complianceServices || [];
 
       // Process reconciliators if they exist and are an array
       if (Array.isArray(reconciliators)) {
@@ -83,6 +61,15 @@ export const configSlice = createSliceWithRequests({
         });
       } else {
         console.warn("Config slice - modifiers not found or not an array");
+      }
+
+      if (Array.isArray(complianceServices)) {
+        complianceServices.forEach((service) => {
+          state.entities.complianceServices.byId[service.id] = service;
+          state.entities.complianceServices.allIds.push(service.id);
+        });
+      } else {
+        console.warn("Config slice - compliance services not found or not an array");
       }
     }),
 });

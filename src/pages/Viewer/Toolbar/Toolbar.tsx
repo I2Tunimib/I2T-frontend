@@ -34,7 +34,7 @@ import {
 } from "@store/slices/table/table.selectors";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import BubbleChartRoundedIcon from "@mui/icons-material/BubbleChartRounded";
-import FormatAlignJustifyRoundedIcon from "@mui/icons-material/FormatAlignJustifyRounded";
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import { updateCurrentTable, updateUI } from "@store/slices/table/table.slice";
 import {
   automaticAnnotation,
@@ -45,6 +45,7 @@ import { selectAppConfig } from "@store/slices/config/config.selectors";
 //import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 //import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import { AssignmentTurnedInOutlined } from "@mui/icons-material";
 import { IconButtonTooltip } from "@components/core";
 import UserAvatar from "@components/kit/UserAvatar";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
@@ -55,7 +56,7 @@ import ExportDialog from "../TableViewer/ExportDialog";
 import AutoAnnotationDialog from "../TableViewer/AutoAnnotationDialog";
 import SettingsDialog from "../SettingsDialog/SettingsDialog";
 import HelpDialog from "../HelpDialog/HelpDialog";
-import { AssignmentTurnedInOutlined } from "@mui/icons-material";
+import ComplianceDialog from "../TableViewer/ComplianceDialog";
 
 interface MenuState extends Record<string, boolean> {}
 
@@ -186,6 +187,7 @@ const Toolbar = () => {
         <div className={styles.ColumnMenu}>
           <div className={clsx(styles.RowMenu)}>
             <InlineInput
+              aria-label="Table name"
               onClick={onInputClick}
               onBlur={onBlurTableName}
               onChange={onChangeTableName}
@@ -225,7 +227,7 @@ const Toolbar = () => {
             </ToggleButton>
             <ToggleButton value="raw" aria-label="centered">
               <Tooltip title="Raw view">
-                <FormatAlignJustifyRoundedIcon fontSize="small" />
+                <CodeRoundedIcon fontSize="small" />
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="graph" aria-label="right aligned">
@@ -237,25 +239,31 @@ const Toolbar = () => {
 
           <>
             <Button
-              onClick={() => dispatch(updateUI({ openExportDialog: true }))}
+              onClick={() =>
+                !isViewOnly &&
+                dispatch(updateUI({ openComplianceStatusDialog: true }))
+              }
               variant="contained"
               color="primary"
               size="medium"
+              disabled={isViewOnly}
               startIcon={<AssignmentTurnedInOutlined />}
             >
               Compliance
             </Button>
-            <ExportDialog />
+            <ComplianceDialog />
           </>
 
           <>
             <Button
               onClick={() =>
+                !isViewOnly &&
                 dispatch(updateUI({ openAutoAnnotationDialog: true }))
               }
               variant="contained"
               size="medium"
               disabled={
+                isViewOnly ||
                 loadingAutomaticAnnotation ||
                 (currentTable &&
                   (currentTable.mantisStatus === "PENDING" ||
@@ -299,11 +307,13 @@ const Toolbar = () => {
             </Button>
           )}
           <IconButtonTooltip
+            aria-label="settings"
             tooltipText="Settings"
             Icon={SettingsIcon}
             onClick={() => dispatch(updateUI({ settingsDialog: true }))}
           />
           <IconButtonTooltip
+            aria-label="help-dialog"
             tooltipText="Help"
             onClick={() => dispatch(updateUI({ openHelpDialog: true }))}
             Icon={HelpOutlineRoundedIcon}

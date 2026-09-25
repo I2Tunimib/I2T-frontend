@@ -30,6 +30,7 @@ const EditableCell:FC<EditableCellProps> = ({
 
   return (
     <input
+      aria-label="edit-cell"
       ref={ref}
       autoComplete="off"
       spellCheck="false"
