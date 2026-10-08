@@ -4,22 +4,13 @@ import { Stack, Typography, useMediaQuery } from "@mui/material";
 import { MouseEvent, useRef, useState, useEffect, useCallback } from "react";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import { Link } from "react-router-dom";
-import { ReactComponent as Logo } from "../../assets/logo-react.svg";
+import { ReactComponent as Logo } from "../../assets/logo_semtx.svg";
 import screen1 from "../../assets/screen1.png";
 import screen2 from "../../assets/screen2.png";
 import screen3 from "../../assets/screen3.png";
 import screen4 from "../../assets/screen4.png";
 
 const images = [screen1, screen2, screen3, screen4];
-
-const rotate = keyframes`
-  0% {
-    transform: rotate(0);
-  },
-  100% {
-    transform: rotate(360deg);
-  }
-`;
 
 const Container = styled.div({
   display: "flex",
@@ -74,7 +65,6 @@ const Dash = styled(Typography)({
 const LogoSized = styled(Logo)({
   width: "120px",
   height: "120px",
-  animation: `${rotate} 14s linear infinite`,
 });
 
 const ExploreButton = styled(Link)({

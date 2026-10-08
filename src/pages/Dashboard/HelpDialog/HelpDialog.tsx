@@ -7,7 +7,7 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 const steps = [
   {
     label: 'Upload a dataset',
-    description: `To start using SemTUI, you first need to upload a dataset. 
+    description: `To start using SemT-UI, you first need to upload a dataset. 
                   A dataset is a collection of tables and must be provided as a ZIP file containing one or more tables.
                   The currently available supported table formats are CSV, JSON, and W3C-JSON.`
   },

@@ -2569,8 +2569,13 @@ export const tableSlice = createSliceWithRequests({
                     }
                   }
 
-                  if (!columnToUpdate.metadata[0].property) {
-                    columnToUpdate.metadata[0].property = [];
+                  if (
+                    columnToUpdate.metadata &&
+                    columnToUpdate.metadata.length > 0
+                  ) {
+                    if (!columnToUpdate.metadata[0].property) {
+                      columnToUpdate.metadata[0].property = [];
+                    }
                   }
 
                   const addedProperties = originalColMeta.properties.map(
