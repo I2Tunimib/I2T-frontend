@@ -127,6 +127,13 @@ REACT_APP_API_URL=http://localhost:8000
 REACT_APP_SOCKET_URL=http://localhost:8000
 ```
 
+Some runtime settings are not frontend env vars: they are served by the backend
+through `GET /api/config` and read from the Redux `config` slice. For example
+`annotationQuickViewUrl` (backend `ANNOTATION_QUICKVIEW_URL`) is the base URL of
+the semTProxy quickView page used by the "Open in quickView" button in the
+annotated-text (NER) tab of the cell metadata dialog; when the backend does not
+provide it, the button is hidden.
+
 ### Docker Configuration
 
 The Docker setup includes:
