@@ -277,16 +277,19 @@ export interface ReconciliationFulfilledPayload {
     metadata: BaseMetadata[];
   }[];
   reconciliator: Reconciliator & { id: ID };
+  operationLog?: DependencyOperation;
 }
 
 export interface ExtendFulfilledPayload {
   columns: ColumnState["byId"];
   rows: RowState["byId"];
+  operationLog?: DependencyOperation;
 }
 
 export interface ModifyFulfilledPayload {
   columns: ColumnState["byId"];
   rows: RowState["byId"];
+  operationLog?: DependencyOperation;
 }
 
 export interface AddCellMetadataPayload {

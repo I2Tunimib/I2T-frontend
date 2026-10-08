@@ -1,7 +1,5 @@
 import { useMemo, useCallback, MouseEvent, useState, useEffect } from "react";
 import {
-  redo,
-  undo,
   updateCellLabel,
   updateCellSelection,
   updateColumnCellsSelection,
@@ -31,7 +29,11 @@ import {
   selectIsViewOnly,
 } from "@store/slices/table/table.selectors";
 import { useHistory, useParams } from "react-router-dom";
-import { saveTable } from "@store/slices/table/table.thunk";
+import {
+  saveTable,
+  undoWithSync,
+  redoWithSync,
+} from "@store/slices/table/table.thunk";
 import { ID } from "@store/interfaces/store";
 import { RouteLeaveGuard } from "@components/kit";
 import clsx from "clsx";
@@ -96,6 +98,14 @@ const TableViewer = () => {
   const isHeaderExpanded = useAppSelector(selectIsHeaderExpanded);
   const settings = useAppSelector(selectSettings);
   const isViewOnly = useAppSelector(selectIsViewOnly);
+  // View-only is also forced on while an automatic annotation is running
+  // (the service is about to write results into the table, so edits are
+  // blocked the same way as a real lock) — but that's not actually "another
+  // user editing", so the lock-conflict banner below should stay hidden for
+  // that specific case.
+  const isAutoAnnotationPending =
+    currentTable.mantisStatus === "PENDING" ||
+    currentTable.schemaStatus === "PENDING";
   const columnVisibilityRedux = useAppSelector(
     (state) => state.table.ui.columnVisibility,
   );
@@ -169,10 +179,10 @@ const TableViewer = () => {
     // Saving
   }, []);
   const undoOperation = useCallback(() => {
-    dispatch(undo());
+    dispatch(undoWithSync(undefined));
   }, []);
   const redoOperation = useCallback(() => {
-    dispatch(redo());
+    dispatch(redoWithSync());
   }, []);
 
   const keyHandlers = {
@@ -417,7 +427,7 @@ const TableViewer = () => {
         onTogglePanel={togglePanel}
         isPanelOpen={isPanelOpen}
       />
-      {isViewOnly && (
+      {isViewOnly && !isAutoAnnotationPending && (
         <Alert severity="warning" sx={{ mb: 0, borderRadius: 0 }}>
           <Stack
             direction="row"

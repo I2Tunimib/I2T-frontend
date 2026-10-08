@@ -185,6 +185,8 @@ const initialState: TableState = {
   _draft: {
     patches: [],
     inversePatches: [],
+    operationRefs: [],
+    redoOperationRefs: [],
     undoPointer: -1,
     redoPointer: -1,
   },
@@ -2172,7 +2174,12 @@ export const tableSlice = createSliceWithRequests({
           state,
           action: PayloadAction<Payload<ReconciliationFulfilledPayload>>,
         ) => {
-          const { data, reconciliator, undoable = true } = action.payload;
+          const {
+            data,
+            reconciliator,
+            undoable = true,
+            operationLog,
+          } = action.payload;
           console.log("reconcile data", data);
 
           //if inTableLinker, use the reconciliator with the corresponding selected prefix
@@ -2402,6 +2409,7 @@ export const tableSlice = createSliceWithRequests({
               draft.entities.tableInstance.lastModifiedDate =
                 new Date().toISOString();
             },
+            operationLog ?? null,
           );
         },
       )
@@ -2444,6 +2452,7 @@ export const tableSlice = createSliceWithRequests({
             extender,
             selectedColumnId,
             undoable = true,
+            operationLog,
           } = action.payload;
 
           const { columns, meta, originalColMeta } = data;
@@ -2605,6 +2614,7 @@ export const tableSlice = createSliceWithRequests({
               draft.entities.tableInstance.lastModifiedDate =
                 new Date().toISOString();
             },
+            operationLog ?? null,
           );
 
           // return produceWithPatch(state, undoable, (draft) => {
@@ -2658,6 +2668,7 @@ export const tableSlice = createSliceWithRequests({
             modifier,
             selectedColumnId,
             undoable = true,
+            operationLog,
           } = action.payload;
 
           if (data.rows) {
@@ -2712,6 +2723,7 @@ export const tableSlice = createSliceWithRequests({
                 draft.entities.tableInstance.lastModifiedDate =
                   new Date().toISOString();
               },
+              operationLog ?? null,
             );
           } else {
             const { columns, meta, originalColMeta } = data;
@@ -2815,6 +2827,7 @@ export const tableSlice = createSliceWithRequests({
                 draft.entities.tableInstance.lastModifiedDate =
                   new Date().toISOString();
               },
+              operationLog ?? null,
             );
           }
         },

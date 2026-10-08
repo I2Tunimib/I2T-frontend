@@ -21,6 +21,19 @@ export interface UndoEnhancedState {
      */
     inversePatches: Patch[][];
     /**
+     * Optional opaque per-step metadata (e.g. a backend operation record to
+     * keep in sync when this step is undone/redone), mirrored in parallel
+     * with inversePatches: index by undoPointer to look up what to undo on
+     * the backend for a given step.
+     */
+    operationRefs: unknown[];
+    /**
+     * Same metadata as operationRefs, mirrored in parallel with patches
+     * (prepended, so index by redoPointer) to look up what to redo on the
+     * backend for a given step.
+     */
+    redoOperationRefs: unknown[];
+    /**
      * Pointer to the current undo version.
      */
     undoPointer: number;
@@ -40,10 +53,16 @@ const _rewriteHistory = <T extends UndoEnhancedState>(draft: Draft<Immutable<T>>
   if (draft._draft.undoPointer === -1) {
     draft._draft.inversePatches = [];
     draft._draft.patches = [];
+    draft._draft.operationRefs = [];
+    draft._draft.redoOperationRefs = [];
   } else {
     draft._draft.inversePatches = draft._draft.inversePatches
       .slice(0, draft._draft.undoPointer + 1);
     draft._draft.patches = draft._draft.patches
+      .slice(draft._draft.redoPointer + 1);
+    draft._draft.operationRefs = draft._draft.operationRefs
+      .slice(0, draft._draft.undoPointer + 1);
+    draft._draft.redoOperationRefs = draft._draft.redoOperationRefs
       .slice(draft._draft.redoPointer + 1);
   }
   draft._draft.redoPointer = -1;
@@ -65,7 +84,14 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
   /**
    * Mutation executed during the same state change withtout generating patches.
    */
-  mutationsWithoutPatches?: (draft: Draft<Immutable<T>>) => void
+  mutationsWithoutPatches?: (draft: Draft<Immutable<T>>) => void,
+  /**
+   * Optional opaque metadata associated with this undoable step (e.g. a
+   * backend operation record), stored alongside the patches so a later
+   * undo/redo of this exact step can look it up. Pass undefined/null for
+   * steps with no backend counterpart.
+   */
+  operationRef: unknown = null
 ) => {
   if (!undoable) {
     mutations(state);
@@ -88,6 +114,8 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
       }
       draft._draft.patches.unshift(patches);
       draft._draft.inversePatches.push(inversePatches);
+      draft._draft.operationRefs.push(operationRef);
+      draft._draft.redoOperationRefs.unshift(operationRef);
       draft._draft.undoPointer += 1;
     }
   }) as T;

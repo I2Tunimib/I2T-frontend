@@ -93,16 +93,17 @@ const Viewer: FC<unknown> = () => {
           currentUserId !== undefined &&
           dataset.editors.map(String).includes(uid);
 
-        // Owner always has dataset-level edit rights; also respect visibility/editors
+        // Dataset-level edit rights: owner or an explicit editor.
         const datasetCanEdit = Boolean(
-          dataset &&
-          (isOwner || dataset.visibility === "public" || isDatasetEditor),
+          dataset && (isOwner || isDatasetEditor),
         );
         let canEdit = datasetCanEdit;
         try {
           const tableResp = await datasetAPI.getTableAcl(datasetId, tableId);
           const table = tableResp.data as any;
-          if (table.visibility === "private" && isOwner === false) {
+          // A "restricted" table has its own ACL: dataset editors are not
+          // automatically table editors.
+          if (table.visibility === "restricted" && isOwner === false) {
             const isTableEditor =
               Array.isArray(table.editors) &&
               table.editors.map(String).includes(uid);

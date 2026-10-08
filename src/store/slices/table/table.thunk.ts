@@ -29,6 +29,8 @@ import {
   updateUI,
   deleteColumn,
   clearColumnReconciliation,
+  undo,
+  redo,
 } from "./table.slice";
 import { getIdsFromCell } from "./utils/table.utils";
 
@@ -641,7 +643,8 @@ export const reconcile = createAsyncThunk(
     );
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { dependencies: _deps, ...reconcileData } = response.data;
+    const { dependencies: _deps, operationLog, ...reconcileData } =
+      response.data;
 
     dispatch(
       getDependencies({
@@ -653,6 +656,7 @@ export const reconcile = createAsyncThunk(
     return {
       data: reconcileData,
       reconciliator,
+      operationLog,
     };
   },
 );
@@ -799,6 +803,7 @@ export type ExtendThunkResponseProps = {
       properties: Property[];
     };
   };
+  operationLog?: DependencyOperation;
 };
 
 /**
@@ -858,7 +863,8 @@ export const extend = createAsyncThunk<
     );
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { dependencies: _deps, ...extendData } = response.data;
+    const { dependencies: _deps, operationLog, ...extendData } =
+      response.data;
 
     dispatch(
       getDependencies({
@@ -871,6 +877,7 @@ export const extend = createAsyncThunk<
       data: extendData,
       extender,
       selectedColumnId,
+      operationLog,
     };
   },
 );
@@ -884,6 +891,7 @@ export type ModifyThunkResponseProps = {
   modifier: Modifier;
   selectedColumnId: string;
   data: any;
+  operationLog?: DependencyOperation;
 };
 
 export const modify = createAsyncThunk<
@@ -927,7 +935,7 @@ export const modify = createAsyncThunk<
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { dependencies: _deps, ...modifyData } = response.data;
+  const { dependencies: _deps, operationLog, ...modifyData } = response.data;
 
   dispatch(
     getDependencies({
@@ -940,6 +948,7 @@ export const modify = createAsyncThunk<
     data: modifyData,
     modifier,
     selectedColumnId,
+    operationLog,
   };
 });
 
@@ -1123,5 +1132,109 @@ export const redoOperationFromLog = createAsyncThunk(
         { items: [], reconciliator, formValues: {} } as any,
       ),
     );
+  },
+);
+
+/**
+ * Toolbar Undo, kept in sync with the backend operation log.
+ *
+ * Local cell/column state is reverted instantly via the existing `undo()`
+ * patch-replay reducer, same as before. Additionally, for each step being
+ * undone that corresponds to a logged RECONCILIATION/EXTENSION/MODIFICATION
+ * operation (tracked alongside the patch stack — see produceWithPatch's
+ * operationRef param), the matching operation is removed from the backend
+ * log so the DependenciesPanel/pipeline stays consistent with what's now
+ * visible in the table. Steps with no backend counterpart (e.g. a plain
+ * cell edit) are left as pure local undo.
+ */
+export const undoWithSync = createAsyncThunk(
+  `${ACTION_PREFIX}/undoWithSync`,
+  async (steps: number | undefined, { getState, dispatch }) => {
+    const { table } = getState() as RootState;
+    const { undoPointer, operationRefs } = table._draft;
+    const { tableInstance } = table.entities;
+
+    if (undoPointer < 0) {
+      dispatch(undo(steps as any));
+      return;
+    }
+
+    const actualSteps = Math.min(steps ?? 1, undoPointer + 1);
+    const opsToRemove: DependencyOperation[] = [];
+    for (let i = 0; i < actualSteps; i++) {
+      const ref = operationRefs[undoPointer - i] as DependencyOperation | null;
+      if (ref) opsToRemove.push(ref);
+    }
+
+    dispatch(undo(steps as any));
+
+    if (opsToRemove.length === 0) return;
+
+    const datasetId = tableInstance.idDataset;
+    const tableId = tableInstance.id;
+    if (!datasetId || !tableId) return;
+
+    for (const op of opsToRemove) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await tableAPI.removeLoggedOperation({
+          datasetId: String(datasetId),
+          tableId: String(tableId),
+          opId: op.id,
+        });
+      } catch (err) {
+        console.error(
+          "[undoWithSync] Failed to remove logged operation:",
+          op.id,
+          err,
+        );
+      }
+    }
+
+    dispatch(getDependencies({ tableId, datasetId }));
+  },
+);
+
+/**
+ * Toolbar Redo, mirror of undoWithSync: restores any logged operation that
+ * a prior Undo had removed, reusing the cached full operation record so the
+ * backend can re-append it with its original id.
+ */
+export const redoWithSync = createAsyncThunk(
+  `${ACTION_PREFIX}/redoWithSync`,
+  async (_arg: void, { getState, dispatch }) => {
+    const { table } = getState() as RootState;
+    const { redoPointer, redoOperationRefs } = table._draft;
+    const { tableInstance } = table.entities;
+
+    if (redoPointer < 0) {
+      dispatch(redo());
+      return;
+    }
+
+    const ref = redoOperationRefs[redoPointer] as DependencyOperation | null;
+
+    dispatch(redo());
+
+    if (!ref) return;
+
+    const datasetId = tableInstance.idDataset;
+    const tableId = tableInstance.id;
+    if (!datasetId || !tableId) return;
+
+    try {
+      await tableAPI.restoreLoggedOperation(
+        { datasetId: String(datasetId), tableId: String(tableId) },
+        ref,
+      );
+    } catch (err) {
+      console.error(
+        "[redoWithSync] Failed to restore logged operation:",
+        ref.id,
+        err,
+      );
+    }
+
+    dispatch(getDependencies({ tableId, datasetId }));
   },
 );

@@ -6,9 +6,6 @@ import {
   DialogActions,
   Button,
   Stack,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   TextField,
   List,
   ListItem,
@@ -21,7 +18,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  FormControl,
 } from "@mui/material";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import DeleteRounded from "@mui/icons-material/DeleteRounded";
@@ -45,7 +41,6 @@ const DatasetAclDialog: FC<Props> = ({
   onChange,
 }) => {
   const [dataset, setDataset] = useState<any | null>(null);
-  const [visibility, setVisibility] = useState<"private" | "public">("private");
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<any[]>([]);
@@ -67,7 +62,6 @@ const DatasetAclDialog: FC<Props> = ({
       try {
         const resp = await datasetAPI.getDatasetInfo({ datasetId });
         setDataset(resp.data);
-        setVisibility((resp.data as any)?.visibility || "private");
       } catch (e) {
         console.error(e);
       }
@@ -148,19 +142,6 @@ const DatasetAclDialog: FC<Props> = ({
     }
   };
 
-  const handleVisibilityChange = async (value: "private" | "public") => {
-    setVisibility(value);
-    try {
-      await datasetAPI.setVisibility(datasetId, value);
-      const resp = await datasetAPI.getDatasetInfo({ datasetId });
-      setDataset(resp.data);
-      if (onChange) onChange();
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.response?.data?.error || e.message);
-    }
-  };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle
@@ -180,38 +161,11 @@ const DatasetAclDialog: FC<Props> = ({
           <div>Loading...</div>
         ) : (
           <Stack gap={2}>
-            <div>
-              <Typography variant="subtitle1">Visibility</Typography>
-              {!isOwner && (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1 }}
-                >
-                  Only the owner can modify access control
-                </Typography>
-              )}
-              <FormControl component="fieldset" disabled={!isOwner}>
-                <RadioGroup
-                  value={visibility}
-                  onChange={(e, v) =>
-                    handleVisibilityChange(v as "private" | "public")
-                  }
-                  row
-                >
-                  <FormControlLabel
-                    value="private"
-                    control={<Radio />}
-                    label="Private (only owner/viewers/editors)"
-                  />
-                  <FormControlLabel
-                    value="public"
-                    control={<Radio />}
-                    label="Public (any authenticated user can view)"
-                  />
-                </RadioGroup>
-              </FormControl>
-            </div>
+            <Typography variant="body2" color="text.secondary">
+              This dataset is accessible only to its owner and the users listed
+              below.
+              {!isOwner && " Only the owner can modify access control."}
+            </Typography>
 
             <Divider />
 

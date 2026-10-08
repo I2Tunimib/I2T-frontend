@@ -1,11 +1,17 @@
-import { FC, useMemo } from "react";
+import { FC, useMemo, useState } from "react";
 import {
   Box,
+  Button,
   Chip,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
+import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import { useAppSelector } from "@hooks/store";
+import { selectAnnotationQuickViewUrl } from "@store/slices/config/config.selectors";
 import { TextAnnotation } from "@store/slices/table/interfaces/table";
 
 interface Props {
@@ -43,6 +49,38 @@ const typeColor = (type: string) =>
   NER_COLORS[type.toUpperCase()] ?? DEFAULT_COLOR;
 
 const NerAnnotationsTab: FC<Props> = ({ label, annotations }) => {
+  const [copied, setCopied] = useState(false);
+  const quickViewBaseUrl = useAppSelector(selectAnnotationQuickViewUrl);
+
+  const handleOpenQuickView = () => {
+    if (!quickViewBaseUrl) return;
+    const data = encodeURIComponent(JSON.stringify({ label, annotations }));
+    window.open(
+      `${quickViewBaseUrl}?data=${data}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleCopyJson = async () => {
+    const payload = JSON.stringify({ label, annotations }, null, 2);
+    try {
+      await navigator.clipboard.writeText(payload);
+    } catch {
+      // Fallback for non-secure contexts / older browsers
+      const ta = document.createElement("textarea");
+      ta.value = payload;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   const segments = useMemo<Segment[]>(() => {
     const flat = Object.entries(annotations).flatMap(([setName, anns]) =>
       anns.map((ann) => ({ ...ann, setName })),
@@ -88,6 +126,45 @@ const NerAnnotationsTab: FC<Props> = ({ label, annotations }) => {
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
+        {quickViewBaseUrl && (
+          <Tooltip title="Open this annotated text in the quickView explorer">
+            <Button
+              size="small"
+              variant="contained"
+              disableElevation
+              startIcon={<OpenInNewRoundedIcon />}
+              onClick={handleOpenQuickView}
+              sx={{ textTransform: "none" }}
+            >
+              Open in quickView
+            </Button>
+          </Tooltip>
+        )}
+        {/* Debug: copy the internal annotations JSON */}
+        <Tooltip title="Debug · copy the internal annotations JSON to the clipboard">
+          <Button
+            size="small"
+            variant="outlined"
+            color={copied ? "success" : "inherit"}
+            startIcon={
+              copied ? <CheckRoundedIcon /> : <ContentCopyRoundedIcon />
+            }
+            onClick={handleCopyJson}
+            sx={{ textTransform: "none", fontSize: "0.75rem" }}
+          >
+            {copied ? "Copied" : "Copy JSON"}
+          </Button>
+        </Tooltip>
+      </Box>
+
       {/* Annotated text */}
       <Box
         sx={{

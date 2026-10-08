@@ -6,6 +6,7 @@ import { IConfigState } from "./interfaces/config";
 // Define the initial state using that type
 const initialState: IConfigState = {
   app: CONFIG,
+  annotationQuickViewUrl: "",
   entities: {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] },
@@ -23,6 +24,9 @@ export const configSlice = createSliceWithRequests({
     builder.addCase(getConfig.fulfilled, (state, action) => {
       // Handle different possible response structures
       const payload = (action.payload as any) || {};
+
+      // Base URL of the semTProxy quickView page (annotated-text entities)
+      state.annotationQuickViewUrl = payload.annotationQuickViewUrl || "";
 
       // Try to find reconciliators data - could be under different keys
       const reconciliators =

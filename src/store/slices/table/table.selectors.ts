@@ -24,7 +24,7 @@ const selectColumnsState = (state: RootState) => state.table.entities.columns;
 const selectRowsState = (state: RootState) => state.table.entities.rows;
 const selectUIState = (state: RootState) => state.table.ui;
 const selectRequests = (state: RootState) => state.table._requests;
-const selectDraftState = (state: RootState) => state.table._draft;
+export const selectDraftState = (state: RootState) => state.table._draft;
 export const selectDependencies = (state: RootState) =>
   state.table.dependencies;
 const selectReconciliatorById = (state: RootState, { value }: any) => {

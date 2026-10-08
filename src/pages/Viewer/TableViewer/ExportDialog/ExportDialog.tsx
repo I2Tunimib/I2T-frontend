@@ -85,7 +85,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
     setCsvDelimiter(",");
     setCsvQuote('"');
     setCsvDecimalSeparator(".");
-    setCsvIncludeHeader("");
+    setCsvIncludeHeader("true");
     setRdfFormat("");
     setBaseUri("");
     setScoreValue(0);

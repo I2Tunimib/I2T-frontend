@@ -33,14 +33,14 @@ import usersAPI from "@services/api/users";
 import { useAppSelector } from "@hooks/store";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 
-type TableVisibility = "private" | "public" | null;
+// "restricted" = table keeps its own viewers/editors; null = inherits dataset ACL
+type TableVisibility = "restricted" | null;
 
 type Props = {
   open: boolean;
   onClose: () => void;
   datasetId: string;
   tableId: string;
-  datasetVisibility?: "private" | "public";
   onChange?: () => void;
 };
 
@@ -49,7 +49,6 @@ const TableAclDialog: FC<Props> = ({
   onClose,
   datasetId,
   tableId,
-  datasetVisibility,
   onChange,
 }) => {
   const [tableAcl, setTableAcl] = useState<any | null>(null);
@@ -183,22 +182,10 @@ const TableAclDialog: FC<Props> = ({
   };
 
   // Effective access description
-  const effectiveLabel = (() => {
-    if (visibility === "private") {
-      return datasetVisibility === "public"
-        ? "Effective: Private — overrides the public dataset. Only the owner and users listed below can access this table."
-        : "Effective: Private — only the owner and users listed below can access this table.";
-    }
-    if (visibility === "public") {
-      return datasetVisibility === "private"
-        ? "Effective: Private — the dataset is private, so table 'public' setting has no additional effect."
-        : "Effective: Public — any authenticated user can view this table.";
-    }
-    // null = inherit
-    return datasetVisibility === "public"
-      ? "Effective: Inheriting from dataset — table is publicly accessible (dataset is public)."
-      : "Effective: Inheriting from dataset — table follows the dataset's private access rules.";
-  })();
+  const effectiveLabel =
+    visibility === "restricted"
+      ? "Restricted — only the dataset owner and the users listed below can access this table. Dataset viewers/editors do not get access automatically."
+      : "Inheriting from dataset — this table follows the dataset's viewers and editors.";
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -223,7 +210,7 @@ const TableAclDialog: FC<Props> = ({
               {effectiveLabel}
             </Alert>
             <div>
-              <Typography variant="subtitle1">Table visibility</Typography>
+              <Typography variant="subtitle1">Table access</Typography>
               {!isOwner && (
                 <Typography
                   variant="body2"
@@ -233,43 +220,28 @@ const TableAclDialog: FC<Props> = ({
                   Only the dataset owner can modify table access control
                 </Typography>
               )}
-              {datasetVisibility === "private" && (
-                <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-                  ⚠️ Dataset is private, so table can only be <b>Inherit</b> or{" "}
-                  <b>Private</b>. Public tables cannot override a private
-                  dataset.
-                </Typography>
-              )}
               <FormControl component="fieldset" disabled={!isOwner}>
                 <RadioGroup
-                  value={visibility === null ? "inherit" : visibility}
-                  onChange={(_, v) => {
-                    const val =
-                      v === "inherit" ? null : (v as "private" | "public");
-                    handleVisibilityChange(val);
-                  }}
+                  value={visibility === "restricted" ? "restricted" : "inherit"}
+                  onChange={(_, v) =>
+                    handleVisibilityChange(v === "restricted" ? "restricted" : null)
+                  }
                 >
                   <FormControlLabel
                     value="inherit"
                     control={<Radio />}
-                    label="Inherit from dataset (no table-level restriction)"
+                    label="Inherit from dataset (follows the dataset's viewers/editors)"
                   />
                   <FormControlLabel
-                    value="private"
+                    value="restricted"
                     control={<Radio />}
-                    label="Private (only owner + explicitly listed users can access)"
-                  />
-                  <FormControlLabel
-                    value="public"
-                    control={<Radio />}
-                    disabled={datasetVisibility === "private"}
-                    label="Public (all users with dataset access can view)"
+                    label="Restricted (only owner + explicitly listed users can access)"
                   />
                 </RadioGroup>
               </FormControl>
             </div>
 
-            {visibility === "private" && (
+            {visibility === "restricted" && (
               <>
                 <Divider />
                 <Accordion>

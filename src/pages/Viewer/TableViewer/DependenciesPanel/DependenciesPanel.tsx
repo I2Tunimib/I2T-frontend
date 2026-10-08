@@ -33,6 +33,7 @@ import {
   DependencyOperation,
 } from "@store/slices/table/interfaces/table";
 import {
+  Fragment,
   useState,
   useRef,
   useEffect,
@@ -88,6 +89,9 @@ const OP_ABBREV: Record<string, string> = {
   PROPAGATE_TYPE: "PRT",
 };
 
+const REDUNDANT_RECONCILIATION_TOOLTIP =
+  "Redundant reconciliation — once saved, this operation will be automatically removed.";
+
 function darkenColor(hex: string, amount = 0.45): string {
   // Expand 3-digit shorthand (#abc -> #aabbcc)
   const expanded = hex.replace(
@@ -136,10 +140,12 @@ const TreeView = ({
   deps,
   visible,
   onNodeDeleteRequest,
+  onRedundantNodeClick,
 }: {
   deps: DependencyGraph;
   visible: boolean;
   onNodeDeleteRequest?: (nodeId: string) => void;
+  onRedundantNodeClick?: (nodeId: string) => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<ForceGraphMethods | undefined>(undefined);
@@ -214,7 +220,7 @@ const TreeView = ({
     };
 
     const LEVEL_DIST = 180;
-    const NODE_SPACING = NODE_R * 5;
+    const NODE_SPACING = NODE_R * 6;
     const treeLayout = d3tree<{ id: string; children: any[] }>().nodeSize([
       NODE_SPACING * 2,
       LEVEL_DIST,
@@ -288,8 +294,26 @@ const TreeView = ({
     return adj;
   }, [graphData]);
 
+  // Direct support-link neighbors (both directions) for each node. Support
+  // arrows are only ever drawn touching the exact hovered node (see
+  // isSupportLinkVisible below), so the *other* endpoint of that arrow must
+  // stay undimmed too, or it looks like an arrow pointing at/from nothing.
+  const supportNeighbors = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    graphData.links.forEach((l: any) => {
+      if (!l.support) return;
+      const src = typeof l.source === "object" ? l.source.id : l.source;
+      const tgt = typeof l.target === "object" ? l.target.id : l.target;
+      if (!map[src]) map[src] = [];
+      if (!map[tgt]) map[tgt] = [];
+      map[src].push(tgt);
+      map[tgt].push(src);
+    });
+    return map;
+  }, [graphData]);
+
   // When a node is hovered, compute the full set of that node + all descendants
-  // so non-members can be dimmed.
+  // (plus its direct support-link neighbors) so non-members can be dimmed.
   const highlightedNodes = useMemo<Set<string> | null>(() => {
     if (!hoveredNodeId) return null;
     const set = new Set<string>();
@@ -301,8 +325,45 @@ const TreeView = ({
         (primaryAdjacency[id] ?? []).forEach((child) => queue.push(child));
       }
     }
+    (supportNeighbors[hoveredNodeId] ?? []).forEach((id) => set.add(id));
     return set;
-  }, [hoveredNodeId, primaryAdjacency]);
+  }, [hoveredNodeId, primaryAdjacency, supportNeighbors]);
+
+  // Reconciliation nodes that are directly followed (via a primary, non-support
+  // link) by another reconciliation, i.e. redundant intermediate steps in a
+  // reconciliation chain. The last node of such a chain is left untouched.
+  //
+  // A node is excluded even if it matches that pattern when some other op's
+  // cross-column "support" dependency (dashed arrow) points at it — the
+  // backend's optimize() keeps those too, since collapsing them would
+  // silently drop that dependency on the next save. Keeping this in sync
+  // with the backend avoids marking a node as "will be removed" when it
+  // actually won't be.
+  const redundantReconciliationIds = useMemo(() => {
+    const supportReferenced = new Set<string>();
+    graphData.links.forEach((l: any) => {
+      if (!l.support) return;
+      const src = typeof l.source === "object" ? l.source.id : l.source;
+      supportReferenced.add(src);
+    });
+
+    const redundant = new Set<string>();
+    graphData.links.forEach((l: any) => {
+      if (l.support) return;
+      const src = typeof l.source === "object" ? l.source.id : l.source;
+      const tgt = typeof l.target === "object" ? l.target.id : l.target;
+      if (supportReferenced.has(src)) return;
+      const srcOp = opMap[src];
+      const tgtOp = opMap[tgt];
+      if (
+        srcOp?.operationType === "RECONCILIATION" &&
+        tgtOp?.operationType === "RECONCILIATION"
+      ) {
+        redundant.add(src);
+      }
+    });
+    return redundant;
+  }, [graphData, opMap]);
 
   const isSupportLinkVisible = useCallback(
     (link: any) => {
@@ -332,14 +393,11 @@ const TreeView = ({
       const isRoot = node.id === "root";
       const op = opMap[node.id];
       const fill = isRoot ? "#1976d2" : opColor(op);
-      const abbrev = isRoot
-        ? "ROOT"
-        : op?.opNumber != null
-          ? `#${op.opNumber}`
-          : "";
+      const abbrev = isRoot ? "ROOT" : "";
       const service = isRoot ? "" : getServiceName(op);
       const col = op?.columnName ?? "";
       const r = NODE_R;
+      const isRedundant = redundantReconciliationIds.has(node.id);
 
       // Dim nodes that are not part of the highlighted subtree.
       const dimmed =
@@ -347,11 +405,36 @@ const TreeView = ({
       ctx.save();
       ctx.globalAlpha = dimmed ? 0.15 : 1;
 
-      // Circle
+      // Circle — redundant reconciliations (superseded by a later one in the
+      // same chain) get a diagonal-stripe fill instead of a solid one. Drawn
+      // as vector strokes clipped to the circle (not a rasterized pattern)
+      // so it stays crisp at any zoom level.
       ctx.beginPath();
       ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
-      ctx.fillStyle = fill;
-      ctx.fill();
+      if (isRedundant) {
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = fill;
+        ctx.fillRect(node.x - r, node.y - r, r * 2, r * 2);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = Math.max(1, r / 6);
+        const step = r / 2;
+        for (let off = -3 * r; off <= 3 * r; off += step) {
+          ctx.beginPath();
+          ctx.moveTo(node.x - r + off, node.y + r);
+          ctx.lineTo(node.x + r + off, node.y - r);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else {
+        ctx.fillStyle = fill;
+        ctx.fill();
+      }
+
+      // Re-trace the circle outline (the hatch drawing above consumes the
+      // path) so the border ring strokes the actual node boundary.
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
       // Extra ring on the hovered node itself
       if (node.id === hoveredNodeId) {
         ctx.strokeStyle = darkenColor(fill);
@@ -362,34 +445,41 @@ const TreeView = ({
       }
       ctx.stroke();
 
-      // Abbreviation inside
-      ctx.font = "bold 5px Roboto";
-      ctx.fillStyle = "#fff";
       ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(abbrev, node.x, node.y);
 
-      // Labels below
-      const labelSize = Math.max(3.5, 11 / globalScale);
-      ctx.textBaseline = "top";
-      let lineY = node.y + r + 3;
-
-      if (service) {
-        ctx.fillStyle = fill;
-        ctx.font = `bold ${labelSize}px sans-serif`;
-        ctx.fillText(service, node.x, lineY);
-        lineY += labelSize + 1.5;
+      // Abbreviation inside (root indicator only)
+      if (abbrev) {
+        ctx.font = "bold 5px Roboto";
+        ctx.fillStyle = "#fff";
+        ctx.textBaseline = "middle";
+        ctx.fillText(abbrev, node.x, node.y);
       }
 
-      if (col) {
-        ctx.fillStyle = "#555";
-        ctx.font = `${labelSize}px sans-serif`;
-        ctx.fillText(col, node.x, lineY);
+      // Labels below — hidden once zoomed out past the node's native size,
+      // well before the text itself would start looking cramped/tiny.
+      const nodeScreenRadius = r * globalScale;
+      if (nodeScreenRadius >= r) {
+        const labelSize = Math.max(3.5, 11 / globalScale);
+        ctx.textBaseline = "top";
+        let lineY = node.y + r + 3;
+
+        if (service) {
+          ctx.fillStyle = fill;
+          ctx.font = `bold ${labelSize}px sans-serif`;
+          ctx.fillText(service, node.x, lineY);
+          lineY += labelSize + 1.5;
+        }
+
+        if (col) {
+          ctx.fillStyle = "#555";
+          ctx.font = `${labelSize}px sans-serif`;
+          ctx.fillText(col, node.x, lineY);
+        }
       }
 
       ctx.restore();
     },
-    [opMap, highlightedNodes, hoveredNodeId],
+    [opMap, highlightedNodes, hoveredNodeId, redundantReconciliationIds],
   );
 
   if (!deps.nodes || Object.keys(deps.nodes).length === 0) {
@@ -417,6 +507,9 @@ const TreeView = ({
           if (n.id === "root") return "root";
           const op = opMap[n.id];
           const label = opLabel(op);
+          if (redundantReconciliationIds.has(n.id)) {
+            return `${label}\n${REDUNDANT_RECONCILIATION_TOOLTIP}`;
+          }
           return label;
         }}
         nodeCanvasObjectMode={() => "replace"}
@@ -430,6 +523,10 @@ const TreeView = ({
         enableNodeDrag={false}
         onNodeClick={(node: any) => {
           if (node.id === "root") return;
+          if (redundantReconciliationIds.has(node.id)) {
+            onRedundantNodeClick?.(node.id);
+            return;
+          }
           onNodeDeleteRequest?.(node.id);
         }}
         onNodeHover={(node: any) => setHoveredNodeId(node ? node.id : null)}
@@ -581,13 +678,8 @@ const NodeCard = ({
           )}
         </Stack>
 
-        {/* Right: op number + expand toggle */}
+        {/* Right: expand toggle */}
         <Stack direction="row" alignItems="center" gap={0.25} flexShrink={0}>
-          {!isRoot && op?.opNumber != null && (
-            <Typography variant="caption" color="text.secondary">
-              {`#${op.opNumber}`}
-            </Typography>
-          )}
           {hasDetails && (
             <IconButton
               size="small"
@@ -858,6 +950,19 @@ const DependenciesPanel = ({
     [dependencies, opMap],
   );
 
+  // Clicking a hatched "redundant reconciliation" node shows an info dialog
+  // instead of the delete-confirmation flow — it can't be manually deleted
+  // this way since it'll be collapsed automatically on the next save.
+  const [redundantInfoNodeId, setRedundantInfoNodeId] = useState<
+    string | null
+  >(null);
+  const handleRedundantNodeClick = useCallback((nodeId: string) => {
+    setRedundantInfoNodeId(nodeId);
+  }, []);
+  const handleCloseRedundantInfo = useCallback(() => {
+    setRedundantInfoNodeId(null);
+  }, []);
+
   const handleCancelDelete = useCallback(() => {
     if (deleteInProgress) return;
     setDeleteConfirmOpen(false);
@@ -1005,22 +1110,35 @@ const DependenciesPanel = ({
             title={
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                 {Object.entries(OP_TYPE_LABEL).map(([type, label]) => (
-                  <Stack
-                    key={type}
-                    direction="row"
-                    alignItems="center"
-                    gap={0.75}
-                  >
-                    <Box
-                      sx={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: "50%",
-                        backgroundColor: OP_COLORS[type],
-                      }}
-                    />
-                    <Typography variant="caption">{label}</Typography>
-                  </Stack>
+                  <Fragment key={type}>
+                    <Stack direction="row" alignItems="center" gap={0.75}>
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          backgroundColor: OP_COLORS[type],
+                        }}
+                      />
+                      <Typography variant="caption">{label}</Typography>
+                    </Stack>
+                    {type === "RECONCILIATION" && (
+                      <Stack direction="row" alignItems="center" gap={0.75}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: "50%",
+                            background: `repeating-linear-gradient(45deg, ${OP_COLORS.RECONCILIATION}, ${OP_COLORS.RECONCILIATION} 1.5px, #fff 1.5px, #fff 3px)`,
+                            border: `1px solid ${OP_COLORS.RECONCILIATION}`,
+                          }}
+                        />
+                        <Typography variant="caption">
+                          Redundant reconciliation (auto-removed on save)
+                        </Typography>
+                      </Stack>
+                    )}
+                  </Fragment>
                 ))}
               </Box>
             }
@@ -1089,6 +1207,7 @@ const DependenciesPanel = ({
               deps={dependencies}
               visible={tab === 1}
               onNodeDeleteRequest={readonly ? undefined : handleDeleteRequest}
+              onRedundantNodeClick={handleRedundantNodeClick}
             />
           </Box>
         </>
@@ -1157,14 +1276,6 @@ const DependenciesPanel = ({
                               <strong>{op.columnName}</strong>
                             </Typography>
                           )}
-                          {op.opNumber != null && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {`#${op.opNumber}`}
-                            </Typography>
-                          )}
                         </>
                       ) : (
                         <Typography variant="caption">
@@ -1221,14 +1332,6 @@ const DependenciesPanel = ({
                                   <strong>{op.columnName}</strong>
                                 </Typography>
                               )}
-                              {op.opNumber != null && (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {`#${op.opNumber}`}
-                                </Typography>
-                              )}
                             </>
                           ) : (
                             <Typography variant="caption">{id}</Typography>
@@ -1261,6 +1364,52 @@ const DependenciesPanel = ({
           >
             {deleteInProgress ? "Removing\u2026" : "Remove"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Redundant-reconciliation info dialog */}
+      <Dialog
+        open={!!redundantInfoNodeId}
+        onClose={handleCloseRedundantInfo}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Redundant reconciliation</DialogTitle>
+        <DialogContent>
+          <Stack gap={1.5}>
+            {redundantInfoNodeId &&
+              (() => {
+                const op = opMap[redundantInfoNodeId];
+                return op ? (
+                  <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+                    <Chip
+                      label={OP_TYPE_LABEL[op.operationType] ?? op.operationType}
+                      size="small"
+                      sx={opChipSx(op.operationType)}
+                    />
+                    {getServiceName(op) && (
+                      <Typography variant="caption" fontWeight={700}>
+                        {getServiceName(op)}
+                      </Typography>
+                    )}
+                    {op.columnName && (
+                      <Typography variant="caption" color="text.secondary">
+                        {"on "}
+                        <strong>{op.columnName}</strong>
+                      </Typography>
+                    )}
+                  </Stack>
+                ) : null;
+              })()}
+            <Typography variant="body2" color="text.secondary">
+              {REDUNDANT_RECONCILIATION_TOOLTIP} It can't be manually removed
+              here — it will be cleaned up automatically the next time the
+              table is saved.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseRedundantInfo}>Got it</Button>
         </DialogActions>
       </Dialog>
     </Drawer>

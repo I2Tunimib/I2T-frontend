@@ -39,10 +39,11 @@ export type ApiConfig = {
     GET_OPERATION_DOWNSTREAM_DEPS: Endpoint;
     DELETE_OPERATION: Endpoint;
     REDO_OPERATION: Endpoint;
+    REMOVE_LOGGED_OPERATION: Endpoint;
+    RESTORE_LOGGED_OPERATION: Endpoint;
     // ACL endpoints
     ADD_ACL_USER: Endpoint;
     REMOVE_ACL_USER: Endpoint;
-    SET_VISIBILITY: Endpoint;
     GET_TABLE_ACL: Endpoint;
     ADD_TABLE_ACL_USER: Endpoint;
     REMOVE_TABLE_ACL_USER: Endpoint;
@@ -130,6 +131,12 @@ const CONFIG: AppConfig = {
       REDO_OPERATION: {
         path: "/dataset/:datasetId/table/:tableId/operation/:opId/redo",
       },
+      REMOVE_LOGGED_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId/step",
+      },
+      RESTORE_LOGGED_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/restore",
+      },
       EXPORT: [
         {
           path: "/dataset/:datasetId/table/:tableId/export?format=schema_w3c",
@@ -171,7 +178,7 @@ const CONFIG: AppConfig = {
           },
         },
         {
-          path: "/dataset/:datasetId/table/:tableId/export?format=rdf&serialization=:serialization&baseUri=:baseUri&score=:score&match=:match",
+          path: "/dataset/:datasetId/table/:tableId/export?format=rdf",
           name: "RDF",
           params: {
             postDownload: (data: any) => {
@@ -246,7 +253,6 @@ const CONFIG: AppConfig = {
       // ACL endpoints
       ADD_ACL_USER: { path: "/dataset/:datasetId/acl" },
       REMOVE_ACL_USER: { path: "/dataset/:datasetId/acl" },
-      SET_VISIBILITY: { path: "/dataset/:datasetId/acl/visibility" },
       GET_TABLE_ACL: { path: "/dataset/:datasetId/table/:tableId/acl" },
       ADD_TABLE_ACL_USER: {
         path: "/dataset/:datasetId/table/:tableId/acl",

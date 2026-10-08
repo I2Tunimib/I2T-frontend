@@ -58,7 +58,7 @@ export const buildPath = (
     // get all query params and substitute with value
     const allQueryParams = getAllQueryParams(path);
     finalPath = allQueryParams.reduce((acc, param) => {
-      return acc.replace(`:${param}`, paramsValue[param].toString());
+      return acc.replace(`:${param}`, encodeURIComponent(paramsValue[param].toString()));
     }, finalPath);
   }
 
