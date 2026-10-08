@@ -8,6 +8,7 @@ import {
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
 import datasetAPI from "@services/api/datasets";
+import tableAPI from "@services/api/table";
 import { FC, useCallback, useEffect, useRef } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { LinearProgress, Stack } from "@mui/material";
@@ -163,12 +164,17 @@ const Viewer: FC<unknown> = () => {
     }
   }, [tableId, datasetId]);
 
-  // WebSocket listener for compliance status updates
-  useEffect(() => {
-    if (!socket || !datasetId || !tableId) return;
+  // Latest compliance status, readable from callbacks without stale closures
+  const complianceStatusRef = useRef<string | undefined>(undefined);
+  complianceStatusRef.current = currentTable.complianceStatus;
 
-    const handleComplianceDone = (data: any) => {
-      if (data.datasetId !== datasetId || data.tableId !== tableId) return;
+  // Shared by the websocket event and the polling fallback. Idempotent: once
+  // the status is no longer PENDING, further calls are ignored.
+  const onComplianceFinished = useCallback(
+    (data: { status: string; complianceReports?: any; error?: string }) => {
+      if (complianceStatusRef.current !== "PENDING") return;
+      if (data.status !== "DONE" && data.status !== "ERROR") return;
+      complianceStatusRef.current = data.status;
 
       if (refSnack.current) {
         closeSnackbar(refSnack.current);
@@ -185,20 +191,69 @@ const Viewer: FC<unknown> = () => {
             complianceReports: data.complianceReports,
           }),
         );
-      } else if (data.status === "ERROR") {
+      } else {
         enqueueSnackbar(
           data.error || "GDPR compliance check failed. Please try again.",
           { variant: "error" },
         );
         dispatch(updateCurrentTable({ complianceStatus: "ERROR" }));
       }
+    },
+    [dispatch, enqueueSnackbar, closeSnackbar],
+  );
+
+  // WebSocket listener for compliance status updates
+  useEffect(() => {
+    if (!socket || !datasetId || !tableId) return;
+
+    const handleComplianceDone = (data: any) => {
+      if (data.datasetId !== datasetId || data.tableId !== tableId) return;
+      onComplianceFinished(data);
     };
 
     socket.on("compliance-done", handleComplianceDone);
     return () => {
       socket.off("compliance-done", handleComplianceDone);
     };
-  }, [socket, datasetId, tableId, dispatch, enqueueSnackbar, closeSnackbar]);
+  }, [socket, datasetId, tableId, onComplianceFinished]);
+
+  // Polling fallback in case the websocket event is never received
+  useEffect(() => {
+    if (!datasetId || !tableId || currentTable.complianceStatus !== "PENDING")
+      return;
+
+    let inFlight = false;
+    let stopped = false;
+
+    const interval = setInterval(async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const response = await tableAPI.getTable({ tableId, datasetId });
+        if (stopped) return;
+        const table = response.data?.table;
+        // Other values (e.g. a GDPR result written just before DONE) mean
+        // the run is still finishing: keep polling.
+        if (table?.complianceStatus === "DONE") {
+          onComplianceFinished({
+            status: "DONE",
+            complianceReports: table.complianceReports,
+          });
+        } else if (table?.complianceStatus === "ERROR") {
+          onComplianceFinished({ status: "ERROR" });
+        }
+      } catch {
+        // transient failure: retry on next tick
+      } finally {
+        inFlight = false;
+      }
+    }, 5000);
+
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [currentTable.complianceStatus, datasetId, tableId, onComplianceFinished]);
 
   useEffect(() => {
     if (isEmptyObject(currentTable)) return;

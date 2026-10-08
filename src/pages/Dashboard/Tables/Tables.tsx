@@ -280,7 +280,6 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [
                 size="small"
                 variant="outlined"
                 color="primary"
-<<<<<<< HEAD
                 startIcon={
                   isLoadingTableData ? (
                     <CircularProgress size={14} color="inherit" />
@@ -288,21 +287,14 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [
                     <BubbleChartRounded />
                   )
                 }
-=======
-                startIcon={isLoadingTableData ? <CircularProgress size={14} color="inherit" /> : <ShareOutlined />}
->>>>>>> 262e4bc (latest changes)
                 disabled={isLoadingTableData}
                 onClick={async () => {
                   setSelectedTableId(row.original.id);
                   setIsLoadingTableData(true);
                   try {
-<<<<<<< HEAD
                     await dispatch(
                       getTable({ tableId: row.original.id, datasetId }),
                     ).unwrap();
-=======
-                    await dispatch(getTable({ tableId: row.original.id, datasetId })).unwrap();
->>>>>>> 262e4bc (latest changes)
                   } catch {
                     // open dialog anyway on error
                   }
