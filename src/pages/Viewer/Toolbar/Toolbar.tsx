@@ -32,6 +32,7 @@ import {
   selectSaveTableStatus,
   selectSettingsDialogStatus,
 } from "@store/slices/table/table.selectors";
+import { selectCurrentDatasetTables } from "@store/slices/datasets/datasets.selectors";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import BubbleChartRoundedIcon from "@mui/icons-material/BubbleChartRounded";
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
@@ -50,6 +51,7 @@ import { IconButtonTooltip } from "@components/core";
 import UserAvatar from "@components/kit/UserAvatar";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import GraphTutorialDialog from "@pages/Viewer/GraphTutorialDialog/GraphTutorialDialog";
+import { useSnackbar } from "notistack";
 import styles from "./Toolbar.module.scss";
 import SaveIndicator from "../TableViewer/SaveIndicator";
 import ExportDialog from "../TableViewer/ExportDialog";
@@ -72,7 +74,6 @@ const initialMenuState: MenuState = {
 const Toolbar = () => {
   // keep track of table name
   const [tableName, setTableName] = useState<string>("");
-
   const [menuState, setMenuState] = useState(initialMenuState);
   const [anchorEl, setAnchorEl] = useState<null | any>(null);
 
@@ -81,6 +82,8 @@ const Toolbar = () => {
     datasetId: string;
     tableId: string;
   }>();
+  const datasetTables = useAppSelector(selectCurrentDatasetTables);
+  const tables = datasetTables?.collection || [];
   const { loading } = useAppSelector(selectSaveTableStatus);
   const currentTable = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
@@ -96,6 +99,7 @@ const Toolbar = () => {
   );
   const dispatch = useAppDispatch();
   const auth = useAppSelector(selectIsLoggedIn);
+  const { enqueueSnackbar } = useSnackbar();
 
   const { view } = useQuery();
 
@@ -114,14 +118,49 @@ const Toolbar = () => {
     setTableName(event.target.value);
   };
 
+  const getUniqueTableName = (name: string) => {
+    const baseName = name.trim() === "" ? "Unnamed table" : name.trim();
+    const existingNames = new Set(
+      tables
+        .filter((t: any) => String(t.id) !== String(tableId))
+        .map((t: any) => t.name)
+    );
+
+    if (!existingNames.has(baseName)) {
+      return { uniqueName: baseName, wasRenamed: false };
+    }
+
+    let counter = 1;
+    let newName = `${baseName}_${counter}`;
+    while (existingNames.has(newName)) {
+      counter++;
+      newName = `${baseName}_${counter}`;
+    }
+
+    return { uniqueName: newName, wasRenamed: true };
+  };
+
   const onBlurTableName = (event: FocusEvent<HTMLInputElement>) => {
-    const newValue =
-      event.target.value === "" ? "Unnamed table" : event.target.value;
-    dispatch(updateCurrentTable({ name: newValue }));
+    const rawValue = event.target.value;
+    const { uniqueName, wasRenamed } = getUniqueTableName(rawValue);
+    setTableName(uniqueName);
+    dispatch(updateCurrentTable({ name: uniqueName }));
+    if (wasRenamed) {
+      enqueueSnackbar("Table name provided already exists in dataset. A numeric suffix has been added.", {
+        variant: "info",
+        autoHideDuration: 3000,
+      });
+    }
   };
 
   const onInputClick = (event: MouseEvent<HTMLInputElement>) => {
     event.currentTarget.select();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.currentTarget.blur();
+    }
   };
 
   const handleMenuOpen = (event: MouseEvent<HTMLButtonElement>, id: string) => {
@@ -191,6 +230,7 @@ const Toolbar = () => {
               onClick={onInputClick}
               onBlur={onBlurTableName}
               onChange={onChangeTableName}
+              onKeyDown={handleKeyDown}
               value={tableName}
               className={clsx({
                 [styles.DefaultName]: tableName === "Unnamed table",

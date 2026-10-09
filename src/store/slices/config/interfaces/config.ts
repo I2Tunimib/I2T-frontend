@@ -130,6 +130,7 @@ export interface ApiConfig {
     GET_CPA: Endpoint;
     GET_CTA: Endpoint;
     GLOBAL_SEARCH: Endpoint;
+    UPDATE_DATASET: Endpoint;
     DELETE_DATASET: Endpoint;
     DELETE_TABLE: Endpoint;
     UPLOAD_DATASET: Endpoint;

@@ -15,9 +15,10 @@ import {
   LockOutlined,
   LockOpenOutlined,
   BubbleChartRounded,
+  EditOutlined,
 } from "@mui/icons-material";
-import { updateUI } from "@store/slices/table/table.slice";
-import { getTable, getDependencies } from "@store/slices/table/table.thunk";
+import { updateCurrentTable, updateUI } from "@store/slices/table/table.slice";
+import { getTable, getDependencies, saveTable } from "@store/slices/table/table.thunk";
 import { selectComplianceDialogStatus } from "@store/slices/table/table.selectors";
 import ComplianceDialog from "@pages/Viewer/TableViewer/ComplianceDialog";
 import GraphDialog from "@pages/Viewer/TableViewer/GraphDialog";
@@ -29,11 +30,17 @@ import {
   CircularProgress,
   IconButton,
   LinearProgress,
+  Link as MatLink,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Pagination,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { InlineInput } from "@components/kit";
 import { ID } from "@store/interfaces/store";
 import {
   selectCurrentDatasetTables,
@@ -42,10 +49,12 @@ import {
 } from "@store/slices/datasets/datasets.selectors";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTablesByDataset } from "@store/slices/datasets/datasets.thunk";
-import { FC, useCallback, useEffect, useState, useMemo } from "react";
+import React, { FC, useCallback, useEffect, useState, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import globalStyles from "@styles/globals.module.scss";
 import styles from "@components/kit/TableListView/TableListView.module.scss";
+import { useSnackbar } from "notistack";
+import datasetAPI from "@services/api/datasets";
 import { useTableCollection } from "../useTableCollection";
 import W3CViewer from "../../Viewer/W3CViewer/W3CViewer";
 
@@ -355,6 +364,158 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [
     [datasetId, viewType, dispatch, getTablePermission, isDatasetOwner],
   );
 
+  const customColumns = useMemo(() => {
+    return columns.map((col: any) => {
+      if (col.accessorKey === "name" || col.id === "name") {
+        return {
+          ...col,
+          cell: ({ row }: any) => {
+            const tableItem = row.original;
+            const { enqueueSnackbar } = useSnackbar();
+            const [isEditing, setIsEditing] = useState(false);
+            const [tableName, setTableName] = useState(tableItem.name);
+            const [contextMenu, setContextMenu] = useState<{
+              mouseX: number;
+              mouseY: number;
+            } | null>(null);
+
+            useEffect(() => {
+              setTableName(tableItem.name);
+            }, [tableItem.name]);
+
+            const getUniqueTableName = (name: string) => {
+              const baseName = name.trim() === "" ? "Unnamed table" : name.trim();
+              const existingNames = new Set(
+                rows
+                  .filter((t: any) => String(t.id) !== String(tableItem.id))
+                  .map((t: any) => t.name)
+              );
+
+              if (!existingNames.has(baseName)) {
+                return { uniqueName: baseName, wasRenamed: false };
+              }
+
+              let counter = 1;
+              let newName = `${baseName}_${counter}`;
+              while (existingNames.has(newName)) {
+                counter++;
+                newName = `${baseName}_${counter}`;
+              }
+
+              return { uniqueName: newName, wasRenamed: true };
+            };
+
+            const handleContextMenu = (e: React.MouseEvent) => {
+              if (!isDatasetOwner) return;
+              e.preventDefault();
+              setContextMenu({ mouseX: e.clientX + 2, mouseY: e.clientY - 6 });
+            };
+
+            const handleCloseContextMenu = () => {
+              setContextMenu(null);
+            };
+
+            const handleStartRename = () => {
+              handleCloseContextMenu();
+              setIsEditing(true);
+            };
+
+            const handleBlur = async (e: any) => {
+              const rawValue = e.target.value;
+              const { uniqueName, wasRenamed } = getUniqueTableName(rawValue);
+              setTableName(uniqueName);
+              setIsEditing(false);
+
+              if (uniqueName !== tableItem.name) {
+                try {
+                  await dispatch(getTable({ tableId: tableItem.id, datasetId })).unwrap();
+                  dispatch(updateCurrentTable({ name: uniqueName }));
+                  await dispatch(saveTable({ tableId: tableItem.id, datasetId })).unwrap();
+                  const response = await datasetAPI.getTablesByDataset({ datasetId });
+                  dispatch(
+                    getTablesByDataset.fulfilled(
+                      { data: response.data, datasetId },
+                      "silent-update",
+                      { datasetId }
+                    )
+                  );
+                } catch (error) {
+                  console.error("Error in renaming existing table:", error);
+                  setTableName(tableItem.name);
+                }
+              }
+
+              if (wasRenamed) {
+                enqueueSnackbar("Table name provided already exists in dataset. A numeric suffix has been added.", {
+                  variant: "info",
+                  autoHideDuration: 3000,
+                });
+              }
+            };
+
+            const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
+            };
+
+            if (isEditing) {
+              return (
+                <div style={{ width: "250px", maxWidth: "250px", display: "inline-block", overflow: "hidden" }}>
+                  <InlineInput
+                    aria-label="Table name"
+                    value={tableName}
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e: any) => {
+                      setTableName(e.currentTarget.value);
+                    }}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    style={{ fontSize: "inherit", fontWeight: "inherit", width: "100%" }}
+                    disabled={!isDatasetOwner}
+                  />
+                </div>
+              );
+            }
+
+            return (
+              <div onContextMenu={handleContextMenu}>
+                <MatLink
+                  component={Link}
+                  to={`/datasets/${datasetId}/tables/${tableItem.id}?view=table`}
+                  sx={{ textDecoration: "none" }}
+                >
+                  {tableName}
+                </MatLink>
+                {isDatasetOwner && (
+                  <Menu
+                    open={contextMenu !== null}
+                    onClose={handleCloseContextMenu}
+                    anchorReference="anchorPosition"
+                    anchorPosition={
+                      contextMenu !== null
+                        ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+                        : undefined
+                    }
+                  >
+                    <MenuItem onClick={handleStartRename}>
+                      <ListItemIcon>
+                        <EditOutlined fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>Rename</ListItemText>
+                    </MenuItem>
+                  </Menu>
+                )}
+              </div>
+            );
+          },
+        };
+      }
+      return col;
+    });
+  }, [columns, rows, isDatasetOwner, datasetId, dispatch]);
+
   return (
     <>
       <ComplianceDialog
@@ -385,7 +546,7 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [
             />
           ) : viewType === "list" ? (
             <DeferredTable
-              columns={columns}
+              columns={customColumns}
               data={rows}
               Actions={Actions}
               onChangeRowSelected={handleRowSelection}

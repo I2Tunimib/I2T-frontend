@@ -24,6 +24,7 @@ export type ApiConfig = {
     DELETE_TABLE: Endpoint;
     UPLOAD_DATASET: Endpoint;
     UPLOAD_TABLE: Endpoint;
+    UPDATE_DATASET: Endpoint;
     SAVE: Endpoint;
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
@@ -80,6 +81,9 @@ const CONFIG: AppConfig = {
       },
       GET_TABLE: {
         path: "/dataset/:datasetId/table/:tableId",
+      },
+      UPDATE_DATASET: {
+        path: "/dataset/:datasetId",
       },
       DELETE_DATASET: {
         path: "/dataset/:datasetId",

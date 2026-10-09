@@ -137,6 +137,21 @@ const datasetAPI = {
     );
   },
 
+  updateDataset: (formData: FormData, datasetId: string) => {
+    return apiClient.put(
+      apiEndpoint({
+        endpoint: "UPDATE_DATASET",
+        paramsValue: { datasetId },
+      }),
+      formData,
+      {
+        headers: {
+          ...getAuthHeader(),
+        },
+      },
+    );
+  },
+
   deleteDataset: (datasetId: string) => {
     return apiClient.delete(
       apiEndpoint({

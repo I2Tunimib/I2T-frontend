@@ -12,6 +12,7 @@ export enum DatasetThunkActions {
   ANNOTATE = 'annotate',
   GLOBAL_SEARCH = 'globalSearch',
   UPLOAD_DATASET = 'uploadDataset',
+  UPDATE_DATASET = 'updateDataset',
   DELETE_DATASET = 'deleteDataset',
   UPLOAD_TABLE = 'uploadTable',
   DELETE_TABLE = 'deleteTable'
@@ -67,6 +68,14 @@ export const uploadDataset = createAsyncThunk(
   `${ACTION_PREFIX}/${DatasetThunkActions.UPLOAD_DATASET}`,
   async ({ formData }: { formData: FormData }) => {
     const response = await datasetAPI.uploadDataset(formData);
+    return response.data;
+  }
+);
+
+export const updateDataset = createAsyncThunk(
+  `${ACTION_PREFIX}/${DatasetThunkActions.UPDATE_DATASET}`,
+  async ({ formData, datasetId }: { formData: FormData, datasetId: string }) => {
+    const response = await datasetAPI.updateDataset(formData, datasetId);
     return response.data;
   }
 );
