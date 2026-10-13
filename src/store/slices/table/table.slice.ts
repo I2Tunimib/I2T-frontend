@@ -2158,6 +2158,14 @@ export const tableSlice = createSliceWithRequests({
           updateScoreBoundaries(state);
         },
       )
+      .addCase(automaticAnnotation.pending, (state, action) => {
+        if (action.meta.arg.target === "schema") {
+          state.entities.tableInstance.schemaStatus = "PENDING";
+        } else {
+          state.entities.tableInstance.mantisStatus = "PENDING";
+        }
+        state.ui.settings.isViewOnly = true;
+      })
       .addCase(
         saveTable.fulfilled,
         (state, action: PayloadAction<TableInstance>) => {
@@ -2426,7 +2434,8 @@ export const tableSlice = createSliceWithRequests({
           if (schemaStatus) {
             state.entities.tableInstance.schemaStatus = schemaStatus;
           }
-          state.ui.settings.isViewOnly = true;
+          state.ui.settings.isViewOnly =
+            mantisStatus === "PENDING" || schemaStatus === "PENDING";
         },
       )
       .addCase(tableCompliance.fulfilled, (state, action) => {

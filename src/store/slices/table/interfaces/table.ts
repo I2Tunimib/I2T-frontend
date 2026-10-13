@@ -33,7 +33,7 @@ export interface TableInstance {
   minMetaScore: number;
   maxMetaScore: number;
   mantisStatus?: "PENDING" | "DONE";
-  schemaStatus?: "PENDING" | "DONE";
+  schemaStatus?: "PENDING" | "DONE" | "ERROR";
   complianceStatus?: "PENDING" | "DONE" | "ERROR";
   compliance?: any; // legacy — kept for backward compatibility
   complianceReports?: ComplianceReport[];

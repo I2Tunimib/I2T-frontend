@@ -180,6 +180,7 @@ const App = () => {
         });
       });
       socket.on("schema-done", (data: GetSchemaResponse) => {
+        if (!data?.table) return;
         const { table } = data;
         console.log("table data after schema", table);
         const tablePath = `/datasets/${table.idDataset}/tables/${table.id}`;

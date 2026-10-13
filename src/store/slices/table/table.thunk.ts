@@ -665,21 +665,21 @@ type AutomaticAnnotationThunkInputProps = {
   datasetId: string;
   tableId: string;
   target: "fullTable" | "schema";
-  method: "alligator";
+  method: "alligator" | "llm";
   useLLM?: boolean;
 };
 
 type AutomaticAnnotationThunkOutputProps = {
   datasetId: string;
   tableId: string;
-  mantisStatus: "PENDING";
-  schemaStatus: "PENDING";
+  mantisStatus?: "PENDING" | "DONE" | "ERROR";
+  schemaStatus?: "PENDING" | "DONE" | "ERROR";
 };
 
 export const automaticAnnotation = createAsyncThunk<
   AutomaticAnnotationThunkOutputProps,
   AutomaticAnnotationThunkInputProps
->(`${ACTION_PREFIX}/automaticAnnotation`, async (params, { getState }) => {
+>(`${ACTION_PREFIX}/automaticAnnotation`, async (params, { getState, dispatch }) => {
   const { datasetId, tableId, target, method, useLLM } = params;
   const { table } = getState() as any;
   const { entities } = table;
@@ -695,6 +695,9 @@ export const automaticAnnotation = createAsyncThunk<
     { datasetId, tableId, target, method },
     data,
   );
+  if (response.data?.table && response.data?.result) {
+    dispatch(updateSchema(response.data));
+  }
   return response.data;
 });
 export type TableComplianceThunkInputProps = {
