@@ -17,6 +17,13 @@ export interface GetTableResponse {
   columnOrder?: string[]; // Optional field for preserving column order
 }
 
+export interface GetTableStatusResponse {
+  mantisStatus?: "PENDING" | "DONE";
+  schemaStatus?: "PENDING" | "DONE" | "ERROR";
+  complianceStatus?: "PENDING" | "DONE" | "ERROR";
+  complianceReports?: any[];
+}
+
 export interface GetSchemaResponse {
   table: TableInstance;
   result: {
@@ -57,6 +64,20 @@ const tableAPI = {
       {
         clearCacheEntry: true,
         headers,
+      },
+    );
+  },
+  getTableStatus: (params: Record<string, string | number> = {}) => {
+    return apiClient.get<GetTableStatusResponse>(
+      apiEndpoint({
+        endpoint: "GET_TABLE_STATUS",
+        paramsValue: { ...params },
+      }),
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
       },
     );
   },

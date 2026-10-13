@@ -229,9 +229,9 @@ const Viewer: FC<unknown> = () => {
       if (inFlight) return;
       inFlight = true;
       try {
-        const response = await tableAPI.getTable({ tableId, datasetId });
+        const response = await tableAPI.getTableStatus({ tableId, datasetId });
         if (stopped) return;
-        const table = response.data?.table;
+        const table = response.data;
         // Other values (e.g. a GDPR result written just before DONE) mean
         // the run is still finishing: keep polling.
         if (table?.complianceStatus === "DONE") {
@@ -255,14 +255,17 @@ const Viewer: FC<unknown> = () => {
     };
   }, [currentTable.complianceStatus, datasetId, tableId, onComplianceFinished]);
 
-  // Socket.IO normally refreshes the table after an automatic annotation
-  // finishes. Poll its persisted status as well: completion events can be
-  // missed while the connection is upgrading or reconnecting.
+  // Full-table annotation completes asynchronously, so poll its persisted
+  // status if its Socket.IO event is missed. Schema annotation returns its
+  // completed result through the initiating HTTP request and does not need
+  // periodic table reloads.
   useEffect(() => {
-    const annotationPending =
-      currentTable.mantisStatus === "PENDING" ||
-      currentTable.schemaStatus === "PENDING";
-    if (!datasetId || !tableId || !annotationPending) return;
+    if (
+      !datasetId ||
+      !tableId ||
+      currentTable.mantisStatus !== "PENDING"
+    )
+      return;
 
     let inFlight = false;
     let stopped = false;
@@ -271,13 +274,12 @@ const Viewer: FC<unknown> = () => {
       if (inFlight) return;
       inFlight = true;
       try {
-        const result = await dispatch(getTable({ tableId, datasetId })).unwrap();
+        const result = await tableAPI.getTableStatus({ tableId, datasetId });
         if (stopped) return;
 
-        const annotationStillPending =
-          result.table?.mantisStatus === "PENDING" ||
-          result.table?.schemaStatus === "PENDING";
-        if (!annotationStillPending) {
+        if (result.data?.mantisStatus !== "PENDING") {
+          await dispatch(getTable({ tableId, datasetId })).unwrap();
+          if (stopped) return;
           dispatch(updateUI({ settings: { isViewOnly: false } }));
           dispatch(getDependencies({ tableId, datasetId }));
         }
@@ -297,7 +299,6 @@ const Viewer: FC<unknown> = () => {
     };
   }, [
     currentTable.mantisStatus,
-    currentTable.schemaStatus,
     datasetId,
     tableId,
     dispatch,

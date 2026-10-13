@@ -19,6 +19,7 @@ export type ApiConfig = {
     GET_DATASET_INFO: Endpoint;
     GET_TABLES_BY_DATASET: Endpoint;
     GET_TABLE: Endpoint;
+    GET_TABLE_STATUS: Endpoint;
     GLOBAL_SEARCH: Endpoint;
     DELETE_DATASET: Endpoint;
     DELETE_TABLE: Endpoint;
@@ -81,6 +82,9 @@ const CONFIG: AppConfig = {
       },
       GET_TABLE: {
         path: "/dataset/:datasetId/table/:tableId",
+      },
+      GET_TABLE_STATUS: {
+        path: "/dataset/:datasetId/table/:tableId/status",
       },
       DELETE_DATASET: {
         path: "/dataset/:datasetId",
