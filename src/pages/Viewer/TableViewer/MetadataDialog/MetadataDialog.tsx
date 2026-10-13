@@ -340,7 +340,8 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
         setShowPropagate(true);
 
         if (!previousMatch || previousMatch.id !== selectedMetadata.id) {
-          if (!previousMatch?.match && selectedMetadata.match === "true") {
+          // The reducer clears the previous match, so this also covers switching candidates
+          if (selectedMetadata.match === "true") {
             dispatch(
               updateCellMetadata({
                 metadataId: selectedMetadata.id,
