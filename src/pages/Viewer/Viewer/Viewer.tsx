@@ -255,6 +255,54 @@ const Viewer: FC<unknown> = () => {
     };
   }, [currentTable.complianceStatus, datasetId, tableId, onComplianceFinished]);
 
+  // Socket.IO normally refreshes the table after an automatic annotation
+  // finishes. Poll its persisted status as well: completion events can be
+  // missed while the connection is upgrading or reconnecting.
+  useEffect(() => {
+    const annotationPending =
+      currentTable.mantisStatus === "PENDING" ||
+      currentTable.schemaStatus === "PENDING";
+    if (!datasetId || !tableId || !annotationPending) return;
+
+    let inFlight = false;
+    let stopped = false;
+
+    const refreshCompletedAnnotation = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const result = await dispatch(getTable({ tableId, datasetId })).unwrap();
+        if (stopped) return;
+
+        const annotationStillPending =
+          result.table?.mantisStatus === "PENDING" ||
+          result.table?.schemaStatus === "PENDING";
+        if (!annotationStillPending) {
+          dispatch(updateUI({ settings: { isViewOnly: false } }));
+          dispatch(getDependencies({ tableId, datasetId }));
+        }
+      } catch {
+        // A transient fetch failure must not stop the fallback.
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    refreshCompletedAnnotation();
+    const interval = setInterval(refreshCompletedAnnotation, 5000);
+
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [
+    currentTable.mantisStatus,
+    currentTable.schemaStatus,
+    datasetId,
+    tableId,
+    dispatch,
+  ]);
+
   useEffect(() => {
     if (isEmptyObject(currentTable)) return;
 
