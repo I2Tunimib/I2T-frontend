@@ -181,6 +181,7 @@ const App = () => {
       });
       socket.on("schema-done", (data: GetSchemaResponse) => {
         const { table } = data;
+        console.log("table data after schema", table);
         const tablePath = `/datasets/${table.idDataset}/tables/${table.id}`;
         console.log("data", data);
         dispatch(updateSchemaSocket(data));
