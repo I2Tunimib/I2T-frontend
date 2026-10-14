@@ -255,17 +255,15 @@ const Viewer: FC<unknown> = () => {
     };
   }, [currentTable.complianceStatus, datasetId, tableId, onComplianceFinished]);
 
-  // Full-table annotation completes asynchronously, so poll its persisted
-  // status if its Socket.IO event is missed. Schema annotation returns its
-  // completed result through the initiating HTTP request and does not need
-  // periodic table reloads.
+  // Both annotation kinds complete asynchronously and normally notify us via
+  // Socket.IO. If that event is missed (or websockets are unavailable), poll the
+  // lightweight status endpoint, which does not touch the store, and reload the
+  // table once when the run is over so the grid does not flicker meanwhile.
   useEffect(() => {
-    if (
-      !datasetId ||
-      !tableId ||
-      currentTable.mantisStatus !== "PENDING"
-    )
-      return;
+    const annotationPending =
+      currentTable.mantisStatus === "PENDING" ||
+      currentTable.schemaStatus === "PENDING";
+    if (!datasetId || !tableId || !annotationPending) return;
 
     let inFlight = false;
     let stopped = false;
@@ -277,7 +275,12 @@ const Viewer: FC<unknown> = () => {
         const result = await tableAPI.getTableStatus({ tableId, datasetId });
         if (stopped) return;
 
-        if (result.data?.mantisStatus !== "PENDING") {
+        const stillPending =
+          (currentTable.mantisStatus === "PENDING" &&
+            result.data?.mantisStatus === "PENDING") ||
+          (currentTable.schemaStatus === "PENDING" &&
+            result.data?.schemaStatus === "PENDING");
+        if (!stillPending) {
           await dispatch(getTable({ tableId, datasetId })).unwrap();
           if (stopped) return;
           dispatch(updateUI({ settings: { isViewOnly: false } }));
@@ -299,6 +302,7 @@ const Viewer: FC<unknown> = () => {
     };
   }, [
     currentTable.mantisStatus,
+    currentTable.schemaStatus,
     datasetId,
     tableId,
     dispatch,

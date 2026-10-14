@@ -12,7 +12,7 @@ import {
   StyledEngineProvider,
 } from "@mui/material/styles";
 import { SnackbarProvider } from "notistack";
-import { SocketIoProvider } from "@components/core";
+import { SocketIoProvider, DebugMenu } from "@components/core";
 import App from "./App";
 
 /*
@@ -96,6 +96,7 @@ root.render(
           <SnackbarProvider maxSnack={3}>
             <SocketIoProvider>
               <App />
+              <DebugMenu />
             </SocketIoProvider>
           </SnackbarProvider>
         </ThemeProvider>
