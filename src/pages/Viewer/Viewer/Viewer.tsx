@@ -371,8 +371,7 @@ const Viewer: FC<unknown> = () => {
   return (
     <>
       <Toolbar />
-      {/* Background refreshes keep the table mounted; only the first load shows the bar */}
-      {!loading || !isEmptyObject(currentTable) ? <>{Switch()}</> : <LinearProgress />}
+      {!loading ? <>{Switch()}</> : <LinearProgress />}
     </>
   );
 };
