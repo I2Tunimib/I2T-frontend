@@ -259,6 +259,8 @@ const Viewer: FC<unknown> = () => {
   // Socket.IO. If that event is missed (or websockets are unavailable), poll the
   // lightweight status endpoint, which does not touch the store, and reload the
   // table once when the run is over so the grid does not flicker meanwhile.
+  // The reload happens at most once per pending run, even if the store still
+  // reports PENDING afterwards.
   useEffect(() => {
     const annotationPending =
       currentTable.mantisStatus === "PENDING" ||
@@ -281,8 +283,9 @@ const Viewer: FC<unknown> = () => {
           (currentTable.schemaStatus === "PENDING" &&
             result.data?.schemaStatus === "PENDING");
         if (!stillPending) {
+          stopped = true;
+          clearInterval(interval);
           await dispatch(getTable({ tableId, datasetId })).unwrap();
-          if (stopped) return;
           dispatch(updateUI({ settings: { isViewOnly: false } }));
           dispatch(getDependencies({ tableId, datasetId }));
         }
@@ -368,7 +371,8 @@ const Viewer: FC<unknown> = () => {
   return (
     <>
       <Toolbar />
-      {!loading ? <>{Switch()}</> : <LinearProgress />}
+      {/* Background refreshes keep the table mounted; only the first load shows the bar */}
+      {!loading || !isEmptyObject(currentTable) ? <>{Switch()}</> : <LinearProgress />}
     </>
   );
 };
