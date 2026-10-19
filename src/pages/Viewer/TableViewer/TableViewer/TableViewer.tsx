@@ -37,9 +37,6 @@ import {
 import { ID } from "@store/interfaces/store";
 import { RouteLeaveGuard } from "@components/kit";
 import clsx from "clsx";
-import { Alert, Button, Stack } from "@mui/material";
-import datasetAPI from "@services/api/datasets";
-import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { Table } from "../Table";
 // import Toolbar from '../../Viewer/Toolbar';
 import styles from "./TableViewer.module.scss";
@@ -52,6 +49,9 @@ import {
 import SubToolbar from "../SubToolbar";
 import DependenciesPanel from "../DependenciesPanel";
 import CompliancePolicyPanel from "../CompliancePolicyPanel";
+import { Alert, Button, Stack } from "@mui/material";
+import { forceUnlockTable } from "@store/slices/table/table.access.thunk";
+import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { selectDatasets } from "@store/slices/datasets/datasets.selectors";
 
 interface MenuState {
@@ -445,13 +445,7 @@ const TableViewer = () => {
                 variant="outlined"
                 onClick={async () => {
                   try {
-                    await datasetAPI.forceReleaseTableLock(tableId);
-                    // Try to acquire lock again
-                    const lockResponse =
-                      await datasetAPI.acquireTableLock(tableId);
-                    if (lockResponse.data?.acquired === true) {
-                      dispatch(updateUI({ settings: { isViewOnly: false } }));
-                    }
+                    await dispatch(forceUnlockTable({ tableId })).unwrap();
                   } catch (error) {
                     console.error("Failed to force release lock:", error);
                   }

@@ -7,8 +7,11 @@ import {
 } from "@store/slices/table/table.selectors";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
-import datasetAPI from "@services/api/datasets";
-import tableAPI from "@services/api/table";
+import { usePollTableStatus } from "@hooks/table-status";
+import {
+  checkEditAccess,
+  releaseTableLock,
+} from "@store/slices/table/table.access.thunk";
 import { FC, useCallback, useEffect, useRef } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { LinearProgress, Stack } from "@mui/material";
@@ -70,77 +73,14 @@ const Viewer: FC<unknown> = () => {
     }
   }, [view, tableId, datasetId]);
 
+  // Decide view-only vs edit (ACL) and take the edit lock when editing.
   useEffect(() => {
     if (!datasetId || !tableId) return;
-
-    let cancelled = false;
-
-    const checkPermissionsAndAcquireLock = async () => {
-      try {
-        // 1. Determine if this user has edit rights (ACL check)
-        const response = await datasetAPI.getDatasetInfo({ datasetId });
-        const dataset = response.data;
-        const currentUserId = auth.user?.id;
-        const uid = String(currentUserId);
-
-        const isOwner =
-          dataset &&
-          currentUserId !== undefined &&
-          String(dataset.userId) === uid;
-
-        const isDatasetEditor =
-          dataset &&
-          Array.isArray(dataset.editors) &&
-          currentUserId !== undefined &&
-          dataset.editors.map(String).includes(uid);
-
-        // Dataset-level edit rights: owner or an explicit editor.
-        const datasetCanEdit = Boolean(
-          dataset && (isOwner || isDatasetEditor),
-        );
-        let canEdit = datasetCanEdit;
-        try {
-          const tableResp = await datasetAPI.getTableAcl(datasetId, tableId);
-          const table = tableResp.data as any;
-          // A "restricted" table has its own ACL: dataset editors are not
-          // automatically table editors.
-          if (table.visibility === "restricted" && isOwner === false) {
-            const isTableEditor =
-              Array.isArray(table.editors) &&
-              table.editors.map(String).includes(uid);
-            canEdit = datasetCanEdit && isTableEditor;
-          }
-        } catch {
-          // fall back to dataset-level
-        }
-
-        // 2. No edit rights → view only, done
-        if (!canEdit) {
-          dispatch(updateUI({ settings: { isViewOnly: true } }));
-          return;
-        }
-
-        // 3. Has edit rights → MUST acquire the lock (including owners)
-        //    The lock is the single source of truth for concurrent editing.
-        const lockResponse = await datasetAPI.acquireTableLock(tableId);
-        if (!cancelled) {
-          if (lockResponse.data?.acquired === true) {
-            dispatch(updateUI({ settings: { isViewOnly: false } }));
-          } else {
-            // Lock is held by someone else
-            dispatch(updateUI({ settings: { isViewOnly: true } }));
-          }
-        }
-      } catch {
-        // Any failure (network, lock error) → safe default is view-only
-        if (!cancelled) dispatch(updateUI({ settings: { isViewOnly: true } }));
-      }
-    };
-
-    checkPermissionsAndAcquireLock();
-
+    const request = dispatch(
+      checkEditAccess({ datasetId, tableId, userId: auth.user?.id }),
+    );
     return () => {
-      cancelled = true;
+      request.abort();
     };
   }, [datasetId, tableId, auth.user?.id, auth.loggedIn, dispatch]);
 
@@ -148,7 +88,7 @@ const Viewer: FC<unknown> = () => {
   useEffect(() => {
     return () => {
       if (tableId) {
-        datasetAPI.releaseTableLock(tableId).catch(() => {});
+        dispatch(releaseTableLock({ tableId }));
       }
     };
   }, [tableId]);
@@ -218,42 +158,23 @@ const Viewer: FC<unknown> = () => {
   }, [socket, datasetId, tableId, onComplianceFinished]);
 
   // Polling fallback in case the websocket event is never received
-  useEffect(() => {
-    if (!datasetId || !tableId || currentTable.complianceStatus !== "PENDING")
-      return;
-
-    let inFlight = false;
-    let stopped = false;
-
-    const interval = setInterval(async () => {
-      if (inFlight) return;
-      inFlight = true;
-      try {
-        const response = await tableAPI.getTableStatus({ tableId, datasetId });
-        if (stopped) return;
-        const table = response.data;
-        // Other values (e.g. a GDPR result written just before DONE) mean
-        // the run is still finishing: keep polling.
-        if (table?.complianceStatus === "DONE") {
-          onComplianceFinished({
-            status: "DONE",
-            complianceReports: table.complianceReports,
-          });
-        } else if (table?.complianceStatus === "ERROR") {
-          onComplianceFinished({ status: "ERROR" });
-        }
-      } catch {
-        // transient failure: retry on next tick
-      } finally {
-        inFlight = false;
+  usePollTableStatus({
+    datasetId,
+    tableId,
+    enabled: currentTable.complianceStatus === "PENDING",
+    onStatus: (table) => {
+      // Other values (e.g. a GDPR result written just before DONE) mean the
+      // run is still finishing: keep polling.
+      if (table?.complianceStatus === "DONE") {
+        onComplianceFinished({
+          status: "DONE",
+          complianceReports: table.complianceReports,
+        });
+      } else if (table?.complianceStatus === "ERROR") {
+        onComplianceFinished({ status: "ERROR" });
       }
-    }, 5000);
-
-    return () => {
-      stopped = true;
-      clearInterval(interval);
-    };
-  }, [currentTable.complianceStatus, datasetId, tableId, onComplianceFinished]);
+    },
+  });
 
   // Both annotation kinds complete asynchronously and normally notify us via
   // Socket.IO. If that event is missed (or websockets are unavailable), poll the
@@ -261,55 +182,26 @@ const Viewer: FC<unknown> = () => {
   // table once when the run is over so the grid does not flicker meanwhile.
   // The reload happens at most once per pending run, even if the store still
   // reports PENDING afterwards.
-  useEffect(() => {
-    const annotationPending =
-      currentTable.mantisStatus === "PENDING" ||
-      currentTable.schemaStatus === "PENDING";
-    if (!datasetId || !tableId || !annotationPending) return;
-
-    let inFlight = false;
-    let stopped = false;
-
-    const refreshCompletedAnnotation = async () => {
-      if (inFlight) return;
-      inFlight = true;
-      try {
-        const result = await tableAPI.getTableStatus({ tableId, datasetId });
-        if (stopped) return;
-
-        const stillPending =
-          (currentTable.mantisStatus === "PENDING" &&
-            result.data?.mantisStatus === "PENDING") ||
-          (currentTable.schemaStatus === "PENDING" &&
-            result.data?.schemaStatus === "PENDING");
-        if (!stillPending) {
-          stopped = true;
-          clearInterval(interval);
-          await dispatch(getTable({ tableId, datasetId })).unwrap();
-          dispatch(updateUI({ settings: { isViewOnly: false } }));
-          dispatch(getDependencies({ tableId, datasetId }));
-        }
-      } catch {
-        // A transient fetch failure must not stop the fallback.
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    refreshCompletedAnnotation();
-    const interval = setInterval(refreshCompletedAnnotation, 5000);
-
-    return () => {
-      stopped = true;
-      clearInterval(interval);
-    };
-  }, [
-    currentTable.mantisStatus,
-    currentTable.schemaStatus,
+  usePollTableStatus({
     datasetId,
     tableId,
-    dispatch,
-  ]);
+    enabled:
+      currentTable.mantisStatus === "PENDING" ||
+      currentTable.schemaStatus === "PENDING",
+    immediate: true,
+    onStatus: async (status, stop) => {
+      const stillPending =
+        (currentTable.mantisStatus === "PENDING" &&
+          status?.mantisStatus === "PENDING") ||
+        (currentTable.schemaStatus === "PENDING" &&
+          status?.schemaStatus === "PENDING");
+      if (stillPending) return;
+      stop();
+      await dispatch(getTable({ tableId, datasetId })).unwrap();
+      dispatch(updateUI({ settings: { isViewOnly: false } }));
+      dispatch(getDependencies({ tableId, datasetId }));
+    },
+  });
 
   useEffect(() => {
     if (isEmptyObject(currentTable)) return;
