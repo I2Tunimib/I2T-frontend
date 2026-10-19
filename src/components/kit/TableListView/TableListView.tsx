@@ -9,6 +9,8 @@ import {
 import {
   Row,
   ColumnDef,
+  RowSelectionState,
+  Updater,
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
@@ -188,11 +190,16 @@ const TableListView: FC<TableListViewProps> = ({
     enableRowSelection: true,
     state: {
       pagination,
-    },
-    initialState: {
       rowSelection: rowSelection || {},
     },
     onPaginationChange: setPagination,
+    onRowSelectionChange: (updater: Updater<RowSelectionState>) => {
+      const next = typeof updater === 'function'
+        ? updater(rowSelection || {})
+        : updater;
+      // row ids default to indexes in `data`
+      onChangeRowSelected(data.filter((_row: any, index: number) => next[index]));
+    },
   });
 
   const paginationProps = {
@@ -202,10 +209,6 @@ const TableListView: FC<TableListViewProps> = ({
     nextPage: table.nextPage,
     previousPage: table.previousPage
   };
-
-  useEffect(() => {
-    onChangeRowSelected(table.getSelectedRowModel().rows.map((row) => row.original));
-  }, [table.getState().rowSelection]);
 
   return (
     <div
