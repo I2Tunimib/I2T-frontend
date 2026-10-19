@@ -123,7 +123,7 @@ const Table: FC<TableProps> = ({
  * Returns row which have at least a cell with label.
  */
   const filterAll = useCallback((rows: Array<Row>, colIds: Array<string>, regex: RegExp) => {
-    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+    const normalize = (str: unknown) => String(str ?? '').replace(/^[\uFEFF\s]+/, '').toLowerCase();
 
     const filteredRows = rows.filter((row) =>
       colIds.some((colId) => regex.test(normalize(row.getValue(colId)?.label || ''))));
@@ -147,7 +147,7 @@ const Table: FC<TableProps> = ({
    * Returns row which have at least a cell with metadata name.
    */
   const filterMetaName = useCallback((rows: Row<any>[], colIds: string[], regex: RegExp) => {
-    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+    const normalize = (str: unknown) => String(str ?? '').replace(/^[\uFEFF\s]+/, '').toLowerCase();
 
     const filteredRows = rows.filter((row) =>
       colIds.some((colId) => row.getValue(colId)?.metadata?.some((item: BaseMetadata) =>
@@ -172,7 +172,7 @@ const Table: FC<TableProps> = ({
    * Returns row which have at least a cell with metadata type.
    */
   const filterMetaType = useCallback((rows: Row<any>[], colIds: string[], regex: RegExp) => {
-    const normalize = (str: string) => str.replace(/^[\uFEFF\s]+/, '').toLowerCase();
+    const normalize = (str: unknown) => String(str ?? '').replace(/^[\uFEFF\s]+/, '').toLowerCase();
 
     const filteredRows = rows.filter((row) =>
       colIds.some((colId) =>
