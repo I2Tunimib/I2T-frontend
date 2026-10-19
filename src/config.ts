@@ -55,6 +55,7 @@ export type ApiConfig = {
     // Table locks
     ACQUIRE_TABLE_LOCK: Endpoint;
     RELEASE_TABLE_LOCK: Endpoint;
+    FORCE_RELEASE_TABLE_LOCK: Endpoint;
     // Users
     SEARCH_USERS: Endpoint;
   };
@@ -88,6 +89,7 @@ const CONFIG: AppConfig = {
       },
       UPDATE_DATASET: {
         path: "/dataset/:datasetId",
+      },
       GET_TABLE_STATUS: {
         path: "/dataset/:datasetId/table/:tableId/status",
       },
@@ -288,6 +290,7 @@ const CONFIG: AppConfig = {
       // Table locks
       ACQUIRE_TABLE_LOCK: { path: "/dataset/lock/:tableId/acquire" },
       RELEASE_TABLE_LOCK: { path: "/dataset/lock/:tableId/release" },
+      FORCE_RELEASE_TABLE_LOCK: { path: "/dataset/lock/:tableId/force-release" },
       // Users search
       SEARCH_USERS: { path: "/auth/users?q=:query" },
     },

@@ -3,6 +3,7 @@ import {
   TableInstance,
 } from "@store/slices/datasets/interfaces/datasets";
 import { apiEndpoint } from "../../configHelpers";
+import { getAuthToken } from "./auth-token";
 import apiClient from "./config/config";
 
 export type Dataset = Omit<DatasetInstance, "tables">;
@@ -24,19 +25,6 @@ export type GetCollectionResult<T = {}> = {
   collection: T[];
 };
 
-/**
- * Helper to build Authorization header preferring Keycloak token (kc_token)
- * and falling back to legacy token (token).
- */
-const getAuthHeader = (): Record<string, string> => {
-  const kcToken =
-    typeof localStorage !== "undefined" && localStorage.getItem("kc_token");
-  const legacyToken =
-    typeof localStorage !== "undefined" && localStorage.getItem("token");
-  const token = kcToken || legacyToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 const datasetAPI = {
   getDataset: (params: Record<string, string | number> = {}) => {
     return apiClient.get<GetCollectionResult<Dataset>>(
@@ -46,9 +34,6 @@ const datasetAPI = {
       }),
       {
         clearCacheEntry: true,
-        headers: {
-          ...getAuthHeader(),
-        },
       },
     );
   },
@@ -61,9 +46,6 @@ const datasetAPI = {
       }),
       {
         clearCacheEntry: true,
-        headers: {
-          ...getAuthHeader(),
-        },
       },
     );
   },
@@ -76,9 +58,6 @@ const datasetAPI = {
       }),
       {
         clearCacheEntry: true,
-        headers: {
-          ...getAuthHeader(),
-        },
       },
     );
   },
@@ -90,11 +69,6 @@ const datasetAPI = {
         subEndpoint: name,
       }),
       data,
-      {
-        headers: {
-          ...getAuthHeader(),
-        },
-      },
     );
   },
 
@@ -104,22 +78,11 @@ const datasetAPI = {
         endpoint: "GLOBAL_SEARCH",
         paramsValue: { query },
       }),
-      {
-        headers: {
-          ...getAuthHeader(),
-        },
-      },
     );
   },
 
   uploadDataset: (formData: FormData) => {
-    const kcToken =
-      typeof localStorage !== "undefined" && localStorage.getItem("kc_token");
-    const legacyToken =
-      typeof localStorage !== "undefined" && localStorage.getItem("token");
-    const token = kcToken || legacyToken;
-
-    if (!token) {
+    if (!getAuthToken()) {
       throw new Error("No authentication token found");
     }
 
@@ -127,13 +90,8 @@ const datasetAPI = {
       apiEndpoint({
         endpoint: "UPLOAD_DATASET",
       }),
+      // no headers: axios sets the multipart Content-Type with its boundary
       formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Let axios set Content-Type for multipart/form-data with proper boundary
-        },
-      },
     );
   },
 
@@ -144,11 +102,6 @@ const datasetAPI = {
         paramsValue: { datasetId },
       }),
       formData,
-      {
-        headers: {
-          ...getAuthHeader(),
-        },
-      },
     );
   },
 
@@ -158,28 +111,16 @@ const datasetAPI = {
         endpoint: "DELETE_DATASET",
         paramsValue: { datasetId },
       }),
-      {
-        headers: {
-          ...getAuthHeader(),
-        },
-      },
     );
   },
 
   uploadTable: (formData: FormData, datasetId: string) => {
-    const headers = {
-      ...getAuthHeader(),
-    };
-
     return apiClient.post(
       apiEndpoint({
         endpoint: "UPLOAD_TABLE",
         paramsValue: { datasetId },
       }),
       formData,
-      {
-        headers,
-      },
     );
   },
 
@@ -189,11 +130,6 @@ const datasetAPI = {
         endpoint: "DELETE_TABLE",
         paramsValue: params,
       }),
-      {
-        headers: {
-          ...getAuthHeader(),
-        },
-      },
     );
   },
 
@@ -202,7 +138,6 @@ const datasetAPI = {
     return apiClient.post(
       apiEndpoint({ endpoint: "ADD_ACL_USER", paramsValue: { datasetId } }),
       { userId, role },
-      { headers: { ...getAuthHeader() } },
     );
   },
 
@@ -213,7 +148,7 @@ const datasetAPI = {
   ) => {
     return apiClient.delete(
       apiEndpoint({ endpoint: "REMOVE_ACL_USER", paramsValue: { datasetId } }),
-      { data: { userId, role }, headers: { ...getAuthHeader() } },
+      { data: { userId, role } },
     );
   },
 
@@ -224,7 +159,7 @@ const datasetAPI = {
         endpoint: "GET_TABLE_ACL",
         paramsValue: { datasetId, tableId },
       }),
-      { clearCacheEntry: true, headers: { ...getAuthHeader() } },
+      { clearCacheEntry: true },
     ),
 
   addTableAclUser: (
@@ -239,7 +174,6 @@ const datasetAPI = {
         paramsValue: { datasetId, tableId },
       }),
       { userId, role },
-      { headers: { ...getAuthHeader() } },
     ),
 
   removeTableAclUser: (
@@ -253,7 +187,7 @@ const datasetAPI = {
         endpoint: "REMOVE_TABLE_ACL_USER",
         paramsValue: { datasetId, tableId },
       }),
-      { data: { userId, role }, headers: { ...getAuthHeader() } },
+      { data: { userId, role } },
     ),
 
   setTableVisibility: (
@@ -267,21 +201,18 @@ const datasetAPI = {
         paramsValue: { datasetId, tableId },
       }),
       { visibility },
-      { headers: { ...getAuthHeader() } },
     ),
 
   acquireTableLock: (tableId: string) =>
     apiClient.post(
       apiEndpoint({ endpoint: "ACQUIRE_TABLE_LOCK", paramsValue: { tableId } }),
       {},
-      { headers: { ...getAuthHeader() } },
     ),
 
   releaseTableLock: (tableId: string) =>
     apiClient.post(
       apiEndpoint({ endpoint: "RELEASE_TABLE_LOCK", paramsValue: { tableId } }),
       {},
-      { headers: { ...getAuthHeader() } },
     ),
 
   forceReleaseTableLock: (tableId: string) =>
@@ -291,7 +222,6 @@ const datasetAPI = {
         paramsValue: { tableId },
       }),
       {},
-      { headers: { ...getAuthHeader() } },
     ),
 };
 

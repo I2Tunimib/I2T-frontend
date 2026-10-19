@@ -6,7 +6,7 @@ import {
   Row,
   TableInstance,
 } from "@store/slices/table/interfaces/table";
-//import { CancelToken } from "axios";
+import type { CancelToken } from "axios";
 import { apiEndpoint } from "../../configHelpers";
 import apiClient from "./config/config";
 
@@ -27,8 +27,9 @@ export interface GetTableStatusResponse {
 export interface GetSchemaResponse {
   table: TableInstance;
   result: {
-    ner_classification: string;
-    kind_classification: string;
+    /** column id -> classification */
+    ner_classification: Record<string, string>;
+    kind_classification: Record<string, string>;
   };
 }
 
@@ -46,9 +47,7 @@ export interface ChallengeTableDataset {
 const tableAPI = {
   getTable: (params: Record<string, string | number> = {}) => {
     console.log("Fetching table with params:", params);
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-    };
+    const headers: Record<string, string> = {};
     if (params.tableId && params.datasetId) {
       console.log(
         `Adding headers for saveTable: tableId: ${params.tableId}, datasetId: ${params.datasetId}`,
@@ -75,9 +74,6 @@ const tableAPI = {
       }),
       {
         clearCacheEntry: true,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
       },
     );
   },
@@ -86,9 +82,7 @@ const tableAPI = {
     params: Record<string, string | number> = {},
     payload?: any,
   ) => {
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-    };
+    const headers: Record<string, string> = {};
     if (params.tableId && params.datasetId) {
       const tableId = String(params.tableId);
       const datasetId = String(params.datasetId);
@@ -100,9 +94,13 @@ const tableAPI = {
     }
     if (payload) {
       return apiClient.post(
-        apiEndpoint({ endpoint: "EXPORT", subEndpoint: format, paramsValue: params }),
+        apiEndpoint({
+          endpoint: "EXPORT",
+          subEndpoint: format,
+          paramsValue: params,
+        }),
         payload,
-        { headers, responseType: 'blob' }
+        { headers, responseType: "blob" },
       );
     }
     return apiClient.get<any>(
@@ -124,9 +122,7 @@ const tableAPI = {
     datasetId?: string,
     deletedColumns?: string[],
   ) => {
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-    };
+    const headers: Record<string, string> = {};
 
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
@@ -207,11 +203,6 @@ const tableAPI = {
         paramsValue: { ...params },
       }),
       data,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
-      },
     );
   },
   makeCompliance: (params: Record<string, string | number> = {}, data: any) => {
@@ -221,27 +212,19 @@ const tableAPI = {
         paramsValue: { ...params },
       }),
       data,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
-      },
     );
   },
-  downloadComplianceReport: (params: Record<string, string | number> = {}, format: "json" | "md" = "json") => {
+  downloadComplianceReport: (
+    params: Record<string, string | number> = {},
+    format: "json" | "md" = "json",
+  ) => {
     const url = apiEndpoint({
       endpoint: "DOWNLOAD_COMPLIANCE_REPORT",
       paramsValue: { ...params },
     });
-    return apiClient.get<Blob>(
-      `${url}?format=${format}`,
-      {
-        responseType: "blob",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
-      },
-    );
+    return apiClient.get<Blob>(`${url}?format=${format}`, {
+      responseType: "blob",
+    });
   },
   getDependencies: (params: Record<string, string | number> = {}) => {
     return apiClient.get<any>(
@@ -251,9 +234,6 @@ const tableAPI = {
       }),
       {
         clearCacheEntry: true,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
       },
     );
   },
@@ -266,9 +246,7 @@ const tableAPI = {
     cancelToken?: CancelToken,
     noLog?: boolean,
   ) => {
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-    };
+    const headers: Record<string, string> = {};
 
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
@@ -315,9 +293,7 @@ const tableAPI = {
     columnName?: string,
     cancelToken?: CancelToken,
   ) => {
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-    };
+    const headers: Record<string, string> = {};
 
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
@@ -362,9 +338,7 @@ const tableAPI = {
     datasetId?: string,
     columnName?: string,
   ) => {
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-    };
+    const headers: Record<string, string> = {};
 
     // Add table and dataset headers if provided
     if (tableId && datasetId) {
@@ -397,8 +371,8 @@ const tableAPI = {
       clearCacheEntry: true, // Bypass cache for this request
     });
   },
-  suggest: (baseUrl: string, data: any) =>
-    apiClient.post(`/suggestion${baseUrl}`, data),
+  suggest: (baseUrl: string, data: any, cancelToken?: CancelToken) =>
+    apiClient.post(`/suggestion${baseUrl}`, data, { cancelToken }),
   getChallengeDatasets: () =>
     apiClient.get<ChallengeTableDataset[]>("/tables/challenge/datasets"),
   getOperationDownstreamDeps: (params: Record<string, string | number>) =>
@@ -409,23 +383,19 @@ const tableAPI = {
       }),
       {
         clearCacheEntry: true,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
       },
     ),
 
   deleteOperation: (params: Record<string, string | number>) =>
-    apiClient.delete<{ deleted: string[] }>(
+    apiClient.delete<{
+      deleted: string[];
+      reconResults?: { serviceId: string; reconData: any }[];
+      dependencies?: DependencyGraph;
+    }>(
       apiEndpoint({
         endpoint: "DELETE_OPERATION",
         paramsValue: params,
       }),
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
-      },
     ),
 
   redoOperation: (params: Record<string, string | number>) =>
@@ -437,9 +407,6 @@ const tableAPI = {
       {},
       {
         clearCacheEntry: true,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
       },
     ),
 
@@ -456,9 +423,6 @@ const tableAPI = {
       }),
       {
         clearCacheEntry: true,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
       },
     ),
 
@@ -466,7 +430,10 @@ const tableAPI = {
     params: Record<string, string | number>,
     operation: DependencyOperation,
   ) =>
-    apiClient.post<{ restored: DependencyOperation; dependencies: DependencyGraph }>(
+    apiClient.post<{
+      restored: DependencyOperation;
+      dependencies: DependencyGraph;
+    }>(
       apiEndpoint({
         endpoint: "RESTORE_LOGGED_OPERATION",
         paramsValue: params,
@@ -474,9 +441,6 @@ const tableAPI = {
       { operation },
       {
         clearCacheEntry: true,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-        },
       },
     ),
 
@@ -485,12 +449,11 @@ const tableAPI = {
       `/tables/challenge/datasets/${datasetName}/tables/${tableName}`,
     ),
   trackTable: (datasetId: string, tableId: string, metadataToTrack: any) =>
-    apiClient.post(`/dataset/track/${datasetId}/${tableId}`, metadataToTrack, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
-      },
-    }),
-  evaluatePolicy: (params: Record<string, string | number> = {}, data: { policy: string; sotw: string }) => {
+    apiClient.post(`/dataset/track/${datasetId}/${tableId}`, metadataToTrack),
+  evaluatePolicy: (
+    params: Record<string, string | number> = {},
+    data: { policy: string; sotw: string },
+  ) => {
     return apiClient.post<any>(
       apiEndpoint({
         endpoint: "EVALUATE_POLICY",
@@ -504,7 +467,10 @@ const tableAPI = {
       },
     );
   },
-  validatePolicy: (params: Record<string, string | number> = {}, data: { odrl: string }) => {
+  validatePolicy: (
+    params: Record<string, string | number> = {},
+    data: { odrl: string },
+  ) => {
     return apiClient.post<any>(
       apiEndpoint({
         endpoint: "VALIDATE_POLICY",

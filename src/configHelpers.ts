@@ -1,5 +1,5 @@
 import { AppConfig, Endpoint } from 'config';
-import { store } from './store';
+import CONFIG from './config';
 
 export const getAllParams = (path: string) => {
   return path.split('/').reduce((acc, slice) => {
@@ -80,7 +80,7 @@ export const apiEndpoint = ({
   subEndpoint,
   paramsValue
 }: ApiEndpointProps) => {
-  const config = store.getState().config.app as AppConfig;
+  const config: AppConfig = CONFIG;
 
   const { API: { ENDPOINTS } } = config;
 

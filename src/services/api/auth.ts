@@ -45,11 +45,6 @@ const authAPI = {
         endpoint: "AUTH_SIGNIN",
       }),
       params,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
     ),
   me: (params: MeParams) =>
     apiClient.post<MeResponse>(
@@ -57,11 +52,6 @@ const authAPI = {
         endpoint: "AUTH_ME",
       }),
       params,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
     ),
 };
 
