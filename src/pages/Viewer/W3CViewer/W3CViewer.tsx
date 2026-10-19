@@ -3,7 +3,10 @@ import { useAppDispatch } from "@hooks/store";
 import { exportTable } from "@store/slices/table/table.thunk";
 import { FC, useEffect, useState } from "react";
 import JsonView from "react18-json-view";
-import datasetAPI from "@services/api/datasets";
+import {
+  getDatasetCollection,
+  getTablesCollection,
+} from "@store/slices/datasets/datasets.thunk";
 import "react18-json-view/src/style.css";
 import { useParams } from "react-router-dom";
 import styles from "./W3CViewer.module.scss";
@@ -31,11 +34,13 @@ const W3CViewer : FC<W3CViewerProps> = ({ externalData }) => {
       ).unwrap();
       setData(res);
     } else if (params.datasetId && window.location.pathname.includes('/tables')) {
-      const res = await datasetAPI.getTablesByDataset({ datasetId: params.datasetId });
-      setData(res.data.collection);
+      const collection = await dispatch(
+        getTablesCollection({ datasetId: params.datasetId })
+      ).unwrap();
+      setData(collection);
     } else {
-      const res = await datasetAPI.getDataset();
-      setData(res.data.collection);
+      const collection = await dispatch(getDatasetCollection()).unwrap();
+      setData(collection);
     }
   }
 

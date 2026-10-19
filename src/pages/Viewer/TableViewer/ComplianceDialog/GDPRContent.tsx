@@ -29,11 +29,13 @@ import {
   Article,
 } from "@mui/icons-material";
 import { selectCurrentTable } from "@store/slices/table/table.selectors";
-import { tableCompliance } from "@store/slices/table/table.thunk";
+import {
+  downloadComplianceReport,
+  tableCompliance,
+} from "@store/slices/table/table.thunk";
 import { FC, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ComplianceReport } from "@store/slices/table/interfaces/table";
-import tableAPI from "@services/api/table";
 
 interface GDPRContentProps {
   tableId?: string;
@@ -75,12 +77,11 @@ const GDPRContent: FC<GDPRContentProps> = ({
     const reportIndex =
       selectedReportIndex >= 0 ? selectedReportIndex : "latest";
     try {
-      const response = await tableAPI.downloadComplianceReport(
-        { datasetId, tableId, reportIndex },
-        format,
-      );
+      const report = await dispatch(
+        downloadComplianceReport({ datasetId, tableId, reportIndex, format }),
+      ).unwrap();
       const ext = format === "md" ? "md" : "json";
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([report]));
       const link = document.createElement("a");
       link.href = url;
       link.download = `compliance_report_${reportIndex}.${ext}`;

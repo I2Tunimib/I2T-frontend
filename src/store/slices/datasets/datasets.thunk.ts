@@ -26,6 +26,18 @@ export const getDataset = createAsyncThunk(
   }
 );
 
+/** Like getDataset/getTablesByDataset but read-only: nothing is stored. */
+export const getDatasetCollection = createAsyncThunk(
+  `${ACTION_PREFIX}/getDatasetCollection`,
+  async () => (await datasetAPI.getDataset()).data.collection
+);
+
+export const getTablesCollection = createAsyncThunk(
+  `${ACTION_PREFIX}/getTablesCollection`,
+  async ({ datasetId }: { datasetId: ID }) =>
+    (await datasetAPI.getTablesByDataset({ datasetId })).data.collection
+);
+
 export const getDatasetInfo = createAsyncThunk(
   `${ACTION_PREFIX}/${DatasetThunkActions.GET_DATASET_INFO}`,
   async ({ datasetId }: { datasetId: ID }) => {

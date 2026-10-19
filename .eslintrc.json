@@ -76,6 +76,24 @@
       }
     ]
   },
+  "overrides": [
+    {
+      "files": ["src/components/**/*.{ts,tsx}", "src/pages/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@services/api/*", "!@services/api/types"],
+                "message": "Components and pages must not call the API directly. Use a thunk (shared state) or a hook from @hooks (transient server state). Types: import from @services/api/types."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
   "settings": {
     "import/parsers": {
       "@typescript-eslint/parser": [".ts", ".tsx"]

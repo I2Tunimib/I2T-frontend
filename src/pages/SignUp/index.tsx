@@ -15,8 +15,7 @@ import { useAppDispatch, useAppSelector } from "@hooks/store";
 import { useHistory } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
-import authAPI from "@services/api/auth";
-import { authVerify } from "@store/slices/auth/auth.thunk";
+import { authSignUp, authVerify } from "@store/slices/auth/auth.thunk";
 
 const Container = styled.div({
   height: "100%",
@@ -85,7 +84,9 @@ const SignUpPage = () => {
     if (res.success) {
       console.log("Recaptcha verified successfully");
       // Proceed with sign up process
-      let signupRes = await authAPI.signUp({ email: state.email });
+      const signupRes = await dispatch(
+        authSignUp({ email: state.email }),
+      ).unwrap();
       if (signupRes.status === 201) {
         console.log("Sign up successful");
         history.push("/login");

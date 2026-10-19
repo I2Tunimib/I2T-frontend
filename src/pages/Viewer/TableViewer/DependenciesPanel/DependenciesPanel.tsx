@@ -43,8 +43,10 @@ import {
 } from "react";
 import ForceGraph2D, { ForceGraphMethods } from "react-force-graph-2d";
 import { hierarchy, tree as d3tree } from "d3-hierarchy";
-import { deleteOperationAndRedo } from "@store/slices/table/table.thunk";
-import tableAPI from "@services/api/table";
+import {
+  deleteOperationAndRedo,
+  getOperationDownstreamDeps,
+} from "@store/slices/table/table.thunk";
 import styles from "./DependenciesPanel.module.scss";
 
 interface DependenciesPanelProps {
@@ -931,12 +933,15 @@ const DependenciesPanel = ({
       if (!isLeaf) {
         setDeleteDialogLoading(true);
         try {
-          const result = await tableAPI.getOperationDownstreamDeps({
-            datasetId: dependencies.datasetId,
-            tableId: dependencies.tableId,
-            opId: nodeId,
-          });
-          setDownstreamIds(result.data.downstreamDeps ?? []);
+          setDownstreamIds(
+            await dispatch(
+              getOperationDownstreamDeps({
+                datasetId: dependencies.datasetId,
+                tableId: dependencies.tableId,
+                opId: nodeId,
+              }),
+            ).unwrap(),
+          );
         } catch {
           setDownstreamIds([]);
         }
