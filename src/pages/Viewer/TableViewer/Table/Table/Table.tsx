@@ -287,7 +287,7 @@ const Table: FC<TableProps> = ({
     onColumnVisibilityChange: setColumnVisibility,
     onColumnSizingChange: setColumnSizing,
     columnResizeMode: 'onChange',
-    enableResizing: true,
+    enableColumnResizing: true,
     onColumnPinningChange: setColumnPinning,
     enableColumnPinning: true,
     onColumnOrderChange: setColumnOrder,
@@ -398,6 +398,7 @@ const Table: FC<TableProps> = ({
                 [styles.HeaderExpanded]: headerExpanded
               }
             )}
+            style={{ width: table.getTotalSize(), minWidth: '100%' }}
           >
             <TableHead>
               {// Loop over the header rows

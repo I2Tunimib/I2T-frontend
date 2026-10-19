@@ -655,7 +655,13 @@ Confidence: ${(complianceInfo.score * 100).toFixed(0)}%`}
         </div>
         {header.column.getCanResize() && (
           <div
-            onMouseDown={header.getResizeHandler()}
+            onMouseDown={(event) => {
+              // keep the drag from selecting the column or the page text
+              event.preventDefault();
+              event.stopPropagation();
+              header.getResizeHandler()(event);
+            }}
+            onClick={(event) => event.stopPropagation()}
             className={styles.ResizeHandle}
             style={{
               cursor: header.column.getIsResizing()
