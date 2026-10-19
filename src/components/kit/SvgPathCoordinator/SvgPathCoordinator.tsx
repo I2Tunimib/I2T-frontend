@@ -33,8 +33,6 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
     { paths, shouldRedraw, onPathMouseEnter, onPathMouseLeave, ...props },
     forwardedRef,
   ) => {
-    console.log("*** SVG paths ***", paths);
-
     // Create a local ref to work with
     const localRef = useRef<SVGSVGElement>(null);
     const ref = (forwardedRef as RefObject<SVGSVGElement>) || localRef;
@@ -46,9 +44,6 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
         alfa: 30,
       },
     });
-
-    // Store scrollLeft to adjust viewBox
-    const [containerScrollLeft, setContainerScrollLeft] = useState(0);
 
     // Store adjusted label positions
     const [adjustedLabels, setAdjustedLabels] = useState<
@@ -62,32 +57,6 @@ const SvgPathCoordinator = forwardRef<SVGSVGElement, SvgPathCoordinatorProps>(
     const [highlightedArrowId, setHighlightedArrowId] = useState<string | null>(
       null,
     );
-
-    // Update scroll position whenever visible
-    useEffect(() => {
-      const updateScrollPosition = () => {
-        if (ref && ref.current) {
-          const tableContainer = ref.current.closest(".TableContainer");
-          if (tableContainer) {
-            setContainerScrollLeft(tableContainer.scrollLeft);
-          }
-        }
-      };
-
-      // Initial update
-      updateScrollPosition();
-
-      // Set up listener for scroll events
-      if (ref && ref.current) {
-        const tableContainer = ref.current.closest(".TableContainer");
-        if (tableContainer) {
-          tableContainer.addEventListener("scroll", updateScrollPosition);
-          return () => {
-            tableContainer.removeEventListener("scroll", updateScrollPosition);
-          };
-        }
-      }
-    }, [ref]);
 
     // Always force a redraw when the component mounts
     useEffect(() => {

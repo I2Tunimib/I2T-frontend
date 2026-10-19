@@ -43,6 +43,14 @@ const getLink = (context: Record<ID, Context>, id: string) => {
   return "";
 };
 
+/**
+ * Relations drawn above the expanded header.
+ *
+ * The svg is sticky on the vertical axis (so the arrows stay with the sticky
+ * header) and as wide as the table, so it scrolls horizontally together with
+ * the columns. Arrow coordinates are computed relative to the svg itself, so
+ * scrolling never requires a redraw.
+ */
 const SvgContainer: FC<SvgContainerProps> = ({
   columns,
   columnRefs,
@@ -55,38 +63,21 @@ const SvgContainer: FC<SvgContainerProps> = ({
   const [state, setState] = useState<SvgContainerState>(DEFAULT_STATE);
   const expandRevision = useAppSelector(selectExpandRevision);
   const containerRef = useRef<SVGSVGElement>(null);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const lastScrollPositionRef = useRef(0);
-  const [hoveredPath, setHoveredPath] = useState<any>(null);
+  const [contentWidth, setContentWidth] = useState<number | null>(null);
 
-  // Listen for scroll events on parent container
+  // Keep the svg as wide as the table (also redraws when columns are resized)
   useEffect(() => {
-    const handleScroll = () => {
-      // Find closest scrollable parent
-      if (containerRef.current) {
-        const tableContainer = containerRef.current.closest(".TableContainer");
-        if (tableContainer) {
-          const newScrollLeft = tableContainer.scrollLeft;
-          setScrollLeft(newScrollLeft);
-          lastScrollPositionRef.current = newScrollLeft;
-        }
-      }
-    };
+    const tableEl = containerRef.current?.parentElement?.querySelector("table");
+    if (!tableEl) return undefined;
 
-    // Find scrollable container and attach event
-    if (containerRef.current && headerExpanded) {
-      const tableContainer = containerRef.current.closest(".TableContainer");
-      if (tableContainer) {
-        // Set initial scroll position
-        setScrollLeft(lastScrollPositionRef.current);
+    const update = () => setContentWidth(tableEl.offsetWidth);
+    update();
 
-        tableContainer.addEventListener("scroll", handleScroll);
-        return () => {
-          tableContainer.removeEventListener("scroll", handleScroll);
-        };
-      }
-    }
-  }, [headerExpanded, containerRef.current]);
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(update);
+    observer.observe(tableEl);
+    return () => observer.disconnect();
+  }, [state.showContent]);
 
   useEffect(() => {
     if (columns && columnRefs && columnRefs.current) {
@@ -122,61 +113,42 @@ const SvgContainer: FC<SvgContainerProps> = ({
       }, {});
       setState((old) => ({ ...old, paths }));
     }
-  }, [columns, columnRefs, scrollLeft]); // Re-run when scroll position changes
+  }, [columns, columnRefs]);
 
   useEffect(() => {
     if (columnRefs && !isEmptyObject(columnRefs.current)) {
       if (headerExpanded) {
-        // When reopening, restore the previous scroll position
-        const restoreScrollPosition = lastScrollPositionRef.current;
-
-        setTimeout(() => {
+        // wait for the header expand transition before drawing
+        const timeoutId = setTimeout(() => {
           setState((old) => ({ ...old, showContent: true }));
-
-          // After the component is shown, restore scroll position on the container
-          if (restoreScrollPosition > 0) {
-            const tableContainer =
-              containerRef.current?.closest(".TableContainer");
-            if (tableContainer) {
-              // We don't set this through state to avoid re-renders
-              // Just update the actual scroll position
-              tableContainer.scrollLeft = restoreScrollPosition;
-              setScrollLeft(restoreScrollPosition);
-            }
-          }
         }, 300);
-      } else {
-        setState((old) => ({ ...old, showContent: false }));
-        // Don't reset the scroll position value in the ref when closing
-        // Just reset the state to avoid re-renders
-        setScrollLeft(0);
+        return () => clearTimeout(timeoutId);
       }
+      setState((old) => ({ ...old, showContent: false }));
     }
+    return undefined;
   }, [columnRefs, headerExpanded]);
 
-  const shouldRedraw = useCallback(() => true, [expandRevision]);
+  // Redraw when the header is re-expanded or the table width changes
+  const shouldRedraw = useCallback(() => true, [expandRevision, contentWidth]);
 
   const paths = useMemo(() => state.paths, [state.paths]);
 
-  // Enhanced hover handlers
   const handlePathMouseEnter = useCallback(
     (pathData: any) => {
-      setHoveredPath(pathData);
       if (onPathMouseEnter) {
-        const enhancedData = {
+        onPathMouseEnter({
           ...pathData,
           relationName: pathData.label,
           fromColumn: pathData.startElementLabel,
           toColumn: pathData.endElementLabel,
-        };
-        onPathMouseEnter(enhancedData);
+        });
       }
     },
     [onPathMouseEnter],
   );
 
   const handlePathMouseLeave = useCallback(() => {
-    setHoveredPath(null);
     if (onPathMouseLeave) {
       onPathMouseLeave();
     }
@@ -192,15 +164,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
           onPathMouseEnter={handlePathMouseEnter}
           onPathMouseLeave={handlePathMouseLeave}
           showRelationTooltips={showRelationTooltips}
-          style={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            left: 0,
-            top: 0,
-            zIndex: 5,
-            overflow: "visible",
-          }}
+          style={contentWidth ? { width: contentWidth } : undefined}
           {...props}
         />
       )}

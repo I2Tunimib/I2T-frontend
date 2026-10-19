@@ -70,14 +70,6 @@ const SvgArrow: FC<SvgArrowProps> = ({
         y: e.clientY - 40, // Position above cursor
       };
 
-      console.log("SvgArrow - Mouse move position:", {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        calculatedPosition: newPosition,
-        arrowId: id,
-        label: label,
-      });
-
       setCursorPosition(newPosition);
     });
   };
@@ -137,19 +129,11 @@ const SvgArrow: FC<SvgArrowProps> = ({
       <g
         className={styles.Arrow}
         onMouseEnter={() => {
-          console.log("SvgArrow - Mouse enter:", {
-            id,
-            label,
-            showTooltip,
-            startElementLabel,
-            endElementLabel,
-          });
           setIsHovering(true);
           onMouseEnter &&
             onMouseEnter({ id, label, startElementLabel, endElementLabel });
         }}
         onMouseLeave={() => {
-          console.log("SvgArrow - Mouse leave:", { id, label });
           setIsHovering(false);
           onMouseLeave && onMouseLeave();
         }}

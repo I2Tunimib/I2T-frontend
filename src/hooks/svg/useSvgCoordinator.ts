@@ -54,34 +54,20 @@ const COLORS = [
   "#e91e63",
 ];
 
+/**
+ * Anchor point of an element, in the svg own coordinate system.
+ * Both rects are in viewport coordinates, so the result does not depend on
+ * the scroll position (the svg scrolls together with the table).
+ * `dx` spreads arrows attached to the same element.
+ */
 const getPoint = (
   element: HTMLElement,
-  { top: svgTop = 0 }: Partial<DOMRect>,
-  fullWidth: number,
-  visibleWidth: number,
-  scrollLeft: number = 0,
+  { top: svgTop = 0, left: svgLeft = 0 }: Partial<DOMRect>,
+  dx: number = 0,
 ) => {
-  // Get element position relative to viewport
   const { left, top, width } = element.getBoundingClientRect();
-
-  // Add scroll position to get correct coordinate
-  const correctedLeft = left + scrollLeft;
-  const x = correctedLeft + width / 2;
+  const x = left - svgLeft + width / 2 + dx;
   const y = top - svgTop;
-  //log all parameters
-
-  console.log("getPoint", {
-    svgTop,
-    left,
-    top,
-    width,
-    fullWidth,
-    visibleWidth,
-    scrollLeft,
-    correctedLeft,
-    x,
-    y,
-  });
   return [x, y];
 };
 
@@ -89,24 +75,11 @@ const calcPointsDistances = (
   el1: HTMLElement,
   el2: HTMLElement,
   svgBoundingClientRect: DOMRect,
-  fullWidth: number,
-  visibleWidth: number,
-  scrollLeft: number = 0,
+  dx1: number = 0,
+  dx2: number = 0,
 ) => {
-  const [x1, y1] = getPoint(
-    el1,
-    svgBoundingClientRect,
-    fullWidth,
-    visibleWidth,
-    scrollLeft,
-  );
-  const [x2, y2] = getPoint(
-    el2,
-    svgBoundingClientRect,
-    fullWidth,
-    visibleWidth,
-    scrollLeft,
-  );
+  const [x1, y1] = getPoint(el1, svgBoundingClientRect, dx1);
+  const [x2, y2] = getPoint(el2, svgBoundingClientRect, dx2);
 
   // draw always in the same direction [left - right] so that
   // labels aren't flipped
@@ -147,9 +120,6 @@ const useSvgCoordinator = ({
       // Total number of arrows for height calculation
       const totalArrows = groupedPaths.length;
 
-      // Track how many arrows we've seen at each distance for small offset
-      const distanceCounters = new Map<number, number>();
-
       return groupedPaths.map(({ p1, p2, properties, ...rest }, index) => {
         const currentGroup = rest.group;
         const path = new Path(
@@ -170,17 +140,7 @@ const useSvgCoordinator = ({
         // Each arrow gets a guaranteed height based ONLY on its index
         // Larger index = shorter distance = lower height
         const heightStep = heightRange / Math.max(1, totalArrows - 1);
-        let baseHeight = maxHeight - index * heightStep;
-
-        // For arrows at same distance (bidirectional or duplicates), add tiny jitter
-        // Max ±3px so it NEVER breaks the ordering between different distances
-        const distanceKey = Math.round(rest.distance);
-        const countAtDistance = distanceCounters.get(distanceKey) || 0;
-        distanceCounters.set(distanceKey, countAtDistance + 1);
-
-        // Small jitter: alternate +3, -3, +3, -3... for same-distance arrows
-        const jitter = countAtDistance % 2 === 0 ? 3 : -3;
-        baseHeight = baseHeight + jitter;
+        const baseHeight = maxHeight - index * heightStep;
 
         // offset between each path (for arrows with same distance)
         const offsetPath = offset * (index + 1);
@@ -197,27 +157,16 @@ const useSvgCoordinator = ({
           horizontalOffset,
         };
 
-        // Add jitter to prevent overlapping arrows
-        // Use a deterministic jitter based on path properties for consistency
-        const jitterSeed = rest.id.length + index;
-        const horizontalJitter = Math.sin(jitterSeed * 2) * 15; // ±15px horizontal jitter
-        const verticalJitter = Math.cos(jitterSeed * 2.3) * 8; // Small vertical jitter
-
-        // Calculate control point Y offsets using baseHeight
-        // baseHeight is already calculated based on distance ordering
-        // Longest distance = highest baseHeight, shortest = lowest baseHeight
-        const yOffset1 = baseHeight - 0.9 * horizontalOffset + verticalJitter;
-        const yOffset2 =
-          baseHeight - 0.9 * horizontalOffset + verticalJitter * 0.8;
+        // Every arrow has its own arc height (see baseHeight), so no random
+        // jitter is needed: it only made arcs and labels collide.
+        const yOffset = baseHeight - 0.9 * horizontalOffset;
 
         path.pipe(
           bezierCurve(
-            // first control point with horizontal jitter
-            p1.x + horizontalOffset + horizontalJitter,
-            p1.y - yOffset1,
-            // second control point with different jitter
-            p2.x + horizontalJitter * 0.6,
-            p2.y - yOffset2,
+            p1.x + horizontalOffset,
+            p1.y - yOffset,
+            p2.x,
+            p2.y - yOffset,
           ),
           drawTo(
             rest.direction === "end" ? p2.x + 5 : p2.x,
@@ -237,20 +186,10 @@ const useSvgCoordinator = ({
   );
   const draw = useCallback(() => {
     if (paths && !isEmptyObject(paths) && svgRef && svgRef.current) {
-      console.log("*** current paths ***", paths);
       // get svg bounding box to compute relative measures
       const svgBB = svgRef.current.getBoundingClientRect();
-      const container = svgRef.current.parentElement;
-
-      const fullWidth = container?.scrollWidth || svgRef.current.scrollWidth;
-      const scrollLeft = container?.scrollLeft || 0;
       // height of svg container
       const { height } = svgBB;
-      console.log("Container info:", {
-        visibleWidth: svgBB.width,
-        fullWidth,
-        scrollLeft,
-      });
       // keep track of number of paths to draw
       // iterate on each group
       // each group contains a set of paths from the same source
@@ -271,13 +210,33 @@ const useSvgCoordinator = ({
 
       let resultingMap: Record<string, PathItem> = {};
 
+      // Spread the anchor points of arrows attached to the same column so
+      // their ends don't pile up on a single pixel.
+      const ENDPOINT_SPACING = 10;
+      const endpointTotals: Record<string, number> = {};
+      const endpointIndex: Record<string, number> = {};
+      const countedKeys = new Set<string>();
+      Object.values(paths).forEach((group) =>
+        group.forEach((item) => {
+          const key = `${item.startElementLabel}-${item.endElementLabel}`;
+          if (countedKeys.has(key)) return;
+          countedKeys.add(key);
+          [item.startElementLabel, item.endElementLabel].forEach((label) => {
+            endpointTotals[label] = (endpointTotals[label] || 0) + 1;
+          });
+        }),
+      );
+      const nextEndpointOffset = (label: string) => {
+        const i = endpointIndex[label] || 0;
+        endpointIndex[label] = i + 1;
+        return (i - (endpointTotals[label] - 1) / 2) * ENDPOINT_SPACING;
+      };
+
       // Build the resulting map by grouping paths with same start-end elements
       Object.keys(paths).forEach((groupKey, groupIndex) => {
         const currentElement = paths[groupKey];
         for (const item of currentElement) {
           const pathKey = `${item.startElementLabel}-${item.endElementLabel}`;
-          console.log("*** Current Key ***", pathKey);
-
           if (pathKey in resultingMap) {
             // Add to existing path group
             resultingMap[pathKey].properties.push({
@@ -291,9 +250,8 @@ const useSvgCoordinator = ({
               item.startElement,
               item.endElement,
               svgBB,
-              fullWidth,
-              svgBB.width,
-              scrollLeft,
+              nextEndpointOffset(item.startElementLabel),
+              nextEndpointOffset(item.endElementLabel),
             );
             resultingMap[pathKey] = {
               id: pathKey,

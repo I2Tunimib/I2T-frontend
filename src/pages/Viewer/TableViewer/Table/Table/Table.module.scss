@@ -10,12 +10,18 @@
     }
 }
 
+// Takes no net space (the expanded table is shifted down by the same 250px);
+// stays on top while rows scroll, so arrows remain attached to the header.
 .SvgContainer {
-    position: absolute;
+    position: sticky;
     top: 0;
-    left: 0;
+    flex-shrink: 0;
     height: 250px;
-    width: 100%;
+    margin-bottom: -250px;
+    min-width: 100%;
+    z-index: 11;
+    overflow: visible;
+    background: var(--white);
 }
 
 .Canvas {
