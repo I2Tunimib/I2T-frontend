@@ -111,6 +111,10 @@
     justify-content: center;
     height: 100%;
     position: relative;
+    min-width: 0;
+    // Keep the header content inside the cell, even when the column is
+    // narrower than its content.
+    overflow: hidden;
 
     .Column {
       display: flex;
@@ -119,6 +123,8 @@
       gap: 10px;
       padding: 12px 10px;
       flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .Row {
@@ -127,6 +133,9 @@
       align-items: center;
       justify-content: center;
       //height: 100%;
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
     }
 
     .Label {
@@ -139,5 +148,11 @@
         text-transform: capitalize;
       }
     }
+  }
+
+  // The expanded metadata panel is wider than the column, so it must be
+  // allowed to overflow instead of being cut by the header content.
+  &.Expanded .TableHeaderContent {
+    overflow: visible;
   }
 }

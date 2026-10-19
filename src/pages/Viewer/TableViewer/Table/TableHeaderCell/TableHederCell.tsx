@@ -356,6 +356,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
             [styles.Selected]: selected,
             [styles.TableHeaderIndex]: id === "index",
             [styles.Resizing]: header.column.getIsResizing(),
+            [styles.Expanded]: expanded,
           },
         ])}
       >
@@ -447,6 +448,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                     <Stack
                       sx={{
                         flex: "1 1 auto",
+                        minWidth: 0,
                         marginRight: "10px",
                       }}
                       alignItems="center"
@@ -457,6 +459,7 @@ const TableHeaderCell = forwardRef<HTMLTableHeaderCellElement>(
                           textOverflow: "ellipsis",
                           overflow: "hidden",
                           whiteSpace: "nowrap",
+                          minWidth: 0,
                         }}
                       >
                         {children}
