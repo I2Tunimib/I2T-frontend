@@ -1,31 +1,20 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
-  Stack,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
-  Autocomplete,
-  Chip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  IconButton,
+  Stack,
+  Typography,
 } from "@mui/material";
 import CloseRounded from "@mui/icons-material/CloseRounded";
-import DeleteRounded from "@mui/icons-material/DeleteRounded";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import datasetAPI from "@services/api/datasets";
-import usersAPI from "@services/api/users";
+import { useDatasetAcl } from "@hooks/acl";
 import { useAppSelector } from "@hooks/store";
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
+import AclMembers from "../AclMembers/AclMembers";
 
 type Props = {
   open: boolean;
@@ -40,106 +29,12 @@ const DatasetAclDialog: FC<Props> = ({
   datasetId,
   onChange,
 }) => {
-  const [dataset, setDataset] = useState<any | null>(null);
-  const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [selectedUsersToAdd, setSelectedUsersToAdd] = useState<any[]>([]);
-  const [section, setSection] = useState<"viewer" | "editor">("viewer");
-  const [viewersInfo, setViewersInfo] = useState<any[]>([]);
-  const [editorsInfo, setEditorsInfo] = useState<any[]>([]);
-  const [viewerFilter, setViewerFilter] = useState("");
-  const [editorFilter, setEditorFilter] = useState("");
-
-  const auth = useAppSelector(selectIsLoggedIn);
-  const currentUserId = auth?.user?.id;
+  const currentUserId = useAppSelector(selectIsLoggedIn).user?.id;
+  const acl = useDatasetAcl({ open, datasetId, onChange });
+  const { acl: dataset } = acl;
   const isOwner = Boolean(
     dataset && String(dataset.userId) === String(currentUserId),
   );
-
-  useEffect(() => {
-    if (!open) return;
-    (async () => {
-      try {
-        const resp = await datasetAPI.getDatasetInfo({ datasetId });
-        setDataset(resp.data);
-      } catch (e) {
-        console.error(e);
-      }
-    })();
-  }, [open, datasetId]);
-
-  // fetch display info for current viewers/editors
-  useEffect(() => {
-    const fetchInfos = async () => {
-      if (!dataset) return;
-      const v = dataset.viewers || [];
-      const e = dataset.editors || [];
-      try {
-        const fetchUser = async (id: string) => {
-          try {
-            const r = await usersAPI.search(String(id));
-            return (r.data && r.data[0]) || { id, username: String(id) };
-          } catch (_) {
-            return { id, username: String(id) };
-          }
-        };
-        const vi = await Promise.all(
-          v.map((id: string) => fetchUser(String(id))),
-        );
-        const ei = await Promise.all(
-          e.map((id: string) => fetchUser(String(id))),
-        );
-        setViewersInfo(vi);
-        setEditorsInfo(ei);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchInfos();
-  }, [dataset]);
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (!query) return setSearchResults([]);
-      usersAPI
-        .search(query)
-        .then((r) => setSearchResults(r.data))
-        .catch(() => setSearchResults([]));
-    }, 300);
-    return () => clearTimeout(t);
-  }, [query, section]);
-
-  const handleAdd = async () => {
-    if (!selectedUsersToAdd || selectedUsersToAdd.length === 0) return;
-    try {
-      const promises = selectedUsersToAdd.map((u) =>
-        datasetAPI.addAclUser(datasetId, String(u.id), section),
-      );
-      await Promise.all(promises);
-      // refresh
-      const resp = await datasetAPI.getDatasetInfo({ datasetId });
-      setDataset(resp.data);
-      if (onChange) onChange();
-      setQuery("");
-      setSearchResults([]);
-      setSelectedUsersToAdd([]);
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.response?.data?.error || e.message);
-    }
-  };
-
-  const handleRemove = async (targetId: string, kind: "viewer" | "editor") => {
-    try {
-      await datasetAPI.removeAclUser(datasetId, String(targetId), kind);
-      const resp = await datasetAPI.getDatasetInfo({ datasetId });
-      setDataset(resp.data);
-      if (onChange) onChange();
-    } catch (e: any) {
-      console.error(e);
-      alert(e?.response?.data?.error || e.message);
-    }
-  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -165,222 +60,8 @@ const DatasetAclDialog: FC<Props> = ({
               below.
               {!isOwner && " Only the owner can modify access control."}
             </Typography>
-
             <Divider />
-
-            <Accordion>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="viewers-content"
-                id="viewers-header"
-              >
-                <Typography variant="subtitle1">
-                  Viewers ({(viewersInfo || []).length})
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <TextField
-                  size="small"
-                  placeholder="Filter viewers"
-                  value={viewerFilter}
-                  onChange={(e) => setViewerFilter(e.target.value)}
-                  fullWidth
-                  sx={{ mb: 1 }}
-                />
-                <List>
-                  {(viewersInfo || [])
-                    .filter((u: any) =>
-                      `${u.username} ${u.email || ""}`
-                        .toLowerCase()
-                        .includes(viewerFilter.toLowerCase()),
-                    )
-                    .map((u: any) => {
-                      const isMe = String(u.id) === String(currentUserId);
-                      return (
-                        <ListItem
-                          key={`v-${u.id}`}
-                          secondaryAction={
-                            dataset &&
-                            String(dataset.userId) === String(currentUserId) &&
-                            !isMe ? (
-                              <IconButton
-                                edge="end"
-                                onClick={() => handleRemove(u.id, "viewer")}
-                              >
-                                <DeleteRounded />
-                              </IconButton>
-                            ) : null
-                          }
-                        >
-                          <ListItemText
-                            primary={(
-                              <span>
-                                {u.username} ({u.email || ""})
-                                {isMe && <span style={{ fontStyle: "italic" }}> - me</span>}
-                              </span>
-                            )}
-                            secondary={u.roles?.join(", ")}
-                          />
-                        </ListItem>
-                      );
-                    })}
-                </List>
-              </AccordionDetails>
-            </Accordion>
-
-            <Accordion>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="editors-content"
-                id="editors-header"
-              >
-                <Typography variant="subtitle1">
-                  Editors ({(editorsInfo || []).length})
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <TextField
-                  size="small"
-                  placeholder="Filter editors"
-                  value={editorFilter}
-                  onChange={(e) => setEditorFilter(e.target.value)}
-                  fullWidth
-                  sx={{ mb: 1 }}
-                />
-                <List>
-                  {(editorsInfo || [])
-                    .filter((u: any) =>
-                      `${u.username} ${u.email || ""}`
-                        .toLowerCase()
-                        .includes(editorFilter.toLowerCase()),
-                    )
-                    .map((u: any) => {
-                      const isMe = String(u.id) === String(currentUserId);
-                      return (
-                        <ListItem
-                          key={`e-${u.id}`}
-                          secondaryAction={
-                            dataset &&
-                            String(dataset.userId) === String(currentUserId) &&
-                            !isMe ? (
-                              <IconButton
-                                edge="end"
-                                onClick={() => handleRemove(u.id, "editor")}
-                              >
-                                <DeleteRounded />
-                              </IconButton>
-                            ) : null
-                          }
-                        >
-                          <ListItemText
-                            primary={(
-                              <span>
-                                {u.username} ({u.email || ""})
-                                {isMe && <span style={{ fontStyle: "italic" }}> - me</span>}
-                              </span>
-                            )}
-                            secondary={u.roles?.join(", ")}
-                          />
-                        </ListItem>
-                      );
-                    })}
-                </List>
-              </AccordionDetails>
-            </Accordion>
-
-            <Divider />
-
-            <div>
-              <Typography variant="subtitle2">Add user</Typography>
-              <Stack direction="row" gap={1} alignItems="center">
-                <Autocomplete
-                  multiple
-                  size="small"
-                  options={
-                    searchResults.filter((u: any) => (
-                      String(u.id) !== String(currentUserId)
-                    ))
-                  }
-                  value={selectedUsersToAdd}
-                  onChange={(_, v) => setSelectedUsersToAdd(v as any[])}
-                  getOptionLabel={(o: any) => `${o.username} (${o.email || ""})`}
-                  filterSelectedOptions
-                  sx={{
-                    flex: 1,
-                    // "& .MuiAutocomplete-inputRoot": {
-                    //   paddingTop: 6,
-                    //   paddingBottom: 6,
-                    //   minHeight: 40,
-                    // },
-                    // "& .MuiChip-root": { height: 28, fontSize: "0.85rem" },
-                    // "& .MuiAutocomplete-endAdornment": {
-                    //   top: "calc(50% - 12px)",
-                    // },
-                  }}
-                  ListboxProps={{ style: { maxHeight: 240 } }}
-                  renderTags={(value: any[], getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        label={`${option.username}`}
-                        {...getTagProps({ index })}
-                        key={option.id}
-                        size="small"
-                      />
-                    ))
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      size="small"
-                      placeholder="Search username or email"
-                      onChange={(e) => setQuery(e.target.value)}
-                      InputProps={{ ...params.InputProps }}
-                    />
-                  )}
-                  noOptionsText={
-                    !query
-                      ? "Type to search users..."
-                      : "No users found"
-                  }
-                  disabled={!isOwner}
-                />
-                <TextField
-                  select
-                  value={section}
-                  onChange={(e) => {
-                    setSection(e.target.value as any);
-                    setQuery("");
-                    setSearchResults([]);
-                  }}
-                  SelectProps={{ native: true }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      height: "40px",
-                    },
-                    "& input": {
-                      height: "40px",
-                      padding: "0 12px",
-                    },
-                  }}
-                >
-                  <option value="viewer">Viewer</option>
-                  <option value="editor">Editor</option>
-                </TextField>
-                <Button
-                  variant="contained"
-                  onClick={handleAdd}
-                  disabled={
-                    selectedUsersToAdd.length === 0 ||
-                    !(
-                      dataset &&
-                      String(dataset.userId) === String(currentUserId)
-                    )
-                  }
-                >
-                  Add
-                </Button>
-              </Stack>
-            </div>
+            <AclMembers acl={acl} isOwner={isOwner} />
           </Stack>
         )}
       </DialogContent>
