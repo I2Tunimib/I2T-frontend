@@ -1,3 +1,4 @@
+import CONFIG from "@config";
 import { StatusBadge } from "@components/core";
 import deferMounting from "@components/HOC";
 import CustomTable from "@components/kit/CustomTable/CustomTable";
@@ -18,7 +19,6 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  selectAppConfig,
   selectReconciliatorsAsArray,
 } from "@store/slices/config/config.selectors";
 import {
@@ -50,7 +50,7 @@ import { Cell } from "@tanstack/react-table";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { SelectColumns } from "@components/core/DynamicForm/formComponents/Select";
 import { KG_INFO, fetchTypeAndDescription } from "@services/utils/kg-info";
-import { Property } from "@store/slices/table";
+import { Property } from "@store/slices/table/interfaces/table";
 import { extractIdFromUri, resolveURI } from "@services/utils/uri-utils";
 import { useSnackbar } from "notistack";
 import { getCellComponent } from "../MetadataDialog/componentsConfig";
@@ -113,7 +113,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
 
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const { loading } = useAppSelector(selectReconcileRequestStatus);

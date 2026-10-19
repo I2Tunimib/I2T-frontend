@@ -1,13 +1,14 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '@store';
-import { getRequestStatus } from '@store/enhancers/requests';
-import { DatasetThunkActions } from './datasets.thunk';
+import { createRequestStatusSelector } from '@store/slices/requests/requests.selectors';
+import {
+  getDataset, getTablesByDataset, uploadDataset, uploadTable
+} from './datasets.thunk';
 
 const selectDatasetsState = (state: RootState) => state.datasets.entities;
 const selectDatasetsEntities = (state: RootState) => state.datasets.entities.datasets;
 const selectCurrentDatasetId = (state: RootState) => state.datasets.entities.currentDatasetId;
 const selectDatasetsUI = (state: RootState) => state.datasets.ui;
-const selectRequests = (state: RootState) => state.datasets._requests;
 
 export const selectDatasets = createSelector(
   selectDatasetsState,
@@ -22,25 +23,13 @@ export const selectDatasets = createSelector(
   }
 );
 
-export const selectGetAllDatasetsStatus = createSelector(
-  selectRequests,
-  (requests) => getRequestStatus(requests, DatasetThunkActions.GET_DATASET)
-);
-
-export const selectGetTablesDatasetStatus = createSelector(
-  selectRequests,
-  (requests) => getRequestStatus(requests, DatasetThunkActions.GET_TABLES_BY_DATASET)
-);
-
-export const selectUploadDatasetStatus = createSelector(
-  selectRequests,
-  (requests) => getRequestStatus(requests, DatasetThunkActions.UPLOAD_DATASET)
-);
-
-export const selectUploadTableStatus = createSelector(
-  selectRequests,
-  (requests) => getRequestStatus(requests, DatasetThunkActions.UPLOAD_TABLE)
-);
+export const selectGetAllDatasetsStatus =
+  createRequestStatusSelector(getDataset);
+export const selectGetTablesDatasetStatus =
+  createRequestStatusSelector(getTablesByDataset);
+export const selectUploadDatasetStatus =
+  createRequestStatusSelector(uploadDataset);
+export const selectUploadTableStatus = createRequestStatusSelector(uploadTable);
 
 export const selectCurrentDataset = createSelector(
   selectCurrentDatasetId,

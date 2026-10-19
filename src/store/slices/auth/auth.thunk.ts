@@ -2,16 +2,16 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import authAPI, {
   MeParams,
   SignInParams,
+  SignUpParams,
   VerifyParams,
 } from "@services/api/auth";
+import {
+  clearLegacyToken,
+  getLegacyToken,
+  setLegacyToken,
+} from "@services/api/auth-token";
 
-const ACTION_PREFIX = "config";
-
-export enum AuthThunkActions {
-  AUTH_SIGNIN = "signIn",
-  AUTH_ME = "me",
-  AUTH_LOGOUT = "logout",
-}
+const ACTION_PREFIX = "auth";
 
 export const authSignIn = createAsyncThunk(
   `${ACTION_PREFIX}/signIn`,
@@ -21,13 +21,20 @@ export const authSignIn = createAsyncThunk(
       const responseMe = await authAPI.me({ token: responseSignIn.data.token });
 
       if (responseMe.data.loggedIn) {
-        localStorage.setItem("token", responseSignIn.data.token);
+        setLegacyToken(responseSignIn.data.token);
       }
 
       return responseMe.data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue((err as any).response.data);
     }
+  }
+);
+export const authSignUp = createAsyncThunk(
+  `${ACTION_PREFIX}/signUp`,
+  async (params: SignUpParams) => {
+    const response = await authAPI.signUp(params);
+    return { status: response.status };
   }
 );
 export const authVerify = createAsyncThunk(
@@ -37,12 +44,12 @@ export const authVerify = createAsyncThunk(
       const response = await authAPI.verify(params);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue((err as any).response.data);
     }
   }
 );
 export const authMe = createAsyncThunk(`${ACTION_PREFIX}/me`, async () => {
-  const token = localStorage.getItem("token");
+  const token = getLegacyToken();
 
   if (!token) {
     return {
@@ -58,7 +65,7 @@ export const authMe = createAsyncThunk(`${ACTION_PREFIX}/me`, async () => {
 export const authLogout = createAsyncThunk(
   `${ACTION_PREFIX}/logout`,
   async () => {
-    localStorage.removeItem("token");
+    clearLegacyToken();
     return null;
   }
 );

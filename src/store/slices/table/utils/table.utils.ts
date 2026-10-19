@@ -1,68 +1,69 @@
-import { ID } from "@store/interfaces/store";
-import { store } from "@store";
 import { Draft } from "@reduxjs/toolkit";
-import {
-  BaseMetadata,
-  Cell,
-  ColumnMetadata,
-  TableState,
-} from "../interfaces/table";
+import { ID } from "@store/interfaces/store";
+import { BaseMetadata, Cell, TableState } from "../interfaces/table";
 
 /**
- * Add a property to another object given old and new object.
- */
-export const addObject = <T, K>(oldObject: T, newObject: T): T => ({
-  ...oldObject,
-  ...newObject,
-});
-
-/**
- * Remove property of an object given the property
+ * Remove a property from an object, without mutating it.
  */
 export const removeObject = <T, K extends keyof T>(
   object: T,
-  property: K
+  property: K,
 ): Omit<T, K> => {
   const { [property]: omit, ...rest } = object;
   return rest;
 };
 
 /**
- * Toggle object by ID.
+ * Add the id when it is missing, remove it when it is there.
  */
-export const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) => {
-  if (id in oldObject) {
-    return removeObject(oldObject, id);
-  }
-  const newObject = { [id]: value };
-  return addObject(oldObject, newObject);
-};
+export const toggleObject = <T>(oldObject: Record<ID, T>, id: ID, value: T) =>
+  id in oldObject
+    ? removeObject(oldObject, id)
+    : { ...oldObject, [id]: value };
 
 /**
  * Get rowId and colId from cellId.
  */
 export const getIdsFromCell = (cellId: ID) => cellId.split("$") as [ID, ID];
-export const getContextPrefix = (metadata: BaseMetadata) => {
-  console.log("metadata", metadata.id.split(":")[0]);
-  if (metadata.id) return metadata.id.split(":")[0];
-  else {
-    console.log("empty string", metadata);
-    return "";
-  }
-};
 
-const getTableState = () => store.getState().table;
+/**
+ * The prefix of a metadata id, e.g. "wd" for "wd:Q220".
+ */
+export const getContextPrefix = (metadata: BaseMetadata) =>
+  metadata.id ? metadata.id.split(":")[0] : "";
+
+/**
+ * An id without its prefix: "wd:Q220" -> "Q220".
+ */
+export const stripPrefix = (id: string) =>
+  id.includes(":") ? id.split(":")[1] : id;
+
 export const getColumn = (state: Draft<TableState>, colId: ID) =>
   state.entities.columns.byId[colId];
-export const getRow = (state: Draft<TableState>, rowId: ID) =>
-  state.entities.rows.byId[rowId];
-export const getRowCells = (state: Draft<TableState>, rowId: ID) =>
-  getRow(state, rowId).cells;
 
 export const getCell = (
   state: Draft<TableState>,
   rowId: ID,
-  colId: ID
-): Cell => {
-  return getRowCells(state, rowId)[colId];
-};
+  colId: ID,
+): Cell => state.entities.rows.byId[rowId].cells[colId];
+
+/**
+ * Put the ids of the columns in the saved order. Columns missing from the
+ * saved order go last, and saved ids of columns that do not exist are ignored.
+ */
+export const orderColumnIds = (columnIds: string[], columnOrder?: unknown) =>
+  Array.isArray(columnOrder)
+    ? [
+        ...columnOrder.filter((id) => columnIds.includes(id)),
+        ...columnIds.filter((id) => !columnOrder.includes(id)),
+      ]
+    : columnIds;
+
+/**
+ * Find a cell that may not exist.
+ */
+export const findCell = (
+  state: Draft<TableState>,
+  rowId: ID,
+  colId: ID,
+): Cell | undefined => state.entities.rows.byId[rowId]?.cells[colId];

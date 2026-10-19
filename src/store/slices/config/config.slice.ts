@@ -1,11 +1,9 @@
-import { createSliceWithRequests } from "@store/enhancers/requests";
-import CONFIG from "../../../config";
+import { createSlice } from "@reduxjs/toolkit";
+import { normalize } from "@store/utils/normalize";
 import { getConfig } from "./config.thunk";
 import { IConfigState } from "./interfaces/config";
 
-// Define the initial state using that type
 const initialState: IConfigState = {
-  app: CONFIG,
   policyEditorUrl: "",
   policyEngineUrl: "",
   annotationQuickViewUrl: "",
@@ -15,70 +13,33 @@ const initialState: IConfigState = {
     modifiers: { byId: {}, allIds: [] },
     complianceServices: { byId: {}, allIds: [] },
   },
-  _requests: { byId: {}, allIds: [] },
 };
 
-export const configSlice = createSliceWithRequests({
+export const configSlice = createSlice({
   name: "config",
   initialState,
   reducers: {},
-  extraRules: (builder) =>
+  extraReducers: (builder) =>
     builder.addCase(getConfig.fulfilled, (state, action) => {
-      // Handle different possible response structures
-      const payload = (action.payload as any) || {};
-      state.policyEditorUrl = payload.policyEditorUrl;
-      state.policyEngineUrl = payload.policyEngineUrl;
-
-      // Base URL of the semTProxy quickView page (annotated-text entities)
-      state.annotationQuickViewUrl = payload.annotationQuickViewUrl || "";
-
-      // Try to find reconciliators data - could be under different keys
-      const reconciliators =
-        payload.reconciliators || payload.reconcilers || payload.services || [];
-      const extenders = payload.extenders || payload.extensions || [];
-      const modifiers = payload.modifiers || payload.extensions || [];
-      const complianceServices = payload.complianceServices || [];
-
-      // Process reconciliators if they exist and are an array
-      if (Array.isArray(reconciliators)) {
-        reconciliators.forEach((reconciliator, i) => {
-          //state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
-          //state.entities.reconciliators.allIds.push(reconciliator.id);
-          state.entities.reconciliators.byId[reconciliator.id] = reconciliator;
-          state.entities.reconciliators.allIds.push(reconciliator.id);
-        });
-      } else {
-        console.warn("Config slice - reconciliators not found or not an array");
-      }
-
-      // Process extenders if they exist and are an array
-      if (Array.isArray(extenders)) {
-        extenders.forEach((extender) => {
-          state.entities.extenders.byId[extender.id] = extender;
-          state.entities.extenders.allIds.push(extender.id);
-        });
-      } else {
-        console.warn("Config slice - extenders not found or not an array");
-      }
-
-      // Process modifiers if they exist and are an array
-      if (Array.isArray(modifiers)) {
-        modifiers.forEach((modifier) => {
-          state.entities.modifiers.byId[modifier.id] = modifier;
-          state.entities.modifiers.allIds.push(modifier.id);
-        });
-      } else {
-        console.warn("Config slice - modifiers not found or not an array");
-      }
-
-      if (Array.isArray(complianceServices)) {
-        complianceServices.forEach((service) => {
-          state.entities.complianceServices.byId[service.id] = service;
-          state.entities.complianceServices.allIds.push(service.id);
-        });
-      } else {
-        console.warn("Config slice - compliance services not found or not an array");
-      }
+      const {
+        reconciliators,
+        extenders,
+        modifiers,
+        complianceServices,
+        annotationQuickViewUrl,
+        policyEditorUrl,
+        policyEngineUrl,
+      } = action.payload;
+      state.annotationQuickViewUrl = annotationQuickViewUrl;
+      state.policyEditorUrl = policyEditorUrl;
+      state.policyEngineUrl = policyEngineUrl;
+      // replace, never append: fetching the config twice must not duplicate ids
+      state.entities = {
+        reconciliators: normalize(reconciliators),
+        extenders: normalize(extenders),
+        modifiers: normalize(modifiers),
+        complianceServices: normalize(complianceServices),
+      };
     }),
 });
 

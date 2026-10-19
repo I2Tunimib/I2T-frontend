@@ -1,97 +1,43 @@
 import { Draft } from "@reduxjs/toolkit";
 import { ID } from "@store/interfaces/store";
 import { TableState } from "../interfaces/table";
-import {
-  decrementContextReconciliated,
-  decrementContextTotal,
-  getCellContext,
-  getColumnStatus,
-  isCellReconciliated,
-} from "./table.reconciliation-utils";
-import { getCell, getColumn, removeObject } from "./table.utils";
+
+type State = Draft<TableState>;
+
+// These only remove things. The columns' contexts, statuses and the table
+// totals depend on what is left: callers refresh them afterwards.
 
 /**
- * Delete one column by id.
+ * Delete one column by id. Its label is remembered so the backend can be told
+ * which columns were deleted when the table is saved.
  */
-export const deleteOneColumn = (state: Draft<TableState>, colId: ID) => {
-  state.entities.columns = {
-    byId: removeObject(state.entities.columns.byId, colId),
-    allIds: state.entities.columns.allIds.filter((id) => colId !== id),
-  };
-  state.entities.rows = {
-    byId: state.entities.rows.allIds.reduce((acc, rowId) => {
-      return {
-        ...acc,
-        [rowId]: {
-          ...state.entities.rows.byId[rowId],
-          cells: removeObject(state.entities.rows.byId[rowId].cells, colId),
-        },
-      };
-    }, {}),
-    allIds: [...state.entities.rows.allIds],
-  };
+export const deleteOneColumn = (state: State, colId: ID) => {
+  const { columns, rows } = state.entities;
+  const column = columns.byId[colId];
+  if (column) {
+    state.ui.deletedColumnsIds[colId] = column.label || colId;
+  }
+  delete columns.byId[colId];
+  columns.allIds = columns.allIds.filter((id) => id !== colId);
+  rows.allIds.forEach((rowId) => {
+    delete rows.byId[rowId].cells[colId];
+  });
 };
 
-export const deleteOneRow = (state: Draft<TableState>, rowId: ID) => {
-  state.entities.rows.byId = removeObject(state.entities.rows.byId, rowId);
-  state.entities.rows.allIds = state.entities.rows.allIds.filter(
-    (id) => rowId !== id
-  );
-};
-
-/**
- * Delete all selected rows.
- */
-export const deleteSelectedRows = (state: Draft<TableState>) => {
-  const { selectedRowsIds } = state.ui;
+export const deleteOneRow = (state: State, rowId: ID) => {
   const { rows } = state.entities;
+  delete rows.byId[rowId];
+  rows.allIds = rows.allIds.filter((id) => id !== rowId);
+};
 
-  Object.keys(selectedRowsIds).forEach((rowId) => {
-    state.entities.columns.allIds.forEach((colId) => {
-      const { cells } = rows.byId[rowId];
-      const column = getColumn(state, colId);
-      const cell = getCell(state, rowId, colId);
-      const cellContext = getCellContext(cell);
-      // if cell has metadata
-      if (cellContext) {
-        // decrement total
-        column.context[cellContext] = decrementContextTotal(
-          column.context[cellContext]
-        );
-        // if the cell is also reconciliated, decrement reconciliated
-        if (isCellReconciliated(cell)) {
-          column.context[cellContext] = decrementContextReconciliated(
-            column.context[cellContext]
-          );
-        }
-      }
-    });
-    // delete row after checking reconciliators for each cell
-    state.entities.rows.byId = removeObject(state.entities.rows.byId, rowId);
-  });
-  // update all ids so that filter is executed only once
-  state.entities.rows.allIds = rows.allIds.filter(
-    (id) => !(id in selectedRowsIds)
-  );
-
-  state.entities.columns.allIds.forEach((colId) => {
-    const column = getColumn(state, colId);
-    // update column status
-    column.status = getColumnStatus(state, colId);
+export const deleteSelectedColumns = (state: State) => {
+  Object.keys(state.ui.selectedColumnsIds).forEach((colId) => {
+    deleteOneColumn(state, colId);
   });
 };
 
-/**
- * Delete all selected columns.
- */
-export const deleteSelectedColumns = (state: Draft<TableState>) => {
-  const { selectedColumnsIds } = state.ui;
-  Object.keys(selectedColumnsIds).forEach((colId) => {
-    // Track the deleted column before deleting it
-    const columnToDelete = state.entities.columns.byId[colId];
-    if (columnToDelete) {
-      state.ui.deletedColumnsIds[colId] = columnToDelete.label || colId;
-    }
-    deleteOneColumn(state, colId);
+export const deleteSelectedRows = (state: State) => {
+  Object.keys(state.ui.selectedRowsIds).forEach((rowId) => {
+    deleteOneRow(state, rowId);
   });
 };

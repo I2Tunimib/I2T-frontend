@@ -1,5 +1,3 @@
-import { RequestEnhancedState } from "@store/enhancers/requests";
-
 export type User = {
   id: number;
   username: string;
@@ -12,7 +10,7 @@ export type AuthContextState = {
 };
 
 // Define a type for the slice state
-export interface IAuthState extends RequestEnhancedState {
+export interface IAuthState {
   loggedIn: boolean;
   user?: User;
 }

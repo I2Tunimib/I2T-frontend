@@ -1,6 +1,5 @@
-import { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Dataset, GetCollectionResult, Table } from '@services/api/datasets';
-import { createSliceWithRequests } from '@store/enhancers/requests';
 import { ID } from '@store/interfaces/store';
 import {
   deleteDataset, deleteTable, getDataset,
@@ -25,11 +24,10 @@ const initialState: DatasetsState = {
     uploadTableDialogOpen: false,
     uploadProgressDialogOpen: false,
     helpDialogOpen: false
-  },
-  _requests: { byId: {}, allIds: [] }
+  }
 };
 
-export const datasetsSlice = createSliceWithRequests({
+export const datasetsSlice = createSlice({
   name: 'datasets',
   initialState,
   reducers: {
@@ -41,7 +39,7 @@ export const datasetsSlice = createSliceWithRequests({
       state.ui = { ...state.ui, ...rest };
     }
   },
-  extraRules: (builder) => (
+  extraReducers: (builder) => (
     builder
       .addCase(getDataset.fulfilled,
         (state, action: PayloadAction<GetCollectionResult<Dataset>>) => {

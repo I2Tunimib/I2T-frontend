@@ -3,7 +3,7 @@ import { useAppSelector } from "@hooks/store";
 import { CoordinatorPath } from "@hooks/svg/useSvgCoordinator";
 import { isEmptyObject } from "@services/utils/objects-utils";
 import { ID } from "@store/interfaces/store";
-import { selectOnExpandAction } from "@store/slices/action/action.selectors";
+import { selectExpandRevision } from "@store/slices/table/table.selectors";
 import { Context } from "@store/slices/table/interfaces/table";
 import {
   useMemo,
@@ -53,7 +53,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
   ...props
 }) => {
   const [state, setState] = useState<SvgContainerState>(DEFAULT_STATE);
-  const action = useAppSelector(selectOnExpandAction);
+  const expandRevision = useAppSelector(selectExpandRevision);
   const containerRef = useRef<SVGSVGElement>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
   const lastScrollPositionRef = useRef(0);
@@ -154,15 +154,7 @@ const SvgContainer: FC<SvgContainerProps> = ({
     }
   }, [columnRefs, headerExpanded]);
 
-  const shouldRedraw = useCallback(() => {
-    if (
-      action.startsWith("table/updateSelectedCellExpanded") ||
-      scrollLeft > 0
-    ) {
-      return true;
-    }
-    return false;
-  }, [action, scrollLeft]);
+  const shouldRedraw = useCallback(() => true, [expandRevision]);
 
   const paths = useMemo(() => state.paths, [state.paths]);
 

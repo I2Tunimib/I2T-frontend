@@ -1,10 +1,7 @@
-import { RequestEnhancedState } from "@store/enhancers/requests";
 import { BaseState, ID } from "@store/interfaces/store";
-import { AppConfig } from "config";
 
 // Define a type for the slice state
-export interface IConfigState extends RequestEnhancedState {
-  app: AppConfig;
+export interface IConfigState {
   policyEditorUrl: string;
   policyEngineUrl: string;
   // Base URL of the semTProxy quickView page, provided by the backend /config endpoint

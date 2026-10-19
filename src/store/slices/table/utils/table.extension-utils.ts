@@ -1,123 +1,62 @@
 import { KG_INFO } from "@services/utils/kg-info";
-import { isEmptyObject } from "@services/utils/objects-utils";
-import { Draft } from "immer";
 import {
   BaseMetadata,
   Cell,
   ColumnMetadata,
-  TableState,
+  ExtendedColumnCell,
 } from "../interfaces/table";
-import { ExtendedColumnCell } from "../table.thunk";
-import {
-  createContext,
-  getCellContext,
-  incrementContextReconciliated,
-  incrementContextTotal,
-} from "./table.reconciliation-utils";
-import { getColumn, getContextPrefix, getIdsFromCell } from "./table.utils";
+import { summarizeMatches } from "./table.reconciliation-utils";
 
+/**
+ * The annotation of something that has candidates, as { annotationMeta }, or
+ * nothing when it has none.
+ */
 export const getAnnotationMeta = (
-  metadata: BaseMetadata[] | undefined | null
-) => {
-  if (!metadata || metadata.length === 0) {
-    return {} as any;
-  }
-
-  const [firstItem, ...rest] = metadata;
-
-  // eslint-disable-next-line prefer-destructuring
-  let match = {
-    value: firstItem.match,
-    ...(firstItem.match && {
-      reason: "reconciliator",
-    }),
-  } as any;
-  let min = firstItem.score;
-  let max = firstItem.score;
-
-  rest.forEach((metaItem) => {
-    if (metaItem.match) {
-      match = {
-        value: true,
-        reason: "reconciliator",
-      };
-    }
-    min = metaItem.score < min ? metaItem.score : min;
-    max = metaItem.score > max ? metaItem.score : max;
-  });
-
-  return {
-    annotationMeta: {
-      annotated: true,
-      match,
-      lowestScore: min,
-      highestScore: max,
-    },
-  };
-};
+  metadata: BaseMetadata[] | undefined | null,
+) =>
+  metadata && metadata.length > 0
+    ? { annotationMeta: { annotated: true, ...summarizeMatches(metadata) } }
+    : ({} as Partial<Pick<Cell, "annotationMeta">>);
 
 export const getColumnAnnotationMeta = (
-  metadata: ColumnMetadata[] | undefined | null
-) => {
-  if (!metadata || metadata.length === 0) {
-    return {} as any;
-  }
+  metadata: ColumnMetadata[] | undefined | null,
+) => (metadata && metadata.length > 0 ? getAnnotationMeta(metadata[0].entity) : {});
 
-  return getAnnotationMeta(metadata[0].entity);
-};
-
-export const getMetadata = (metadata: BaseMetadata[]): any => {
-  if (metadata.length === 0) {
-    return metadata;
-  }
-  return metadata
-    .map(({ id, name, ...rest }) => {
-      const [prefix, resourceId] = id.split(":");
-      console.log("getMetadata", prefix, resourceId);
-      if (
-        resourceId === undefined ||
-        id.startsWith("https://") ||
-        id.startsWith("http://")
-      ) {
-        return null;
-      }
-      return {
+/**
+ * Candidates as the store holds them: with their name and link. Candidates
+ * whose id has no prefix, or is already a link, cannot be resolved and are
+ * dropped.
+ */
+export const getMetadata = (metadata: BaseMetadata[]): any[] =>
+  metadata.flatMap(({ id, name, ...rest }) => {
+    const [prefix, resourceId] = id.split(":");
+    if (
+      resourceId === undefined ||
+      id.startsWith("https://") ||
+      id.startsWith("http://")
+    ) {
+      return [];
+    }
+    return [
+      {
         id,
         name: {
           value: name,
-          uri: `${
-            KG_INFO[prefix as keyof typeof KG_INFO].uri ?? "emtpy/"
-          }${resourceId}`,
+          uri: `${KG_INFO[prefix]?.uri ?? "empty/"}${resourceId}`,
         },
         ...rest,
-      };
-    })
-    .filter((item) => item !== null);
-};
-
-export const getColumnMetadata = (metadata: ColumnMetadata[]): any => {
-  if (metadata.length === 0) {
-    return metadata;
-  }
-
-  return metadata.map((columnMetaItem) => {
-    console.log(
-      "column meta item",
-      columnMetaItem.entity,
-      columnMetaItem.entity === undefined
-    );
-    if (columnMetaItem.entity === undefined) {
-      console.log("columnMetaItem.entity === undefined");
-      return columnMetaItem;
-    }
-
-    return {
-      ...columnMetaItem,
-      entity: getMetadata(columnMetaItem.entity),
-    };
+      },
+    ];
   });
-};
 
+export const getColumnMetadata = (metadata: ColumnMetadata[]): any[] =>
+  metadata.map((columnMetaItem) =>
+    columnMetaItem.entity === undefined
+      ? columnMetaItem
+      : { ...columnMetaItem, entity: getMetadata(columnMetaItem.entity) },
+  );
+
+/** A label may arrive as text or as an object describing it. */
 const normalizeLabel = (label: any): string => {
   if (typeof label === "string") return label;
   if (label && typeof label === "object") {
@@ -135,7 +74,6 @@ export const createCell = (
   newCell: ExtendedColumnCell | null,
 ) => {
   if (newCell) {
-    console.log("createCell", newCell);
     return {
       id: `${rowId}$${colId}`,
       label: normalizeLabel(newCell.label),
@@ -150,33 +88,4 @@ export const createCell = (
     label: "null",
     metadata: [],
   } as any;
-};
-
-export const updateContext = (state: Draft<TableState>, cell: Cell) => {
-  const [rowId, colId] = getIdsFromCell(cell.id);
-  const column = getColumn(state, colId);
-
-  const contextPrefix = getCellContext(cell);
-
-  if (contextPrefix) {
-    const { uri } = KG_INFO[contextPrefix as keyof typeof KG_INFO];
-
-    if (
-      !column.context[contextPrefix] ||
-      isEmptyObject(column.context[contextPrefix])
-    ) {
-      // create context if doesn't exist
-      column.context[contextPrefix] = createContext({ uri, total: 1 });
-    } else {
-      column.context[contextPrefix] = incrementContextTotal(
-        column.context[contextPrefix]
-      );
-    }
-
-    if (cell.annotationMeta.match.value) {
-      column.context[contextPrefix] = incrementContextReconciliated(
-        column.context[contextPrefix]
-      );
-    }
-  }
 };

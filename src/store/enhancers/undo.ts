@@ -3,9 +3,12 @@ import {
   PayloadAction, Draft
 } from '@reduxjs/toolkit';
 import produce, {
-  applyPatches, original,
+  applyPatches, enablePatches, original,
   produceWithPatches, Patch, Immutable
 } from 'immer';
+
+// patches are what undo/redo are made of: this module cannot work without them
+enablePatches();
 
 /**
  * State slice which includes undo and redu patches.
@@ -107,10 +110,10 @@ export const produceWithPatch = <T extends UndoEnhancedState>(
   return produce(nextState, (draft) => {
     if (draft) {
       if (mutationsWithoutPatches) {
-        mutationsWithoutPatches(draft);
+        mutationsWithoutPatches(draft as Draft<Immutable<T>>);
       }
       if (draft._draft.redoPointer > -1) {
-        _rewriteHistory(draft);
+        _rewriteHistory(draft as Draft<Immutable<T>>);
       }
       draft._draft.patches.unshift(patches);
       draft._draft.inversePatches.push(inversePatches);

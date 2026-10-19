@@ -1,15 +1,13 @@
 import { ItemsToMatch } from "@pages/Viewer/TableViewer/RefineMatching/TypeRefineMatching";
-import { RequestEnhancedState } from "@store/enhancers/requests";
 import { UndoEnhancedState } from "@store/enhancers/undo";
 import { ID, BaseState } from "@store/interfaces/store";
 import { Reconciliator } from "@store/slices/config/interfaces/config";
-import { DependencyGraph } from "./table";
 
 /**
  * Table slice state.
  * It extends requests and undo states to support requests status and undo behaviour.
  */
-export interface TableState extends RequestEnhancedState, UndoEnhancedState {
+export interface TableState extends UndoEnhancedState {
   entities: {
     tableInstance: Partial<CurrentTableState>;
     columns: ColumnState;
@@ -78,6 +76,9 @@ export interface GraphMetric {
 export interface TableUIState {
   search: { globalFilter: string[]; filter: string; value: string };
   denseView: boolean;
+  /** Visibility of each column; a column is visible unless set to false. */
+  columnVisibility: Record<ID, boolean>;
+  discoverStep?: number;
   openReconciliateDialog: boolean;
   openExtensionDialog: boolean;
   openModificationDialog: boolean;
@@ -100,8 +101,8 @@ export interface TableUIState {
   metadataColumnDialogInitialTab: number;
   openHelpDialog: boolean;
   openGraphTutorialDialog: boolean;
-  helpStart: "rec" | "ext" | "tutorial";
-  graphTutorialStart: "tutorial";
+  helpStart: boolean | "rec" | "ext" | "tutorial";
+  graphTutorialStart: boolean | "tutorial";
   settingsDialog: boolean;
   settings: Partial<Settings>;
   headerExpanded: boolean;
@@ -118,6 +119,8 @@ export interface TableUIState {
   tmpCell: Cell | null;
   tutorialBBoxes: Record<string, BBox>;
   tutorialStep: number;
+  /** Incremented each time cells are expanded/collapsed; lets views redraw. */
+  expandRevision: number;
 }
 
 export interface Settings {
@@ -158,6 +161,9 @@ export enum CsvSeparator {
 export interface Column {
   id: ID;
   label: string;
+  width?: number;
+  minWidth?: number;
+  maxWidth?: number;
   status: ColumnStatus;
   context: Record<ID, Context>;
   annotationMeta: AnnotationMeta;
@@ -183,6 +189,8 @@ export interface Cell {
   metadata: BaseMetadata[];
   annotationMeta: AnnotationMeta;
   annotations?: Record<string, TextAnnotation[]>;
+  /** The reconciliator that annotated this cell. */
+  reconciler?: string;
 }
 
 export interface AnnotationMeta {
@@ -195,6 +203,24 @@ export interface AnnotationMeta {
   highestScore: number;
   lowestScore: number;
 }
+
+/** A property of a column, as an extension service found it. */
+export interface Property {
+  id: string; // Wikidata property ID (e.g., "wd:P31")
+  obj: string; // Column name that this property maps to
+  name: string; // Human-readable name of the property
+  description: string;
+  match: boolean; // Whether this is a matched property
+  score: number; // Match confidence score (1 = exact match)
+  prefix?: string;
+}
+
+/** A cell as the extension and modification services answer it. */
+export type ExtendedColumnCell = {
+  label: string;
+  metadata: BaseMetadata[];
+  annotations?: Record<string, TextAnnotation[]>;
+};
 
 export interface Context {
   uri: string;
@@ -318,6 +344,8 @@ export interface AddColumnMetadataPayload {
     match: string;
     description: string;
     obj?: string;
+    subj?: string;
+    prefix?: string;
   };
 }
 
@@ -325,6 +353,7 @@ export interface DeleteColumnMetadataPayload {
   metadataId: ID;
   colId: ID;
   type: "type" | "property" | "entity";
+  obj?: ID;
 }
 
 export interface UpdateCellMetadataPayload {
@@ -335,6 +364,7 @@ export interface UpdateCellMetadataPayload {
 export interface UpdateColumnMetadataPayload {
   metadataId: ID;
   colId: ID;
+  obj?: ID;
 }
 
 export interface DeleteCellMetadataPayload {
@@ -370,6 +400,12 @@ export interface UpdateColumnTypePayload {
 
 export interface UpdateColumnTypeMatchesPayload {
   typeIds: string[];
+}
+
+/** Add types to a column: the one of the payload, else the open dialog's. */
+export interface AddColumnTypesPayload {
+  colId?: ID;
+  newTypes: AddColumnTypePayload[];
 }
 
 export interface AddColumnTypePayload {

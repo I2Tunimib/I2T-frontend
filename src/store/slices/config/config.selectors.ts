@@ -1,7 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "@store";
-import { getRequestStatus } from "@store/enhancers/requests";
-import { ConfigEndpoints } from "./config.thunk";
+import { createRequestStatusSelector } from "@store/slices/requests/requests.selectors";
+import { getConfig } from "./config.thunk";
 
 // select slice state
 export const selectConfig = (state: RootState) => state.config.entities;
@@ -17,23 +17,11 @@ export const selectModifiers = (state: RootState) =>
 // select compliance services
 export const selectComplianceServices = (state: RootState) =>
   state.config.entities.complianceServices;
-// select requests
-export const selectRequests = (state: RootState) => state.config._requests;
 export const selectStoreConfig = (state: RootState) => state.config;
-
-export const selectAppConfig = createSelector(
-  selectStoreConfig,
-  (storeConfig) => storeConfig.app
-);
 
 export const selectAnnotationQuickViewUrl = createSelector(
   selectStoreConfig,
   (storeConfig) => storeConfig.annotationQuickViewUrl
-);
-
-export const selectAppConfigExportFormats = createSelector(
-  selectStoreConfig,
-  (storeConfig) => storeConfig.app.API.ENDPOINTS.EXPORT
 );
 
 export const selectReconciliatorsAsObject = createSelector(
@@ -79,7 +67,4 @@ export const selectComplianceAsArray = createSelector(
       .map((id) => complianceServices.byId[id])
 );
 // Loading selectors
-export const selectGetConfigRequest = createSelector(
-  selectRequests,
-  (requests) => getRequestStatus(requests, ConfigEndpoints.GET_CONFIG)
-);
+export const selectGetConfigRequest = createRequestStatusSelector(getConfig);

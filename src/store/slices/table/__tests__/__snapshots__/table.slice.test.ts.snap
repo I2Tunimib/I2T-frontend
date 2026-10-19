@@ -1,0 +1,105 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`table slice (characterization) > addCellMetadata > updates the column context and status 1`] = `
+{
+  "annotationMeta": {
+    "annotated": false,
+    "highestScore": 0,
+    "lowestScore": 0,
+    "match": {
+      "value": false,
+    },
+  },
+  "context": {
+    "wd": {
+      "reconciliated": 1,
+      "total": 1,
+      "uri": "https://www.wikidata.org/wiki/",
+    },
+  },
+  "id": "c1",
+  "label": "Name",
+  "metadata": [],
+  "status": "pending",
+}
+`;
+
+exports[`table slice (characterization) > simple reducers > has the expected initial state 1`] = `
+{
+  "_draft": {
+    "inversePatches": [],
+    "operationRefs": [],
+    "patches": [],
+    "redoOperationRefs": [],
+    "redoPointer": -1,
+    "undoPointer": -1,
+  },
+  "dependencies": null,
+  "entities": {
+    "columns": {
+      "allIds": [],
+      "byId": {},
+    },
+    "rows": {
+      "allIds": [],
+      "byId": {},
+    },
+    "tableInstance": {},
+  },
+  "ui": {
+    "columnVisibility": {},
+    "currentGraphData": null,
+    "currentGraphSnapshot": "",
+    "currentGraphSnapshotCompliance": "",
+    "currentMetrics": null,
+    "deletedColumnsIds": {},
+    "denseView": true,
+    "editableCellsIds": {},
+    "expandRevision": 0,
+    "expandedCellsIds": {},
+    "expandedColumnsIds": {},
+    "graphTutorialStart": false,
+    "headerExpanded": false,
+    "helpStart": false,
+    "initialComplianceType": "",
+    "lastSaved": "",
+    "metadataColumnDialogColId": null,
+    "metadataColumnDialogInitialTab": 0,
+    "openAutoAnnotationDialog": false,
+    "openComplianceStatusDialog": false,
+    "openExportDialog": false,
+    "openExtensionDialog": false,
+    "openGraphDialog": false,
+    "openGraphTutorialDialog": false,
+    "openHelpDialog": false,
+    "openMetadataColumnDialog": false,
+    "openMetadataDialog": false,
+    "openModificationDialog": false,
+    "openReconciliateDialog": false,
+    "search": {
+      "filter": "all",
+      "globalFilter": [
+        "match",
+        "pending",
+        "miss",
+      ],
+      "value": "",
+    },
+    "selectedCellIds": {},
+    "selectedColumnCellsIds": {},
+    "selectedColumnsIds": {},
+    "selectedRowsIds": {},
+    "settings": {
+      "isScoreLowerBoundEnabled": true,
+      "isViewOnly": false,
+      "scoreLowerBound": 0.35,
+    },
+    "settingsDialog": false,
+    "showLinkLabels": false,
+    "tmpCell": null,
+    "tutorialBBoxes": {},
+    "tutorialStep": 1,
+    "view": "table",
+  },
+}
+`;

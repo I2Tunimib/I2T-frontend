@@ -1,14 +1,17 @@
-import { createSliceWithRequests } from "@store/enhancers/requests";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { authLogout, authMe, authSignIn } from "./auth.thunk";
 import { IAuthState, User } from "./interfaces/auth";
 
-// Define the initial state using that type
 const initialState: IAuthState = {
   loggedIn: false,
-  _requests: { byId: {}, allIds: [] },
 };
 
-export const authSlice = createSliceWithRequests({
+// signIn and me both answer with { loggedIn, user? }; fields they omit are kept
+const mergeAuth = (state: IAuthState, action: PayloadAction<Partial<IAuthState>>) => {
+  Object.assign(state, action.payload);
+};
+
+export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
@@ -20,29 +23,13 @@ export const authSlice = createSliceWithRequests({
       state.user = action.payload.user;
     },
   },
-  extraRules: (builder) =>
+  extraReducers: (builder) =>
     builder
-      .addCase(authSignIn.fulfilled, (state, action) => {
-        state = {
-          ...state,
-          ...action.payload,
-        };
-        return state;
-      })
-      .addCase(authMe.fulfilled, (state, action) => {
-        state = {
-          ...state,
-          ...action.payload,
-        };
-        return state;
-      })
-      .addCase(authLogout.fulfilled, (state, action) => {
-        state = {
-          ...state,
-          loggedIn: false,
-          user: undefined,
-        };
-        return state;
+      .addCase(authSignIn.fulfilled, mergeAuth)
+      .addCase(authMe.fulfilled, mergeAuth)
+      .addCase(authLogout.fulfilled, (state) => {
+        state.loggedIn = false;
+        state.user = undefined;
       }),
 });
 

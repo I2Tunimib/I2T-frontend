@@ -1,10 +1,9 @@
-import axios from "axios";
 import tableAPI, {
   GetTableResponse,
   GetSchemaResponse,
 } from "@services/api/table";
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { RootState } from "@store";
+import type { IConfigState } from "../config/interfaces/config";
 //import { levDistance } from "@services/utils/lev-distance";
 import { isEmptyObject } from "@services/utils/objects-utils";
 import {
@@ -22,19 +21,33 @@ import {
   TableState,
   DependencyGraph,
   DependencyOperation,
+  ExtendedColumnCell,
+  Property,
 } from "./interfaces/table";
 import {
   updateTable,
   updateSchema,
   updateUI,
+  updateDependencies,
   deleteColumn,
   clearColumnReconciliation,
   undo,
   redo,
 } from "./table.slice";
 import { getIdsFromCell } from "./utils/table.utils";
+import {
+  cancelTokenFor,
+  getRequestFormValues,
+} from "./utils/table.request-utils";
 
 const ACTION_PREFIX = "table";
+
+/**
+ * The parts of the store these thunks read. Declared here, not taken from the
+ * store, so the thunks do not depend on the type of the store that depends on
+ * them (that cycle made `RootState["table"]` unknown).
+ */
+type RootState = { table: TableState; config: IConfigState };
 
 export enum TableThunkActions {
   SAVE_TABLE = "saveTable",
@@ -124,64 +137,12 @@ export const saveTable = createAsyncThunk(
     const deletedColumns = table.ui.deletedColumnsIds;
     const deletedColumnsList = Object.values(deletedColumns) as string[];
 
-    console.log("Save operation - deleted columns:", deletedColumnsList);
-    console.log("Save operation - column order:", entities.columns.allIds);
-    console.log(
-      "Save operation - tableId:",
-      tableInstance.id,
-      "datasetId:",
-      tableInstance.idDataset,
-    );
-
-    // Check for non-ASCII characters in IDs
-    if (tableInstance.id && /[^\x00-\xFF]/.test(tableInstance.id)) {
-      console.warn("TableId contains non-ASCII characters:", tableInstance.id);
-    }
-    if (
-      tableInstance.idDataset &&
-      /[^\x00-\xFF]/.test(tableInstance.idDataset)
-    ) {
-      console.warn(
-        "DatasetId contains non-ASCII characters:",
-        tableInstance.idDataset,
-      );
-    }
-
-    // Check deleted columns for non-ASCII characters
-    deletedColumnsList.forEach((col, index) => {
-      if (/[^\x00-\xFF]/.test(col)) {
-        console.warn(
-          `Deleted column ${index} contains non-ASCII characters:`,
-          col,
-        );
-      }
-    });
-
-    console.log("Save operation - sending data structure:", {
-      hasTableInstance: !!entities.tableInstance,
-      hasColumns: !!entities.columns,
-      hasRows: !!entities.rows,
-      columnsCount: Object.keys(entities.columns?.byId || {}).length,
-    });
-
     try {
       // Include column order in the data being saved
       const dataToSave = {
         ...entities,
         columnOrder: entities.columns.allIds, // Add column order to preserve frontend ordering
       };
-
-      console.log(
-        "DEBUG: Saving table with columnOrder:",
-        entities.columns.allIds,
-      );
-      console.log("DEBUG: Data structure being saved:", {
-        hasTableInstance: !!dataToSave.tableInstance,
-        hasColumns: !!dataToSave.columns,
-        hasRows: !!dataToSave.rows,
-        hasColumnOrder: !!dataToSave.columnOrder,
-        columnOrder: dataToSave.columnOrder,
-      });
 
       const response = await tableAPI.saveTable(
         dataToSave, // Send entities with column order
@@ -190,12 +151,6 @@ export const saveTable = createAsyncThunk(
         tableInstance.idDataset,
         deletedColumnsList, // Pass deleted columns to the API
       );
-
-      console.log("Save operation - response received:", {
-        status: response?.status,
-        hasData: !!response?.data,
-        dataKeys: response?.data ? Object.keys(response.data) : "no data",
-      });
 
       // Clear deleted columns after successful save
       dispatch({ type: "table/clearDeletedColumns" });
@@ -228,7 +183,7 @@ const LABELS_FN = {
     rows.allIds.flatMap((rowId) => {
       return columns.allIds.flatMap((colId) => {
         return rows.byId[rowId].cells[colId].metadata.map(
-          (metaItem) => metaItem.name.value,
+          ({ name }) => (typeof name === "string" ? name : name.value),
         );
       });
     }),
@@ -256,328 +211,15 @@ export const filterTable = createAsyncThunk(
       new Set(LABELS_FN[tag as keyof typeof LABELS_FN]({ rows, columns })),
     );
 
+    // Labels can be numbers (e.g. numeric cells), so coerce to string first
     return allLabels
+      .filter((label) => label != null)
+      .map((label) => String(label))
       .filter((label) => label.toLowerCase().startsWith(searchValue))
       .slice(0, 10) // max 10 suggestions
       .map((label) => ({ label }));
   },
 );
-
-const getContextColumns = (ids: string[], rows: RowState) => {
-  return ids.reduce(
-    (acc, colId) => {
-      acc[colId] = rows.allIds.reduce(
-        (accInn, rowId) => {
-          const cell = rows.byId[rowId].cells[colId];
-          const [r, c] = getIdsFromCell(cell.id);
-          accInn[r] = cell;
-          return accInn;
-        },
-        {} as Record<string, Cell>,
-      );
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-
-const getColumnMetaIds = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-      if (trueMeta) {
-        // eslint-disable-next-line prefer-destructuring
-        acc[rowId] = trueMeta.id;
-      }
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-
-// New helper for extension services like llmClassifier
-const getColumnMetaObjects = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-      if (trueMeta) {
-        acc[rowId] = {
-          name: trueMeta.name,
-          kbId: trueMeta.id,
-          value: cell.label,
-          matchingType: trueMeta.match ? "exact" : "fuzzy", // Adjust logic if needed
-        };
-      }
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-
-// Helper functions to get ALL column items without filtering
-const getAllColumnMetaIds = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-      // Always include every row - use matched metadata if available, otherwise include row with empty/null value
-      if (trueMeta) {
-        acc[rowId] = trueMeta.id;
-      } else {
-        // Include row even without matching metadata - use empty string instead of null
-        acc[rowId] = "";
-      }
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-
-const getAllColumnMetaObjects = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      const trueMeta = cell.metadata.find((metaItem) => metaItem.match);
-      // Always include every row - use matched metadata if available, otherwise include with null kbId
-      if (trueMeta) {
-        acc[rowId] = {
-          name: trueMeta.name,
-          kbId: trueMeta.id,
-          value: cell.label,
-          matchingType: trueMeta.match ? "exact" : "fuzzy",
-        };
-      } else {
-        // Include row even without matching metadata - use empty string instead of null
-        acc[rowId] = {
-          kbId: "",
-          value: cell.label,
-          matchingType: "none",
-        };
-      }
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-
-const getColumnValues = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      acc[rowId] = [cell.label, cell.metadata, colId];
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-const getMultipleColumnsValues = (colId: string, rowEntities: RowState) => {
-  return rowEntities.allIds.reduce(
-    (acc, rowId) => {
-      const cell = rowEntities.byId[rowId].cells[colId];
-      acc[rowId] = [cell.label, cell.metadata, colId];
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-const getRequestFormValuesExtension = (
-  formParams: FormInputParams[],
-  formValues: Record<string, any>,
-  table: TableState,
-  extender?: Extender,
-) => {
-  if (!formParams) {
-    return {};
-  }
-
-  const { ui, entities } = table;
-  const { rows } = entities;
-  // Prefer UI selection, but fallback to formValues.selectedColumns when UI selection is empty.
-  // This fixes calls originating from GroupServiceDialog which pass selectedColumns in formValues
-  let selectedColumnsIds = Object.keys(ui.selectedColumnsIds);
-
-  if (
-    (!selectedColumnsIds || selectedColumnsIds.length === 0) &&
-    formValues &&
-    formValues.selectedColumns
-  ) {
-    // formValues.selectedColumns can be an array or an object; normalize to array of ids
-    if (Array.isArray(formValues.selectedColumns)) {
-      selectedColumnsIds = formValues.selectedColumns;
-    } else if (typeof formValues.selectedColumns === "object") {
-      selectedColumnsIds = Object.keys(formValues.selectedColumns);
-    }
-    console.debug(
-      "[getRequestFormValuesExtension] using fallback formValues.selectedColumns:",
-      selectedColumnsIds,
-    );
-  }
-
-  console.debug("getting request form values", {
-    extender,
-    selectedColumnsIds,
-  });
-  const requestParams = {} as Record<string, any>;
-
-  // Check if skipFiltering is enabled
-  const shouldSkipFiltering = extender?.skipFiltering === true;
-
-  if (shouldSkipFiltering) {
-    // Skip filtering - include all rows regardless of reconciliation status
-    if (extender && (extender.id === "llmClassifier" || extender.allValues)) {
-      console.log(
-        "intercepted extender with rich objects and skipFiltering enabled",
-        extender.id,
-      );
-      requestParams.items = selectedColumnsIds.reduce(
-        (acc, key) => {
-          acc[key] = getAllColumnMetaObjects(key, rows);
-          return acc;
-        },
-        {} as Record<string, any>,
-      );
-    } else {
-      // fallback: use all KB ids (including null for non-reconciled items)
-      requestParams.items = selectedColumnsIds.reduce(
-        (acc, key) => {
-          acc[key] = getAllColumnMetaIds(key, rows);
-          return acc;
-        },
-        {} as Record<string, any>,
-      );
-    }
-  } else {
-    // Use existing filtering logic - only include reconciled items
-    if (extender && (extender.id === "llmClassifier" || extender.allValues)) {
-      console.log("intercepted extender with rich objects", extender.id);
-      // For extenders that require rich objects or explicitly request allValues,
-      // include ALL rows' metadata objects (not only reconciled ones).
-      requestParams.items = selectedColumnsIds.reduce(
-        (acc, key) => {
-          acc[key] = getAllColumnMetaObjects(key, rows);
-          return acc;
-        },
-        {} as Record<string, any>,
-      );
-    } else {
-      // fallback: if extender is undefined or doesn't need rich objects, use KB id logic
-      requestParams.items = selectedColumnsIds.reduce(
-        (acc, key) => {
-          acc[key] = getColumnMetaIds(key, rows);
-          return acc;
-        },
-        {} as Record<string, any>,
-      );
-    }
-  }
-
-  formParams.forEach(({ id, inputType }) => {
-    if (formValues[id]) {
-      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
-        requestParams[id] = getColumnValues(formValues[id], rows);
-      } else if (inputType === "multipleColumnSelect") {
-        requestParams[id] = {};
-        for (const colId of formValues[id]) {
-          requestParams[id][colId] = getMultipleColumnsValues(colId, rows);
-        }
-      } else {
-        requestParams[id] = formValues[id];
-      }
-    }
-  });
-
-  return requestParams;
-};
-
-const getRequestFormValuesReconciliation = (
-  formParams: FormInputParams[],
-  formValues: Record<string, any>,
-  table: TableState,
-) => {
-  if (!formParams) {
-    return {};
-  }
-
-  const { entities } = table;
-  const { rows } = entities;
-  const requestParams = {} as Record<string, any>;
-
-  formParams.forEach(({ id, inputType }) => {
-    if (formValues[id]) {
-      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
-        requestParams[id] = getColumnValues(formValues[id], rows);
-      } else if (inputType === "multipleColumnSelect") {
-        requestParams[id] = {};
-        for (const colId of formValues[id]) {
-          requestParams[id][colId] = getMultipleColumnsValues(colId, rows);
-        }
-      } else {
-        requestParams[id] = formValues[id];
-      }
-    }
-  });
-
-  return requestParams;
-};
-
-const getRequestFormValuesModification = (
-  formParams: FormInputParams[],
-  formValues: Record<string, any>,
-  table: TableState,
-  modifier?: Modifier,
-) => {
-  if (!formParams) {
-    return {};
-  }
-
-  const { ui, entities } = table;
-  const { rows } = entities;
-  let selectedColumnsIds = Object.keys(table.ui.selectedColumnsIds);
-  console.log("getting request form values", modifier);
-
-  if (modifier?.skipFiltering) {
-    selectedColumnsIds = Object.keys(entities.columns.byId);
-  }
-
-  const requestParams = {} as Record<string, any>;
-
-  if (modifier?.allValues) {
-    requestParams.items = selectedColumnsIds.reduce(
-      (acc, key) => {
-        acc[key] = getAllColumnMetaObjects(key, rows);
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
-  } else {
-    requestParams.items = selectedColumnsIds.reduce(
-      (acc, key) => {
-        acc[key] = getColumnValues(key, rows);
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
-  }
-
-  formParams.forEach(({ id, inputType }) => {
-    if (formValues[id]) {
-      if (inputType === "selectColumns" || inputType === "selectColumnAll") {
-        requestParams[id] = getColumnValues(formValues[id], rows);
-      } else if (inputType === "multipleColumnSelect") {
-        requestParams[id] = {};
-        for (const colId of formValues[id]) {
-          requestParams[id][colId] = getColumnValues(colId, rows);
-        }
-      } else {
-        requestParams[id] = formValues[id];
-      }
-    }
-  });
-
-  return requestParams;
-};
 
 export const reconcile = createAsyncThunk(
   `${ACTION_PREFIX}/reconcile`,
@@ -605,31 +247,18 @@ export const reconcile = createAsyncThunk(
     const selectedColumnId = selectedColumnIds[0];
     const columnName = columns.byId[selectedColumnId]?.label || "";
 
-    const params = getRequestFormValuesReconciliation(
-      formParams,
-      formValues,
-      table,
-    );
+    const params = getRequestFormValues(formParams, formValues, table);
 
-    console.log("reconcile", { items, reconciliator, formValues, params });
     const data = {
       serviceId: reconciliator.id,
       items,
-      tableId: tableInstance.id,
-      datasetId: tableInstance.idDataset,
+      tableId: tableInstance.id!,
+      datasetId: tableInstance.idDataset!,
       columnName,
       ...params,
     };
 
-    // Create axios CancelToken source and wire it to the thunk abort signal
-    const source = axios.CancelToken.source();
-    if (signal.aborted) {
-      source.cancel("Aborted before request");
-      throw new Error("Aborted");
-    }
-    signal.addEventListener("abort", () => {
-      source.cancel("Aborted by user");
-    });
+    const cancelToken = cancelTokenFor(signal);
 
     const response = await tableAPI.reconcile(
       relativeUrl,
@@ -638,7 +267,7 @@ export const reconcile = createAsyncThunk(
       tableInstance.idDataset,
       columnName,
       // pass axios cancel token so the request is cancelled on abort
-      source.token,
+      cancelToken,
       silent,
     );
 
@@ -648,8 +277,8 @@ export const reconcile = createAsyncThunk(
 
     dispatch(
       getDependencies({
-        tableId: tableInstance.id,
-        datasetId: tableInstance.idDataset,
+        tableId: tableInstance.id!,
+        datasetId: tableInstance.idDataset!,
       }),
     );
 
@@ -737,35 +366,19 @@ export const suggest = createAsyncThunk<
   const { ui, entities } = table;
   const { rows } = entities;
   const selectedColumnId = Object.keys(ui.selectedColumnsIds)[0];
+  // the first candidate of each row, when it is the matched one
   const rowsMetadata = rows.allIds
-    .map((rowId) => {
-      let currentMetadata =
-        rows.byId[rowId].cells[selectedColumnId].metadata[0];
-      if (currentMetadata.match) {
-        return currentMetadata;
-      } else {
-        return null;
-      }
-    })
-    .filter((meta) => meta !== null);
+    .map((rowId) => rows.byId[rowId].cells[selectedColumnId].metadata[0])
+    .filter((candidate) => candidate?.match);
 
-  // Create axios CancelToken source and wire it to the thunk abort signal
-  const source = axios.CancelToken.source();
-  if (signal.aborted) {
-    source.cancel("Aborted before request");
-    throw new Error("Aborted");
-  }
-  signal.addEventListener("abort", () => {
-    source.cancel("Aborted by user");
-  });
+  const cancelToken = cancelTokenFor(signal);
 
   const response = await tableAPI.suggest(
     suggester,
     rowsMetadata,
-    source.token,
+    cancelToken,
   );
   let currentDataResponse = response.data.data;
-  console.log("suggest", currentDataResponse);
   return {
     suggester,
     data: currentDataResponse,
@@ -776,25 +389,11 @@ export type ExtendThunkInputProps = {
   extender: Extender;
   formValues: Record<string, any>;
 };
-export type ExtendedColumnCell = {
-  label: string;
-  metadata: BaseMetadata[];
-  annotations?: Record<string, import("../interfaces/table").TextAnnotation[]>;
-};
 type ExtendedColumn = {
   label: string;
   metadata: ColumnMetadata[];
   cells: Record<string, ExtendedColumnCell | null>;
 };
-interface Property {
-  id: string; // Wikidata property ID (e.g., "wd:P31")
-  obj: string; // Column name that this property maps to
-  name: string; // Human-readable name of the property
-  description: string;
-  match: boolean; // Whether this is a matched property
-  score: number; // Match confidence score (1 = exact match)
-}
-
 export type ExtendThunkResponseProps = {
   extender: Extender;
   selectedColumnId: string;
@@ -830,8 +429,20 @@ export const extend = createAsyncThunk<
     const selectedColumnId = selectedColumnIds[0];
     const columnName = columns.byId[selectedColumnId]?.label || "";
 
+    // Rich objects (llmClassifier / allValues) include every row with a
+    // null-kbId fallback; skipFiltering without rich objects includes every
+    // row as plain ids; otherwise only matched rows are sent.
+    const richObjects =
+      extender && (extender.id === "llmClassifier" || extender.allValues);
+    const skipFiltering = extender?.skipFiltering === true;
+
     const params = {
-      ...getRequestFormValuesExtension(formParams, formValues, table, extender),
+      ...getRequestFormValues(formParams, formValues, table, {
+        buildItems: true,
+        selectedColumnsFallback: true,
+        itemMode: richObjects || skipFiltering ? "all" : "matched",
+        itemRichObjects: richObjects,
+      }),
       // Prefer selected columns explicitly provided by the formValues.
       // If not present, fall back to extender.selectedColumns (service-level selection).
       selectedColumns:
@@ -842,15 +453,7 @@ export const extend = createAsyncThunk<
             : undefined,
     };
 
-    // Create axios CancelToken source and wire it to the thunk abort signal
-    const source = axios.CancelToken.source();
-    if (signal.aborted) {
-      source.cancel("Aborted before request");
-      throw new Error("Aborted");
-    }
-    signal.addEventListener("abort", () => {
-      source.cancel("Aborted by user");
-    });
+    const cancelToken = cancelTokenFor(signal);
 
     const response = await tableAPI.extend(
       relativeUrl,
@@ -862,7 +465,7 @@ export const extend = createAsyncThunk<
       tableInstance.idDataset,
       columnName,
       // pass axios cancel token so the request is cancelled on abort
-      source.token,
+      cancelToken,
     );
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -871,8 +474,8 @@ export const extend = createAsyncThunk<
 
     dispatch(
       getDependencies({
-        tableId: tableInstance.id,
-        datasetId: tableInstance.idDataset,
+        tableId: tableInstance.id!,
+        datasetId: tableInstance.idDataset!,
       }),
     );
 
@@ -913,12 +516,12 @@ export const modify = createAsyncThunk<
   const columnName = columns.byId[selectedColumnId]?.label || "";
 
   const params = {
-    ...getRequestFormValuesModification(
-      formParams,
-      formValues,
-      table,
-      modifier,
-    ),
+    ...getRequestFormValues(formParams, formValues, table, {
+      buildItems: true,
+      allColumns: modifier?.skipFiltering === true,
+      itemMode: modifier?.allValues ? "all" : "values",
+      itemRichObjects: modifier?.allValues === true,
+    }),
     joinColumns: formValues.joinColumns,
     selectedColumns: formValues.selectedColumns,
     columnType: formValues.columnType,
@@ -942,8 +545,8 @@ export const modify = createAsyncThunk<
 
   dispatch(
     getDependencies({
-      tableId: tableInstance.id,
-      datasetId: tableInstance.idDataset,
+      tableId: tableInstance.id!,
+      datasetId: tableInstance.idDataset!,
     }),
   );
 
@@ -964,8 +567,6 @@ export const updateTableSocket = createAsyncThunk(
     const { table } = inputProps;
 
     if (!isEmptyObject(tableInstance) && table.id === tableInstance.id) {
-      console.log("update table socket called");
-
       // Preserve the current column order when updating from socket
       const currentColumnOrder = state.table.entities.columns.allIds;
       const updatedProps = {
@@ -996,10 +597,8 @@ export const updateSchemaSocket = createAsyncThunk(
 
     if (
       !isEmptyObject(tableInstance) &&
-      tableInstance.id.toString() === table.id.toString()
+      tableInstance.id!.toString() === table.id.toString()
     ) {
-      console.log("updateSchemaSocket: IDs match, dispatching updateSchema");
-
       dispatch(updateSchema(inputProps));
       dispatch(
         updateUI({
@@ -1012,6 +611,29 @@ export const updateSchemaSocket = createAsyncThunk(
     }
   },
 );
+
+/**
+ * Apply a reconciliation the backend redid, through the same reducer a normal
+ * reconciliation goes through. It is not part of the undo history.
+ */
+const applyRedoneReconciliation = (
+  dispatch: (action: any) => unknown,
+  getState: () => unknown,
+  serviceId: string,
+  data: any,
+) => {
+  const { config } = getState() as RootState;
+  const reconciliator = config.entities.reconciliators.byId[serviceId] as any;
+  // without its service there is no way to resolve the candidates
+  if (!reconciliator) return;
+  dispatch(
+    reconcile.fulfilled(
+      { data, reconciliator, undoable: false } as any,
+      "redo",
+      { items: [], reconciliator, formValues: {} } as any,
+    ),
+  );
+};
 
 export const deleteOperationAndRedo = createAsyncThunk(
   `${ACTION_PREFIX}/deleteOperationAndRedo`,
@@ -1069,29 +691,19 @@ export const deleteOperationAndRedo = createAsyncThunk(
 
     // Update dependency graph in store
     if (dependencies) {
-      dispatch(updateUI({ key: "dependencies", value: dependencies } as any));
+      dispatch(updateDependencies(dependencies));
     }
 
-    // Dispatch reconcile.fulfilled for each redo result from the backend
-    const freshState = getState() as RootState;
+    // Apply each reconciliation the backend redid
     for (const { serviceId, reconData } of reconResults) {
-      const reconciliator =
-        (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ??
-        null;
-      dispatch(
-        reconcile.fulfilled(
-          { data: reconData, reconciliator, undoable: false },
-          "redo",
-          { items: [], reconciliator, formValues: {} } as any,
-        ),
-      );
+      applyRedoneReconciliation(dispatch, getState, serviceId, reconData);
     }
 
     // Refresh dependencies from backend to ensure store is up to date
     dispatch(
       getDependencies({
-        tableId: tableInstance.id,
-        datasetId: tableInstance.idDataset,
+        tableId: tableInstance.id!,
+        datasetId: tableInstance.idDataset!,
       }),
     );
   },
@@ -1116,25 +728,12 @@ export const redoOperationFromLog = createAsyncThunk(
     // Refresh dependency graph
     dispatch(
       getDependencies({
-        tableId: tableInstance.id,
-        datasetId: tableInstance.idDataset,
+        tableId: tableInstance.id!,
+        datasetId: tableInstance.idDataset!,
       }),
     );
 
-    // Look up reconciliator so the fulfilled handler can build metadata correctly
-    const freshState = getState() as RootState;
-    const reconciliator =
-      (freshState.config.entities.reconciliators?.byId?.[serviceId] as any) ??
-      null;
-
-    // Dispatch reconcile.fulfilled directly so the exact same reducer runs
-    dispatch(
-      reconcile.fulfilled(
-        { data: reconcileData, reconciliator, undoable: false },
-        "redo",
-        { items: [], reconciliator, formValues: {} } as any,
-      ),
-    );
+    applyRedoneReconciliation(dispatch, getState, serviceId, reconcileData);
   },
 );
 
@@ -1239,5 +838,34 @@ export const redoWithSync = createAsyncThunk(
     }
 
     dispatch(getDependencies({ tableId, datasetId }));
+  },
+);
+
+export const downloadComplianceReport = createAsyncThunk(
+  `${ACTION_PREFIX}/downloadComplianceReport`,
+  async ({
+    datasetId,
+    tableId,
+    reportIndex,
+    format,
+  }: {
+    datasetId: string;
+    tableId: string;
+    reportIndex: number | "latest";
+    format: "json" | "md";
+  }) => {
+    const response = await tableAPI.downloadComplianceReport(
+      { datasetId, tableId, reportIndex },
+      format,
+    );
+    return response.data;
+  },
+);
+
+export const getOperationDownstreamDeps = createAsyncThunk(
+  `${ACTION_PREFIX}/getOperationDownstreamDeps`,
+  async (params: { datasetId: string; tableId: string; opId: string }) => {
+    const response = await tableAPI.getOperationDownstreamDeps(params);
+    return response.data.downstreamDeps ?? [];
   },
 );

@@ -1,11 +1,10 @@
 import { Dataset, Meta, Table } from "@services/api/datasets";
-import { RequestEnhancedState } from "@store/enhancers/requests";
 import { BaseState, ID } from "@store/interfaces/store";
 
 /**
  * State which holds all datasets with their tables and UI state for dialogs.
  */
-export interface DatasetsState extends RequestEnhancedState {
+export interface DatasetsState {
   entities: {
     currentDatasetId: string;
     metaDatasets: Meta<Dataset>;
