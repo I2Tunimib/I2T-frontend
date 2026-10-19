@@ -1,12 +1,12 @@
+import CONFIG from "@config";
 import { Chip, IconButton, Stack, Typography } from '@mui/material';
 import { Searchbar } from '@components/kit';
 import { FC, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@hooks/store';
-import { selectAppConfig } from '@store/slices/config/config.selectors';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { globalSearch } from '@store/slices/datasets/datasets.thunk';
-import { GlobalSearchResult } from '@services/api/datasets';
+import { GlobalSearchResult } from '@services/api/types';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { selectIsLoggedIn } from '@store/slices/auth/auth.selectors';
 import UserAvatar from '@components/kit/UserAvatar';
@@ -33,7 +33,7 @@ const ToolbarContent: FC<any> = () => {
     setSearchResults] = useState<GlobalSearchResult>({ datasets: [], tables: [] });
   const auth = useAppSelector(selectIsLoggedIn);
 
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const dispatch = useAppDispatch();
   const [tutorialOpen, setTutorialOpen] = useState(false);
 

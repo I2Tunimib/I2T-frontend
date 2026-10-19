@@ -1,5 +1,5 @@
 import { useAppSelector } from '@hooks/store';
-import { GetCollectionResult } from '@services/api/datasets';
+import { GetCollectionResult } from '@services/api/types';
 import {
   useEffect,
   useMemo, useState

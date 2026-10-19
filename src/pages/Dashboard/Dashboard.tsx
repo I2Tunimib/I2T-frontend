@@ -1,3 +1,4 @@
+import CONFIG from "@config";
 import {
   Breadcrumbs,
   Button,
@@ -42,7 +43,6 @@ import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
 import ViewModuleRoundedIcon from "@mui/icons-material/ViewModuleRounded";
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded";
 import clsx from "clsx";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
 import { updateUI } from "@store/slices/datasets/datasets.slice";
 import ToolbarContent from "./ToolbarContent";
 import styles from "./Dashboard.module.scss";
@@ -81,7 +81,7 @@ const Dashboard: FC<any> = () => {
   const { loading: loadingDatasets } = useAppSelector(
     selectGetAllDatasetsStatus,
   );
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const location = useLocation();
   const auth = useAppSelector(selectIsLoggedIn);
   const currentUserId = auth?.user?.id;

@@ -1,3 +1,4 @@
+import CONFIG from "@config";
 import {
   Button,
   Menu,
@@ -78,7 +79,6 @@ import {
   redoWithSync,
 } from "@store/slices/table/table.thunk";
 import {
-  selectAppConfig,
   selectExtendersAsArray,
   selectReconciliatorsAsArray,
   selectModifiersAsArray,
@@ -186,7 +186,7 @@ const SubToolbar = ({
   const isCellSelected = useAppSelector(selectIsCellSelected);
   const { status: isMetadataButtonEnabled, type: metadataAction } =
     useAppSelector(selectIsMetadataButtonEnabled);
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const { loading: loadingAutomaticAnnotation } = useAppSelector(
     selectAutomaticAnnotationStatus,
   );

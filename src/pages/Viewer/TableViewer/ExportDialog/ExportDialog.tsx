@@ -1,3 +1,4 @@
+import CONFIG from "@config";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
   Box,
@@ -22,7 +23,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
 import {
   selectCurrentTable,
   selectExportDialogStatus,
@@ -58,7 +58,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
     tableId: string;
   }>();
   const { name: tableName } = useAppSelector(selectCurrentTable);
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const isUnsaved = useAppSelector(selectIsUnsaved);
   const { enqueueSnackbar } = useSnackbar();
   const {

@@ -1,3 +1,4 @@
+import CONFIG from "@config";
 import {
   Button,
   Box,
@@ -15,7 +16,7 @@ import {
 } from "@mui/material";
 import { FC, ReactNode, SyntheticEvent, useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
-import { selectAppConfig, selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
+import { selectReconciliatorsAsArray } from "@store/slices/config/config.selectors";
 import {
   selectCurrentCol,
   selectColumnKind,
@@ -76,7 +77,7 @@ const a11yProps = (index: number) => {
 const Content = () => {
   const [value, setValue] = useState(0);
   const [editsState, setEditsState] = useState<ReduxEditObject[]>([]);
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const kind = useAppSelector(selectColumnKind);
   const datatype = useAppSelector(selectColumnDatatype);

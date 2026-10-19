@@ -1,3 +1,4 @@
+import CONFIG from "@config";
 import styled from "@emotion/styled";
 import { useAppDispatch, useAppSelector } from "@hooks/store";
 import {
@@ -19,7 +20,6 @@ import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { KG_INFO, fetchTypeAndDescription, searchQudtUnits, searchW3CFormats } from "@services/utils/kg-info";
 import { createWikidataURI, extractIdFromUri, resolveURI } from "@services/utils/uri-utils";
 import {
-  selectAppConfig,
   selectReconciliatorsAsArray,
 } from "@store/slices/config/config.selectors";
 import { isValidWikidataId } from "@services/utils/regexs";
@@ -33,7 +33,6 @@ import {
 } from "@store/slices/table/table.selectors";
 import {
   addColumnType,
-  updateColumnType,
   updateColumnTypeMatches,
   updateUI,
 } from "@store/slices/table/table.slice";
@@ -171,7 +170,7 @@ const TypeTab: FC<TypeTabProps> = ({ addEdit, currentKind, currentDatatype }) =>
     (state) => state.table.ui.metadataColumnDialogColId,
   );
   const types = useAppSelector(selectColumnTypes);
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const dispatch = useAppDispatch();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const {

@@ -1,4 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
+import CONFIG from "@config";
 import {
   Box,
   Button,
@@ -36,7 +37,6 @@ import {
   selectSettings,
 } from "@store/slices/table/table.selectors";
 import {
-  selectAppConfig,
   selectReconciliatorsAsArray,
 } from "@store/slices/config/config.selectors";
 import { Controller, useForm } from "react-hook-form";
@@ -203,7 +203,7 @@ const MetadataDialog: FC<MetadataDialogProps> = ({ open }) => {
       match: "true",
     },
   });
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const { loading } = useAppSelector(selectReconcileRequestStatus);
   const reconciliators = useAppSelector(selectReconciliatorsAsArray);
   const cell = useAppSelector(selectCurrentCell);

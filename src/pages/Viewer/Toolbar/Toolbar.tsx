@@ -1,3 +1,4 @@
+import CONFIG from "@config";
 import {
   Button,
   IconButton,
@@ -42,7 +43,6 @@ import {
   saveTable,
 } from "@store/slices/table/table.thunk";
 import { useQuery } from "@hooks/router";
-import { selectAppConfig } from "@store/slices/config/config.selectors";
 //import ModeEditOutlineOutlinedIcon from '@mui/icons-material/ModeEditOutlineOutlined';
 //import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
@@ -87,7 +87,7 @@ const Toolbar = () => {
   const { loading } = useAppSelector(selectSaveTableStatus);
   const currentTable = useAppSelector(selectCurrentTable);
   const lastSaved = useAppSelector(selectLastSaved);
-  const { API } = useAppSelector(selectAppConfig);
+  const { API } = CONFIG;
   const isViewOnly = useAppSelector(selectIsViewOnly);
   const openSettingsDialog = useAppSelector(selectSettingsDialogStatus);
   const openHelpDialog = useAppSelector(selectHelpDialogStatus);
