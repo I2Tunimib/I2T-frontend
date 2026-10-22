@@ -5,6 +5,7 @@ import { AppConfig } from "config";
 // Define a type for the slice state
 export interface IConfigState extends RequestEnhancedState {
   app: AppConfig;
+  policyEditorUrl: string;
   entities: {
     reconciliators: ReconciliatorsState;
     extenders: ExtendersState;

@@ -58,7 +58,7 @@ import ExportDialog from "../TableViewer/ExportDialog";
 import AutoAnnotationDialog from "../TableViewer/AutoAnnotationDialog";
 import SettingsDialog from "../SettingsDialog/SettingsDialog";
 import HelpDialog from "../HelpDialog/HelpDialog";
-import ComplianceDialog from "../TableViewer/ComplianceDialog";
+//import ComplianceDialog from "../TableViewer/ComplianceDialog";
 
 interface MenuState extends Record<string, boolean> {}
 
@@ -291,7 +291,7 @@ const Toolbar = () => {
             >
               Compliance
             </Button>
-            <ComplianceDialog />
+            {/* <ComplianceDialog /> */}
           </>
 
           <>

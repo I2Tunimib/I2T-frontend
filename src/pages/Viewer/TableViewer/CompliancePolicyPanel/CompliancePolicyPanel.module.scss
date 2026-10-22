@@ -1,0 +1,17 @@
+.Header {
+  background: #fafafa;
+  min-height: 36px;
+}
+
+.Tabs {
+  background: #fafafa;
+  min-height: 40px;
+
+  :global(.MuiTab-root) {
+    min-height: 40px;
+  }
+}
+
+.Body {
+  font-size: 0.875rem;
+}
