@@ -68,7 +68,9 @@ test('Reconcile and Revision', async ({ page, context }) => {
     await metadataDialog(page, 'Liverpool');
     console.log('Manage Metadata for "Liverpool" Cell opened.');
 
-    await selectMetadata(page, 'Liverpool', ['association football club'], 'wd', 'Q1130849', 'association football club in Liverpool, England');
+    await addMetadata(page, 'Chelsea', 'wd (Wikidata)', 'Q1130849', 'Liverpool F.C.', 'association football club in Liverpool, England');
+    console.log('Correct metadata added.');
+
     await confirmPropagate(page, 'Liverpool');
     console.log('"Liverpool" cell reconciled.');
   });

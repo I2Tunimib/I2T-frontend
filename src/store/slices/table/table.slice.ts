@@ -2531,78 +2531,84 @@ export const tableSlice = createSliceWithRequests({
                     };
                   }
 
-                  if (
-                    columnToUpdate.metadata &&
-                    columnToUpdate.metadata.length > 0
-                  ) {
-                    if (
-                      originalColMeta.types &&
-                      originalColMeta.types.length > 0
-                    ) {
-                      if (!columnToUpdate.metadata[0].type) {
-                        columnToUpdate.metadata[0].type = [];
-                      }
-
-                      const addedTypes = originalColMeta.types.map(
-                        (typeMeta: any) => {
-                          const cleanTypeId = typeMeta.id.includes(":")
-                            ? typeMeta.id.split(":")[1]
-                            : typeMeta.id;
-
-                          return {
-                            ...typeMeta,
-                            id: typeMeta.id,
-                            name: typeMeta.name,
-                            uri: `https://www.wikidata.org/wiki/${cleanTypeId}`,
-                          };
-                        },
-                      );
-
-                      addedTypes.forEach((newType) => {
-                        const typeExists = columnToUpdate.metadata[0].type.some(
-                          (t: any) => t.id === newType.id,
-                        );
-                        if (!typeExists) {
-                          columnToUpdate.metadata[0].type.push(newType);
-                        }
-                      });
-                    }
+                  if (!columnToUpdate.metadata || columnToUpdate.metadata.length === 0) {
+                    columnToUpdate.metadata = [{
+                      id: "None:",
+                      match: true,
+                      score: 0,
+                      name: { value: "", uri: "" },
+                      type: [],
+                      property: []
+                    }];
                   }
 
                   if (
-                    columnToUpdate.metadata &&
-                    columnToUpdate.metadata.length > 0
+                    originalColMeta.types &&
+                    originalColMeta.types.length > 0
                   ) {
+                    if (!columnToUpdate.metadata[0].type) {
+                      columnToUpdate.metadata[0].type = [];
+                    }
+
+                    const addedTypes = originalColMeta.types.map(
+                      (typeMeta: any) => {
+                        const cleanTypeId = typeMeta.id.includes(":")
+                          ? typeMeta.id.split(":")[1]
+                          : typeMeta.id;
+
+                        return {
+                          ...typeMeta,
+                          id: typeMeta.id,
+                          name: typeMeta.name,
+                          uri: `https://www.wikidata.org/wiki/${cleanTypeId}`,
+                        };
+                      },
+                    );
+
+                    addedTypes.forEach((newType) => {
+                      const typeExists = columnToUpdate.metadata[0].type.some(
+                        (t: any) => t.id === newType.id,
+                      );
+                      if (!typeExists) {
+                        columnToUpdate.metadata[0].type.push(newType);
+                      }
+                    });
+                  }
+
+                  if (originalColMeta.properties &&
+                    originalColMeta.properties.length > 0) {
                     if (!columnToUpdate.metadata[0].property) {
                       columnToUpdate.metadata[0].property = [];
                     }
+
+                    const addedProperties = originalColMeta.properties.map(
+                      (prop: any) => {
+                        console.log("prop", prop);
+                        const cleanId = prop.id.includes(":")
+                          ? prop.id.split(":")[1]
+                          : prop.id;
+
+                        return {
+                          ...prop,
+                          id: prop.id,
+                          uri: `https://www.wikidata.org/wiki/Property:${cleanId}`,
+                        };
+                      },
+                    );
+                    console.log("addedProperties", addedProperties);
+
+                    addedProperties.forEach((newProp) => {
+                      const propertyExists =
+                        columnToUpdate.metadata[0].property.some(
+                          (p: any) =>
+                            p.id === newProp.id && p.obj === newProp.obj,
+                        );
+                      if (!propertyExists) {
+                        columnToUpdate.metadata[0].property.push(newProp);
+                      }
+                      console.log("columnToUpdate.metadata[0].property", columnToUpdate.metadata[0].property);
+                    });
                   }
-
-                  const addedProperties = originalColMeta.properties.map(
-                    (prop: any) => {
-                      console.log("prop", prop);
-                      const cleanId = prop.id.includes(":")
-                        ? prop.id.split(":")[1]
-                        : prop.id;
-
-                      return {
-                        ...prop,
-                        id: prop.id,
-                        uri: `https://www.wikidata.org/wiki/Property:${cleanId}`,
-                      };
-                    },
-                  );
-
-                  addedProperties.forEach((newProp) => {
-                    const propertyExists =
-                      columnToUpdate.metadata[0].property.some(
-                        (p: any) =>
-                          p.id === newProp.id && p.obj === newProp.obj,
-                      );
-                    if (!propertyExists) {
-                      columnToUpdate.metadata[0].property.push(newProp);
-                    }
-                  });
                 }
               }
             },

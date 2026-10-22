@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login } from "../utils/setup.utils";
+import { login, openDataset, openTable } from "../utils/setup.utils";
 import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
@@ -23,8 +23,7 @@ test('Create dataset & Upload table', async ({ page }) => {
   await ui.confirmBtn.click();
 
   //Open dataset
-  await page.getByRole('link', { name: datasetName, exact: true }).click();
-  await expect(page.getByRole('heading', { name: datasetName })).toBeVisible();
+  await openDataset(page, datasetName);
   console.log('Dataset created.');
 
   //Upload table
@@ -39,10 +38,11 @@ test('Create dataset & Upload table', async ({ page }) => {
   const baseDirectory = 'FILE_PATH';
   const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
   await fileChooser.setFiles(filePath);
+  await expect(ui.confirmBtn).toBeVisible();
   await ui.confirmBtn.click();
 
   //Open table
-  await page.getByRole('link', { name: tableName, exact: true }).click();
+  await openTable(page, tableName);
   const tableNameInput = page.getByLabel('Table name');
   await expect(tableNameInput).toBeVisible();
   await expect(tableNameInput).toHaveValue(tableName);
