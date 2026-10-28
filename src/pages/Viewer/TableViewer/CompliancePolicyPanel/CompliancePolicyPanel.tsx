@@ -76,14 +76,14 @@ const CompliancePolicyPanel = ({
         const { policyJson } = event.data;
         dispatch(
           updateCurrentTable({
-            odrlPolicies: policyJson.odrl,
+            odrlPolicies: policyJson,
           })
         );
         console.log("Stato attuale tableInstance:", tableInstance);
         dispatch(
           saveTable({
             ...tableInstance,
-            odrlPolicies: policyJson.odrl,
+            odrlPolicies: policyJson,
           })
         );
       }
