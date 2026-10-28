@@ -6,6 +6,7 @@ import { AppConfig } from "config";
 export interface IConfigState extends RequestEnhancedState {
   app: AppConfig;
   policyEditorUrl: string;
+  policyEngineUrl: string;
   entities: {
     reconciliators: ReconciliatorsState;
     extenders: ExtendersState;

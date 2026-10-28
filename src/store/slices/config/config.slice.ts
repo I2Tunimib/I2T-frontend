@@ -7,6 +7,7 @@ import { IConfigState } from "./interfaces/config";
 const initialState: IConfigState = {
   app: CONFIG,
   policyEditorUrl: "",
+  policyEngineUrl: "",
   entities: {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] },
@@ -25,6 +26,7 @@ export const configSlice = createSliceWithRequests({
       // Handle different possible response structures
       const payload = (action.payload as any) || {};
       state.policyEditorUrl = payload.policyEditorUrl;
+      state.policyEngineUrl = payload.policyEngineUrl;
 
       // Try to find reconciliators data - could be under different keys
       const reconciliators =

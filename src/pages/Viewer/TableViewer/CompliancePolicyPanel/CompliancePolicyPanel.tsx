@@ -48,6 +48,7 @@ const CompliancePolicyPanel = ({
   const tableInstance = useAppSelector((state) => state.table.entities.tableInstance);
   const initialComplianceType = useAppSelector((state: any) => state.table.ui.initialComplianceType);
   const policyEditorBaseUrl = useAppSelector((state: any) => state.config?.policyEditorUrl);
+  const policyEngineBaseUrl = useAppSelector((state: any) => state.config?.policyEngineUrl);
   const [currentPath, setCurrentPath] = useState<string>("/user/home#menu1");
   const [iframeKey, setIframeKey] = useState<number>(0);
   const policyEditorUrl = `${policyEditorBaseUrl}${currentPath}`;
@@ -79,7 +80,6 @@ const CompliancePolicyPanel = ({
             odrlPolicies: policyJson,
           })
         );
-        console.log("Stato attuale tableInstance:", tableInstance);
         dispatch(
           saveTable({
             ...tableInstance,
@@ -372,15 +372,28 @@ const CompliancePolicyPanel = ({
         alignItems="center"
         justifyContent="center"
       >
-        <Stack alignItems="center" textAlign="center">
-          <ErrorOutlineRoundedIcon color="warning" sx={{ fontSize: 48 }} />
-          <Typography variant="subtitle1" fontWeight={600}>
-            Not available
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            The Policy Engine URL has not been configured.
-          </Typography>
-        </Stack>
+        {policyEngineBaseUrl ? (
+          <iframe
+            src={policyEngineBaseUrl}
+            title="Policy Engine"
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+              flex: 1,
+            }}
+          />
+        ) : (
+          <Stack alignItems="center" textAlign="center">
+            <ErrorOutlineRoundedIcon color="warning" sx={{ fontSize: 48 }} />
+            <Typography variant="subtitle1" fontWeight={600}>
+              Not available
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              The Policy Engine URL has not been configured.
+            </Typography>
+          </Stack>
+        )}
       </Box>
     </Drawer>
   );
