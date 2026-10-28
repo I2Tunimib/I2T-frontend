@@ -1,5 +1,6 @@
 import {
   Drawer,
+  Button,
   IconButton,
   Typography,
   Divider,
@@ -18,9 +19,11 @@ import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import EditNoteRoundedIcon from "@mui/icons-material/EditNoteRounded";
 import HelpOutlineRounded from "@mui/icons-material/HelpOutlineRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
+import PolicyRoundedIcon from "@mui/icons-material/PolicyRounded";
 import { useAppSelector, useAppDispatch } from "@hooks/store";
 import { selectComplianceDialogStatus } from "@store/slices/table/table.selectors";
-import { updateUI } from "@store/slices/table/table.slice";
+import { updateUI, updateCurrentTable } from "@store/slices/table/table.slice";
+import { saveTable } from "@store/slices/table/table.thunk";
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent } from "react";
 import GDPRContent from "./GDPRContent";
 import styles from "./CompliancePolicyPanel.module.scss";
@@ -42,11 +45,53 @@ const CompliancePolicyPanel = ({
 }: CompliancePolicyPanelProps) => {
   const dispatch = useAppDispatch();
   const open = useAppSelector(selectComplianceDialogStatus);
+  const tableInstance = useAppSelector((state) => state.table.entities.tableInstance);
   const initialComplianceType = useAppSelector((state: any) => state.table.ui.initialComplianceType);
   const policyEditorBaseUrl = useAppSelector((state: any) => state.config?.policyEditorUrl);
-  const policyEditorUrl = `${policyEditorBaseUrl}/update?policy=...%20Create%20new%20policy%20....&mode=create`;
+  const [currentPath, setCurrentPath] = useState<string>("/user/home#menu1");
+  const [iframeKey, setIframeKey] = useState<number>(0);
+  const policyEditorUrl = `${policyEditorBaseUrl}${currentPath}`;
   const [complianceType, setComplianceType] = useState<string>("");
   const [tab, setTab] = useState<number>(0);
+
+  const handleGoHome = () => {
+    setCurrentPath("/user/home#menu1");
+    setIframeKey((prev) => prev + 1);
+  };
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === "POLICY_EDITOR_NAVIGATED") {
+        if (event.data.view === "home") {
+          setCurrentPath("/user/home#menu1");
+        } else if (event.data.path) {
+          let cleanPath = event.data.path;
+          if (cleanPath.startsWith("/policy-editor")) {
+            cleanPath = cleanPath.replace("/policy-editor", "");
+          }
+          setCurrentPath(cleanPath);
+        }
+      }
+      if (event.data && event.data.type === "POLICY_SAVED") {
+        const { policyJson } = event.data;
+        dispatch(
+          updateCurrentTable({
+            odrlPolicies: policyJson.odrl,
+          })
+        );
+        console.log("Stato attuale tableInstance:", tableInstance);
+        dispatch(
+          saveTable({
+            ...tableInstance,
+            odrlPolicies: policyJson.odrl,
+          })
+        );
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   const handleClose = () => {
     dispatch(updateUI({ openComplianceStatusDialog: false }));
@@ -201,6 +246,12 @@ const CompliancePolicyPanel = ({
           label="Policy Editor"
           sx={{ minHeight: 40, textTransform: "none", fontSize: "0.8rem" }}
         />
+        <Tab
+          icon={<PolicyRoundedIcon fontSize="small" />}
+          iconPosition="start"
+          label="Policy Engine"
+          sx={{ minHeight: 40, textTransform: "none", fontSize: "0.8rem" }}
+        />
       </Tabs>
 
       <Divider />
@@ -273,16 +324,30 @@ const CompliancePolicyPanel = ({
         justifyContent="center"
       >
         {policyEditorBaseUrl ? (
-          <iframe
-            src={policyEditorUrl}
-            title="Policy Editor"
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-              flex: 1,
-            }}
-          />
+          <>
+            <Stack direction="row" justifyContent="flex-start" width="100%" mb={1}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={handleGoHome}
+                disabled={currentPath.includes("/user/home")}
+                sx={{ fontSize: "0.75rem", textTransform: "none" }}
+              >
+                Back to Policy Editor Home
+              </Button>
+            </Stack>
+            <iframe
+              key={iframeKey}
+              src={policyEditorUrl}
+              title="Policy Editor"
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+                flex: 1,
+              }}
+            />
+          </>
         ) : (
           <Stack alignItems="center" textAlign="center">
             <ErrorOutlineRoundedIcon color="warning" sx={{ fontSize: 48 }} />
@@ -290,10 +355,32 @@ const CompliancePolicyPanel = ({
               Not available
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              The Policy Editor URL has not been configured
+              The Policy Editor URL has not been configured.
             </Typography>
           </Stack>
         )}
+      </Box>
+
+      {/* Policy Engine */}
+      <Box
+        className={styles.Body}
+        flex={1}
+        overflow="auto"
+        p={2}
+        display={tab === 2 ? "flex" : "none"}
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Stack alignItems="center" textAlign="center">
+          <ErrorOutlineRoundedIcon color="warning" sx={{ fontSize: 48 }} />
+          <Typography variant="subtitle1" fontWeight={600}>
+            Not available
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            The Policy Engine URL has not been configured.
+          </Typography>
+        </Stack>
       </Box>
     </Drawer>
   );

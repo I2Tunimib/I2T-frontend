@@ -37,6 +37,7 @@ export interface TableInstance {
   complianceStatus?: "PENDING" | "DONE" | "ERROR";
   compliance?: any; // legacy — kept for backward compatibility
   complianceReports?: ComplianceReport[];
+  odrlPolicies?: any;
 }
 
 export interface ComplianceReport {
