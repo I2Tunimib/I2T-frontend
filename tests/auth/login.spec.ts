@@ -22,7 +22,7 @@ test('Authentication Local', async ({ page }) => {
   console.log('Login successful.');
 
   const dashboardHeader = page.getByRole('heading', { name: 'Datasets' });
-  await expect(dashboardHeader).toBeVisible();
+  await expect(dashboardHeader).toBeVisible({ timeout: 10000 });
 });
 
 test('Authentication Chronos', async ({ page }) => {

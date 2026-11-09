@@ -247,3 +247,44 @@ test('Reconcile Geocoding: Geo Coordinates (HERE)', async ({ page }) => {
   await page.locator('div:nth-child(2) > div:nth-child(3) > .MuiButtonBase-root').click();
   await expect(page.getByRole('link', { name: 'georss:48.64607,9.45235' })).toBeVisible();
 });
+
+test('Reconcile Linking: Text Annotation: NER (GateNLP)', async ({ page }) => {
+  test.setTimeout(120000);
+  const urlChronos = 'http://vm.chronos.disco.unimib.it:3001/';
+  const datasetName = 'Evaluation';
+  const tableName = 'table_textAnnotation';
+  // Please provide your local base directory path below
+  const baseDirectory = 'FILE_PATH';
+  const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_textAnnotation.csv`;
+  //Please provide your username and password
+  const username = 'test';
+  const password = 'test';
+
+  await login(page, urlChronos, username, password);
+  await getOrCreateDataset(page, datasetName);
+  await expect(page.getByRole('heading', { name: datasetName })).toBeVisible();
+  console.log('Dataset opened.');
+
+  await getOrCreateTable(page, tableName, filePath);
+  const tableNameInput = page.getByLabel('Table name');
+  await expect(tableNameInput).toBeVisible();
+  await expect(tableNameInput).toHaveValue(tableName);
+  console.log('Table opened.');
+
+  /**
+   * Open Reconciliation Dialog of a specific column and select a group service, and then a reconciler
+   * * @param {import('@playwright/test').Page} page
+   * @param {string} columnName
+   * @param {string} groupService
+   * @param {string} service
+   */
+  await reconciliationDialog(page, 'Description', 'Wikidata', 'Text Annotation: NER (GateNLP)');
+  /**
+   * Configuration of the reconciler
+   * * @param {import('@playwright/test').Page} page
+   * @param {string[]} additionalColumns
+   */
+  await reconcilerConfig(page, []);
+  await expect(page.getByText('Learn more about annotation')).toBeVisible({ timeout: 10000000 });
+  console.log('Column "Match Location" reconciled.');
+});

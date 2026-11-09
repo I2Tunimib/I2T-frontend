@@ -13,13 +13,14 @@ export const login = async (page, url, username, password) => {
 
 export const openDataset = async (page, datasetName) => {
   const datasetLink = page.getByRole('link', { name: datasetName, exact: true });
-  try {
-    await datasetLink.waitFor({ state: 'visible', timeout: 3000 });
-  } catch (e) {
+  let isVisible = await datasetLink.isVisible();
+  while (!isVisible) {
     const goToPageBtn = page.getByRole('button', { name: 'Go to page' });
     if (await goToPageBtn.isVisible()) {
       await goToPageBtn.click();
-      await datasetLink.waitFor({ state: 'visible', timeout: 3000 });
+      isVisible = await datasetLink.isVisible();
+    } else {
+      break;
     }
   }
 
@@ -30,13 +31,14 @@ export const openDataset = async (page, datasetName) => {
 
 export const openTable = async (page, tabletName) => {
   const tableLink = page.getByRole('link', { name: tabletName, exact: true });
-  try {
-    await tableLink.waitFor({ state: 'visible', timeout: 3000 });
-  } catch (e) {
+  let isVisible = await tableLink.isVisible();
+  while (!isVisible) {
     const goToPageBtn = page.getByRole('button', { name: 'Go to page' });
     if (await goToPageBtn.isVisible()) {
       await goToPageBtn.click();
-      await tableLink.waitFor({ state: 'visible', timeout: 3000 });
+      isVisible = await tableLink.isVisible();
+    } else {
+      break;
     }
   }
 
@@ -71,6 +73,16 @@ export const getOrCreateDataset = async (page, datasetName) => {
 
 export const getOrCreateTable = async (page, tableName, filePath) => {
   const tableLink = page.getByRole('link', { name: tableName, exact: true });
+  const tableExists = await tableLink.count() > 0 && await tableLink.isVisible();
+  if (!tableExists) {
+    await page.getByRole('button', { name: 'New table' }).click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Select file (.csv or .json)' }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(filePath);
+    await page.getByRole('textbox', { name: 'Table name' }).fill(tableName);
+    await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  }
   try {
     await tableLink.waitFor({ state: 'visible', timeout: 3000 });
   } catch (e) {
@@ -81,16 +93,6 @@ export const getOrCreateTable = async (page, tableName, filePath) => {
         await tableLink.waitFor({ state: 'visible', timeout: 2000 });
       } catch (err) {}
     }
-  }
-
-  if (!(await tableLink.isVisible())) {
-    await page.getByRole('button', { name: 'New table' }).click();
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.getByRole('button', { name: 'Select file (.csv or .json)' }).click();
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(filePath);
-    await page.getByRole('textbox', { name: 'Table name' }).fill(tableName);
-    await page.getByRole('button', { name: 'Confirm', exact: true }).click();
   }
   await tableLink.click();
 };

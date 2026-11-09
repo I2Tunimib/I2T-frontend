@@ -8,7 +8,6 @@ export const getComponents = (page) => ({
   extendRightBtn: page.getByText('Extend column'),
   reconcileRightBtn: page.getByText('Reconcile column'),
   modifyRightBtn: page.getByText('Modify column'),
-  editBtn: page.getByText('Edit'),
   reconcileCellBtn: page.getByText('Reconciliate cell'),
   manageMetaBtn: page.getByText('Manage metadata'),
   deleteRowBtn: page.getByText('Delete row'),
@@ -17,6 +16,7 @@ export const getComponents = (page) => ({
   logoutBtn: page.getByText('Logout'),
   listProps: page.getByText('Show list').nth(1),
   listTypes: page.getByText('Show list').first(),
+  editBtn: page.getByText('Edit', { exact: true }),
 
   datasetBtn: page.getByRole('button', { name: 'New dataset' }),
   tableBtn: page.getByRole('button', { name: 'New table' }),
@@ -25,8 +25,10 @@ export const getComponents = (page) => ({
   doneBtn: page.getByRole('button', { name: 'Done' }),
   helpBtn: page.getByRole('button', { name: 'help' }),
   cancelBtn: page.getByRole('button', { name: 'Cancel' }),
+  accessBtn: page.getByRole('button', { name: 'Access' }),
   userMenuBtn: page.getByRole('button', { name: 'user-menu' }),
   helpDatasetBtn: page.getByRole('button', { name: 'help-dataset' }),
+  helpTableBtn: page.getByRole('button', { name: 'help-table' }),
   rawViewBtn: page.getByRole('button', { name: 'raw view' }),
   listViewBtn: page.getByRole('button', { name: 'list view' }),
   gridViewBtn: page.getByRole('button', { name: 'grid view' }),
@@ -57,6 +59,7 @@ export const getComponents = (page) => ({
   addPropertyBtn: page.getByRole('button', { name: 'Add property' }),
   searchBtn: page.getByRole('button', { name: 'Search' }),
   confirmCloseBtn: page.getByRole('button', { name: 'Confirm and Close' }),
+  closePanelBtn: page.getByRole('button', { name: 'Close panel' }),
   viewBtn: page.getByRole('button', { name: 'View' }),
   addType: page.getByRole('button', { name: 'Add type' }),
   nextPageBtn: page.getByRole('button', { name: 'Go to next page' }),
@@ -82,17 +85,50 @@ export const getComponents = (page) => ({
   extensionBtn: page.getByRole('button', { name: 'Extend', exact: true }),
   addBtn: page.getByRole('button', { name: 'Add', exact: true }),
   saveBtn: page.getByRole('button', { name: 'Save', exact: true }),
+  schemaBtn: page.getByRole('button', { name: 'Schema', exact: true }),
+  pipelineBtn: page.getByRole('button', { name: 'Pipeline', exact: true }),
 
-  selectDatasetBtn: (datasetName: string) => page.getByRole('row', { name: `${datasetName}` }).getByRole('checkbox'),
-  selectTableBtn: (tableName: string) => page.getByRole('row', { name: `${tableName}` }).getByRole('checkbox'),
+  selectDatasetBtn: (datasetName: string) => page.getByRole('row', { name: new RegExp(`^${datasetName}\\b`) }).getByRole('checkbox'),
+  selectTableBtn: (tableName: string) => page.getByRole('row', { name: new RegExp(`^${tableName}\\b`) }).getByRole('checkbox'),
   cell: (cellLabel: string) => page.getByRole('gridcell', { name: cellLabel }).first(),
   searchInWikidataBtn: (label: string) => page.getByRole('button', { name: `Search "${label}" in Wikidata` }),
-  labelCellBtn: (label: string) => page.getByRole('button', { name: `${label}` }),
-  confirmComponentBtn: (component: string) => page.getByRole(`${component}`).getByRole('button', { name: 'Confirm' }),
+  labelCellBtn: (label: string) => page.getByRole('button', { name: label }),
+  confirmComponentBtn: (component: string) => page.getByRole(component).getByRole('button', { name: 'Confirm' }),
   showTypesNumberBtn: (number: string) => page.getByRole('button', { name: `(${number}) 👉` }),
   selectService: (enrichmentStep: string) => page.getByText(`Choose ${enrichmentStep} service...`),
   linkLabelBtn: (celLabel: string, number: number) => page.getByRole('row', { name: `${celLabel} (${number}) 👇` }).getByRole('link'),
 
+  addUserTarget: async (userTarget: string, emailTarget: string, isViewer: boolean) => {
+    const ui = getComponents(page);
+
+    await expect(page.getByRole('combobox', { name: 'Search username or email' })).toBeVisible();
+    await page.getByRole('combobox', { name: 'Search username or email' }).click();
+    await page.getByRole('combobox', { name: 'Search username or email' }).fill(userTarget);
+    await expect(page.getByRole('option', { name: `${userTarget} (${emailTarget})` })).toBeVisible();
+    await page.getByRole('option', { name: `${userTarget} (${emailTarget})` }).click();
+    await expect(page.locator('select')).toBeVisible();
+    if (!isViewer) {
+      await page.locator('select').selectOption('editor');
+    }
+    await ui.addBtn.click();
+    await expect(page.getByRole('button', { name: `${isViewer ? "Viewers" : "Editors"} (2)` })).toBeVisible();
+    await page.getByRole('button', { name: `${isViewer ? "Viewers" : "Editors"} (2)` }).click();
+    await expect(page.getByText(`${userTarget} (${emailTarget})`)).toBeVisible();
+    await ui.closeBtn.click();
+  },
+  removeUserTarget: async (userTarget: string, emailTarget: string, isViewer: boolean) => {
+    const ui = getComponents(page);
+
+    await expect(page.getByRole('button', { name: `${isViewer ? "Viewers" : "Editors"} (2)` })).toBeVisible();
+    await page.getByRole('button', { name: `${isViewer ? "Viewers" : "Editors"} (2)` }).click();
+    await expect(page.getByText(`${userTarget} (${emailTarget})`)).toBeVisible();
+    const regionCancelBtn = page.getByRole('list').getByRole('button').first();
+    await regionCancelBtn.scrollIntoViewIfNeeded();
+    await expect(regionCancelBtn).toBeVisible();
+    await regionCancelBtn.click();
+    await expect(page.getByRole('button', { name: `${isViewer ? "Viewers" : "Editors"} (1)` })).toBeVisible();
+    await ui.closeBtn.click();
+  },
   pinColumn: async (columnName: string, rightClick: boolean) => {
     const ui = getComponents(page);
     const column = page.getByRole('columnheader', { name: columnName });

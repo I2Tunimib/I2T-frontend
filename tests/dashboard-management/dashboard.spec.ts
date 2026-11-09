@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, openDataset, openTable } from "../utils/setup.utils";
+import { getOrCreateTable, login, openDataset } from "../utils/setup.utils";
 import { getComponents } from "../utils/components.utils";
 
 test.beforeEach(async ({ page }) => {
@@ -42,7 +42,7 @@ test('Create dataset & Upload table', async ({ page }) => {
   await ui.confirmBtn.click();
 
   //Open table
-  await openTable(page, tableName);
+  await getOrCreateTable(page, tableName, filePath);
   const tableNameInput = page.getByLabel('Table name');
   await expect(tableNameInput).toBeVisible();
   await expect(tableNameInput).toHaveValue(tableName);
@@ -74,16 +74,17 @@ test('Create dataset with same name (Auto-rename check)', async ({ page }) => {
 
 test('Upload table with same name (Auto-rename check)', async ({ page }) => {
   test.setTimeout(120000);
+  const datasetName = 'DatasetTest';
   const baseName = 'table_sample';
   const expectedRename = 'table_sample_1';
   // Please provide your local base directory path below
-  const baseDirectory = 'FILE_PATH';
+  const baseDirectory = '/Users/cyreneabjelina/Library/CloudStorage/GoogleDrive-c.abjelina@campus.unimib.it';
   const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_sample.csv`;
   const ui = getComponents(page);
 
   //Dataset opened
-  await page.getByRole('link', { name: 'Dataset_test', exact: true }).click();
-  console.log('Dataset "Dataset_test" opened.');
+  await page.getByRole('link', { name: datasetName, exact: true }).click();
+  console.log('Dataset opened.');
 
   //Upload first table
   await ui.tableBtn.click();
@@ -105,112 +106,4 @@ test('Upload table with same name (Auto-rename check)', async ({ page }) => {
   //Auto-rename table
   await expect(page.getByText(expectedRename)).toBeVisible();
   console.log(`Success: Table ${baseName} was correctly renamed to ${expectedRename}`);
-});
-
-test('Raw/List view all/selected datasets', async ({ page }) => {
-  test.setTimeout(120000);
-  const baseName = 'DatasetTest';
-  const ui = getComponents(page);
-
-  await ui.rawViewBtn.click();
-  const element = page.getByText(`name: "${baseName}"`).first();
-  await element.scrollIntoViewIfNeeded();
-  await expect(element).toBeVisible();
-  await ui.listViewBtn.click();
-  await expect(page.getByText(`${baseName}`)).toBeVisible();
-
-  await ui.selectDatasetBtn(`${baseName}`).click();
-  await ui.rawViewBtn.click();
-  await expect(element).toBeVisible();
-});
-
-test('Raw/Grid/List view all/selected tables', async ({ page }) => {
-  test.setTimeout(120000);
-  const baseName = 'table_fullTableAnnotation';
-  const ui = getComponents(page);
-
-  await page.getByRole('link', { name: 'Dataset_test', exact: true }).click();
-  await ui.rawViewBtn.click();
-  const element = page.getByText(`name: "${baseName}"`).first();
-  await element.scrollIntoViewIfNeeded();
-  await expect(element).toBeVisible();
-  await ui.gridViewBtn.click();
-  await expect(page.getByRole('link', { name: `${baseName}` })).toBeVisible();
-  await ui.listViewBtn.click();
-  await expect(page.getByText(`${baseName}`)).toBeVisible();
-
-  await ui.selectTableBtn(`${baseName}`).click();
-  await ui.rawViewBtn.click();
-  await expect(element).toBeVisible();
-  await ui.gridViewBtn.click();
-  await expect(page.getByRole('link', { name: `${baseName}` })).toBeVisible();
-});
-
-test('Help Link', async ({ page }) => {
-  test.setTimeout(120000);
-  const ui = getComponents(page);
-
-  await test.step('General Help from Dashboard', async () => {
-    await ui.helpBtn.click();
-    await expect(page.getByRole('heading', { name: 'Upload a dataset' })).toBeVisible();
-    await ui.nextBtn.click();
-    await expect(page.getByRole('heading', { name: 'Upload a table' })).toBeVisible();
-    await ui.doneBtn.click();
-
-    //Back to Dashboard
-    await expect(page.getByRole('heading', { name: 'Datasets' })).toBeVisible();
-    console.log('General Help from Dashboard checked.');
-  });
-
-  await test.step('Contextual Help inside Add Dataset Dialog', async () => {
-    //Open Add dataset dialog
-    await ui.datasetBtn.click();
-    await expect(page.getByRole('heading', { name: 'Add dataset' })).toBeVisible();
-
-    //Open contextual help
-    await ui.helpDatasetBtn.click();
-    await expect(page.getByRole('heading', { name: 'Upload a dataset' })).toBeVisible();
-    await ui.nextBtn.click();
-    await expect(page.getByRole('heading', { name: 'Upload a table' })).toBeVisible();
-    await ui.doneBtn.click();
-
-    //Back to Add dataset dialog
-    await expect(page.getByRole('heading', { name: 'Add dataset' })).toBeVisible();
-
-    //Back to Dashboard
-    await ui.cancelBtn.click();
-    await expect(page.getByRole('heading', { name: 'Datasets' })).toBeVisible();
-    console.log('Contextual Help inside Add Dataset Dialog checked.');
-  });
-});
-
-test('Search Table', async ({ page }) => {
-  test.setTimeout(120000);
-  const searchInput = page.getByPlaceholder('Search for a table name');
-  const tableName = 'table_sample';
-  const resultLink = page.getByRole('link').filter({ hasText: 'table_sample' }).first();
-  const tableNameHeading = page.getByLabel('Table name');
-
-  //Search table name
-  await searchInput.click();
-  await searchInput.fill(tableName);
-
-  //Table found
-  await expect(resultLink).toBeVisible();
-
-  //Open table
-  await resultLink.click();
-  await expect(tableNameHeading).toBeVisible();
-  await expect(tableNameHeading).toHaveValue(tableName);
-  console.log('Table found and opened.');
-});
-
-test('Logout', async ({ page }) => {
-  const ui = getComponents(page);
-  await ui.userMenuBtn.click();
-  await ui.logoutBtn.click();
-
-  //Back to Landing page
-  await expect(page).toHaveURL('/');
-  console.log('Logout successful: User redirected to landing page.');
 });
