@@ -13,15 +13,16 @@ import {
 } from "@mui/material";
 import { HelpOutline } from "@mui/icons-material";
 import {
-  selectIsHelpDialogOpen,
   selectIsUploadDatasetDialogOpen,
   selectUploadDatasetStatus,
+  selectDatasets,
 } from "@store/slices/datasets/datasets.selectors";
 import { updateUI } from "@store/slices/datasets/datasets.slice";
 //import { LoadingButton } from "@mui/lab";
 import { ChangeEvent, useState, FocusEvent, useRef, useEffect } from "react";
 import { uploadDataset } from "@store/slices/datasets/datasets.thunk";
-import HelpDialog from "../HelpDialog/HelpDialog";
+import { useSnackbar } from "notistack";
+import ToolbarTutorialDialog from "@pages/Dashboard/ToolbarTutorialDialog/ToolbarTutorialDialog";
 
 type ErrorState = Record<string, string>;
 
@@ -31,11 +32,14 @@ const UploadDataset = () => {
   const [datasetName, setDatasetName] = useState<string>("");
   const [datasetFile, setDatasetFile] = useState<File>();
   const [error, setError] = useState<ErrorState>({});
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
 
   const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const isOpen = useAppSelector(selectIsUploadDatasetDialogOpen);
-  const helpDialogOpen = useAppSelector(selectIsHelpDialogOpen);
+  const datasetData = useAppSelector(selectDatasets);
+  const existingDatasets = datasetData?.collection || [];
 
   const { loading, error: uploadError } = useAppSelector(
     selectUploadDatasetStatus
@@ -62,18 +66,43 @@ const UploadDataset = () => {
     dispatch(updateUI({ uploadDatasetDialogOpen: false }));
   };
 
+  const getUniqueDatasetName = (name: string) => {
+    const baseName = name.trim() === "" ? "Unnamed dataset" : name.trim();
+    const existingNames = new Set(existingDatasets.map((t: any) => t.name));
+
+    if (!existingNames.has(baseName)) {
+      return { uniqueName: baseName, wasRenamed: false };
+    }
+
+    let counter = 1;
+    let newName = `${baseName}_${counter}`;
+    while (existingNames.has(newName)) {
+      counter++;
+      newName = `${baseName}_${counter}`;
+    }
+
+    return { uniqueName: newName, wasRenamed: true };
+  };
+
   const handleConfirm = () => {
     if (!datasetName) {
       setError((old) => ({ ...old, name: "A name must be set" }));
     }
 
     if (datasetName) {
+      const { uniqueName, wasRenamed } = getUniqueDatasetName(datasetName);
       const formData = new FormData();
       if (datasetFile) formData.append("file", datasetFile);
-      formData.append("name", datasetName);
+      formData.append("name", uniqueName);
       dispatch(uploadDataset({ formData }))
         .unwrap()
         .then(() => {
+          if (wasRenamed) {
+            enqueueSnackbar("Dataset name provided already exists. A numeric suffix has been added.", {
+              variant: "info",
+              autoHideDuration: 3000,
+            });
+          }
           resetForm();
           handleClose();
         });
@@ -114,7 +143,7 @@ const UploadDataset = () => {
         Add dataset
         <IconButton
           aria-label="help-dataset"
-          onClick={() => dispatch(updateUI({ helpDialogOpen: true }))}
+          onClick={() => setTutorialOpen(true)}
           size="small"
           sx={{ ml: 1 }}
         >
@@ -181,9 +210,10 @@ const UploadDataset = () => {
           Confirm
         </Button>
       </DialogActions>
-      <HelpDialog
-        open={helpDialogOpen}
-        onClose={() => dispatch(updateUI({ helpDialogOpen: false }))}
+      <ToolbarTutorialDialog
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+        initialStep={1}
       />
     </Dialog>
   );

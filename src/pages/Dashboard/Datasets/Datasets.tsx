@@ -205,18 +205,23 @@ const Datasets: FC<DatasetsProps> = ({ onSelectionChange, selectedRows = [] }) =
       const isOwner =
         currentUserId !== undefined &&
         String(currentUserId) === String(row.original.userId);
+      const uid = currentUserId !== undefined ? String(currentUserId) : null;
+      const isEditor =
+        uid !== null &&
+        Array.isArray(row.original.editors) &&
+        row.original.editors.map(String).includes(uid);
       return (
         <>
           <Stack direction="row" gap="8px" className={globalStyles.Actions}>
-            <Tooltip title={isOwner ? "Read & Write" : "Read Only"}>
+            <Tooltip title={isOwner || isEditor ? "Read & Write" : "Read Only"}>
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  color: isOwner ? "success.main" : "action.disabled",
+                  color: isOwner || isEditor ? "success.main" : "action.disabled",
                 }}
               >
-                {isOwner ? (
+                {isOwner || isEditor ? (
                   <LockOpenOutlined fontSize="small" />
                 ) : (
                   <LockOutlined fontSize="small" />

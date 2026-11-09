@@ -1,7 +1,10 @@
 import {
   FC, forwardRef,
   ReactNode,
-  useEffect, useRef
+  useEffect,
+  useRef,
+  useState,
+  useLayoutEffect
 } from 'react';
 import {
   Row,
@@ -107,6 +110,34 @@ const TableListView: FC<TableListViewProps> = ({
   rowSelection,
 }) => {
   const match = useMediaQuery('(max-width:1230px)');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 8,
+  });
+
+  useLayoutEffect(() => {
+    const updatePageSize = () => {
+      if (containerRef.current) {
+        const containerHeight = containerRef.current.clientHeight;
+        const footerHeight = 20;
+        const rowHeight = 48;
+
+        const availableHeight = containerHeight - footerHeight;
+        const calculatedRows = Math.floor(availableHeight / rowHeight);
+        const newSize = calculatedRows > 3 ? calculatedRows : 3;
+
+        setPagination((prev) => ({
+          ...prev,
+          pageSize: newSize,
+        }));
+      }
+    };
+
+    updatePageSize();
+    window.addEventListener('resize', updatePageSize);
+    return () => window.removeEventListener('resize', updatePageSize);
+  }, []);
 
   const extraColumns: ColumnDef<any>[] = [
     {
@@ -155,12 +186,11 @@ const TableListView: FC<TableListViewProps> = ({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     enableRowSelection: true,
-    initialState: {
-      pagination: {
-        pageSize: 12,
-      },
+    state: {
+      pagination,
       rowSelection: rowSelection || {},
-    }
+    },
+    onPaginationChange: setPagination,
   });
 
   const paginationProps = {
@@ -177,6 +207,7 @@ const TableListView: FC<TableListViewProps> = ({
 
   return (
     <div
+      ref={containerRef}
       style={{
         display: 'flex',
         flexDirection: 'column',

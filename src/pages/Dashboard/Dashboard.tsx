@@ -34,7 +34,6 @@ import {
 import {
   selectCurrentDataset,
   selectGetAllDatasetsStatus,
-  selectIsHelpDialogOpen,
 } from "@store/slices/datasets/datasets.selectors";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { Status as CompletionStatus } from "@store/slices/datasets/interfaces/datasets";
@@ -51,7 +50,6 @@ import Datasets from "./Datasets/Datasets";
 import Tables from "./Tables";
 import UploadDataset from "./UploadDataset/UploadDataset";
 import UploadTable from "./UploadTable/UploadTable";
-import HelpDialog from "./HelpDialog/HelpDialog";
 import W3CViewer from "../Viewer/W3CViewer/W3CViewer";
 
 export const calcPercentage = (status: CompletionStatus) => {
@@ -79,7 +77,6 @@ const Dashboard: FC<any> = () => {
   const { path, url } = useRouteMatch();
   const matches = useMediaQuery("(max-width:1365px)");
   const currentDataset = useAppSelector(selectCurrentDataset);
-  const helpDialogOpen = useAppSelector(selectIsHelpDialogOpen);
   const history = useHistory();
   const { loading: loadingDatasets } = useAppSelector(
     selectGetAllDatasetsStatus,
@@ -362,10 +359,6 @@ const Dashboard: FC<any> = () => {
       </div>
       <UploadDataset />
       <UploadTable />
-      <HelpDialog
-        open={helpDialogOpen}
-        onClose={() => dispatch(updateUI({ helpDialogOpen: false }))}
-      />
     </MainLayout>
   );
 };

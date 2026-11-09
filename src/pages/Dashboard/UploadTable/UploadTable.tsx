@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Stack,
   TextField,
   Typography,
@@ -14,12 +15,15 @@ import {
   selectCurrentDataset,
   selectIsUploadTableDialogOpen,
   selectUploadDatasetStatus,
+  selectCurrentDatasetTables,
 } from "@store/slices/datasets/datasets.selectors";
 import { updateUI } from "@store/slices/datasets/datasets.slice";
 //import { LoadingButton } from '@mui/lab';
 import { ChangeEvent, useState, FocusEvent, useRef } from "react";
 import { uploadTable } from "@store/slices/datasets/datasets.thunk";
-import { useParams } from "react-router-dom";
+import { useSnackbar } from "notistack";
+import ToolbarTutorialDialog from "@pages/Dashboard/ToolbarTutorialDialog/ToolbarTutorialDialog";
+import { HelpOutline } from "@mui/icons-material";
 
 type ErrorState = Record<string, string>;
 
@@ -29,17 +33,40 @@ const UploadTable = () => {
   const [tableName, setTableName] = useState<string>("");
   const [tableFile, setTableFile] = useState<File>();
   const [error, setError] = useState<ErrorState>({});
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
 
   const dispatch = useAppDispatch();
+  const { enqueueSnackbar } = useSnackbar();
   const isOpen = useAppSelector(selectIsUploadTableDialogOpen);
   const currentDataset = useAppSelector(selectCurrentDataset);
+  const currentDatasetTables = useAppSelector(selectCurrentDatasetTables);
+  const existingTables = currentDatasetTables?.collection || [];
+
   const { loading, error: uploadError } = useAppSelector(
     selectUploadDatasetStatus
   );
 
   const handleClose = () => {
     dispatch(updateUI({ uploadTableDialogOpen: false }));
+  };
+
+  const getUniqueTableName = (name: string) => {
+    const baseName = name.trim() === "" ? "Unnamed table" : name.trim();
+    const existingNames = new Set(existingTables.map((t: any) => t.name));
+
+    if (!existingNames.has(baseName)) {
+      return { uniqueName: baseName, wasRenamed: false };
+    }
+
+    let counter = 1;
+    let newName = `${baseName}_${counter}`;
+    while (existingNames.has(newName)) {
+      counter++;
+      newName = `${baseName}_${counter}`;
+    }
+
+    return { uniqueName: newName, wasRenamed: true };
   };
 
   const handleConfirm = () => {
@@ -50,13 +77,20 @@ const UploadTable = () => {
       setError((old) => ({ ...old, file: "A file must be selected" }));
     }
     if (tableName && tableFile) {
+      const { uniqueName, wasRenamed } = getUniqueTableName(tableName);
       const formData = new FormData();
       formData.append("file", tableFile);
-      formData.append("name", tableName);
+      formData.append("name", uniqueName);
 
       dispatch(uploadTable({ formData, datasetId: currentDataset.id }))
         .unwrap()
         .then(() => {
+          if (wasRenamed) {
+            enqueueSnackbar("Table name provided already exists. A numeric suffix has been added.", {
+              variant: "info",
+              autoHideDuration: 3000,
+            });
+          }
           handleClose();
         });
     }
@@ -86,7 +120,23 @@ const UploadTable = () => {
 
   return (
     <Dialog open={isOpen} onClose={handleClose}>
-      <DialogTitle>Add table</DialogTitle>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        Add table
+        <IconButton
+          aria-label="help-table"
+          onClick={() => setTutorialOpen(true)}
+          size="small"
+          sx={{ ml: 1 }}
+        >
+          <HelpOutline />
+        </IconButton>
+      </DialogTitle>
       <DialogContent>
         <DialogContentText>
           Select a table to upload. Please refer to the
@@ -140,6 +190,11 @@ const UploadTable = () => {
           Confirm
         </Button>
       </DialogActions>
+      <ToolbarTutorialDialog
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+        initialStep={2}
+      />
     </Dialog>
   );
 };
