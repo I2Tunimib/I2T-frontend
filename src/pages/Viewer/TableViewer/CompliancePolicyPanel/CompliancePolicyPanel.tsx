@@ -1,6 +1,5 @@
 import {
   Drawer,
-  Button,
   IconButton,
   Typography,
   Divider,
@@ -25,6 +24,8 @@ import { selectComplianceDialogStatus } from "@store/slices/table/table.selector
 import { updateUI, updateCurrentTable } from "@store/slices/table/table.slice";
 import { saveTable } from "@store/slices/table/table.thunk";
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent } from "react";
+import EvaluatorContent from "./EvaluatorContent";
+import ValidatorContent from "./ValidatorContent";
 import GDPRContent from "./GDPRContent";
 import styles from "./CompliancePolicyPanel.module.scss";
 
@@ -45,36 +46,49 @@ const CompliancePolicyPanel = ({
 }: CompliancePolicyPanelProps) => {
   const dispatch = useAppDispatch();
   const open = useAppSelector(selectComplianceDialogStatus);
+  const columns = useAppSelector((state) => state.table.entities.columns);
   const tableInstance = useAppSelector((state) => state.table.entities.tableInstance);
   const initialComplianceType = useAppSelector((state: any) => state.table.ui.initialComplianceType);
-  const policyEditorBaseUrl = useAppSelector((state: any) => state.config?.policyEditorUrl);
-  const policyEngineBaseUrl = useAppSelector((state: any) => state.config?.policyEngineUrl);
-  const [currentPath, setCurrentPath] = useState<string>("/user/home#menu1");
-  const [iframeKey, setIframeKey] = useState<number>(0);
-  const policyEditorUrl = `${policyEditorBaseUrl}${currentPath}`;
   const [complianceType, setComplianceType] = useState<string>("");
-  const [tab, setTab] = useState<number>(0);
 
-  const handleGoHome = () => {
-    setCurrentPath("/user/home#menu1");
-    setIframeKey((prev) => prev + 1);
-  };
+  const policyEditorBaseUrl = useAppSelector((state: any) => state.config?.policyEditorUrl);
+  const policyEditorUrl =
+    policyEditorBaseUrl
+      ? `${policyEditorBaseUrl}${policyEditorBaseUrl.includes('?') ? '&' : '?'}&showHeader=true&showLeftPanel=false&showCenterPanel=true&templateMode=true&showRightPanel=false&showRuleTabsHeader=true&showSHACL=false`
+      : '';
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const targetOptions = [
+    tableInstance.name,
+    ...(columns?.allIds?.map((colId) => {
+      const colLabel = columns.byId[colId]?.label || colId;
+      return `${tableInstance.name}/${colLabel}`;
+    }) || [])
+  ];
+
+  const [policyOperationType, setPolicyOperationType] = useState<string>("");
+  const [tab, setTab] = useState<number>(0);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === "POLICY_EDITOR_NAVIGATED") {
-        if (event.data.view === "home") {
-          setCurrentPath("/user/home#menu1");
-        } else if (event.data.path) {
-          let cleanPath = event.data.path;
-          if (cleanPath.startsWith("/policy-editor")) {
-            cleanPath = cleanPath.replace("/policy-editor", "");
-          }
-          setCurrentPath(cleanPath);
+      if (!event.data) return;
+      // Policy Editor ready: sending existing policies
+      if (event.data.type === "MSG_READY") {
+        const iframeWindow = (document.querySelector('iframe[title="Policy Editor"]') as HTMLIFrameElement)?.contentWindow;
+        if (iframeWindow) {
+          iframeWindow.postMessage(
+            {
+              type: "MSG_INITIATE",
+              policy: tableInstance?.odrlPolicies || {},
+              targetOptions: targetOptions,
+            },
+            "*"
+          );
         }
       }
-      if (event.data && event.data.type === "POLICY_SAVED") {
-        const { policyJson } = event.data;
+
+      // Publishing policies and saving it into the table's description
+      if (event.data.type === "MSG_FINALIZE") {
+        const policyJson = event.data.policy;
         dispatch(
           updateCurrentTable({
             odrlPolicies: policyJson,
@@ -91,7 +105,7 @@ const CompliancePolicyPanel = ({
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [dispatch, tableInstance]);
 
   const handleClose = () => {
     dispatch(updateUI({ openComplianceStatusDialog: false }));
@@ -108,6 +122,10 @@ const CompliancePolicyPanel = ({
 
   const handleTypeChange = (e: SelectChangeEvent<string>) => {
     setComplianceType(e.target.value);
+  };
+
+  const handleOperationTypeChange = (e: SelectChangeEvent<string>) => {
+    setPolicyOperationType(e.target.value);
   };
 
   const [drawerWidth, setDrawerWidth] = useState(
@@ -316,38 +334,27 @@ const CompliancePolicyPanel = ({
       <Box
         className={styles.Body}
         flex={1}
-        overflow="auto"
-        p={2}
+        overflow="hidden"
+        p={0}
         display={tab === 1 ? "flex" : "none"}
         flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
+        width="100%"
+        height="100%"
       >
         {policyEditorBaseUrl ? (
-          <>
-            <Stack direction="row" justifyContent="flex-start" width="100%" mb={1}>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={handleGoHome}
-                disabled={currentPath.includes("/user/home")}
-                sx={{ fontSize: "0.75rem", textTransform: "none" }}
-              >
-                Back to Policy Editor Home
-              </Button>
-            </Stack>
-            <iframe
-              key={iframeKey}
-              src={policyEditorUrl}
-              title="Policy Editor"
-              style={{
-                width: "100%",
-                height: "100%",
-                border: "none",
-                flex: 1,
-              }}
-            />
-          </>
+          <iframe
+            ref={iframeRef}
+            src={policyEditorUrl}
+            title="Policy Editor"
+            style={{
+              width: "100%",
+              height: "100%",
+              minWidth: 0,
+              border: "none",
+              flex: 1,
+              boxSizing: "border-box",
+            }}
+          />
         ) : (
           <Stack alignItems="center" textAlign="center">
             <ErrorOutlineRoundedIcon color="warning" sx={{ fontSize: 48 }} />
@@ -367,32 +374,58 @@ const CompliancePolicyPanel = ({
         flex={1}
         overflow="auto"
         p={2}
-        display={tab === 2 ? "flex" : "none"}
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
+        display={tab === 2 ? "block" : "none"}
       >
-        {policyEngineBaseUrl ? (
-          <iframe
-            src={policyEngineBaseUrl}
-            title="Policy Engine"
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-              flex: 1,
+        <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+          <Typography variant="body2" color="text.secondary">
+            Select the Policy Engine operation you want to perform:
+          </Typography>
+          <IconButton
+            aria-label="open-compliance-discover"
+            size="small"
+            onClick={() => {
+              dispatch(
+                updateUI({
+                  openHelpDialog: true,
+                  helpStart: "discover",
+                  discoverStep: 30,
+                })
+              );
             }}
-          />
-        ) : (
-          <Stack alignItems="center" textAlign="center">
-            <ErrorOutlineRoundedIcon color="warning" sx={{ fontSize: 48 }} />
-            <Typography variant="subtitle1" fontWeight={600}>
-              Not available
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              The Policy Engine URL has not been configured.
-            </Typography>
-          </Stack>
+          >
+            <HelpOutlineRounded fontSize="small" />
+          </IconButton>
+        </Stack>
+
+        <FormControl fullWidth sx={{ marginTop: "10px", marginBottom: "20px" }}>
+          <InputLabel
+            id="operation-type-label"
+          >
+            Operation type
+          </InputLabel>
+          <Select
+            labelId="operation-type-label"
+            value={policyOperationType}
+            label="Operation type"
+            onChange={handleOperationTypeChange}
+            variant="outlined"
+            size="medium"
+          >
+            <MenuItem value="EvaluatorMonitoring">Policy Evaluator on SotW</MenuItem>
+            <MenuItem value="SHACLInspector">SHACL Inspector</MenuItem>
+          </Select>
+        </FormControl>
+
+        {policyOperationType === "EvaluatorMonitoring" && (
+          <Box sx={{ pt: 2, borderTop: "1px solid #eee" }}>
+            <EvaluatorContent tableId={tableId} datasetId={datasetId} />
+          </Box>
+        )}
+
+        {policyOperationType === "SHACLInspector" && (
+          <Box sx={{ pt: 2, borderTop: "1px solid #eee" }}>
+            <ValidatorContent tableId={tableId} datasetId={datasetId} />
+          </Box>
         )}
       </Box>
     </Drawer>

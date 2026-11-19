@@ -29,6 +29,8 @@ export type ApiConfig = {
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
     COMPLIANCE: Endpoint;
+    EVALUATE_POLICY: Endpoint;
+    VALIDATE_POLICY: Endpoint;
     DOWNLOAD_COMPLIANCE_REPORT: Endpoint;
     EXPORT: Endpoint[];
     AUTH_SIGNIN: Endpoint;
@@ -118,6 +120,12 @@ const CONFIG: AppConfig = {
       ],
       COMPLIANCE: {
         path: "/dataset/:datasetId/table/:tableId/compliance",
+      },
+      EVALUATE_POLICY: {
+        path: "/dataset/:datasetId/table/:tableId/evaluate",
+      },
+      VALIDATE_POLICY: {
+        path: "/dataset/:datasetId/table/:tableId/validate",
       },
       DOWNLOAD_COMPLIANCE_REPORT: {
         path: "/dataset/:datasetId/table/:tableId/compliance/:reportIndex",
@@ -228,6 +236,13 @@ const CONFIG: AppConfig = {
               }
               return String(data);
             },
+          },
+        },
+        {
+          path: "/dataset/:datasetId/table/:tableId/export?format=sotwCsv",
+          name: "State of the World (CSV)",
+          params: {
+            extension: "csv",
           },
         },
       ],

@@ -188,6 +188,8 @@ const TableListView: FC<TableListViewProps> = ({
     enableRowSelection: true,
     state: {
       pagination,
+    },
+    initialState: {
       rowSelection: rowSelection || {},
     },
     onPaginationChange: setPagination,

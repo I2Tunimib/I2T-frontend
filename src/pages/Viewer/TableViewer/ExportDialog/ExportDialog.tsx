@@ -95,7 +95,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
   const filteredFormats = API.ENDPOINTS.EXPORT.filter(({ name }) => {
     if (type === "schema") return name.toLowerCase().includes("schema");
     if (type === "table") return !name.toLowerCase().includes("schema") && !name.toLowerCase().includes("pipeline");
-    if (type === "pipeline") return name.toLowerCase().includes("pipeline");
+    if (type === "pipeline") return name.toLowerCase().includes("pipeline") || name.toLowerCase().includes("world");
     return true;
   });
 
@@ -147,7 +147,7 @@ const ExportDialog: FC<ExportDialogProps> = () => {
 
     // Don't allow pipeline exports if there are unsaved changes
     const isPipeline =
-      format === "Python pipeline" || format === "Jupyter notebook pipeline";
+      format === "Python pipeline" || format === "Jupyter notebook pipeline" || format === "State of the World (CSV)";
     if (isPipeline && isUnsaved) {
       dispatch(updateUI({ openExportDialog: false }));
       enqueueSnackbar(

@@ -430,6 +430,34 @@ const tableAPI = {
         Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
       },
     }),
+  evaluatePolicy: (params: Record<string, string | number> = {}, data: { policy: string; sotw: string }) => {
+    return apiClient.post<any>(
+      apiEndpoint({
+        endpoint: "EVALUATE_POLICY",
+        paramsValue: { ...params },
+      }),
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    );
+  },
+  validatePolicy: (params: Record<string, string | number> = {}, data: { odrl: string }) => {
+    return apiClient.post<any>(
+      apiEndpoint({
+        endpoint: "VALIDATE_POLICY",
+        paramsValue: { ...params },
+      }),
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    );
+  },
 };
 
 export default tableAPI;
