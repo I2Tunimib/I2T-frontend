@@ -31,8 +31,6 @@ import AccountTreeRoundedIcon from "@mui/icons-material/AccountTreeRounded";
 import {
   addTutorialBox,
   deleteSelected,
-  redo,
-  undo,
   updateSelectedCellExpanded,
   updateUI,
 } from "@store/slices/table/table.slice";
@@ -76,6 +74,8 @@ import {
   extend,
   reconcile,
   modify,
+  undoWithSync,
+  redoWithSync,
 } from "@store/slices/table/table.thunk";
 import {
   selectAppConfig,
@@ -423,14 +423,14 @@ const SubToolbar = ({
             tooltipText="Undo"
             Icon={UndoRoundedIcon}
             disabled={!canUndo}
-            onClick={() => dispatch(undo())}
+            onClick={() => dispatch(undoWithSync(undefined))}
           />
           <IconButtonTooltip
             aria-label="redo"
             tooltipText="Redo"
             Icon={RedoRoundedIcon}
             disabled={!canRedo}
-            onClick={() => dispatch(redo())}
+            onClick={() => dispatch(redoWithSync())}
           />
           <IconButtonTooltip
             aria-label="delete-selected"

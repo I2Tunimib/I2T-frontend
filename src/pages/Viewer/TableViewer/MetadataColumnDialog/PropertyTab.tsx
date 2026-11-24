@@ -37,13 +37,12 @@ import {
 import {
   addColumnMetadata,
   deleteColumnMetadata,
-  undo,
   updateColumnRole,
   updateColumnMetadata,
   updateColumnPropertyMetadata,
   updateUI,
 } from "@store/slices/table/table.slice";
-import { reconcile } from "@store/slices/table/table.thunk";
+import { reconcile, undoWithSync } from "@store/slices/table/table.thunk";
 import { getCellContext } from "@store/slices/table/utils/table.reconciliation-utils";
 import { FC, useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -347,7 +346,7 @@ const PropertyTab: FC<PropertyTabProps> = ({ addEdit, setCurrentRole, currentKin
   };
 
   const handleCancel = () => {
-    dispatch(undo(undoSteps));
+    dispatch(undoWithSync(undoSteps));
     dispatch(updateUI({ openMetadataColumnDialog: false }));
   };
 

@@ -8,6 +8,7 @@ const initialState: IConfigState = {
   app: CONFIG,
   policyEditorUrl: "",
   policyEngineUrl: "",
+  annotationQuickViewUrl: "",
   entities: {
     reconciliators: { byId: {}, allIds: [] },
     extenders: { byId: {}, allIds: [] },
@@ -27,6 +28,9 @@ export const configSlice = createSliceWithRequests({
       const payload = (action.payload as any) || {};
       state.policyEditorUrl = payload.policyEditorUrl;
       state.policyEngineUrl = payload.policyEngineUrl;
+
+      // Base URL of the semTProxy quickView page (annotated-text entities)
+      state.annotationQuickViewUrl = payload.annotationQuickViewUrl || "";
 
       // Try to find reconciliators data - could be under different keys
       const reconciliators =

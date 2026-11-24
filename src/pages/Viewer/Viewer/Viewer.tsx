@@ -8,6 +8,7 @@ import {
 import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { getTable, getDependencies } from "@store/slices/table/table.thunk";
 import datasetAPI from "@services/api/datasets";
+import tableAPI from "@services/api/table";
 import { FC, useCallback, useEffect, useRef } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { LinearProgress, Stack } from "@mui/material";
@@ -93,16 +94,17 @@ const Viewer: FC<unknown> = () => {
           currentUserId !== undefined &&
           dataset.editors.map(String).includes(uid);
 
-        // Owner always has dataset-level edit rights; also respect visibility/editors
+        // Dataset-level edit rights: owner or an explicit editor.
         const datasetCanEdit = Boolean(
-          dataset &&
-          (isOwner || dataset.visibility === "public" || isDatasetEditor),
+          dataset && (isOwner || isDatasetEditor),
         );
         let canEdit = datasetCanEdit;
         try {
           const tableResp = await datasetAPI.getTableAcl(datasetId, tableId);
           const table = tableResp.data as any;
-          if (table.visibility === "private" && isOwner === false) {
+          // A "restricted" table has its own ACL: dataset editors are not
+          // automatically table editors.
+          if (table.visibility === "restricted" && isOwner === false) {
             const isTableEditor =
               Array.isArray(table.editors) &&
               table.editors.map(String).includes(uid);
@@ -162,12 +164,17 @@ const Viewer: FC<unknown> = () => {
     }
   }, [tableId, datasetId]);
 
-  // WebSocket listener for compliance status updates
-  useEffect(() => {
-    if (!socket || !datasetId || !tableId) return;
+  // Latest compliance status, readable from callbacks without stale closures
+  const complianceStatusRef = useRef<string | undefined>(undefined);
+  complianceStatusRef.current = currentTable.complianceStatus;
 
-    const handleComplianceDone = (data: any) => {
-      if (data.datasetId !== datasetId || data.tableId !== tableId) return;
+  // Shared by the websocket event and the polling fallback. Idempotent: once
+  // the status is no longer PENDING, further calls are ignored.
+  const onComplianceFinished = useCallback(
+    (data: { status: string; complianceReports?: any; error?: string }) => {
+      if (complianceStatusRef.current !== "PENDING") return;
+      if (data.status !== "DONE" && data.status !== "ERROR") return;
+      complianceStatusRef.current = data.status;
 
       if (refSnack.current) {
         closeSnackbar(refSnack.current);
@@ -184,20 +191,125 @@ const Viewer: FC<unknown> = () => {
             complianceReports: data.complianceReports,
           }),
         );
-      } else if (data.status === "ERROR") {
+      } else {
         enqueueSnackbar(
           data.error || "GDPR compliance check failed. Please try again.",
           { variant: "error" },
         );
         dispatch(updateCurrentTable({ complianceStatus: "ERROR" }));
       }
+    },
+    [dispatch, enqueueSnackbar, closeSnackbar],
+  );
+
+  // WebSocket listener for compliance status updates
+  useEffect(() => {
+    if (!socket || !datasetId || !tableId) return;
+
+    const handleComplianceDone = (data: any) => {
+      if (data.datasetId !== datasetId || data.tableId !== tableId) return;
+      onComplianceFinished(data);
     };
 
     socket.on("compliance-done", handleComplianceDone);
     return () => {
       socket.off("compliance-done", handleComplianceDone);
     };
-  }, [socket, datasetId, tableId, dispatch, enqueueSnackbar, closeSnackbar]);
+  }, [socket, datasetId, tableId, onComplianceFinished]);
+
+  // Polling fallback in case the websocket event is never received
+  useEffect(() => {
+    if (!datasetId || !tableId || currentTable.complianceStatus !== "PENDING")
+      return;
+
+    let inFlight = false;
+    let stopped = false;
+
+    const interval = setInterval(async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const response = await tableAPI.getTableStatus({ tableId, datasetId });
+        if (stopped) return;
+        const table = response.data;
+        // Other values (e.g. a GDPR result written just before DONE) mean
+        // the run is still finishing: keep polling.
+        if (table?.complianceStatus === "DONE") {
+          onComplianceFinished({
+            status: "DONE",
+            complianceReports: table.complianceReports,
+          });
+        } else if (table?.complianceStatus === "ERROR") {
+          onComplianceFinished({ status: "ERROR" });
+        }
+      } catch {
+        // transient failure: retry on next tick
+      } finally {
+        inFlight = false;
+      }
+    }, 5000);
+
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [currentTable.complianceStatus, datasetId, tableId, onComplianceFinished]);
+
+  // Both annotation kinds complete asynchronously and normally notify us via
+  // Socket.IO. If that event is missed (or websockets are unavailable), poll the
+  // lightweight status endpoint, which does not touch the store, and reload the
+  // table once when the run is over so the grid does not flicker meanwhile.
+  // The reload happens at most once per pending run, even if the store still
+  // reports PENDING afterwards.
+  useEffect(() => {
+    const annotationPending =
+      currentTable.mantisStatus === "PENDING" ||
+      currentTable.schemaStatus === "PENDING";
+    if (!datasetId || !tableId || !annotationPending) return;
+
+    let inFlight = false;
+    let stopped = false;
+
+    const refreshCompletedAnnotation = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const result = await tableAPI.getTableStatus({ tableId, datasetId });
+        if (stopped) return;
+
+        const stillPending =
+          (currentTable.mantisStatus === "PENDING" &&
+            result.data?.mantisStatus === "PENDING") ||
+          (currentTable.schemaStatus === "PENDING" &&
+            result.data?.schemaStatus === "PENDING");
+        if (!stillPending) {
+          stopped = true;
+          clearInterval(interval);
+          await dispatch(getTable({ tableId, datasetId })).unwrap();
+          dispatch(updateUI({ settings: { isViewOnly: false } }));
+          dispatch(getDependencies({ tableId, datasetId }));
+        }
+      } catch {
+        // A transient fetch failure must not stop the fallback.
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    refreshCompletedAnnotation();
+    const interval = setInterval(refreshCompletedAnnotation, 5000);
+
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [
+    currentTable.mantisStatus,
+    currentTable.schemaStatus,
+    datasetId,
+    tableId,
+    dispatch,
+  ]);
 
   useEffect(() => {
     if (isEmptyObject(currentTable)) return;

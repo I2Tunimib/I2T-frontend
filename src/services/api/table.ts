@@ -1,6 +1,8 @@
 import { ID } from "@store/interfaces/store";
 import {
   Column,
+  DependencyGraph,
+  DependencyOperation,
   Row,
   TableInstance,
 } from "@store/slices/table/interfaces/table";
@@ -13,6 +15,13 @@ export interface GetTableResponse {
   columns: Record<ID, Column>;
   rows: Record<ID, Row>;
   columnOrder?: string[]; // Optional field for preserving column order
+}
+
+export interface GetTableStatusResponse {
+  mantisStatus?: "PENDING" | "DONE";
+  schemaStatus?: "PENDING" | "DONE" | "ERROR";
+  complianceStatus?: "PENDING" | "DONE" | "ERROR";
+  complianceReports?: any[];
 }
 
 export interface GetSchemaResponse {
@@ -55,6 +64,20 @@ const tableAPI = {
       {
         clearCacheEntry: true,
         headers,
+      },
+    );
+  },
+  getTableStatus: (params: Record<string, string | number> = {}) => {
+    return apiClient.get<GetTableStatusResponse>(
+      apiEndpoint({
+        endpoint: "GET_TABLE_STATUS",
+        paramsValue: { ...params },
+      }),
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
       },
     );
   },
@@ -412,6 +435,43 @@ const tableAPI = {
         paramsValue: params,
       }),
       {},
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    ),
+
+  // Toolbar Undo/Redo <-> operation log sync. Unlike deleteOperation/
+  // redoOperation above (which cascade to downstream ops and re-run
+  // reconciliation), these only ever touch a single operation: the local
+  // table state has already been reverted/replayed by the frontend's Redux
+  // undo stack, so the backend just needs to keep the log in sync.
+  removeLoggedOperation: (params: Record<string, string | number>) =>
+    apiClient.delete<{ deleted: string[]; dependencies: DependencyGraph }>(
+      apiEndpoint({
+        endpoint: "REMOVE_LOGGED_OPERATION",
+        paramsValue: params,
+      }),
+      {
+        clearCacheEntry: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("kc_token") || localStorage.getItem("token")}`,
+        },
+      },
+    ),
+
+  restoreLoggedOperation: (
+    params: Record<string, string | number>,
+    operation: DependencyOperation,
+  ) =>
+    apiClient.post<{ restored: DependencyOperation; dependencies: DependencyGraph }>(
+      apiEndpoint({
+        endpoint: "RESTORE_LOGGED_OPERATION",
+        paramsValue: params,
+      }),
+      { operation },
       {
         clearCacheEntry: true,
         headers: {

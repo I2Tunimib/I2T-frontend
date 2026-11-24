@@ -217,14 +217,6 @@ const datasetAPI = {
     );
   },
 
-  setVisibility: (datasetId: string, visibility: string) => {
-    return apiClient.post(
-      apiEndpoint({ endpoint: "SET_VISIBILITY", paramsValue: { datasetId } }),
-      { visibility },
-      { headers: { ...getAuthHeader() } },
-    );
-  },
-
   // Table ACL endpoints
   getTableAcl: (datasetId: string, tableId: string) =>
     apiClient.get(
@@ -267,7 +259,7 @@ const datasetAPI = {
   setTableVisibility: (
     datasetId: string,
     tableId: string,
-    visibility: string | null,
+    visibility: "restricted" | null,
   ) =>
     apiClient.post(
       apiEndpoint({

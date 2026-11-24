@@ -51,7 +51,6 @@ export interface DatasetInstance {
   tables: ID[];
   // ACL fields (populated from API)
   userId?: string;
-  visibility?: "private" | "public";
   viewers?: string[];
   editors?: string[];
 }
@@ -91,7 +90,8 @@ export interface TableInstance {
   headerTypeMatching?: { total: number; value: number };
   nProperties?: number | string;
   // ACL fields (populated from API)
-  visibility?: "private" | "public" | null;
+  // "restricted" = table has its own viewers/editors; null = inherits dataset ACL
+  visibility?: "restricted" | null;
   viewers?: string[];
   editors?: string[];
 }

@@ -19,6 +19,7 @@ export type ApiConfig = {
     GET_DATASET_INFO: Endpoint;
     GET_TABLES_BY_DATASET: Endpoint;
     GET_TABLE: Endpoint;
+    GET_TABLE_STATUS: Endpoint;
     GLOBAL_SEARCH: Endpoint;
     DELETE_DATASET: Endpoint;
     DELETE_TABLE: Endpoint;
@@ -42,10 +43,11 @@ export type ApiConfig = {
     GET_OPERATION_DOWNSTREAM_DEPS: Endpoint;
     DELETE_OPERATION: Endpoint;
     REDO_OPERATION: Endpoint;
+    REMOVE_LOGGED_OPERATION: Endpoint;
+    RESTORE_LOGGED_OPERATION: Endpoint;
     // ACL endpoints
     ADD_ACL_USER: Endpoint;
     REMOVE_ACL_USER: Endpoint;
-    SET_VISIBILITY: Endpoint;
     GET_TABLE_ACL: Endpoint;
     ADD_TABLE_ACL_USER: Endpoint;
     REMOVE_TABLE_ACL_USER: Endpoint;
@@ -86,6 +88,8 @@ const CONFIG: AppConfig = {
       },
       UPDATE_DATASET: {
         path: "/dataset/:datasetId",
+      GET_TABLE_STATUS: {
+        path: "/dataset/:datasetId/table/:tableId/status",
       },
       DELETE_DATASET: {
         path: "/dataset/:datasetId",
@@ -142,6 +146,12 @@ const CONFIG: AppConfig = {
       REDO_OPERATION: {
         path: "/dataset/:datasetId/table/:tableId/operation/:opId/redo",
       },
+      REMOVE_LOGGED_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/:opId/step",
+      },
+      RESTORE_LOGGED_OPERATION: {
+        path: "/dataset/:datasetId/table/:tableId/operation/restore",
+      },
       EXPORT: [
         {
           path: "/dataset/:datasetId/table/:tableId/export?format=schema_w3c",
@@ -183,7 +193,7 @@ const CONFIG: AppConfig = {
           },
         },
         {
-          path: "/dataset/:datasetId/table/:tableId/export?format=rdf&serialization=:serialization&baseUri=:baseUri&score=:score&match=:match",
+          path: "/dataset/:datasetId/table/:tableId/export?format=rdf",
           name: "RDF",
           params: {
             postDownload: (data: any) => {
@@ -265,7 +275,6 @@ const CONFIG: AppConfig = {
       // ACL endpoints
       ADD_ACL_USER: { path: "/dataset/:datasetId/acl" },
       REMOVE_ACL_USER: { path: "/dataset/:datasetId/acl" },
-      SET_VISIBILITY: { path: "/dataset/:datasetId/acl/visibility" },
       GET_TABLE_ACL: { path: "/dataset/:datasetId/table/:tableId/acl" },
       ADD_TABLE_ACL_USER: {
         path: "/dataset/:datasetId/table/:tableId/acl",

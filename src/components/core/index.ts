@@ -21,6 +21,7 @@ import TaggedSearch from "./TaggedSearch/TaggedSearch";
 import CheckboxGroup from "./CheckboxGroup/CheckboxGroup";
 import MultipleSelectChip from "./MultipleSelectChip";
 import CheckboxGroupCompact from "./CheckboxGroupCompact";
+import DebugMenu from "./DebugMenu/DebugMenu";
 
 export {
   StatusBadge,
@@ -45,4 +46,5 @@ export {
   CheckboxGroup,
   MultipleSelectChip,
   CheckboxGroupCompact,
+  DebugMenu,
 };

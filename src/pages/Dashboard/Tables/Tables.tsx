@@ -153,9 +153,6 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [
     currentUserId !== undefined &&
     currentDataset !== undefined &&
     String(currentUserId) === String((currentDataset as any).userId);
-  const datasetVisibility: "private" | "public" | undefined = (
-    currentDataset as any
-  )?.visibility;
 
   useEffect(() => {
     dispatch(getTablesByDataset({ datasetId }));
@@ -530,7 +527,6 @@ const Tables: FC<TablesProps> = ({ onSelectionChange, viewType, selectedRows = [
           onClose={() => setAclTableId(undefined)}
           datasetId={datasetId}
           tableId={aclTableId}
-          datasetVisibility={datasetVisibility}
           onChange={() => dispatch(getTablesByDataset({ datasetId }))}
         />
       )}

@@ -7,6 +7,8 @@ export interface IConfigState extends RequestEnhancedState {
   app: AppConfig;
   policyEditorUrl: string;
   policyEngineUrl: string;
+  // Base URL of the semTProxy quickView page, provided by the backend /config endpoint
+  annotationQuickViewUrl: string;
   entities: {
     reconciliators: ReconciliatorsState;
     extenders: ExtendersState;

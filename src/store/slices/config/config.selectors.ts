@@ -26,6 +26,11 @@ export const selectAppConfig = createSelector(
   (storeConfig) => storeConfig.app
 );
 
+export const selectAnnotationQuickViewUrl = createSelector(
+  selectStoreConfig,
+  (storeConfig) => storeConfig.annotationQuickViewUrl
+);
+
 export const selectAppConfigExportFormats = createSelector(
   selectStoreConfig,
   (storeConfig) => storeConfig.app.API.ENDPOINTS.EXPORT
