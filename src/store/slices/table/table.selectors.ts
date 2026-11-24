@@ -1,5 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { floor } from "@services/utils/math";
+import { headerWidth } from "@services/utils/header-width";
 import { RootState } from "@store";
 import { createRequestStatusSelector } from "@store/slices/requests/requests.selectors";
 import { ID } from "@store/interfaces/store";
@@ -554,7 +555,8 @@ export const selectDataTableFormat = createSelector(
         sortType: "customSort",
         id,
         data: { ...rest },
-        size: width ?? 150,
+        // no saved width: fit the header label
+        size: width ?? headerWidth(label, rest),
         minSize: minWidth ?? 80,
         maxSize: maxWidth ?? 800,
         enableResizing: true,

@@ -1,3 +1,4 @@
+import { headerWidth } from "@services/utils/header-width";
 import { describe, expect, it } from "vitest";
 import {
   selectAreCellReconciliated,
@@ -193,7 +194,9 @@ describe("selectDataTableFormat", () => {
     });
     const { columns } = selectDataTableFormat(rootOf(table, {}));
     expect(columns[0]).toMatchObject({ header: "a", accessorKey: "a", size: 200, minSize: 10, maxSize: 300 });
-    expect(columns[1]).toMatchObject({ size: 150, minSize: 80, maxSize: 800, enableResizing: true });
+    // no saved width: sized to fit the header label
+    expect(columns[1].size).toBe(headerWidth("b", {}));
+    expect(columns[1]).toMatchObject({ minSize: 80, maxSize: 800, enableResizing: true });
   });
 });
 
