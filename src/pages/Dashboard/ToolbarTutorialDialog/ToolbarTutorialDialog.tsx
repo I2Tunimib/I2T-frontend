@@ -15,11 +15,13 @@ import {
   useState,
   FunctionComponent,
   useCallback,
+  useEffect,
 } from "react";
 
 type ToolbarTutorialDialogProps = DialogProps & {
   open: boolean;
   onClose: () => void;
+  initialStep?: number;
 };
 
 const List = styled.ul({
@@ -280,9 +282,21 @@ const TutorialIndex: FC<{
   );
 };
 
-const ToolbarTutorialDialog: FC<ToolbarTutorialDialogProps> = ({ open, onClose, ...props }) => {
-  const [start, setStart] = useState(false);
-  const [activeStep, setActiveStep] = useState(1);
+const ToolbarTutorialDialog: FC<ToolbarTutorialDialogProps> = ({ open, onClose, initialStep = 0, ...props }) => {
+  const [start, setStart] = useState(initialStep > 0);
+  const [activeStep, setActiveStep] = useState(initialStep > 0 ? initialStep : 1);
+
+  useEffect(() => {
+    if (open) {
+      if (initialStep > 0) {
+        setStart(true);
+        setActiveStep(initialStep);
+      } else {
+        setStart(false);
+        setActiveStep(1);
+      }
+    }
+  }, [open, initialStep]);
 
   const handleNext = () => {
     if (activeStep === steps.length - 1) {

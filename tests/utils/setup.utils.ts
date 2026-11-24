@@ -11,27 +11,70 @@ export const login = async (page, url, username, password) => {
   await expect(dashboardHeader).toBeVisible();
 };
 
-export const getOrCreateDataset = async (page, datasetName) => {
+export const openDataset = async (page, datasetName) => {
   const datasetLink = page.getByRole('link', { name: datasetName, exact: true });
+  let isVisible = await datasetLink.isVisible();
+  while (!isVisible) {
+    const goToPageBtn = page.getByRole('button', { name: 'Go to page' });
+    if (await goToPageBtn.isVisible()) {
+      await goToPageBtn.click();
+      isVisible = await datasetLink.isVisible();
+    } else {
+      break;
+    }
+  }
+
+  //Open dataset
+  await datasetLink.click();
+  await expect(page.getByRole('heading', { name: datasetName })).toBeVisible();
+};
+
+export const openTable = async (page, tabletName) => {
+  const tableLink = page.getByRole('link', { name: tabletName, exact: true });
+  let isVisible = await tableLink.isVisible();
+  while (!isVisible) {
+    const goToPageBtn = page.getByRole('button', { name: 'Go to page' });
+    if (await goToPageBtn.isVisible()) {
+      await goToPageBtn.click();
+      isVisible = await tableLink.isVisible();
+    } else {
+      break;
+    }
+  }
+
+  //Open table
+  await tableLink.click();
+  await expect(page.getByRole('heading', { name: tabletName })).toBeVisible();
+};
+
+export const getOrCreateDataset = async (page, datasetName) => {
+  const datasetLink = page.getByRole('link', { name: datasetName });
   try {
     await datasetLink.waitFor({ state: 'visible', timeout: 3000 });
-  } catch (e) {}
+  } catch (e) {
+    const goToPageBtn = page.getByRole('button', { name: 'Go to page' });
+    if (await goToPageBtn.isVisible()) {
+      await goToPageBtn.click();
+      try {
+        await datasetLink.waitFor({ state: 'visible', timeout: 2000 });
+      } catch (err) {}
+    }
+  }
 
   if (!(await datasetLink.isVisible())) {
     await page.getByRole('button', { name: 'New dataset' }).click();
-    await page.getByLabel('Dataset name').fill(datasetName);
+    await page.getByRole('textbox', { name: 'Dataset name' }).fill(datasetName);
     await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Add dataset' })).not.toBeVisible();
   }
-  await datasetLink.click();
+
+  await openDataset(page, datasetName);
 };
 
 export const getOrCreateTable = async (page, tableName, filePath) => {
   const tableLink = page.getByRole('link', { name: tableName, exact: true });
-  try {
-    await tableLink.waitFor({ state: 'visible', timeout: 3000 });
-  } catch (e) {}
-
-  if (!(await tableLink.isVisible())) {
+  const tableExists = await tableLink.count() > 0 && await tableLink.isVisible();
+  if (!tableExists) {
     await page.getByRole('button', { name: 'New table' }).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByRole('button', { name: 'Select file (.csv or .json)' }).click();
@@ -39,6 +82,17 @@ export const getOrCreateTable = async (page, tableName, filePath) => {
     await fileChooser.setFiles(filePath);
     await page.getByRole('textbox', { name: 'Table name' }).fill(tableName);
     await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  }
+  try {
+    await tableLink.waitFor({ state: 'visible', timeout: 3000 });
+  } catch (e) {
+    const goToPageBtn = page.getByRole('button', { name: 'Go to page' });
+    if (await goToPageBtn.isVisible()) {
+      await goToPageBtn.click();
+      try {
+        await tableLink.waitFor({ state: 'visible', timeout: 2000 });
+      } catch (err) {}
+    }
   }
   await tableLink.click();
 };

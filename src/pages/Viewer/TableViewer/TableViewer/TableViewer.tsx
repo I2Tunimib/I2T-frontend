@@ -37,6 +37,9 @@ import {
 import { ID } from "@store/interfaces/store";
 import { RouteLeaveGuard } from "@components/kit";
 import clsx from "clsx";
+import { Alert, Button, Stack } from "@mui/material";
+import datasetAPI from "@services/api/datasets";
+import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
 import { Table } from "../Table";
 // import Toolbar from '../../Viewer/Toolbar';
 import styles from "./TableViewer.module.scss";
@@ -48,9 +51,7 @@ import {
 } from "../Menus/ContextMenus";
 import SubToolbar from "../SubToolbar";
 import DependenciesPanel from "../DependenciesPanel";
-import { Alert, Button, Stack } from "@mui/material";
-import datasetAPI from "@services/api/datasets";
-import { selectIsLoggedIn } from "@store/slices/auth/auth.selectors";
+import CompliancePolicyPanel from "../CompliancePolicyPanel";
 import { selectDatasets } from "@store/slices/datasets/datasets.selectors";
 
 interface MenuState {
@@ -517,6 +518,11 @@ const TableViewer = () => {
             handleClose={handleMenuClose}
           />
         </div>
+        <CompliancePolicyPanel
+          tableId={tableId}
+          datasetId={datasetId}
+          readonly={isViewOnly}
+        />
         <DependenciesPanel
           open={isPanelOpen}
           onClose={() => setIsPanelOpen(false)}

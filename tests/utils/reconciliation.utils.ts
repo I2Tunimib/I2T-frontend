@@ -38,15 +38,15 @@ export const reconcilerConfig = async (page: Page, additionalColumns: string[]) 
       const contextSelect = page.locator('#mui-component-select-additionalColumns');
       await contextSelect.click();
       for (const column of additionalColumns) {
-        await page.getByRole('option', {name: column, exact: true}).click();
+        await page.getByRole('option', { name: column, exact: true }).click();
       }
       await ui.confirmComponentBtn('listbox').click();
 
       if (additionalColumns.length > 2) {
         const supportColumns = additionalColumns.join(' , ');
-        await expect(page.getByRole('combobox', {name: supportColumns})).toBeVisible({timeout: 10000});
+        await expect(page.getByRole('combobox', { name: supportColumns })).toBeVisible({ timeout: 10000 });
       } else {
-        await expect(page.getByRole('combobox', {name: additionalColumns[0]})).toBeVisible({timeout: 10000});
+        await expect(page.getByRole('combobox', { name: additionalColumns[0] })).toBeVisible({ timeout: 10000 });
       }
     }
   }
@@ -112,9 +112,9 @@ export const addMetadata = async (
   await searchInKG(pageKG, idKG, nameKG, descriptionKG);
 
   const urlKG = pageKG.url();
-  await page.evaluate((url) => navigator.clipboard.writeText(url), urlKG);
   const uriInput = page.getByRole('textbox', { name: 'Uri' });
   await uriInput.click();
+  await uriInput.fill(urlKG);
   const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
   await page.keyboard.press(`${modifier}+V`);
   await expect(uriInput).toHaveValue(urlKG);

@@ -1347,11 +1347,11 @@ const HelpDialog: FC<HelpDialogProps> = ({ onClose, ...props }) => {
             <DialogTitle
               sx={{ display: "flex", alignItems: "center", gap: "10px" }}
             >
-              Welcome to SemTUI!
+              Welcome to SemT-UI!
             </DialogTitle>
             <DialogContent>
               <Stack gap="10px">
-                SemTUI is a framework for the semantic enrichment of tabular data.
+                SemT-UI is a framework for the semantic enrichment of tabular data.
                 <br />
                 It helps you enhance tables by linking cells and columns to external
                 knowledge sources, adding context and extra information.

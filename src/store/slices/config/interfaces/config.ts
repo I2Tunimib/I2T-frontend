@@ -5,6 +5,8 @@ import { AppConfig } from "config";
 // Define a type for the slice state
 export interface IConfigState extends RequestEnhancedState {
   app: AppConfig;
+  policyEditorUrl: string;
+  policyEngineUrl: string;
   // Base URL of the semTProxy quickView page, provided by the backend /config endpoint
   annotationQuickViewUrl: string;
   entities: {
@@ -132,6 +134,7 @@ export interface ApiConfig {
     GET_CPA: Endpoint;
     GET_CTA: Endpoint;
     GLOBAL_SEARCH: Endpoint;
+    UPDATE_DATASET: Endpoint;
     DELETE_DATASET: Endpoint;
     DELETE_TABLE: Endpoint;
     UPLOAD_DATASET: Endpoint;

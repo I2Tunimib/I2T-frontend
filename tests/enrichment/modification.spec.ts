@@ -7,7 +7,9 @@ import {
   regexConfig,
   textColumnsConfig,
   textRowsConfig,
-  dateFormatterConfig, pseudoanonymizationConfig
+  dateFormatterConfig,
+  pseudoanonymizationConfig,
+  coordsTruncationConfig
 } from "../utils/modification.utils";
 
 test.describe('Test in local', () => {
@@ -87,6 +89,31 @@ test.describe('Test in local', () => {
     await dataCleaningConfig(page, 'Convert to titlecase');
     await expect(page.getByText('Puma', { exact: true }).first()).toBeVisible();
     console.log('Converted to uppercase.');
+  });
+
+  test('Modify Coordinate Truncation', async ({ page, context }) => {
+    test.setTimeout(120000);
+    // Please provide your local base directory path below
+    const baseDirectory = 'FILE_PATH';
+    const filePath = `${baseDirectory}/Drive condivisi/SemT project (shared)/Test_Tables/Test interface/table_inTableLinking.json`;
+    const tableName = 'table_coordsTruncation';
+    await getOrCreateTable(page, tableName, filePath);
+    const tableNameInput = page.getByLabel('Table name');
+    await expect(tableNameInput).toBeVisible();
+    await expect(tableNameInput).toHaveValue(tableName);
+    console.log('Table opened.');
+
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await modificationDialog(page, 'coordinates', 'Coordinate Truncation Modifier');
+    console.log('Column "coordinates" selected.');
+
+    /**
+     * Configuration of Coordinate Truncation modifier
+     * * @param {import('@playwright/test').Page} page
+     * @param {string} decimal
+     */
+    await coordsTruncationConfig(page, '2');
+    console.log('Truncation successfully.');
   });
 
   test('Modify Regex', async ({ page, context }) => {

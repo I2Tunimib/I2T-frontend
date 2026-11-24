@@ -81,7 +81,7 @@ const ToolbarContent: FC<any> = () => {
         alignItems="center"
         gap="8px">
         <Typography className={styles.AppTitle} component="span" variant="h4">
-          SemTUI
+          SemT-UI
         </Typography>
       </Stack>
 

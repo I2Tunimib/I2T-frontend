@@ -25,10 +25,13 @@ export type ApiConfig = {
     DELETE_TABLE: Endpoint;
     UPLOAD_DATASET: Endpoint;
     UPLOAD_TABLE: Endpoint;
+    UPDATE_DATASET: Endpoint;
     SAVE: Endpoint;
     AUTOMATIC_ANNOTATION: Endpoint;
     PROCESS_START: Endpoint[];
     COMPLIANCE: Endpoint;
+    EVALUATE_POLICY: Endpoint;
+    VALIDATE_POLICY: Endpoint;
     DOWNLOAD_COMPLIANCE_REPORT: Endpoint;
     EXPORT: Endpoint[];
     AUTH_SIGNIN: Endpoint;
@@ -83,6 +86,8 @@ const CONFIG: AppConfig = {
       GET_TABLE: {
         path: "/dataset/:datasetId/table/:tableId",
       },
+      UPDATE_DATASET: {
+        path: "/dataset/:datasetId",
       GET_TABLE_STATUS: {
         path: "/dataset/:datasetId/table/:tableId/status",
       },
@@ -119,6 +124,12 @@ const CONFIG: AppConfig = {
       ],
       COMPLIANCE: {
         path: "/dataset/:datasetId/table/:tableId/compliance",
+      },
+      EVALUATE_POLICY: {
+        path: "/dataset/:datasetId/table/:tableId/evaluate",
+      },
+      VALIDATE_POLICY: {
+        path: "/dataset/:datasetId/table/:tableId/validate",
       },
       DOWNLOAD_COMPLIANCE_REPORT: {
         path: "/dataset/:datasetId/table/:tableId/compliance/:reportIndex",
@@ -235,6 +246,13 @@ const CONFIG: AppConfig = {
               }
               return String(data);
             },
+          },
+        },
+        {
+          path: "/dataset/:datasetId/table/:tableId/export?format=sotwCsv",
+          name: "State of the World (CSV)",
+          params: {
+            extension: "csv",
           },
         },
       ],

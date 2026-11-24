@@ -1,0 +1,27 @@
+.Header {
+  background: #fafafa;
+  min-height: 36px;
+}
+
+.Tabs {
+  background: #fafafa;
+  min-height: 40px;
+
+  :global(.MuiTab-root) {
+    min-height: 40px;
+  }
+}
+
+.Body {
+  font-size: 0.875rem;
+}
+
+.List {
+  padding: 4px 0 4px 24px;
+  list-style-type: disc;
+  margin: 0;
+}
+
+.List li:not(:last-child):not(:only-child) {
+  margin-bottom: 4px;
+}

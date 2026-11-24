@@ -32,7 +32,14 @@ export const useGraphData = (datasetId: string, tableId: string) => {
 
       const addPrefix = (idStr: string) => {
         if (!idStr) return undefined;
-        return idStr.includes(':') ? idStr : `${lastContextEntry?.prefix}${idStr}`;
+        if (idStr.includes(':')) return idStr;
+        if (lastContextEntry?.prefix) {
+          return `${lastContextEntry.prefix}${idStr}`;
+        }
+        if (idStr.startsWith('Q')) {
+          return `wd:${idStr}`;
+        }
+        return idStr;
       };
 
       const types = th.metadata?.flatMap((m: any) => m.type ?? []) ?? [];

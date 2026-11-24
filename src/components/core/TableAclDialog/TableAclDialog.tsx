@@ -118,9 +118,8 @@ const TableAclDialog: FC<Props> = ({
   useEffect(() => {
     const t = setTimeout(() => {
       if (!query) return setSearchResults([]);
-      const role = section === "editor" ? "editor" : undefined;
       usersAPI
-        .search(query, role)
+        .search(query)
         .then((r) => setSearchResults(r.data))
         .catch(() => setSearchResults([]));
     }, 300);
@@ -266,26 +265,34 @@ const TableAclDialog: FC<Props> = ({
                             .toLowerCase()
                             .includes(viewerFilter.toLowerCase()),
                         )
-                        .map((u: any) => (
-                          <ListItem
-                            key={`tv-${u.id}`}
-                            secondaryAction={
-                              isOwner ? (
-                                <IconButton
-                                  edge="end"
-                                  onClick={() => handleRemove(u.id, "viewer")}
-                                >
-                                  <DeleteRounded />
-                                </IconButton>
-                              ) : null
-                            }
-                          >
-                            <ListItemText
-                              primary={`${u.username} (${u.email || ""})`}
-                              secondary={u.roles?.join(", ")}
-                            />
-                          </ListItem>
-                        ))}
+                        .map((u: any) => {
+                          const isMe = String(u.id) === String(currentUserId);
+                          return (
+                            <ListItem
+                              key={`v-${u.id}`}
+                              secondaryAction={
+                                !isMe && isOwner ? (
+                                  <IconButton
+                                    edge="end"
+                                    onClick={() => handleRemove(u.id, "viewer")}
+                                  >
+                                    <DeleteRounded />
+                                  </IconButton>
+                                ) : null
+                              }
+                            >
+                              <ListItemText
+                                primary={(
+                                  <span>
+                                    {u.username} ({u.email || ""})
+                                    {isMe && <span style={{ fontStyle: "italic" }}> - me</span>}
+                                  </span>
+                                )}
+                                secondary={u.roles?.join(", ")}
+                              />
+                            </ListItem>
+                          );
+                        })}
                     </List>
                   </AccordionDetails>
                 </Accordion>
@@ -311,26 +318,34 @@ const TableAclDialog: FC<Props> = ({
                             .toLowerCase()
                             .includes(editorFilter.toLowerCase()),
                         )
-                        .map((u: any) => (
-                          <ListItem
-                            key={`te-${u.id}`}
-                            secondaryAction={
-                              isOwner ? (
-                                <IconButton
-                                  edge="end"
-                                  onClick={() => handleRemove(u.id, "editor")}
-                                >
-                                  <DeleteRounded />
-                                </IconButton>
-                              ) : null
-                            }
-                          >
-                            <ListItemText
-                              primary={`${u.username} (${u.email || ""})`}
-                              secondary={u.roles?.join(", ")}
-                            />
-                          </ListItem>
-                        ))}
+                        .map((u: any) => {
+                          const isMe = String(u.id) === String(currentUserId);
+                          return (
+                            <ListItem
+                              key={`e-${u.id}`}
+                              secondaryAction={
+                                isOwner && !isMe ? (
+                                  <IconButton
+                                    edge="end"
+                                    onClick={() => handleRemove(u.id, "editor")}
+                                  >
+                                    <DeleteRounded />
+                                  </IconButton>
+                                ) : null
+                              }
+                            >
+                              <ListItemText
+                                primary={(
+                                  <span>
+                                    {u.username} ({u.email || ""})
+                                    {isMe && <span style={{ fontStyle: "italic" }}> - me</span>}
+                                  </span>
+                                )}
+                                secondary={u.roles?.join(", ")}
+                              />
+                            </ListItem>
+                          );
+                        })}
                     </List>
                   </AccordionDetails>
                 </Accordion>
@@ -342,14 +357,9 @@ const TableAclDialog: FC<Props> = ({
                       multiple
                       size="small"
                       options={
-                        section === "editor"
-                          ? searchResults.filter(
-                              (u) =>
-                                Array.isArray(u.roles) &&
-                                (u.roles.includes("editor") ||
-                                  u.roles.includes("admin")),
-                            )
-                          : searchResults
+                        searchResults.filter((u: any) => (
+                          String(u.id) !== String(currentUserId)
+                        ))
                       }
                       value={selectedUsersToAdd}
                       onChange={(_, v) => setSelectedUsersToAdd(v as any[])}
@@ -375,11 +385,7 @@ const TableAclDialog: FC<Props> = ({
                         <TextField
                           {...params}
                           size="small"
-                          placeholder={
-                            section === "editor"
-                              ? "Search users with editor/admin role"
-                              : "Search username or email"
-                          }
+                          placeholder="Search username or email"
                           onChange={(e) => setQuery(e.target.value)}
                           InputProps={{
                             ...params.InputProps,
@@ -387,8 +393,8 @@ const TableAclDialog: FC<Props> = ({
                         />
                       )}
                       noOptionsText={
-                        section === "editor"
-                          ? "No users with editor/admin role found"
+                        !query
+                          ? "Type to search users..."
                           : "No users found"
                       }
                       disabled={!isOwner}
@@ -396,7 +402,11 @@ const TableAclDialog: FC<Props> = ({
                     <TextField
                       select
                       value={section}
-                      onChange={(e) => setSection(e.target.value as any)}
+                      onChange={(e) => {
+                        setSection(e.target.value as any);
+                        setQuery("");
+                        setSearchResults([]);
+                      }}
                       SelectProps={{ native: true }}
                       sx={{
                         "& .MuiOutlinedInput-root": {

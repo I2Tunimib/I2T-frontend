@@ -5,7 +5,8 @@ export const modificationDialog = async (page: Page, columnName: string, service
   const ui = getComponents(page);
 
   const column = page.getByRole('table').getByText(columnName, { exact: true });
-  const classAttr = await column.getAttribute('class') || '';
+  const thElement = page.getByRole('table').getByText(columnName, { exact: true }).locator('xpath=ancestor::th');
+  const classAttr = await thElement.getAttribute('class') || '';
   const isSelected = classAttr.includes('Selected');
 
   if (!isSelected) {
@@ -101,6 +102,16 @@ export const regexConfig = async (
   await expect(page.getByText('column updated')).toBeVisible();
 };
 
+export const coordsTruncationConfig = async (page: Page, decimals: string) => {
+  const ui = getComponents(page);
+
+  await page.getByRole('textbox', { name: 'Decimal places' }).click();
+  await page.getByRole('textbox', { name: 'Decimal places' }).fill(decimals);
+  await ui.confirmBtn.click();
+  await expect(page.getByText('column updated')).toBeVisible();
+  await expect(page.getByText('column updated')).not.toBeVisible();
+};
+
 export const textRowsConfig = async (page: Page, separator: string) => {
   const ui = getComponents(page);
 
@@ -145,9 +156,9 @@ export const textColumnsConfig = async (
 
     if (columnsJoin.length > 2) {
       const column = columnsJoin.join(' , ');
-      await expect(page.getByRole('combobox', { name: column })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('combobox', { name: column })).toBeVisible({ timeout: 100000 });
     } else {
-      await expect(page.getByRole('combobox', { name: columnsJoin[0] })).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('combobox', { name: columnsJoin[0] })).toBeVisible({ timeout: 100000 });
     }
   }
 

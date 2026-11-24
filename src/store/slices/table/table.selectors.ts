@@ -983,16 +983,18 @@ export const selectColumnsAnnotationPercentages = createSelector(
         rows.allIds.forEach((rowId) => {
           const cell = rows.byId[rowId].cells[colId];
 
-          if (cell.annotationMeta) {
-            const { annotated, match, highestScore } = cell.annotationMeta;
+          if (cell && cell.length > 0) {
+            if (cell.annotationMeta) {
+              const { annotated, match, highestScore } = cell.annotationMeta;
 
-            if (annotated) {
-              if (match.value) {
-                nMatches += 1;
-              } else if (highestScore < scoreLowerBound) {
-                nMissMatches += 1;
-              } else {
-                nPending += 1;
+              if (annotated) {
+                if (match.value) {
+                  nMatches += 1;
+                } else if (highestScore < scoreLowerBound) {
+                  nMissMatches += 1;
+                } else {
+                  nPending += 1;
+                }
               }
             }
           }
